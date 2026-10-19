@@ -116,6 +116,8 @@ import {
   type ParsedCarddassAsset,
 } from "../parse/bandai";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
+import { isNarutoFansetCollector } from "../parse/catalogues";
+import { relocateFansetCollectors } from "../sources/relocateFansetCollectors";
 
 const CDX_URL =
   "https://web.archive.org/cdx/search/cdx?url=www.carddass.fr/naruto/images/*&output=json&fl=timestamp,original,mimetype,statuscode&filter=statuscode:200&collapse=urlkey&limit=20000";
@@ -682,13 +684,16 @@ function ingestNarutoCardDir(input: {
     grouping:
       existing?.grouping ?? parsed.grouping ?? groupingFromKey ?? null,
   });
+  const fanset = isNarutoFansetCollector(input.diskId);
   input.assets.push({
     printKey,
     lang,
     art: art ?? null,
     thumb: thumb ?? null,
     back: null,
-    printed: isNarutoLangPrinted(sets.length ? sets : appearanceSet, lang),
+    printed: fanset
+      ? false
+      : isNarutoLangPrinted(sets.length ? sets : appearanceSet, lang),
   });
 }
 
@@ -766,6 +771,8 @@ export function buildIndexFromDisk(root: string): {
           const resolved = resolveDiskAppearanceSets(diskId, lang);
           if (resolved.length) sets = resolved;
         }
+        // Drive fansets parked under s1 (or any Bandai set) → catalogue set `fanset`.
+        if (isNarutoFansetCollector(diskId)) sets = ["fanset"];
         ingestNarutoCardDir({
           prints,
           assets,
@@ -1458,6 +1465,10 @@ export async function scrapeNarutoCards(
     const facesRewritten = await promoteAllNarutoFaces(root);
     const migratedVc = migrateNarutoVcBacksToCorrectedArt(root);
     const tinPromos = materializeTinBoxPromos(root);
+    const fansetMove = relocateFansetCollectors(path.join(root, "cards"));
+    if (fansetMove.moved.length) {
+      console.log(`── fanset relocate: ${fansetMove.moved.length} dossiers`);
+    }
     const { prints, assets } = buildIndexFromDisk(root);
     const thumbMapped = mapSiteMedThumbsOntoAssets(root, prints, assets);
     const assembled = assembleNarutoCatalogue(
@@ -1784,6 +1795,10 @@ export async function scrapeNarutoCards(
   const migratedVc = migrateNarutoVcBacksToCorrectedArt(root);
   const foldedUnsourced = await foldUnsourcedNarutoArt(root);
   await promoteAllNarutoFaces(root);
+  const fansetMove = relocateFansetCollectors(path.join(root, "cards"));
+  if (fansetMove.moved.length) {
+    console.log(`── fanset relocate: ${fansetMove.moved.length} dossiers`);
+  }
 
   // Merge disk for any pre-existing when not force-limited (keyed by print+lang).
   const fromDisk = buildIndexFromDisk(root);

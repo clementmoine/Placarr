@@ -18,6 +18,7 @@ import {
   parseNarutoCollector,
 } from "../identity";
 import { belongsOnNarutoPromoChecklist } from "../sources/promos";
+import { isNarutoS6FrPrintedNumber } from "../sources/titles";
 import { narutoCuratedSourcesDir } from "../install/curated";
 import { isColekaPlaceholderName } from "./index";
 import enCcgSeries from "../curated/sources/en-ccg-series.json";
@@ -107,6 +108,7 @@ export type FoundCatalogueMerge = {
   narutocardsNetTitled: string[];
   collectorsCometTitled: string[];
   fansetEnTitled: string[];
+  fansetEnMinted: string[];
 };
 
 export { isColekaPlaceholderName } from "./index";
@@ -206,10 +208,18 @@ export function colekaFrNamedCards(): Array<{
   return [...fromJson, ...fromListing];
 }
 
+/** Keys under `coleka.json#cards` — Coleka's cancelled Série 06 branch. */
+function isColekaSerie06BranchNumber(raw: string): boolean {
+  return Object.keys(coleka.cards).some((key) => narutoNumbersEqual(key, raw));
+}
+
 /**
- * FR names from the Coleka S6 / tin fiches we already copied.
- * Fill-only — official / Manga-News names win. No new prints (Coleka
- * files some S1 numbers under the S6 branch).
+ * FR names from Coleka fiches we already copied.
+ * Fill-only — official / Manga-News names win. No new prints.
+ *
+ * Coleka's curated Série 06 object lists cancelled / never-printed FR cardboard
+ * (CL-033 « Uruchai Uchiha », …). Those names only land on attested S6 FR
+ * prints. Harvested s1–s5 fiches keep the previous fill-by-number behaviour.
  */
 export function mergeColekaFrNamesIntoIndex(input: {
   prints: NarutoPrintRow[];
@@ -225,6 +235,19 @@ export function mergeColekaFrNamesIntoIndex(input: {
   const titled: string[] = [];
 
   for (const card of colekaFrNamedCards()) {
+    const s6Branch = isColekaSerie06BranchNumber(card.number);
+    if (s6Branch) {
+      const diskId = narutoDiskCardId(card.number) ?? card.number;
+      if (!isNarutoS6FrPrintedNumber(diskId)) continue;
+      for (const print of findPrintsByNumber(prints, card.number)) {
+        if ((print.setCode ?? "").trim().toLowerCase() !== "s6") continue;
+        if (fillTitle(titles, seen, print.printKey, "fr", card.name)) {
+          titled.push(print.printKey);
+        }
+      }
+      continue;
+    }
+
     for (const print of findPrintsByNumber(prints, card.number)) {
       if (fillTitle(titles, seen, print.printKey, "fr", card.name)) {
         titled.push(print.printKey);

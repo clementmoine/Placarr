@@ -440,27 +440,82 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
 // —— attestedNarutoCarddassFinishes ——
 {
   describe("attestedNarutoCarddassFinishes", () => {
-    it("gates S2 from carddass.fr list rarity without inventing duals", () => {
+    it("gates S2 from physical shelf (not site liste off-by-one)", () => {
       expect(attestedNarutoCarddassFinishes("s2", "ni0084")).toEqual(["holo"]);
       expect(attestedNarutoCarddassFinishes("s2", "ni084")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s2", "ni0061")).toEqual(["holo"]);
+      // Site-listed holo that is physically Normale.
+      expect(attestedNarutoCarddassFinishes("s2", "ni0062")).toEqual(["normal"]);
       expect(attestedNarutoCarddassFinishes("s2", "cl0006")).toEqual(["normal"]);
-      // Liste omits rarity → null so the picker keeps legacy dual.
-      expect(attestedNarutoCarddassFinishes("s2", "cl0005")).toBeNull();
+      // Unlisted rarity on site → still Normale (physical ledger, no dual).
+      expect(attestedNarutoCarddassFinishes("s2", "cl0005")).toEqual(["normal"]);
     });
 
-    it("gates S5 commune/rare as Normale and leaves S4 ungated", () => {
-      expect(attestedNarutoCarddassFinishes("s5", "ni0232")).toEqual(["normal"]);
-      expect(attestedNarutoCarddassFinishes("s5", "cl0028")).toEqual(["normal"]); // rare
+    it("gates S4 / S5 from physical shelf ledgers", () => {
       expect(attestedNarutoCarddassFinishes("s5", "ni0217")).toEqual(["holo"]);
-      expect(attestedNarutoCarddassFinishes("s4", "ta0158")).toBeNull();
-    });
-
-    it("keeps S1 on Bandai détailée (prerelease duals)", () => {
-      expect(attestedNarutoCarddassFinishes("s1", "ni0001")).toEqual(["holo"]);
-      expect(attestedNarutoCarddassFinishes("s1", "ni0019")).toEqual([
+      expect(attestedNarutoCarddassFinishes("s5", "ni0223")).toEqual(["holo"]);
+      // Site-listed holo that is physically Normale.
+      expect(attestedNarutoCarddassFinishes("s5", "te0226")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s5", "cl0028")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s4", "ta0158")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s4", "ni0127")).toEqual([
         "normal",
         "holo",
       ]);
+      expect(attestedNarutoCarddassFinishes("s4", "ni0146")).toEqual(["normal"]);
+    });
+
+    it("keeps S1 retail foil-only when a manga non-holo alt exists", () => {
+      expect(attestedNarutoCarddassFinishes("s1", "ni0001")).toEqual(["holo"]);
+      // Opened Kyubi / non-holo alts live on *-prerelease — not retail Normale.
+      expect(attestedNarutoCarddassFinishes("s1", "ni0019")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s1", "ta0005")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s1", "te0007")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s1", "te0036")).toEqual(["holo"]);
+    });
+
+    it("gates S3 from physical shelf (not site liste off-by-one)", () => {
+      // Physical foil — site wrongly left rarity empty / commune.
+      expect(attestedNarutoCarddassFinishes("s3", "ni0063")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s3", "te0109")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s3", "ta0115")).toEqual(["holo"]);
+      // NI-127 exists as Normale and Holo.
+      expect(attestedNarutoCarddassFinishes("s3", "ni0127")).toEqual([
+        "normal",
+        "holo",
+      ]);
+      // Site-listed holo that is physically Normale.
+      expect(attestedNarutoCarddassFinishes("s3", "ni0079")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s3", "te0110")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s3", "cl0014")).toEqual(["normal"]);
+      // Starter reprint on S3 (outside paper checklist) — Normale, never dual.
+      expect(attestedNarutoCarddassFinishes("s3", "ni0009")).toEqual(["normal"]);
+    });
+
+    it("gates S24 FR as EN Super Rare + Rare foil-only (no C/U dual)", () => {
+      // EN Super Rare / Rare — foil-only (accept padded or short collector).
+      expect(attestedNarutoCarddassFinishes("s24", "n1367")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s24", "j0898")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s24", "j898")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s24", "m0855")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s24", "n1370")).toEqual(["holo"]);
+      // EN Common / Uncommon — Normale only (no invented foil parallel).
+      expect(attestedNarutoCarddassFinishes("s24", "n1358")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s24", "j0913")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s24", "j896")).toEqual(["normal"]);
+    });
+
+    it("gates S28 / S11 / S6 from physical ledgers", () => {
+      expect(attestedNarutoCarddassFinishes("s28", "n1646")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s28", "j1031")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s28", "n1647")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s28", "m0978")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s28", "n1621")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s11", "n0406")).toEqual(["holo"]);
+      expect(attestedNarutoCarddassFinishes("s11", "n0407")).toEqual(["normal"]);
+      // S6 chapter — Normale only (no FR foil cardboard).
+      expect(attestedNarutoCarddassFinishes("s6", "ni0103")).toEqual(["normal"]);
+      expect(attestedNarutoCarddassFinishes("s6", "te0207")).toEqual(["normal"]);
     });
   });
 }

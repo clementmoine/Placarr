@@ -9,7 +9,7 @@
   "url": "https://drive.google.com/drive/folders/1tq0OWmtvZ4Slh8ZlDBEx51uLZUcqnh-T",
   "folderId": "1tq0OWmtvZ4Slh8ZlDBEx51uLZUcqnh-T",
   "title": "[Fansets] Naruto CCG Sets Database",
-  "note": "Unofficial post-s28 fansets (Mardo s29, Henrich s30, TP5 fan, Silent Humming, tokens…). Archive under staging. A file here is not proof the card was never Bandai — remakes of official numbers may be the only scan we hold. Copy onto an existing card as art.fanset (last rank). Do not mint a new print from a fanset-only filename, and do not compare each remake to the original.",
+  "note": "Unofficial post-s28 fansets (Mardo s29, Henrich s30, TP5 fan, Silent Humming, tokens…). Archive under staging. Remakes of official Bandai numbers → `art.fanset` fallback on the existing print. Fan-only C/N/M/J 5000+ (ledger `fanset-en-titles.json`) mint under set `fanset` with `printed: false`. Do not treat fanset scans as Bandai attestation.",
   "folders": [
     "Promo (Fan Made)",
     "Set 29 - Shinobi's Dreams (Fan Made - Mardo)",

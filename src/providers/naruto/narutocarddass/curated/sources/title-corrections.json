@@ -18,6 +18,13 @@
       "wrong": "Déterrminé à Protéger",
       "right": "Déterminé à Protéger",
       "evidence": "Typo Coleka (triple r). EN = Determination to Protect ; orthographe FR correcte = Déterminé."
+    },
+    {
+      "number": "ni0203",
+      "lang": "fr",
+      "wrong": "peut l'utiliser",
+      "right": "Itachi Uchiwa",
+      "evidence": "Texte d'effet scrapé / OCR pris pour le nom. La carte imprime « ITACHI UCHIWA » ; Manga-News S4 et carddass-card-names aliases.fr = Itachi Uchiwa."
     }
   ]
 }

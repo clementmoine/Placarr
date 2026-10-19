@@ -4,13 +4,20 @@
 
 import bandaiFrSerie1DetailleeJson from "../curated/sources/bandai-fr-serie-1-detaillee.json";
 import mercariLedgerJson from "../curated/sources/mercari.json";
+import s2FrPhysicalFinishesJson from "../curated/sources/s2-fr-physical-finishes.json";
+import s3FrPhysicalFinishesJson from "../curated/sources/s3-fr-physical-finishes.json";
+import s4FrPhysicalFinishesJson from "../curated/sources/s4-fr-physical-finishes.json";
+import s5FrPhysicalFinishesJson from "../curated/sources/s5-fr-physical-finishes.json";
+import s6FrPhysicalFinishesJson from "../curated/sources/s6-fr-physical-finishes.json";
+import s11FrPhysicalFinishesJson from "../curated/sources/s11-fr-physical-finishes.json";
+import s24FrPhysicalFinishesJson from "../curated/sources/s24-fr-physical-finishes.json";
+import s28FrPhysicalFinishesJson from "../curated/sources/s28-fr-physical-finishes.json";
 import slabzLedgerJson from "../curated/sources/slab-z-ja.json";
 import tvtokyoLedgerJson from "../curated/sources/tvtokyo.json";
 import yahooAuctionsLedgerJson from "../curated/sources/yahoo-auctions.json";
 import {
   canonicalizeNarutoPrintKey,
   canonicalNarutoDiskPrefix,
-  loadOfficialNames,
   mintNarutoPrintKey,
   narutoDiskCardId,
   parseNarutoCollector,
@@ -39,13 +46,6 @@ export function bandaiFrSerie1DetailleeHoloCount(): number {
 const PLAIN = "normal";
 const HOLO = "holo";
 
-/**
- * FR series whose carddass.fr « liste des cartes » pages carry a usable
- * rarity (`commune` / `rare` / `holo`). S4 has none; S1 prefers Bandai
- * détailée (prerelease duals). S6 was never printed FR.
- */
-const OFFICIAL_LIST_RARITY_SETS = new Set(["s2", "s3", "s5"]);
-
 /** Bandai / official short key `ni001` from collector `ni0001` / `NI-1`. */
 function carddassFrShortKey(collectorNumber: string): string | null {
   const id = parseNarutoCollector(collectorNumber);
@@ -54,26 +54,81 @@ function carddassFrShortKey(collectorNumber: string): string | null {
   return `${prefix}${String(id.number).padStart(3, "0")}`;
 }
 
-function finishesFromOfficialListRarity(
-  rarity: string | null | undefined,
-): readonly string[] | null {
-  const r = (rarity ?? "").trim().toLowerCase();
-  if (!r) return null;
-  if (r === "holo" || r === "holofoil") return [HOLO];
-  if (r === "commune" || r === "common" || r === "rare") return [PLAIN];
-  return null;
+function physicalFinishSets(ledger: {
+  holoOnly: readonly string[];
+  dualNormalAndHolo: readonly string[];
+}): { holoOnly: Set<string>; dual: Set<string> } {
+  return {
+    holoOnly: new Set(ledger.holoOnly.map((id) => id.trim().toLowerCase())),
+    dual: new Set(
+      ledger.dualNormalAndHolo.map((id) => id.trim().toLowerCase()),
+    ),
+  };
+}
+
+const PHYSICAL_FR_FINISHES: Record<
+  string,
+  { holoOnly: Set<string>; dual: Set<string> }
+> = {
+  s2: physicalFinishSets(s2FrPhysicalFinishesJson),
+  s3: physicalFinishSets(s3FrPhysicalFinishesJson),
+  s4: physicalFinishSets(s4FrPhysicalFinishesJson),
+  s5: physicalFinishSets(s5FrPhysicalFinishesJson),
+  s6: physicalFinishSets(s6FrPhysicalFinishesJson),
+  s11: physicalFinishSets(s11FrPhysicalFinishesJson),
+  s24: physicalFinishSets(s24FrPhysicalFinishesJson),
+  s28: physicalFinishSets(s28FrPhysicalFinishesJson),
+};
+
+/**
+ * Physical FR finishes from a holoOnly / dual ledger.
+ *
+ * Any slot that is not foil-only / dual is Normale. Returning `null` would
+ * fall back to legacy dual and invent foil rows in the master set.
+ */
+function attestedPhysicalFrFinishes(
+  short: string,
+  sets: { holoOnly: Set<string>; dual: Set<string> },
+): readonly string[] {
+  const key = short.toLowerCase();
+  if (sets.dual.has(key)) return [PLAIN, HOLO];
+  if (sets.holoOnly.has(key)) return [HOLO];
+  return [PLAIN];
+}
+
+/**
+ * S1 manga prerelease that is the non-holo alt of a retail holo
+ * (`ni019` / `ta005` / `te007` / `te036`). Opened card lives on
+ * `*-prerelease` (e.g. TA-005 « Kyubi ») — retail is foil-only.
+ */
+export function isNarutoS1PrereleaseNonHoloAltOfHolo(
+  collectorNumber: string,
+): boolean {
+  const short = carddassFrShortKey(collectorNumber);
+  if (!short) return false;
+  if (
+    !bandaiFrSerie1DetailleeJson.prereleaseListed.some(
+      (id) => id.toLowerCase() === short,
+    )
+  ) {
+    return false;
+  }
+  return bandaiFrSerie1DetailleeJson.cards.some(
+    (row) => row.printKey.toLowerCase() === short && row.holoMarker,
+  );
 }
 
 /**
  * Attested finishes for FR Carddass retail series.
  *
- * - **S1** — Bandai « Série 1 détaillée ». Dual (`normal`+`holo`) = Bandai
- *   listed a non-holo alt of a holo ID (`ni019` / `ta005` / `te007` /
- *   `te036`). That plain card is the opened bag content; the still-in-bag
- *   copy lives on the `*-prerelease` printKey with finish `sealed` only.
- * - **S2 / S3 / S5** — carddass.fr listes (`carddass-card-names.json`).
- *   `holo` → foil only; `commune` / `rare` → Normale only. Missing rarity
- *   → `null` (caller keeps legacy dual — e.g. S4, or unlisted S2 stubs).
+ * - **S1** — Bandai « Série 1 détaillée ». Retail holo that has a manga
+ *   non-holo alt (`ni019` / `ta005` / `te007` / `te036`) stays **foil-only**
+ *   on the retail key — the opened non-holo (TA-005 « Kyubi », …) and the
+ *   still-sealed bag live on `*-prerelease`. Other holos → foil-only;
+ *   communes → Normale.
+ * - **S2–S6 / S11 / S24 / S28** — physical FR ledgers
+ *   (`*-fr-physical-finishes.json`). Foil-only / dual IDs; every other slot
+ *   is Normale. carddass.fr listes are often off-by-one and must not gate.
  *
  * Returns `null` when the series / number is not attested.
  */
@@ -91,21 +146,15 @@ export function attestedNarutoCarddassFinishes(
     );
     if (rows.length === 0) return null;
     const hasHolo = rows.some((row) => row.holoMarker);
-    const prereleaseAlt = bandaiFrSerie1DetailleeJson.prereleaseListed.some(
-      (id) => id.toLowerCase() === short,
-    );
-    // Non-holo prerelease alt of a holo ID → retail offers both finishes.
-    if (hasHolo && prereleaseAlt) return [PLAIN, HOLO];
+    // Non-holo manga alt is on `*-prerelease`, not retail Normale.
     if (hasHolo) return [HOLO];
     return [PLAIN];
   }
 
-  if (!OFFICIAL_LIST_RARITY_SETS.has(set)) return null;
-  const official = loadOfficialNames().get(short);
-  if (!official) return null;
-  const serie = official.serie;
-  if (typeof serie === "number" && `s${serie}` !== set) return null;
-  return finishesFromOfficialListRarity(official.rarity);
+  const physical = PHYSICAL_FR_FINISHES[set];
+  if (physical) return attestedPhysicalFrFinishes(short, physical);
+
+  return null;
 }
 
 // ─── Mercari faces ───────────────────────────────────────────────────────

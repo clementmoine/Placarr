@@ -26,16 +26,38 @@ import {
   Package,
   Printer,
   Search,
+  Settings,
 } from "lucide-react";
 
-import { formatChecklistMarkdown } from "@/core/collect/checklistMarkdown";
+import {
+  ambiguousChecklistPrintKeys,
+  checklistShouldShowFinish,
+} from "@/core/collect/checklist";
+import {
+  checklistSetsForMarkdown,
+  formatChecklistMarkdown,
+} from "@/core/collect/checklistMarkdown";
 import {
   nextTcgdexDisplayUrl,
   tcgdexDisplayCandidates,
 } from "@/core/enrich/media/tcgdexAssetUrls";
+import {
+  DEFAULT_CHECKLIST_PREFS,
+  readChecklistPrefs,
+  writeChecklistPrefs,
+} from "@/lib/client/checklistPrefs";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { cn } from "@/lib/shared/utils";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import styles from "./checklist.module.css";
 
 type ChecklistPrint = {
@@ -117,6 +139,9 @@ type ChecklistResponse = {
   masterSet?: boolean;
   /** Copies sans `variant` — ignorées en master set. */
   untaggedOwned?: number;
+  /** Hors master set : suggérer d'activer (tirages multi-finition possédés). */
+  suggestMasterSet?: boolean;
+  multiFinishOwned?: number;
   sets: ChecklistSet[];
   setsWithoutCatalogue: { id: string; label: string }[];
   advice: SetAdvice[];
@@ -531,6 +556,8 @@ function SetRow({
   advice,
   expandable,
   showOwned,
+  alwaysShowFinishLabels,
+  showPrices,
   searchQuery,
   forceExpand,
   t,
@@ -539,6 +566,8 @@ function SetRow({
   advice?: SetAdvice;
   expandable: boolean;
   showOwned: boolean;
+  alwaysShowFinishLabels: boolean;
+  showPrices: boolean;
   searchQuery: string;
   /**
    * Impression : monter toutes les cartes dans le DOM. Sinon Masters (7k+)
@@ -589,6 +618,16 @@ function SetRow({
     searchQuery,
     setMatches,
   ]);
+
+  /*
+    Finition affichée seulement s'il y a ambiguïté (plusieurs lignes master
+    set pour le même printKey). Calculé sur tout le set, pas sur le pool
+    filtré — une foil manquante reste étiquetée si la normale existe aussi.
+  */
+  const ambiguousFinishes = useMemo(
+    () => ambiguousChecklistPrintKeys(set.cards ?? set.missing),
+    [set.cards, set.missing],
+  );
 
   const listOpen = forceExpand || (searching ? rows.length > 0 : open);
   const prices = advice?.prices ?? {};
@@ -655,7 +694,8 @@ function SetRow({
         l'impression** : une check-list papier qu'il faut déplier n'en est pas
         une.
       */}
-      {advice &&
+      {showPrices &&
+        advice &&
         set.missing.length > 0 &&
         listOpen &&
         !searching && <Advice advice={advice} t={t} />}
@@ -664,7 +704,9 @@ function SetRow({
         <ol className={cn(styles.missing, styles.missingOpen)}>
           {rows.map((row) => {
             // Cote + sources scellées aussi pour les cartes déjà possédées.
-            const priceCents = prices[row.printKey] ?? null;
+            const priceCents = showPrices
+              ? (prices[row.printKey] ?? null)
+              : null;
             const sources = sealedSources[row.printKey] ?? [];
             const sealedLabel =
               sources.length > 0
@@ -692,8 +734,15 @@ function SetRow({
                 )}
                 <span className={styles.ref}>{row.reference}</span>
                 <span className={styles.name}>{row.title}</span>
-                {row.finish ? (
-                  <span className={styles.finish}>{row.finish}</span>
+                {checklistShouldShowFinish({
+                  printKey: row.printKey,
+                  finish: row.finish,
+                  ambiguous: ambiguousFinishes,
+                  onlyWhenAmbiguous: !alwaysShowFinishLabels,
+                }) ? (
+                  <span className={styles.finish}>
+                    {localizeFinishLabel(row.finish!, t)}
+                  </span>
                 ) : null}
                 {sources.length > 0 && (
                   <span
@@ -746,14 +795,29 @@ export default function ChecklistPage() {
   /*
     Par défaut : toute la liste (possédées comprises) — cote et provenance
     scellée restent utiles même cochées. Décocher pour ne chasser que les
-    manquantes.
+    manquantes. Préférence mémorisée par étagère (localStorage).
   */
-  const [showOwned, setShowOwned] = useState(true);
+  const [showOwned, setShowOwned] = useState(
+    DEFAULT_CHECKLIST_PREFS.showOwned,
+  );
   /*
     Master set : chaque finition (normale / foil / …) est une case. Posséder
-    la foil ne coche pas la normale.
+    la foil ne coche pas la normale. Off par défaut en début de licence ;
+    mémorisé par étagère.
   */
-  const [masterSet, setMasterSet] = useState(false);
+  const [masterSet, setMasterSet] = useState(
+    DEFAULT_CHECKLIST_PREFS.masterSet,
+  );
+  const [masterSetSuggestDismissed, setMasterSetSuggestDismissed] = useState(
+    DEFAULT_CHECKLIST_PREFS.masterSetSuggestDismissed,
+  );
+  const [alwaysShowFinishLabels, setAlwaysShowFinishLabels] = useState(
+    DEFAULT_CHECKLIST_PREFS.alwaysShowFinishLabels,
+  );
+  const [showPrices, setShowPrices] = useState(
+    DEFAULT_CHECKLIST_PREFS.showPrices,
+  );
+  const [prefsReady, setPrefsReady] = useState(false);
   const [search, setSearch] = useState("");
   /** Déplie tous les sets le temps d'imprimer (sinon les cartes ne sont pas dans le DOM). */
   const [printing, setPrinting] = useState(false);
@@ -761,6 +825,35 @@ export default function ChecklistPage() {
     () => normalizeChecklistQuery(search),
     [search],
   );
+
+  useEffect(() => {
+    const prefs = readChecklistPrefs(shelfId);
+    setShowOwned(prefs.showOwned);
+    setMasterSet(prefs.masterSet);
+    setMasterSetSuggestDismissed(prefs.masterSetSuggestDismissed);
+    setAlwaysShowFinishLabels(prefs.alwaysShowFinishLabels);
+    setShowPrices(prefs.showPrices);
+    setPrefsReady(true);
+  }, [shelfId]);
+
+  useEffect(() => {
+    if (!prefsReady || !shelfId) return;
+    writeChecklistPrefs(shelfId, {
+      showOwned,
+      masterSet,
+      masterSetSuggestDismissed,
+      alwaysShowFinishLabels,
+      showPrices,
+    });
+  }, [
+    shelfId,
+    showOwned,
+    masterSet,
+    masterSetSuggestDismissed,
+    alwaysShowFinishLabels,
+    showPrices,
+    prefsReady,
+  ]);
 
   useEffect(() => {
     const onBefore = () => {
@@ -789,7 +882,7 @@ export default function ChecklistPage() {
       if (!response.ok) throw new Error(String(response.status));
       return (await response.json()) as ChecklistResponse;
     },
-    enabled: Boolean(shelfId),
+    enabled: Boolean(shelfId) && prefsReady,
   });
 
   /*
@@ -842,25 +935,30 @@ export default function ChecklistPage() {
     const languageLabel = langCode
       ? printLanguageLabel(langCode).name
       : null;
+    const setsForMd = data.sets.map((set) => {
+      if (!showPrices) return set;
+      const prices = adviceBySet.get(set.id)?.prices;
+      if (!prices || Object.keys(prices).length === 0) return set;
+      const labels: Record<string, string> = {};
+      for (const [printKey, cents] of Object.entries(prices)) {
+        if (typeof cents === "number" && Number.isFinite(cents)) {
+          labels[printKey] = euros(cents);
+        }
+      }
+      return { ...set, prices: labels };
+    });
     const markdown = formatChecklistMarkdown({
       shelfName: data.shelf.name,
       language: data.language,
       languageLabel,
       totals: data.totals,
-      includeOwned: true,
-      sets: data.sets.map((set) => ({
-        label: set.label,
-        owned: set.owned,
-        total: set.total,
-        completion: set.completion,
-        cards: (set.cards ?? []).map((card) => ({
-          reference: card.finish
-            ? `${card.reference} (${card.finish})`
-            : card.reference,
-          title: card.title,
-          owned: Boolean(card.owned),
-        })),
-      })),
+      includeOwned: showOwned,
+      sets: checklistSetsForMarkdown(
+        setsForMd,
+        showOwned,
+        (finish) => localizeFinishLabel(finish, t),
+        !alwaysShowFinishLabels,
+      ),
       setsWithoutCatalogue: data.setsWithoutCatalogue,
     });
     const slug =
@@ -877,7 +975,14 @@ export default function ChecklistPage() {
     anchor.download = `${slug}${langSuffix}-checklist.md`;
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [data]);
+  }, [
+    data,
+    showOwned,
+    alwaysShowFinishLabels,
+    showPrices,
+    adviceBySet,
+    t,
+  ]);
 
   return (
     <TooltipPrimitive.Provider
@@ -887,7 +992,7 @@ export default function ChecklistPage() {
     >
     <main className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headBar}>
+        <div className={styles.topBar}>
           <Link
             href={`/shelves/${encodeURIComponent(shelfId)}`}
             className={styles.back}
@@ -896,62 +1001,17 @@ export default function ChecklistPage() {
             {data?.shelf.name ?? ""}
           </Link>
 
-          <div className={styles.actions}>
-            <label className={styles.search}>
-              <Search className={styles.searchIcon} aria-hidden />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={t("items.checklistSearch")}
-                aria-label={t("items.checklistSearch")}
-                className={styles.searchInput}
-              />
-            </label>
-            {(data?.languages.length ?? 0) > 1 && (
-              <select
-                value={language ?? data?.language ?? ""}
-                onChange={(event) => setLanguage(event.target.value)}
-                aria-label={t("items.checklistLanguage")}
-                className={styles.select}
-              >
-                {data?.languages.map((code) => {
-                  const label = printLanguageLabel(code);
-                  return (
-                    <option key={code} value={code}>
-                      {label.flag} {label.name}
-                    </option>
-                  );
-                })}
-              </select>
-            )}
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={showOwned}
-                onChange={(event) => setShowOwned(event.target.checked)}
-              />
-              {t("items.checklistShowOwned")}
-            </label>
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={masterSet}
-                onChange={(event) => setMasterSet(event.target.checked)}
-              />
-              {t("items.checklistMasterSet")}
-            </label>
-
+          <div className={styles.topActions}>
             <button
               type="button"
               onClick={downloadMarkdown}
-              className={styles.exportMd}
+              className={styles.iconBtn}
               disabled={!data || data.totals.total === 0}
+              title={t("items.checklistExportMarkdown")}
+              aria-label={t("items.checklistExportMarkdown")}
             >
               <FileDown className="size-4" aria-hidden />
-              {t("items.checklistExportMarkdown")}
             </button>
-
             <button
               type="button"
               onClick={() => {
@@ -959,29 +1019,120 @@ export default function ChecklistPage() {
                 window.print();
                 setPrinting(false);
               }}
-              className={styles.print}
+              className={styles.iconBtn}
+              title={t("items.checklistPrint")}
+              aria-label={t("items.checklistPrint")}
             >
               <Printer className="size-4" aria-hidden />
-              {t("items.checklistPrint")}
             </button>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={styles.settingsBtn}
+                  title={t("items.checklistSettings")}
+                  aria-label={t("items.checklistSettings")}
+                >
+                  <Settings className="size-4" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel>
+                  {t("items.checklistSettings")}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={showOwned}
+                  onCheckedChange={(checked) =>
+                    setShowOwned(checked === true)
+                  }
+                >
+                  {t("items.checklistShowOwned")}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={masterSet}
+                  onCheckedChange={(checked) => {
+                    const on = checked === true;
+                    setMasterSet(on);
+                    if (on) setMasterSetSuggestDismissed(true);
+                  }}
+                >
+                  {t("items.checklistMasterSet")}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={alwaysShowFinishLabels}
+                  disabled={!masterSet}
+                  onCheckedChange={(checked) =>
+                    setAlwaysShowFinishLabels(checked === true)
+                  }
+                >
+                  {t("items.checklistAlwaysShowFinishLabels")}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={showPrices}
+                  onCheckedChange={(checked) =>
+                    setShowPrices(checked === true)
+                  }
+                >
+                  {t("items.checklistShowPrices")}
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <h1 className={styles.title}>{t("items.checklistTitle")}</h1>
-        <p className={styles.subtitle}>{t("items.checklistSubtitle")}</p>
-
-        {data && (
-          <div className={styles.totals}>
-            <strong>
-              {t("items.checklistOwnedOf", {
-                owned: data.totals.owned,
-                total: data.totals.total,
-              })}
-            </strong>
-            <CompletionBar value={data.totals.completion} />
-            <span>{data.totals.completion}%</span>
+        <div className={styles.hero}>
+          <div className={styles.heroText}>
+            <h1 className={styles.title}>{t("items.checklistTitle")}</h1>
+            <p className={styles.subtitle}>{t("items.checklistSubtitle")}</p>
           </div>
-        )}
+          {data && (
+            <div className={styles.totals}>
+              <strong>
+                {t("items.checklistOwnedOf", {
+                  owned: data.totals.owned,
+                  total: data.totals.total,
+                })}
+              </strong>
+              <CompletionBar value={data.totals.completion} />
+              <span className={styles.totalsPct}>
+                {data.totals.completion}%
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.toolbar}>
+          <label className={styles.search}>
+            <Search className={styles.searchIcon} aria-hidden />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t("items.checklistSearch")}
+              aria-label={t("items.checklistSearch")}
+              className={styles.searchInput}
+            />
+          </label>
+          {(data?.languages.length ?? 0) > 1 && (
+            <select
+              value={language ?? data?.language ?? ""}
+              onChange={(event) => setLanguage(event.target.value)}
+              aria-label={t("items.checklistLanguage")}
+              className={styles.select}
+            >
+              {data?.languages.map((code) => {
+                const label = printLanguageLabel(code);
+                return (
+                  <option key={code} value={code}>
+                    {label.flag} {label.name}
+                  </option>
+                );
+              })}
+            </select>
+          )}
+        </div>
+
         {data && masterSet && (data.untaggedOwned ?? 0) > 0 && (
           <p className={styles.untaggedHint}>
             {t("items.checklistUntaggedOwned", {
@@ -989,6 +1140,37 @@ export default function ChecklistPage() {
             })}
           </p>
         )}
+        {data &&
+          !masterSet &&
+          data.suggestMasterSet &&
+          !masterSetSuggestDismissed && (
+            <div className={styles.suggestMasterSet} role="status">
+              <p className={styles.suggestMasterSetText}>
+                {t("items.checklistMasterSetSuggest", {
+                  count: data.multiFinishOwned ?? 0,
+                })}
+              </p>
+              <div className={styles.suggestMasterSetActions}>
+                <button
+                  type="button"
+                  className={styles.suggestMasterSetEnable}
+                  onClick={() => {
+                    setMasterSet(true);
+                    setMasterSetSuggestDismissed(true);
+                  }}
+                >
+                  {t("items.checklistMasterSetSuggestEnable")}
+                </button>
+                <button
+                  type="button"
+                  className={styles.suggestMasterSetDismiss}
+                  onClick={() => setMasterSetSuggestDismissed(true)}
+                >
+                  {t("items.checklistMasterSetSuggestDismiss")}
+                </button>
+              </div>
+            </div>
+          )}
       </header>
 
       {isLoading && (
@@ -1019,6 +1201,8 @@ export default function ChecklistPage() {
                   Boolean(searchQuery)
                 }
                 showOwned={showOwned}
+                alwaysShowFinishLabels={alwaysShowFinishLabels}
+                showPrices={showPrices}
                 searchQuery={searchQuery}
                 forceExpand={printing}
                 t={t}

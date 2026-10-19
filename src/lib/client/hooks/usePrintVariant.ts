@@ -235,11 +235,16 @@ export function variantRendering(
     Holo): imply that finish. Multi-finish prints (Naruto normal|holo, Lorcana
     None|Silver) stay flat until the copy picks one — do not collapse onto the
     plain option via ownership helpers.
+
+    A *stale* stored variant that the catalogue no longer offers (retail
+    `normal` after a non-holo alt moved to `*-prerelease`) must not fall
+    through to the sole remaining finish — that painted foil on opened bags.
   */
   const finishes = normalizeVariantOptions(info.finishes);
+  const storedAttempt = Boolean(variant?.trim());
   const resolved =
     resolveStoredVariant(variant, info.finishes) ??
-    (finishes.length === 1 ? finishes[0]! : null);
+    (!storedAttempt && finishes.length === 1 ? finishes[0]! : null);
   // Keep pack id even without a finish: backs (flip / skeleton) resolve from
   // the pack; foil layers stay null until a finish is known.
   if (!resolved) {

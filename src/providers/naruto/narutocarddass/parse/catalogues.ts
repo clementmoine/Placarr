@@ -1897,9 +1897,23 @@ export function mergeCollectorsCometIntoIndex(input: {
 
 /**
  * EN titles for unofficial Drive fansets — human-validated OCR.
- * Fills missing EN; re-syncs rows already stamped `fanset-ocr-validated`.
+ * Mints missing prints under set `fanset` (`printed: false` at asset time) and
+ * fills / re-syncs EN titles stamped `fanset-ocr-validated`.
  */
 export type FansetEnTitleRow = (typeof fansetEnTitles.cards)[number];
+
+const FANSET_DISK_NUMBERS = new Set(
+  fansetEnTitles.cards.map((row) => row.number.trim().toLowerCase()),
+);
+
+/** Drive fanset collectors (C/N/M/J 5000+ ledger) — not Bandai cardboard. */
+export function isNarutoFansetCollector(diskId: string): boolean {
+  const id = narutoDiskCardId(diskId)?.toLowerCase() ?? diskId.trim().toLowerCase();
+  if (!id) return false;
+  if (FANSET_DISK_NUMBERS.has(id)) return true;
+  const bare = id.replace(/-(?:promo|prerelease|cdf)$/i, "");
+  return FANSET_DISK_NUMBERS.has(bare);
+}
 
 export function fansetEnTitleCards(): FansetEnTitleRow[] {
   return fansetEnTitles.cards;
@@ -1912,27 +1926,36 @@ export function mergeFansetEnTitlesIntoIndex(input: {
   prints: NarutoPrintRow[];
   titles: NarutoTitleRow[];
   titled: string[];
+  minted: string[];
 } {
   const prints = [...input.prints];
   const titles = [...input.titles];
   const printKeys = new Set(
     prints.map((p) => canonicalizeNarutoPrintKey(p.printKey)),
   );
-  const titleKeys = new Set(
-    titles.map(
-      (t) =>
-        `${canonicalizeNarutoPrintKey(t.printKey)}\0${t.lang.toLowerCase()}`,
-    ),
-  );
   const titled: string[] = [];
+  const minted: string[] = [];
 
   for (const row of fansetEnTitleCards()) {
-    const keys = resolveNarutoLedgerPrintKeys(row.number, null, prints).filter(
-      (printKey) => printKeys.has(printKey),
-    );
-    if (!keys.length) continue;
     const name = row.name.trim();
     if (!name) continue;
+    let keys = resolveNarutoLedgerPrintKeys(row.number, null, prints).filter(
+      (printKey) => printKeys.has(printKey),
+    );
+    if (!keys.length) {
+      const diskId = narutoDiskCardId(row.number) ?? row.number.trim().toLowerCase();
+      const printKey = mintNarutoPrintKey(diskId, "fanset");
+      if (!printKey || printKeys.has(printKey)) continue;
+      prints.push({
+        printKey,
+        setCode: "fanset",
+        number: diskId,
+        cardType: cardTypeFromCollectorNumber(diskId),
+      });
+      printKeys.add(printKey);
+      keys = [printKey];
+      minted.push(printKey);
+    }
     for (const printKey of keys) {
       const existing = titles.find(
         (t) =>
@@ -1953,13 +1976,13 @@ export function mergeFansetEnTitlesIntoIndex(input: {
         fullName: name,
         nameSource: "fanset-ocr-validated",
       });
-      titleKeys.add(`${printKey}\0en`);
       titled.push(printKey);
     }
   }
 
   titled.sort((a, b) => a.localeCompare(b));
-  return { prints, titles, titled };
+  minted.sort((a, b) => a.localeCompare(b));
+  return { prints, titles, titled, minted };
 }
 
 // ─── parseMangaNewsChecklist ──────────────────────────────────────────────────────────

@@ -32,9 +32,13 @@ import {
   expandNarutoPrintsToSetScoped,
   isJpOnlyNarutoArtwork,
   isNarutoCatalogueSetCode,
+  isNarutoFrUnpublishedHtmlNumber,
   isNarutoJapaneseVolumeSet,
+  loadOfficialNames,
   mintNarutoPrintKey,
   narutoDiskCardId,
+  narutoLedgerNumber,
+  narutoRetailDiskNumber,
   officialFrChecklistSetsForNumber,
   parseNarutoCollector,
 } from "./identity";
@@ -43,6 +47,10 @@ import {
   keepsNarutoS6FrTitle,
 } from "./sources/titles";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
+import {
+  loadSealedProductsIndex,
+  persistSealedProductsIndex,
+} from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { foldNarutoCatalogueRecords } from "./pipeline";
 import { fillNarutoTitlesFromSiblingLocales } from "./pipeline/ledgers";
 import { narutoEditorialLandscapePrints } from "./search";
@@ -451,10 +459,10 @@ export function writeNarutoCcgIndex(input: {
         return false;
       }
       /*
-        Drop ghost EU memberships (ledger mis-buckets) when the FR paper
-        checklist already lists the collector elsewhere — keep maki / promo /
-        s6+, and keep starter/deck reprint series (NI-008 → s2) that are not
-        on the booster checklist.
+        Drop ghost EU memberships when the FR paper checklist already lists the
+        collector elsewhere — keep maki / promo / s6+, and starter/deck reprint
+        series. FR titles/assets must not fan out onto JA-parked s1 (see
+        setAcceptsTitleLang); do not delete the JA print itself.
       */
       if (
         frChecklist.length &&
@@ -509,11 +517,13 @@ export function writeNarutoCcgIndex(input: {
     return out;
   };
   /*
-    FR titles must not land on EN-only series keys (s7–s10, s15, tp4…).
-    Expand used to copy every locale onto every membership — checklist FR then
-    listed Tempête reprints under Quest for Power, etc.
+    Locale rows must not fan out onto every collector membership. JA under
+    `ja/s1/ni0316` keeps the s1 print for JA assets; FR titles/faces stay on
+    checklist / deck / S6-preprod sets only — otherwise S1 shows « Kakashi »
+    sans image while the scan lives under fr/s6.
   */
-  const setAcceptsTitleLang = (
+  const officialNames = loadOfficialNames();
+  const setAcceptsLocaleRow = (
     setCode: string,
     lang: string,
     printKey: string,
@@ -529,12 +539,12 @@ export function writeNarutoCcgIndex(input: {
     }
     if (l !== "fr") return true;
     if (set === "promo" || set === "prerelease") return true;
+    const parsed = parsePrintKey(printKey);
+    const number =
+      parsed?.number ?? printKey.slice(printKey.lastIndexOf("-") + 1);
+    const grouping = parsed?.grouping;
+    const raw = grouping ? `${number}-${grouping}` : number;
     if (set === "s6") {
-      const number =
-        parsePrintKey(printKey)?.number ??
-        printKey.slice(printKey.lastIndexOf("-") + 1);
-      const grouping = parsePrintKey(printKey)?.grouping;
-      const raw = grouping ? `${number}-${grouping}` : number;
       // Inserts cartonnés + noms lus sur préprod carddass.fr (pas Coleka IT).
       return keepsNarutoS6FrTitle(raw);
     }
@@ -542,15 +552,44 @@ export function writeNarutoCcgIndex(input: {
     const series = /^s(\d+)$/.exec(set);
     if (series) {
       const n = Number(series[1]);
-      return n >= 1 && n <= 5;
+      if (n < 1 || n > 5) return false;
+      const collector = collectorOf(raw, printKey);
+      /*
+        Manga S1 bags are `s1-*-prerelease` (set = s1, not catalogue
+        `prerelease`). Paper checklist keys are retail-only — look up the
+        bare collector so FR titles/faces are not stripped from the bags.
+      */
+      const checklistNumber =
+        grouping === "prerelease" || /-prerelease$/i.test(raw)
+          ? (narutoRetailDiskNumber(raw) ?? number)
+          : raw;
+      if (officialFrChecklistSetsForNumber(checklistNumber).includes(set)) {
+        return true;
+      }
+      if (deckSetsByCollector.get(collector)?.has(set)) return true;
+      /*
+        Site-HTML phantoms never on paper (TA-090 « Le don de la copie ») —
+        keep the FR title on the official serie only, not every JA-parked sN.
+      */
+      if (isNarutoFrUnpublishedHtmlNumber(raw)) {
+        const ledger = narutoLedgerNumber(raw)?.replace(/-.*$/, "") ?? "";
+        const officialSerie = officialNames.get(ledger)?.serie;
+        if (officialSerie != null && officialSerie === n) return true;
+      }
+      return false;
     }
     return false;
   };
   const expandedTitles = expandRows(folded.titles, "titre").filter((row) => {
     const set = parsePrintKey(row.printKey)?.set ?? "";
-    return setAcceptsTitleLang(set, row.lang, row.printKey);
+    return setAcceptsLocaleRow(set, row.lang, row.printKey);
   });
-  const expandedAssets = expandRows(folded.assets ?? [], "face");
+  const expandedAssets = expandRows(folded.assets ?? [], "face").filter(
+    (row) => {
+      const set = parsePrintKey(row.printKey)?.set ?? "";
+      return setAcceptsLocaleRow(set, row.lang, row.printKey);
+    },
+  );
 
   const db = new DatabaseSync(buildPath);
   createSchema(db);
@@ -695,13 +734,62 @@ export function writeNarutoCcgIndex(input: {
   // Identity rebuild replaces the whole file — keep sealed / faces / pack docs.
   copyCatalogSideTablesFromPrevious(dbPath, buildPath);
 
+  /*
+    Replace the live file only after dropping WAL/SHM sidecars. Renaming a
+    fresh `.building` over a WAL-mode DB while `-wal`/`-shm` still point at the
+    old inode leaves "database disk image is malformed" for every reader
+    (Next, integrity_check, the post-rebuild load).
+  */
+  unlinkSqliteSidecars(dbPath);
+  if (existsSync(dbPath)) {
+    try {
+      unlinkSync(dbPath);
+    } catch {
+      /* ignore — rename may still overwrite on same filesystem */
+    }
+  }
   renameSync(buildPath, dbPath);
+  unlinkSqliteSidecars(dbPath);
   /*
     Les lecteurs (Next) qui tenaient l'ancien fichier doivent le lâcher —
     sinon ils servent encore l'inode remplacé.
   */
   resetNarutoCcgDbCache();
+  /*
+    Side-table copy can resurrect stale `art.mercari.*` product URLs from an
+    older catalog while face.json already points at `art.reconstructed.*`.
+    Re-resolve packshots from disk before readers hit the new file.
+  */
+  refreshNarutoSealedPackshotsAfterCatalogRebuild(pack);
   return { dbPath, printCount: expandedPrints.length };
+}
+
+function refreshNarutoSealedPackshotsAfterCatalogRebuild(packId: string): void {
+  try {
+    const loaded = loadSealedProductsIndex(packId);
+    persistSealedProductsIndex(packId, loaded.products);
+  } catch (error) {
+    console.warn(
+      `[naruto] sealed packshot refresh after catalog rebuild failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+/** Drop SQLite WAL/journal sidecars next to `dbPath` (best-effort). */
+function unlinkSqliteSidecars(dbPath: string): void {
+  for (const side of [
+    `${dbPath}-wal`,
+    `${dbPath}-shm`,
+    `${dbPath}-journal`,
+  ]) {
+    try {
+      unlinkSync(side);
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 function copyCatalogSideTablesFromPrevious(
@@ -709,6 +797,34 @@ function copyCatalogSideTablesFromPrevious(
   buildPath: string,
 ): void {
   if (!existsSync(previousPath)) return;
+  /*
+    A prior malformed catalog must not poison the fresh build via ATTACH.
+    Skip side-table copy; sealed products can be re-scraped independently.
+  */
+  try {
+    const probe = new DatabaseSync(previousPath, { readOnly: true });
+    try {
+      const row = probe.prepare("PRAGMA integrity_check").get() as
+        | { integrity_check?: string }
+        | undefined;
+      if ((row?.integrity_check ?? "").toLowerCase() !== "ok") {
+        console.warn(
+          `[naruto] skip side-table copy — previous catalog integrity: ${row?.integrity_check ?? "?"}`,
+        );
+        return;
+      }
+    } finally {
+      probe.close();
+    }
+  } catch (error) {
+    console.warn(
+      `[naruto] skip side-table copy — previous catalog unreadable: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return;
+  }
+
   const build = new DatabaseSync(buildPath);
   try {
     migrateProductsSchema(build);

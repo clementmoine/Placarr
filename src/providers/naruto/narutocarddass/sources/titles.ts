@@ -17,6 +17,7 @@ import {
   appearanceSetsOf,
   appearanceValueForJson,
   canonicalizeNarutoPrintKey,
+  isNarutoCatalogueSetCode,
   isNarutoS6FrPreprodNamedNumber,
   loadNarutoAppearancesFile,
   mergeAppearanceValues,
@@ -524,29 +525,44 @@ export function mergeCarteSemaineIntoIndex(input: {
   for (const [cardId, name] of names) {
     if (isImplausibleNarutoTitle(name)) continue;
     const setGuess = guessSetForCarteSemaineId(cardId);
-    const wantKey = mintNarutoPrintKey(cardId, setGuess);
-    let rows = prints.filter(
-      (p) =>
-        (wantKey != null &&
-          canonicalizeNarutoPrintKey(p.printKey) === wantKey) ||
-        narutoNumbersEqual(p.number, cardId),
-    );
-    if (rows.length === 0) {
-      const set = setGuess;
-      const printKey = mintNarutoPrintKey(cardId, set);
-      if (!printKey || printByKey.has(printKey)) continue;
+    const wantKey =
+      setGuess !== "unknown" && isNarutoCatalogueSetCode(setGuess)
+        ? mintNarutoPrintKey(cardId, setGuess)
+        : null;
+    /*
+      FR carte-semaine names bind to the guessed EU series only. Matching any
+      collector row used to name JA 巻ノ parking (maki12-ta0240) and then
+      setAcceptsTitleLang dropped the FR title — S6 title-only stubs vanished.
+    */
+    let rows = wantKey
+      ? prints.filter(
+          (p) => canonicalizeNarutoPrintKey(p.printKey) === wantKey,
+        )
+      : [];
+    if (!rows.length && setGuess !== "unknown") {
+      /*
+        Same guessed series only (legacy `naruto:ni-0264` + setCode s6).
+        Do not bind onto JA-parked `s1-te0263` — that hid the S6 title stub.
+      */
+      rows = prints.filter(
+        (p) =>
+          narutoNumbersEqual(p.number, cardId) &&
+          p.setCode.trim().toLowerCase() === setGuess,
+      );
+    }
+    if (!rows.length && wantKey) {
       const parsed = parseNarutoCollector(cardId);
       const print: NarutoPrintRow = {
-        printKey,
-        setCode: set,
+        printKey: wantKey,
+        setCode: setGuess,
         number: narutoDiskCardId(cardId) ?? cardId,
         cardType: cardTypeFromCollectorNumber(cardId),
         family: parsed?.family ?? null,
       };
       prints.push(print);
-      printByKey.set(printKey, print);
+      printByKey.set(wantKey, print);
       rows = [print];
-      addedPrints.push(printKey);
+      addedPrints.push(wantKey);
     }
     for (const print of rows) {
       const existing = titleByKey.get(

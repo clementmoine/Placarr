@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { decodeNarutoHtmlEntities, foldNarutoCardsIndex, foldNarutoCatalogueRecords, isImplausibleNarutoTitle, pickBetterNarutoTitle, planNarutoCardMove, planNarutoCanonicalDiskRename, relocateMiskeyedPromoAppearances, THUMB_RATIO_TOLERANCE, correctedThumbSize, thumbRatioDeviation, upsertNarutoAppearances } from ".";
+import { decodeNarutoHtmlEntities, foldNarutoCardsIndex, foldNarutoCatalogueRecords, isImplausibleNarutoTitle, pickBetterNarutoTitle, planNarutoCardMove, planNarutoCanonicalDiskRename, planNarutoLayoutMovesFromTree, relocateMiskeyedPromoAppearances, THUMB_RATIO_TOLERANCE, correctedThumbSize, thumbRatioDeviation, upsertNarutoAppearances } from ".";
 import { loadNarutoAppearancesFile, narutoDiskCardId, writeNarutoAppearancesFile } from "../identity";
 import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
 
@@ -12,8 +12,10 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
     it("rejects scrape leftovers and keeps real names", () => {
       expect(isImplausibleNarutoTitle("qui")).toBe(true);
       expect(isImplausibleNarutoTitle("Carte NI-064")).toBe(true);
+      expect(isImplausibleNarutoTitle("peut l'utiliser")).toBe(true);
       expect(isImplausibleNarutoTitle("Kakashi Hatake")).toBe(false);
       expect(isImplausibleNarutoTitle("Ino")).toBe(false);
+      expect(isImplausibleNarutoTitle("L'esprit du sable")).toBe(false);
     });
   });
 
@@ -388,6 +390,21 @@ import { migrateNarutoVcBacksToCorrectedArt } from "../scrape/scrapeCards";
 
     it("does not re-plan a tree that is already family-first", () => {
       expect(planNarutoCardMove("ninja", "fr", "ni0001")).toBeNull();
+    });
+
+    it("never treats a lang-first root as a set (would invert en/s1 → s1/en)", () => {
+      expect(planNarutoCardMove("en", "s1", "n0001")).toBeNull();
+      expect(planNarutoCardMove("s1", "n0001", "en")).toBeNull();
+    });
+  });
+
+  describe("planNarutoLayoutMovesFromTree", () => {
+    it("skips already lang-first trees", () => {
+      const root = mkdtempSync(path.join(tmpdir(), "naruto-layout-lang-"));
+      const card = path.join(root, "en", "s1", "n0001");
+      mkdirSync(card, { recursive: true });
+      writeFileSync(path.join(card, "art.drive.webp"), "x");
+      expect(planNarutoLayoutMovesFromTree(root)).toEqual([]);
     });
   });
 }

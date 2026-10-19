@@ -744,7 +744,7 @@ export function compareNarutoCollectors(a: string, b: string): number {
 }
 
 const SERIES_SET =
-  /^(s\d+|promo|prerelease|ns|spc|maki\d+|maku\d+|tp\d+|tin\d+)$/i;
+  /^(s\d+|promo|prerelease|ns|spc|maki\d+|maku\d+|tp\d+|tin\d+|fanset|gaku|shi|mju|msa)$/i;
 
 /** Extension catalogue (`s3`, `promo`, `maki1`…) — pas un préfixe famille (`ni`). */
 export function isNarutoCatalogueSetCode(set: string): boolean {
@@ -1866,6 +1866,28 @@ export function officialFrChecklistSetsForNumber(number: string): string[] {
     if (nums.some((n) => forms.has(n))) hits.push(setId);
   }
   return hits.sort();
+}
+
+/**
+ * May this EU `s1`–`s5` membership stay when expanding set-scoped prints?
+ *
+ * JA scans often park under `ja/s1/…`. That must not mint FR catalogue tiles
+ * for collectors absent from the paper checklist (Coleka S6 / HTML phantoms).
+ * Keep the series when the checklist lists it, a deck guarantee needs it, or
+ * a real FR face already lives under `cards/fr/{set}/`.
+ */
+export function keepNarutoFrSeriesMembership(opts: {
+  set: string;
+  frChecklist: readonly string[];
+  deckSets?: ReadonlySet<string>;
+  hasFrDiskFace?: boolean;
+}): boolean {
+  const set = opts.set.trim().toLowerCase();
+  if (!/^s[1-5]$/.test(set)) return true;
+  if (opts.frChecklist.includes(set)) return true;
+  if (opts.deckSets?.has(set)) return true;
+  if (opts.hasFrDiskFace) return true;
+  return false;
 }
 
 /** Raw checklist ids (`ta074`, `ni049`, …) for one printed FR series. */

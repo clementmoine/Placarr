@@ -206,4 +206,18 @@ describe("resolveNarutoPrintFace", () => {
     expect(owned?.donorPrintKey).toBeUndefined();
     expect(owned?.disk.set).toBe("s6");
   });
+
+  it("EN CCG reprint membership borrows the first-print set via sameNumberArtFallback", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "print-face-en-reprint-"));
+    const cards = path.join(root, "cards");
+    seedFace(cards, "en", "s24", "m0882", "art.drive.webp");
+    const hit = resolveNarutoPrintFace({
+      printKey: "naruto:s27-m0882",
+      lang: "en",
+      cardsRoot: cards,
+    });
+    expect(hit?.source).toBe("borrowed");
+    expect(hit?.disk).toEqual({ lang: "en", set: "s24", card: "m0882" });
+    expect(hit?.donorPrintKey).toMatch(/s24-m0*882/);
+  });
 });

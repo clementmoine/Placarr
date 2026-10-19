@@ -145,6 +145,79 @@ import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoInd
       ).toBe("Mélodie du guerrier illusoire");
     });
 
+    it("mints S6 stubs instead of naming JA maki / s1 parking (TA-240 / TE-263)", () => {
+      const merged = mergeCarteSemaineIntoIndex({
+        prints: [
+          {
+            printKey: "naruto:maki12-ta0240",
+            setCode: "maki12",
+            number: "ta0240",
+            cardType: "ta",
+          },
+          {
+            printKey: "naruto:maki13-te0263",
+            setCode: "maki13",
+            number: "te0263",
+            cardType: "te",
+          },
+          {
+            printKey: "naruto:s1-te0263",
+            setCode: "s1",
+            number: "te0263",
+            cardType: "te",
+          },
+        ],
+        titles: [],
+        report: {
+          generatedAt: "2026-01-01T00:00:00.000Z",
+          source: "test",
+          weekCount: 1,
+          featuredCount: 2,
+          uniqueFeaturedIds: ["ta240", "te263"],
+          weeks: [
+            {
+              week: 20,
+              page: "w20.html",
+              featured: [
+                {
+                  week: 20,
+                  name: "L'homme-ivre",
+                  printedId: "TA-240",
+                  cardId: "ta240",
+                  page: "w20.html",
+                },
+                {
+                  week: 20,
+                  name: "Mélodie du guerrier illusoire",
+                  printedId: "TE-263",
+                  cardId: "te263",
+                  page: "w20.html",
+                },
+              ],
+              alsoMentioned: [],
+            },
+          ],
+        },
+      });
+      expect(merged.addedPrints.sort()).toEqual([
+        "naruto:s6-ta0240",
+        "naruto:s6-te0263",
+      ]);
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:s6-ta0240")?.fullName,
+      ).toBe("L'homme-ivre");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:s6-te0263")?.fullName,
+      ).toBe("Mélodie du guerrier illusoire");
+      expect(
+        merged.titles.some(
+          (t) =>
+            t.printKey.startsWith("naruto:maki") ||
+            t.printKey === "naruto:s1-te0263",
+        ),
+      ).toBe(false);
+    });
+
     it("does not mint a second NI-064 beside the retail print", () => {
       const merged = mergeCarteSemaineIntoIndex({
         prints: [

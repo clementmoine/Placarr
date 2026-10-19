@@ -13,6 +13,7 @@
  * (extension, territoire).
  */
 
+import { finishesOwnedByBlankVariant } from "@/core/enrich/variants";
 import { comparePrintKeys, parsePrintKey } from "@/core/identify/printKey";
 
 export type ChecklistPrint = {
@@ -27,11 +28,79 @@ export type ChecklistPrint = {
   /**
    * Finition catalogue en mode master set (`Silver`, `holo`, …).
    *
-   * Absent / `null` hors master set, ou quand le tirage n'offre qu'une face
-   * sans choix de finish. En master set, normal et foil sont deux lignes.
+   * Absent / `null` hors master set. En master set : une ligne par finition
+   * (y compris si le tirage n'en a qu'une — utile pour la clé owned). L'UI /
+   * l'export ne montrent le finish que s'il lève une ambiguïté
+   * ({@link ambiguousChecklistPrintKeys}).
    */
   finish?: string | null;
 };
+
+/**
+ * `printKey` pour lesquels afficher la finition (master set).
+ *
+ * Ambiguïté si :
+ * - plusieurs lignes pour le **même** printKey (dual normal/foil) ;
+ * - grouping `prerelease` (sachet vs ouverte — toujours à préciser) ;
+ * - même jeu×set×numéro avec un jumeau `prerelease` (ex. S1 retail holo +
+ *   manga sachet) : les deux côtés affichent la finition.
+ *
+ * Hors de ces cas (promo foil-only, holo S2 sans jumeau…) : pas de chip.
+ */
+export function ambiguousChecklistPrintKeys(
+  cards: readonly Pick<ChecklistPrint, "printKey">[],
+): ReadonlySet<string> {
+  const counts = new Map<string, number>();
+  /** `game|set|number` → printKeys de cette identité. */
+  const stemKeys = new Map<string, Set<string>>();
+  const out = new Set<string>();
+
+  for (const card of cards) {
+    const key = card.printKey.trim().toLowerCase();
+    if (!key) continue;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+
+    const parsed = parsePrintKey(key);
+    if (!parsed) continue;
+    const stem = `${parsed.game}|${parsed.set}|${parsed.number}`;
+    const bucket = stemKeys.get(stem) ?? new Set<string>();
+    bucket.add(key);
+    stemKeys.set(stem, bucket);
+    if ((parsed.grouping ?? "").toLowerCase() === "prerelease") {
+      out.add(key);
+    }
+  }
+
+  for (const [key, n] of counts) {
+    if (n > 1) out.add(key);
+  }
+
+  for (const keys of stemKeys.values()) {
+    if (keys.size < 2) continue;
+    const list = [...keys];
+    const hasPrerelease = list.some(
+      (k) => (parsePrintKey(k)?.grouping ?? "").toLowerCase() === "prerelease",
+    );
+    if (!hasPrerelease) continue;
+    for (const k of list) out.add(k);
+  }
+
+  return out;
+}
+
+/** Afficher le chip / suffixe de finition pour cette ligne. */
+export function checklistShouldShowFinish(input: {
+  printKey: string;
+  finish?: string | null;
+  ambiguous: ReadonlySet<string>;
+  /** `true` (défaut UI) : seulement si ambiguë. `false` : toute finition. */
+  onlyWhenAmbiguous: boolean;
+}): boolean {
+  const finish = input.finish?.trim();
+  if (!finish) return false;
+  if (!input.onlyWhenAmbiguous) return true;
+  return input.ambiguous.has(input.printKey.trim().toLowerCase());
+}
 
 /**
  * Clé d'appartenance master set **sans** set : `printKey|finish`.
@@ -90,10 +159,10 @@ export function isChecklistPrintOwned(
 /**
  * Réécrit les clés possédées pour le master set.
  *
- * Normalise la casse. **Ne devine pas** une finition pour `printKey|` (variant
- * vide) : inventer `None` ferait croire qu'on a la normale alors que la copie
- * peut être une foil jamais taguée. Sans finition renseignée, la case master
- * set reste ouverte — c'est le même principe que « foil ≠ normale ».
+ * Normalise la casse. Pour un `variant` vide (`printKey|` / `set|printKey|`),
+ * mappe via {@link finishesOwnedByBlankVariant} : une seule finition catalogue
+ * → cette finition ; plusieurs → seulement les plain. On ne coche jamais une
+ * foil inventée — même règle que le pricing (blank = non-foil).
  *
  * Préserve un éventuel préfixe `setCode|`.
  */
@@ -104,29 +173,60 @@ export function resolveMasterSetOwned(input: {
   /** Plain finishes provider, quand il les annonce. */
   plainFinishesByPrintKey?: ReadonlyMap<string, readonly string[]>;
 }): Set<string> {
-  void input.finishesByPrintKey;
-  void input.plainFinishesByPrintKey;
   const resolved = new Set<string>();
+
+  const expandBlank = (
+    setCode: string | null,
+    printKey: string,
+  ): void => {
+    const pk = printKey.trim().toLowerCase();
+    const finishes = input.finishesByPrintKey.get(pk);
+    const plains = input.plainFinishesByPrintKey?.get(pk);
+    const mapped = finishesOwnedByBlankVariant(finishes, plains);
+    if (mapped.length === 0) {
+      resolved.add(checklistSetOwnedKey(setCode, pk, null));
+      return;
+    }
+    for (const finish of mapped) {
+      resolved.add(checklistSetOwnedKey(setCode, pk, finish));
+    }
+  };
+
   for (const key of input.owned) {
     const raw = key.trim().toLowerCase();
     const parts = raw.split("|");
     if (parts.length >= 3) {
       const [setCode, printKey, ...finishParts] = parts;
-      resolved.add(
-        checklistSetOwnedKey(setCode, printKey!, finishParts.join("|")),
-      );
+      const finish = finishParts.join("|");
+      if (!finish.trim()) {
+        expandBlank(setCode!, printKey!);
+        continue;
+      }
+      resolved.add(checklistSetOwnedKey(setCode, printKey!, finish));
       continue;
     }
     if (parts.length === 2) {
-      const [printKey, finish] = parts;
+      const [left, right] = parts;
       /*
-        Variant vide : on garde la clé telle quelle. Elle ne matche une ligne
-        catalogue que si cette ligne a aussi `finish` null (pas de choix).
+        `printKey|finish` (printKey porte `:`) ou `set|printKey` legacy sans
+        finish — le printKey porte toujours `:`.
       */
-      resolved.add(checklistOwnedKey(printKey!, finish ?? ""));
+      if (left!.includes(":")) {
+        if (!right!.trim()) {
+          expandBlank(null, left!);
+          continue;
+        }
+        resolved.add(checklistOwnedKey(left!, right));
+        continue;
+      }
+      if (right!.includes(":")) {
+        expandBlank(left!, right!);
+        continue;
+      }
+      resolved.add(checklistOwnedKey(left!, right ?? ""));
       continue;
     }
-    resolved.add(checklistOwnedKey(raw, null));
+    expandBlank(null, raw);
   }
   return resolved;
 }

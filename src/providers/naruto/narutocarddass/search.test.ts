@@ -86,8 +86,7 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
   });
 
   /**
-   * S1 = Bandai détailée; S2/S3/S5 = carddass.fr listes. Elsewhere dual
-   * when rarity is missing (`ta158` S4, unlisted stubs).
+   * S1 = Bandai détailée; S2–S6 / S11 / S24 / S28 = physical FR ledgers.
    */
   describe("finishes", () => {
     const finishes = (printKey: string) => lookupNarutoPrint(printKey)?.finishes;
@@ -95,43 +94,91 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
     it("attests S1 FR finishes from Bandai détailée (not dual everywhere)", () => {
       expect(finishes("naruto:s1-cl0001")).toEqual(["normal"]);
       expect(finishes("naruto:s1-ni0001")).toEqual(["holo"]);
-      // Non-holo alt of a holo ID (opened bag) shares retail Normale + Holofoil.
-      expect(finishes("naruto:s1-ni0019")).toEqual(["normal", "holo"]);
-      expect(finishes("naruto:s1-ta0005")).toEqual(["normal", "holo"]);
-      expect(finishes("naruto:s1-te0007")).toEqual(["normal", "holo"]);
-      expect(finishes("naruto:s1-te0036")).toEqual(["normal", "holo"]);
+      // Retail holo + manga non-holo alt → foil-only retail (opened = prerelease).
+      expect(finishes("naruto:s1-ni0019")).toEqual(["holo"]);
+      expect(finishes("naruto:s1-ta0005")).toEqual(["holo"]);
+      expect(finishes("naruto:s1-te0007")).toEqual(["holo"]);
+      expect(finishes("naruto:s1-te0036")).toEqual(["holo"]);
     });
 
-    it("attests S2 FR finishes from carddass.fr listes", () => {
+    it("attests S2 FR finishes from the physical shelf ledger", () => {
       expect(finishes("naruto:s2-ni0084")).toEqual(["holo"]);
-      expect(finishes("naruto:s2-ni0062")).toEqual(["holo"]);
-      // Listed commune → Normale only.
+      expect(finishes("naruto:s2-ni0061")).toEqual(["holo"]);
+      // Site-listed holo that is physically Normale.
+      expect(finishes("naruto:s2-ni0062")).toEqual(["normal"]);
       expect(finishes("naruto:s2-cl0006")).toEqual(["normal"]);
+      // Unlisted rarity on site → Normale (no invented dual).
+      expect(finishes("naruto:s2-cl0005")).toEqual(["normal"]);
     });
 
-    it("keeps dual on S2 when the liste omits rarity", () => {
-      // cl005 is in S2 without a rarity field — do not invent a finish.
-      expect(finishes("naruto:s2-cl0005")).toEqual(["normal", "holo"]);
+    it("attests S3 FR finishes from the physical shelf ledger", () => {
+      expect(finishes("naruto:s3-ni0063")).toEqual(["holo"]);
+      expect(finishes("naruto:s3-ni0127")).toEqual(["normal", "holo"]);
+      expect(finishes("naruto:s3-ni0079")).toEqual(["normal"]);
+      // Starter reprint on S3 — Normale only (no invented foil row).
+      expect(finishes("naruto:s3-ni0009")).toEqual(["normal"]);
     });
 
-    it("offers sealed only on manga prerelease keys (opened = retail Normale)", () => {
-      const pre = lookupNarutoPrint("naruto:s1-ni0019-prerelease");
-      expect(pre?.finishes).toEqual(["sealed"]);
-      expect(pre?.plainFinishes).toEqual(["sealed"]);
-      expect(pre?.sealedBag).toBe(true);
-      // Commune prerelease: same — bag is the only distinct finish.
+    it("attests S4 / S5 / S11 / S6 / S28 physical ledgers", () => {
+      expect(finishes("naruto:s4-ta0158")).toEqual(["holo"]);
+      expect(finishes("naruto:s4-ni0127")).toEqual(["normal", "holo"]);
+      expect(finishes("naruto:s5-ni0223")).toEqual(["holo"]);
+      expect(finishes("naruto:s5-te0226")).toEqual(["normal"]);
+      expect(finishes("naruto:s11-n0406")).toEqual(["holo"]);
+      expect(finishes("naruto:s28-n1646")).toEqual(["holo"]);
+      expect(finishes("naruto:s28-j1031")).toEqual(["holo"]);
+      expect(finishes("naruto:s28-n1621")).toEqual(["normal"]);
+      const s28 = listNarutoSetPrints({ setId: "s28", language: "fr" });
+      expect(s28.filter((r) => r.finishes?.join() === "holo")).toHaveLength(49);
+    });
+
+    it("attests S24 FR finishes as EN Super Rare + Rare foil-only", () => {
+      expect(finishes("naruto:s24-n1367")).toEqual(["holo"]);
+      expect(finishes("naruto:s24-j0898")).toEqual(["holo"]);
+      expect(finishes("naruto:s24-m0855")).toEqual(["holo"]);
+      // Common / Uncommon — Normale only (no EN foil parallel).
+      expect(finishes("naruto:s24-n1358")).toEqual(["normal"]);
+      expect(finishes("naruto:s24-j0913")).toEqual(["normal"]);
+      const s24 = listNarutoSetPrints({ setId: "s24", language: "fr" });
+      expect(s24).toHaveLength(120);
+      expect(s24.filter((r) => r.finishes?.join() === "holo")).toHaveLength(49);
+      expect(
+        s24.every(
+          (r) =>
+            r.finishes?.join() === "holo" || r.finishes?.join() === "normal",
+        ),
+      ).toBe(true);
+    });
+
+    it("puts opened non-holo alts on the prerelease key (TA-005 Kyubi)", () => {
+      const ta005 = lookupNarutoPrint("naruto:s1-ta0005");
+      expect(ta005?.finishes).toEqual(["holo"]);
+      expect(ta005?.title).toMatch(/Démon Renard/i);
+      const kyubi = lookupNarutoPrint("naruto:s1-ta0005-prerelease");
+      expect(kyubi?.title).toMatch(/Kyubi/i);
+      expect(kyubi?.finishes).toEqual(["normal", "sealed"]);
+      expect(kyubi?.plainFinishes).toEqual(["normal", "sealed"]);
+      // Bag chrome follows the `sealed` finish, not every variant.
+      expect(kyubi?.sealedBag).toBeFalsy();
+      expect(finishes("naruto:s1-ni0019-prerelease")).toEqual([
+        "normal",
+        "sealed",
+      ]);
+      // Commune prerelease: bag only — opened = retail Normale.
       expect(finishes("naruto:s1-ni0027-prerelease")).toEqual(["sealed"]);
       expect(finishes("naruto:s1-ni0027")).toEqual(["normal"]);
+      expect(lookupNarutoPrint("naruto:s1-ni0027-prerelease")?.sealedBag).toBe(
+        true,
+      );
     });
 
-    it("keeps dual on S4 when rarity cannot gate (ta158)", () => {
-      expect(finishes("naruto:s4-ta0158")).toEqual(["normal", "holo"]);
-    });
-
-    it("does not turn a promo into a finish — that is how it was handed out", () => {
+    it("offers foil only on promo prints (no invented Normale)", () => {
       const promo = lookupNarutoPrint("naruto:promo-ni0023");
       expect(promo?.rarity).toBe("promo");
-      expect(promo?.finishes).toEqual(["normal", "holo"]);
+      expect(promo?.finishes).toEqual(["holo"]);
+      expect(promo?.plainFinishes).toEqual([]);
+      expect(finishes("naruto:promo-pr0011")).toEqual(["holo"]);
+      expect(finishes("naruto:promo-te0034")).toEqual(["holo"]);
     });
 
     it("falls back to the retail face when the promo stub has no art", () => {
@@ -654,7 +701,7 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       const bag = keys.indexOf("naruto:s1-ni0019-prerelease");
       expect(retail).toBeGreaterThanOrEqual(0);
       expect(bag).toBe(retail + 1);
-      expect(page[bag]?.finishes).toEqual(["sealed"]);
+      expect(page[bag]?.finishes).toEqual(["normal", "sealed"]);
     });
 
     /*

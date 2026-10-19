@@ -5,9 +5,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ambiguousChecklistPrintKeys,
   buildShelfChecklist,
   checklistOwnedKey,
   checklistSetOwnedKey,
+  checklistShouldShowFinish,
   compareChecklistPrints,
   referenceWithinSet,
   resolveMasterSetOwned,
@@ -332,28 +334,75 @@ describe("ordre retail puis promos", () => {
     ]);
   });
 
+  it("ambiguousChecklistPrintKeys flags multi-finish and prerelease siblings", () => {
+    expect(
+      [...ambiguousChecklistPrintKeys([
+        print("game:s2-ni0001", "s2", "NI-001", "holo"),
+        print("game:s2-ni0002", "s2", "NI-002", "normal"),
+        print("game:s2-ni0002", "s2", "NI-002", "holo"),
+      ])].sort(),
+    ).toEqual(["game:s2-ni0002"]);
+
+    expect(
+      [...ambiguousChecklistPrintKeys([
+        print("naruto:s1-ni0019", "s1", "NI-019", "holo"),
+        print("naruto:s1-ni0019-prerelease", "s1", "NI-019 · prerelease", "normal"),
+        print("naruto:s1-ni0019-prerelease", "s1", "NI-019 · prerelease", "sealed"),
+        print("naruto:s1-ni0001", "s1", "NI-001", "holo"),
+        print("naruto:s2-ni0061-promo", "s2", "NI-061 · promo", "holo"),
+      ])].sort(),
+    ).toEqual([
+      "naruto:s1-ni0019",
+      "naruto:s1-ni0019-prerelease",
+    ]);
+  });
+
+  it("checklistShouldShowFinish respects onlyWhenAmbiguous", () => {
+    const ambiguous = new Set(["game:s1-a"]);
+    expect(
+      checklistShouldShowFinish({
+        printKey: "game:s1-b",
+        finish: "holo",
+        ambiguous,
+        onlyWhenAmbiguous: true,
+      }),
+    ).toBe(false);
+    expect(
+      checklistShouldShowFinish({
+        printKey: "game:s1-b",
+        finish: "holo",
+        ambiguous,
+        onlyWhenAmbiguous: false,
+      }),
+    ).toBe(true);
+  });
+
   /*
     Items ajoutés avant le sélecteur de finish : variant null → `printKey|`.
-    On ne devine pas None : une foil non taguée ne doit pas cocher la normale.
+    Blank = plain (ou la seule finition) — jamais une foil inventée.
   */
-  it("resolveMasterSetOwned does not invent a plain finish for blank variant", () => {
+  it("resolveMasterSetOwned maps blank variant to plain / sole finish", () => {
     const owned = resolveMasterSetOwned({
       owned: new Set([
         checklistOwnedKey("lorcana:1-1", null),
         checklistOwnedKey("lorcana:1-2", "Silver"),
+        checklistOwnedKey("naruto:s3-ni0063", null),
       ]),
       finishesByPrintKey: new Map([
         ["lorcana:1-1", ["None", "Silver"]],
         ["lorcana:1-2", ["None", "Silver"]],
+        ["naruto:s3-ni0063", ["holo"]],
       ]),
       plainFinishesByPrintKey: new Map([
         ["lorcana:1-1", ["None"]],
         ["lorcana:1-2", ["None"]],
+        ["naruto:s3-ni0063", []],
       ]),
     });
-    expect(owned.has(checklistOwnedKey("lorcana:1-1", null))).toBe(true);
-    expect(owned.has(checklistOwnedKey("lorcana:1-1", "None"))).toBe(false);
+    expect(owned.has(checklistOwnedKey("lorcana:1-1", "None"))).toBe(true);
+    expect(owned.has(checklistOwnedKey("lorcana:1-1", "Silver"))).toBe(false);
     expect(owned.has(checklistOwnedKey("lorcana:1-2", "Silver"))).toBe(true);
+    expect(owned.has(checklistOwnedKey("naruto:s3-ni0063", "holo"))).toBe(true);
 
     const list = buildShelfChecklist({
       sets: [{ id: "1", label: "Premier Chapitre" }],
@@ -363,10 +412,23 @@ describe("ordre retail puis promos", () => {
         print("lorcana:1-2", "1", "2/204", "None"),
         print("lorcana:1-2", "1", "2/204", "Silver"),
       ],
-      owned,
+      owned: resolveMasterSetOwned({
+        owned: new Set([
+          checklistOwnedKey("lorcana:1-1", null),
+          checklistOwnedKey("lorcana:1-2", "Silver"),
+        ]),
+        finishesByPrintKey: new Map([
+          ["lorcana:1-1", ["None", "Silver"]],
+          ["lorcana:1-2", ["None", "Silver"]],
+        ]),
+        plainFinishesByPrintKey: new Map([
+          ["lorcana:1-1", ["None"]],
+          ["lorcana:1-2", ["None"]],
+        ]),
+      }),
       masterSet: true,
     });
-    expect(list.totals).toEqual({ total: 4, owned: 1, completion: 25 });
+    expect(list.totals).toEqual({ total: 4, owned: 2, completion: 50 });
   });
 
   it("without master set, any finish of a printKey counts once", () => {

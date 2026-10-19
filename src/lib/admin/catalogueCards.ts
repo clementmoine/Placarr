@@ -528,43 +528,6 @@ export function narutoCatalogueSetTag(
   return narutoSetCodeTag(narutoPrintKeySetCode(printKey));
 }
 
-/**
- * Sets shown on a browse caption for this face language.
- * FR/EN/IT → EU sN (+ promo channels); JA → 巻ノ volumes.
- */
-export function narutoBrowseAppearanceTags(
-  appearanceSets: readonly string[] | undefined,
-  lang: string,
-): string[] {
-  if (!appearanceSets?.length) return [];
-  const ja = lang.toLowerCase() === "ja";
-  const codes = appearanceSets.filter((set) => {
-    if (isNarutoJapaneseVolumeSet(set)) return ja;
-    if (/^s\d+$/i.test(set)) return !ja;
-    if (set === "promo" || set === "prerelease") return true;
-    return !ja;
-  });
-  codes.sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
-  return codes
-    .map((set) => narutoSetCodeTag(set))
-    .filter((tag): tag is string => Boolean(tag));
-}
-
-/** Rewrite `S1 · NI-027 — …` → `S1/S2/S4 · NI-027 — …` when collapsed. */
-function withNarutoAppearanceLabel(row: CatalogueCardRow): CatalogueCardRow {
-  const tags = narutoBrowseAppearanceTags(row.appearanceSets, row.lang);
-  if (tags.length <= 1) return row;
-  const primary = narutoCatalogueSetTag(row.printKey, row.lang);
-  const joined = tags.join("/");
-  if (primary && row.label.startsWith(`${primary} · `)) {
-    return {
-      ...row,
-      label: `${joined} · ${row.label.slice(primary.length + 3)}`,
-    };
-  }
-  return row;
-}
-
 /** Locale tile name — attested in that language only; siblings stay in aka. */
 function catalogueNames(
   pack: CataloguePackId,
@@ -776,8 +739,9 @@ function appearanceSetOfRow(row: CatalogueCardRow): string | null {
 /**
  * One browse tile per collector impression + face language.
  *
- * EU FR/IT/EN keep each set-scoped membership (`s3-ni0009`, `s4-ni0009`).
- * JA still collapses EU shells onto the 巻ノ tile; CCG s7+ stay on the ccg band.
+ * EU FR/IT/EN keep each set-scoped membership (`s3-ni0009`, `s8-c0032`,
+ * `s15-c0032`) — never `S8/S15` concat. JA still collapses EU shells onto the
+ * 巻ノ tile.
  */
 function collapseNarutoIdentityRows(
   rows: CatalogueCardRow[],
@@ -800,11 +764,9 @@ function collapseNarutoIdentityRows(
       const only = list[0]!;
       const set = appearanceSetOfRow(only);
       collapsed.push(
-        withNarutoAppearanceLabel(
-          set && !only.appearanceSets
-            ? { ...only, appearanceSets: [set] }
-            : only,
-        ),
+        set && !only.appearanceSets
+          ? { ...only, appearanceSets: [set] }
+          : only,
       );
       continue;
     }
@@ -821,12 +783,10 @@ function collapseNarutoIdentityRows(
           .filter((set): set is string => Boolean(set)),
       ),
     ].sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+    // JA 巻ノ collapse may list makiN + EU sN for locale-axis filters — never
+    // rewrite the caption as `巻1/S1` / `S8/S15`.
     collapsed.push(
-      withNarutoAppearanceLabel(
-        appearanceSets.length
-          ? { ...winner, appearanceSets }
-          : winner,
-      ),
+      appearanceSets.length ? { ...winner, appearanceSets } : winner,
     );
   }
   return collapseNarutoAbBareJaRows(

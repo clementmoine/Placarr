@@ -58,7 +58,10 @@ import {
   registerPrereleaseHomeSet,
 } from "@/core/identify/printKey";
 import { SEALED_FINISH } from "@/core/render/sealedBag";
-import { attestedNarutoCarddassFinishes } from "./sources/faces";
+import {
+  attestedNarutoCarddassFinishes,
+  isNarutoS1PrereleaseNonHoloAltOfHolo,
+} from "./sources/faces";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { listJapaneseReleases } from "./sources/sealed";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
@@ -359,9 +362,9 @@ export type { NarutoPrintDetail } from "./identity";
 const PLAIN_FINISH = "normal";
 
 /**
- * Default outside Bandai-attested S1: plain + holo on every print.
+ * Default outside attested series: plain + holo on every print.
  * Rarity alone is too dirty to gate (`ta158` commune + physical holo).
- * S1–S3 / S5 FR use {@link attestedNarutoCarddassFinishes} instead.
+ * S1–S6 / S11 / S24 / S28 FR use {@link attestedNarutoCarddassFinishes} instead.
  */
 const NARUTO_FINISHES = [PLAIN_FINISH, ...NARUTO_CARDDASS_FINISHES];
 
@@ -554,20 +557,30 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
       ? narutoIllustrationBArt(row.number)
       : null;
   /*
-    Manga S1 prerelease printKey = the bag only (`sealed`). Opened, the card is
-    the retail non-foil (`normal`) — same object, so we do not offer a second
-    Normale on the prerelease key.
+    Manga S1 prerelease printKey:
+    - Non-holo alt of a retail holo (TA-005 « Kyubi », NI-019, …) → opened
+      Normale + still-sealed bag. Retail stays foil-only (different title/face
+      for TA-005 — never invent retail Normale).
+    - Other bags (identical retail art) → sealed only; opened = retail Normale.
   */
   const isPrereleasePrint =
     parseNarutoCollector(row.number)?.grouping?.toLowerCase() ===
       "prerelease" ||
     /-prerelease$/i.test(row.number) ||
     /-prerelease$/i.test(row.printKey);
-  // S1 FR: Bandai-attested finishes. Elsewhere keep dual (rarity too dirty to gate).
+  /*
+    EU promos (CdF / dig / tin PR) are foil-only cardboard — never invent a
+    Normale finish beside Holofoil.
+  */
+  const isPromoPrint = isNarutoPromoChannelDetail(row);
   const baseFinishes = isPrereleasePrint
-    ? ([SEALED_FINISH] as string[])
-    : (attestedNarutoCarddassFinishes(row.setCode, row.number) ??
-      NARUTO_FINISHES);
+    ? isNarutoS1PrereleaseNonHoloAltOfHolo(row.number)
+      ? ([PLAIN_FINISH, SEALED_FINISH] as string[])
+      : ([SEALED_FINISH] as string[])
+    : isPromoPrint
+      ? [...NARUTO_CARDDASS_FINISHES]
+      : (attestedNarutoCarddassFinishes(row.setCode, row.number) ??
+        NARUTO_FINISHES);
   const finishes = illustrationBArt
     ? [...baseFinishes, ...baseFinishes.map(narutoIllustrationBFinish)]
     : [...baseFinishes];
@@ -636,8 +649,12 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
         finish === SEALED_FINISH ||
         finish === narutoIllustrationBFinish(PLAIN_FINISH),
     ),
-    // Manga FR prereleases ship with heat-seals top + bottom (double pinch).
-    ...(isPrereleasePrint ? { sealedBag: true } : {}),
+    // Bag chrome only when the sole finish is sealed — not on opened Kyubi.
+    ...(isPrereleasePrint &&
+    baseFinishes.length === 1 &&
+    baseFinishes[0] === SEALED_FINISH
+      ? { sealedBag: true }
+      : {}),
     ...(illustrationBArt
       ? {
           variantImageUrls: Object.fromEntries(

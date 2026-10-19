@@ -145,6 +145,28 @@ describe("variantRendering", () => {
     });
   });
 
+  it("does not promote a stale plain variant onto a foil-only retail key", () => {
+    // TE-007 retail is holo-only; opened non-holo lives on *-prerelease.
+    // A copy still tagged `normal` on retail must stay flat — not become holo.
+    expect(
+      variantRendering(
+        "normal",
+        {
+          finishes: ["holo"],
+          plainFinishes: [],
+          effectPack: "naruto-carddass",
+          foilMaskUrl: "/assets/naruto/masks/holo.webp",
+        },
+        BASE,
+      ),
+    ).toMatchObject({
+      finish: null,
+      foilMaskUrl: null,
+      shader: null,
+      effectPackId: "naruto-carddass",
+    });
+  });
+
   it("gives no effect before the provider has answered", () => {
     expect(variantRendering("Silver", null, BASE)).toMatchObject({
       imageUrl: BASE,

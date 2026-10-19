@@ -132,4 +132,74 @@ describe("backfillSealedProductPackshots", () => {
       "/assets/naruto/carddass/products/other/fr/art.webp",
     );
   });
+
+  it("rewrites mislabeled art.mercari when face.json is art.reconstructed", () => {
+    /*
+      Historical bug: several reconstructed packshots (Kana DVD, pack-découverte,
+      tin-box-hobby) were indexed as art.mercari.* — file never existed / 404.
+    */
+    const root = mkdtempSync(path.join(os.tmpdir(), "packshot-mislabeled-"));
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const products: Record<
+      string,
+      { slug: string; lang: string; image: string }
+    > = {};
+    for (const slug of [
+      "tin-box-hobby",
+      "pack-decouverte",
+      "kana-dvd-naruto-vol3",
+    ]) {
+      const dir = path.join(root, "naruto", "carddass", "products", slug, "fr");
+      mkdirSync(dir, { recursive: true });
+      const art = slug === "tin-box-hobby" ? "art.reconstructed.png" : "art.reconstructed.jpg";
+      writeFileSync(path.join(dir, art), "bytes");
+      writeFileSync(
+        path.join(dir, "face.json"),
+        `${JSON.stringify({ art }, null, 2)}\n`,
+      );
+      products[slug] = {
+        slug,
+        lang: "fr",
+        image: `/assets/naruto/carddass/products/${slug}/fr/art.mercari.${slug === "tin-box-hobby" ? "png" : "jpg"}`,
+      };
+    }
+    expect(backfillSealedProductPackshots("naruto/carddass", products)).toBe(3);
+    expect(products["tin-box-hobby"]!.image).toContain("art.reconstructed.png");
+    expect(products["pack-decouverte"]!.image).toContain("art.reconstructed.jpg");
+    expect(products["kana-dvd-naruto-vol3"]!.image).toContain(
+      "art.reconstructed.jpg",
+    );
+  });
+
+  it("rewrites a 404 index URL when face.json points at a real packshot", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "packshot-stale-"));
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const dir = path.join(
+      root,
+      "naruto",
+      "carddass",
+      "products",
+      "tin-box-hobby",
+      "fr",
+    );
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, "art.reconstructed.png"), "png");
+    writeFileSync(
+      path.join(dir, "face.json"),
+      `${JSON.stringify({ art: "art.reconstructed.png" }, null, 2)}\n`,
+    );
+
+    const products = {
+      hobby: {
+        slug: "tin-box-hobby",
+        lang: "FR",
+        image:
+          "/assets/naruto/carddass/products/tin-box-hobby/fr/art.mercari.png",
+      },
+    };
+    expect(backfillSealedProductPackshots("naruto/carddass", products)).toBe(1);
+    expect(products.hobby.image).toBe(
+      "/assets/naruto/carddass/products/tin-box-hobby/fr/art.reconstructed.png",
+    );
+  });
 });

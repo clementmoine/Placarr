@@ -15,6 +15,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
   buildShelfChecklist,
+  isChecklistPrintOwned,
   resolveMasterSetOwned,
   type ChecklistPrint,
   type ShelfChecklist,
@@ -89,6 +90,13 @@ export type ShelfChecklistResult = ShelfChecklist & {
   advice: ChecklistSetAdvice[];
   /** Langues que les packs de cette étagère annoncent. */
   languages: string[];
+  /**
+   * Hors master set : au moins un tirage possédé a ≥2 finitions catalogue.
+   * L'UI peut suggérer d'activer le mode (préférence mémorisée / dismiss).
+   */
+  suggestMasterSet: boolean;
+  /** Nombre de tirages possédés multi-finition (signal de la suggestion). */
+  multiFinishOwned: number;
 };
 
 /**
@@ -461,6 +469,8 @@ export async function buildChecklistForShelf(input: {
   /** Finitions catalogue par printKey (minuscules) — master set ownership. */
   const finishesByPrintKey = new Map<string, string[]>();
   const plainFinishesByPrintKey = new Map<string, string[]>();
+  /** Tirages possédés dont le catalogue annonce ≥2 finitions. */
+  let multiFinishOwned = 0;
 
   for (const pack of modules) {
     catalogues.push({
@@ -518,6 +528,23 @@ export async function buildChecklistForShelf(input: {
           thumbnailUrl: row.thumbnailUrl ?? row.imageUrl ?? null,
           rarity: row.rarity ?? null,
         };
+        const finishes = normalizeVariantOptions(row.finishes);
+        const printKeyLower = row.printKey.trim().toLowerCase();
+        /*
+          Même hors master set : compter les tirages possédés qui offrent
+          plusieurs finitions — signal pour suggérer d'activer le mode.
+        */
+        if (
+          !masterSet &&
+          finishes.length >= 2 &&
+          isChecklistPrintOwned(
+            input.owned,
+            { printKey: row.printKey, setId: set.id, finish: null },
+            false,
+          )
+        ) {
+          multiFinishOwned += 1;
+        }
         if (!masterSet) {
           prints.push(base);
           continue;
@@ -526,8 +553,6 @@ export async function buildChecklistForShelf(input: {
           Master set : une ligne par finition annoncée. Sans liste, une seule
           ligne (finish null) — comme le print picker.
         */
-        const finishes = normalizeVariantOptions(row.finishes);
-        const printKeyLower = row.printKey.trim().toLowerCase();
         finishesByPrintKey.set(printKeyLower, finishes);
         plainFinishesByPrintKey.set(
           printKeyLower,
@@ -695,5 +720,11 @@ export async function buildChecklistForShelf(input: {
     catalogues,
     advice,
     languages: [...languages].sort(),
+    /*
+      Suggérer le master set dès qu'au moins un tirage possédé a plusieurs
+      finitions catalogue — pas un seuil « beaucoup de cartes » aveugle.
+    */
+    suggestMasterSet: !masterSet && multiFinishOwned > 0,
+    multiFinishOwned,
   };
 }

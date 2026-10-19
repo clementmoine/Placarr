@@ -556,11 +556,10 @@ describe("Naruto catalogue lines", () => {
     );
   });
 
-  it("prefers the named FR membership over earlier invent shells", () => {
+  it("keeps each CCG membership tile — no S8/S15 label concat", () => {
     /*
-      N-261 reprints on S8/S11/S15: FR title only on S11 (setAcceptsTitleLang),
-      FR art also on S8/S15. Collapse must keep Mikoto Uchiwa, not a nameless
-      Quest for Power shell.
+      N-261 / C-032 reprints across S8/S11/S15 stay set-scoped. Admin must not
+      collapse onto a `ccg` band or rewrite labels as `S8/S15 · …`.
     */
     const index = {
       version: 1 as const,
@@ -594,17 +593,43 @@ describe("Naruto catalogue lines", () => {
             fr: { art: "art.fr.webp" },
           },
         },
+        "naruto:s8-c0032": {
+          set: "client",
+          card: "c0032",
+          langs: { en: { name: "Teyaki Uchiha", art: "art.webp" } },
+        },
+        "naruto:s15-c0032": {
+          set: "client",
+          card: "c0032",
+          langs: { en: { name: "Teyaki Uchiha", art: "art.webp" } },
+        },
       },
     };
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     const fr = rows.filter(
       (row) => /n0261/i.test(row.card) && row.lang === "fr",
     );
-    expect(fr).toHaveLength(1);
-    expect(fr[0]?.printKey).toBe("naruto:s11-n0261");
-    expect(fr[0]?.name).toBe("Mikoto Uchiwa");
-    expect(fr[0]?.appearanceSets).toEqual(["s8", "s11", "s15"]);
-    expect(fr[0]?.label).toMatch(/Mikoto Uchiwa/);
+    expect(fr.map((row) => row.printKey).sort()).toEqual([
+      "naruto:s11-n0261",
+      "naruto:s15-n0261",
+      "naruto:s8-n0261",
+    ]);
+    expect(fr.find((row) => row.printKey === "naruto:s11-n0261")?.name).toBe(
+      "Mikoto Uchiwa",
+    );
+    expect(fr.every((row) => !row.label.includes("/"))).toBe(true);
+
+    const enC = rows.filter(
+      (row) => /c0032/i.test(row.card) && row.lang === "en",
+    );
+    expect(enC.map((row) => row.printKey).sort()).toEqual([
+      "naruto:s15-c0032",
+      "naruto:s8-c0032",
+    ]);
+    expect(enC.map((row) => row.label).sort()).toEqual([
+      "S15 · C-032 — Teyaki Uchiha",
+      "S8 · C-032 — Teyaki Uchiha",
+    ]);
   });
 
   it("keeps each FR series membership; collapses JA onto 巻", () => {

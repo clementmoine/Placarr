@@ -1263,8 +1263,9 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
 // —— parseFansetEnTitles ——
 {
   function print(number: string, set = "fanset"): NarutoPrintRow {
+    const printKey = `naruto:${set}-${number}`;
     return {
-      printKey: `naruto:${number}`,
+      printKey,
       setCode: set,
       number,
       cardType: number.slice(0, 1),
@@ -1290,14 +1291,17 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
   });
 
   describe("mergeFansetEnTitlesIntoIndex", () => {
-    it("fills EN on existing fanset prints only", () => {
+    it("fills EN on existing fanset prints and mints the rest of the ledger", () => {
       const merged = mergeFansetEnTitlesIntoIndex({
-        prints: [print("c-5001"), print("c-5002")],
+        prints: [print("c5001", "fanset"), print("c5002", "fanset")],
         titles: [],
       });
-      expect(merged.titled).toEqual(["naruto:c-5001", "naruto:c-5002"]);
-      expect(merged.titles[0]).toMatchObject({
-        printKey: "naruto:c-5001",
+      expect(merged.minted).toHaveLength(117);
+      expect(merged.titled).toContain("naruto:fanset-c5001");
+      expect(merged.titled).toContain("naruto:fanset-c5002");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:fanset-c5001"),
+      ).toMatchObject({
         lang: "en",
         fullName: "Gengo",
         nameSource: "fanset-ocr-validated",
@@ -1306,39 +1310,49 @@ import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEn
 
     it("does not overwrite an attested EN title", () => {
       const kept: NarutoTitleRow = {
-        printKey: "naruto:c-5001",
+        printKey: "naruto:fanset-c5001",
         lang: "en",
         fullName: "Already named",
       };
       const merged = mergeFansetEnTitlesIntoIndex({
-        prints: [print("c-5001")],
+        prints: [print("c5001", "fanset")],
         titles: [kept],
       });
-      expect(merged.titled).toEqual([]);
-      expect(merged.titles).toEqual([kept]);
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:fanset-c5001"),
+      ).toEqual(kept);
+      expect(merged.titled).not.toContain("naruto:fanset-c5001");
     });
 
     it("re-syncs a prior fanset-ocr-validated title from the ledger", () => {
       const stale: NarutoTitleRow = {
-        printKey: "naruto:n-5002",
+        printKey: "naruto:fanset-n5002",
         lang: "en",
         fullName: "Five Hungty Sharks",
         nameSource: "fanset-ocr-validated",
       };
       const merged = mergeFansetEnTitlesIntoIndex({
-        prints: [print("n-5002")],
+        prints: [print("n5002", "fanset")],
         titles: [stale],
       });
-      expect(merged.titled).toEqual(["naruto:n-5002"]);
-      expect(merged.titles[0]?.fullName).toBe("Five Hungry Sharks");
+      expect(merged.titled).toContain("naruto:fanset-n5002");
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:fanset-n5002")
+          ?.fullName,
+      ).toBe("Five Hungry Sharks");
     });
 
-    it("skips prints absent from the index", () => {
+    it("mints missing fanset prints under set fanset", () => {
       const merged = mergeFansetEnTitlesIntoIndex({
-        prints: [print("c-9999")],
+        prints: [],
         titles: [],
       });
-      expect(merged.titled).toEqual([]);
+      expect(merged.minted).toContain("naruto:fanset-c5000");
+      expect(merged.minted).toHaveLength(119);
+      expect(merged.titled).toContain("naruto:fanset-c5000");
+      expect(
+        merged.prints.find((p) => p.printKey === "naruto:fanset-c5000"),
+      ).toMatchObject({ setCode: "fanset", number: "c5000" });
     });
   });
 }

@@ -20,6 +20,7 @@ import {
   narutoRetailDiskNumber,
   parseNarutoCollector,
 } from "./identity";
+import { narutoCatalogueLineForCard } from "./packs";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
 
@@ -109,6 +110,55 @@ function borrowChainFor(channelSet: string): readonly string[] {
   const chain =
     cataloguePackInfo("naruto/carddass")?.artBorrowFrom?.[channelSet];
   return chain ?? [];
+}
+
+function sameNumberArtFallbackEnabled(): boolean {
+  return cataloguePackInfo("naruto/carddass")?.sameNumberArtFallback === true;
+}
+
+/** Prefer earlier retail boosters, then TP / tin / promo / other. */
+function compareNarutoDonorSets(a: string, b: string): number {
+  const rank = (set: string): [number, number, string] => {
+    const s = set.toLowerCase();
+    const booster = /^s(\d+)$/.exec(s);
+    if (booster) return [0, Number(booster[1]), s];
+    const tp = /^tp(\d+)$/.exec(s);
+    if (tp) return [1, Number(tp[1]), s];
+    const tin = /^tin(\d+)$/.exec(s);
+    if (tin) return [2, Number(tin[1]), s];
+    if (s === "promo") return [3, 0, s];
+    if (s === "prerelease") return [4, 0, s];
+    const maki = /^maki(\d+)$/.exec(s);
+    if (maki) return [5, Number(maki[1]), s];
+    return [9, 0, s];
+  };
+  const ra = rank(a);
+  const rb = rank(b);
+  return ra[0] - rb[0] || ra[1] - rb[1] || ra[2].localeCompare(rb[2]);
+}
+
+/**
+ * Observational same-locale donors: every set folder under `lang/` that already
+ * holds this collector. Used when {@link sameNumberArtFallback} is on — EN CCG
+ * reprints often live only under the first print set (Drive / Goat / Vintage)
+ * while later memberships still need a catalogue tile.
+ */
+function sameNumberDonorSets(
+  cardsRoot: string,
+  lang: string,
+  diskCard: string,
+  excludeSets: ReadonlySet<string>,
+): string[] {
+  const langDir = path.join(cardsRoot, lang);
+  if (!existsSync(langDir) || !statSync(langDir).isDirectory()) return [];
+  const hits: string[] = [];
+  for (const set of readdirSync(langDir)) {
+    const low = set.trim().toLowerCase();
+    if (!low || low.startsWith(".") || excludeSets.has(low)) continue;
+    if (!tryDir(cardsRoot, lang, low, diskCard)) continue;
+    hits.push(low);
+  }
+  return hits.sort(compareNarutoDonorSets);
 }
 
 function euPromoBorrowBlocked(channel: string, lang: string, diskCard: string) {
@@ -213,9 +263,40 @@ export function resolveNarutoPrintFace(opts: {
   }
 
   // 3) artBorrowFrom chain (same locale, sister series).
+  const collectorRetail = retail ?? diskCard;
   if (!blockEuBorrow) {
-    const collectorRetail = retail ?? diskCard;
     for (const set of borrowChainFor(channel)) {
+      const sib = tryDir(cardsRoot, lang, set, collectorRetail);
+      if (!sib) continue;
+      const hit = hitFromDir(
+        sib.dir,
+        sib.artFile,
+        role,
+        "borrowed",
+        { lang, set, card: collectorRetail },
+        mintDonorKey(set, collectorRetail),
+      );
+      if (hit) return hit;
+    }
+  }
+
+  // 4) sameNumberArtFallback — EN CCG reprints only. Carddass FR/IT keep the
+  //    explicit artBorrowFrom chains (S1 must not display a later peer face).
+  if (
+    !blockEuBorrow &&
+    sameNumberArtFallbackEnabled() &&
+    narutoCatalogueLineForCard(collectorRetail, home) === "en-ccg"
+  ) {
+    const exclude = new Set<string>([
+      home.toLowerCase(),
+      ...borrowChainFor(channel).map((s) => s.toLowerCase()),
+    ]);
+    for (const set of sameNumberDonorSets(
+      cardsRoot,
+      lang,
+      collectorRetail,
+      exclude,
+    )) {
       const sib = tryDir(cardsRoot, lang, set, collectorRetail);
       if (!sib) continue;
       const hit = hitFromDir(

@@ -30,16 +30,23 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
   });
 
   describe("mergeColekaFrNamesIntoIndex", () => {
-    it("fills missing FR names and skips placeholders", () => {
-      const unnamed: NarutoPrintRow = {
-        printKey: "naruto:cl-0033",
+    it("skips Coleka S6 phantoms and placeholders; keeps checklist fills", () => {
+      const phantomS6: NarutoPrintRow = {
+        printKey: "naruto:s6-cl0033",
         setCode: "s6",
         number: "cl0033",
         cardType: "cl",
         family: "client",
       };
+      const phantomOnS1: NarutoPrintRow = {
+        printKey: "naruto:s1-cl0033",
+        setCode: "s1",
+        number: "cl0033",
+        cardType: "cl",
+        family: "client",
+      };
       const placeholder: NarutoPrintRow = {
-        printKey: "naruto:cl-0032",
+        printKey: "naruto:s6-cl0032",
         setCode: "s6",
         number: "cl0032",
         cardType: "cl",
@@ -51,19 +58,39 @@ import { isColekaPlaceholderName, fillNarutoTitlesFromSiblingLocales, mergeBrasi
         fullName: "Naruto Uzumaki",
       };
       const merged = mergeColekaFrNamesIntoIndex({
-        prints: [ni001, unnamed, placeholder],
+        prints: [ni001, phantomS6, phantomOnS1, placeholder],
         titles: [official],
       });
+      // CL-033 is Coleka Série 06 only — never printed FR cardboard.
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:cl-0033")?.fullName,
-      ).toBe("Uruchai Uchiha");
+        merged.titles.find((t) => t.printKey === "naruto:s6-cl0033"),
+      ).toBeUndefined();
       expect(
-        merged.titles.find((t) => t.printKey === "naruto:cl-0032"),
+        merged.titles.find((t) => t.printKey === "naruto:s1-cl0033"),
+      ).toBeUndefined();
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:s6-cl0032"),
       ).toBeUndefined();
       expect(
         merged.titles.find((t) => t.printKey === "naruto:ni-0001")?.fullName,
       ).toBe("Naruto Uzumaki");
-      expect(merged.prints).toHaveLength(3);
+    });
+
+    it("still fills harvested s1–s5 Coleka names by collector number", () => {
+      const s1: NarutoPrintRow = {
+        printKey: "naruto:s1-ni0001",
+        setCode: "s1",
+        number: "ni0001",
+        cardType: "ni",
+        family: "ninja",
+      };
+      const merged = mergeColekaFrNamesIntoIndex({
+        prints: [s1],
+        titles: [],
+      });
+      expect(
+        merged.titles.find((t) => t.printKey === "naruto:s1-ni0001"),
+      ).toMatchObject({ lang: "fr", fullName: "Naruto Uzumaki" });
     });
   });
 

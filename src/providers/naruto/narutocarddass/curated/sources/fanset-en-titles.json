@@ -3,7 +3,7 @@
   "observed": "2026-09-01",
   "ingest": "titles",
   "line": "en-ccg-unofficial",
-  "note": "Remakes post-s28 (`art.fanset.webp`). Remplissage seul sur tirages déjà indexés — pas de mint depuis un fanset seul. Attestation = lecture humaine du recto après proposition OCR Tesseract.",
+  "note": "Remakes post-s28 (`art.fanset.webp`). Mint catalogue sous set `fanset` + `printed: false` (pas Bandai). Titres EN validés manuellement (OCR Tesseract + relecture). Dossiers disque → `cards/en/fanset/{id}/`.",
   "related": ["naruto-ccg-fansets-drive.json", "data/naruto/carddass/staging/ocr-title-audit.json"],
   "not": ["bandai-s1-s28", "carddass"],
   "cards": [

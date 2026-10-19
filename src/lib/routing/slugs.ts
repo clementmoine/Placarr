@@ -206,16 +206,30 @@ export function itemLookupSlugs(item: {
     formes (ex. `13-16-…` pour une P4) : `reconcileDuplicateItemSlugsOnShelf`
     migre le slug stocké.
   */
-  for (const withSet of [item.setCode, null]) {
-    for (const withLanguage of [item.language, null]) {
-      for (const withVariant of [item.variant, null]) {
-        const slug = printKeyItemSlug(
-          item.printKey,
-          withVariant,
-          withLanguage,
-          withSet,
-        );
-        if (slug) slugs.add(slug);
+  const printKeys = new Set<string>();
+  if (item.printKey?.trim()) printKeys.add(item.printKey.trim());
+  /*
+    Manga S1 bags used to be filed as retail `s1-te0007-fr-normal` before the
+    opened non-holo lived on `*-prerelease`. Keep the retail-shaped URL as a
+    lookup alias so old bookmarks still resolve.
+  */
+  const identity = parsePrintKey(item.printKey);
+  if (identity?.grouping?.toLowerCase() === "prerelease") {
+    const retailKey = `${identity.game}:${identity.set}-${identity.number}`;
+    printKeys.add(retailKey);
+  }
+  for (const printKey of printKeys) {
+    for (const withSet of [item.setCode, null]) {
+      for (const withLanguage of [item.language, null]) {
+        for (const withVariant of [item.variant, null]) {
+          const slug = printKeyItemSlug(
+            printKey,
+            withVariant,
+            withLanguage,
+            withSet,
+          );
+          if (slug) slugs.add(slug);
+        }
       }
     }
   }

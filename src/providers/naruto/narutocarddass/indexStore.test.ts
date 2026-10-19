@@ -327,6 +327,186 @@ describe("writeNarutoCcgIndex", () => {
     expect(keys).not.toContain("naruto:s1-cl0005");
   });
 
+  it("keeps FR title for HTML-only TA-090 on official serie 2 only", () => {
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s1-ta0090",
+          setCode: "s1",
+          number: "ta0090",
+          cardType: "ta",
+        },
+        {
+          printKey: "naruto:s2-ta0090",
+          setCode: "s2",
+          number: "ta0090",
+          cardType: "ta",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:s1-ta0090",
+          lang: "fr",
+          fullName: "Le don de la copie",
+        },
+        {
+          printKey: "naruto:s2-ta0090",
+          lang: "fr",
+          fullName: "Le don de la copie",
+        },
+      ],
+      assets: [],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const frTitles = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM print_titles WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    db.close();
+    expect(frTitles).toEqual(["naruto:s2-ta0090"]);
+  });
+
+  it("keeps JA s1 print but does not fan FR title onto it (NI-316)", () => {
+    /*
+      `ja/s1/ni0316` mints s1 for JA; FR scan lives under fr/s6. Expanding every
+      locale onto every membership used to put « Kakashi » + FR art on s1 and
+      show a sans-image S1 tile.
+    */
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s1-ni0316",
+          setCode: "s1",
+          number: "ni0316",
+          cardType: "ni",
+        },
+        {
+          printKey: "naruto:s6-ni0316",
+          setCode: "s6",
+          number: "ni0316",
+          cardType: "ni",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:s1-ni0316",
+          lang: "ja",
+          fullName: "はたけカカシ",
+        },
+        {
+          printKey: "naruto:s6-ni0316",
+          lang: "fr",
+          fullName: "Kakashi Hatake",
+        },
+      ],
+      assets: [
+        {
+          printKey: "naruto:s6-ni0316",
+          lang: "fr",
+          art: "art.carddass.jpg",
+          printed: false,
+        },
+      ],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const frTitles = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM print_titles WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    const frArts = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM print_assets WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    const keys = (
+      db
+        .prepare(`SELECT print_key AS printKey FROM prints ORDER BY print_key`)
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    db.close();
+    expect(keys).toContain("naruto:s1-ni0316");
+    expect(keys).toContain("naruto:s6-ni0316");
+    expect(frTitles).toEqual(["naruto:s6-ni0316"]);
+    expect(frArts).toEqual(["naruto:s6-ni0316"]);
+  });
+
+  it("keeps FR title and face on S1 manga prerelease bags", () => {
+    /*
+      Bags live under `s1-*-prerelease` (set = s1). Paper checklist only knows
+      the retail id — locale fan-out must still accept FR on the bag key.
+    */
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s1-ni0019",
+          setCode: "s1",
+          number: "ni0019",
+          cardType: "ni",
+        },
+        {
+          printKey: "naruto:s1-ni0019-prerelease",
+          setCode: "s1",
+          number: "ni0019-prerelease",
+          cardType: "ni",
+          grouping: "prerelease",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:s1-ni0019",
+          lang: "fr",
+          fullName: "Naruto Uzumaki",
+        },
+        {
+          printKey: "naruto:s1-ni0019-prerelease",
+          lang: "fr",
+          fullName: "Naruto Uzumaki",
+          rarity: "prerelease",
+        },
+      ],
+      assets: [
+        {
+          printKey: "naruto:s1-ni0019-prerelease",
+          lang: "fr",
+          art: "art.carddass.jpg",
+          printed: true,
+        },
+      ],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const frTitles = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM print_titles WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    const frArts = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM print_assets WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string }[]
+    ).map((row) => row.printKey);
+    db.close();
+    expect(frTitles).toContain("naruto:s1-ni0019-prerelease");
+    expect(frArts).toEqual(["naruto:s1-ni0019-prerelease"]);
+  });
+
   it("ajoute s6 aux inserts FR attestés même sans setCodes européen", () => {
     const dbPath = scratch();
     writeNarutoCcgIndex({

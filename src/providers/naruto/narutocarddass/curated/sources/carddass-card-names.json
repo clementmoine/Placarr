@@ -14,6 +14,9 @@
   },
   "s5SiteListeBleed": {
    "why": "Sur liste_cartes_s5.htm, certaines lignes « Holo rare » collent le NI suivant dans la même cellule texte (ex. Manda + NI-222 Katsuyu). Les noms officiels sont scindés ; ne pas réimporter le collage."
+  },
+  "s3SiteListeHoloOffByOne": {
+   "why": "Sur liste_cartes_s3.htm, beaucoup de marqueurs Holo TE/TA sont décalés d’un numéro (+1) par rapport au carton. Les finitions catalogue passent par s3-fr-physical-finishes.json (étagère FR complète), pas par rarity site."
   }
  },
  "cards": {
@@ -500,7 +503,7 @@
    "name": "Iruka",
    "source": "checklist",
    "resolved": "même personnage que ni008",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ni064": {
@@ -587,7 +590,7 @@
   "ni079": {
    "name": "Oboro",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ni080": {
@@ -620,7 +623,8 @@
   "ni085": {
    "name": "Naruto Uzumaki",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "ni086": {
    "name": "Sasuke Uchiwa",
@@ -637,7 +641,7 @@
   "ni088": {
    "name": "Ino Yamanaka",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ni089": {
@@ -713,13 +717,13 @@
   "ni101": {
    "name": "Jiraya",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ni102": {
    "name": "Crapaud",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ni103": {
@@ -790,7 +794,7 @@
   "ni115": {
    "name": "Naruto Uzumaki",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ni116": {
@@ -801,7 +805,8 @@
   "ni117": {
    "name": "Gaara",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "ni118": {
    "name": "Naruto Uzumaki",
@@ -855,12 +860,14 @@
   "ni127": {
    "name": "Jiraya",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "ni128": {
    "name": "Gama Bunta",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "ni129": {
    "name": "Hokage le 4e",
@@ -871,7 +878,7 @@
   "ni130": {
    "name": "Baki",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ni136": {
@@ -963,7 +970,7 @@
   "ni152": {
    "name": "Kabuto Yakushi",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ni153": {
@@ -990,7 +997,7 @@
   "ni157": {
    "name": "Aoba Yamashiro",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ni158": {
@@ -1202,7 +1209,7 @@
    "serie": 4
   },
   "ni203": {
-   "name": "Itachi Uchiha",
+   "name": "Itachi Uchiwa",
    "source": "site",
    "serie": 4
   },
@@ -2165,12 +2172,13 @@
   "ta115": {
    "name": "Une blessure non guérie",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "ta116": {
    "name": "Le pouvoir des 9 queues",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ta117": {
@@ -2186,13 +2194,13 @@
   "ta119": {
    "name": "Enchainement de techniques secrètes",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ta120": {
    "name": "Victoire totale",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ta122": {
@@ -2204,13 +2212,13 @@
   "ta125": {
    "name": "Conspiration rampante",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ta126": {
    "name": "Double K.O.",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ta127": {
@@ -2272,13 +2280,13 @@
   "ta138": {
    "name": "Déplacement à grande vitesse",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ta139": {
    "name": "La danse des feuilles",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ta140": {
@@ -2295,13 +2303,13 @@
   "ta142": {
    "name": "Le kidnapping",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "ta143": {
    "name": "Portée limite",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "ta144": {
@@ -2356,7 +2364,8 @@
   "ta153": {
    "name": "Rivaux éternels",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "ta154": {
    "name": "Tel une tempête",
@@ -3394,23 +3403,25 @@
   "te109": {
    "name": "Invocation",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "te110": {
    "name": "Sexy-meta",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "te111": {
    "name": "La fleur de lotus, verso",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "te112": {
    "name": "Le piège du tampon effaceur",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "te113": {
@@ -3422,12 +3433,13 @@
   "te114": {
    "name": "La danse sous la nouvelle lune",
    "source": "site",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "te115": {
    "name": "La marche sur l'eau",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "te116": {
@@ -3445,13 +3457,13 @@
   "te123": {
    "name": "Une épée de vent",
    "source": "site",
-   "rarity": "commune",
+   "rarity": "holo",
    "serie": 3
   },
   "te124": {
    "name": "Technique doton",
    "source": "site",
-   "rarity": "holo",
+   "rarity": "commune",
    "serie": 3
   },
   "te125": {
@@ -3565,7 +3577,8 @@
   "te144": {
    "name": "Technique du poing souple : les 64 poings du Hakke",
    "source": "checklist",
-   "serie": 3
+   "serie": 3,
+   "rarity": "holo"
   },
   "te145": {
    "name": "La Naru-tornade des 2000 poings",

@@ -12,21 +12,24 @@
 }
 
 .header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
-.headBar {
+.topBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 0.75rem;
 }
 
 .back {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--muted-foreground);
@@ -35,67 +38,96 @@
   color: var(--foreground);
 }
 
-.actions {
-  display: flex;
+.topActions {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
-.select,
-.print,
-.exportMd {
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.subtitle {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+}
+
+.totals {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+}
+.totalsPct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 2.75rem;
+  text-align: right;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.select {
   height: 2.25rem;
   border-radius: 0.75rem;
   border: 1px solid var(--border);
   background: var(--card);
   padding: 0 0.75rem;
   font-size: 0.875rem;
+  flex-shrink: 0;
 }
-.print,
-.exportMd {
+
+.settingsBtn,
+.iconBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
   cursor: pointer;
 }
-.print:hover,
-.exportMd:hover {
+.settingsBtn:hover,
+.iconBtn:hover {
   background: var(--accent);
+  color: var(--foreground);
 }
-.exportMd:disabled {
+.settingsBtn[data-state="open"] {
+  background: var(--accent);
+  color: var(--foreground);
+}
+.iconBtn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 2.25rem;
-  padding: 0 0.75rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--card);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-}
-.toggle input {
-  accent-color: var(--primary);
-}
-.toggle:hover {
-  background: var(--accent);
-}
-
 .search {
   position: relative;
-  flex: 1 1 14rem;
-  min-width: 10rem;
-  max-width: 22rem;
+  flex: 1 1 16rem;
+  min-width: 12rem;
 }
 .searchIcon {
   position: absolute;
@@ -121,31 +153,64 @@
   outline-offset: 1px;
 }
 
-.title {
-  font-size: 1.875rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.subtitle {
-  color: var(--muted-foreground);
-  font-size: 0.9375rem;
-  margin-top: 0.25rem;
-}
-
-.totals {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  font-size: 0.9375rem;
-}
-
 .untaggedHint {
   margin-top: 0.75rem;
   font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--muted-foreground);
   max-width: 42rem;
+}
+
+.suggestMasterSet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 0.75rem;
+  width: 100%;
+  max-width: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+.suggestMasterSetText {
+  flex: 1 1 12rem;
+  color: var(--muted-foreground);
+}
+.suggestMasterSetActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.suggestMasterSetEnable,
+.suggestMasterSetDismiss {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.suggestMasterSetEnable {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+.suggestMasterSetDismiss {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.suggestMasterSetEnable:hover {
+  filter: brightness(1.05);
+}
+.suggestMasterSetDismiss:hover {
+  color: var(--foreground);
+  background: var(--accent);
 }
 
 .bar {
@@ -465,7 +530,10 @@
     Le papier n'a ni bouton ni repli : tout ce qui manque doit être là, et rien
     de ce qui sert à naviguer.
   */
-  .actions,
+  .toolbar,
+  .topActions,
+  .suggestMasterSet,
+  .untaggedHint,
   .back,
   .chevron,
   .thumb,

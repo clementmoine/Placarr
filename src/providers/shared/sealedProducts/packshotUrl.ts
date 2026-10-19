@@ -5,7 +5,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { assetsPackFileUrl, rewriteAssetPackUrl } from "@/lib/packAssetUrls";
+import {
+  ASSETS_URL_PREFIX,
+  assetsPackFileUrl,
+  canonicalAssetPack,
+  rewriteAssetPackUrl,
+} from "@/lib/packAssetUrls";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
 
@@ -26,6 +31,31 @@ function artFilesIn(dir: string): string[] {
     .sort((a, b) => a.localeCompare(b));
 }
 
+/** True when `/assets/<pack>/products/…` points at a file that still exists. */
+function sealedProductAssetExists(
+  packId: string,
+  assetUrl: string,
+  productsDir: string,
+): boolean {
+  const rewritten = rewriteAssetPackUrl(assetUrl);
+  const prefix = `${ASSETS_URL_PREFIX}/${canonicalAssetPack(packId)}/products/`;
+  if (!rewritten.startsWith(prefix)) return false;
+  const rel = rewritten
+    .slice(prefix.length)
+    .split("/")
+    .map((part) => {
+      try {
+        return decodeURIComponent(part);
+      } catch {
+        return part;
+      }
+    });
+  if (!rel.length || rel.some((part) => !part || part === ".." || part === ".")) {
+    return false;
+  }
+  return existsSync(path.join(productsDir, ...rel));
+}
+
 /**
  * Absolute `/assets/…` URL for the displayed packshot, or `fallback` /
  * `null` when nothing is on disk.
@@ -41,11 +71,8 @@ export function resolveSealedPackshotUrl(input: {
   const slug = input.slug.trim();
   if (!slug) return input.fallback?.trim() || null;
   const lang = langFolder(input.lang, slug);
-  const dir = path.join(
-    input.productsDir ?? packSealedProductsDir(input.packId),
-    slug,
-    lang,
-  );
+  const productsDir = input.productsDir ?? packSealedProductsDir(input.packId);
+  const dir = path.join(productsDir, slug, lang);
 
   try {
     const facePath = path.join(dir, CARD_FACE_DECISION_FILE);
@@ -66,13 +93,23 @@ export function resolveSealedPackshotUrl(input: {
   const fallback = input.fallback?.trim()
     ? rewriteAssetPackUrl(input.fallback)
     : null;
-  if (fallback) return fallback;
+  /*
+    Skip 404 index URLs (tin-box-hobby still pointed at art.mercari.png after
+    face.json moved to art.reconstructed.png) so disk dumps can win.
+  */
+  if (
+    fallback &&
+    (!fallback.startsWith(`${ASSETS_URL_PREFIX}/`) ||
+      sealedProductAssetExists(input.packId, fallback, productsDir))
+  ) {
+    return fallback;
+  }
 
   const arts = artFilesIn(dir);
   if (arts[0]) {
     return assetsPackFileUrl(input.packId, "products", slug, lang, arts[0]);
   }
-  return null;
+  return fallback;
 }
 
 /**
@@ -95,9 +132,10 @@ export function backfillSealedProductPackshots(
     });
     if (!next) continue;
     if (entry.image === next) continue;
-    const current = entry.image?.trim() || "";
-    // Fill holes, or rewrite a legacy `/assets/<alias>/…` URL onto disk.
-    if (current && rewriteAssetPackUrl(current) === current) continue;
+    /*
+      face.json / on-disk resolution wins over a stale sqlite URL. Skipping
+      any non-empty image left tin-box-hobby on a 404 art.mercari.png forever.
+    */
     entry.image = next;
     filled += 1;
   }

@@ -191,11 +191,23 @@ export function isColekaPlaceholderName(name: string): boolean {
   return /^carte\s+[a-z]{1,3}[- ]?\d+$/i.test(name.trim());
 }
 
+/**
+ * Phrase d'effet scrapée / OCR (ex. « peut l'utiliser ») — pas un titre
+ * imprimé. Les vrais noms FR commencent par une majuscule.
+ */
+export function isNarutoEffectTextTitle(name: string): boolean {
+  const n = name.trim();
+  if (!n || !/\s/.test(n)) return false;
+  // Latin minuscule en tête + au moins un espace → fragment de phrase.
+  return /^[a-zàâäéèêëïîôùûüç]/.test(n);
+}
+
 /** Relative pronoun / empty scrape — not a printed title. */
 export function isImplausibleNarutoTitle(name: string): boolean {
   const n = name.trim();
   if (!n) return true;
   if (isColekaPlaceholderName(n)) return true;
+  if (isNarutoEffectTextTitle(n)) return true;
   return TITLE_STOP.test(n);
 }
 
@@ -673,6 +685,11 @@ export function planNarutoLayoutMovesFromTree(
     if (SKIP_DIR.test(set) || set.includes(".")) continue;
     const setDir = path.join(cardsDir, set);
     if (!statSync(setDir).isDirectory()) continue;
+    /*
+      Lang-first roots (`en/`, `fr/`, …) are already canonical. Treating them as
+      set folders swaps segments (`en/s1/n0001` → `s1/en/n0001`) and wrecks the tree.
+    */
+    if (isNarutoLangDir(set)) continue;
     if (isNarutoFamilyFolder(set)) {
       for (const diskId of readdirSync(setDir)) {
         const cardDir = path.join(setDir, diskId);

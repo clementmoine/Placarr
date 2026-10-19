@@ -917,6 +917,49 @@ import type { NarutoPrintDetail } from "./search";
     });
   });
 
+  describe("keepNarutoFrSeriesMembership", () => {
+    it("jette s1 fantôme quand la checklist est vide (parking JA / Coleka)", () => {
+      expect(
+        keepNarutoFrSeriesMembership({
+          set: "s1",
+          frChecklist: [],
+        }),
+      ).toBe(false);
+    });
+
+    it("garde s1 sur checklist, deck, ou face FR déjà sur disque", () => {
+      expect(
+        keepNarutoFrSeriesMembership({
+          set: "s1",
+          frChecklist: ["s1"],
+        }),
+      ).toBe(true);
+      expect(
+        keepNarutoFrSeriesMembership({
+          set: "s2",
+          frChecklist: ["s1"],
+          deckSets: new Set(["s2"]),
+        }),
+      ).toBe(true);
+      expect(
+        keepNarutoFrSeriesMembership({
+          set: "s4",
+          frChecklist: [],
+          hasFrDiskFace: true,
+        }),
+      ).toBe(true);
+    });
+
+    it("ne filtre pas s6 / maki / promo", () => {
+      expect(
+        keepNarutoFrSeriesMembership({ set: "s6", frChecklist: [] }),
+      ).toBe(true);
+      expect(
+        keepNarutoFrSeriesMembership({ set: "maki3", frChecklist: [] }),
+      ).toBe(true);
+    });
+  });
+
   describe("syncOfficialFrChecklistAppearances", () => {
     it("écrit s1+s5 sur le disque pour ni0049", () => {
       const root = mkdtempSync(path.join(tmpdir(), "naruto-fr-check-"));

@@ -10,6 +10,7 @@ import {
   matchAssetsBacksRest,
   resolveRoleBack,
 } from "@/lib/media/resolveRoleBack";
+import { legacySetFirstCardsRest } from "@/lib/media/legacySetFirstCardsRest";
 import {
   resolveUnderRoot,
   streamFileResponse,
@@ -29,6 +30,20 @@ function resolveAssetFile(
   if (!mapped) return null;
   const hit = resolveUnderRoot(mapped.root, mapped.relative);
   if (hit) return hit;
+
+  /*
+    Stale Item URLs: cards/{set}/{lang}/{card}/… while disk is lang-first
+    (Dragon Ball Masters/JCC, etc.). Try the swapped path before pack-specific
+    remaps.
+  */
+  const langFirstRest = legacySetFirstCardsRest(rest);
+  if (langFirstRest) {
+    const lfMapped = resolveAssetsDiskRoot(pack, langFirstRest);
+    const lfHit = lfMapped
+      ? resolveUnderRoot(lfMapped.root, lfMapped.relative)
+      : null;
+    if (lfHit) return lfHit;
+  }
 
   if (pack === "naruto/carddass" || pack.startsWith("naruto/")) {
     // Pre–lang-first Item URLs: cards/ninja/ni0001/fr/… → cards/fr/s1/ni0001/…

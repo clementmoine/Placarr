@@ -4,9 +4,12 @@ import {
   inferLangFromPackshotUrl,
   inferOfficialSetId,
   inferPackshotKind,
+  isNonCardOfficialAccessory,
   OFFICIAL_SITE_LOCALES,
+  officialProductDisplayName,
   officialSiteContentHashFromPages,
   officialSiteLocaleToLang,
+  parseOfficialProductContents,
   parseOfficialProductMenu,
   parseOfficialProductPage,
   type OfficialProductPage,
@@ -129,6 +132,198 @@ describe("inferPackshotKind", () => {
       "collector_box",
     );
   });
+
+  it("keeps full Illumineer's Quest title (og apostrophe) and Q3 packshot", () => {
+    const page = parseOfficialProductPage(
+      `<html><head>
+<meta property="og:title" content="Illumineer's Quest: The Great Hunny Rescue | Disney Lorcana TCG by Ravensburger">
+<title>Illumineer&#x27;s Quest: The Great Hunny Rescue | Disney Lorcana TCG by Ravensburger | Disney Lorcana by Ravensburger</title>
+</head><body>
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/iq3-great-hunny-rescue/dlc_iq3_hero_1920x1080.jpg" alt="Illumineer's Quest: The Great Hunny Rescue Key Art" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/iq3-great-hunny-rescue/logo/en_gosdhfht9u.png" alt="great hunny rescue" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/iq3-great-hunny-rescue/encounter-cards/en_cklkadqyuv_660x440.png" alt="encounter card for Great Hunny Rescue" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/iq3-great-hunny-rescue/dlc-iq3_spill-photo_1920x1080.png" alt="great hunny rescue trove" />
+</body></html>`,
+      "great-hunny-rescue",
+      { locale: "en-US", lang: "en" },
+    );
+    expect(page.title).toBe("Illumineer's Quest: The Great Hunny Rescue");
+    expect(page.setId).toBe("quest3");
+    expect(page.packshots).toEqual([
+      {
+        url: "https://ravensburger.cloud/cms/gallery/lorcana-web/products/iq3-great-hunny-rescue/logo/en_gosdhfht9u.png",
+        alt: "great hunny rescue",
+        kind: "quest",
+      },
+    ]);
+  });
+
+  it("keeps gift-box product-shot over website header", () => {
+    const page = parseOfficialProductPage(
+      `<html><head><meta property="og:title" content="Elsa Gift Box | Disney Lorcana" /></head>
+<body>
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/collection-starter-set/dlc_1920x1080_thumbnail-1.jpg" alt="Disney Lorcana Collection Starter Set website header" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/collection-starter-set/en/dlc_web_elsa-gb_stub-page_assets_collection-product-shot_en.png" alt="Elsa Gift Box Components" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/fabled/logos/dlc_web_collector-ss_stub-page_assets_double_teaser_en.png" alt="Fabled logo" />
+<h3>Contents Include:</h3>
+<li>(1) "Glimmer foil" Elsa - The fifth Spirit promo card</li>
+<li>(5) Booster packs (each with 12 randomized cards)</li>
+<li>(1) Elsa storage box (holds up to 250 randomized cards)</li>
+<li>(3) Punch-out dividers</li>
+</body></html>`,
+      "elsa-gift-box",
+      { locale: "en-US", lang: "en" },
+    );
+    expect(page.packshots).toHaveLength(1);
+    expect(page.packshots[0]?.alt).toBe("Elsa Gift Box Components");
+    expect(page.packshots[0]?.kind).toBe("collector_box");
+    expect(page.contents?.packsContained).toBe(5);
+    expect(page.contents?.cardsPerPack).toBe(12);
+    expect(page.contents?.trusted).toBe(true);
+  });
+
+  it("distrusts polluted FR Contents Include but keeps body pack count", () => {
+    const html = `
+Elsa Gift Box. Ce coffret contient 5 boosters de différents sets.
+<h3>Contents Include:</h3>
+<li>4 Fabled booster packs (each with 12 randomized cards)</li>
+<li>1 Mickey Mouse – Brave Little Tailor card portfolio</li>
+<li>1 “Glimmer foil” Tinker Bell – Giant Fairy promo card</li>
+<li>1 Collector’s guide</li>
+Welcome to the story`;
+    const contents = parseOfficialProductContents(html, {
+      slug: "elsa-gift-box",
+      title: "Elsa Gift Box",
+    });
+    expect(contents?.trusted).toBe(false);
+    expect(contents?.packsContained).toBe(5);
+  });
+
+  it("parses Gateway Includes decks + reward packs into declaredCardCount", () => {
+    const html = `
+Disney Lorcana Gateway
+<h3>Gateway Includes:</h3>
+<li>2 Starting Decks (30 cards each)</li>
+<li>4 Reward Packs (18 cards each)</li>
+<li>1 Game board</li>
+How To Play`;
+    const contents = parseOfficialProductContents(html, {
+      slug: "gateway",
+      title: "Disney Lorcana Gateway",
+    });
+    expect(contents?.trusted).toBe(true);
+    expect(contents?.declaredCardCount).toBe(132);
+    expect(contents?.packsContained).toBeNull();
+  });
+
+  it("parses 2-Player Starter ready-to-play decks", () => {
+    const html = `
+Here's what you'll find inside:
+2 Ready-to-play decks (60 cards each)
+Welcome to the story`;
+    const contents = parseOfficialProductContents(html, {
+      slug: "2-player-starter-set",
+      title: "2-Player Starter Set",
+    });
+    expect(contents?.declaredCardCount).toBe(120);
+  });
+
+  it("classes Illumineer's Quest before CMS trove folder", () => {
+    expect(
+      inferPackshotKind(
+        "Illumineer's Quest Great Hunny Rescue",
+        "https://ravensburger.cloud/.../products/trove/iq3-great-hunny-rescue/en.png",
+      ),
+    ).toBe("quest");
+    expect(
+      inferPackshotKind(
+        "Quête des Illumineurs",
+        "https://ravensburger.cloud/.../products/iq3-great-hunny-rescue/fr.png",
+      ),
+    ).toBe("quest");
+    expect(
+      inferPackshotKind(
+        "Product Image",
+        "https://www.disneylorcana.com/en-US/products/iq3/box.png",
+      ),
+    ).toBe("quest");
+  });
+
+  it("maps booster box / box of packs to display, not booster", () => {
+    expect(
+      inferPackshotKind(
+        "Disney Lorcana Fabled Booster Box",
+        "https://ravensburger.cloud/.../fabled-booster-box.png",
+      ),
+    ).toBe("display");
+    expect(
+      inferPackshotKind(
+        "Box of 24 booster packs",
+        "https://ravensburger.cloud/.../lorcana_set_6_booster_850x850_en.png",
+      ),
+    ).toBe("display");
+  });
+});
+
+describe("flat-path sealed packshots", () => {
+  it("keeps Wilds Unknown display art out of spoilers", () => {
+    const page = parseOfficialProductPage(
+      `<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s12-wilds-unknown/svvuwbf6ph_en.png" alt="Display Packs of Disney Lorcana Wilds Unknown" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s12-wilds-unknown/svvuwbf6ph_de.png" alt="Display Packs of Disney Lorcana Wilds Unknown" />
+<img src="https://ravensburger.cloud/cms/gallery/lorcana-web/products/s12-wilds-unknown/en/first-look/card.png.png" alt="Mickey Mouse - Brave Little Tailor" />`,
+      "wilds-unknown",
+      { locale: "en-US" },
+    );
+    expect(page.packshots.map((p) => p.kind)).toEqual(["display", "display"]);
+    expect(page.packshots.map((p) => inferLangFromPackshotUrl(p.url))).toEqual([
+      "en",
+      "de",
+    ]);
+    expect(page.spoilers).toHaveLength(1);
+  });
+});
+
+describe("officialProductDisplayName", () => {
+  it("labels set-page two-player starter packshots", () => {
+    expect(
+      officialProductDisplayName({
+        pageTitle: "Wilds Unknown",
+        packshotAlt: "Two Player Starter Decks",
+        pageSlug: "wilds-unknown",
+      }),
+    ).toBe("Wilds Unknown 2-Player Starter Set");
+  });
+
+  it("keeps dedicated 2-player page title", () => {
+    expect(
+      officialProductDisplayName({
+        pageTitle: "Disney Lorcana TCG 2-Player Starter Set",
+        packshotAlt: "Photo of the Disney Lorcana 2-player starter set",
+        pageSlug: "2-player-starter-set",
+      }),
+    ).toBe("Disney Lorcana TCG 2-Player Starter Set");
+  });
+});
+
+describe("isNonCardOfficialAccessory", () => {
+  it("rejects Hades playmat product-photography as a sealed SKU", () => {
+    const url =
+      "https://ravensburger.cloud/cms/gallery/lorcana-web/products/jafar/skus/misc/dlc_s8_playmats_product-photography-hades.png";
+    expect(isNonCardOfficialAccessory("Hadès Tapis de jeu", url)).toBe(true);
+    expect(inferPackshotKind("Hadès Tapis de jeu", url, { setId: "set8" })).toBe(
+      null,
+    );
+  });
+
+  it("rejects Fabled deck-box lifestyle shots", () => {
+    expect(
+      inferPackshotKind(
+        "Image of deck boxes from Disney Lorcana Fabled",
+        "https://ravensburger.cloud/cms/gallery/lorcana-web/products/fabled/deck-boxes.png",
+        { setId: "set9" },
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("official site locales", () => {
@@ -155,8 +350,13 @@ describe("official site locales", () => {
     expect(page.sourceUrl).toContain("/en-US/product/");
   });
 
-  it("lists catalogue locales for harvest (EN+FR only)", () => {
-    expect(OFFICIAL_SITE_LOCALES).toEqual(["fr-FR", "en-US"]);
+  it("lists catalogue locales for harvest (FR/EN/DE/IT)", () => {
+    expect(OFFICIAL_SITE_LOCALES).toEqual([
+      "fr-FR",
+      "en-US",
+      "de-DE",
+      "it-IT",
+    ]);
   });
 });
 
@@ -183,6 +383,7 @@ describe("officialSiteContentHashFromPages", () => {
             kind: "first-look",
           },
         ],
+        contents: null,
         sourceUrl: "https://www.disneylorcana.com/fr-FR/product/hyperia-city",
         lang: "fr",
       },

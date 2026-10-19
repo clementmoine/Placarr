@@ -78,56 +78,24 @@ export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
 async function runOfficialSiteOnly(
   force: boolean,
 ): Promise<Record<string, unknown>> {
-  const { harvestOfficialLorcanaSite } = await import("./scrape/officialSite");
-  const { applyOfficialSiteLogos, upsertOfficialSiteProducts } =
-    await import("./scrape/officialSiteApply");
-  const harvested = await harvestOfficialLorcanaSite({
+  const { runOfficialSiteProductsStep } = await import(
+    "./scrape/officialSiteStep"
+  );
+  const out = await runOfficialSiteProductsStep({
     force,
-    onProgress: (message) => console.log(`   official — ${message}`),
+    spoilers: true,
+    log: (message) => console.log(message),
   });
-  console.log(
-    `── official site — ${harvested.pages} pages, ${harvested.logos} logos, ${harvested.packshots} packshots, ${harvested.spoilers} spoilers`,
-  );
-  const logos = applyOfficialSiteLogos();
-  const upserted = upsertOfficialSiteProducts({ setLogoIndex: logos.index });
-  console.log(
-    `── official upsert — logos +${logos.added}/${logos.updated}, produits ${upserted.written}`,
-  );
-  const { applyOfficialSiteSpoilerFaces } = await import(
-    "./scrape/officialSiteSpoilers"
-  );
-  const spoilers = await applyOfficialSiteSpoilerFaces({
-    pages: harvested.pagesParsed,
-    onProgress: (message) => console.log(`   spoiler — ${message}`),
-  });
-  console.log(
-    `── official spoilers — ${spoilers.written} faces, ${spoilers.matched} matchés, ${spoilers.unmatched} sans ancre`,
-  );
-  if (spoilers.unmatchedTitles.length) {
-    console.log(
-      `   (sans ancre) ${spoilers.unmatchedTitles.slice(0, 12).join(" · ")}`,
-    );
-  }
-  const { promoteOfficialSiteAndPurgeStaging } = await import(
-    "./scrape/officialSite"
-  );
-  if (
-    promoteOfficialSiteAndPurgeStaging({
-      pages: harvested.pagesParsed,
-    })
-  ) {
-    console.log("── official site — staging purgé (ledger frais)");
-  }
   return {
     provider: "lorcanaofficial",
     ok: true,
-    officialPages: harvested.pages,
-    officialLogos: harvested.logos,
-    officialPackshots: harvested.packshots,
-    officialSpoilers: harvested.spoilers,
-    officialSpoilerFaces: spoilers.written,
-    officialSpoilerUnmatched: spoilers.unmatched,
-    officialUpserted: upserted.written,
+    officialPages: out.pages,
+    officialLogos: out.logos,
+    officialPackshots: out.packshots,
+    officialSpoilers: out.spoilers,
+    officialSpoilerFaces: out.spoilerFaces,
+    officialSpoilerUnmatched: out.spoilerUnmatched,
+    officialUpserted: out.upserted,
   };
 }
 

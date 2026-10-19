@@ -17,11 +17,19 @@ import { packLogsDir } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import {
   catalogArtefactIsFresh,
+  catalogArtefactIsFreshWithin,
   hashCatalogArtefactBytes,
   packCatalogIngestLedgerPath,
+  purgeStagingArtefact,
   readCatalogIngestLedger,
   recordCatalogPromoteAndPurgeStaging,
 } from "@/providers/shared/catalogIngestLedger";
+
+/**
+ * Max age of a promoted products graph before Sync re-crawls the remote shop.
+ * Shared by lorcards/pokecardex-style crawls and the Lorcana official site.
+ */
+export const TCG_CARDS_PRODUCTS_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 export function tcgCardsProductsArtefactId(packId: string): string {
   return `tcgcards-products:${packId}`;
@@ -79,6 +87,11 @@ export function promoteAndPurgeTcgCardsProductsStaging(opts: {
   packId: string;
   stagingFolder: string;
   stagingDir?: string;
+  /**
+   * Skip-path: the crawl did not run, so do not bump `promotedAt` when the
+   * ledger already holds this hash (otherwise the TTL would never elapse).
+   */
+  keepLedgerTimestamp?: boolean;
 }): { purged: boolean; contentHash: string | null } {
   const staging =
     opts.stagingDir ?? tcgCardsProductsStagingDir(opts.packId, opts.stagingFolder);
@@ -91,6 +104,10 @@ export function promoteAndPurgeTcgCardsProductsStaging(opts: {
     );
     if (!existsSync(durable)) return { purged: false, contentHash: null };
     const contentHash = tcgCardsProductsContentHash(durable);
+    if (opts.keepLedgerTimestamp && tcgCardsProductsLedgerFresh(opts.packId, contentHash)) {
+      purgeStagingArtefact(staging);
+      return { purged: true, contentHash };
+    }
     recordCatalogPromoteAndPurgeStaging({
       ledgerPath: packCatalogIngestLedgerPath(opts.packId),
       artefactId: tcgCardsProductsArtefactId(opts.packId),
@@ -105,6 +122,10 @@ export function promoteAndPurgeTcgCardsProductsStaging(opts: {
     stagingFolder: opts.stagingFolder,
     stagingDir: staging,
   });
+  if (opts.keepLedgerTimestamp && tcgCardsProductsLedgerFresh(opts.packId, contentHash)) {
+    purgeStagingArtefact(staging);
+    return { purged: true, contentHash };
+  }
   recordCatalogPromoteAndPurgeStaging({
     ledgerPath: packCatalogIngestLedgerPath(opts.packId),
     artefactId: tcgCardsProductsArtefactId(opts.packId),
@@ -133,6 +154,9 @@ export function tcgCardsProductsSkipCrawl(opts: {
   packId: string;
   stagingFolder: string;
   force?: boolean;
+  /** Test seam — default {@link TCG_CARDS_PRODUCTS_MAX_AGE_MS}. */
+  maxAgeMs?: number;
+  now?: Date;
 }): {
   skip: boolean;
   dir: string | null;
@@ -148,6 +172,19 @@ export function tcgCardsProductsSkipCrawl(opts: {
   const productsPath = path.join(dir, "products.json");
   const contentHash = tcgCardsProductsContentHash(productsPath);
   if (!tcgCardsProductsLedgerFresh(opts.packId, contentHash)) {
+    return { skip: false, dir, meta: null };
+  }
+  // The hash is of our own durable copy, so it always matches after promote:
+  // only the TTL lets a new remote SKU be discovered by a later Sync.
+  if (
+    !catalogArtefactIsFreshWithin(
+      readCatalogIngestLedger(packCatalogIngestLedgerPath(opts.packId)),
+      tcgCardsProductsArtefactId(opts.packId),
+      contentHash,
+      opts.maxAgeMs ?? TCG_CARDS_PRODUCTS_MAX_AGE_MS,
+      opts.now,
+    )
+  ) {
     return { skip: false, dir, meta: null };
   }
   let meta: {

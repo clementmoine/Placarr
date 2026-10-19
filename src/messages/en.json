@@ -543,6 +543,8 @@
     "checklistPlanBoostersToComplete": "≈ {boosters} boosters to expect a full set",
     "checklistSealedNotRecommended": "Poor value this late — prefer singles (endgame / chase cards).",
     "checklistSealedNoUsefulOption": "No useful sealed product for this language / set (or unknown contents).",
+    "checklistSealedStructureOnly": "Structure known — no card-by-card lists yet (impact not estimated).",
+    "checklistStructureAttested": "structure attested",
     "checklistNoAdvice": "No known sealed product for this set.",
     "checklistNoSinglesAdvice": "Nothing to recommend as singles for now.",
     "checklistPricesLoading": "Looking up prices…",

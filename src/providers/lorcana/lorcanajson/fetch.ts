@@ -31,8 +31,18 @@ export const LORCANA_GAME = "lorcana";
 
 const BASE_URL = "https://lorcanajson.org/files/current";
 
+/**
+ * Index distants LorcanaJSON (`lorcanajson.org/files/current/{lang}/`).
+ * Le scrape / le cold-load ne tire que ceux-là.
+ */
 export const LORCANA_LANGUAGES = ["fr", "en"] as const;
-export type LorcanaLanguage = (typeof LORCANA_LANGUAGES)[number];
+/**
+ * Langues de titres/faces dans le corpus local (sqlite). Q3 Illumineer Quest
+ * a du `de` ; d'autres fills portent de l'`it`. Ce n'est **pas** la liste de
+ * scrape distant — sinon on téléchargerait des index vides à chaque sync.
+ */
+export const LORCANA_CORPUS_LANGUAGES = ["fr", "en", "de", "it"] as const;
+export type LorcanaLanguage = (typeof LORCANA_CORPUS_LANGUAGES)[number];
 
 export const LORCANA_DEFAULT_LANGUAGE: LorcanaLanguage = "fr";
 
@@ -244,7 +254,7 @@ export function normalizeLorcanaSearchText(value: string): string {
 export function isLorcanaLanguage(value: unknown): value is LorcanaLanguage {
   return (
     typeof value === "string" &&
-    (LORCANA_LANGUAGES as readonly string[]).includes(value)
+    (LORCANA_CORPUS_LANGUAGES as readonly string[]).includes(value)
   );
 }
 

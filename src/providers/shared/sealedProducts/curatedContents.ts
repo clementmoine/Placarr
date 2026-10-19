@@ -62,6 +62,12 @@ export type CuratedSealedSku = {
    */
   guaranteeSets?: readonly string[] | null;
   /**
+   * Code boutique / catalogue (`Q3`, `12`, …). Permet de rattacher un SKU
+   * official-site ou lorcards sans setId (coffret quête FR) au set checklist.
+   */
+  setCode?: string | null;
+  catalogueSetId?: string | null;
+  /**
    * Taille totale du contenu fixe (ex. 120 = 2×60 decks quête), pour que le
    * conseil d'achat traite une liste partielle comme un plancher (`atLeast`).
    */
@@ -78,6 +84,14 @@ export type CuratedSealedSku = {
    * La checklist Catalogue les affiche en miniatures produit.
    */
   guaranteedProducts?: readonly CuratedGuaranteedProduct[];
+  /**
+   * Unités taille connue sans liste (Gateway decks + reward packs, 2p starter).
+   */
+  structureUnits?: readonly {
+    label: string;
+    count: number;
+    cardsEach: number;
+  }[];
   randomPoolScope?: RandomPoolScope;
   randomPoolPrintKeys?: readonly string[];
   /** Quand le produit est un starter + booster, etc. */
@@ -220,10 +234,18 @@ function applyPatch(
   const inventoryKnown = hasProductBundle || hasPrintInventory;
   return {
     ...entry,
+    /*
+      `null` dans un SKU curated = « pas d'avis », pas « effacer le byKind ».
+      Sinon les troves Hyperia (`cardsPerPack: null`) écrasaient byKind ×12 et
+      le display set 14 (sans booster frère) restait à packSize inconnu →
+      newCards 0 → masqué du conseil d'achat.
+    */
     cardsPerPack:
-      patch.cardsPerPack !== undefined ? patch.cardsPerPack : entry.cardsPerPack,
+      patch.cardsPerPack !== undefined && patch.cardsPerPack !== null
+        ? patch.cardsPerPack
+        : entry.cardsPerPack,
     packsContained:
-      patch.packsContained !== undefined
+      patch.packsContained !== undefined && patch.packsContained !== null
         ? patch.packsContained
         : entry.packsContained,
     packsBySet:
@@ -234,12 +256,35 @@ function applyPatch(
           ? [...patch.guaranteeSets]
           : null
         : entry.guaranteeSets,
+    setCode:
+      patch.setCode !== undefined
+        ? patch.setCode?.trim() || null
+        : entry.setCode,
+    catalogueSetId:
+      patch.catalogueSetId !== undefined
+        ? patch.catalogueSetId?.trim() || null
+        : entry.catalogueSetId,
     declaredCardCount:
       patch.declaredCardCount !== undefined
         ? patch.declaredCardCount
         : entry.declaredCardCount,
     guaranteedPrints: guaranteed ?? entry.guaranteedPrints,
     guaranteedProducts: products ?? entry.guaranteedProducts,
+    structureUnits:
+      patch.structureUnits !== undefined
+        ? patch.structureUnits
+            .filter(
+              (row) =>
+                row.label.trim() &&
+                row.count > 0 &&
+                row.cardsEach > 0,
+            )
+            .map((row) => ({
+              label: row.label.trim(),
+              count: Math.floor(row.count),
+              cardsEach: Math.floor(row.cardsEach),
+            }))
+        : entry.structureUnits,
     randomPoolPrints: pool ?? entry.randomPoolPrints,
     randomPoolScope: patch.randomPoolScope ?? entry.randomPoolScope,
     behavior: patch.behavior ?? entry.behavior,

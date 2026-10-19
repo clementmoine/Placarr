@@ -508,6 +508,27 @@ describe("ordre retail puis promos", () => {
     ).toBe(false);
   });
 
+  it("dedupes the same printKey×finish when two catalogues list one set", () => {
+    const list = buildShelfChecklist({
+      sets: [
+        { id: "q3", label: "Hunny Rescue", sortKey: 103 },
+        { id: "q3", label: "Hunny Rescue (dup module)", sortKey: 103 },
+      ],
+      prints: [
+        print("lorcana:q3-10", "q3", "10"),
+        print("lorcana:q3-10", "q3", "10"),
+        print("lorcana:q3-11", "q3", "11"),
+      ],
+      owned: new Set(),
+    });
+    expect(list.sets).toHaveLength(1);
+    expect(list.sets[0]?.total).toBe(2);
+    expect(list.sets[0]?.cards.map((c) => c.printKey)).toEqual([
+      "lorcana:q3-10",
+      "lorcana:q3-11",
+    ]);
+  });
+
   it("legacy owned printKey without set still counts in every listing", () => {
     const list = buildShelfChecklist({
       sets: [

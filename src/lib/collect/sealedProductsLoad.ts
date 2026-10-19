@@ -6,6 +6,7 @@
  * deux projections ({@link BuyProduct} vs {@link ContainmentProduct}).
  */
 import {
+  normalizeBuySetId,
   withContainerPackSizes,
   type BuyProduct,
   type ProductBehavior,
@@ -91,12 +92,23 @@ export function toBuyProduct(entry: SealedProductEntry): BuyProduct {
   const known = guaranteed.length > 0;
   const randomPoolScope = entry.randomPoolScope ?? "unknown";
   const randomPoolPrints = printKeys(entry.randomPoolPrints);
+  const guaranteedProducts = (entry.guaranteedProducts ?? [])
+    .map((link) => {
+      const slug = link.slug?.trim();
+      if (!slug) return null;
+      const qty =
+        typeof link.qty === "number" && link.qty > 0
+          ? Math.floor(link.qty)
+          : 1;
+      return { slug, qty };
+    })
+    .filter((row): row is { slug: string; qty: number } => row != null);
   return {
     slug: entry.slug,
     name: (entry.name ?? "").trim() || entry.slug.replace(/-/g, " "),
     kind: entry.kind,
     behavior: entry.behavior as ProductBehavior,
-    setId: entry.catalogueSetId ?? entry.setCode,
+    setId: normalizeBuySetId(entry.catalogueSetId ?? entry.setCode),
     prints: known ? guaranteed : preview,
     printsArePreview: known ? false : entry.containsPrintsIsPreview,
     cardCount: entry.declaredCardCount,
@@ -113,6 +125,10 @@ export function toBuyProduct(entry: SealedProductEntry): BuyProduct {
       randomPoolScope === "listed" && randomPoolPrints.length > 0
         ? randomPoolPrints
         : null,
+    ...(guaranteedProducts.length > 0 ? { guaranteedProducts } : {}),
+    ...(entry.structureUnits?.length
+      ? { structureUnits: entry.structureUnits }
+      : {}),
   };
 }
 
@@ -125,7 +141,7 @@ export function toContainmentProduct(
     name: (entry.name ?? "").trim() || entry.slug.replace(/-/g, " "),
     kind: entry.kind,
     behavior: entry.behavior as ContainmentProduct["behavior"],
-    setId: entry.catalogueSetId ?? entry.setCode,
+    setId: normalizeBuySetId(entry.catalogueSetId ?? entry.setCode),
     imageUrl: entry.image,
     language: entry.lang,
     guaranteedPrints: guaranteed,

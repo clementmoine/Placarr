@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -9,15 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   CatalogueSealedContainedGrid,
   CatalogueSealedPrintGrid,
 } from "@/components/admin/CatalogueSealedPrintGrid";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import type {
+  CatalogueSealedContainedProduct,
   CatalogueSealedDetail,
   CatalogueSealedRow,
 } from "@/lib/admin/catalogueProducts";
+import {
+  formatRandomPoolScopeLabel,
+  formatSealedRandomContentsLabel,
+  formatSealedStructureUnitLabel,
+} from "@/lib/admin/sealedContentsLabels";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
 import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
@@ -39,6 +47,7 @@ async function fetchDetail(
 
 /**
  * Checklist dialog for one sealed SKU — known list, preview, or honest gap.
+ * Nested SKUs open in the same dialog (stack + back).
  */
 export function CatalogueSealedDetailDialog({
   packId,
@@ -54,10 +63,21 @@ export function CatalogueSealedDetailDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const fr = locale === "fr";
-  const productKey = product?.productKey ?? null;
+  const rootKey = product?.productKey ?? null;
+  const [stack, setStack] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open || !rootKey) {
+      setStack([]);
+      return;
+    }
+    setStack([rootKey]);
+  }, [open, rootKey]);
+
+  const productKey = stack[stack.length - 1] ?? null;
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ["catalogueProductDetail", "v4", packId, productKey],
+    queryKey: ["catalogueProductDetail", "v5", packId, productKey],
     queryFn: () => fetchDetail(packId, productKey!),
     enabled: open && Boolean(productKey),
   });
@@ -65,17 +85,50 @@ export function CatalogueSealedDetailDialog({
   const detail = data ?? null;
   const langLabel = detail?.lang?.trim()
     ? printLanguageLabel(detail.lang)
-    : product?.lang?.trim()
+    : product?.lang?.trim() && stack.length <= 1
       ? printLanguageLabel(product.lang)
       : null;
 
   const title =
     detail?.name ?? product?.name ?? detail?.slug ?? product?.slug ?? "…";
 
+  const pushChild = (child: CatalogueSealedContainedProduct) => {
+    if (!child.resolvable || !child.productKey) return;
+    setStack((prev) => [...prev, child.productKey]);
+  };
+
+  const popStack = () => {
+    setStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) setStack([]);
+    onOpenChange(next);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="flex max-h-[90vh] flex-col gap-3 sm:max-w-2xl">
         <DialogHeader>
+          {stack.length > 1 ? (
+            <div className="mb-1 flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="-ml-2 h-7 gap-1 px-2 text-xs text-muted-foreground"
+                onClick={popStack}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                {fr ? "Retour" : "Back"}
+              </Button>
+              <span className="truncate text-[11px] text-muted-foreground">
+                {fr
+                  ? `${stack.length} niveaux`
+                  : `${stack.length} levels`}
+              </span>
+            </div>
+          ) : null}
           <DialogTitle className="pr-6 text-base leading-snug">
             {langLabel?.flag ? `${langLabel.flag} ` : ""}
             {title}
@@ -200,13 +253,12 @@ export function CatalogueSealedDetailDialog({
                   </p>
                 ) : null}
                 <p>
-                  {fr ? "Loterie : " : "Pool: "}
-                  <span className="tabular-nums">
-                    {detail.randomPoolScope}
-                    {detail.randomPoolScope === "set" && detail.setCode
-                      ? ` (${detail.setCode})`
-                      : ""}
-                  </span>
+                  {fr ? "Tirage : " : "Random draw: "}
+                  {formatRandomPoolScopeLabel(
+                    detail.randomPoolScope,
+                    detail.setCode,
+                    fr,
+                  )}
                 </p>
                 {detail.contentsKnown &&
                 detail.randomPoolScope === "set" &&
@@ -214,8 +266,8 @@ export function CatalogueSealedDetailDialog({
                 detail.randomPoolPrints.length === 0 ? (
                   <p className="text-[11px] text-amber-800 dark:text-amber-200">
                     {fr
-                      ? "Pool set connu, mais le catalogue n’a pas encore de tirages pour ce set."
-                      : "Set pool known, but the catalogue has no prints for this set yet."}
+                      ? "Tirage au hasard du set connu, mais le catalogue n’a pas encore les cartes de ce set."
+                      : "Set random draw is known, but the catalogue has no prints for this set yet."}
                   </p>
                 ) : null}
               </div>
@@ -278,10 +330,43 @@ export function CatalogueSealedDetailDialog({
             ) : null}
 
             <CatalogueSealedContainedGrid
-              title={fr ? "Produits inclus" : "Contained products"}
+              title={fr ? "SKUs inclus" : "Contained SKUs"}
               products={detail.guaranteedProducts}
               fr={fr}
+              onSelectProduct={pushChild}
             />
+            {detail.contentsUnits?.length ? (
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-medium text-foreground">
+                  {fr ? "Structure (sans liste carte-à-carte)" : "Structure (no card list yet)"}
+                </h3>
+                <ul className="space-y-1 rounded-md border border-border/60 bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
+                  {detail.contentsUnits.map((unit, index) => (
+                    <li
+                      key={`${unit.label}-${unit.count}-${unit.cardsEach}-${index}`}
+                    >
+                      {formatSealedStructureUnitLabel(unit, fr)}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+            {detail.contentsRandom?.length ? (
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-medium text-foreground">
+                  {fr ? "Sachets / tirages" : "Packs / random draws"}
+                </h3>
+                <ul className="space-y-1 rounded-md border border-border/60 bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
+                  {detail.contentsRandom.map((node, index) => (
+                    <li
+                      key={`${node.setId ?? "pack"}-${node.packs}-${node.cardsPerPack}-${index}`}
+                    >
+                      {formatSealedRandomContentsLabel(node, fr)}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             <CatalogueSealedPrintGrid
               title={sealedGuaranteedPrintsSectionTitle({
                 fr,
@@ -299,11 +384,11 @@ export function CatalogueSealedDetailDialog({
               title={
                 detail.randomPoolScope === "set"
                   ? fr
-                    ? `Pool set${detail.setCode ? ` ${detail.setCode}` : ""} (loterie)`
-                    : `Set pool${detail.setCode ? ` ${detail.setCode}` : ""} (random)`
+                    ? `Cartes possibles du set${detail.setCode ? ` ${detail.setCode}` : ""}`
+                    : `Possible cards from set${detail.setCode ? ` ${detail.setCode}` : ""}`
                   : fr
-                    ? "Pool listé (loterie)"
-                    : "Listed pool (random)"
+                    ? "Cartes possibles (liste connue)"
+                    : "Possible cards (listed pool)"
               }
               prints={detail.randomPoolPrints}
               fr={fr}

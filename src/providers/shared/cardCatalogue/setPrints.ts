@@ -49,5 +49,18 @@ export async function enumerateSetPrints(input: {
   if (!includeUnprinted) {
     rows = rows.filter((row) => row.printed !== false);
   }
-  return rows;
+  /*
+    Les JOINs multi-titres (une ligne SQL par langue) doivent collapser : la
+    check-list compte des *tirages*, pas des traductions. On garde la première
+    ligne — le search a déjà ordonné la langue préférée en tête.
+  */
+  const seen = new Set<string>();
+  const unique: PrintCandidate[] = [];
+  for (const row of rows) {
+    const key = row.printKey.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(row);
+  }
+  return unique;
 }

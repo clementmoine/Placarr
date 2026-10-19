@@ -543,6 +543,8 @@
     "checklistPlanBoostersToComplete": "≈ {boosters} boosters pour espérer tout avoir",
     "checklistSealedNotRecommended": "Peu rentable à ce stade — préférer les singles (fin de set / chase).",
     "checklistSealedNoUsefulOption": "Aucun scellé utile pour cette langue / ce set (ou contenu inconnu).",
+    "checklistSealedStructureOnly": "Structure connue — listes carte-à-carte absentes (impact non estimé).",
+    "checklistStructureAttested": "structure attestée",
     "checklistNoAdvice": "Aucun produit scellé connu pour cette extension.",
     "checklistNoSinglesAdvice": "Rien à recommander à l'unité pour l'instant.",
     "checklistPricesLoading": "Recherche des prix…",

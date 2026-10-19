@@ -95,7 +95,6 @@ export function resolveContentLayers(input: {
       input.kind === "trove" ||
       input.kind === "multipack" ||
       input.kind === "collector_box" ||
-      input.kind === "blister" ||
       input.kind === "deck_bundle";
     return {
       guaranteedPrints: [],
@@ -104,7 +103,7 @@ export function resolveContentLayers(input: {
     };
   }
 
-  // random_pack — booster / judge / story…
+  // random_pack — booster / judge / story… (blister = pack_container ×1)
   if (input.containsPrintsIsPreview || prints.length === 0) {
     return {
       guaranteedPrints: [],

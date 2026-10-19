@@ -24,6 +24,17 @@ export type SealedProductLink = {
   qty?: number;
 };
 
+/**
+ * Unité de taille connue sans liste carte-à-carte (deck 60, reward pack 18).
+ * Distinct de la loterie `random` et des printKeys `fixed`.
+ */
+export type SealedStructureUnit = {
+  /** Libellé court (`Starting decks`, `Reward packs`, …). */
+  label: string;
+  count: number;
+  cardsEach: number;
+};
+
 /** D'où sort la loterie — détail dans `contentLayers.ts`. */
 export type RandomPoolScope = "set" | "listed" | "none" | "unknown";
 
@@ -113,6 +124,11 @@ export type SealedProductEntry = {
    * décomposés pour le conseil d'achat.
    */
   guaranteedProducts?: SealedProductLink[];
+  /**
+   * Blocs de taille connue sans inventaire (Gateway 2×30 + 4×18, starter 2×60).
+   * Alimente l'arbre `units` — pas une fausse loterie ni une checklist.
+   */
+  structureUnits?: SealedStructureUnit[];
   /**
    * D'où sort la loterie — voir `contentLayers.ts` / docs/sealed_product_contents.md.
    * `set` sur un booster classique est une **hypothèse** jusqu'à vérification

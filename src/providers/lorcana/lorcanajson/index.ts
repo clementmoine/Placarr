@@ -371,9 +371,17 @@ export function cardFromLocalRow(row: LorcanaTcgSearchRow): LorcanaCard {
     setCardCount: row.setCardCount,
     variant: row.variant,
     promoGrouping: row.promoGrouping,
-    language: (isLorcanaLanguage(row.lang)
-      ? row.lang
-      : LORCANA_DEFAULT_LANGUAGE) as LorcanaCard["language"],
+    /*
+      Conserver le `lang` sqlite tel quel. Recaser `de`/`it` (hors allowlist
+      scrape fr+en) en `fr` faisait passer BRAMBLE BULLY le filtre check-list
+      française à côté de « Brute de ronces ».
+    */
+    language: ((): LorcanaCard["language"] => {
+      const raw =
+        typeof row.lang === "string" ? row.lang.trim().toLowerCase() : "";
+      if (isLorcanaLanguage(raw)) return raw;
+      return LORCANA_DEFAULT_LANGUAGE;
+    })(),
     fullName: row.fullName,
     name: row.name ?? row.fullName,
     version: row.version,

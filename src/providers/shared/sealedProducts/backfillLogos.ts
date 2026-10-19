@@ -69,6 +69,83 @@ function copyLogoFields(
   return touched;
 }
 
+/** Prix / titre boutique — jumeaux locale (gift EN) vs coffret FR tarifé. */
+function copyShopIdentityFields(
+  donor: SealedProductEntry,
+  entry: SealedProductEntry,
+): boolean {
+  let touched = false;
+  if (
+    (entry.priceCents == null || !(entry.priceCents > 0)) &&
+    typeof donor.priceCents === "number" &&
+    donor.priceCents > 0
+  ) {
+    entry.priceCents = donor.priceCents;
+    touched = true;
+  }
+  if ((!entry.name || !entry.name.trim()) && donor.name?.trim()) {
+    entry.name = donor.name.trim();
+    touched = true;
+  }
+  return touched;
+}
+
+/**
+ * Boutique `WHW` → catalogue `10` quand un seul mapping est attesté sur l'index.
+ */
+export function boutiqueCodeToCatalogueSetId(
+  products: readonly SealedProductEntry[],
+): Map<string, string> {
+  const votes = new Map<string, Map<string, number>>();
+  for (const entry of products) {
+    const code = entry.setCode?.trim();
+    const cat = entry.catalogueSetId?.trim();
+    if (!code || !cat || code === cat) continue;
+    const key = code.toLowerCase();
+    const byCat = votes.get(key) ?? new Map<string, number>();
+    byCat.set(cat, (byCat.get(cat) ?? 0) + 1);
+    votes.set(key, byCat);
+  }
+  const out = new Map<string, string>();
+  for (const [code, byCat] of votes) {
+    if (byCat.size !== 1) continue;
+    out.set(code, [...byCat.keys()][0]!);
+  }
+  return out;
+}
+
+function remapPacksBySetKeys(
+  packsBySet: Record<string, number> | null | undefined,
+  codeToCat: ReadonlyMap<string, string>,
+): Record<string, number> | null | undefined {
+  if (!packsBySet) return packsBySet;
+  let touched = false;
+  const out: Record<string, number> = {};
+  for (const [key, qty] of Object.entries(packsBySet)) {
+    const mapped = codeToCat.get(key.trim().toLowerCase()) ?? key;
+    if (mapped !== key) touched = true;
+    out[mapped] = (out[mapped] ?? 0) + qty;
+  }
+  return touched ? out : packsBySet;
+}
+
+function remapGuaranteeSetKeys(
+  guaranteeSets: string[] | null | undefined,
+  codeToCat: ReadonlyMap<string, string>,
+): string[] | null | undefined {
+  if (!guaranteeSets?.length) return guaranteeSets;
+  let touched = false;
+  const out = guaranteeSets.map((row) => {
+    const mapped = codeToCat.get(row.trim().toLowerCase());
+    if (mapped && mapped !== row) {
+      touched = true;
+      return mapped;
+    }
+    return row;
+  });
+  return touched ? out : guaranteeSets;
+}
+
 /**
  * Remplit `setLogo` / `catalogueSetId` encore vides via les modules du pack.
  * Utile quand le relevé de logos a grossi après le premier ingest, ou quand le
@@ -142,20 +219,88 @@ export function backfillSealedProductSetLogos(
   }
 
   for (const group of [...byPrints.values(), ...byFamily.values()]) {
-    const donor = group.find((entry) => entry.setLogo || entry.catalogueSetId);
-    if (!donor) continue;
+    const logoDonor = group.find(
+      (entry) => entry.setLogo || entry.catalogueSetId,
+    );
     for (const entry of group) {
-      if (entry === donor) continue;
-      if (copyLogoFields(donor, entry)) filled += 1;
+      let touched = false;
+      if (logoDonor && entry !== logoDonor && copyLogoFields(logoDonor, entry)) {
+        touched = true;
+      }
+      for (const donor of group) {
+        if (donor === entry) continue;
+        if (copyShopIdentityFields(donor, entry)) touched = true;
+      }
+      if (touched) filled += 1;
+    }
+  }
+
+  /*
+    Chapitre lu dans les printKeys garantis — même avec un setCode boutique
+    (WHW, FAB…). Sans ça, le conseil d'achat ne joint jamais la check-list
+    numérique (`10`) au SKU étiqueté `WHW`.
+  */
+  for (const entry of entries) {
+    const chapter = uniqueChapterSetFromGuarantees(entry);
+    if (!chapter) continue;
+    let touched = false;
+    if (!entry.catalogueSetId) {
+      entry.catalogueSetId = chapter;
+      touched = true;
+    }
+    /*
+      Deck + booster inclus : les garanties comptent sur le chapitre, les
+      sachets via packsBySet. Sans guaranteeSets, projectBuyProductForSet
+      vide les prints dès que packsBySet est présent.
+    */
+    if (!entry.guaranteeSets?.length && entry.guaranteedPrints.length > 0) {
+      entry.guaranteeSets = [chapter];
+      touched = true;
+    }
+    if (touched) filled += 1;
+  }
+
+  const codeToCat = boutiqueCodeToCatalogueSetId(entries);
+  if (codeToCat.size > 0) {
+    for (const entry of entries) {
+      const nextPacks = remapPacksBySetKeys(entry.packsBySet, codeToCat);
+      const nextGuarantees = remapGuaranteeSetKeys(
+        entry.guaranteeSets,
+        codeToCat,
+      );
+      let touched = false;
+      if (nextPacks !== entry.packsBySet) {
+        entry.packsBySet = nextPacks;
+        touched = true;
+      }
+      if (nextGuarantees !== entry.guaranteeSets) {
+        entry.guaranteeSets = nextGuarantees;
+        touched = true;
+      }
+      // Display WHW sans garanties : hérite du mapping attesté par un deck frère.
+      if (!entry.catalogueSetId && entry.setCode?.trim()) {
+        const mapped = codeToCat.get(entry.setCode.trim().toLowerCase());
+        if (mapped) {
+          entry.catalogueSetId = mapped;
+          touched = true;
+        }
+      }
+      if (touched) filled += 1;
     }
   }
 
   if (hasResolver) {
     for (const entry of entries) {
       if (entry.setLogo && entry.catalogueSetId) continue;
-      // Boutique déjà étiquetée D23 / D100 : ne pas inventer un logo de chapitre.
-      if (entry.setCode?.trim()) continue;
-      const chapter = uniqueChapterSetFromGuarantees(entry);
+      const chapter =
+        entry.catalogueSetId?.trim() ||
+        uniqueChapterSetFromGuarantees(entry);
+      /*
+        Boutique D23 / D100 sans chapitre catalogue : ne pas inventer un
+        logo de set principal. Dès qu'on a un catalogueSetId (garanties ou
+        slug set-N), le wordmark du chapitre est légitime.
+      */
+      if (!chapter && entry.setCode?.trim()) continue;
       if (!chapter) continue;
       const hint = { setCode: chapter, slug: entry.slug, name: entry.name };
       let touched = false;

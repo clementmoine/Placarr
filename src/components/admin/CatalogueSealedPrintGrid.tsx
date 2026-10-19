@@ -265,11 +265,14 @@ export function CatalogueSealedContainedGrid({
   products,
   fr,
   muted,
+  onSelectProduct,
 }: {
   title: string;
   products: CatalogueSealedContainedProduct[];
   fr: boolean;
   muted?: boolean;
+  /** Drill-down when the child SKU exists in the pack index. */
+  onSelectProduct?: (product: CatalogueSealedContainedProduct) => void;
 }) {
   if (products.length === 0) return null;
   const copies = products.reduce(
@@ -308,13 +311,39 @@ export function CatalogueSealedContainedGrid({
           const qty = sealedProductQty(product.qty);
           const stackDepth = Math.min(Math.max(qty, 1), MAX_STACK_LAYERS);
           const label = product.name?.trim() || product.slug;
+          const clickable =
+            Boolean(onSelectProduct) && product.resolvable !== false;
           return (
             <li
               key={product.productKey || product.slug}
               className="min-w-0 list-none"
             >
               <div
-                className="relative mx-auto"
+                className={cn(
+                  "relative mx-auto",
+                  clickable &&
+                    "cursor-pointer rounded-md ring-offset-background transition hover:ring-2 hover:ring-ring/60",
+                  !clickable &&
+                    onSelectProduct &&
+                    "opacity-70",
+                )}
+                role={clickable ? "button" : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onClick={
+                  clickable
+                    ? () => onSelectProduct?.(product)
+                    : undefined
+                }
+                onKeyDown={
+                  clickable
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onSelectProduct?.(product);
+                        }
+                      }
+                    : undefined
+                }
                 style={{
                   width: "5rem",
                   height: "7rem",
@@ -323,7 +352,20 @@ export function CatalogueSealedContainedGrid({
                   paddingBottom:
                     stackDepth > 1 ? `${(stackDepth - 1) * 3}px` : undefined,
                 }}
-                title={[label, product.slug, qty > 1 ? `×${qty}` : null]
+                title={[
+                  label,
+                  product.slug,
+                  qty > 1 ? `×${qty}` : null,
+                  !clickable && onSelectProduct
+                    ? fr
+                      ? "SKU absent de l'index"
+                      : "SKU missing from index"
+                    : clickable
+                      ? fr
+                        ? "Ouvrir le détail"
+                        : "Open detail"
+                      : null,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               >

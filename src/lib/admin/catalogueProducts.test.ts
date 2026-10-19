@@ -643,13 +643,52 @@ describe("catalogue sealed rows", () => {
         name: "Starter Pays du Vent",
         image: "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.webp",
         contentsKnown: true,
+        resolvable: true,
       }),
       expect.objectContaining({
         slug: "booster-s1",
         qty: 2,
         name: "Booster Série 1",
         image: "/assets/naruto/carddass/products/booster-s1/fr/art.webp",
+        resolvable: true,
       }),
+    ]);
+  });
+
+  it("exposes contentsRandom from the sealed contents tree", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "cat-sealed-tree-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const packDir = path.join(root, "lorcana");
+    mkdirSync(packDir, { recursive: true });
+    const index: ProductsIndexV1 = {
+      version: 1,
+      pack: "lorcana",
+      generatedAt: "2026-10-19T00:00:00.000Z",
+      products: {
+        "lorcana::display-24": baseEntry({
+          slug: "display-24-boosters-set-14",
+          kind: "display",
+          behavior: "pack_container",
+          name: "Display 24",
+          cardsPerPack: 12,
+          packsContained: 24,
+          randomPoolScope: "none",
+          containsPrintsIsPreview: true,
+        }),
+      },
+    };
+    writeFileSync(
+      path.join(packDir, "products-index.json"),
+      `${JSON.stringify(index, null, 2)}\n`,
+    );
+    resetCatalogueProductsCache();
+    const detail = getCatalogueProductDetail(
+      "lorcana",
+      "lorcana::display-24",
+    );
+    expect(detail?.contentsRandom).toEqual([
+      { packs: 24, cardsPerPack: 12, pool: "set" },
     ]);
   });
 

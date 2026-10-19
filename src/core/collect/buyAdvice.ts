@@ -19,6 +19,20 @@
  */
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 
+import {
+  buyProductToContentsSource,
+  toContentsTree,
+  type SealedContentsSource,
+  type SealedContentsTree,
+} from "./sealedContentsTree";
+
+export type {
+  SealedContentNode,
+  SealedContentsSource,
+  SealedContentsTree,
+} from "./sealedContentsTree";
+export { buyProductToContentsSource, toContentsTree } from "./sealedContentsTree";
+
 /** Ce qu'un produit fait des cartes qu'il contient. */
 export type ProductBehavior =
   "known_bundle" | "mixed_bundle" | "random_pack" | "pack_container";
@@ -33,6 +47,14 @@ export type BuyProduct = {
   prints?: readonly string[] | null;
   /** `true` quand `prints` n'est qu'un aperçu, pas le contenu réel. */
   printsArePreview?: boolean;
+  /** SKUs scellés inclus (pack découverte, …) — expand via l'arbre. */
+  guaranteedProducts?: readonly { slug: string; qty?: number }[] | null;
+  /** Unités taille connue sans liste (Gateway decks, …). */
+  structureUnits?: readonly {
+    label: string;
+    count: number;
+    cardsEach: number;
+  }[] | null;
   /**
    * Combien de cartes le produit annonce.
    *
@@ -124,7 +146,35 @@ export type BuyOption = {
    * check-list : utile, mais ne complète pas les trous ciblés.
    */
   languageMismatch?: boolean;
+  /**
+   * Taille / blocs attestés (`structureUnits`) mais listes carte-à-carte
+   * absentes — `newCards` reste 0 (pas d'espérance inventée), l'UI peut
+   * quand même montrer le SKU.
+   */
+  structureAttested?: boolean;
 };
+
+/** Set ids checklist / boutique : toujours comparer en minuscules (`Q3` ↔ `q3`). */
+export function normalizeBuySetId(
+  setId: string | null | undefined,
+): string | null {
+  const trimmed = setId?.trim() ?? "";
+  return trimmed ? trimmed.toLowerCase() : null;
+}
+
+/**
+ * Produits projetés pour une extension checklist. Les clés de
+ * {@link projectBuyProductsBySet} sont normalisées (`Q3` ↔ `q3`) — sans
+ * cette lecture, les scellés d'extensions à code majuscule restent invisibles.
+ */
+export function buyProductsForSet(
+  productsBySet: ReadonlyMap<string, readonly BuyProduct[]>,
+  setId: string,
+): BuyProduct[] {
+  const key = normalizeBuySetId(setId);
+  if (!key) return [];
+  return [...(productsBySet.get(key) ?? [])];
+}
 
 /**
  * L'espérance de cartes **neuves** dans un paquet aléatoire.
@@ -296,26 +346,40 @@ function membershipSetIds(
  * reprint partage le printKey (NI-009), S1 est une autre extension / un autre
  * produit. La possession set-scoped ne change pas ça.
  */
+function packsInSetRecord(
+  packsBySet: Readonly<Record<string, number>> | null | undefined,
+  sid: string,
+): number {
+  if (!packsBySet) return 0;
+  const direct = packsBySet[sid];
+  if (typeof direct === "number") return Math.max(0, direct);
+  for (const [key, value] of Object.entries(packsBySet)) {
+    if (normalizeBuySetId(key) === sid) return Math.max(0, value);
+  }
+  return 0;
+}
+
 export function projectBuyProductForSet(
   product: BuyProduct,
   setId: string,
   printSetIds: PrintSetMemberships,
 ): BuyProduct | null {
-  const sid = setId.trim();
+  const sid = normalizeBuySetId(setId);
   if (!sid) return null;
+  const productSetId = normalizeBuySetId(product.setId);
 
   const packsBySet = product.packsBySet;
   const hasPacksBySet =
     packsBySet != null && Object.keys(packsBySet).length > 0;
   const guaranteeSets = (product.guaranteeSets ?? [])
-    .map((row) => row.trim())
-    .filter(Boolean);
+    .map((row) => normalizeBuySetId(row))
+    .filter((row): row is string => Boolean(row));
   const hasGuaranteeSets = guaranteeSets.length > 0;
   const guaranteesHere = hasGuaranteeSets && guaranteeSets.includes(sid);
 
   const packsInContainer = hasPacksBySet
-    ? Math.max(0, packsBySet![sid] ?? 0)
-    : product.setId === sid
+    ? packsInSetRecord(packsBySet, sid)
+    : productSetId === sid
       ? (product.packsInContainer ?? null)
       : 0;
 
@@ -324,7 +388,7 @@ export function projectBuyProductForSet(
     if (printBelongsToSet(printSetIds, key, sid)) return true;
     const known = membershipSetIds(printSetIds, key).length > 0;
     if (known) return false;
-    return !hasPacksBySet && !hasGuaranteeSets && product.setId === sid;
+    return !hasPacksBySet && !hasGuaranteeSets && productSetId === sid;
   });
 
   /*
@@ -346,12 +410,12 @@ export function projectBuyProductForSet(
   */
   const attach = hasPacksBySet || hasGuaranteeSets
     ? (packsInContainer ?? 0) > 0 || printsForSet.length > 0
-    : product.setId === sid ||
-      (!product.setId && printsForSet.length > 0);
+    : productSetId === sid ||
+      (!productSetId && printsForSet.length > 0);
 
   if (!attach) return null;
 
-  if (!hasPacksBySet && !hasGuaranteeSets && product.setId === sid) {
+  if (!hasPacksBySet && !hasGuaranteeSets && productSetId === sid) {
     return { ...product, setId: sid };
   }
 
@@ -373,25 +437,25 @@ export function projectBuyProductsBySet(input: {
   const out = new Map<string, BuyProduct[]>();
   for (const product of input.products) {
     const candidates = new Set<string>();
-    if (product.setId) candidates.add(product.setId);
+    const add = (raw: string | null | undefined) => {
+      const id = normalizeBuySetId(raw);
+      if (id) candidates.add(id);
+    };
+    add(product.setId);
     if (product.packsBySet) {
-      for (const setId of Object.keys(product.packsBySet)) {
-        if (setId.trim()) candidates.add(setId.trim());
-      }
+      for (const setId of Object.keys(product.packsBySet)) add(setId);
     }
-    for (const setId of product.guaranteeSets ?? []) {
-      if (setId.trim()) candidates.add(setId.trim());
-    }
+    for (const setId of product.guaranteeSets ?? []) add(setId);
     if (!(product.guaranteeSets ?? []).length) {
       for (const key of product.prints ?? []) {
         for (const setId of membershipSetIds(input.printSetIds, key)) {
-          candidates.add(setId);
+          add(setId);
         }
       }
       if (product.randomPoolScope === "listed") {
         for (const key of product.randomPoolPrints ?? []) {
           for (const setId of membershipSetIds(input.printSetIds, key)) {
-            candidates.add(setId);
+            add(setId);
           }
         }
       }
@@ -556,11 +620,46 @@ export function buyOptionsForMissing(input: {
   });
 }
 
+function structureUnitsFingerprint(
+  units: BuyProduct["structureUnits"],
+): string {
+  if (!units?.length) return "";
+  return [...units]
+    .map(
+      (unit) =>
+        `${unit.label.trim().toLowerCase()}\t${unit.count}\t${unit.cardsEach}`,
+    )
+    .sort()
+    .join("|");
+}
+
 /**
  * Même produit retail sous plusieurs SKU (recto/verso dbzcollection,
  * `part1-booster-1188` vs `1189`) — une seule option d'achat suffit.
+ *
+ * Les quêtes Illumineer ont souvent **deux** entrées boutique pour le même
+ * coffret : titre quête FR (« Équipe Miel ») et titre de chapitre
+ * (« Invasion Épineuse » / « Règne de Jafar »). On ignore le nom et on
+ * fingerprint la structure (set × langue × unités).
  */
 export function buyAdviceEquivalenceKey(product: BuyProduct): string {
+  const kind = product.kind.trim().toLowerCase();
+  const setId = (product.setId ?? "").trim().toLowerCase();
+  const lang = normalizeLang(product.language) ?? "";
+  if (kind === "quest") {
+    /*
+      Pas de packSize : un SKU boutique peut porter un residual (ex. 39)
+      alors que le jumeau chapitre n'en a pas — ce n'est pas deux coffrets.
+    */
+    return [
+      setId,
+      kind,
+      product.behavior,
+      lang,
+      product.cardCount ?? "",
+      structureUnitsFingerprint(product.structureUnits),
+    ].join("\0");
+  }
   const name = product.name
     .trim()
     .toLowerCase()
@@ -569,10 +668,10 @@ export function buyAdviceEquivalenceKey(product: BuyProduct): string {
     .replace(/[\s—–_-]+/g, " ")
     .trim();
   return [
-    (product.setId ?? "").trim().toLowerCase(),
-    product.kind.trim().toLowerCase(),
+    setId,
+    kind,
     product.behavior,
-    normalizeLang(product.language) ?? "",
+    lang,
     product.packSize ?? "",
     product.packsInContainer ?? "",
     product.cardCount ?? "",
@@ -606,6 +705,178 @@ export function dedupeBuyProductsForAdvice(
   return [...best.values()];
 }
 
+export type BuyImpact = {
+  newCards: number;
+  certainty: BuyOption["certainty"];
+  basis: string;
+};
+
+const CERTAINTY_RANK: Record<BuyImpact["certainty"], number> = {
+  exact: 0,
+  atLeast: 1,
+  expected: 2,
+  unknown: 3,
+};
+
+function mergeCertainty(
+  a: BuyImpact["certainty"],
+  b: BuyImpact["certainty"],
+): BuyImpact["certainty"] {
+  return CERTAINTY_RANK[a] >= CERTAINTY_RANK[b] ? a : b;
+}
+
+/**
+ * Évalue l'apport en cartes neuves en expandant l'arbre (SKU enfants inclus).
+ */
+export function expandBuyImpact(input: {
+  tree: SealedContentsTree;
+  missing: ReadonlySet<string>;
+  poolSize: number;
+  resolveSku?: (slug: string) => SealedContentsSource | null;
+  packsPerHitByPrint?: ReadonlyMap<string, number>;
+  contentsKnown?: boolean;
+  cardCount?: number | null;
+  maxDepth?: number;
+  _depth?: number;
+  _seen?: Set<string>;
+}): BuyImpact {
+  const depth = input._depth ?? 0;
+  const maxDepth = input.maxDepth ?? 4;
+  const seen = input._seen ?? new Set<string>();
+  const missingKeys = [...input.missing];
+
+  if (input.tree.length === 0) {
+    return {
+      newCards: 0,
+      certainty: "unknown",
+      basis: "Arbre de contenu vide — rien à estimer.",
+    };
+  }
+
+  let newCards = 0;
+  let certainty: BuyImpact["certainty"] = "exact";
+  const basisParts: string[] = [];
+
+  for (const node of input.tree) {
+    if (node.kind === "fixed") {
+      const hits = node.prints.filter((row) =>
+        input.missing.has(row.printKey),
+      ).length;
+      newCards += hits;
+      const declared = input.cardCount;
+      const partial =
+        declared != null &&
+        declared > 0 &&
+        node.prints.length < declared &&
+        !input.contentsKnown;
+      certainty = mergeCertainty(certainty, partial ? "atLeast" : "exact");
+      basisParts.push(
+        partial
+          ? `fixe : ${hits} manquante(s) (${node.prints.length}/${declared} listées)`
+          : `fixe : ${hits} manquante(s) / ${node.prints.length} garanties`,
+      );
+      continue;
+    }
+
+    if (node.kind === "random") {
+      if (node.pool === "listed") {
+        const listed = node.listed ?? [];
+        const missingInPool = listed.filter((key) =>
+          input.missing.has(key),
+        ).length;
+        if (listed.length === 0) {
+          certainty = mergeCertainty(certainty, "unknown");
+          basisParts.push("pool listé vide");
+          continue;
+        }
+        const draws = node.packs > 0 ? node.packs : 1;
+        const expected =
+          Math.round((missingInPool / listed.length) * draws * 10) / 10;
+        newCards += expected;
+        certainty = mergeCertainty(certainty, "expected");
+        basisParts.push(
+          `listé : ${draws} tirage(s) parmi ${listed.length} (${missingInPool} manquante(s))`,
+        );
+        continue;
+      }
+
+      if (node.cardsPerPack <= 0 || node.packs <= 0) {
+        certainty = mergeCertainty(certainty, "unknown");
+        basisParts.push("aléatoire sans taille de sachet");
+        continue;
+      }
+      const expected = expectedNewCards({
+        packSize: node.cardsPerPack,
+        poolSize: input.poolSize,
+        missing: input.missing.size,
+        packsPerHitByPrint: input.packsPerHitByPrint,
+        missingKeys,
+        packsOpened: node.packs,
+      });
+      newCards += expected;
+      certainty = mergeCertainty(certainty, "expected");
+      basisParts.push(
+        `aléatoire : ${node.packs}×${node.cardsPerPack}${node.setId ? ` (${node.setId})` : ""}`,
+      );
+      continue;
+    }
+
+    if (node.kind === "units") {
+      // Taille connue, listes absentes — pas d'espérance inventée.
+      basisParts.push(
+        `${node.count}×${node.cardsEach} ${node.label} (listes absentes)`,
+      );
+      certainty = mergeCertainty(certainty, "unknown");
+      continue;
+    }
+
+    if (depth >= maxDepth) {
+      certainty = mergeCertainty(certainty, "unknown");
+      basisParts.push(`sku ${node.slug} : profondeur max`);
+      continue;
+    }
+    if (seen.has(node.slug)) {
+      certainty = mergeCertainty(certainty, "unknown");
+      basisParts.push(`sku ${node.slug} : cycle`);
+      continue;
+    }
+    const childSource = input.resolveSku?.(node.slug) ?? null;
+    if (!childSource) {
+      certainty = mergeCertainty(certainty, "unknown");
+      basisParts.push(`sku ${node.slug} : absent`);
+      continue;
+    }
+    const childTree = toContentsTree(childSource);
+    const nextSeen = new Set(seen);
+    nextSeen.add(node.slug);
+    const childImpact = expandBuyImpact({
+      ...input,
+      tree: childTree,
+      contentsKnown: childSource.contentsKnown,
+      cardCount: childSource.cardCount,
+      _depth: depth + 1,
+      _seen: nextSeen,
+    });
+    newCards += childImpact.newCards * node.qty;
+    certainty = mergeCertainty(certainty, childImpact.certainty);
+    basisParts.push(
+      node.qty > 1
+        ? `${node.qty}× ${node.slug} (${childImpact.newCards}/u)`
+        : `${node.slug} → ${childImpact.newCards}`,
+    );
+  }
+
+  const capped =
+    Math.round(Math.min(newCards, input.missing.size) * 10) / 10;
+  return {
+    newCards: capped,
+    certainty: capped <= 0 && certainty === "exact" ? "unknown" : certainty,
+    basis: basisParts.length
+      ? `Arbre : ${basisParts.join(" · ")}.`
+      : "Arbre de contenu — rien à dire.",
+  };
+}
+
 function scoreBuyOptions(input: {
   missing: ReadonlySet<string>;
   poolSize: number;
@@ -619,6 +890,13 @@ function scoreBuyOptions(input: {
   const missingKeys = [...input.missing];
   const seenSlugs = new Set<string>();
   const products = dedupeBuyProductsForAdvice(input.products);
+  const bySlug = new Map(
+    products.map((product) => [product.slug.trim(), product] as const),
+  );
+  const resolveSku = (slug: string): SealedContentsSource | null => {
+    const child = bySlug.get(slug.trim());
+    return child ? buyProductToContentsSource(child) : null;
+  };
 
   for (const product of products) {
     /*
@@ -636,14 +914,69 @@ function scoreBuyOptions(input: {
       if (seenSlugs.has(slug)) continue;
       seenSlugs.add(slug);
     }
-    const random = RANDOM.has(product.behavior);
-    const listed = product.prints ?? [];
-    const hits = listed.filter((key) => input.missing.has(key)).length;
     const language = normalizeLang(product.language);
     const languageMismatch = Boolean(
       input.forceLanguageMismatch ||
         (preferred && language && language !== preferred),
     );
+
+    /*
+      SKUs enfants (pack découverte, …) : expand l'arbre. Sinon chemin plat
+      historique (certainty exact/atLeast plus fine sur les decks).
+    */
+    const hasTreeChildren = Boolean(
+      product.guaranteedProducts?.length || product.structureUnits?.length,
+    );
+    if (hasTreeChildren) {
+      const impact = expandBuyImpact({
+        tree: toContentsTree(buyProductToContentsSource(product)),
+        missing: input.missing,
+        poolSize: input.poolSize,
+        resolveSku,
+        packsPerHitByPrint: input.packsPerHitByPrint,
+        contentsKnown: product.contentsKnown,
+        cardCount: product.cardCount,
+      });
+      let basis = impact.basis;
+      if (languageMismatch) {
+        basis += ` Produit en ${language} — ne complète pas une liste ${preferred}.`;
+      }
+      const priceCents = product.priceCents ?? null;
+      const structureAttested =
+        impact.newCards <= 0 &&
+        impact.certainty === "unknown" &&
+        (product.structureUnits?.length ?? 0) > 0;
+      options.push({
+        slug: product.slug,
+        name: product.name,
+        kind: product.kind,
+        newCards: impact.newCards,
+        certainty: impact.certainty,
+        priceCents,
+        centsPerNewCard:
+          priceCents != null && impact.newCards > 0
+            ? Math.round(priceCents / impact.newCards)
+            : null,
+        basis,
+        imageUrl: product.imageUrl ?? null,
+        language,
+        languageMismatch,
+        ...(structureAttested ? { structureAttested: true } : {}),
+      });
+      continue;
+    }
+
+    const random = RANDOM.has(product.behavior);
+    /*
+      Aperçu boutique (15 tuiles) : jamais un plancher, sauf `known_bundle`
+      où l'aperçu est un inventaire partiel honnête (deck à moitié listé).
+      Sinon trove/prerelease/blister annonçaient « +15 · au moins ».
+    */
+    const listed =
+      product.printsArePreview && product.behavior !== "known_bundle"
+        ? []
+        : (product.prints ?? []);
+    const hits = listed.filter((key) => input.missing.has(key)).length;
 
     let newCards: number;
     let certainty: BuyOption["certainty"];
@@ -965,8 +1298,14 @@ export function withContainerPackSizes(
   for (const product of products) {
     const row = hint(product.setId);
     const lang = normalizeLang(product.language) ?? "";
+    /*
+      Cartes/sachet : booster (`random_pack`) ou blister carton (`pack_container`
+      ×1 avec `packSize` 12). Sans ça, un set n'ayant que des blisters ne
+      renseignait jamais la display.
+    */
     if (
-      product.behavior === "random_pack" &&
+      (product.behavior === "random_pack" ||
+        product.behavior === "pack_container") &&
       product.packSize != null &&
       product.packSize > 0
     ) {
@@ -975,10 +1314,14 @@ export function withContainerPackSizes(
       }
       if (row.anyPackSize == null) row.anyPackSize = product.packSize;
     }
+    /*
+      Taille de boîte : ignorer les containers ×1 (blister) — sinon
+      `anyPacks = 1` écrase une display 24 encore sans `packsContained`.
+    */
     if (
       product.behavior === "pack_container" &&
       product.packsInContainer != null &&
-      product.packsInContainer > 0
+      product.packsInContainer > 1
     ) {
       if (!row.packsByLang.has(lang)) {
         row.packsByLang.set(lang, product.packsInContainer);
@@ -1122,15 +1465,18 @@ export function planSetCompletion(input: {
   const packSizeOf = (slug: string): number =>
     input.products.find((product) => product.slug === slug)?.packSize ?? 0;
 
+  /** Booster nu ou blister carton (= container ×1 autour d'un booster). */
+  const isUnitPack = (option: BuyOption): boolean =>
+    option.kind === "booster" || option.kind === "blister";
   const sizedBooster = pool.find(
     (option) =>
-      option.kind === "booster" &&
+      isUnitPack(option) &&
       option.newCards > 0 &&
       packSizeOf(option.slug) > 0,
   );
   const pricedBooster = pool.find(
     (option) =>
-      option.kind === "booster" &&
+      isUnitPack(option) &&
       option.newCards > 0 &&
       option.centsPerNewCard != null &&
       packSizeOf(option.slug) > 0,
@@ -1139,15 +1485,19 @@ export function planSetCompletion(input: {
   const threshold = pricedBooster?.centsPerNewCard ?? null;
 
   /*
-    Taille de sachet : d'abord le booster du pool (langue OK), sinon n'importe
-    quel `random_pack` du set — un display EN seul ne doit pas faire croire
+    Taille de sachet : d'abord le booster/blister du pool, sinon n'importe
+    quel sachet unitaire du set — un display EN seul ne doit pas faire croire
     qu'on est en « fin de chase ».
   */
+  const isUnitPackProduct = (product: BuyProduct): boolean =>
+    product.behavior === "random_pack" ||
+    (product.behavior === "pack_container" &&
+      (product.packsInContainer ?? 0) === 1);
   let packSize = booster ? packSizeOf(booster.slug) : 0;
   if (packSize <= 0) {
     const fallback = input.products.find(
       (product) =>
-        product.behavior === "random_pack" &&
+        isUnitPackProduct(product) &&
         (product.packSize ?? 0) > 0 &&
         sealedLanguageRank(
           product.language,
@@ -1159,7 +1509,7 @@ export function planSetCompletion(input: {
   if (packSize <= 0) {
     const anyPack = input.products.find(
       (product) =>
-        product.behavior === "random_pack" && (product.packSize ?? 0) > 0,
+        isUnitPackProduct(product) && (product.packSize ?? 0) > 0,
     );
     packSize = anyPack?.packSize ?? 0;
   }
@@ -1266,15 +1616,21 @@ export function planSetCompletion(input: {
     packsPerHitForMissing: ratesFor(sealedKeys),
   });
 
-  const displayProduct = input.products.find(
+  /*
+    Prefer a real `display` over other pack_containers (blister_case, …).
+    `.find` used to badge the first 24-pack SKU — often a mis-tagged blister.
+  */
+  const langAnchor = booster?.language ?? matching[0]?.language;
+  // Multi-pack only — blister ×1 must not become the « display » badge.
+  const containers = input.products.filter(
     (product) =>
       product.behavior === "pack_container" &&
-      (product.packsInContainer ?? 0) > 0 &&
-      sealedLanguageRank(
-        product.language,
-        booster?.language ?? matching[0]?.language,
-      ) === 0,
+      (product.packsInContainer ?? 0) > 1 &&
+      sealedLanguageRank(product.language, langAnchor) === 0,
   );
+  const displayProduct =
+    containers.find((product) => product.kind === "display") ??
+    containers[0];
   const packs = displayProduct?.packsInContainer ?? null;
   const displayOption = displayProduct
     ? pool.find((option) => option.slug === displayProduct.slug)

@@ -260,6 +260,28 @@ describe("lorcanaLogoUrlForSet", () => {
     ).toBe("14");
   });
 
+  it("reads catalogue set id from slug set-N when the logo index is missing", () => {
+    expect(
+      lorcanaCatalogueSetIdForProduct({
+        setCode: "WHW",
+        slug: "booster-set-10-lueurs-dans-les-profondeurs-gaston",
+        name: "Booster Set 10",
+        index: null,
+      }),
+    ).toBe("10");
+  });
+
+  it("prefers slug set-14 over a mistyped Set 13 title (Hyperia prerelease)", () => {
+    expect(
+      lorcanaCatalogueSetIdForProduct({
+        setCode: "HYP",
+        slug: "pack-avant-premiere-set-14-hyperia-city",
+        name: "Pack Avant-Première Set 13 - Hyperia City",
+        index: null,
+      }),
+    ).toBe("14");
+  });
+
   it("joins Rise of the Floodborn via the unique catalog word, even under ROTF", () => {
     expect(
       lorcanaLogoUrlForSet({

@@ -333,12 +333,28 @@ function Advice({
       Un known_bundle déjà couvert (DVD Vol.3 → TA-214 possédée) sort
       `newCards: 0` + `certainty: exact` — ce n'est **pas** une option utile.
       Ne garder que ce qui apporte au moins une carte neuve.
+      Exception : structure attestée (quête) — on montre le SKU sans inventer
+      d'espérance (`structureAttested`).
     */
     const useful = options.filter((option) => option.newCards > 0);
+    const structureOnly = options.filter(
+      (option) =>
+        option.newCards <= 0 &&
+        option.structureAttested &&
+        !option.languageMismatch,
+    );
     if (plan.preferSingles) return useful.slice(0, 5);
     const head = recommended ? [recommended] : [];
     const rest = useful.filter((option) => option.slug !== recommended?.slug);
-    return [...head, ...rest].slice(0, 5);
+    const merged = [...head, ...rest, ...structureOnly];
+    const seen = new Set<string>();
+    return merged
+      .filter((option) => {
+        if (seen.has(option.slug)) return false;
+        seen.add(option.slug);
+        return true;
+      })
+      .slice(0, 5);
   })();
 
   return (
@@ -463,6 +479,11 @@ function Advice({
                 <p className={styles.adviceNote}>
                   {t("items.checklistSealedNoUsefulOption")}
                 </p>
+              ) : listedOptions.some((option) => option.structureAttested) &&
+                !listedOptions.some((option) => option.newCards > 0) ? (
+                <p className={styles.adviceNote}>
+                  {t("items.checklistSealedStructureOnly")}
+                </p>
               ) : null}
               {options.length === 0 && (
                 <p className={styles.adviceNote}>
@@ -508,19 +529,26 @@ function Advice({
                         styles.optionGain,
                         option.certainty === "exact" && styles.optionExact,
                         option.languageMismatch && styles.optionMuted,
+                        option.structureAttested && styles.optionMuted,
                       )}
                       title={option.basis}
                     >
-                      {t("items.checklistNewCards", {
-                        count: option.newCards,
-                      })}
-                      {" · "}
-                      {t(
-                        option.certainty === "exact"
-                          ? "items.checklistExact"
-                          : option.certainty === "atLeast"
-                            ? "items.checklistAtLeast"
-                            : "items.checklistEstimated",
+                      {option.structureAttested
+                        ? t("items.checklistStructureAttested")
+                        : t("items.checklistNewCards", {
+                            count: option.newCards,
+                          })}
+                      {!option.structureAttested && (
+                        <>
+                          {" · "}
+                          {t(
+                            option.certainty === "exact"
+                              ? "items.checklistExact"
+                              : option.certainty === "atLeast"
+                                ? "items.checklistAtLeast"
+                                : "items.checklistEstimated",
+                          )}
+                        </>
                       )}
                     </span>
                     {option.priceCents != null && (

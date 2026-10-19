@@ -132,9 +132,11 @@ function contentsCaption(product: CatalogueSealedRow, fr: boolean): string | nul
       );
     }
     if (product.randomPoolScope === "set") {
-      bits.push(fr ? "pool set (gamble)" : "set pool (gamble)");
+      bits.push(fr ? "hasard du set" : "random from set");
     } else if (product.randomPoolScope === "none") {
-      bits.push(fr ? "loterie dans les sachets" : "lottery in child packs");
+      bits.push(
+        fr ? "hasard dans les sachets" : "random in child packs",
+      );
     }
     return bits.join(" · ") || (fr ? "structure connue" : "structure known");
   }

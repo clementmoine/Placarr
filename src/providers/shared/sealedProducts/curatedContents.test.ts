@@ -59,6 +59,42 @@ function entry(partial: Partial<SealedProductEntry> & { slug: string }): SealedP
 }
 
 describe("mergeCuratedSealedContents", () => {
+  it("does not let SKU cardsPerPack:null wipe byKind pack size (Hyperia trove)", () => {
+    stubPack("lorcana", {
+      version: 1,
+      pack: "lorcana",
+      updatedAt: "2026-10-19",
+      byKind: {
+        trove: {
+          source: "test",
+          verifiedAt: "2026-10-19",
+          packsContained: 8,
+          cardsPerPack: 12,
+          randomPoolScope: "none",
+        },
+      },
+      skus: {
+        "coffret-tresor-des-illumineurs-set-14-hyperia-city": {
+          source: "test",
+          verifiedAt: "2026-10-19",
+          packsContained: 8,
+          cardsPerPack: null,
+          containsPrintsIsPreview: true,
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("lorcana", {
+      "lorcana::trove14": entry({
+        slug: "coffret-tresor-des-illumineurs-set-14-hyperia-city",
+        kind: "trove",
+        behavior: "mixed_bundle",
+        cardsPerPack: null,
+        packsContained: 8,
+      }),
+    });
+    expect(merged["lorcana::trove14"]?.cardsPerPack).toBe(12);
+  });
+
   it("applies byKind then sku overrides", () => {
     stubPack("lorcana", {
       version: 1,

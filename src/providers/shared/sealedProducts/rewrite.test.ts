@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ProductsIndexV1, SealedProductEntry } from "./indexFormat";
 import {
   mergeSealedFaceBackPairs,
+  normalizeSealedSetCode,
   rewriteSealedProductName,
   rewriteSealedProductsIndex,
 } from "./rewrite";
@@ -48,6 +49,36 @@ describe("rewriteSealedProductName", () => {
     expect(rewriteSealedProductName("Part Promo — Carte")).toBe(
       "Série Promo — Carte",
     );
+  });
+
+  it("restores truncated Illumineer og:title from hunny slug", () => {
+    expect(
+      rewriteSealedProductName("Illumineer", "great-hunny-rescue-quest-en"),
+    ).toBe("Illumineer's Quest: The Great Hunny Rescue");
+  });
+
+  it("aligns boutique Set N typos with the slug set number", () => {
+    expect(
+      rewriteSealedProductName(
+        "Pack Avant-Première Set 13 - Hyperia City",
+        "pack-avant-premiere-set-14-hyperia-city",
+      ),
+    ).toBe("Pack Avant-Première Set 14 - Hyperia City");
+    expect(
+      rewriteSealedProductName(
+        "Boîte de 24 boosters Set 14 - Hyperia City",
+        "display-24-boosters-set-14-hyperia-city",
+      ),
+    ).toBe("Boîte de 24 boosters Set 14 - Hyperia City");
+  });
+});
+
+describe("normalizeSealedSetCode", () => {
+  it("maps QUEST3 / SET14 / GATEWAY1", () => {
+    expect(normalizeSealedSetCode("QUEST3")).toBe("Q3");
+    expect(normalizeSealedSetCode("SET14")).toBe("14");
+    expect(normalizeSealedSetCode("GATEWAY1")).toBe("G1");
+    expect(normalizeSealedSetCode("Q3")).toBe("Q3");
   });
 });
 
@@ -160,7 +191,7 @@ describe("rewriteSealedProductsIndex", () => {
     expect(changed).toBeGreaterThanOrEqual(3);
     expect(next.products["pokemon::etb-demo"]?.kind).toBe("etb");
     expect(next.products["pokemon::etb-demo"]?.lang).toBe("fr");
-    expect(next.products["pokemon::blister-carton"]?.kind).toBe("blister_case");
+    expect(next.products["pokemon::blister-carton"]?.kind).toBe("blister");
     expect(next.products["onepiece::jp-display"]?.lang).toBe("ja");
     expect(next.products["onepiece::jp-display"]?.slug).toBe(
       "japanese-display-op01",

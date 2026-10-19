@@ -9,6 +9,7 @@ import {
   cataloguePackInfo,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
+import { toContentsTree } from "@/core/collect/sealedContentsTree";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
 import {
@@ -72,6 +73,23 @@ export type CatalogueSealedContainedProduct = {
   kind: SealedKind;
   productKey: string;
   contentsKnown: boolean;
+  /** false when the child slug is absent from the pack index. */
+  resolvable: boolean;
+};
+
+/** Nœud aléatoire résolu pour l'UI admin (résumé honnête, pas de tuiles). */
+export type CatalogueSealedRandomNode = {
+  packs: number;
+  cardsPerPack: number;
+  pool: RandomPoolScope;
+  setId?: string;
+};
+
+/** Unité taille connue sans liste (Gateway decks, starter 2×60). */
+export type CatalogueSealedStructureUnit = {
+  label: string;
+  count: number;
+  cardsEach: number;
 };
 
 /** Full SKU payload for the Scellés content dialog (checklist). */
@@ -83,6 +101,13 @@ export type CatalogueSealedDetail = CatalogueSealedRow & {
   randomPoolScope: RandomPoolScope;
   /** SKUs scellés inclus (starters / boosters d'un pack multi-produits). */
   guaranteedProducts: CatalogueSealedContainedProduct[];
+  /**
+   * Tirages aléatoires issus de l'arbre (`packs × cardsPerPack`), distincts
+   * du pool marketing `randomPoolPrints`.
+   */
+  contentsRandom: CatalogueSealedRandomNode[];
+  /** Blocs taille connue sans inventaire carte-à-carte. */
+  contentsUnits: CatalogueSealedStructureUnit[];
   guaranteedPrints: SealedPrintLink[];
   randomPoolPrints: SealedPrintLink[];
   /** Shop / curated union list — preview tiles when `containsPrintsIsPreview`. */
@@ -428,8 +453,60 @@ function buildGuaranteedProducts(
       kind: refined?.kind ?? "coffret",
       productKey: sealedProductKey(corpus, link.slug),
       contentsKnown: refined?.contentsKnown ?? false,
+      resolvable: Boolean(refined),
     };
   });
+}
+
+function entryContentsSource(entry: SealedProductEntry) {
+  return {
+    kind: entry.kind,
+    behavior: entry.behavior,
+    contentsKnown: entry.contentsKnown,
+    printsArePreview: entry.containsPrintsIsPreview,
+    guaranteedPrints: entry.guaranteedPrints,
+    cardCount: entry.declaredCardCount,
+    cardsPerPack: entry.cardsPerPack,
+    packsContained: entry.packsContained,
+    packsBySet: entry.packsBySet,
+    randomPoolScope: entry.randomPoolScope,
+    randomPoolPrints: (entry.randomPoolPrints ?? []).map(
+      (row) => row.printKey ?? "",
+    ),
+    guaranteedProducts: entry.guaranteedProducts,
+    structureUnits: entry.structureUnits,
+  };
+}
+
+function buildContentsRandom(
+  entry: SealedProductEntry,
+): CatalogueSealedRandomNode[] {
+  return toContentsTree(entryContentsSource(entry))
+    .filter(
+      (node): node is Extract<typeof node, { kind: "random" }> =>
+        node.kind === "random" && node.pool !== "listed",
+    )
+    .map((node) => ({
+      packs: node.packs,
+      cardsPerPack: node.cardsPerPack,
+      pool: node.pool,
+      ...(node.setId ? { setId: node.setId } : {}),
+    }));
+}
+
+function buildContentsUnits(
+  entry: SealedProductEntry,
+): CatalogueSealedStructureUnit[] {
+  return toContentsTree(entryContentsSource(entry))
+    .filter(
+      (node): node is Extract<typeof node, { kind: "units" }> =>
+        node.kind === "units",
+    )
+    .map((node) => ({
+      label: node.label,
+      count: node.count,
+      cardsEach: node.cardsEach,
+    }));
 }
 
 function needsPrintEnrichment(link: SealedPrintLink): boolean {
@@ -536,6 +613,8 @@ export async function getCatalogueProductDetailAsync(
     setCardCount: entry.setCardCount,
     randomPoolScope: entry.randomPoolScope,
     guaranteedProducts: buildGuaranteedProducts(corpus, entry, bySlug),
+    contentsRandom: buildContentsRandom(entry),
+    contentsUnits: buildContentsUnits(entry),
     guaranteedPrints,
     randomPoolPrints,
     prints: entry.prints,
@@ -565,6 +644,8 @@ export function getCatalogueProductDetail(
     setCardCount: entry.setCardCount,
     randomPoolScope: entry.randomPoolScope,
     guaranteedProducts: buildGuaranteedProducts(corpus, entry, bySlug),
+    contentsRandom: buildContentsRandom(entry),
+    contentsUnits: buildContentsUnits(entry),
     guaranteedPrints: entry.guaranteedPrints,
     randomPoolPrints: entry.randomPoolPrints,
     prints: entry.prints,

@@ -5,6 +5,7 @@ import {
   sealedContentsKnown,
   sealedKindForCategory,
   refineSealedKind,
+  withRefinedSealedKind,
 } from "./kinds";
 import {
   printKeyFromCollectorRef,
@@ -53,7 +54,7 @@ describe("sealed kinds", () => {
     expect(sealedKindForCategory("puzzles")).toBe("puzzle");
     expect(sealedKindForCategory("playmats")).toBeNull();
     expect(sealedBehaviorForKind("booster")).toBe("random_pack");
-    expect(sealedBehaviorForKind("blister")).toBe("mixed_bundle");
+    expect(sealedBehaviorForKind("blister")).toBe("pack_container");
     expect(sealedBehaviorForKind("display")).toBe("pack_container");
     expect(sealedBehaviorForKind("puzzle")).toBe("known_bundle");
     expect(sealedBehaviorForKind("case")).toBe("pack_container");
@@ -66,11 +67,20 @@ describe("sealed kinds", () => {
   });
 
   it("refines blister cartons, duopacks and multi-deck packs", () => {
+    // FR retail « blister carton » = sleeved single, not a 24-pack case.
+    expect(
+      refineSealedKind({
+        category: "boosters-blister",
+        slug: "booster-blister-carton-set-12-woody",
+        name: "Booster Blister Carton Set 12",
+        kind: "booster",
+      }),
+    ).toBe("blister");
     expect(
       refineSealedKind({
         category: "boosters",
-        slug: "booster-blister-carton-set-12-woody",
-        name: "Booster Blister Carton Set 12",
+        slug: "carton-de-24-blisters-set-12",
+        name: "Carton de 24 blisters Set 12",
         kind: "booster",
       }),
     ).toBe("blister_case");
@@ -108,6 +118,51 @@ describe("sealed kinds", () => {
         kind: "coffret",
       }),
     ).toBe("tin");
+  });
+
+  it("keeps gift boxes as collector_box (not decks→deck)", () => {
+    expect(
+      refineSealedKind({
+        category: "decks",
+        slug: "elsa-gift-box-collector_box-en",
+        name: "Elsa Gift Box",
+        kind: "deck",
+      }),
+    ).toBe("collector_box");
+    expect(
+      refineSealedKind({
+        category: "decks",
+        slug: "coffret-cadeau-aurore",
+        name: "Coffret cadeau Aurore",
+        kind: "deck",
+      }),
+    ).toBe("collector_box");
+  });
+
+  it("promotes Illumineer's Quest packshots off trove / byKind ×8", () => {
+    expect(
+      refineSealedKind({
+        category: "trove-packs",
+        slug: "great-hunny-rescue-trove-en",
+        name: "Illumineer's Quest Great Hunny Rescue",
+        kind: "trove",
+      }),
+    ).toBe("quest");
+    const demoted = withRefinedSealedKind({
+      kind: "trove" as const,
+      behavior: "mixed_bundle" as const,
+      category: "trove-packs",
+      slug: "great-hunny-rescue-trove-fr",
+      name: "Quête des Illumineurs — Le Grand Sauvetage du Miel",
+      packsContained: 8,
+      packsBySet: { set13: 8 },
+      cardsPerPack: 12,
+    });
+    expect(demoted.kind).toBe("quest");
+    expect(demoted.packsContained).toBeNull();
+    expect(demoted.packsBySet).toBeNull();
+    expect(demoted.cardsPerPack).toBeNull();
+    expect(demoted.behavior).toBe("mixed_bundle");
   });
 
   it("never treats a booster or display as known contents", () => {

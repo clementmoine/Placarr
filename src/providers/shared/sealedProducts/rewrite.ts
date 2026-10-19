@@ -29,14 +29,52 @@ function rewriteEntryAssetUrl(
 /** Soft-repair latin-1→UTF-8 mojibake left in sealed names (`D�tecteur`). */
 export function rewriteSealedProductName(
   name: string | null | undefined,
+  slug?: string | null,
 ): string | null {
   if (name == null) return null;
   const trimmed = name.trim();
   if (!trimmed) return name;
-  return trimmed
+  let next = trimmed
     .replace(/\uFFFD/g, "é")
     // Bandai FR packaging / Naruto Carddass : « Série N », pas dbzc « Part N ».
     .replace(/^Part (\d+|Promo)\b/u, "Série $1");
+  /*
+    Official og:title used to cut at the apostrophe → bare « Illumineer ».
+    Recover the full IQ3 title from the slug when we still have the stub.
+  */
+  if (
+    /^illumineer$/i.test(next) &&
+    /great-hunny-rescue|hunny|miel/i.test(slug ?? "")
+  ) {
+    next = "Illumineer's Quest: The Great Hunny Rescue";
+  }
+  /*
+    Boutique typo : « Pack Avant-Première Set 13 - Hyperia City » alors que le
+    slug porte set-14. Aligner le numéro sur le slug.
+  */
+  const slugSet = /(?:^|-)set-(\d+)(?:-|$)/i.exec(slug ?? "")?.[1];
+  if (slugSet) {
+    next = next.replace(/\bSet\s+(\d+)\b/gi, (full, n: string) =>
+      n === slugSet ? full : full.replace(n, slugSet),
+    );
+  }
+  return next;
+}
+
+/** `QUEST3` / `SET14` → catalogue codes `Q3` / `14`. */
+export function normalizeSealedSetCode(
+  setCode: string | null | undefined,
+): string | null {
+  if (setCode == null) return null;
+  const raw = setCode.trim();
+  if (!raw) return null;
+  const m = /^(set|quest|gateway)(\d+)$/i.exec(raw);
+  if (!m) return raw;
+  const kind = m[1]!.toLowerCase();
+  const n = m[2]!;
+  if (kind === "set") return n;
+  if (kind === "quest") return `Q${n}`;
+  return `G${n}`;
 }
 
 function normalizeSealedPairName(name: string | null | undefined): string {
@@ -167,17 +205,42 @@ export function rewriteSealedProductEntry(
       name: refined.name,
       kind: refined.kind,
     }) ?? refined.kind;
+  const setCode = normalizeSealedSetCode(refined.setCode);
   return {
     ...refined,
     kind,
     behavior: sealedBehaviorForKind(kind),
     lang,
-    name: rewriteSealedProductName(refined.name),
+    setCode,
+    name: rewriteSealedProductName(refined.name, refined.slug),
     image: rewriteEntryAssetUrl(refined.image),
     imageBack: rewriteEntryAssetUrl(refined.imageBack),
     poster: rewriteEntryAssetUrl(refined.poster),
     setLogo: rewriteEntryAssetUrl(refined.setLogo),
   };
+}
+
+/**
+ * Official IQ pages used to mint `*-trove` from spill photos. Drop those when
+ * a real `*-quest` sibling exists for the same locale suffix.
+ */
+export function dropRedundantQuestTroveSkus(
+  products: Record<string, SealedProductEntry>,
+): number {
+  const slugs = new Set(Object.values(products).map((p) => p.slug));
+  let removed = 0;
+  for (const [key, entry] of Object.entries(products)) {
+    const m =
+      /^(great-hunny-rescue|deep-trouble|palace-heist)-trove(-[a-z]{2})?$/i.exec(
+        entry.slug,
+      );
+    if (!m) continue;
+    const questSlug = `${m[1]}-quest${m[2] ?? ""}`;
+    if (!slugs.has(questSlug)) continue;
+    delete products[key];
+    removed += 1;
+  }
+  return removed;
 }
 
 export function rewriteSealedProductsIndex(
@@ -192,6 +255,7 @@ export function rewriteSealedProductsIndex(
       next.behavior !== entry.behavior ||
       next.lang !== entry.lang ||
       next.name !== entry.name ||
+      next.setCode !== entry.setCode ||
       next.image !== entry.image ||
       next.imageBack !== entry.imageBack ||
       next.poster !== entry.poster ||
@@ -202,6 +266,7 @@ export function rewriteSealedProductsIndex(
     // Keep the existing product key — only fields migrate.
     products[key] = next;
   }
+  changed += dropRedundantQuestTroveSkus(products);
   changed += mergeSealedFaceBackPairs(products);
   changed += backfillSealedProductPackshots(index.pack, products);
   return {

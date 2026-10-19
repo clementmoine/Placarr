@@ -378,6 +378,30 @@ function percent(owned: number, total: number): number {
  * **Set-scoped** : posséder un tirage pour S5 ne coche pas S1, même si le
  * `printKey` est partagé (reprints Naruto). Pas d'expansion cross-set.
  */
+function checklistRowIdentity(print: ChecklistPrint): string {
+  return `${print.printKey.trim().toLowerCase()}|${(print.finish ?? "")
+    .trim()
+    .toLowerCase()}`;
+}
+
+/**
+ * Deux modules Lorcana (JSON + TCG) énumèrent le même set — sans dédup, la
+ * check-list double chaque carte (`lorcana:q3-10` ×2 → clé React collision).
+ */
+function dedupeChecklistPrints(
+  prints: readonly ChecklistPrint[],
+): ChecklistPrint[] {
+  const seen = new Set<string>();
+  const out: ChecklistPrint[] = [];
+  for (const print of prints) {
+    const id = checklistRowIdentity(print);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(print);
+  }
+  return out;
+}
+
 export function buildShelfChecklist(input: {
   sets: readonly ChecklistSetInput[];
   prints: readonly ChecklistPrint[];
@@ -399,10 +423,14 @@ export function buildShelfChecklist(input: {
   const setsWithoutCatalogue: ChecklistSetInput[] = [];
   let total = 0;
   let ownedCount = 0;
+  /** Même id poussé par deux catalogues (lorcanajson + lorcanatcg). */
+  const seenSetIds = new Set<string>();
 
   for (const set of input.sets) {
-    const prints = bySet.get(set.id);
-    if (!prints?.length) {
+    if (seenSetIds.has(set.id)) continue;
+    seenSetIds.add(set.id);
+    const prints = dedupeChecklistPrints(bySet.get(set.id) ?? []);
+    if (!prints.length) {
       setsWithoutCatalogue.push(set);
       continue;
     }

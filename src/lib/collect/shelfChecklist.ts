@@ -22,6 +22,7 @@ import {
 } from "@/core/collect/checklist";
 import {
   buyOptionsForMissing,
+  buyProductsForSet,
   planSetCompletion,
   projectBuyProductsBySet,
   sealedSourcesByPrint,
@@ -659,7 +660,7 @@ export async function buildChecklistForShelf(input: {
     const allowedLanguages = language
       ? [language]
       : (setCardLanguages.get(set.id) ?? []);
-    const products = productsBySet.get(set.id) ?? [];
+    const products = buyProductsForSet(productsBySet, set.id);
 
     const setPrints = prints.filter((row) => row.setId === set.id);
     const packsPerHitByPrint =

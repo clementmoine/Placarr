@@ -3,6 +3,38 @@
 Pour le conseil d'achat (« singles vs booster vs display »), **chaque** SKU de
 `products-index.json` doit décrire ce qu'il contient. Absent = non vérifié.
 
+## Modèle : arbre imbriqué (tous TCGs)
+
+Tout SKU scellé est une **composition** de trois sortes de nœuds, éventuellement
+récursive — pas seulement un `behavior` plat :
+
+| Nœud | Sens | Exemple |
+| --- | --- | --- |
+| `fixed` | cartes **toujours** présentes | starter known, promo gift |
+| `random` | `packs × cardsPerPack` + pool | booster ×1, display ×24, trove ×8 |
+| `units` | taille connue **sans** liste | Gateway 2×30 + 4×18 ; starter 2×60 |
+| `sku` | autre SKU du même pack | Pack Découverte → starters + boosters |
+
+```
+SKU
+├── fixed  (guaranteedPrints)
+├── units  (structureUnits — decks / reward packs sans inventaire)
+├── random (packsContained / packsBySet × cardsPerPack)
+└── sku    (guaranteedProducts) → arbre enfant…
+```
+
+Implémentation : `src/core/collect/sealedContentsTree.ts` (`toContentsTree`,
+projection depuis les champs plats). Le conseil d'achat **expand** les nœuds
+`sku` (`expandBuyImpact` dans `buyAdvice.ts`).
+
+**Admin Catalogue → Scellés** : le dialogue détail affiche les trois couches ;
+cliquer un SKU enfant ouvre son détail (pile + retour). Lecture seule — pas
+d'édition d'arbre dans l'UI.
+
+Les `behavior` ci-dessous restent des **raccourcis** de formes d'arbre
+fréquentes (`random_pack` ≈ un nœud random, `pack_container` ≈ random × N,
+`known_bundle` ≈ fixed, `mixed_bundle` ≈ fixed + random).
+
 ## Kinds catalogue (`SealedKind`)
 
 Familles retail first-class (plus seulement booster / display / deck / coffret) :
@@ -56,15 +88,15 @@ réécrits via `rewriteSealedProductsIndex`.
 `declaredCardCount` (fiche boutique) **n'est pas** `cardsPerPack` : chez
 lorcards c'est souvent la taille du **set** (420), pas du sachet.
 
-## Comportements × couches
+## Comportements × couches (raccourcis legacy)
 
-| `behavior` | Garanties | Loterie |
-| --- | --- | --- |
-| `known_bundle` (starter) | liste exacte → `guaranteedPrints` | `none` |
-| `random_pack` (booster set) | souvent vide | `set` (= extension catalogue) **par défaut — à vérifier** |
-| `random_pack` (judge / promo) | parfois 1 promo | `listed` + `randomPoolPrints` |
-| `pack_container` (display) | — | `none` ici ; la loterie est dans les N sachets (`packsContained`) |
-| `mixed_bundle` (trove, blister 3+1) | exclus / promo → `guaranteedPrints` | sachets enfants |
+| `behavior` | Forme d'arbre typique |
+| --- | --- |
+| `known_bundle` (starter) | `fixed` (liste) |
+| `random_pack` (booster set) | `random ×1`, pool `set` (**hypothèse** jusqu'à vérif.) |
+| `random_pack` (judge / promo) | `random` pool `listed` + `randomPoolPrints` |
+| `pack_container` (display / blister ×1 / blister_case) | `random × packsContained` (loterie dans les sachets) |
+| `mixed_bundle` (trove, gift, tin) | `fixed` ± `random` ± `sku` enfants |
 
 ## État mesuré (2026-09-14)
 
@@ -174,7 +206,7 @@ Le conseil d'achat utilise déjà `mergeCuratedSealedContents` via
 | Gift sets (`coffret-cadeau`) | packs + promos vérifiés SKU | disneylorcana / Ravensburger / ScreenRant |
 | Collection starters / Stitch portfolio | 4 boosters + 1 promo | Ravensburger product pages |
 | D23 / Disney 100 | printKeys promo | catalogue `-p1` / `-d23` |
-| Quête Deep Trouble | 5 exclusives + `declaredCardCount=120` (listes decks à compléter) | lorcanaplayer / disneylorcana |
+| Quête Deep Trouble | 5 exclusives + structure 50+2×60 (`declaredCardCount=170`, listes decks à compléter) | lorcanaplayer / disneylorcana |
 | Quêtes Palace Heist / Hunny | structure seule | — |
 | Avant-première / prelude | `randomPoolScope=unknown` (pas un booster set) | — |
 | Judge / special packs | **ne pas** laisser en `set` sans vérif | — |

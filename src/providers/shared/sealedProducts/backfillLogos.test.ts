@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   backfillSealedProductSetLogos,
+  boutiqueCodeToCatalogueSetId,
   sealedGuaranteedPrintSignature,
   sealedProductSlugFamily,
   uniqueChapterSetFromGuarantees,
@@ -123,6 +124,8 @@ describe("backfillSealedProductSetLogos", () => {
       }),
       "lorcana::elsa-fr": entry({
         slug: "coffret-cadeau-fabuleux-elsa",
+        name: "Coffret cadeau Fabuleux Elsa",
+        priceCents: 4499,
         setLogo: "/assets/lorcana/products/sets/set9/logo.png",
         catalogueSetId: "9",
         guaranteedPrints: [
@@ -137,6 +140,8 @@ describe("backfillSealedProductSetLogos", () => {
       "lorcana::elsa-en": entry({
         slug: "elsa-gift-box-collector_box-en",
         lang: "en",
+        name: "",
+        priceCents: null,
         guaranteedPrints: [
           {
             name: "Elsa",
@@ -157,8 +162,58 @@ describe("backfillSealedProductSetLogos", () => {
     expect(products["lorcana::elsa-en"]?.setLogo).toBe(
       "/assets/lorcana/products/sets/set9/logo.png",
     );
+    expect(products["lorcana::elsa-en"]?.priceCents).toBe(4499);
+    expect(products["lorcana::elsa-en"]?.name).toBe(
+      "Coffret cadeau Fabuleux Elsa",
+    );
     expect(sealedGuaranteedPrintSignature(products["lorcana::elsa-fr"]!)).toBe(
       sealedGuaranteedPrintSignature(products["lorcana::elsa-en"]!),
     );
+  });
+
+  it("maps boutique WHW decks onto catalogue set 10 for buy advice", () => {
+    const products = {
+      "lorcana::deck": entry({
+        slug: "set-10-lueurs-deck-simba",
+        setCode: "WHW",
+        packsBySet: { WHW: 1 },
+        guaranteedPrints: [
+          {
+            name: "Simba",
+            slug: "s",
+            ref: null,
+            printKey: "lorcana:10-70",
+          },
+        ],
+      }),
+      "lorcana::display": entry({
+        slug: "display-24-boosters-set-10-lueurs",
+        setCode: "WHW",
+        packsBySet: { WHW: 24 },
+        kind: "display",
+        behavior: "pack_container",
+      }),
+    };
+
+    // Avoid pack "lorcana" — resolveSetLogo may touch a local catalog.sqlite.
+    backfillSealedProductSetLogos("no-such-pack", products);
+
+    expect(products["lorcana::deck"]).toMatchObject({
+      catalogueSetId: "10",
+      packsBySet: { "10": 1 },
+      guaranteeSets: ["10"],
+    });
+    expect(products["lorcana::display"]?.catalogueSetId).toBe("10");
+    expect(products["lorcana::display"]?.packsBySet).toEqual({ "10": 24 });
+  });
+});
+
+describe("boutiqueCodeToCatalogueSetId", () => {
+  it("keeps a unique boutique→catalogue vote", () => {
+    const map = boutiqueCodeToCatalogueSetId([
+      entry({ slug: "a", setCode: "WHW", catalogueSetId: "10" }),
+      entry({ slug: "b", setCode: "WHW", catalogueSetId: "10" }),
+    ]);
+    expect(map.get("whw")).toBe("10");
   });
 });

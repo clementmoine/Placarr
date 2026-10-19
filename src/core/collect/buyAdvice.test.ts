@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   boostersToExpectNearComplete,
   buyOptionsForMissing,
+  buyProductsForSet,
   dedupeBuyProductsForAdvice,
   expectedNewCards,
   packSizeFromName,
@@ -255,6 +256,92 @@ describe("comparer les options d'achat", () => {
     });
     expect(option.certainty).toBe("expected");
     expect(option.newCards).toBeLessThan(3);
+  });
+
+  /*
+    Premier Chapitre fin de set : 12 Enchanted manquantes, blister carton à 5 €
+    avec aperçu boutique = les 12 Enchanted + bulk. Compter l'aperçu comme
+    contenu fixe affichait « +12 · au moins » à 0,42 €/carte.
+  */
+  it("does not floor a blister carton on shop preview tiles (Lorcana chase)", () => {
+    const enchanted = Array.from({ length: 12 }, (_, i) => `lorcana:1-${205 + i}`);
+    const [option] = buyOptionsForMissing({
+      missing: new Set(enchanted),
+      poolSize: 216,
+      products: [
+        {
+          slug: "booster-blister-carton-premier-chapitre-mickey",
+          name: "Booster Blister Carton Premier Chapitre - Mickey",
+          kind: "blister",
+          behavior: "pack_container",
+          prints: [...enchanted, "lorcana:1-21", "lorcana:1-18", "lorcana:1-147"],
+          printsArePreview: true,
+          packSize: 12,
+          packsInContainer: 1,
+          cardCount: 420,
+          priceCents: 500,
+        },
+      ],
+    });
+    expect(option.certainty).toBe("expected");
+    expect(option.newCards).toBeLessThan(2);
+    expect(option.centsPerNewCard == null || option.centsPerNewCard > 200).toBe(
+      true,
+    );
+  });
+
+  it("ranks Hyperia display above trove; never floors trove on 15 preview tiles", () => {
+    const missing = new Set(
+      Array.from({ length: 253 }, (_, i) => `lorcana:14-${i + 1}`),
+    );
+    const options = buyOptionsForMissing({
+      missing,
+      poolSize: 253,
+      products: [
+        {
+          slug: "display-24-boosters-set-14-hyperia-city",
+          name: "Boîte de 24 boosters Set 14 - Hyperia City",
+          kind: "display",
+          behavior: "pack_container",
+          prints: Array.from({ length: 15 }, (_, i) => `lorcana:14-${i + 1}`),
+          printsArePreview: true,
+          packSize: 12,
+          packsInContainer: 24,
+          priceCents: 9990,
+        },
+        {
+          slug: "coffret-tresor-des-illumineurs-set-14-hyperia-city",
+          name: "Trésor des Illumineurs Set 14 - Hyperia City",
+          kind: "trove",
+          behavior: "mixed_bundle",
+          prints: Array.from({ length: 15 }, (_, i) => `lorcana:14-${i + 1}`),
+          printsArePreview: true,
+          packSize: 12,
+          packsInContainer: 8,
+          priceCents: 4400,
+        },
+        {
+          slug: "pack-avant-premiere-set-14-hyperia-city",
+          name: "Pack Avant-Première Set 13 - Hyperia City",
+          kind: "prerelease",
+          behavior: "mixed_bundle",
+          prints: Array.from({ length: 15 }, (_, i) => `lorcana:14-${i + 1}`),
+          printsArePreview: true,
+          priceCents: 6397,
+        },
+      ],
+    });
+    const display = options.find((o) => o.slug.includes("display-24"));
+    expect(display).toBeDefined();
+    expect(display?.certainty).toBe("expected");
+    expect(display?.newCards).toBeGreaterThan(50);
+    const trove = options.find((o) => o.slug.includes("tresor"));
+    expect(trove?.certainty).toBe("expected");
+    expect(trove?.newCards).toBeGreaterThan(15);
+    expect(trove?.newCards).not.toBe(15);
+    const prerelease = options.find((o) => o.slug.includes("avant-premiere"));
+    // No pack model → not a useful option (UI hides newCards 0).
+    expect(prerelease?.newCards ?? 0).toBe(0);
   });
 
   /*
@@ -666,6 +753,112 @@ describe("projectBuyProductsBySet", () => {
     ).toBeNull();
   });
 
+  it("dedupes chapter-branded quest SKUs onto the priced retail coffret", () => {
+    const hunny = {
+      slug: "coffret-quete-des-illumineurs-equipe-miel-a-la-rescousse",
+      name: "Coffret Quête des Illumineurs - Équipe Miel à la Rescousse",
+      kind: "quest",
+      behavior: "mixed_bundle" as const,
+      setId: "q3",
+      language: "fr",
+      cardCount: 190,
+      priceCents: 4000,
+      structureUnits: [
+        { label: "Scenario deck (Vine)", count: 1, cardsEach: 50 },
+        { label: "Ready-to-play decks", count: 2, cardsEach: 60 },
+      ],
+    };
+    const vineChapter = {
+      ...hunny,
+      slug: "attack-of-the-vine-quest",
+      name: "Invasion Epineuse",
+      priceCents: null,
+    };
+    const palace = {
+      slug: "coffret-quete-des-illumineurs-vol-au-palais",
+      name: "Coffret Quête des Illumineurs - Vol au Palais",
+      kind: "quest",
+      behavior: "mixed_bundle" as const,
+      setId: "q2",
+      language: "fr",
+      cardCount: 170,
+      /** Residual boutique — ne doit pas empêcher la fusion avec le jumeau. */
+      packSize: 39,
+      priceCents: 2444,
+      structureUnits: [
+        { label: "Scenario deck (Jafar)", count: 1, cardsEach: 50 },
+        { label: "Ready-to-play decks", count: 2, cardsEach: 60 },
+      ],
+    };
+    const jafarChapter = {
+      ...palace,
+      slug: "reign-of-jafar-quest",
+      name: "Le Règne de Jafar",
+      packSize: null,
+      priceCents: null,
+    };
+    const deduped = dedupeBuyProductsForAdvice([
+      vineChapter,
+      hunny,
+      jafarChapter,
+      palace,
+    ]);
+    expect(deduped.map((row) => row.slug).sort()).toEqual([
+      "coffret-quete-des-illumineurs-equipe-miel-a-la-rescousse",
+      "coffret-quete-des-illumineurs-vol-au-palais",
+    ]);
+    const options = buyOptionsForMissing({
+      missing: new Set(["lorcana:q3-10"]),
+      poolSize: 37,
+      preferredLanguage: "fr",
+      products: [vineChapter, hunny],
+    });
+    expect(options).toHaveLength(1);
+    expect(options[0]?.slug).toBe(
+      "coffret-quete-des-illumineurs-equipe-miel-a-la-rescousse",
+    );
+    expect(options[0]?.priceCents).toBe(4000);
+  });
+
+  it("matches quest setIds case-insensitively (Q3 ↔ q3)", () => {
+    const quest = {
+      slug: "great-hunny-rescue-quest-en",
+      name: "Great Hunny Rescue",
+      kind: "quest",
+      behavior: "mixed_bundle" as const,
+      setId: "Q3",
+      cardCount: 190,
+      structureUnits: [
+        { label: "Ready-to-play decks", count: 2, cardsEach: 60 },
+      ],
+      contentsKnown: false,
+      language: "en",
+    };
+    const projected = projectBuyProductForSet(quest, "q3", new Map());
+    expect(projected?.setId).toBe("q3");
+    const bySet = projectBuyProductsBySet({
+      products: [quest],
+      printSetIds: new Map(),
+    });
+    expect([...bySet.keys()]).toEqual(["q3"]);
+    // Checklist set.id is `Q3` (sqlite set_code) — lookup must normalize.
+    expect(buyProductsForSet(bySet, "Q3").map((row) => row.slug)).toEqual([
+      "great-hunny-rescue-quest-en",
+    ]);
+    expect(buyProductsForSet(bySet, "Q3")).toEqual(
+      buyProductsForSet(bySet, "q3"),
+    );
+    const [option] = buyOptionsForMissing({
+      missing: new Set(["lorcana:q3-10"]),
+      poolSize: 41,
+      products: buyProductsForSet(bySet, "Q3"),
+      preferredLanguage: "en",
+    });
+    expect(option?.structureAttested).toBe(true);
+    expect(option?.newCards).toBe(0);
+    expect(option?.certainty).toBe("unknown");
+  });
+
   it("scores S1 advice with one tin booster, not both packs", () => {
     const projected = projectBuyProductForSet(tin, "s1", printSetIds)!;
     const missingKeys = Array.from({ length: 100 }, (_, i) => `naruto:s1-${i}`);
@@ -708,6 +901,34 @@ describe("withContainerPackSizes", () => {
     ]).find((p) => p.slug === "display");
     expect(box?.packSize).toBe(12);
     expect(box?.packsInContainer).toBe(24);
+  });
+
+  it("blister ×1 donates packSize but not packsInContainer=1 to a display", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "blister",
+        name: "Blister carton",
+        kind: "blister",
+        behavior: "pack_container",
+        setId: "1",
+        packSize: 12,
+        packsInContainer: 1,
+        language: "fr",
+      },
+      {
+        slug: "display",
+        name: "Display",
+        kind: "display",
+        behavior: "pack_container",
+        setId: "1",
+        packsInContainer: 24,
+        language: "fr",
+      },
+    ]);
+    expect(products.find((p) => p.slug === "display")).toMatchObject({
+      packSize: 12,
+      packsInContainer: 24,
+    });
   });
 
   it("fills packsInContainer from a same-set display sibling (Storm 3 FR)", () => {
@@ -852,7 +1073,56 @@ describe("planSetCompletion", () => {
     expect(mid.boostersExpected).toBe(35);
     expect(mid.boostersToComplete).toBe(35);
     expect(mid.recommendedSlug).toBe("display");
+  });
 
+  it("badges the display even when a blister_case pack_container is listed first", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "blister-case-cheap",
+        name: "Carton blister",
+        kind: "blister_case",
+        behavior: "pack_container",
+        packsInContainer: 24,
+        packSize: 12,
+        priceCents: 800,
+      },
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 12,
+        packsInContainer: 1,
+        priceCents: 400,
+      },
+      {
+        slug: "display",
+        name: "Display",
+        kind: "display",
+        behavior: "pack_container",
+        packsInContainer: 24,
+        priceCents: 8000,
+      },
+    ]);
+    const missingPrices = new Map(
+      Array.from({ length: 80 }, (_, i) => [`c${i}`, 20 as number | null]),
+    );
+    const options = buyOptionsForMissing({
+      missing: new Set(missingPrices.keys()),
+      poolSize: 100,
+      products,
+    });
+    expect(
+      planSetCompletion({
+        missingPrices,
+        poolSize: 100,
+        options,
+        products,
+      }).recommendedSlug,
+    ).toBe("display");
+  });
+
+  it("recommends display for mid-set fill volume (Panini threshold)", () => {
     /*
       50 trous bon marché / pool 200 / pack 10 → Panini ~77 ≥ 0.7×24 → display.
     */

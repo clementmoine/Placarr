@@ -470,6 +470,9 @@ export function lorcanaLogoUrlForSet(input: {
  *
  * Le relevé de logos numérote `setN`, le catalogue de tirages `N`. Une quête ou
  * un gateway n'a pas d'équivalent côté tirages et rend donc `null`.
+ *
+ * Sans index logos (sqlite vide), un slug `…-set-10-…` reste lisible : les
+ * check-lists utilisent `10`, pas le code boutique `WHW`.
  */
 export function lorcanaCatalogueSetIdForProduct(input: {
   setCode?: string | null;
@@ -479,7 +482,22 @@ export function lorcanaCatalogueSetIdForProduct(input: {
 }): string | null {
   const id = lorcanaSetRowForProduct(input)?.id?.trim().toLowerCase();
   const numbered = id ? /^set(\d+)$/.exec(id) : null;
-  return numbered ? numbered[1]! : null;
+  if (numbered) return numbered[1]!;
+
+  /*
+    Slug before title — lorcards often mistypes the chapter in the title
+    (« Set 13 » on a Hyperia `…-set-14-…` slug / boutique `HYP`). Joining both
+    texts made the chapter ambiguous and left catalogueSetId null.
+  */
+  for (const text of [input.slug, input.name, input.setCode]) {
+    const chapters = lorcanaSetIdsInText(text).filter((row) =>
+      /^set\d+$/i.test(row),
+    );
+    if (chapters.length !== 1) continue;
+    const bare = /^set(\d+)$/i.exec(chapters[0]!);
+    if (bare) return bare[1]!;
+  }
+  return null;
 }
 
 async function fetchBytes(url: string): Promise<Buffer> {

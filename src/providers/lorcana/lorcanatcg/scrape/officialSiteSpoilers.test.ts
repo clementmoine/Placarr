@@ -63,6 +63,7 @@ describe("matchOfficialSpoilersToPrints", () => {
     setId: "set14",
     packshots: [],
     spoilers,
+    contents: null,
     sourceUrl: "https://www.disneylorcana.com/fr-FR/product/hyperia-city",
     lang: "fr",
   });

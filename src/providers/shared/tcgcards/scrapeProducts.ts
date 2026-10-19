@@ -199,11 +199,19 @@ export async function scrapeDbscardsProducts(opts: {
     opts.onProgress?.(
       `produits ${opts.packId}: ledger frais → skip crawl (durable)`,
     );
+    // Same order as the crawl path: logo refresh first so catalogueSetId
+    // backfill is persisted by the ingest below.
+    const skipLogoNote = await refreshPackSetLogos(opts.packId, {
+      force: opts.force,
+      offline: opts.offline,
+    });
+    if (skipLogoNote) opts.onProgress?.(skipLogoNote);
     await ingestSealedProducts(opts.packId);
     const purged = promoteAndPurgeTcgCardsProductsStaging({
       packId: opts.packId,
       stagingFolder,
       stagingDir: dir,
+      keepLedgerTimestamp: true,
     });
     return {
       listed: skip.meta?.listingCount ?? 0,

@@ -4,7 +4,8 @@
  *
  * Hierarchy (containers):
  *   booster → blister → display → case
- *   blister → blister_case (carton de blisters)
+ *   blister_case = shipping case of many blisters (not FR « blister carton »
+ *   = single sleeved booster on cardboard)
  *   deck → deck_bundle (plusieurs decks distincts, ex. Naruto pack-découverte)
  *   multipack = N boosters ± promo (duopack / double-pack / tripack)
  *
@@ -94,7 +95,36 @@ export function refineSealedKind(input: {
     input.kind && isSealedKind(input.kind) ? input.kind : null;
 
   // Strong title/slug signals win over a stale coffret / booster.
-  if (/blister[\s_-]*carton|carton[\s_-]*blister|blister-carton/.test(hay)) {
+  /*
+    Illumineer's Quest before trove / decks category — official IQ packshots
+    were minted as `*-trove` with byKind ×8 boosters.
+  */
+  if (
+    /illumineer'?s?\s*quest|qu[eê]te\s+des\s+illumineurs|\/iq\d/.test(hay) ||
+    /great-hunny-rescue|deep-trouble|palace-heist/.test(slug)
+  ) {
+    return "quest";
+  }
+  /*
+    Gift box / `*-collector_box` before category `decks` — otherwise soft-migrate
+    turns a 5-booster coffret into a known_bundle « deck » (promo only).
+  */
+  if (
+    /gift[\s_-]*box|coffret[\s_-]*cadeau|gift[-_]?set|\bgiftset\b/.test(hay) ||
+    /-collector_box(?:-|$)/.test(slug)
+  ) {
+    return "collector_box";
+  }
+  /*
+    Shipping case of many blisters — NOT French retail « blister carton »
+    / slug `booster-blister-carton-*` (one sleeved booster, ~booster price).
+    Those used to become blister_case ×24 and bury real displays in buy advice.
+  */
+  if (
+    /carton\s+de\s+\d+\s*blisters?|blisters?\s*case|case\s+of\s+\d+\s*blisters?/i.test(
+      hay,
+    )
+  ) {
     return "blister_case";
   }
   if (
@@ -116,6 +146,13 @@ export function refineSealedKind(input: {
     /\bduopack\b|double[\s_-]*packs?|tripacks?|tri[\s_-]*packs?/.test(hay)
   ) {
     return "multipack";
+  }
+  // After multipack: FR « blister carton » / boosters-blister = one sleeved pack.
+  if (
+    /blister[\s_-]*carton|blister-carton|carton[\s_-]*blister/.test(hay) ||
+    input.category === "boosters-blister"
+  ) {
+    return "blister";
   }
   if (
     slug.startsWith("tin-box") ||
@@ -144,7 +181,9 @@ export function sealedBehaviorForKind(kind: SealedKind): SealedBehavior {
     case "booster":
       return "random_pack";
     case "blister":
-      return "mixed_bundle";
+      // FR « blister carton » = packaging autour d'1 booster → container ×1.
+      // (blister_case = casier de N blisters, souvent ×24.)
+      return "pack_container";
     case "display":
     case "case":
     case "blister_case":
@@ -201,7 +240,15 @@ export function sealedContentsKnown(input: {
 
 /** Apply refine + matching behavior on a stored entry (soft migrate). */
 export function withRefinedSealedKind<
-  T extends { kind: SealedKind; behavior: SealedBehavior; category: string; slug: string; name: string | null },
+  T extends {
+    kind: SealedKind;
+    behavior: SealedBehavior;
+    category: string;
+    slug: string;
+    name: string | null;
+    packsContained?: number | null;
+    packsBySet?: Record<string, number> | null;
+  },
 >(entry: T): T {
   const kind =
     refineSealedKind({
@@ -210,12 +257,42 @@ export function withRefinedSealedKind<
       name: entry.name,
       kind: entry.kind,
     }) ?? entry.kind;
-  if (kind === entry.kind) return entry;
-  return {
+  /*
+    Opaque kinds always re-derive behavior — stale `mixed_bundle` on a blister
+    (shop ingest) made buy advice treat preview tiles as guaranteed cards.
+  */
+  const behavior = sealedKindIsOpaqueContents(kind)
+    ? sealedBehaviorForKind(kind)
+    : kind !== entry.kind
+      ? sealedBehaviorForKind(kind)
+      : entry.behavior;
+  if (kind === entry.kind && behavior === entry.behavior) return entry;
+  const next: T = {
     ...entry,
     kind,
-    behavior: sealedBehaviorForKind(kind),
+    behavior,
   };
+  /*
+    Demote mis-tagged FR « blister carton » (was blister_case ×24) so buy
+    advice does not treat an 8 € sleeved booster as a display.
+  */
+  if (
+    entry.kind === "blister_case" &&
+    kind === "blister" &&
+    (entry.packsContained ?? 0) > 1
+  ) {
+    next.packsContained = 1;
+    next.packsBySet = null;
+  }
+  // Quest mis-minted as trove: drop byKind trove 8×12 lottery.
+  if (entry.kind === "trove" && kind === "quest") {
+    next.packsContained = null;
+    next.packsBySet = null;
+    if ("cardsPerPack" in next) {
+      (next as { cardsPerPack?: number | null }).cardsPerPack = null;
+    }
+  }
+  return next;
 }
 
 const KIND_LABEL_FR: Record<SealedKind, string> = {

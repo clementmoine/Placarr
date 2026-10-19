@@ -14,6 +14,7 @@ import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import { lorcanaTcgDbPath } from "../indexStore";
 import { scrapeLorcardsProducts } from "../sources/lorcards";
 import { scrapeLorcanaCards } from "../scrape/cards";
+import { runOfficialSiteProductsStep } from "../scrape/officialSiteStep";
 
 const LORCANA_PACK_ID = "lorcana";
 
@@ -24,6 +25,15 @@ const hooks = cardCatalogueHooks({
   runPipeline: async () => {
     await scrapeLorcanaCards({ force: true });
     await scrapeLorcardsProducts({});
+    /*
+      Découverte automatique des SKU officiels (Hyperia, Quêtes, …) : harvest
+      TTL-gated → logos → upsert → purge. Sans ça, Sync ne voyait que lorcards.
+    */
+    await runOfficialSiteProductsStep({
+      force: false,
+      spoilers: false,
+      log: (message) => console.log(message),
+    });
   },
 });
 

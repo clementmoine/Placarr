@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { mapLorcanaMetadata, toPrintCandidate } from "./index";
+import {
+  cardFromLocalRow,
+  mapLorcanaMetadata,
+  toPrintCandidate,
+} from "./index";
 import type { LorcanaCard } from "./fetch";
+import type { LorcanaTcgSearchRow } from "@/providers/lorcana/lorcanatcg/indexStore";
 
 function card(overrides: Partial<LorcanaCard>): LorcanaCard {
   return {
@@ -78,6 +83,70 @@ describe("mapLorcanaMetadata language variants", () => {
         url: "https://example.test/en-tempest.jpg",
       }),
     ]);
+  });
+});
+
+describe("cardFromLocalRow language", () => {
+  function row(
+    overrides: Partial<LorcanaTcgSearchRow> &
+      Pick<LorcanaTcgSearchRow, "printKey" | "lang" | "fullName">,
+  ): LorcanaTcgSearchRow {
+    return {
+      setCode: "Q3",
+      number: "10",
+      variant: null,
+      promoGrouping: null,
+      providerId: null,
+      cost: null,
+      artistsJson: null,
+      foilTypesJson: null,
+      varnishType: null,
+      cardmarketUrl: null,
+      foilEffectColorsJson: null,
+      lore: null,
+      strength: null,
+      willpower: null,
+      inkwell: null,
+      setCardCount: 37,
+      name: null,
+      version: null,
+      setName: null,
+      rarity: null,
+      cardType: null,
+      color: null,
+      story: null,
+      flavorText: null,
+      subtypesJson: null,
+      searchName: null,
+      imageUrl: null,
+      thumbnailUrl: null,
+      fullFoilUrl: null,
+      foilMaskUrl: null,
+      varnishMaskUrl: null,
+      secondVarnishMaskUrl: null,
+      ...overrides,
+    } as LorcanaTcgSearchRow;
+  }
+
+  it("keeps corpus de/it codes (does not coerce them to fr)", () => {
+    const de = cardFromLocalRow(
+      row({
+        printKey: "lorcana:q3-10",
+        lang: "de",
+        fullName: "BRAMBLE BULLY - Protecting the Stalk",
+      }),
+    );
+    expect(de.language).toBe("de");
+    expect(toPrintCandidate(de).language).toBe("de");
+
+    const fr = cardFromLocalRow(
+      row({
+        printKey: "lorcana:q3-10",
+        lang: "fr",
+        fullName: "Brute de ronces - Protège la tige",
+      }),
+    );
+    expect(fr.language).toBe("fr");
   });
 });
 

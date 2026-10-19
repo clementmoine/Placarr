@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  attachCompetitivePriceCaps,
   boostersToExpectNearComplete,
   buyOptionsForMissing,
   buyProductsForSet,
@@ -18,9 +19,91 @@ import {
   projectBuyProductForSet,
   projectBuyProductsBySet,
   sealedSourcesByPrint,
+  sealedRentabilityLevel,
+  sealedUnitsForPacks,
+  sealedYieldByProgress,
   singlesCostBreakdown,
   withContainerPackSizes,
 } from "./buyAdvice";
+
+describe("Pequignot Panini 2026 (s=980, m=7)", () => {
+  const s = 980;
+  const m = 7;
+
+  it("matches the PDF progression table for E[distinct]", () => {
+    /*
+      Note Yann Pequignot — tableau p.6 :
+      k sachets → distinctes / manquantes (arrondis publiés).
+    */
+    const distinct = (k: number) => s * (1 - (1 - m / s) ** k);
+    expect(distinct(140)).toBeCloseTo(621, 0);
+    expect(distinct(300)).toBeCloseTo(866, 0);
+    expect(distinct(500)).toBeCloseTo(953, 0);
+    expect(distinct(700)).toBeCloseTo(974, 0);
+    expect(distinct(965)).toBeCloseTo(979, 0);
+  });
+
+  it("matches expectedNewCards to u(1-(1-m/s)^k) on remaining holes", () => {
+    // Album vide, 140 sachets → ~621 neuves (PDF ≈ 621).
+    expect(
+      expectedNewCards({
+        packSize: m,
+        poolSize: s,
+        missing: s,
+        packsOpened: 140,
+      }),
+    ).toBeCloseTo(621, 0);
+    // Après ~621 collées : 359 trous, encore 160 sachets → progresse comme la table.
+    expect(
+      expectedNewCards({
+        packSize: m,
+        poolSize: s,
+        missing: 359,
+        packsOpened: 160,
+      }),
+    ).toBeCloseTo(245, 0); // 866-621
+  });
+
+  it("hits E[missing]<1 near the PDF ~965 packs (exact log, not s/m·ln s)", () => {
+    /*
+      PDF approx k > (s/m) ln s ≈ 964. Notre forme exacte
+      u(1-m/s)^k < 1 donne ceil un peu plus bas (~961) — acceptable.
+    */
+    const k = boostersToExpectNearComplete({
+      missing: s,
+      poolSize: s,
+      packSize: m,
+    });
+    expect(k).toBeGreaterThanOrEqual(960);
+    expect(k).toBeLessThanOrEqual(966);
+    const missingAt = (packs: number) => s * (1 - m / s) ** packs;
+    expect(missingAt(k!)).toBeLessThan(1);
+    expect(missingAt(k! - 1)).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not treat a 100-pack TCG case like a Panini unique box", () => {
+    /*
+      PDF : boîte 700 distincts → E = 700 en un achat.
+      100 sachets indépendants de 7 → ~501 distincts, pas 700.
+    */
+    expect(
+      expectedNewCards({
+        packSize: m,
+        poolSize: s,
+        missing: s,
+        packsOpened: 100,
+      }),
+    ).toBeCloseTo(501.5, 1);
+    expect(
+      expectedNewCards({
+        packSize: 700,
+        poolSize: s,
+        missing: s,
+        packsOpened: 1,
+      }),
+    ).toBe(700);
+  });
+});
 
 describe("boostersToExpectNearComplete", () => {
   it("matches the Panini near-complete threshold for a mid set", () => {
@@ -106,6 +189,22 @@ describe("espérance de cartes neuves", () => {
         packsPerHitByPrint: rates,
       }),
     ).toBe(0);
+  });
+
+  it("caps optimistic rates at cards physically opened", () => {
+    // Taux absurdes (1 sachet / print) × 200 manquantes > 12 cartes du booster.
+    const keys = Array.from({ length: 200 }, (_, i) => `c${i}`);
+    const rates = new Map(keys.map((key) => [key, 1]));
+    expect(
+      expectedNewCards({
+        packSize: 12,
+        poolSize: 220,
+        missing: 200,
+        missingKeys: keys,
+        packsPerHitByPrint: rates,
+        packsOpened: 1,
+      }),
+    ).toBe(12);
   });
 });
 
@@ -377,6 +476,35 @@ describe("comparer les options d'achat", () => {
     expect(options[1].centsPerNewCard).toBe(333);
   });
 
+  it("at equal €/new card, ranks the option with more new cards first", () => {
+    const options = buyOptionsForMissing({
+      missing: new Set(Array.from({ length: 40 }, (_, i) => `c${i}`)),
+      poolSize: 40,
+      products: [
+        {
+          slug: "deck",
+          name: "Deck",
+          kind: "deck",
+          behavior: "known_bundle",
+          prints: Array.from({ length: 10 }, (_, i) => `c${i}`),
+          priceCents: 250,
+        },
+        {
+          slug: "trove",
+          name: "Trove",
+          kind: "trove",
+          behavior: "known_bundle",
+          prints: Array.from({ length: 30 }, (_, i) => `c${i}`),
+          priceCents: 750,
+        },
+      ],
+    });
+    expect(options[0].centsPerNewCard).toBe(25);
+    expect(options[1].centsPerNewCard).toBe(25);
+    expect(options[0].slug).toBe("trove");
+    expect(options[1].slug).toBe("deck");
+  });
+
   it("keeps a priceless product in the list, at the end", () => {
     const options = buyOptionsForMissing({
       missing,
@@ -471,6 +599,111 @@ describe("la falaise des prix", () => {
   l'espérance calculée dessus affirmait qu'il apportait d'un coup toutes les
   cartes manquantes.
 */
+describe("attachCompetitivePriceCaps", () => {
+  it("caps a display at packs × unit booster price (not €/new × EV)", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 12,
+        priceCents: 200,
+      },
+      {
+        slug: "display",
+        name: "Display",
+        kind: "display",
+        behavior: "pack_container",
+        packsInContainer: 24,
+        packSize: 12,
+        priceCents: 12600,
+      },
+      {
+        slug: "trove",
+        name: "Trove",
+        kind: "trove",
+        behavior: "mixed_bundle",
+        packsInContainer: 8,
+        packSize: 12,
+        priceCents: 4000,
+      },
+    ]);
+    const options = attachCompetitivePriceCaps(
+      [
+        {
+          slug: "booster",
+          name: "Booster",
+          kind: "booster",
+          newCards: 12,
+          certainty: "expected",
+          priceCents: 200,
+          centsPerNewCard: 17,
+          basis: "aléatoire",
+        },
+        {
+          slug: "display",
+          name: "Display",
+          kind: "display",
+          newCards: 100,
+          certainty: "expected",
+          priceCents: 12600,
+          centsPerNewCard: 126,
+          basis: "aléatoire",
+        },
+        {
+          slug: "trove",
+          name: "Trove",
+          kind: "trove",
+          newCards: 80,
+          certainty: "expected",
+          priceCents: 4000,
+          centsPerNewCard: 50,
+          basis: "aléatoire",
+        },
+      ],
+      products,
+    );
+    expect(options.find((row) => row.slug === "booster")?.maxCompetitivePriceCents).toBeNull();
+    // 24 × 2 € = 48 € — pas ~17 € via €/neuve × EV.
+    expect(options.find((row) => row.slug === "display")?.maxCompetitivePriceCents).toBe(
+      4800,
+    );
+    expect(options.find((row) => row.slug === "trove")?.maxCompetitivePriceCents).toBe(
+      1600,
+    );
+  });
+
+  it("wires pack-parity caps through buyOptionsForMissing", () => {
+    const missing = new Set(Array.from({ length: 80 }, (_, i) => `c${i}`));
+    const options = buyOptionsForMissing({
+      missing,
+      poolSize: 100,
+      products: withContainerPackSizes([
+        {
+          slug: "booster",
+          name: "Booster",
+          kind: "booster",
+          behavior: "random_pack",
+          packSize: 12,
+          priceCents: 200,
+        },
+        {
+          slug: "display",
+          name: "Display",
+          kind: "display",
+          behavior: "pack_container",
+          packsInContainer: 24,
+          packSize: 12,
+          priceCents: 12600,
+        },
+      ]),
+    });
+    const display = options.find((row) => row.slug === "display");
+    expect(display?.maxCompetitivePriceCents).toBe(4800);
+  });
+});
+
 describe("ce que « nombre de cartes » veut dire", () => {
   const missing = new Set(Array.from({ length: 16 }, (_, i) => `c${i}`));
 
@@ -1029,6 +1262,94 @@ describe("packsOpenedForProduct", () => {
   });
 });
 
+describe("sealedUnitsForPacks", () => {
+  it("maps Panini-style box volume (100 packs → ceil k/100 boxes)", () => {
+    expect(sealedUnitsForPacks(140, 100)).toBe(2);
+    expect(sealedUnitsForPacks(100, 100)).toBe(1);
+    expect(sealedUnitsForPacks(35, 24)).toBe(2);
+  });
+
+  it("keeps pack counts when the SKU is a single pack", () => {
+    expect(sealedUnitsForPacks(35, 1)).toBe(35);
+    expect(sealedUnitsForPacks(35, null)).toBe(35);
+  });
+});
+
+describe("sealedYieldByProgress", () => {
+  it("matches Panini one-pack yield: full at start, weak near the end", () => {
+    const yieldCurve = sealedYieldByProgress({
+      packSize: 7,
+      poolSize: 980,
+      packsOpened: 1,
+      missingNow: 359,
+    });
+    expect(yieldCurve.atStart).toBe(7);
+    expect(yieldCurve.atNow).toBeCloseTo(2.6, 1);
+    // ~90 % : missing ≈ 98 → E[new] ≈ 0.7
+    expect(yieldCurve.atLate).toBeLessThan(1);
+    expect(yieldCurve.atLate).toBeGreaterThan(0);
+    expect(yieldCurve.atStart).toBeGreaterThan(yieldCurve.atNow);
+    expect(yieldCurve.atNow).toBeGreaterThan(yieldCurve.atLate);
+    expect(yieldCurve.progressNow).toBeCloseTo(1 - 359 / 980, 5);
+    expect(yieldCurve.samples.length).toBeGreaterThanOrEqual(5);
+    expect(yieldCurve.samples[0]).toMatchObject({ progress: 0, expectedNew: 7 });
+    expect(yieldCurve.samples.at(-1)).toMatchObject({
+      progress: 1,
+      expectedNew: 0,
+    });
+  });
+
+  it("shows a display collapsing from start to late-set holes", () => {
+    const yieldCurve = sealedYieldByProgress({
+      packSize: 12,
+      poolSize: 220,
+      packsOpened: 24,
+      missingNow: 12,
+    });
+    expect(yieldCurve.atStart).toBeGreaterThan(100);
+    expect(yieldCurve.atNow).toBeLessThan(15);
+    expect(yieldCurve.atStart).toBeGreaterThan(yieldCurve.atNow);
+    expect(yieldCurve.progressNow).toBeCloseTo(1 - 12 / 220, 5);
+  });
+
+  it("keeps atNow equal to newCards on a scored booster option", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 12,
+        priceCents: 400,
+      },
+    ]);
+    const missing = new Set(
+      Array.from({ length: 80 }, (_, i) => `c${i}`),
+    );
+    const option = buyOptionsForMissing({
+      missing,
+      poolSize: 100,
+      products,
+    }).find((row) => row.slug === "booster");
+    expect(option?.certainty).toBe("expected");
+    expect(option?.yieldByProgress).toBeDefined();
+    expect(option!.yieldByProgress!.atNow).toBe(option!.newCards);
+    expect(option!.yieldByProgress!.atStart).toBeGreaterThan(
+      option!.yieldByProgress!.atNow,
+    );
+    expect(option!.yieldByProgress!.samples.length).toBeGreaterThan(0);
+  });
+});
+
+describe("sealedRentabilityLevel", () => {
+  it("labels high / medium / low from the now÷start ratio", () => {
+    expect(sealedRentabilityLevel(7, 7)).toBe("high");
+    expect(sealedRentabilityLevel(3, 7)).toBe("medium");
+    expect(sealedRentabilityLevel(0.5, 7)).toBe("low");
+    expect(sealedRentabilityLevel(0, 7)).toBe("low");
+  });
+});
+
 describe("planSetCompletion", () => {
   it("recommends the display when cheap bulk still fills mid-set", () => {
     const products = withContainerPackSizes([
@@ -1052,7 +1373,8 @@ describe("planSetCompletion", () => {
     ]);
     /*
       Pool 100, 80 manquantes **bon marché**, booster 12 : espérance ~9.6 ≥ 1,
-      Panini ~35 sachets (≥ 0.7×24) → display. Les chase iraient en singles.
+      Panini ~35 sachets (info volume). Reco = meilleur €/carte → booster
+      (~42 ¢) devant display (~105 ¢).
     */
     const missingPrices = new Map(
       Array.from({ length: 80 }, (_, i) => [`c${i}`, 20 as number | null]),
@@ -1072,10 +1394,13 @@ describe("planSetCompletion", () => {
     expect(mid.sealedHoles).toBe(80);
     expect(mid.boostersExpected).toBe(35);
     expect(mid.boostersToComplete).toBe(35);
-    expect(mid.recommendedSlug).toBe("display");
+    expect(mid.recommendedSlug).toBe("booster");
+    // Badge booster → volume en sachets, pas « N× display ».
+    expect(mid.sealedUnitsExpected).toBeNull();
+    expect(mid.sealedUnitsToComplete).toBeNull();
   });
 
-  it("badges the display even when a blister_case pack_container is listed first", () => {
+  it("recommends the cheapest €/new sealed option regardless of kind", () => {
     const products = withContainerPackSizes([
       {
         slug: "blister-case-cheap",
@@ -1084,7 +1409,11 @@ describe("planSetCompletion", () => {
         behavior: "pack_container",
         packsInContainer: 24,
         packSize: 12,
-        priceCents: 800,
+        /*
+          Moins cher / neuve que le booster (400→≈42), mais au-dessus des
+          cotes bulk (20) — sinon la barre fill vide les trous scellés.
+        */
+        priceCents: 2500,
       },
       {
         slug: "booster",
@@ -1112,19 +1441,24 @@ describe("planSetCompletion", () => {
       poolSize: 100,
       products,
     });
-    expect(
-      planSetCompletion({
-        missingPrices,
-        poolSize: 100,
-        options,
-        products,
-      }).recommendedSlug,
-    ).toBe("display");
+    const plan = planSetCompletion({
+      missingPrices,
+      poolSize: 100,
+      options,
+      products,
+    });
+    expect(plan.packThreshold?.slug).toBe("blister-case-cheap");
+    expect(plan.recommendedSlug).toBe("blister-case-cheap");
+    // 35 sachets / carton de 24 → ≈ 2 unités (comme k boîtes Panini).
+    expect(plan.boostersExpected).toBe(35);
+    expect(plan.sealedUnitsExpected).toBe(2);
+    expect(plan.sealedUnitsToComplete).toBe(2);
   });
 
-  it("recommends display for mid-set fill volume (Panini threshold)", () => {
+  it("keeps Panini volume info without forcing a display recommendation", () => {
     /*
-      50 trous bon marché / pool 200 / pack 10 → Panini ~77 ≥ 0.7×24 → display.
+      50 trous bon marché / pool 200 / pack 10 → Panini ~77. Display sans
+      prix : reco = booster (seul €/carte comparable).
     */
     const productsB = withContainerPackSizes([
       {
@@ -1158,7 +1492,7 @@ describe("planSetCompletion", () => {
       products: productsB,
     });
     expect(plan.boostersExpected).toBe(77);
-    expect(plan.recommendedSlug).toBe("display");
+    expect(plan.recommendedSlug).toBe("booster");
   });
 
   /*
@@ -1201,6 +1535,10 @@ describe("planSetCompletion", () => {
     });
     expect(plan.preferSingles).toBe(true);
     expect(plan.buySinglesCount).toBe(13);
+    expect(plan.buySinglesKeys).toHaveLength(13);
+    expect(plan.buySinglesKeys).toEqual(
+      expect.arrayContaining(["promo", "enc0", "enc11"]),
+    );
     expect(plan.sealedHoles).toBe(0);
     expect(plan.recommendedSlug).toBeNull();
     expect(plan.boostersExpected).toBeNull();
@@ -1225,7 +1563,7 @@ describe("planSetCompletion", () => {
         packsInContainer: 24,
       },
     ]);
-    // 40 cheap + 2 chase / pool 100 → espérance 5.0, display pour le bulk.
+    // 40 cheap + 2 chase / pool 100 → espérance 5.0 ; reco = booster (€/carte).
     const missingPrices = new Map<string, number | null>([
       ...Array.from({ length: 40 }, (_, i) => [`c${i}`, 25] as const),
       ["elsa", 44750],
@@ -1245,8 +1583,212 @@ describe("planSetCompletion", () => {
     expect(plan.preferSingles).toBe(false);
     expect(plan.buySinglesCount).toBe(2);
     expect(plan.buySinglesCents).toBe(44750 + 13450);
+    expect(plan.buySinglesKeys).toEqual(["elsa", "mickey"]);
     expect(plan.sealedHoles).toBe(40);
+    expect(plan.sealedHoleKeys).toHaveLength(40);
+    expect(plan.sealedHoleKeys).toEqual(
+      expect.arrayContaining(["c0", "c39"]),
+    );
+    expect(plan.sealedHoleKeys).not.toContain("elsa");
+    expect(plan.recommendedSlug).toBe("booster");
+    expect(plan.packThreshold).toEqual({
+      slug: "booster",
+      name: "Booster",
+      centsPerNewCard: expect.any(Number),
+    });
+    expect(plan.packThreshold!.centsPerNewCard).toBeGreaterThan(0);
+    expect(plan.packThreshold!.centsPerNewCard).toBeLessThan(44750);
+  });
+
+  it("badges a random fill product, not a cheaper exact deck", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 12,
+        priceCents: 400,
+      },
+      {
+        slug: "display",
+        name: "Display",
+        kind: "display",
+        behavior: "pack_container",
+        packsInContainer: 24,
+        priceCents: 9000,
+      },
+      {
+        slug: "starter",
+        name: "Starter",
+        kind: "deck",
+        behavior: "known_bundle",
+        contentsKnown: true,
+        prints: Array.from({ length: 40 }, (_, i) => `c${i}`),
+        priceCents: 400,
+      },
+    ]);
+    const missingPrices = new Map(
+      Array.from({ length: 80 }, (_, i) => [`c${i}`, 20 as number | null]),
+    );
+    const options = buyOptionsForMissing({
+      missing: new Set(missingPrices.keys()),
+      poolSize: 100,
+      products,
+    });
+    const plan = planSetCompletion({
+      missingPrices,
+      poolSize: 100,
+      options,
+      products,
+    });
+    expect(plan.preferSingles).toBe(false);
+    // Badge = meilleur € / neuve (starter) ; barre chase = fill (booster).
+    expect(plan.recommendedSlug).toBe("starter");
+    expect(plan.packThreshold?.slug).toBe("booster");
+    expect(options[0]?.slug).toBe("starter");
+    const starter = options.find((row) => row.slug === "starter");
+    const display = options.find((row) => row.slug === "display");
+    expect(starter?.centsPerNewCard).not.toBeNull();
+    expect(display?.centsPerNewCard).not.toBeNull();
+    expect(starter!.centsPerNewCard!).toBeLessThan(display!.centsPerNewCard!);
+  });
+
+  it("drops a starter from advice once all its prints are owned", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "starter",
+        name: "Starter",
+        kind: "deck",
+        behavior: "known_bundle",
+        contentsKnown: true,
+        prints: ["a", "b", "c"],
+        priceCents: 400,
+      },
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 10,
+        priceCents: 400,
+      },
+    ]);
+    const missing = new Set(["x1", "x2", "x3", "x4", "x5"]);
+    const options = buyOptionsForMissing({
+      missing,
+      poolSize: 40,
+      products,
+    });
+    const starter = options.find((row) => row.slug === "starter");
+    expect(starter?.newCards).toBe(0);
+    const plan = planSetCompletion({
+      missingPrices: new Map([...missing].map((key) => [key, 20])),
+      poolSize: 40,
+      options,
+      products,
+    });
+    expect(plan.recommendedSlug).toBe("booster");
+  });
+
+  it("badges a multi-pack trove over a single booster, not a mixed starter", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 12,
+        priceCents: 300,
+      },
+      {
+        slug: "trove",
+        name: "Trove",
+        kind: "trove",
+        behavior: "mixed_bundle",
+        packsInContainer: 8,
+        packSize: 12,
+        // Moins cher / carte que 8× le booster nu → badge fill.
+        priceCents: 1600,
+      },
+      {
+        slug: "starter",
+        name: "Starter",
+        kind: "deck",
+        behavior: "mixed_bundle",
+        packsInContainer: 1,
+        packSize: 12,
+        contentsKnown: true,
+        prints: Array.from({ length: 22 }, (_, i) => `c${i}`),
+        priceCents: 550,
+      },
+    ]);
+    const missingPrices = new Map(
+      Array.from({ length: 190 }, (_, i) => [`c${i}`, 20 as number | null]),
+    );
+    const options = buyOptionsForMissing({
+      missing: new Set(missingPrices.keys()),
+      poolSize: 220,
+      products,
+    });
+    const plan = planSetCompletion({
+      missingPrices,
+      poolSize: 220,
+      options,
+      products,
+    });
+    expect(plan.preferSingles).toBe(false);
+    // Starter gagne au € / neuve → badge ; fill / volume restent le trove.
+    expect(plan.recommendedSlug).toBe("starter");
+    expect(plan.packThreshold?.slug).toBe("trove");
+    expect(plan.sealedUnitsExpected).not.toBeNull();
+    expect(plan.recommendedSlug).not.toBe("trove");
+    expect(plan.recommendedSlug).not.toBe("booster");
+  });
+
+  it("lowers the chase threshold when a discounted display beats loose boosters", () => {
+    const products = withContainerPackSizes([
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack",
+        packSize: 12,
+        priceCents: 400,
+      },
+      {
+        slug: "display",
+        name: "Display",
+        kind: "display",
+        behavior: "pack_container",
+        packsInContainer: 24,
+        // ≈ 50 ¢ / sachet vs 400 ¢ au détail — gagne au € / neuve.
+        priceCents: 1200,
+      },
+    ]);
+    // Cotes sous la barre display (≈16) → restent en fill scellé.
+    const missingPrices = new Map(
+      Array.from({ length: 80 }, (_, i) => [`c${i}`, 10 as number | null]),
+    );
+    const options = buyOptionsForMissing({
+      missing: new Set(missingPrices.keys()),
+      poolSize: 100,
+      products,
+    });
+    const plan = planSetCompletion({
+      missingPrices,
+      poolSize: 100,
+      options,
+      products,
+    });
+    const booster = options.find((row) => row.slug === "booster");
+    const display = options.find((row) => row.slug === "display");
+    expect(display?.centsPerNewCard).not.toBeNull();
+    expect(booster?.centsPerNewCard).not.toBeNull();
+    expect(display!.centsPerNewCard!).toBeLessThan(booster!.centsPerNewCard!);
+    expect(plan.packThreshold?.slug).toBe("display");
     expect(plan.recommendedSlug).toBe("display");
+    expect(plan.sealedHoles).toBe(80);
   });
 
   it("still estimates boosters to complete when nothing is priced", () => {
@@ -1389,6 +1931,47 @@ describe("planSetCompletion", () => {
     expect(plan.sealedHoles).toBe(0);
     expect(plan.recommendedSlug).toBeNull();
     expect(plan.boostersToComplete).toBeNull();
+  });
+
+  it("keeps both finishes of the same print in the endgame singles cart", () => {
+    const products = [
+      {
+        slug: "booster",
+        name: "Booster",
+        kind: "booster",
+        behavior: "random_pack" as const,
+        packSize: 12,
+        priceCents: 400,
+      },
+    ];
+    /*
+      Master set : NI-019 Normale + Scellé = deux lignes, même cote printKey.
+      Indexer le Map par printKey seul n'en gardait qu'une (18 au lieu de 19).
+    */
+    const missingPrices = new Map<string, number | null>([
+      ["naruto:ni-019|normale", 1000],
+      ["naruto:ni-019|scelle", 1000],
+      ["naruto:cl-003|", 10],
+    ]);
+    const options = buyOptionsForMissing({
+      missing: new Set(["naruto:ni-019", "naruto:cl-003"]),
+      poolSize: 198,
+      products,
+    });
+    const plan = planSetCompletion({
+      missingPrices,
+      poolSize: 198,
+      options,
+      products,
+    });
+    expect(plan.preferSingles).toBe(true);
+    expect(plan.buySinglesCount).toBe(3);
+    expect(plan.buySinglesCents).toBe(2010);
+    expect(plan.buySinglesKeys).toEqual([
+      "naruto:ni-019|normale",
+      "naruto:ni-019|scelle",
+      "naruto:cl-003|",
+    ]);
   });
 
   /** Sans cote ≠ 0 € : on ne les range ni en singles ni en trous scellés. */

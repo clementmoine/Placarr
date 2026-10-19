@@ -445,7 +445,7 @@ describe("catalogue sealed rows", () => {
     expect(rows[0]).toMatchObject({
       structureAttested: true,
       contentsKnown: false,
-      label: "忍伝-学 (série école) · スターティングパック · deck",
+      label: "忍伝-学 (série école) · Deck — スターティングパック · deck",
     });
   });
 

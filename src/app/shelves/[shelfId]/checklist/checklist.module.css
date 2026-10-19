@@ -691,6 +691,9 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
   gap: 1.5rem;
 }
+.adviceColsSealedOnly {
+  grid-template-columns: minmax(0, 1fr);
+}
 @media (max-width: 40rem) {
   .adviceCols {
     grid-template-columns: 1fr;
@@ -722,6 +725,89 @@
   font-variant-numeric: tabular-nums;
 }
 
+.adviceTotalSecondary {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.75rem;
+}
+
+.adviceThreshold {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.125rem;
+}
+
+.adviceThresholdThumb {
+  width: 1.5rem;
+  height: 1.95rem;
+  flex: none;
+  border-radius: 0.15rem;
+  object-fit: cover;
+  background: var(--muted);
+  cursor: zoom-in;
+}
+
+.singlesCart {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.35rem;
+  margin: 0.75rem 0 0;
+  padding: 0.25rem 0 0;
+  list-style: none;
+}
+
+.singlesCartItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  width: 2.35rem;
+}
+
+.singlesCartThumb,
+.singlesCartThumbPlaceholder {
+  width: 2.1rem;
+  height: 2.9rem;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+
+.singlesCartThumb {
+  cursor: zoom-in;
+}
+
+.singlesCartThumbPlaceholder {
+  border: 1px solid var(--border);
+}
+
+.singlesCartPrice {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  line-height: 1.1;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.singlesCartMore {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  padding: 0 0.25rem;
+}
+
 .adviceNote,
 .adviceWarn {
   font-size: 0.75rem;
@@ -736,14 +822,57 @@
 .optionList {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.25rem;
 }
 
+/*
+  [img]  Nom                              Prix
+         ≈ +0.2 cartes (≈ 630 € / carte)
+*/
 .option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.5rem;
+  align-items: start;
   font-size: 0.8125rem;
+}
+
+.optionBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.optionTop {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.optionGain {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.optionCompetitiveCap {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  opacity: 0.85;
+}
+
+.optionExact {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.optionMuted {
+  opacity: 0.65;
 }
 
 /*
@@ -752,8 +881,8 @@
 */
 .productThumb,
 .productThumbPlaceholder {
-  width: 1.9rem;
-  height: 2.45rem;
+  width: 2.1rem;
+  height: 2.7rem;
   flex: none;
   border-radius: 0.2rem;
   object-fit: cover;
@@ -772,21 +901,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.optionGain {
-  flex: none;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-}
-/* Un compte exact ne se lit pas comme une espérance. */
-.optionExact {
-  color: var(--foreground);
   font-weight: 600;
 }
-.optionMuted {
-  opacity: 0.65;
-}
+
 .optionOtherLang {
   opacity: 0.72;
 }
@@ -807,8 +924,9 @@
 
 .optionPrice {
   flex: none;
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .optionPerCard {

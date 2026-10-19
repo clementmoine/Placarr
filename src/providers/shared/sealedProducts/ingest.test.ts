@@ -4,6 +4,8 @@ import {
   sealedBehaviorForKind,
   sealedContentsKnown,
   sealedKindForCategory,
+  sealedKindLabel,
+  sealedProductDisplayName,
   refineSealedKind,
   withRefinedSealedKind,
 } from "./kinds";
@@ -31,6 +33,46 @@ describe("sealedPriceCentsFromShop", () => {
     expect(sealedPriceCentsFromShop({ price: "4.90", currency: "USD" })).toBeNull();
     expect(sealedPriceCentsFromShop({ price: null, currency: "EUR" })).toBeNull();
     expect(sealedPriceCentsFromShop({ price: "0", currency: "EUR" })).toBeNull();
+  });
+});
+
+describe("sealedProductDisplayName", () => {
+  it("prefixes kind when the boutique title is only the set name", () => {
+    expect(
+      sealedProductDisplayName({
+        name: "Premier Chapitre",
+        kind: "trove",
+        slug: "the-first-chapter-trove",
+        packsInContainer: 8,
+        locale: "fr",
+      }),
+    ).toBe("Trésor (8 boosters) — Premier Chapitre");
+    expect(
+      sealedProductDisplayName({
+        name: "Premier Chapitre",
+        kind: "trove",
+        packsInContainer: 8,
+        locale: "en",
+      }),
+    ).toBe("Trove (8 boosters) — Premier Chapitre");
+  });
+
+  it("leaves titles that already name the product family", () => {
+    expect(
+      sealedProductDisplayName({
+        name: "Boîte de 24 boosters - Premier Chapitre",
+        kind: "display",
+        locale: "fr",
+      }),
+    ).toBe("Boîte de 24 boosters - Premier Chapitre");
+    expect(
+      sealedProductDisplayName({
+        name: "Coffret Quête des Illumineurs - Équipe Miel à la Rescousse",
+        kind: "quest",
+        locale: "fr",
+      }),
+    ).toBe("Coffret Quête des Illumineurs - Équipe Miel à la Rescousse");
+    expect(sealedKindLabel("trove", "fr")).toBe("Trésor");
   });
 });
 

@@ -61,12 +61,14 @@ export type SealedContentsSource = {
 export function toContentsTree(source: SealedContentsSource): SealedContentsTree {
   const tree: SealedContentsTree = [];
 
+  let skuChildCount = 0;
   for (const link of source.guaranteedProducts ?? []) {
     const slug = link.slug?.trim();
     if (!slug) continue;
     const qty =
       typeof link.qty === "number" && link.qty > 0 ? Math.floor(link.qty) : 1;
     tree.push({ kind: "sku", slug, qty });
+    skuChildCount += 1;
   }
 
   for (const unit of source.structureUnits ?? []) {
@@ -85,8 +87,15 @@ export function toContentsTree(source: SealedContentsSource): SealedContentsTree
     tree.push({ kind: "fixed", prints: fixedPrints });
   }
 
-  for (const node of collectRandomNodes(source)) {
-    tree.push(node);
+  /*
+    Composition boutique (`containedProducts` → guaranteedProducts) : l'ingest
+    pose aussi `packsContained = Σ qty`. Rejouer une loterie packsContained
+    ici doublerait display/trove (24× booster + encore 24 sachets).
+  */
+  if (skuChildCount === 0) {
+    for (const node of collectRandomNodes(source)) {
+      tree.push(node);
+    }
   }
 
   return tree;

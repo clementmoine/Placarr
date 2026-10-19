@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buyOptionsForMissing, expandBuyImpact } from "./buyAdvice";
+import {
+  buyOptionsForMissing,
+  expandBuyImpact,
+  expectedNewCards,
+} from "./buyAdvice";
 import {
   buyProductToContentsSource,
   toContentsTree,
@@ -217,6 +221,27 @@ describe("toContentsTree", () => {
       { kind: "random", packs: 8, cardsPerPack: 12, pool: "set" },
     ]);
   });
+
+  it("does not re-emit packsContained lottery when composition SKUs are present", () => {
+    expect(
+      toContentsTree({
+        kind: "trove",
+        behavior: "mixed_bundle",
+        cardsPerPack: 12,
+        packsContained: 8,
+        randomPoolScope: "none",
+        guaranteedProducts: [
+          { slug: "booster-a", qty: 3 },
+          { slug: "booster-b", qty: 3 },
+          { slug: "booster-c", qty: 2 },
+        ],
+      }),
+    ).toEqual([
+      { kind: "sku", slug: "booster-a", qty: 3 },
+      { kind: "sku", slug: "booster-b", qty: 3 },
+      { kind: "sku", slug: "booster-c", qty: 2 },
+    ]);
+  });
 });
 
 describe("expandBuyImpact", () => {
@@ -289,6 +314,93 @@ describe("expandBuyImpact", () => {
     });
     expect(blister.newCards).toBe(booster.newCards);
     expect(blister.certainty).toBe("expected");
+  });
+
+  it("scores a 24-booster display as one coupon-collector, not 24× unit EV", () => {
+    const poolSize = 227;
+    const missing = new Set(
+      Array.from({ length: poolSize }, (_, i) => `c${i}`),
+    );
+    const booster: SealedContentsSource = {
+      kind: "booster",
+      behavior: "random_pack",
+      cardsPerPack: 12,
+      packsContained: 1,
+      randomPoolScope: "set",
+    };
+    const unit = expandBuyImpact({
+      tree: toContentsTree(booster),
+      missing,
+      poolSize,
+    });
+    const display = expandBuyImpact({
+      tree: toContentsTree({
+        kind: "display",
+        behavior: "pack_container",
+        packsContained: 24,
+        cardsPerPack: 12,
+        guaranteedProducts: [
+          { slug: "booster-a", qty: 8 },
+          { slug: "booster-b", qty: 8 },
+          { slug: "booster-c", qty: 8 },
+        ],
+      }),
+      missing,
+      poolSize,
+      resolveSku: () => booster,
+    });
+    // Ancien bug : 24 × ~12 → plafond 227 (taille du set).
+    expect(display.newCards).toBeLessThan(poolSize);
+    expect(display.newCards).toBeLessThan((unit.newCards ?? 0) * 24);
+    expect(display.newCards).toBe(
+      expectedNewCards({
+        packSize: 12,
+        poolSize,
+        missing: poolSize,
+        packsOpened: 24,
+      }),
+    );
+  });
+
+  it("does not double-count trove composition SKUs and packsContained", () => {
+    const poolSize = 227;
+    const missing = new Set(
+      Array.from({ length: poolSize }, (_, i) => `c${i}`),
+    );
+    const booster: SealedContentsSource = {
+      kind: "booster",
+      behavior: "random_pack",
+      cardsPerPack: 12,
+      packsContained: 1,
+      randomPoolScope: "set",
+    };
+    const trove = expandBuyImpact({
+      tree: toContentsTree({
+        kind: "trove",
+        behavior: "mixed_bundle",
+        cardsPerPack: 12,
+        packsContained: 8,
+        randomPoolScope: "none",
+        guaranteedProducts: [
+          { slug: "booster-a", qty: 3 },
+          { slug: "booster-b", qty: 3 },
+          { slug: "booster-c", qty: 2 },
+        ],
+      }),
+      missing,
+      poolSize,
+      resolveSku: () => booster,
+    });
+    expect(trove.newCards).toBe(
+      expectedNewCards({
+        packSize: 12,
+        poolSize,
+        missing: poolSize,
+        packsOpened: 8,
+      }),
+    );
+    // 8×12 cartes physiques — pas ~150 par double comptage.
+    expect(trove.newCards).toBeLessThanOrEqual(96);
   });
 });
 

@@ -10,14 +10,26 @@
  *
  * - Un **contenu connu** — deck, coffret — donne un chiffre exact : on sait ce
  *   qu'il y a dedans, donc combien de cartes neuves il apporte.
- * - Un **contenu aléatoire** — booster, display — ne donne qu'une espérance,
- *   qui décroît à mesure que la collection se remplit. Les premières boîtes
- *   apportent beaucoup, les dernières presque rien.
+ * - Un **contenu aléatoire** — booster, trove, display, duopack… — ne donne
+ *   qu'une espérance, qui décroît à mesure que la collection se remplit
+ *   (Pequignot : \(E[\mathrm{distinctes}]=s(1-(1-m/s)^k)\), d'où
+ *   \(E[\mathrm{manquantes}]=u(1-m/s)^k\) sur les \(u\) trous restants).
+ *
+ * **Boîte Panini ≠ display TCG.** Chez Panini une boîte est un *super-sachet*
+ * (700 vignettes **deux à deux distinctes** → \(m_{\mathrm{boîte}}=700\)).
+ * Un display / trove TCG, lui, est \(k\) sachets **indépendants** (doublons
+ * entre sachets possibles) → on ouvre via `packsOpened`, on ne gonfle pas \(m\`.
+ *
+ * **Plan en phases** (vidéo Exclarrogatif + note Pequignot ; Stadje cité pour
+ * l'arrêt optimal prix sachet / single — chez nous : EV &lt; seuil + chase) :
+ * 1. **Mercato** — EV utile : meilleur scellé en € / carte neuve (tout kind).
+ * 2. **Tir cadré** — EV / sachet &lt; {@link SEALED_MIN_EXPECTED_NEW} : singles.
  *
  * L'interface doit dire laquelle des deux elle affiche. Un chiffre exact et une
  * espérance ne se comparent pas sans le préciser.
  */
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
+import { sealedProductDisplayName } from "@/providers/shared/sealedProducts/kinds";
 
 import {
   buyProductToContentsSource,
@@ -119,6 +131,53 @@ export type BuyProduct = {
   randomPoolPrints?: readonly string[] | null;
 };
 
+function buyOptionDisplayName(
+  product: Pick<
+    BuyProduct,
+    "name" | "kind" | "slug" | "language" | "packsInContainer"
+  >,
+  preferredLanguage?: string | null,
+): string {
+  return sealedProductDisplayName({
+    name: product.name,
+    kind: product.kind,
+    slug: product.slug,
+    packsInContainer: product.packsInContainer,
+    locale: preferredLanguage ?? product.language,
+  });
+}
+
+/** Espérance de neuves selon la progression (Pequignot / rendements décroissants). */
+export type SealedYieldByProgress = {
+  /** Album vide (`missing = poolSize`), modèle uniforme. */
+  atStart: number;
+  /** Trous actuels — aligné sur {@link BuyOption.newCards}. */
+  atNow: number;
+  /** ~90 % complété (`missing ≈ 0.1 × pool`), modèle uniforme. */
+  atLate: number;
+  /** Fraction possédée actuelle ∈ [0, 1] — curseur sur le graphe. */
+  progressNow: number;
+  /**
+   * Courbe uniforme (progression → espérance) pour le graphe d'explication.
+   * Pas les taux curated : lisible comme le tableau Pequignot.
+   */
+  samples: readonly { progress: number; expectedNew: number }[];
+};
+
+/** Niveau de rentabilité scellée (ratio maintenant / début). */
+export type SealedRentability = "high" | "medium" | "low";
+
+export function sealedRentabilityLevel(
+  atNow: number,
+  atStart: number,
+): SealedRentability {
+  if (!(atStart > 0) || !(atNow > 0)) return "low";
+  const ratio = atNow / atStart;
+  if (ratio >= 0.55) return "high";
+  if (ratio >= 0.25) return "medium";
+  return "low";
+}
+
 export type BuyOption = {
   slug: string;
   name: string;
@@ -136,6 +195,11 @@ export type BuyOption = {
   priceCents: number | null;
   /** Coût par carte neuve, quand on connaît le prix. Sert au classement. */
   centsPerNewCard: number | null;
+  /**
+   * Prix max (centimes) pour battre les mêmes sachets achetés à l'unité :
+   * `packs × prix booster`. Multi-sachets seulement (display, trove…).
+   */
+  maxCompetitivePriceCents?: number | null;
   /** Pourquoi ce chiffre, en une phrase que l'interface peut afficher. */
   basis: string;
   /** Packshot du produit, pour l'afficher à côté du nom. */
@@ -152,6 +216,11 @@ export type BuyOption = {
    * quand même montrer le SKU.
    */
   structureAttested?: boolean;
+  /**
+   * Rendement estimé début / maintenant / tard — seulement pour une espérance
+   * pure (`expected` via {@link expectedNewCards}). Absent sinon.
+   */
+  yieldByProgress?: SealedYieldByProgress | null;
 };
 
 /** Set ids checklist / boutique : toujours comparer en minuscules (`Q3` ↔ `q3`). */
@@ -177,6 +246,70 @@ export function buyProductsForSet(
 }
 
 /**
+ * Rendement d'un scellé aléatoire selon la progression de la collection.
+ *
+ * - **atStart** / **atLate** / **samples** : uniforme (scénario générique).
+ * - **atNow** : même modèle que le gain actuel (uniforme ou taux curated).
+ */
+export function sealedYieldByProgress(input: {
+  packSize: number;
+  poolSize: number;
+  packsOpened: number;
+  missingNow: number;
+  packsPerHitByPrint?: ReadonlyMap<string, number>;
+  missingKeys?: readonly string[];
+}): SealedYieldByProgress {
+  const lateMissing = Math.max(1, Math.ceil(0.1 * input.poolSize));
+  const progressNow =
+    input.poolSize <= 0
+      ? 0
+      : Math.min(
+          1,
+          Math.max(0, 1 - input.missingNow / input.poolSize),
+        );
+  const sampleProgress = [0, 0.2, 0.4, 0.6, 0.8, 0.9, 1] as const;
+  const samples = sampleProgress.map((progress) => {
+    const missing =
+      progress >= 1
+        ? 0
+        : Math.max(0, Math.round(input.poolSize * (1 - progress)));
+    return {
+      progress,
+      expectedNew: expectedNewCards({
+        packSize: input.packSize,
+        poolSize: input.poolSize,
+        missing,
+        packsOpened: input.packsOpened,
+      }),
+    };
+  });
+  return {
+    atStart: expectedNewCards({
+      packSize: input.packSize,
+      poolSize: input.poolSize,
+      missing: input.poolSize,
+      packsOpened: input.packsOpened,
+    }),
+    atNow: expectedNewCards({
+      packSize: input.packSize,
+      poolSize: input.poolSize,
+      missing: input.missingNow,
+      packsOpened: input.packsOpened,
+      packsPerHitByPrint: input.packsPerHitByPrint,
+      missingKeys: input.missingKeys,
+    }),
+    atLate: expectedNewCards({
+      packSize: input.packSize,
+      poolSize: input.poolSize,
+      missing: lateMissing,
+      packsOpened: input.packsOpened,
+    }),
+    progressNow,
+    samples,
+  };
+}
+
+/**
  * L'espérance de cartes **neuves** dans un paquet aléatoire.
  *
  * Sans taux de tirage : borne haute uniforme `m × u/s` (ignore les raretés).
@@ -185,6 +318,7 @@ export function buyProductsForSet(
  * P(hit) ≈ 1/packsPerHit pour chaque manquante — honête pour les chase
  * (Enchanted ≈ 1/1152 pour un print précis sur 12).
  */
+
 export function expectedNewCards(input: {
   packSize: number;
   poolSize: number;
@@ -199,6 +333,8 @@ export function expectedNewCards(input: {
   packsOpened?: number;
 }): number {
   const packsOpened = Math.max(1, input.packsOpened ?? 1);
+  const physicalCap =
+    input.packSize > 0 ? input.packSize * packsOpened : Number.POSITIVE_INFINITY;
   const rates = input.packsPerHitByPrint;
   const keys = input.missingKeys;
   if (rates && keys && keys.length > 0) {
@@ -220,7 +356,8 @@ export function expectedNewCards(input: {
         const p = Math.min(1, input.packSize / input.poolSize);
         sum += uncovered * (1 - (1 - p) ** packsOpened);
       }
-      return Math.round(Math.min(sum, keys.length) * 10) / 10;
+      // Indépendance par print peut dépasser les cartes physiquement ouvertes.
+      return Math.round(Math.min(sum, keys.length, physicalCap) * 10) / 10;
     }
   }
 
@@ -236,7 +373,7 @@ export function expectedNewCards(input: {
     packsOpened === 1
       ? Math.min(packSize * (missing / poolSize), missing)
       : missing * (1 - (1 - p) ** packsOpened);
-  return Math.round(Math.min(expected, missing) * 10) / 10;
+  return Math.round(Math.min(expected, missing, physicalCap) * 10) / 10;
 }
 
 /**
@@ -612,11 +749,79 @@ export function buyOptionsForMissing(input: {
   const pool = matching.length > 0 ? matching : otherLang;
   const forceMismatch = matching.length === 0 && otherLang.length > 0;
 
-  return scoreBuyOptions({
+  const scored = scoreBuyOptions({
     ...input,
     products: pool,
     preferredLanguage: preferred,
     forceLanguageMismatch: forceMismatch,
+  });
+  return attachCompetitivePriceCaps(scored, pool);
+}
+
+/** Sachet unitaire coté (booster / blister ×1) — référence « à l'unité ». */
+function isUnitFillProduct(product: BuyProduct): boolean {
+  if (product.behavior === "random_pack") return true;
+  if (product.behavior === "pack_container") {
+    return (product.packsInContainer ?? 0) === 1;
+  }
+  return false;
+}
+
+/**
+ * Prix plafond d'un multi-sachets pour battre l'achat **des mêmes sachets
+ * à l'unité** : `packs × prix_du_booster`.
+ *
+ * Pas `€/neuve(booster) × EV(display)` — ça comparait l'efficacité d'un
+ * *premier* sachet (sans doublons) à une boîte de 24, d'où « ≤ 28 € »
+ * alors que 24×2 € = 48 € (même espérance de neuves des deux côtés).
+ */
+export function attachCompetitivePriceCaps(
+  options: readonly BuyOption[],
+  products: readonly BuyProduct[] = [],
+): BuyOption[] {
+  const bySlug = new Map(products.map((product) => [product.slug, product]));
+  let unitPrice: number | null = null;
+  for (const option of options) {
+    const product = bySlug.get(option.slug);
+    if (
+      product == null ||
+      !isUnitFillProduct(product) ||
+      option.languageMismatch ||
+      option.priceCents == null ||
+      option.priceCents <= 0 ||
+      !(option.newCards > 0)
+    ) {
+      continue;
+    }
+    if (unitPrice == null || option.priceCents < unitPrice) {
+      unitPrice = option.priceCents;
+    }
+  }
+  if (unitPrice == null) {
+    return options.map((option) => ({
+      ...option,
+      maxCompetitivePriceCents: null,
+    }));
+  }
+  return options.map((option) => {
+    const product = bySlug.get(option.slug);
+    if (
+      product == null ||
+      !isSealedFillProduct(product) ||
+      option.languageMismatch ||
+      !(option.newCards > 0)
+    ) {
+      return { ...option, maxCompetitivePriceCents: null };
+    }
+    const packs = packsOpenedForProduct(product);
+    if (packs == null || packs <= 1) {
+      return { ...option, maxCompetitivePriceCents: null };
+    }
+    const cap = unitPrice * packs;
+    return {
+      ...option,
+      maxCompetitivePriceCents: cap > 0 ? cap : null,
+    };
   });
 }
 
@@ -727,6 +932,10 @@ function mergeCertainty(
 
 /**
  * Évalue l'apport en cartes neuves en expandant l'arbre (SKU enfants inclus).
+ *
+ * Les sachets set-lottery (boosters enfants × qty, nœuds `random`) sont
+ * **agrégés** puis scorés une fois : `24 × EV(1 booster)` saturait le set
+ * (display → +227) alors que l'espérance d'une boîte est ~coupon-collector.
  */
 export function expandBuyImpact(input: {
   tree: SealedContentsTree;
@@ -739,10 +948,13 @@ export function expandBuyImpact(input: {
   maxDepth?: number;
   _depth?: number;
   _seen?: Set<string>;
+  /** Multiplicateur de nœud parent (2× pack découverte → 2× garanties + 2 sachets). */
+  _qty?: number;
 }): BuyImpact {
   const depth = input._depth ?? 0;
   const maxDepth = input.maxDepth ?? 4;
   const seen = input._seen ?? new Set<string>();
+  const qtyMul = input._qty != null && input._qty > 0 ? input._qty : 1;
   const missingKeys = [...input.missing];
 
   if (input.tree.length === 0) {
@@ -756,12 +968,34 @@ export function expandBuyImpact(input: {
   let newCards = 0;
   let certainty: BuyImpact["certainty"] = "exact";
   const basisParts: string[] = [];
+  /** Sachets set-pool à ouvrir d'un coup (pas qty × EV unitaire). */
+  let lotteryPacks = 0;
+  let lotteryPackSize = 0;
+
+  const addLotteryPacks = (packs: number, cardsPerPack: number, label: string) => {
+    if (!(packs > 0) || !(cardsPerPack > 0)) {
+      certainty = mergeCertainty(certainty, "unknown");
+      basisParts.push(label);
+      return;
+    }
+    if (lotteryPackSize > 0 && lotteryPackSize !== cardsPerPack) {
+      certainty = mergeCertainty(certainty, "unknown");
+      basisParts.push(
+        `${label} (taille sachet ${cardsPerPack} ≠ ${lotteryPackSize})`,
+      );
+      return;
+    }
+    lotteryPackSize = cardsPerPack;
+    lotteryPacks += packs;
+    certainty = mergeCertainty(certainty, "expected");
+    basisParts.push(label);
+  };
 
   for (const node of input.tree) {
     if (node.kind === "fixed") {
-      const hits = node.prints.filter((row) =>
-        input.missing.has(row.printKey),
-      ).length;
+      const hits =
+        node.prints.filter((row) => input.missing.has(row.printKey)).length *
+        qtyMul;
       newCards += hits;
       const declared = input.cardCount;
       const partial =
@@ -789,7 +1023,7 @@ export function expandBuyImpact(input: {
           basisParts.push("pool listé vide");
           continue;
         }
-        const draws = node.packs > 0 ? node.packs : 1;
+        const draws = (node.packs > 0 ? node.packs : 1) * qtyMul;
         const expected =
           Math.round((missingInPool / listed.length) * draws * 10) / 10;
         newCards += expected;
@@ -800,23 +1034,12 @@ export function expandBuyImpact(input: {
         continue;
       }
 
-      if (node.cardsPerPack <= 0 || node.packs <= 0) {
-        certainty = mergeCertainty(certainty, "unknown");
-        basisParts.push("aléatoire sans taille de sachet");
-        continue;
-      }
-      const expected = expectedNewCards({
-        packSize: node.cardsPerPack,
-        poolSize: input.poolSize,
-        missing: input.missing.size,
-        packsPerHitByPrint: input.packsPerHitByPrint,
-        missingKeys,
-        packsOpened: node.packs,
-      });
-      newCards += expected;
-      certainty = mergeCertainty(certainty, "expected");
-      basisParts.push(
-        `aléatoire : ${node.packs}×${node.cardsPerPack}${node.setId ? ` (${node.setId})` : ""}`,
+      addLotteryPacks(
+        node.packs * qtyMul,
+        node.cardsPerPack,
+        node.cardsPerPack > 0 && node.packs > 0
+          ? `aléatoire : ${node.packs * qtyMul}×${node.cardsPerPack}${node.setId ? ` (${node.setId})` : ""}`
+          : "aléatoire sans taille de sachet",
       );
       continue;
     }
@@ -849,6 +1072,24 @@ export function expandBuyImpact(input: {
     const childTree = toContentsTree(childSource);
     const nextSeen = new Set(seen);
     nextSeen.add(node.slug);
+
+    /*
+      Booster / blister pur : accumuler les sachets × qty plutôt que
+      `qty × EV(1 sachet)` (display 24×10 → plafond set).
+    */
+    const childQty = qtyMul * node.qty;
+    const pureLottery = pureSetLotteryPacks(childTree);
+    if (pureLottery) {
+      addLotteryPacks(
+        pureLottery.packs * childQty,
+        pureLottery.cardsPerPack,
+        childQty > 1
+          ? `${childQty}× ${node.slug} (sachets)`
+          : `${node.slug} (sachet)`,
+      );
+      continue;
+    }
+
     const childImpact = expandBuyImpact({
       ...input,
       tree: childTree,
@@ -856,14 +1097,26 @@ export function expandBuyImpact(input: {
       cardCount: childSource.cardCount,
       _depth: depth + 1,
       _seen: nextSeen,
+      _qty: childQty,
     });
-    newCards += childImpact.newCards * node.qty;
+    newCards += childImpact.newCards;
     certainty = mergeCertainty(certainty, childImpact.certainty);
     basisParts.push(
-      node.qty > 1
-        ? `${node.qty}× ${node.slug} (${childImpact.newCards}/u)`
+      childQty > 1
+        ? `${childQty}× ${node.slug} → ${childImpact.newCards}`
         : `${node.slug} → ${childImpact.newCards}`,
     );
+  }
+
+  if (lotteryPacks > 0 && lotteryPackSize > 0) {
+    newCards += expectedNewCards({
+      packSize: lotteryPackSize,
+      poolSize: input.poolSize,
+      missing: input.missing.size,
+      packsPerHitByPrint: input.packsPerHitByPrint,
+      missingKeys,
+      packsOpened: lotteryPacks,
+    });
   }
 
   const capped =
@@ -875,6 +1128,23 @@ export function expandBuyImpact(input: {
       ? `Arbre : ${basisParts.join(" · ")}.`
       : "Arbre de contenu — rien à dire.",
   };
+}
+
+/** Arbre = uniquement de la loterie set (un booster / blister), même taille. */
+function pureSetLotteryPacks(
+  tree: SealedContentsTree,
+): { packs: number; cardsPerPack: number } | null {
+  if (tree.length === 0) return null;
+  let packs = 0;
+  let cardsPerPack = 0;
+  for (const node of tree) {
+    if (node.kind !== "random" || node.pool === "listed") return null;
+    if (!(node.packs > 0) || !(node.cardsPerPack > 0)) return null;
+    if (cardsPerPack > 0 && cardsPerPack !== node.cardsPerPack) return null;
+    cardsPerPack = node.cardsPerPack;
+    packs += node.packs;
+  }
+  return packs > 0 ? { packs, cardsPerPack } : null;
 }
 
 function scoreBuyOptions(input: {
@@ -948,7 +1218,7 @@ function scoreBuyOptions(input: {
         (product.structureUnits?.length ?? 0) > 0;
       options.push({
         slug: product.slug,
-        name: product.name,
+        name: buyOptionDisplayName(product, preferred),
         kind: product.kind,
         newCards: impact.newCards,
         certainty: impact.certainty,
@@ -981,6 +1251,19 @@ function scoreBuyOptions(input: {
     let newCards: number;
     let certainty: BuyOption["certainty"];
     let basis: string;
+    /** Courbe début/maintenant/tard — seulement espérance pure set-lottery. */
+    let yieldByProgress: SealedYieldByProgress | null = null;
+    const attachSetLotteryYield = (packSize: number, packsOpened: number) => {
+      if (packSize <= 0 || packsOpened <= 0 || input.poolSize <= 0) return;
+      yieldByProgress = sealedYieldByProgress({
+        packSize,
+        poolSize: input.poolSize,
+        packsOpened,
+        missingNow: input.missing.size,
+        packsPerHitByPrint: input.packsPerHitByPrint,
+        missingKeys,
+      });
+    };
 
     /*
       Pool listé (1 carte parmi N variantes connues) : espérance = part des
@@ -1048,6 +1331,8 @@ function scoreBuyOptions(input: {
             hits > 0
               ? `Mixte : ${hits} garantie(s) manquante(s) + ${packs}×${cardsPerPack} cartes aléatoires.`
               : `Mixte : ${packs} sachets de ${cardsPerPack} cartes aléatoires (garanties déjà possédées ou hors liste).`;
+          // Courbe seulement si le gain = pure espérance (pas de garanties).
+          if (hits === 0) attachSetLotteryYield(cardsPerPack, packs);
         } else {
           certainty = "atLeast";
           basis = product.cardCount
@@ -1100,6 +1385,7 @@ function scoreBuyOptions(input: {
         });
         certainty = "expected";
         basis = `Mixte : ${packs} sachets de ${cardsPerPack} cartes aléatoires.`;
+        attachSetLotteryYield(cardsPerPack, packs);
       } else {
         newCards = 0;
         certainty = "unknown";
@@ -1139,6 +1425,7 @@ function scoreBuyOptions(input: {
           input.packsPerHitByPrint && input.packsPerHitByPrint.size > 0
             ? `Contenu aléatoire : taux de tirage curated (${packSize} cartes / pack × ${packsOpened}).`
             : `Contenu aléatoire : ${packSize} cartes / sachet × ${packsOpened} sachet(s) dans un pool de ${input.poolSize}.`;
+        attachSetLotteryYield(packSize, packsOpened);
       }
       if (languageMismatch) {
         basis += ` Produit en ${language} — ne complète pas une liste ${preferred}.`;
@@ -1148,7 +1435,7 @@ function scoreBuyOptions(input: {
     const priceCents = product.priceCents ?? null;
     options.push({
       slug: product.slug,
-      name: product.name,
+      name: buyOptionDisplayName(product, preferred),
       kind: product.kind,
       newCards,
       certainty,
@@ -1161,6 +1448,7 @@ function scoreBuyOptions(input: {
       imageUrl: product.imageUrl ?? null,
       language,
       languageMismatch,
+      ...(yieldByProgress ? { yieldByProgress } : {}),
     });
   }
 
@@ -1176,7 +1464,13 @@ function scoreBuyOptions(input: {
       return a.languageMismatch ? 1 : -1;
     }
     if (a.centsPerNewCard != null && b.centsPerNewCard != null) {
-      return a.centsPerNewCard - b.centsPerNewCard;
+      if (a.centsPerNewCard !== b.centsPerNewCard) {
+        return a.centsPerNewCard - b.centsPerNewCard;
+      }
+      // À € / carte égal : le plus de neuves d'abord (aligné sur
+      // {@link bestValueSealedOption} — sinon un deck 0,25 € passe devant
+      // le trove « Recommandé » à 0,25 €).
+      return b.newCards - a.newCards;
     }
     // Sans prix des deux côtés, le plus de cartes neuves gagne.
     if (a.centsPerNewCard == null && b.centsPerNewCard == null) {
@@ -1372,13 +1666,24 @@ export type CompletionPlan = {
   buySinglesCount: number;
   buySinglesCents: number;
   /**
+   * Identités de ligne du panier singles (`printKey|finish` via
+   * `checklistRowIdentity`) — même filtre que {@link buySinglesCount}.
+   * L'UI peut en afficher les miniatures sans rejouer le seuil.
+   */
+  buySinglesKeys: readonly string[];
+  /**
    * Trous bon marché encore « fillables » en scellé (milieu de set seulement).
    * Jamais les chase cotées : le marché les vend en singles.
    */
   sealedHoles: number;
   /**
+   * Identités de ligne des {@link sealedHoles} (`printKey|finish`) — pour
+   * montrer lesquelles restent hors du panier singles.
+   */
+  sealedHoleKeys: readonly string[];
+  /**
    * Sachets pour combler les **trous scellés** (après retraits singles), via
-   * {@link boostersToExpectNearComplete} — sert aussi à booster vs display.
+   * {@link boostersToExpectNearComplete} — info de volume Panini, pas le badge.
    */
   boostersExpected: number | null;
   /**
@@ -1387,14 +1692,56 @@ export type CompletionPlan = {
    * uniforme tromperait (ex. « 46 boosters » pour 12 enchanted).
    */
   boostersToComplete: number | null;
-  /** Option à badge « Recommandé » — display si le volume colle à la boîte. */
+  /**
+   * Unités du scellé **multi-sachets** recommandé pour couvrir le volume en
+   * sachets : \(\lceil\texttt{boostersExpected}/\texttt{packsPerUnit}\rceil\).
+   * Aide d'UI (« ≈ 2 cartons »), **pas** le modèle super-sachet Panini
+   * (\(m_{\mathrm{boîte}}=700\)) — un display TCG reste \(k\) packs indépendants.
+   */
+  sealedUnitsExpected: number | null;
+  /**
+   * Idem pour {@link boostersToComplete}.
+   */
+  sealedUnitsToComplete: number | null;
+  /**
+   * Option à badge « Recommandé » — meilleur € / carte neuve parmi **toutes**
+   * les options utiles (deck exact, trove, booster, display… — mercado
+   * Exclarrogatif / Pequignot, pas seulement le fill aléatoire).
+   */
   recommendedSlug: string | null;
   /**
-   * `true` quand le plan dit d'acheter les singles (fin de set ou plus de
-   * fill scellé). L'UI ne doit alors pas teaser un booster / display.
+   * `true` quand le plan dit d'acheter les singles (fin de set / tir cadré).
+   * L'UI ne doit alors pas teaser un scellé aléatoire.
    */
   preferSingles: boolean;
+  /**
+   * Seuil chase / bulk : meilleur € / carte neuve parmi les scellés de
+   * *fill* (booster, blister, trove, display…) — un display soldé compte
+   * s'il bat le booster nu. `null` si aucun fill coté.
+   */
+  packThreshold: {
+    slug: string;
+    name: string;
+    centsPerNewCard: number;
+  } | null;
 };
+
+/**
+ * Combien d'exemplaires d'un scellé multi-sachets pour couvrir `packsNeeded`
+ * sachets indépendants. Conversion d'affichage seulement — ne change pas
+ * l'espérance (contrairement à une boîte Panini sans doublon interne).
+ * `packsPerUnit` ≤ 1 → on renvoie `packsNeeded` (volume en sachets).
+ */
+export function sealedUnitsForPacks(
+  packsNeeded: number | null | undefined,
+  packsPerUnit: number | null | undefined,
+): number | null {
+  if (packsNeeded == null || packsNeeded <= 0) return null;
+  const per =
+    packsPerUnit != null && packsPerUnit > 1 ? packsPerUnit : 1;
+  if (per === 1) return packsNeeded;
+  return Math.max(1, Math.ceil(packsNeeded / per));
+}
 
 /** Un produit scellé qui **garantit** une carte (starter, promo de gift…). */
 export type SealedPrintSource = {
@@ -1422,7 +1769,7 @@ export function sealedSourcesByPrint(
     if (product.printsArePreview) continue;
     const source: SealedPrintSource = {
       slug: product.slug,
-      name: product.name,
+      name: buyOptionDisplayName(product, product.language),
       kind: product.kind,
       imageUrl: product.imageUrl ?? null,
     };
@@ -1443,14 +1790,17 @@ export function sealedSourcesByPrint(
 }
 
 /**
- * Plan d'achat aligné sur le consensus collectionneurs TCG :
+ * Plan d'achat (phases Panini / collection TCG) :
  *
- * - **Fin de set** (espérance &lt; {@link SEALED_MIN_EXPECTED_NEW} neuves /
- *   booster, **quand on a un modèle de sachet**) → **singles** pour les
- *   trous **cotés**. Sans cote, on ne dit pas « préférer les singles ».
- * - **Milieu de set** → chase en singles ; bulk en fill scellé / display.
- * - Sans taille de sachet connue : pas de volume Panini inventé, pas de
- *   message fin-de-set (cas Naruto display EN seul, etc.).
+ * - **Tir cadré / fin de set** (espérance &lt; {@link SEALED_MIN_EXPECTED_NEW}
+ *   neuves / sachet, **quand on a un modèle de sachet**) → **singles** pour
+ *   les trous **cotés**. Sans cote, on ne dit pas « préférer les singles ».
+ * - **Mercato / milieu de set** → chase en singles (au-dessus du seuil fill) ;
+ *   bulk via scellés. Badge = meilleur € / neuve **global** (starter inclus).
+ *   Seuil chase / volume sachets = meilleur *fill* aléatoire seulement.
+ * - Volume : sachets Panini **et** unités si le recommandé est multi-sachets.
+ * - Sans taille de sachet connue : pas de volume inventé, pas de message
+ *   fin-de-set (cas Naruto display EN seul, etc.).
  */
 export function planSetCompletion(input: {
   missingPrices: ReadonlyMap<string, number | null>;
@@ -1482,7 +1832,27 @@ export function planSetCompletion(input: {
       packSizeOf(option.slug) > 0,
   );
   const booster = pricedBooster ?? sizedBooster;
-  const threshold = pricedBooster?.centsPerNewCard ?? null;
+  /*
+    Barre chase = meilleur € / neuve du fill (trove / display / booster…),
+    pas seulement le booster à l'unité : un carton soldé (prix / 24 sachets
+    implicite via l'espérance) doit abaisser le seuil.
+  */
+  const fillBest = bestFillSealedOption(pool, input.products);
+  const thresholdOption =
+    fillBest?.centsPerNewCard != null
+      ? fillBest
+      : pricedBooster?.centsPerNewCard != null
+        ? pricedBooster
+        : null;
+  const threshold = thresholdOption?.centsPerNewCard ?? null;
+  const packThreshold =
+    thresholdOption != null && thresholdOption.centsPerNewCard != null
+      ? {
+          slug: thresholdOption.slug,
+          name: thresholdOption.name,
+          centsPerNewCard: thresholdOption.centsPerNewCard,
+        }
+      : null;
 
   /*
     Taille de sachet : d'abord le booster/blister du pool, sinon n'importe
@@ -1558,23 +1928,28 @@ export function planSetCompletion(input: {
 
   let buySinglesCount = 0;
   let buySinglesCents = 0;
+  const buySinglesKeys: string[] = [];
   let sealedHoles = 0;
-  for (const price of input.missingPrices.values()) {
+  const sealedHoleKeys: string[] = [];
+  for (const [key, price] of input.missingPrices.entries()) {
     if (price == null) continue;
     /*
       Fin de set : tout ce qui est coté part en singles (même sans seuil
       booster). Milieu de set : seuil obligatoire pour séparer chase / bulk.
     */
     if (endgame) {
+      buySinglesKeys.push(key);
       buySinglesCount += 1;
       buySinglesCents += price;
       continue;
     }
     if (threshold == null) continue;
     if (price > threshold) {
+      buySinglesKeys.push(key);
       buySinglesCount += 1;
       buySinglesCents += price;
     } else {
+      sealedHoleKeys.push(key);
       sealedHoles += 1;
     }
   }
@@ -1582,27 +1957,80 @@ export function planSetCompletion(input: {
   /** Reco singles seulement si on a des trous cotés à pousser. */
   const preferSingles = endgame && buySinglesCount > 0;
 
-  const idle = (): CompletionPlan => ({
-    buySinglesCount,
-    buySinglesCents,
-    sealedHoles: 0,
-    boostersExpected: null,
-    boostersToComplete,
-    recommendedSlug: null,
-    preferSingles,
-  });
+  /**
+   * Sachets par unité d'un scellé — pour convertir le volume Panini en
+   * « ≈ k cartons ». Un deck exact → `null` (pas une unité de fill).
+   */
+  const packsPerFillUnit = (slug: string | null): number | null => {
+    if (!slug) return null;
+    const product = input.products.find((row) => row.slug === slug);
+    if (!product || !isSealedFillProduct(product)) return null;
+    if (
+      product.behavior === "pack_container" ||
+      product.behavior === "mixed_bundle"
+    ) {
+      const packs = product.packsInContainer ?? 0;
+      return packs > 1 ? packs : 1;
+    }
+    if (product.behavior === "random_pack") return 1;
+    return null;
+  };
 
-  if (!hasPackModel) return idle();
-  if (endgame || sealedHoles <= 0 || !pricedBooster) {
+  const withUnits = (
+    plan: Omit<
+      CompletionPlan,
+      "sealedUnitsExpected" | "sealedUnitsToComplete"
+    >,
+  ): CompletionPlan => {
+    /*
+      Unités « k boîtes » calées sur le *fill* (seuil), pas sur le badge :
+      un starter Recommandé ne doit pas effacer « ≈ 2 troves ».
+    */
+    const per =
+      packsPerFillUnit(plan.packThreshold?.slug ?? null) ??
+      packsPerFillUnit(plan.recommendedSlug);
+    if (per == null || per <= 1) {
+      return {
+        ...plan,
+        sealedUnitsExpected: null,
+        sealedUnitsToComplete: null,
+      };
+    }
     return {
+      ...plan,
+      sealedUnitsExpected: sealedUnitsForPacks(plan.boostersExpected, per),
+      sealedUnitsToComplete: sealedUnitsForPacks(plan.boostersToComplete, per),
+    };
+  };
+
+  const idle = (): CompletionPlan =>
+    withUnits({
       buySinglesCount,
       buySinglesCents,
-      sealedHoles: endgame ? 0 : sealedHoles,
+      buySinglesKeys,
+      sealedHoles: 0,
+      sealedHoleKeys: [],
       boostersExpected: null,
       boostersToComplete,
       recommendedSlug: null,
       preferSingles,
-    };
+      packThreshold,
+    });
+
+  if (!hasPackModel) return idle();
+  if (endgame || sealedHoles <= 0 || !pricedBooster) {
+    return withUnits({
+      buySinglesCount,
+      buySinglesCents,
+      buySinglesKeys,
+      sealedHoles: endgame ? 0 : sealedHoles,
+      sealedHoleKeys: endgame ? [] : sealedHoleKeys,
+      boostersExpected: null,
+      boostersToComplete,
+      recommendedSlug: null,
+      preferSingles,
+      packThreshold,
+    });
   }
 
   const sealedKeys = [...input.missingPrices.entries()]
@@ -1616,43 +2044,77 @@ export function planSetCompletion(input: {
     packsPerHitForMissing: ratesFor(sealedKeys),
   });
 
-  /*
-    Prefer a real `display` over other pack_containers (blister_case, …).
-    `.find` used to badge the first 24-pack SKU — often a mis-tagged blister.
-  */
-  const langAnchor = booster?.language ?? matching[0]?.language;
-  // Multi-pack only — blister ×1 must not become the « display » badge.
-  const containers = input.products.filter(
-    (product) =>
-      product.behavior === "pack_container" &&
-      (product.packsInContainer ?? 0) > 1 &&
-      sealedLanguageRank(product.language, langAnchor) === 0,
-  );
-  const displayProduct =
-    containers.find((product) => product.kind === "display") ??
-    containers[0];
-  const packs = displayProduct?.packsInContainer ?? null;
-  const displayOption = displayProduct
-    ? pool.find((option) => option.slug === displayProduct.slug)
-    : null;
-
-  let recommendedSlug: string | null = booster?.slug ?? null;
-  if (
-    boostersExpected != null &&
-    packs != null &&
-    displayOption &&
-    boostersExpected >= Math.ceil(packs * 0.7)
-  ) {
-    recommendedSlug = displayOption.slug;
-  }
-
-  return {
+  return withUnits({
     buySinglesCount,
     buySinglesCents,
+    buySinglesKeys,
     sealedHoles,
+    sealedHoleKeys,
     boostersExpected,
     boostersToComplete,
-    recommendedSlug,
+    /*
+      Badge = meilleur € / neuve (decks inclus). Le fill aléatoire reste le
+      référentiel de la barre chase / du volume « ≈ N sachets » uniquement.
+    */
+    recommendedSlug: bestValueSealedOption(pool)?.slug ?? null,
     preferSingles: false,
-  };
+    packThreshold,
+  });
+}
+
+/**
+ * Meilleur scellé pour le classement liste : € / carte neuve croissant,
+ * puis plus de cartes neuves à coût égal. Sans prix comparable → plus de
+ * neuves. Aucune préférence de kind (display / deck / trove…).
+ */
+export function bestValueSealedOption(
+  options: readonly BuyOption[],
+): BuyOption | null {
+  const useful = options.filter(
+    (option) => option.newCards > 0 && !option.languageMismatch,
+  );
+  if (useful.length === 0) return null;
+  return [...useful].sort((a, b) => {
+    if (a.centsPerNewCard != null && b.centsPerNewCard != null) {
+      if (a.centsPerNewCard !== b.centsPerNewCard) {
+        return a.centsPerNewCard - b.centsPerNewCard;
+      }
+      return b.newCards - a.newCards;
+    }
+    if (a.centsPerNewCard == null && b.centsPerNewCard == null) {
+      return b.newCards - a.newCards;
+    }
+    return a.centsPerNewCard == null ? 1 : -1;
+  })[0]!;
+}
+
+/**
+ * Produit qui sert à **remplir** les trous bulk (plan ≈ N sachets) :
+ * - sachet / blister / display (`random_pack`, `pack_container`) ;
+ * - `mixed_bundle` **multi-sachets** (trove 8 boosters) — pas un starter
+ *   « deck + 1 booster » (`packsInContainer` ≤ 1). Sert au seuil chase /
+ *   volume sachets, pas au badge Recommandé.
+ */
+export function isSealedFillProduct(product: BuyProduct): boolean {
+  if (RANDOM.has(product.behavior)) return true;
+  if (product.behavior === "mixed_bundle") {
+    return (product.packsInContainer ?? 0) > 1;
+  }
+  return false;
+}
+
+/**
+ * Meilleur scellé pour le badge / volume du plan de fill.
+ * Voir {@link isSealedFillProduct}.
+ */
+export function bestFillSealedOption(
+  options: readonly BuyOption[],
+  products: readonly BuyProduct[],
+): BuyOption | null {
+  const bySlug = new Map(products.map((product) => [product.slug, product]));
+  const fill = options.filter((option) => {
+    const product = bySlug.get(option.slug);
+    return product != null && isSealedFillProduct(product);
+  });
+  return bestValueSealedOption(fill);
 }

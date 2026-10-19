@@ -31,6 +31,7 @@ import {
 
 import {
   ambiguousChecklistPrintKeys,
+  checklistRowIdentity,
   checklistShouldShowFinish,
 } from "@/core/collect/checklist";
 import {
@@ -91,10 +92,13 @@ type BuyOption = {
   certainty: "exact" | "atLeast" | "expected" | "unknown";
   priceCents: number | null;
   centsPerNewCard: number | null;
+  /** Prix max pour égaler le meilleur € / neuve — absent sur le recommandé. */
+  maxCompetitivePriceCents?: number | null;
   basis: string;
   imageUrl?: string | null;
   language?: string | null;
   languageMismatch?: boolean;
+  structureAttested?: boolean;
 };
 
 type SealedPrintSource = {
@@ -124,11 +128,20 @@ type SetAdvice = {
   plan: {
     buySinglesCount: number;
     buySinglesCents: number;
+    buySinglesKeys: string[];
     sealedHoles: number;
+    sealedHoleKeys: string[];
     boostersExpected: number | null;
     boostersToComplete: number | null;
+    sealedUnitsExpected: number | null;
+    sealedUnitsToComplete: number | null;
     recommendedSlug: string | null;
     preferSingles: boolean;
+    packThreshold: {
+      slug: string;
+      name: string;
+      centsPerNewCard: number;
+    } | null;
   };
 };
 
@@ -155,6 +168,37 @@ function euros(cents: number): string {
     currency: "EUR",
     maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
   }).format(cents / 100);
+}
+
+/** Ligne sous le nom : gain, et € / carte si on a un prix. */
+function sealedOptionGain(
+  option: BuyOption,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  if (option.structureAttested) {
+    return t("items.checklistStructureAttested");
+  }
+  if (option.centsPerNewCard != null && option.newCards > 0) {
+    return t(
+      option.certainty === "exact"
+        ? "items.checklistNewCardsExactWithCost"
+        : option.certainty === "atLeast"
+          ? "items.checklistNewCardsAtLeastWithCost"
+          : "items.checklistNewCardsApproxWithCost",
+      {
+        count: option.newCards,
+        perCard: euros(option.centsPerNewCard),
+      },
+    );
+  }
+  return t(
+    option.certainty === "exact"
+      ? "items.checklistNewCardsExact"
+      : option.certainty === "atLeast"
+        ? "items.checklistNewCardsAtLeast"
+        : "items.checklistNewCardsApprox",
+    { count: option.newCards },
+  );
 }
 
 /**
@@ -245,23 +289,29 @@ function CompletionBar({ value }: { value: number }) {
 /**
  * Ce qu'il en coûte, et ce qu'on peut acheter à la place.
  *
- * Résumé = **une** intention : singles en fin de set / chase, sinon reco
- * scellé + volume. Pas de teaser display quand `preferSingles`.
+ * Résumé = **une** intention : singles en fin de set (tir cadré), sinon
+ * reco scellé (mercato, kind-agnostique). Liste scellée = rentabilité
+ * (€ / neuve) décroissante, avec ≈ +N cartes.
  */
 function Advice({
   advice,
+  cards,
+  hideZeroSealedExpectation,
   t,
 }: {
   advice: SetAdvice;
+  /** Cartes du set (manquantes) — pour miniatures du panier singles. */
+  cards: readonly ChecklistPrint[];
+  hideZeroSealedExpectation: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const [open, setOpen] = useState(false);
-  const { singles, options, plan } = advice;
+  const { singles, options, plan, prices } = advice;
   const recommended =
     options.find((option) => option.slug === plan.recommendedSlug) ?? null;
   /*
-    Fin de set / chase : pas de teaser booster — ça faisait lire « Recommandé
-    · display » alors que le plan dit singles.
+    Mercato : teaser = scellé recommandé (€ / neuve, decks inclus).
+    Fin de set : pas de teaser scellé — l'intention c'est l'unité (tir cadré).
   */
   const teaser = plan.preferSingles
     ? null
@@ -293,7 +343,11 @@ function Advice({
     options.length > 0 ||
     hasVolume;
 
-  /** Au plus 2–3 bribes ; le reste est dans le détail. */
+  /*
+    Résumé : fin de set → singles ; mercato → scellé recommandé d'abord,
+    chase à l'unité en second (pas l'inverse — à 0 % « 35 singles
+    recommandés » faisait croire qu'il fallait 1000 € avant le scellé).
+  */
   const briefParts: string[] = [];
   if (plan.preferSingles && plan.buySinglesCount > 0) {
     briefParts.push(
@@ -302,23 +356,18 @@ function Advice({
         price: euros(plan.buySinglesCents),
       }),
     );
-  } else if (teaser != null) {
-    briefParts.push(teaser.name);
+  } else {
+    if (teaser != null) briefParts.push(teaser.name);
+    if (plan.buySinglesCount > 0) {
+      briefParts.push(
+        t("items.checklistAdviceBriefBuySingles", {
+          count: plan.buySinglesCount,
+          price: euros(plan.buySinglesCents),
+        }),
+      );
+    }
   }
-  if (hasVolume) {
-    briefParts.push(
-      t("items.checklistAdviceBriefBoostersToComplete", {
-        boosters: plan.boostersToComplete!,
-      }),
-    );
-  }
-  if (singles.priced > 0 && !(plan.preferSingles && plan.buySinglesCount > 0)) {
-    briefParts.push(
-      t("items.checklistAdviceBriefSingles", {
-        price: euros(singles.totalCents),
-      }),
-    );
-  } else if (singles.unpriced > 0 && briefParts.length === 0) {
+  if (briefParts.length === 0 && singles.unpriced > 0) {
     briefParts.push(
       t("items.checklistAdviceBriefUnpriced", { count: singles.unpriced }),
     );
@@ -328,34 +377,65 @@ function Advice({
   }
   const brief = briefParts.join(" · ");
 
-  const listedOptions = (() => {
-    /*
-      Un known_bundle déjà couvert (DVD Vol.3 → TA-214 possédée) sort
-      `newCards: 0` + `certainty: exact` — ce n'est **pas** une option utile.
-      Ne garder que ce qui apporte au moins une carte neuve.
-      Exception : structure attestée (quête) — on montre le SKU sans inventer
-      d'espérance (`structureAttested`).
-    */
-    const useful = options.filter((option) => option.newCards > 0);
-    const structureOnly = options.filter(
-      (option) =>
-        option.newCards <= 0 &&
-        option.structureAttested &&
-        !option.languageMismatch,
-    );
-    if (plan.preferSingles) return useful.slice(0, 5);
-    const head = recommended ? [recommended] : [];
-    const rest = useful.filter((option) => option.slug !== recommended?.slug);
-    const merged = [...head, ...rest, ...structureOnly];
-    const seen = new Set<string>();
-    return merged
-      .filter((option) => {
-        if (seen.has(option.slug)) return false;
-        seen.add(option.slug);
-        return true;
+  /*
+    Un seul critère : € / carte neuve (puis +neuves à égalité) — déjà
+    trié côté core. Pas de re-pin « Recommandé » qui cassait la lecture.
+  */
+  const listedOptions = hideZeroSealedExpectation
+    ? options.filter((option) => option.newCards > 0)
+    : options;
+
+  /*
+    Colonne « à l'unité » = conseil d'achat singles (chase / fin de set /
+    total coté). Sans cote utile, on ne laisse pas « 141 sans prix » occuper
+    la moitié du panneau.
+  */
+  const showSinglesCol =
+    plan.buySinglesCount > 0 ||
+    plan.preferSingles ||
+    singles.priced > 0;
+
+  /*
+    Clés plan = `printKey|finish` (master set). Prix catalogue toujours
+    indexés par printKey — on reprend le print depuis la ligne.
+  */
+  const byRow = new Map(
+    cards.map((card) => [checklistRowIdentity(card), card] as const),
+  );
+  const thumbRows = (keys: readonly string[]) =>
+    keys
+      .map((key) => {
+        const card = byRow.get(key);
+        const priceCents = card
+          ? prices[card.printKey]
+          : (prices[key] ?? null);
+        if (priceCents == null) return null;
+        return {
+          rowKey: key,
+          printKey: card?.printKey ?? key,
+          title: card?.title ?? key,
+          reference: card?.reference ?? "",
+          thumbnailUrl: card?.thumbnailUrl ?? null,
+          priceCents,
+        };
       })
-      .slice(0, 5);
-  })();
+      .filter((row): row is NonNullable<typeof row> => row != null)
+      .sort((a, b) => b.priceCents - a.priceCents);
+
+  /*
+    Colonne à l'unité = seulement le panier pertinent (chase / fin de set),
+    exhaustif. Pas la liste des trous « plutôt en scellé » ni la barre booster.
+  */
+  const singlesCart = thumbRows(plan.buySinglesKeys ?? []);
+  const unpricedLeft = cards
+    .filter((card) => prices[card.printKey] == null)
+    .map((card) => ({
+      rowKey: checklistRowIdentity(card),
+      printKey: card.printKey,
+      title: card.title,
+      reference: card.reference,
+      thumbnailUrl: card.thumbnailUrl ?? null,
+    }));
 
   return (
     <div className={styles.advice}>
@@ -372,16 +452,15 @@ function Advice({
                 variant="product"
               />
             ) : null}
-            {recommended != null && (
+            {plan.preferSingles && plan.buySinglesCount > 0 ? (
               <span className={styles.badge}>
                 {t("items.checklistRecommended")}
               </span>
-            )}
-            {plan.preferSingles && plan.buySinglesCount > 0 && (
+            ) : !plan.preferSingles && recommended != null ? (
               <span className={styles.badge}>
                 {t("items.checklistRecommended")}
               </span>
-            )}
+            ) : null}
             <span className={styles.adviceBriefText}>{brief}</span>
           </span>
         </span>
@@ -403,56 +482,105 @@ function Advice({
 
       {hasDetail && (
         <div className={cn(styles.adviceDetail, open && styles.adviceDetailOpen)}>
-          <div className={styles.adviceCols}>
+          <div
+            className={cn(
+              styles.adviceCols,
+              !showSinglesCol && styles.adviceColsSealedOnly,
+            )}
+          >
+            {showSinglesCol && (
             <div className={styles.adviceCol}>
               <h3 className={styles.adviceTitle}>
                 {t("items.checklistSingles")}
               </h3>
               {plan.buySinglesCount > 0 && (
-                <p className={styles.adviceNote}>
-                  {t("items.checklistPlanSingles", {
-                    count: plan.buySinglesCount,
-                    price: euros(plan.buySinglesCents),
-                  })}
-                </p>
+                <>
+                  <p className={styles.adviceTotal}>
+                    {t("items.checklistPlanSingles", {
+                      count: plan.buySinglesCount,
+                      price: euros(plan.buySinglesCents),
+                    })}
+                  </p>
+                  <p className={styles.adviceNote}>
+                    {t(
+                      plan.preferSingles
+                        ? "items.checklistPlanSinglesWhyEndgame"
+                        : "items.checklistPlanSinglesWhyChase",
+                    )}
+                  </p>
+                </>
               )}
-              {singles.priced > 0 && (
-                <p className={styles.adviceTotal}>
-                  {t("items.checklistSinglesTotal", {
-                    price: euros(singles.totalCents),
-                  })}
-                </p>
+              {singlesCart.length > 0 && (
+                <ul className={styles.singlesCart} aria-label={t("items.checklistSinglesCart")}>
+                  {singlesCart.map((row) => (
+                    <li
+                      key={row.rowKey}
+                      className={styles.singlesCartItem}
+                      title={`${row.reference} ${row.title} — ${euros(row.priceCents)}`}
+                    >
+                      {row.thumbnailUrl ? (
+                        <HoverEnlargeImage
+                          src={row.thumbnailUrl}
+                          className={styles.singlesCartThumb}
+                        />
+                      ) : (
+                        <span
+                          className={styles.singlesCartThumbPlaceholder}
+                          aria-hidden
+                        />
+                      )}
+                      <span className={styles.singlesCartPrice}>
+                        {euros(row.priceCents)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               )}
-              {singles.expensiveCount > 0 && (
-                <p className={styles.adviceNote}>
-                  {t("items.checklistCliff", {
-                    cheapCount: singles.cheapCount,
-                    cheapPrice: euros(singles.cheapCents),
-                    expensiveCount: singles.expensiveCount,
-                    expensivePrice: euros(singles.expensiveCents),
-                  })}
-                </p>
-              )}
-              {singles.medianCents != null && (
-                <p className={styles.adviceNote}>
-                  {t("items.checklistMedian", {
-                    price: euros(singles.medianCents),
-                  })}
-                </p>
-              )}
-              {singles.unpriced > 0 && (
-                <p className={styles.adviceWarn}>
-                  {t("items.checklistUnpriced", { count: singles.unpriced })}
-                </p>
+              {unpricedLeft.length > 0 && (
+                <>
+                  <p className={styles.adviceTotalSecondary}>
+                    {t("items.checklistUnpriced", {
+                      count: unpricedLeft.length,
+                    })}
+                  </p>
+                  <p className={styles.adviceWarn}>
+                    {t("items.checklistUnpricedWhy")}
+                  </p>
+                  <ul
+                    className={styles.singlesCart}
+                    aria-label={t("items.checklistUnpricedCart")}
+                  >
+                    {unpricedLeft.map((row) => (
+                      <li
+                        key={row.rowKey}
+                        className={styles.singlesCartItem}
+                        title={`${row.reference} ${row.title}`}
+                      >
+                        {row.thumbnailUrl ? (
+                          <HoverEnlargeImage
+                            src={row.thumbnailUrl}
+                            className={styles.singlesCartThumb}
+                          />
+                        ) : (
+                          <span
+                            className={styles.singlesCartThumbPlaceholder}
+                            aria-hidden
+                          />
+                        )}
+                        <span className={styles.singlesCartPrice}>—</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
               {singles.priced === 0 &&
-                singles.unpriced === 0 &&
                 plan.buySinglesCount === 0 && (
                   <p className={styles.adviceNote}>
                     {t("items.checklistNoSinglesAdvice")}
                   </p>
                 )}
             </div>
+            )}
 
             <div className={styles.adviceCol}>
               <h3 className={styles.adviceTitle}>
@@ -462,11 +590,32 @@ function Advice({
                 <p className={styles.adviceNote}>
                   {t("items.checklistSealedNotRecommended")}
                 </p>
+              ) : hasSplitVolume &&
+                recommended != null &&
+                plan.sealedUnitsExpected != null ? (
+                <p className={styles.adviceNote}>
+                  {t("items.checklistPlanSealedUnits", {
+                    holes: plan.sealedHoles,
+                    boosters: plan.boostersExpected!,
+                    units: plan.sealedUnitsExpected,
+                    name: recommended.name,
+                  })}
+                </p>
               ) : hasSplitVolume ? (
                 <p className={styles.adviceNote}>
                   {t("items.checklistPlanBoosters", {
                     holes: plan.sealedHoles,
                     boosters: plan.boostersExpected!,
+                  })}
+                </p>
+              ) : hasVolume &&
+                recommended != null &&
+                plan.sealedUnitsToComplete != null ? (
+                <p className={styles.adviceNote}>
+                  {t("items.checklistPlanSealedUnitsToComplete", {
+                    boosters: plan.boostersToComplete!,
+                    units: plan.sealedUnitsToComplete,
+                    name: recommended.name,
                   })}
                 </p>
               ) : hasVolume ? (
@@ -485,6 +634,14 @@ function Advice({
                   {t("items.checklistSealedStructureOnly")}
                 </p>
               ) : null}
+              {listedOptions.some(
+                (option) =>
+                  option.newCards > 0 && option.centsPerNewCard == null,
+              ) && (
+                <p className={styles.adviceNote}>
+                  {t("items.checklistSealedNoPrice")}
+                </p>
+              )}
               {options.length === 0 && (
                 <p className={styles.adviceNote}>
                   {t("items.checklistNoAdvice")}
@@ -511,63 +668,56 @@ function Advice({
                         aria-hidden
                       />
                     )}
-                    <span className={styles.optionName}>{option.name}</span>
-                    {option.languageMismatch && option.language && (
-                      <span
-                        className={styles.optionLang}
-                        title={t("items.checklistOtherLanguageHint", {
-                          language: option.language.toUpperCase(),
-                        })}
-                      >
-                        {t("items.checklistOtherLanguage", {
-                          language: option.language.toUpperCase(),
-                        })}
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        styles.optionGain,
-                        option.certainty === "exact" && styles.optionExact,
-                        option.languageMismatch && styles.optionMuted,
-                        option.structureAttested && styles.optionMuted,
-                      )}
-                      title={option.basis}
-                    >
-                      {option.structureAttested
-                        ? t("items.checklistStructureAttested")
-                        : t("items.checklistNewCards", {
-                            count: option.newCards,
-                          })}
-                      {!option.structureAttested && (
-                        <>
-                          {" · "}
-                          {t(
-                            option.certainty === "exact"
-                              ? "items.checklistExact"
-                              : option.certainty === "atLeast"
-                                ? "items.checklistAtLeast"
-                                : "items.checklistEstimated",
+                    <div className={styles.optionBody}>
+                      <div className={styles.optionTop}>
+                        <span className={styles.optionName}>{option.name}</span>
+                        {option.languageMismatch && option.language && (
+                          <span
+                            className={styles.optionLang}
+                            title={t("items.checklistOtherLanguageHint", {
+                              language: option.language.toUpperCase(),
+                            })}
+                          >
+                            {t("items.checklistOtherLanguage", {
+                              language: option.language.toUpperCase(),
+                            })}
+                          </span>
+                        )}
+                        {recommended != null &&
+                          option.slug === recommended.slug && (
+                            <span className={styles.badge}>
+                              {t("items.checklistRecommended")}
+                            </span>
                           )}
-                        </>
-                      )}
-                    </span>
-                    {option.priceCents != null && (
-                      <span className={styles.optionPrice}>
-                        {euros(option.priceCents)}
+                        {option.priceCents != null && (
+                          <span className={styles.optionPrice}>
+                            {euros(option.priceCents)}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          styles.optionGain,
+                          option.certainty === "exact" && styles.optionExact,
+                          option.languageMismatch && styles.optionMuted,
+                          option.structureAttested && styles.optionMuted,
+                        )}
+                        title={option.basis}
+                      >
+                        {sealedOptionGain(option, t)}
                       </span>
-                    )}
-                    {option.centsPerNewCard != null && (
-                      <span className={styles.optionPerCard}>
-                        {t("items.checklistPerCard", {
-                          price: euros(option.centsPerNewCard),
-                        })}
-                      </span>
-                    )}
-                    {recommended != null && option.slug === recommended.slug && (
-                      <span className={styles.badge}>
-                        {t("items.checklistRecommended")}
-                      </span>
-                    )}
+                      {option.maxCompetitivePriceCents != null &&
+                        option.maxCompetitivePriceCents > 0 && (
+                          <span
+                            className={styles.optionCompetitiveCap}
+                            title={t("items.checklistSealedCompetitiveCapHint")}
+                          >
+                            {t("items.checklistSealedCompetitiveCap", {
+                              price: euros(option.maxCompetitivePriceCents),
+                            })}
+                          </span>
+                        )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -586,6 +736,7 @@ function SetRow({
   showOwned,
   alwaysShowFinishLabels,
   showPrices,
+  hideZeroSealedExpectation,
   searchQuery,
   forceExpand,
   t,
@@ -596,6 +747,7 @@ function SetRow({
   showOwned: boolean;
   alwaysShowFinishLabels: boolean;
   showPrices: boolean;
+  hideZeroSealedExpectation: boolean;
   searchQuery: string;
   /**
    * Impression : monter toutes les cartes dans le DOM. Sinon Masters (7k+)
@@ -726,7 +878,14 @@ function SetRow({
         advice &&
         set.missing.length > 0 &&
         listOpen &&
-        !searching && <Advice advice={advice} t={t} />}
+        !searching && (
+          <Advice
+            advice={advice}
+            cards={set.missing}
+            hideZeroSealedExpectation={hideZeroSealedExpectation}
+            t={t}
+          />
+        )}
 
       {listOpen && rows.length > 0 && (
         <ol className={cn(styles.missing, styles.missingOpen)}>
@@ -845,6 +1004,9 @@ export default function ChecklistPage() {
   const [showPrices, setShowPrices] = useState(
     DEFAULT_CHECKLIST_PREFS.showPrices,
   );
+  const [hideZeroSealedExpectation, setHideZeroSealedExpectation] = useState(
+    DEFAULT_CHECKLIST_PREFS.hideZeroSealedExpectation,
+  );
   const [prefsReady, setPrefsReady] = useState(false);
   const [search, setSearch] = useState("");
   /** Déplie tous les sets le temps d'imprimer (sinon les cartes ne sont pas dans le DOM). */
@@ -861,6 +1023,7 @@ export default function ChecklistPage() {
     setMasterSetSuggestDismissed(prefs.masterSetSuggestDismissed);
     setAlwaysShowFinishLabels(prefs.alwaysShowFinishLabels);
     setShowPrices(prefs.showPrices);
+    setHideZeroSealedExpectation(prefs.hideZeroSealedExpectation);
     setPrefsReady(true);
   }, [shelfId]);
 
@@ -872,6 +1035,7 @@ export default function ChecklistPage() {
       masterSetSuggestDismissed,
       alwaysShowFinishLabels,
       showPrices,
+      hideZeroSealedExpectation,
     });
   }, [
     shelfId,
@@ -880,6 +1044,7 @@ export default function ChecklistPage() {
     masterSetSuggestDismissed,
     alwaysShowFinishLabels,
     showPrices,
+    hideZeroSealedExpectation,
     prefsReady,
   ]);
 
@@ -1104,6 +1269,15 @@ export default function ChecklistPage() {
                 >
                   {t("items.checklistShowPrices")}
                 </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={hideZeroSealedExpectation}
+                  disabled={!showPrices}
+                  onCheckedChange={(checked) =>
+                    setHideZeroSealedExpectation(checked === true)
+                  }
+                >
+                  {t("items.checklistHideZeroSealedExpectation")}
+                </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -1231,6 +1405,7 @@ export default function ChecklistPage() {
                 showOwned={showOwned}
                 alwaysShowFinishLabels={alwaysShowFinishLabels}
                 showPrices={showPrices}
+                hideZeroSealedExpectation={hideZeroSealedExpectation}
                 searchQuery={searchQuery}
                 forceExpand={printing}
                 t={t}

@@ -378,7 +378,14 @@ function percent(owned: number, total: number): number {
  * **Set-scoped** : posséder un tirage pour S5 ne coche pas S1, même si le
  * `printKey` est partagé (reprints Naruto). Pas d'expansion cross-set.
  */
-function checklistRowIdentity(print: ChecklistPrint): string {
+/**
+ * Identité d'une ligne check-list : `printKey|finish`. En master set, deux
+ * finitions du même tirage sont deux trous — le plan d'achat ne doit pas les
+ * fusionner dans un `Map` indexé par printKey seul.
+ */
+export function checklistRowIdentity(
+  print: Pick<ChecklistPrint, "printKey" | "finish">,
+): string {
   return `${print.printKey.trim().toLowerCase()}|${(print.finish ?? "")
     .trim()
     .toLowerCase()}`;

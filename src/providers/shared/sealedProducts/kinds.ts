@@ -306,7 +306,7 @@ const KIND_LABEL_FR: Record<SealedKind, string> = {
   multipack: "Multipack",
   tin: "Tin",
   etb: "Elite Trainer",
-  trove: "Trove",
+  trove: "Trésor",
   collector_box: "Coffret",
   quest: "Quête",
   prerelease: "Avant-première",
@@ -342,6 +342,139 @@ export function sealedKindLabel(
   locale: "fr" | "en" = "en",
 ): string {
   return locale === "fr" ? KIND_LABEL_FR[kind] : KIND_LABEL_EN[kind];
+}
+
+function foldSealedLabelText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/['’]/g, "'");
+}
+
+/**
+ * Markers (folded) that mean the shop title already names the product family.
+ * Avoids « Trésor — Illumineer's Trove ».
+ */
+const KIND_TITLE_MARKERS: Record<SealedKind, readonly string[]> = {
+  booster: ["booster"],
+  blister: ["blister"],
+  display: ["display", "boite de", "box of", "booster box"],
+  case: ["case", "casier", "shipping"],
+  blister_case: ["blister case", "carton blister", "blister carton"],
+  deck: ["deck", "starter"],
+  deck_bundle: ["multi-deck", "pack decouverte", "pack découverte", "discovery"],
+  multipack: ["multipack", "duopack", "double pack", "tripack", "triple pack"],
+  tin: ["tin", "boite metal", "boîte métal"],
+  etb: ["elite trainer", "etb"],
+  trove: ["trove", "tresor", "illumineer's trove", "illumineers trove"],
+  collector_box: ["collector", "coffret cadeau", "gift box", "gift set", "collection box"],
+  quest: [
+    "quest",
+    "quete",
+    "illumineer's quest",
+    "illumineers quest",
+    "quete des illumineurs",
+  ],
+  prerelease: ["prerelease", "avant-premiere", "avant premiere"],
+  special: ["special"],
+  puzzle: ["puzzle"],
+  coffret: ["coffret", "box"],
+  ephemera: ["ephemere", "poster", "sell sheet"],
+};
+
+function sealedNameMentionsKind(
+  name: string,
+  kind: SealedKind,
+  locale: "fr" | "en",
+): boolean {
+  const folded = foldSealedLabelText(name);
+  if (!folded) return false;
+  const label = foldSealedLabelText(sealedKindLabel(kind, locale));
+  if (label && folded.includes(label)) return true;
+  return KIND_TITLE_MARKERS[kind].some((marker) => folded.includes(marker));
+}
+
+function slugAsSealedTitle(slug: string | null | undefined): string {
+  return (slug ?? "")
+    .trim()
+    .replace(/[-_]+/g, " ")
+    .replace(/\b(fr|en|de|it)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Kinds dont `packsContained` = sachets (à rappeler dans le libellé). */
+const KINDS_WITH_PACK_COUNT = new Set<SealedKind>([
+  "trove",
+  "display",
+  "etb",
+  "tin",
+  "multipack",
+  "case",
+  "blister_case",
+]);
+
+function sealedNameMentionsPackCount(name: string, packs: number): boolean {
+  const folded = foldSealedLabelText(name);
+  if (new RegExp(`\\b${packs}\\b`).test(folded)) return true;
+  // « Boîte de 24 boosters », « 8×12 », etc.
+  return (
+    folded.includes(`${packs} booster`) ||
+    folded.includes(`${packs} pack`) ||
+    folded.includes(`${packs}x`) ||
+    folded.includes(`${packs}×`)
+  );
+}
+
+/**
+ * Libellé UI explicite : préfixe le kind quand le titre boutique n'est que
+ * le nom du set (« Premier Chapitre » → « Trésor (8 boosters) — Premier Chapitre »).
+ */
+export function sealedProductDisplayName(input: {
+  name?: string | null;
+  kind: string;
+  slug?: string | null;
+  packsInContainer?: number | null;
+  locale?: string | null;
+}): string {
+  const kind = isSealedKind(input.kind) ? input.kind : "coffret";
+  const locale: "fr" | "en" = (input.locale ?? "en")
+    .trim()
+    .toLowerCase()
+    .startsWith("fr")
+    ? "fr"
+    : "en";
+  const fromSlug = slugAsSealedTitle(input.slug);
+  const raw =
+    (input.name ?? "").trim() ||
+    fromSlug ||
+    sealedKindLabel(kind, locale);
+  let title = sealedNameMentionsKind(raw, kind, locale)
+    ? raw
+    : `${sealedKindLabel(kind, locale)} — ${raw}`;
+
+  const packs =
+    typeof input.packsInContainer === "number" && input.packsInContainer > 1
+      ? Math.floor(input.packsInContainer)
+      : 0;
+  if (
+    packs > 0 &&
+    KINDS_WITH_PACK_COUNT.has(kind) &&
+    !sealedNameMentionsPackCount(title, packs)
+  ) {
+    const packBit =
+      locale === "fr" ? `${packs} boosters` : `${packs} boosters`;
+    if (title.includes(" — ")) {
+      const head = title.slice(0, title.indexOf(" — "));
+      const tail = title.slice(title.indexOf(" — ") + 3);
+      title = `${head} (${packBit}) — ${tail}`;
+    } else {
+      title = `${title} (${packBit})`;
+    }
+  }
+  return title;
 }
 
 /** Sort order for Catalogue → Scellés grid. */

@@ -15,6 +15,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
   buildShelfChecklist,
+  checklistRowIdentity,
   isChecklistPrintOwned,
   resolveMasterSetOwned,
   type ChecklistPrint,
@@ -643,7 +644,16 @@ export async function buildChecklistForShelf(input: {
 
   const advice: ChecklistSetAdvice[] = [];
   for (const set of checklist.sets) {
-    const missingKeys = set.missing.map((row) => row.printKey);
+    /*
+      Une ligne = une finition manquante. Deux finitions du même tirage
+      (NI-019 Normale + Scellé) sont deux trous : indexées par
+      {@link checklistRowIdentity}, pas par printKey seul — sinon le Map du
+      plan n'en gardait qu'une (panier 18 au lieu de 19).
+    */
+    const missingRows = set.missing;
+    const missingPrintKeys = [
+      ...new Set(missingRows.map((row) => row.printKey)),
+    ];
     /*
       Cotes + sources scellées pour **toutes** les cartes du set (possédées
       comprises). Le plan d'achat ne porte que sur les manquantes.
@@ -675,10 +685,11 @@ export async function buildChecklistForShelf(input: {
         : undefined;
 
     const options =
-      missingKeys.length === 0
+      missingPrintKeys.length === 0
         ? []
         : buyOptionsForMissing({
-            missing: new Set(missingKeys),
+            // EV scellé : pool de *tirages*, une clé par print (pas par finish).
+            missing: new Set(missingPrintKeys),
             poolSize: set.total,
             products,
             allowedLanguages,
@@ -696,18 +707,20 @@ export async function buildChecklistForShelf(input: {
       const sources = sourcesIndex.get(key);
       if (sources?.length) sealedSources[key] = sources;
     }
+    const missingPrices = new Map(
+      missingRows.map((row) => [
+        checklistRowIdentity(row),
+        prices.get(row.printKey) ?? null,
+      ]),
+    );
     advice.push({
       setId: set.id,
-      singles: singlesCostBreakdown(
-        missingKeys.map((key) => prices.get(key) ?? null),
-      ),
+      singles: singlesCostBreakdown([...missingPrices.values()]),
       prices: Object.fromEntries(prices),
       sealedSources,
       options,
       plan: planSetCompletion({
-        missingPrices: new Map(
-          missingKeys.map((key) => [key, prices.get(key) ?? null]),
-        ),
+        missingPrices,
         poolSize: set.total,
         options,
         products,

@@ -25,6 +25,7 @@ describe("checklistPrefs", () => {
       masterSetSuggestDismissed: false,
       alwaysShowFinishLabels: false,
       showPrices: true,
+      hideZeroSealedExpectation: false,
     });
   });
 
@@ -54,6 +55,7 @@ describe("checklistPrefs", () => {
       masterSetSuggestDismissed: true,
       alwaysShowFinishLabels: true,
       showPrices: false,
+      hideZeroSealedExpectation: true,
     });
     expect(readChecklistPrefs(id)).toEqual({
       showOwned: false,
@@ -61,6 +63,7 @@ describe("checklistPrefs", () => {
       masterSetSuggestDismissed: true,
       alwaysShowFinishLabels: true,
       showPrices: false,
+      hideZeroSealedExpectation: true,
     });
   });
 });

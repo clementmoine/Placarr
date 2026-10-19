@@ -19,6 +19,11 @@ export type ChecklistShelfPrefs = {
   alwaysShowFinishLabels: boolean;
   /** Cotes par carte + panneau conseil d'achat. */
   showPrices: boolean;
+  /**
+   * Conseil scellé : masquer les SKU à espérance 0 (déjà couverts / sans
+   * impact estimé). Défaut off — on liste tout, trié du plus rentable.
+   */
+  hideZeroSealedExpectation: boolean;
 };
 
 export const DEFAULT_CHECKLIST_PREFS: ChecklistShelfPrefs = {
@@ -27,6 +32,7 @@ export const DEFAULT_CHECKLIST_PREFS: ChecklistShelfPrefs = {
   masterSetSuggestDismissed: false,
   alwaysShowFinishLabels: false,
   showPrices: true,
+  hideZeroSealedExpectation: false,
 };
 
 const STORAGE_PREFIX = "placarr.checklistPrefs.v1:";
@@ -65,6 +71,10 @@ export function parseChecklistPrefs(raw: unknown): ChecklistShelfPrefs {
       typeof raw.showPrices === "boolean"
         ? raw.showPrices
         : DEFAULT_CHECKLIST_PREFS.showPrices,
+    hideZeroSealedExpectation:
+      typeof raw.hideZeroSealedExpectation === "boolean"
+        ? raw.hideZeroSealedExpectation
+        : DEFAULT_CHECKLIST_PREFS.hideZeroSealedExpectation,
   };
 }
 

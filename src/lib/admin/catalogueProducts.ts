@@ -21,6 +21,7 @@ import {
 } from "@/providers/shared/sealedProducts/indexFormat";
 import {
   SEALED_KIND_ORDER,
+  sealedProductDisplayName,
   withRefinedSealedKind,
   type SealedBehavior,
   type SealedKind,
@@ -177,10 +178,16 @@ function rowFromEntry(
   corpusPack?: string,
 ): CatalogueSealedRow {
   const entry = withRefinedSealedKind(raw);
-  const name = entry.name?.trim() || entry.slug;
   const lang = resolveSealedLang({
     lang: entry.lang,
     slug: entry.slug,
+  });
+  const name = sealedProductDisplayName({
+    name: entry.name,
+    kind: entry.kind,
+    slug: entry.slug,
+    packsInContainer: entry.packsContained,
+    locale: lang,
   });
   /*
     Ledger curated inventorié → compteur = somme des qty garanties (starter 40,
@@ -441,7 +448,15 @@ function buildGuaranteedProducts(
     return {
       slug: link.slug,
       qty,
-      name: refined?.name ?? null,
+      name: refined
+        ? sealedProductDisplayName({
+            name: refined.name,
+            kind: refined.kind,
+            slug: refined.slug,
+            packsInContainer: refined.packsContained,
+            locale: childLang,
+          })
+        : null,
       image: refined
         ? resolveSealedPackshotUrl({
             packId: corpus,

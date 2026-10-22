@@ -77,4 +77,46 @@ describe("artOrientationForPackPrint", () => {
       artOrientationForPackPrint(packId, "naruto:ni-0099", null),
     ).toEqual({ landscapeFace: true, landscapePrint: true });
   });
+
+  it("rotates a portrait locale when sibling langs are landscape", () => {
+    const packId = writePackIndex("naruto/ninja-ranks", {
+      "naruto:nr-0068": {
+        set: "nr",
+        card: "0068",
+        landscapePrint: true,
+        langs: {
+          fr: { art: "art.fr.webp", artW: 1040, artH: 736 },
+          en: { art: "art.en.jpg", artW: 300, artH: 212 },
+          it: { art: "art.it.jpg", artW: 236, artH: 328 },
+        },
+      },
+    });
+    resetCardsIndexOrientationCache();
+
+    expect(
+      artOrientationForPackPrint(packId, "naruto:nr-0068", "fr"),
+    ).toEqual({ landscapeFace: true, landscapePrint: true });
+    expect(
+      artOrientationForPackPrint(packId, "naruto:nr-0068", "it"),
+    ).toEqual({ faceQuarterTurns: 1, landscapePrint: true });
+  });
+
+  it("assumes a quarter-turn when a landscape print has no dims for this lang", () => {
+    const packId = writePackIndex("naruto/ninja-ranks", {
+      "naruto:nr-0067": {
+        set: "nr",
+        card: "0067",
+        landscapePrint: true,
+        langs: {
+          fr: { art: "art.fr.webp", artW: 1040, artH: 736 },
+          it: { art: "art.it.jpg" },
+        },
+      },
+    });
+    resetCardsIndexOrientationCache();
+
+    expect(
+      artOrientationForPackPrint(packId, "naruto:nr-0067", "it"),
+    ).toEqual({ faceQuarterTurns: 1, landscapePrint: true });
+  });
 });

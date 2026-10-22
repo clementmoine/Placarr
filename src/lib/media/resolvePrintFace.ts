@@ -3,15 +3,16 @@
  *
  * Stem = shelf item slug without finish (`s1-cl0001-fr`). Disk bytes stay
  * under `cards/{lang}/{set}/{id}/`. Naruto Carddass adds owned/borrowed
- * ranking; other packs resolve owned files only.
+ * ranking; other packs resolve owned files (+ face.json / locale borrow).
  */
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { catalogueCorpusPack } from "@/lib/admin/cataloguePacks";
 import { canonicalAssetPack } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
+import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
 import { providerModulesForPack } from "@/providers/shared/packOwner";
 import {
   matchNarutoPrintsAssetRest,
@@ -126,6 +127,25 @@ export function matchPrintsAssetRest(
   return null;
 }
 
+function readFaceJsonArt(cardDir: string, names: string[]): string | null {
+  const decisionPath = path.join(cardDir, CARD_FACE_DECISION_FILE);
+  if (!existsSync(decisionPath)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(decisionPath, "utf8")) as {
+      art?: string;
+    };
+    const named = raw.art?.trim();
+    if (named && names.includes(named) && /^art\./i.test(named)) return named;
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
+/**
+ * Owned face basename — `face.json` wins, then catalogue-grade dumps
+ * (reconstructed / AnimeCollection) before listing photos (`art.coleka`, …).
+ */
 function pickOwnedArtFile(
   cardDir: string,
   role: PrintFaceRole,
@@ -146,7 +166,11 @@ function pickOwnedArtFile(
       names.find((n) => /^art\.[^/]*-b\.(jpe?g|png|webp|gif)$/i.test(n)) ?? null
     );
   }
+  const fromDecision = readFaceJsonArt(cardDir, names);
+  if (fromDecision) return fromDecision;
   return (
+    names.find((n) => /^art\.reconstructed\./i.test(n)) ??
+    names.find((n) => /^art\.animecollection\./i.test(n)) ??
     names.find((n) => /^art\.webp$/i.test(n)) ??
     names.find((n) => /^art\.(jpe?g|png|gif)$/i.test(n)) ??
     names.find((n) => /^art\./i.test(n)) ??
@@ -164,17 +188,46 @@ function resolveOwnedPrintFace(opts: {
   if (!id) return null;
   const card = id.grouping ? `${id.number}-${id.grouping}` : id.number;
   const lang = opts.lang.trim().toLowerCase();
-  const dir = path.join(packCardsDir(opts.pack), lang, id.set, card);
-  const artFile = pickOwnedArtFile(dir, opts.role);
-  if (!artFile) return null;
-  const filePath = path.join(dir, artFile);
-  if (!existsSync(filePath) || !statSync(filePath).isFile()) return null;
-  return {
-    filePath,
-    artFile,
-    source: "owned",
-    disk: { lang, set: id.set, card },
+  const cardsRoot = packCardsDir(opts.pack);
+  const tryLang = (code: string): PrintFaceHit | null => {
+    const dir = path.join(cardsRoot, code, id.set, card);
+    const artFile = pickOwnedArtFile(dir, opts.role);
+    if (!artFile) return null;
+    const filePath = path.join(dir, artFile);
+    if (!existsSync(filePath) || !statSync(filePath).isFile()) return null;
+    return {
+      filePath,
+      artFile,
+      source: code === lang ? "owned" : "borrowed",
+      ...(code === lang ? {} : { donorPrintKey: opts.printKey }),
+      disk: { lang: code, set: id.set, card },
+    };
   };
+
+  const owned = tryLang(lang);
+  if (owned) return owned;
+
+  // Locale borrow — same print, another *language* folder (IT←EN…).
+  // Skip set-first legacy dirs (`sd`, `nr`, …) sitting next to `fr`/`en`.
+  let langs: string[] = [];
+  try {
+    langs = readdirSync(cardsRoot).filter((name) => {
+      if (!LANG_SEGMENT.test(name)) return false;
+      try {
+        return statSync(path.join(cardsRoot, name)).isDirectory();
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return null;
+  }
+  for (const code of langs) {
+    if (code.toLowerCase() === lang) continue;
+    const hit = tryLang(code.toLowerCase());
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function fromNarutoHit(hit: NarutoPrintFaceHit): PrintFaceHit {

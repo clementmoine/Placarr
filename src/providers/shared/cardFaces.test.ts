@@ -1,3 +1,7 @@
+import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { createCardFaceChoice } from "./cardFaces";
@@ -166,5 +170,31 @@ describe("areaDecidesBelow", () => {
         "fr",
       ),
     ).toBe("boutique");
+  });
+});
+
+describe("recordFaceDecision", () => {
+  const choice = createCardFaceChoice<"a" | "b">({
+    sources: ["a", "b"],
+    priority: { fr: ["a", "b"] },
+  });
+
+  it("does not rewrite face.json when the winner is unchanged", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "face-decision-"));
+    choice.recordFaceDecision(dir, "art", "art.a.jpg");
+    const first = readFileSync(path.join(dir, "face.json"), "utf8");
+    const mtimeMs = statSync(path.join(dir, "face.json")).mtimeMs;
+    choice.recordFaceDecision(dir, "art", "art.a.jpg");
+    expect(readFileSync(path.join(dir, "face.json"), "utf8")).toBe(first);
+    expect(statSync(path.join(dir, "face.json")).mtimeMs).toBe(mtimeMs);
+  });
+
+  it("rewrites when the winner changes", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "face-decision-"));
+    choice.recordFaceDecision(dir, "art", "art.a.jpg");
+    choice.recordFaceDecision(dir, "art", "art.b.jpg");
+    expect(JSON.parse(readFileSync(path.join(dir, "face.json"), "utf8"))).toEqual({
+      art: "art.b.jpg",
+    });
   });
 });

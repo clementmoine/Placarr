@@ -7,7 +7,9 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -19,12 +21,19 @@ import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { httpGet } from "@/lib/http/httpClient";
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import {
+  packCardDir,
   packCardsDir,
   packCatalogDb,
   packSealedProductsDir,
   packStagingDir,
 } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import {
+  loadCardsIndexDoc,
+  persistCardsIndexDoc,
+} from "@/providers/shared/cardCatalogue/cardsIndexDoc";
+import { resetCardsIndexOrientationCache } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
+import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
 import {
   hashNarutoCuratedFile,
   hashNarutoCuratedJson,
@@ -573,41 +582,141 @@ export function colekaNinjaRanksRejectedFaceKeys(
   return keys;
 }
 
+/**
+ * Face d'affichage préférée sur disque — au-dessus de Coleka (photos listing).
+ * `art.reconstructed` puis `art.animecollection` ; sinon `null` (trou honnête).
+ */
+export function preferredNinjaRanksDisplayArt(
+  cardDir: string,
+): string | null {
+  if (!existsSync(cardDir)) return null;
+  const files = readdirSync(cardDir);
+  const pick = (re: RegExp) => files.find((name) => re.test(name)) ?? null;
+  return (
+    pick(/^art\.reconstructed\./i) ??
+    pick(/^art\.animecollection\./i) ??
+    null
+  );
+}
+
+/** `face.json` — le rôle `/prints/…/face` lit ce sidecar, pas le basename Coleka. */
+function recordNinjaRanksFaceDecision(
+  cardDir: string,
+  artFile: string | null,
+): void {
+  if (!artFile || !existsSync(cardDir)) return;
+  const file = path.join(cardDir, CARD_FACE_DECISION_FILE);
+  let current: Record<string, string> = {};
+  let previous = "";
+  try {
+    previous = readFileSync(file, "utf8");
+    current = JSON.parse(previous) as Record<string, string>;
+  } catch {
+    /* first decision */
+  }
+  const next = `${JSON.stringify({ ...current, art: artFile }, null, 2)}\n`;
+  if (previous === next) return;
+  writeFileSync(file, next, "utf8");
+}
+
+/** Dossier carte — layout courant `cards/{lang}/{set}/{n}` puis legacy set-first. */
+export function ninjaRanksCardDir(
+  setCode: string,
+  lang: string,
+  number: string,
+): string {
+  const langFirst = packCardDir(NARUTO_RANKS_PACK_ID, {
+    set: setCode,
+    lang,
+    card: number,
+  });
+  if (existsSync(langFirst)) return langFirst;
+  return path.join(packCardsDir(NARUTO_RANKS_PACK_ID), setCode, lang, number);
+}
+
 function purgeColekaRejectedFaces(
   index: LocalPrintsIndex,
   ledger: ColekaNinjaRanksLedger,
 ): void {
   const rejected = colekaNinjaRanksRejectedFaceKeys(ledger);
   if (!rejected.size) return;
-  const lang = ledger.lang?.trim().toLowerCase();
+  const lang = ledger.lang?.trim().toLowerCase() || "fr";
   const dbPath = packCatalogDb(NARUTO_RANKS_PACK_ID);
   if (!existsSync(dbPath)) return;
+  const cardsIndex = loadCardsIndexDoc(NARUTO_RANKS_PACK_ID);
+  let cardsIndexDirty = false;
   const db = new DatabaseSync(dbPath);
   try {
     const stmt = db.prepare(
       `UPDATE print_assets
-       SET art = NULL
-       WHERE print_key = ? AND lang = ? AND art LIKE 'art.coleka%'`,
+       SET art = ?
+       WHERE print_key = ? AND lang = ? AND (art LIKE 'art.coleka%' OR art IS NULL)`,
     );
     for (const key of rejected) {
-      const [setCode, number] = key.split("-");
+      const dash = key.indexOf("-");
+      const setCode = dash >= 0 ? key.slice(0, dash) : key;
+      const number = dash >= 0 ? key.slice(dash + 1) : "";
+      if (!setCode || !number) continue;
       const printKey = ninjaRanksPrintKey(setCode, number);
       if (!printKey) continue;
-      stmt.run(printKey, lang);
+      const cardDir = ninjaRanksCardDir(setCode, lang, number);
+      const fallback = preferredNinjaRanksDisplayArt(cardDir);
+      stmt.run(fallback, printKey, lang);
+      recordNinjaRanksFaceDecision(cardDir, fallback);
+      /*
+        `exportIndex` ne réécrit plus le blob cards-index — sans ce sync,
+        l'admin / l'orientation gardent `art.coleka` alors que print_assets
+        pointe déjà vers AnimeCollection.
+      */
+      const entry = cardsIndex?.cards[printKey];
+      const slot = entry?.langs?.[lang];
+      if (slot && (slot.art?.startsWith("art.coleka") || !slot.art)) {
+        if (fallback) {
+          slot.art = fallback;
+          delete slot.artW;
+          delete slot.artH;
+        } else {
+          delete slot.art;
+          delete slot.artW;
+          delete slot.artH;
+        }
+        cardsIndexDirty = true;
+      }
     }
   } finally {
     db.close();
+  }
+  if (cardsIndex && cardsIndexDirty) {
+    persistCardsIndexDoc(NARUTO_RANKS_PACK_ID, cardsIndex);
+    resetCardsIndexOrientationCache();
   }
   index.exportIndex();
 }
 
 function removeColekaRejectedFaceFiles(ledger: ColekaNinjaRanksLedger): void {
   /*
-    Ne pas effacer `art.coleka` des dossiers cartes : le rejet ne concerne que
-    l'affichage (index → `art.reconstructed` ou trou honnête). Le dump Coleka
-    reste à côté, comme un scan Inkworks à côté d'un packshot curé.
+    Faces explicitement rejetées (reflets, mauvaise fiche) : on retire
+    `art.coleka.*` du dossier carte. Sinon l'URL directe et le sélecteur
+    d'images continuent de proposer la photo listing. Le staging Coleka
+    peut toujours reposer un dump au prochain harvest — l'index préférera
+    reconstructed / AnimeCollection.
   */
-  void ledger;
+  const lang = ledger.lang?.trim().toLowerCase() || "fr";
+  for (const row of ledger.rejectedFaces ?? []) {
+    const setCode = row.setCode?.trim() || COLEKA_NINJA_RANKS_SET;
+    const number = row.number?.trim();
+    if (!number) continue;
+    const cardDir = ninjaRanksCardDir(setCode, lang, number);
+    if (!existsSync(cardDir)) continue;
+    for (const name of readdirSync(cardDir)) {
+      if (!/^art\.coleka\./i.test(name)) continue;
+      try {
+        unlinkSync(path.join(cardDir, name));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
 }
 
 export function colekaNinjaRanksStagingDir(): string {
@@ -912,6 +1021,20 @@ export function installColekaNinjaRanks(
       const ext = path.extname(src).toLowerCase() || ".webp";
       const art = `art.${ledger.sourceId}${ext}`;
       copyFileSync(src, path.join(destDir, art));
+      /*
+        Dump Coleka toujours posé ; l'index n'y pointe que s'il n'y a pas déjà
+        une face préférée (reconstructed / AnimeCollection). Sinon Sync Coleka
+        écrasait l'affichage avec une photo listing (reflets).
+      */
+      const preferredDir = ninjaRanksCardDir(card.setCode, lang, card.number);
+      const displayArt =
+        preferredNinjaRanksDisplayArt(preferredDir) ??
+        preferredNinjaRanksDisplayArt(destDir) ??
+        art;
+      recordNinjaRanksFaceDecision(
+        existsSync(preferredDir) ? preferredDir : destDir,
+        displayArt,
+      );
 
       let back: string | undefined;
       if (backSrc) {
@@ -925,7 +1048,7 @@ export function installColekaNinjaRanks(
       assetsByKey.set(assetKey, {
         printKey,
         lang,
-        art: existing?.art ?? art,
+        art: existing?.art ?? displayArt,
         back: back ?? existing?.back,
         sourceUrl: card.faceUrl,
       });

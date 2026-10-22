@@ -34,6 +34,12 @@ export type ChecklistPrint = {
    * ({@link ambiguousChecklistPrintKeys}).
    */
   finish?: string | null;
+  /** Scan déjà paysage — cadre large, pas de rotation. */
+  landscapeFace?: boolean;
+  /** Quarts de tour (scan portrait d'un print paysage). */
+  faceQuarterTurns?: 0 | 1 | 2 | 3;
+  /** Au moins une langue a un art paysage pour ce tirage. */
+  landscapePrint?: boolean;
 };
 
 /**

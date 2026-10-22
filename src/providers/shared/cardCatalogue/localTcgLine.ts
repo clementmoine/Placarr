@@ -18,6 +18,7 @@ import {
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   assetsCardUrl,
+  assetsPrintFaceUrl,
   type CardDiskId,
 } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
@@ -113,9 +114,13 @@ export type LocalTcgLineSpec = {
    */
   searchPreferLanguage?: string;
   /**
-   * URL face sous `/assets/…/cards/…`. Défaut : {@link assetsCardUrl}
-   * (`{set}/{lang}/{card}/`). Override pour les arbres Carddass-like
+   * URL fichier sous `/assets/…/cards/…` (attachements, verso carte).
+   * Défaut : {@link assetsCardUrl}. Override pour les arbres Carddass-like
    * (`{set}/{card}/{lang}/`, ex. 疾風伝).
+   *
+   * Les candidats `imageUrl` / `thumbnailUrl` passent par
+   * {@link assetsPrintFaceUrl} (`…/prints/…/face`) sauf si cet override
+   * est posé — alors on garde le basename (chemins custom).
    */
   cardAssetUrl?: (id: CardDiskId, file: string) => string;
   /**
@@ -260,8 +265,33 @@ function toCandidate(
     : row.number.trim().toLowerCase();
   const faces = resolveFaceFiles(index, spec, row);
   const diskId: CardDiskId = { set, lang: faces.diskLang, card };
-  const art = faces.art ? faceUrl(spec, diskId, faces.art) : null;
-  const thumb = faces.thumb ? faceUrl(spec, diskId, faces.thumb) : null;
+  /*
+    Rôle stable `/prints/…/face` — comme Carddass / Pokémon. Le basename
+    (`art.coleka.webp`) reste sur disque + face.json ; changer de source
+    préférée ne casse plus les URL d'item / checklist.
+  */
+  const usePrintRoles = !spec.cardAssetUrl;
+  /*
+    Stem = locale des *octets* (faces.diskLang), pas la langue du titre.
+    Sinon un trou Imadoki IT (`sd-0004`) publie `…/sd-0004-it/face` alors que
+    le scan vit en EN — le resolver doit alors emprunter, et un 404 laisse
+    la check-list sans vignette.
+  */
+  const faceLang = (faces.diskLang || row.lang?.trim().toLowerCase() || "").trim();
+  const art = faces.art
+    ? usePrintRoles
+      ? assetsPrintFaceUrl(spec.packId, row.printKey, faceLang, "face")
+      : faceUrl(spec, diskId, faces.art)
+    : null;
+  const thumb = faces.art || faces.thumb
+    ? usePrintRoles
+      ? assetsPrintFaceUrl(spec.packId, row.printKey, faceLang, "thumb")
+      : faces.thumb
+        ? faceUrl(spec, diskId, faces.thumb)
+        : faces.art
+          ? faceUrl(spec, diskId, faces.art)
+          : null
+    : null;
   const back = faces.back ? faceUrl(spec, diskId, faces.back) : null;
   const setLabel =
     spec.setLabel ?? ((code: string) => code.trim().toUpperCase());

@@ -60,11 +60,21 @@ export function artOrientationForPackPrint(
 
   if (!landscapePrint) return null;
 
+  /*
+    Consensus paysage : si d'autres langues ont un scan large (ou le flag
+    `landscapePrint`), cette locale — même sans dims, même fichier portrait —
+    est traitée comme un scan à tourner (Imadoki IT / BREAK), pas comme une
+    face déjà paysage (`landscapeFace` bloquerait la rotation côté client).
+  */
+  if (langKey) {
+    return { faceQuarterTurns: 1, landscapePrint: true };
+  }
+
   if (Object.values(entry.langs).some(artSlotIsLandscape)) {
     return { landscapeFace: true, landscapePrint: true };
   }
 
-  return { landscapeFace: true, landscapePrint: true };
+  return { faceQuarterTurns: 1, landscapePrint: true };
 }
 
 /** @internal test hook */

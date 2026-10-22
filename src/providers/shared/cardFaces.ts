@@ -333,16 +333,20 @@ export function createCardFaceChoice<S extends string>(config: {
   ): void => {
     const file = path.join(cardDir, CARD_FACE_DECISION_FILE);
     let current: FaceDecision = {};
+    let previous = "";
     try {
-      current = JSON.parse(readFileSync(file, "utf8")) as FaceDecision;
+      previous = readFileSync(file, "utf8");
+      current = JSON.parse(previous) as FaceDecision;
     } catch {
       /* first decision for this card */
     }
-    writeFileSync(
-      file,
-      serializeFaceDecision({ ...current, [role]: filename }),
-      "utf8",
-    );
+    const next = serializeFaceDecision({ ...current, [role]: filename });
+    /*
+      Promote passe sur tout le pack à chaque Sync : réécrire un face.json
+      identique ne fait que bouger le mtime (sync cloud = « modifié »).
+    */
+    if (previous === next) return;
+    writeFileSync(file, next, "utf8");
   };
 
   return {

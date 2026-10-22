@@ -1,4 +1,11 @@
-import { mkdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -27,7 +34,19 @@ function animatedFromMeta(pages: number | undefined): boolean {
   return (pages ?? 1) > 1;
 }
 
-function atomicWrite(dest: string, data: Buffer): void {
+/**
+ * Écrit `data` seulement si le fichier diffère (ou n'existe pas).
+ * Évite de toucher le mtime quand Sync / curated ré-encodent la même image.
+ * @returns `true` si le fichier a été écrit.
+ */
+export function writeBufferIfChanged(dest: string, data: Buffer): boolean {
+  if (existsSync(dest)) {
+    try {
+      if (readFileSync(dest).equals(data)) return false;
+    } catch {
+      /* rewrite on read failure */
+    }
+  }
   mkdirSync(path.dirname(dest), { recursive: true });
   const tmp = `${dest}.tmp`;
   try {
@@ -41,6 +60,11 @@ function atomicWrite(dest: string, data: Buffer): void {
     }
     throw err;
   }
+  return true;
+}
+
+function atomicWrite(dest: string, data: Buffer): void {
+  writeBufferIfChanged(dest, data);
 }
 
 /** Encode any sharp-readable raster as lossless WebP (pixel-exact — foil dumps). */

@@ -10,7 +10,11 @@ import {
   matchAssetsBacksRest,
   resolveRoleBack,
 } from "@/lib/media/resolveRoleBack";
-import { legacySetFirstCardsRest } from "@/lib/media/legacySetFirstCardsRest";
+import {
+  legacyLangFirstCardsRest,
+  legacySetFirstCardsRest,
+  pokemonCardsRestFallbacks,
+} from "@/lib/media/legacySetFirstCardsRest";
 import {
   resolveUnderRoot,
   streamFileResponse,
@@ -22,13 +26,17 @@ import {
 
 type Ctx = { params: Promise<{ path?: string[] }> };
 
+function tryResolveRest(pack: string, rest: string[]): string | null {
+  const mapped = resolveAssetsDiskRoot(pack, rest);
+  if (!mapped) return null;
+  return resolveUnderRoot(mapped.root, mapped.relative);
+}
+
 function resolveAssetFile(
   pack: string,
   rest: string[],
 ): string | null {
-  const mapped = resolveAssetsDiskRoot(pack, rest);
-  if (!mapped) return null;
-  const hit = resolveUnderRoot(mapped.root, mapped.relative);
+  const hit = tryResolveRest(pack, rest);
   if (hit) return hit;
 
   /*
@@ -38,34 +46,40 @@ function resolveAssetFile(
   */
   const langFirstRest = legacySetFirstCardsRest(rest);
   if (langFirstRest) {
-    const lfMapped = resolveAssetsDiskRoot(pack, langFirstRest);
-    const lfHit = lfMapped
-      ? resolveUnderRoot(lfMapped.root, lfMapped.relative)
-      : null;
+    const lfHit = tryResolveRest(pack, langFirstRest);
     if (lfHit) return lfHit;
+  }
+
+  /*
+    Pokémon Live (and any pack still on set-first disk): client URLs are
+    lang-first (`cards/fr/xy12/011/art.webp`) while bytes sit at
+    `cards/xy12/en/011/…`.
+  */
+  const setFirstRest = legacyLangFirstCardsRest(rest);
+  if (setFirstRest) {
+    const sfHit = tryResolveRest(pack, setFirstRest);
+    if (sfHit) return sfHit;
+  }
+
+  if (pack === "pokemon" || pack.startsWith("pokemon/")) {
+    for (const candidate of pokemonCardsRestFallbacks(rest)) {
+      const alt = tryResolveRest(pack, candidate);
+      if (alt) return alt;
+    }
   }
 
   if (pack === "naruto/carddass" || pack.startsWith("naruto/")) {
     // Pre–lang-first Item URLs: cards/ninja/ni0001/fr/… → cards/fr/s1/ni0001/…
-    const langFirstRest = narutoLangFirstAssetsRest(rest);
-    if (langFirstRest) {
-      const lfMapped = resolveAssetsDiskRoot(pack, langFirstRest);
-      const lfHit = lfMapped
-        ? resolveUnderRoot(lfMapped.root, lfMapped.relative)
-        : null;
+    const narutoLangFirst = narutoLangFirstAssetsRest(rest);
+    if (narutoLangFirst) {
+      const lfHit = tryResolveRest(pack, narutoLangFirst);
       if (lfHit) return lfHit;
     }
     // Stale Metadata still points at `…/ta0081-promo/…` while bytes are retail.
     const retailRest = narutoRetailAssetsRest(rest);
     if (retailRest) {
-      const retailMapped = resolveAssetsDiskRoot(pack, retailRest);
-      if (retailMapped) {
-        const retailHit = resolveUnderRoot(
-          retailMapped.root,
-          retailMapped.relative,
-        );
-        if (retailHit) return retailHit;
-      }
+      const retailHit = tryResolveRest(pack, retailRest);
+      if (retailHit) return retailHit;
     }
   }
   return null;
@@ -138,7 +152,7 @@ export async function GET(req: Request, ctx: Ctx) {
       headers["Content-Location"] = assetsPrintFaceUrl(
         split.pack,
         hit.donorPrintKey,
-        matched.lang,
+        hit.disk.lang,
         matched.role,
       );
     }

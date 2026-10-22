@@ -62,7 +62,7 @@ describe("localTcgLine face URLs", () => {
 
     const hit = line.lookupPrint("naruto:nr-0001", "fr");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ninja-ranks/cards/fr/nr/0001/art.coleka.webp",
+      "/assets/naruto/ninja-ranks/prints/nr-0001-fr/face",
     );
   });
 
@@ -104,7 +104,10 @@ describe("localTcgLine face URLs", () => {
     expect(hit?.language).toBe("fr");
     expect(hit?.title).toBe("FR title");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ninja-ranks/cards/fr/nr/0003/art.fr.webp",
+      "/assets/naruto/ninja-ranks/prints/nr-0003-fr/face",
+    );
+    expect(hit?.thumbnailUrl).toBe(
+      "/assets/naruto/ninja-ranks/prints/nr-0003-fr/thumb",
     );
   });
 
@@ -157,8 +160,9 @@ describe("localTcgLine face URLs", () => {
     });
     const hit = withBorrow.lookupPrint("naruto:nr-0002", "fr");
     expect(hit?.language).toBe("fr");
+    // Stem = locale des octets empruntés (EN), pas le titre FR.
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ninja-ranks/cards/en/nr/0002/art.coleka.webp",
+      "/assets/naruto/ninja-ranks/prints/nr-0002-en/face",
     );
   });
 
@@ -245,7 +249,7 @@ describe("localTcgLine metadata adapter", () => {
     });
     expect(hit?.title).toBe("Naruto");
     expect(hit?.imageUrl).toBe(
-      "/assets/naruto/ultra-challenge/cards/fr/uc/0001/art.coleka.webp",
+      "/assets/naruto/ultra-challenge/prints/uc-0001-fr/face",
     );
     expect(hit?.externalIds?.printKey).toBe("naruto:uc-0001");
     expect(hit?.externalIds?.narutoultra).toBe("naruto:uc-0001");

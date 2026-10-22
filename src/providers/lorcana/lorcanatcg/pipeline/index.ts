@@ -23,7 +23,12 @@ const hooks = cardCatalogueHooks({
   effectPackId: LORCANA_EFFECT_PACK_ID,
   dbPath: lorcanaTcgDbPath,
   runPipeline: async () => {
-    await scrapeLorcanaCards({ force: true });
+    /*
+      Jamais `force` ici : Sync = admin manuel ou auto, pas de CLI. Un
+      retéléchargement massif ne faisait que bouger les mtime (même pixels).
+      Les trous restent comblés (`skipExisting` dans scrapeLorcanaCards).
+    */
+    await scrapeLorcanaCards({});
     await scrapeLorcardsProducts({});
     /*
       Découverte automatique des SKU officiels (Hyperia, Quêtes, …) : harvest

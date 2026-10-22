@@ -22,6 +22,21 @@
   ],
   "rejectedFaces": [
     {
+      "setCode": "nr",
+      "number": "0026",
+      "reason": "Photo Coleka avec reflet (Shikamaru) — hors affichage. Affichage → `art.animecollection.jpg` (attesté 2026-10-22)."
+    },
+    {
+      "setCode": "nr",
+      "number": "0039",
+      "reason": "Photo Coleka avec gros reflet caméra (Rock Lee) — hors affichage. Affichage → `art.animecollection.jpg` (attesté 2026-10-22)."
+    },
+    {
+      "setCode": "nr",
+      "number": "0044",
+      "reason": "Photo Coleka avec reflet (Gaï) — hors affichage. Affichage → `art.animecollection.jpg` (attesté 2026-10-22)."
+    },
+    {
       "setCode": "ff",
       "number": "0002",
       "reason": "Photo Coleka très reflétée (holo FF) — hors affichage (`rejectedFaces`) ; dump conservé à côté de `art.reconstructed`. Texte FR language-specific (« DEMON-RENARD »)."

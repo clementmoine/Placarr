@@ -1,3 +1,7 @@
+import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
 
@@ -5,6 +9,8 @@ import {
   FETCHED_IMAGE_MAX_SIDE,
   toUploadWebp,
   WEBP_MAX_SIDE,
+  writeBufferIfChanged,
+  writeLosslessWebpFile,
 } from "./losslessWebp";
 
 /** A plain raster of the given size — cheap to build, cheap to encode. */
@@ -62,5 +68,40 @@ describe("toUploadWebp", () => {
     const { w, h } = await sizeOf(out);
     expect(w).toBe(FETCHED_IMAGE_MAX_SIDE);
     expect(h).toBe(Math.round(FETCHED_IMAGE_MAX_SIDE / 3));
+  });
+});
+
+describe("writeBufferIfChanged", () => {
+  it("skips rewrite when bytes are identical (mtime stable)", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "webp-if-"));
+    const dest = path.join(dir, "face.webp");
+    const payload = Buffer.from("same-bytes");
+    expect(writeBufferIfChanged(dest, payload)).toBe(true);
+    const mtimeMs = statSync(dest).mtimeMs;
+    expect(writeBufferIfChanged(dest, Buffer.from("same-bytes"))).toBe(false);
+    expect(statSync(dest).mtimeMs).toBe(mtimeMs);
+    expect(readFileSync(dest)).toEqual(payload);
+  });
+
+  it("rewrites when bytes differ", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "webp-if-"));
+    const dest = path.join(dir, "face.webp");
+    writeFileSync(dest, "old");
+    expect(writeBufferIfChanged(dest, Buffer.from("new"))).toBe(true);
+    expect(readFileSync(dest, "utf8")).toBe("new");
+  });
+});
+
+describe("writeLosslessWebpFile", () => {
+  it("does not bump mtime when re-encoding yields the same webp", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "lossless-webp-"));
+    const dest = path.join(dir, "art.webp");
+    const png = await solid(8, 12);
+    await writeLosslessWebpFile(png, dest);
+    const mtimeMs = statSync(dest).mtimeMs;
+    const before = readFileSync(dest);
+    await writeLosslessWebpFile(png, dest);
+    expect(readFileSync(dest)).toEqual(before);
+    expect(statSync(dest).mtimeMs).toBe(mtimeMs);
   });
 });

@@ -5,8 +5,7 @@
  * trous Lorcast, puis titres/faces manquants via le catalogue Companion
  * (`api.lorcana.ravensburger.com/v3/catalog/{lang}`).
  *
- *   Catalogue Sync Lorcana
- *   Catalogue Sync Lorcana -- --force
+ *   Catalogue Sync Lorcana (admin / auto — faces déjà là = skip)
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -120,6 +119,14 @@ async function downloadRaw(
     throw new Error(`HTTP ${response.status} ${url}`);
   }
   const buf = Buffer.from(response.data);
+  /*
+    Défense en profondeur : si un appelant force le fetch et que le CDN
+    renvoie les mêmes octets, ne pas réécrire (mtime inchangé).
+  */
+  if (fs.existsSync(destPath)) {
+    const prev = await fs.promises.readFile(destPath);
+    if (prev.equals(buf)) return "skip";
+  }
   await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
   await fs.promises.writeFile(destPath, buf);
   return "ok";

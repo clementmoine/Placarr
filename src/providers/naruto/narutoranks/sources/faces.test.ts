@@ -13,7 +13,9 @@ import {
   installBloggerPackRip,
   readBloggerPackRipLedger,
   colekaBackOnlyStagingFile,
+  colekaNinjaRanksRejectedFaceKeys,
   installColekaNinjaRanks,
+  preferredNinjaRanksDisplayArt,
   readColekaNinjaRanksLedger,
   ingestInkworksProducts,
   readInkworksProductsLedger,
@@ -244,11 +246,70 @@ import {
 
       const report = installColekaNinjaRanks(index, { stagingDir: staging });
       expect(report.faces).toBe(0);
-      expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(true);
+      expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(false);
 
       const exported = index.exportIndex();
       const entry = exported!.index.cards["naruto:ff-0002"]!;
       expect(entry.langs.fr?.art).toBeUndefined();
+    });
+
+    it("prefers AnimeCollection over a glare Coleka dump on disk", () => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nr-prefer-"));
+      roots.push(dir);
+      fs.writeFileSync(path.join(dir, "art.coleka.webp"), "glare");
+      fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), "clean");
+      expect(preferredNinjaRanksDisplayArt(dir)).toBe("art.animecollection.jpg");
+    });
+
+    it("rejette les photos Coleka reflétées NR-26 / 39 / 44", () => {
+      const ledger = readColekaNinjaRanksLedger();
+      const keys = colekaNinjaRanksRejectedFaceKeys(ledger);
+      expect(keys.has("nr-0026")).toBe(true);
+      expect(keys.has("nr-0039")).toBe(true);
+      expect(keys.has("nr-0044")).toBe(true);
+    });
+
+    it("sur rejet NR-39, pointe l'index vers AnimeCollection (pas NULL)", () => {
+      tmpDataRoot();
+      const index = createLocalPrintsIndex(NARUTO_RANKS_PACK_ID);
+      index.writePrints([
+        {
+          printKey: "naruto:nr-0039",
+          setCode: "nr",
+          number: "0039",
+          cardType: "nr",
+          titles: [{ lang: "fr", fullName: "Rock Lee" }],
+        },
+      ]);
+      index.writeAssets([
+        {
+          printKey: "naruto:nr-0039",
+          lang: "fr",
+          art: "art.coleka.webp",
+        },
+      ]);
+      const cardDir = path.join(
+        process.env.PLACARR_DATA_DIR!,
+        "naruto",
+        "ninja-ranks",
+        "cards",
+        "fr",
+        "nr",
+        "0039",
+      );
+      fs.mkdirSync(cardDir, { recursive: true });
+      fs.writeFileSync(path.join(cardDir, "art.coleka.webp"), "glare");
+      fs.writeFileSync(path.join(cardDir, "art.animecollection.jpg"), "ac");
+
+      installColekaNinjaRanks(index, {
+        stagingDir: path.join(os.tmpdir(), "missing-nr39"),
+      });
+
+      const exported = index.exportIndex();
+      expect(exported!.index.cards["naruto:nr-0039"]!.langs.fr?.art).toBe(
+        "art.animecollection.jpg",
+      );
+      expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(false);
     });
 
     it("retire le faux recto Coleka GS03 (fiche base 3) de bl-0003", () => {
@@ -297,7 +358,7 @@ import {
       const entry = exported!.index.cards["naruto:bl-0003"]!;
       expect(entry.langs.fr?.art).toBeUndefined();
       expect(entry.langs.en?.art).toBe("art.imadoki.jpg");
-      expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(true);
+      expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(false);
     });
 
     it("pose un insert EU sous le bon set", () => {

@@ -2,7 +2,7 @@
  * Dragon Ball Super Masters pack extract — Catalogue Sync / worker (in-process).
  */
 import { fetchDbsCgFaces } from "./disk/fetchFaces";
-import { buildDbsCgFacts } from "./harvest/buildMastersFacts";
+import { tryBuildDbsCgFacts } from "./harvest/buildMastersFacts";
 import { ensureArenaClone, installArenaFaces } from "./install/arena";
 import { ensureDbsCgCuratedAssets } from "./install/curated";
 import type { DbsCardlistLocaleId } from "./parse/cardlist";
@@ -151,36 +151,49 @@ export async function runDbsCgPackPipeline(
         // Le clone porte aussi `masters_superset.json` : texte des cartes,
         // traits, ère, coûts, verso, statut tournoi et errata. Les visuels
         // seuls laissaient tout ça sur le disque sans jamais l'ouvrir.
-        buildDbsCgFacts();
         const {
           packCatalogIngestLedgerPath,
           recordCatalogPromoteAndPurgeStaging,
         } = await import("@/providers/shared/catalogIngestLedger");
-        const { arenaStagingDir } = await import("./install/arena");
+        const {
+          arenaHasMastersSuperset,
+          arenaStagingDir,
+        } = await import("./install/arena");
         const staging = arenaStagingDir();
-        // Prefer git HEAD (stable across re-install); fallback to prior ledger.
-        let contentHash: string | null = null;
-        try {
-          const { execFileSync } = await import("node:child_process");
-          contentHash = execFileSync("git", ["-C", staging, "rev-parse", "HEAD"], {
-            encoding: "utf8",
-          }).trim();
-        } catch {
-          const prior = (
-            await import("@/providers/shared/catalogIngestLedger")
-          ).readCatalogIngestLedger(
-            packCatalogIngestLedgerPath(DBS_CG_PACK_ID),
-          ).entries["dbs-cg:arena-clone"]?.contentHash;
-          contentHash = prior ?? null;
-        }
-        if (contentHash) {
-          recordCatalogPromoteAndPurgeStaging({
-            ledgerPath: packCatalogIngestLedgerPath(DBS_CG_PACK_ID),
-            artefactId: "dbs-cg:arena-clone",
-            contentHash,
-            stagingPath: staging,
-          });
-          console.log("── arena staging — purgé (faces + facts promus)");
+        const facts = arenaHasMastersSuperset(staging)
+          ? tryBuildDbsCgFacts()
+          : null;
+        if (!facts) {
+          console.warn(
+            "── arena : facts non reconstruits (masters_superset / catalogue) — pas de purge staging",
+          );
+        } else {
+          // Prefer git HEAD (stable across re-install); fallback to prior ledger.
+          let contentHash: string | null = null;
+          try {
+            const { execFileSync } = await import("node:child_process");
+            contentHash = execFileSync(
+              "git",
+              ["-C", staging, "rev-parse", "HEAD"],
+              { encoding: "utf8" },
+            ).trim();
+          } catch {
+            const prior = (
+              await import("@/providers/shared/catalogIngestLedger")
+            ).readCatalogIngestLedger(
+              packCatalogIngestLedgerPath(DBS_CG_PACK_ID),
+            ).entries["dbs-cg:arena-clone"]?.contentHash;
+            contentHash = prior ?? null;
+          }
+          if (contentHash) {
+            recordCatalogPromoteAndPurgeStaging({
+              ledgerPath: packCatalogIngestLedgerPath(DBS_CG_PACK_ID),
+              artefactId: "dbs-cg:arena-clone",
+              contentHash,
+              stagingPath: staging,
+            });
+            console.log("── arena staging — purgé (faces + facts promus)");
+          }
         }
       }
     }

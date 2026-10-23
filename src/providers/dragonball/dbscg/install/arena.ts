@@ -67,6 +67,99 @@ export function arenaAssetsDir(root = arenaStagingDir()): string {
   return path.join(root, "assets");
 }
 
+/** Texte / traits Masters — requis pour `buildDbsCgFacts`, pas seulement les faces. */
+export function arenaMastersSupersetPath(root = arenaStagingDir()): string {
+  return path.join(root, "masters_superset.json");
+}
+
+export function arenaHasMastersSuperset(root = arenaStagingDir()): boolean {
+  return existsSync(arenaMastersSupersetPath(root));
+}
+
+/**
+ * Dump `assets/` sans `.git` et sans `masters_superset.json` : faces OK, facts
+ * impossibles. En ligne, on reclône plutôt que de planter après le rangement.
+ */
+export function arenaBareDumpMissingMasters(root = arenaStagingDir()): boolean {
+  return (
+    existsSync(arenaAssetsDir(root)) &&
+    !existsSync(path.join(root, ".git")) &&
+    !arenaHasMastersSuperset(root)
+  );
+}
+
+const PARTIAL_DIR_RE = new RegExp(
+  `^${DBS_CG_ARENA_STAGING_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.partial-\\d+$`,
+);
+
+/** Sibling `….partial-<pid>/masters_superset.json` left by interrupted clones. */
+export function findArenaMastersSupersetInPartials(
+  stagingParent = packStagingDir(DBS_CG_PACK_ID),
+): string | null {
+  if (!existsSync(stagingParent)) return null;
+  let names: string[];
+  try {
+    names = readdirSync(stagingParent);
+  } catch {
+    return null;
+  }
+  const candidates: { path: string; mtime: number }[] = [];
+  for (const name of names) {
+    if (!PARTIAL_DIR_RE.test(name)) continue;
+    const file = path.join(stagingParent, name, "masters_superset.json");
+    if (!existsSync(file)) continue;
+    try {
+      candidates.push({ path: file, mtime: statSync(file).mtimeMs });
+    } catch {
+      /* skip */
+    }
+  }
+  candidates.sort((a, b) => b.mtime - a.mtime);
+  return candidates[0]?.path ?? null;
+}
+
+/**
+ * Copy `masters_superset.json` from a leftover partial into `dest` when the
+ * live dump only has faces. Returns true when dest now has the file.
+ */
+export function recoverArenaMastersSupersetFromPartials(
+  dest = arenaStagingDir(),
+): boolean {
+  if (arenaHasMastersSuperset(dest)) return true;
+  const src = findArenaMastersSupersetInPartials(path.dirname(dest));
+  if (!src) return false;
+  mkdirSync(dest, { recursive: true });
+  copyFileSync(src, arenaMastersSupersetPath(dest));
+  console.log(
+    `── arena : masters_superset.json récupéré depuis ${path.basename(path.dirname(src))}`,
+  );
+  return arenaHasMastersSuperset(dest);
+}
+
+/**
+ * Drop interrupted clone dirs that cannot yield facts (no masters, no `.git`).
+ * Keeps partials that still hold `masters_superset.json` as a spare.
+ */
+export function wipeOrphanArenaPartials(
+  stagingParent = packStagingDir(DBS_CG_PACK_ID),
+): number {
+  if (!existsSync(stagingParent)) return 0;
+  let removed = 0;
+  for (const name of readdirSync(stagingParent)) {
+    if (!PARTIAL_DIR_RE.test(name)) continue;
+    const root = path.join(stagingParent, name);
+    if (arenaHasMastersSuperset(root) || existsSync(path.join(root, ".git"))) {
+      continue;
+    }
+    rmSync(root, { recursive: true, force: true });
+    removed += 1;
+  }
+  if (removed) {
+    console.warn(`── arena : ${removed} partial orphelin(s) effacé(s)`);
+  }
+  return removed;
+}
+
 /**
  * `BT1-001.webp` → art; `BT1-001_b.webp` → awakened. `_SPR` is grouping, `_b`
  * is the Leader verso — strip the verso marker before parsing the collector.
@@ -224,14 +317,23 @@ export function cloneArenaInto(dest: string): void {
 export function ensureArenaClone(opts: EnsureArenaCloneOptions = {}): boolean {
   const dest = arenaStagingDir();
   const assets = arenaAssetsDir(dest);
+  const parent = path.dirname(dest);
+  mkdirSync(parent, { recursive: true });
+  wipeOrphanArenaPartials(parent);
+
   if (opts.offline) {
-    if (existsSync(assets)) return true;
-    console.warn(
-      `── arena : pas de clone sous ${dest} (relancer sans --offline)`,
-    );
-    return false;
+    if (!existsSync(assets)) {
+      console.warn(
+        `── arena : pas de clone sous ${dest} (relancer sans --offline)`,
+      );
+      return false;
+    }
+    if (!arenaHasMastersSuperset(dest)) {
+      recoverArenaMastersSupersetFromPartials(dest);
+    }
+    return true;
   }
-  mkdirSync(path.dirname(dest), { recursive: true });
+
   wipeUnusableArenaStaging(dest);
   if (existsSync(path.join(dest, ".git"))) {
     console.log("── arena : git fetch (dump TCG Arena)");
@@ -243,13 +345,29 @@ export function ensureArenaClone(opts: EnsureArenaCloneOptions = {}): boolean {
         `── arena : fetch ignoré, on range le clone déjà là (${error instanceof Error ? error.message : error})`,
       );
     }
+    if (!arenaHasMastersSuperset(dest)) {
+      recoverArenaMastersSupersetFromPartials(dest);
+    }
     return existsSync(assets);
   }
   if (existsSync(assets)) {
-    console.log("── arena : dump local sans .git, on range tel quel");
-    return true;
+    if (arenaHasMastersSuperset(dest)) {
+      console.log("── arena : dump local sans .git, on range tel quel");
+      return true;
+    }
+    if (recoverArenaMastersSupersetFromPartials(dest)) {
+      console.log("── arena : dump local complété via partial, on range tel quel");
+      return true;
+    }
+    console.warn(
+      "── arena : dump local incomplet (pas de masters_superset.json), on reclône",
+    );
+    rmSync(dest, { recursive: true, force: true });
   }
   cloneArenaInto(dest);
+  if (!arenaHasMastersSuperset(dest)) {
+    recoverArenaMastersSupersetFromPartials(dest);
+  }
   return existsSync(assets);
 }
 

@@ -16,9 +16,14 @@ import { packCardDir } from "@/lib/packPaths";
 import { dbsFaceFilename } from "../disk/faceChoice";
 import { DBS_CG_PACK_ID, resetDbsCgDbCache } from "../indexStore";
 import {
+  arenaBareDumpMissingMasters,
+  arenaHasMastersSuperset,
   arenaStagingUsable,
+  findArenaMastersSupersetInPartials,
   installArenaFaces,
   parseArenaFaceFilename,
+  recoverArenaMastersSupersetFromPartials,
+  wipeOrphanArenaPartials,
   wipeUnusableArenaStaging,
 } from "./arena";
 
@@ -107,6 +112,38 @@ describe("wipeUnusableArenaStaging", () => {
     expect(existsSync(path.join(root, "assets", "BT1", "BT1-001.webp"))).toBe(
       true,
     );
+  });
+
+  it("flags a bare assets dump without masters_superset.json", () => {
+    const root = path.join(tmp, "dragon-ball-masters-arena");
+    mkdirSync(path.join(root, "assets", "BT1"), { recursive: true });
+    writeFileSync(path.join(root, "assets", "BT1", "BT1-001.webp"), "x");
+    expect(arenaBareDumpMissingMasters(root)).toBe(true);
+    expect(arenaHasMastersSuperset(root)).toBe(false);
+    writeFileSync(path.join(root, "masters_superset.json"), "[]");
+    expect(arenaBareDumpMissingMasters(root)).toBe(false);
+    expect(arenaHasMastersSuperset(root)).toBe(true);
+  });
+
+  it("recovers masters_superset from a sibling partial and wipes orphan partials", () => {
+    const parent = tmp;
+    const dest = path.join(parent, "dragon-ball-masters-arena");
+    const spare = path.join(parent, "dragon-ball-masters-arena.partial-42");
+    const junk = path.join(parent, "dragon-ball-masters-arena.partial-7");
+    mkdirSync(path.join(dest, "assets"), { recursive: true });
+    mkdirSync(spare, { recursive: true });
+    mkdirSync(path.join(junk, "assets"), { recursive: true });
+    writeFileSync(path.join(spare, "masters_superset.json"), "[1]");
+    expect(findArenaMastersSupersetInPartials(parent)).toBe(
+      path.join(spare, "masters_superset.json"),
+    );
+    expect(recoverArenaMastersSupersetFromPartials(dest)).toBe(true);
+    expect(readFileSync(path.join(dest, "masters_superset.json"), "utf8")).toBe(
+      "[1]",
+    );
+    expect(wipeOrphanArenaPartials(parent)).toBe(1);
+    expect(existsSync(junk)).toBe(false);
+    expect(existsSync(spare)).toBe(true);
   });
 
   it("keeps a real git clone even without assets yet", () => {

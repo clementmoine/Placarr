@@ -150,6 +150,23 @@ export function joinDbsCgFacts(
   };
 }
 
+/**
+ * Rebuild `facts.json` from staging Masters. Returns `null` when the dump or
+ * catalogue is missing — Sync must not hard-fail the whole job on that alone.
+ */
+export function tryBuildDbsCgFacts(
+  opts: { root?: string } = {},
+): DbsCgFactsFile | null {
+  try {
+    return buildDbsCgFacts(opts);
+  } catch (error) {
+    console.warn(
+      `── DBS/CG faits : ${error instanceof Error ? error.message : error}`,
+    );
+    return null;
+  }
+}
+
 export function buildDbsCgFacts(opts: { root?: string } = {}): DbsCgFactsFile {
   const root = packRoot(opts.root);
   const mastersPath = path.join(root, MASTERS_STAGING);

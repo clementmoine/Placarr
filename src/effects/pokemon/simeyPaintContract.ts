@@ -44,8 +44,8 @@ export type SimeyMaterialsBrief = {
 };
 
 /**
- * Static readiness — Live inventory exists; paint-space projection still
- * `adapt` until `simeyPaintSpace` normalizers land.
+ * Static readiness — Live inventory + `simeyPaintSpace` μ/polarity projection.
+ * Remaining `adapt` = topology (CSS lattice / mask carve), not paint polarity.
  */
 export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
   {
@@ -53,8 +53,8 @@ export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
     simeyStem: "radiant-holo",
     slots: {
       face: "ok",
-      foil: "adapt", // Live etch polarity + μ
-      mask: "adapt", // etch→alpha; lattice is CSS (not baké in Live etch)
+      foil: "ok", // simeyPaintSpace polarity + μ
+      mask: "adapt", // etch→alpha; lattice is CSS (not baked into Live etch)
       glitter: "ok", // vendored simey_glitter (lang-agnostic)
       sharedFx: "ok",
     },
@@ -66,7 +66,7 @@ export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
     simeyStem: "rainbow-holo / rainbow-alt",
     slots: {
       face: "ok",
-      foil: "adapt",
+      foil: "ok",
       mask: "ok", // Live wp / reverse mask
       glitter: "ok",
       sharedFx: "ok", // Live Spectrum*
@@ -77,7 +77,7 @@ export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
     simeyStem: "reverse-holo / poke-ball-holo",
     slots: {
       face: "ok",
-      foil: "adapt",
+      foil: "ok",
       mask: "ok",
       glitter: "ok",
       sharedFx: "ok",
@@ -88,7 +88,7 @@ export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
     simeyStem: "secret-rare",
     slots: {
       face: "ok",
-      foil: "adapt",
+      foil: "ok",
       mask: "adapt",
       glitter: "ok",
       sharedFx: "ok",
@@ -110,11 +110,13 @@ export const SIMEY_MATERIALS_BRIEFS: readonly SimeyMaterialsBrief[] = [
     simeyStem: "v-* / ex-regular",
     slots: {
       face: "ok",
-      foil: "adapt",
+      foil: "ok",
       mask: "ok",
       glitter: "ok",
       sharedFx: "ok",
     },
+    topologyNote:
+      "Paint space projected; dosage / wash still playroom-gated (Comparer user).",
   },
 ];
 

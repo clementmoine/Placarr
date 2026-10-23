@@ -6,14 +6,14 @@ Registry ids stay flat; folders nest by franchise.
 
 | Folder | Registry id | `catalogLifecycle` / role | Role |
 | ------ | ----------- | ------------------------- | ---- |
-| [`lorcanatcg/`](./lorcanatcg/) | `lorcanatcg` | `living` (`local_catalog`) | Official local dump → `data/lorcana/` (web + Unity) |
-| [`lorcanajson/`](./lorcanajson/) | `lorcanajson` | `living` (`api_live`) | Community JSON API (FR/EN/DE/IT faces + foil masks) |
+| [`lorcanatcg/`](./lorcanatcg/) | `lorcanatcg` | `living` (`local_catalog`) | **Catalogue owner** — local dump → `data/lorcana/` (picker / check-list / scellés ; repli JSON distant) |
+| [`lorcanajson/`](./lorcanajson/) | `lorcanajson` | `living` (`api_live`) | Enrich only — community JSON (faces + foil masks) ; plus de surface print |
 | [`lorcast/`](./lorcast/) | `lorcast` | price module | TCGplayer USD via Lorcast API |
 | [`lorcanagg/`](./lorcanagg/) | `lorcanagg` | price module | Cardmarket EUR via Lorcana.gg (DotGG) |
 | [`lormarket/`](./lormarket/) | `lormarket` | price module | Cardmarket EUR via dump liste lorcards.fr |
 | [`shared/`](./shared/) | — | franchise helpers | Promo set grouping → market codes |
 
-`lorcanatcg` owns the local corpus; `lorcanajson` / `lorcast` / `lorcanagg` / `lormarket` are complementary observations (JSON + prices), not stand-ins for the app dump.
+`lorcanatcg` owns picker + check-list + local corpus; `lorcanajson` is enrich metadata only. `lorcast` / `lorcanagg` / `lormarket` are price observations.
 
 ## Action template (local TCG)
 

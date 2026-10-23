@@ -1,7 +1,7 @@
-import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
-import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
-import { mergePrintSetOptions } from "@/providers/shared/cardCatalogue/sets";
-import { tcgdexDbPath } from "./indexStore";
+import {
+  tcgdexAssetDiskId,
+  type TcgdexSearchRow,
+} from "./indexStore";
 import { tcgdexCatalog } from "./catalog";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
@@ -10,14 +10,6 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
-import {
-  isLegacyTcgdexTrainerGalleryId,
-  listTcgdexLocalSets,
-  listTcgdexRowsForLanguage,
-  searchTcgdexRows,
-  type TcgdexSearchRow,
-} from "./indexStore";
-import { loadTcgdexSetLogoIndex, withTcgdexSetSymbols } from "./setLogos";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -35,6 +27,7 @@ import {
   faceQuarterTurnsForPokemonPrint,
   joinLiveForPrint,
 } from "@/effects/pokemon/liveJoin";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
 import {
   localPokemonCatalogueArtUrl,
   buildPokemonDiskArtAttachments,
@@ -47,8 +40,6 @@ import {
   resolveLiveBundleForPrintKey,
 } from "@/effects/pokemon/resolveEffect";
 import { appendUnreachableLiveFinishes } from "@/effects/pokemon/liveFinishVariants";
-import tcgdexBoosterComposition from "./curated/booster-composition.json";
-import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 
 /**
  * Codes Live → libellés alignés sur `booster-composition.json` (TCGdex / FR).
@@ -94,7 +85,6 @@ import {
   fetchTcgdexCardById,
   fetchTcgdexCardByPrintKey,
   isTcgdexLanguage,
-  listTcgdexRemoteSets,
   resolveTcgdexLanguage,
   searchTcgdexCards,
   tcgdexCollectorNumberLabel,
@@ -133,6 +123,20 @@ function resolveLanguage(ctx: {
   return resolveTcgdexLanguage(requested);
 }
 
+/** Live paper front URL when the foil dump knows the print (no foil join). */
+function livePaperFrontUrl(card: TcgdexCard): string | null {
+  const bundle =
+    resolveLiveBundleForPrintKey(card.printKey, card.language, card.name) ??
+    null;
+  if (!bundle) return null;
+  return (
+    paperArtUrl(
+      bundle,
+      paperCard(bundle)?.std?.cardTex ?? paperCard(bundle)?.ph?.cardTex,
+    ) ?? null
+  );
+}
+
 function buildAttachments(card: TcgdexCard): MetadataAttachment[] | undefined {
   const disk = buildPokemonDiskArtAttachments({
     printKey: card.printKey,
@@ -141,6 +145,20 @@ function buildAttachments(card: TcgdexCard): MetadataAttachment[] | undefined {
     title: card.name,
   });
   const attachments: MetadataAttachment[] = [...disk.attachments];
+  // Live dump art (lang-first URL; set-first bytes OK via assets rewrite).
+  if (attachments.length === 0) {
+    const liveFront = livePaperFrontUrl(card);
+    if (liveFront) {
+      attachments.push({
+        type: "cover",
+        url: liveFront,
+        title: card.name,
+        role: "pokemon-face-live",
+        source: PROVIDER_ID,
+        coverProvenance: "catalog",
+      });
+    }
+  }
   // Remote TCGdex scan only when no local face gallery (catalogue vignette).
   if (attachments.length === 0 && card.imageUrl) {
     attachments.push({
@@ -423,8 +441,9 @@ export function toPrintCandidate(card: TcgdexCard): PrintCandidate {
 /**
  * Candidat **check-list** : identité + vignette, sans join Live foil.
  *
- * Ordre : art disque **FR** (PokéCardex / Live) → CDN TCGdex localisé (`/fr/…`,
- * EN au `onError` via `tcgdexDisplayCandidates`).
+ * Ordre : art disque catalogue (PokéCardex) → art Live dump (foil index, pas
+ * de mask/shader) → CDN TCGdex localisé (`/fr/…`, EN au `onError` via
+ * `tcgdexDisplayCandidates`).
  */
 export function toChecklistPrintCandidate(
   card: TcgdexCard,
@@ -435,13 +454,14 @@ export function toChecklistPrintCandidate(
     localPokemonCatalogueArtUrl(card.printKey, lang, undefined, {
       languages: [lang],
     }) ?? null;
+  const liveFront = livePaperFrontUrl(card);
   const localizedBase = tcgdexLocalizedImageBase(card.imageBaseUrl, lang);
   const tcgdexThumb =
     tcgdexImageUrl(localizedBase, "low") ??
     card.thumbnailUrl ??
     card.imageUrl ??
     null;
-  const thumb = localPaper ?? tcgdexThumb;
+  const thumb = localPaper ?? liveFront ?? tcgdexThumb;
   return {
     printKey: card.printKey,
     title: card.name,
@@ -461,42 +481,6 @@ export function toChecklistPrintCandidate(
       [PROVIDER_ID]: card.providerId,
     },
   };
-}
-
-function rowIsPrinted(row: { printed?: number | boolean | null }): boolean {
-  return row.printed !== 0 && row.printed !== false;
-}
-
-/** Cache par langue pour l'énumération check-list (une requête SQL). */
-const checklistPrintsByLang = new Map<string, Map<string, PrintCandidate[]>>();
-
-function checklistPrintsForLanguage(
-  language: string,
-  opts?: { includeUnprinted?: boolean },
-): Map<string, PrintCandidate[]> {
-  const lang = language.trim().toLowerCase() || "fr";
-  const includeUnprinted = opts?.includeUnprinted === true;
-  const cacheKey = `${lang}\0${includeUnprinted ? "all" : "printed"}`;
-  const hit = checklistPrintsByLang.get(cacheKey);
-  if (hit) return hit;
-
-  const rows = listTcgdexRowsForLanguage(lang, { includeUnprinted });
-  const presentIds = new Set(
-    rows.map((row) => row.setId.trim().toLowerCase()),
-  );
-  const bySet = new Map<string, PrintCandidate[]>();
-  for (const row of rows) {
-    const setId = row.setId.trim().toLowerCase();
-    if (isLegacyTcgdexTrainerGalleryId(setId, presentIds)) continue;
-    const candidate = toChecklistPrintCandidate(cardFromLocalRow(row), {
-      printed: rowIsPrinted(row) ? undefined : false,
-    });
-    const list = bySet.get(setId);
-    if (list) list.push(candidate);
-    else bySet.set(setId, [candidate]);
-  }
-  checklistPrintsByLang.set(cacheKey, bySet);
-  return bySet;
 }
 
 export function mapTcgdexMetadata(
@@ -638,6 +622,20 @@ export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
     ? row.lang
     : "fr") as TcgdexCard["language"];
   const imageBaseUrl = tcgdexLocalizedImageBase(row.imageBaseUrl, language);
+  /*
+    Indexed local face (`print_assets.art`) wins over CDN. Basename →
+    `/assets/pokemon/cards/{lang}/{set}/{num}/{art}`; without it, TCGdex
+    high/low URLs from `image_base_url` (unchanged harvest contract).
+  */
+  const artBasename = row.art?.trim() || null;
+  const diskId =
+    artBasename != null
+      ? tcgdexAssetDiskId(row.printKey, language)
+      : null;
+  const localArtUrl =
+    artBasename && diskId
+      ? assetsCardUrl("pokemon", diskId, artBasename)
+      : null;
   return {
     providerId: row.providerId,
     printKey: row.printKey,
@@ -663,8 +661,8 @@ export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
     illustrator: null,
     finishes: [],
     imageBaseUrl,
-    imageUrl: tcgdexImageUrl(imageBaseUrl, "high"),
-    thumbnailUrl: tcgdexImageUrl(imageBaseUrl, "low"),
+    imageUrl: localArtUrl ?? tcgdexImageUrl(imageBaseUrl, "high"),
+    thumbnailUrl: localArtUrl ?? tcgdexImageUrl(imageBaseUrl, "low"),
     cmPriceCents: null,
     cmFoilPriceCents: null,
     cardmarketProductId: null,
@@ -675,9 +673,7 @@ export const tcgdexModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
-    catalogueLabel: "Pokémon",
     types: ["tcg"],
-    nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people", "price"],
     auth: { kind: "none" },
     supplyMode: "api_live",
@@ -692,7 +688,7 @@ export const tcgdexModule = defineProvider({
     },
     websiteUrl: "https://tcgdex.dev/",
     notes:
-      "Catalogue Pokémon TCG (TCGdex). API REST sans clé, FR par défaut, jaquettes HD sur assets.tcgdex.net, cotes Cardmarket en EUR. Identité = tirage imprimé (set + numéro) ; les effets foil Unity viennent du pack pokemon (TCG Live), pas de masques first-party TCGdex.",
+      "Harvest + enrich + prix Pokémon (API TCGdex, Cardmarket EUR). Pas de surface picker / check-list — owner = `pokemontcglive` (index local + repli distant). Foil Unity = pack Live, pas de masques first-party TCGdex.",
     referencePriceSource: true,
   },
   catalog: tcgdexCatalog,
@@ -708,117 +704,8 @@ export const tcgdexModule = defineProvider({
       },
     } satisfies MetadataProviderAdapter;
   },
-  suggestDatabaseTitles: async ({ cleanedName }) => {
-    const cards = await searchTcgdexCards(cleanedName, {
-      limit: 10,
-      hydrate: false,
-    });
-    return Array.from(new Set(cards.map((card) => card.name)));
-  },
-  /** Ce que la moisson a réellement rapporté, pas ce que TCGdex publie. Voir `distinctPrintLanguages`. */
-  listPrintLanguages: () => distinctPrintLanguages(tcgdexDbPath()),
-  labelPrintSet: ({ setCode, language }) =>
-    labelFromPrintSetOptions(
-      listTcgdexLocalSets(language ?? undefined),
-      setCode,
-    ),
-  /*
-    Local ∪ API ∪ logos : une base non vide ne doit plus masquer un set déjà
-    annoncé (ex. `me05.5`). La moisson `catalog.refresh` remplit ensuite les
-    cartes ; le sélecteur reste dynamique dès l'ouverture.
-  */
-  listPrintSets: async (_type, language) => {
-    const local = listTcgdexLocalSets(language ?? undefined);
-    const logos = (loadTcgdexSetLogoIndex()?.sets ?? [])
-      .filter((row) => row.name?.trim())
-      .map((row) => ({ id: row.id, label: row.name!.trim() }));
-    const remote = await listTcgdexRemoteSets({
-      language: tcgdexLanguageFromLiveOrDex(language) ?? undefined,
-    });
-    const merged = withTcgdexSetSymbols(
-      mergePrintSetOptions(local, logos, remote),
-    );
-    const ids = new Set(merged.map((row) => row.id.toLowerCase()));
-    return merged.filter(
-      (row) => !isLegacyTcgdexTrainerGalleryId(row.id, ids),
-    );
-  },
-  /*
-    L'énumération lit la base locale, plafond levé — la check-list compte, elle
-    n'échantillonne pas. Pas de repli distant : un décompte tiré d'un catalogue
-    absent serait faux, et mieux vaut ne rien annoncer.
-  */
-  printGames: [POKEMON_GAME],
-  loadBoosterComposition: () => {
-    const raw = tcgdexBoosterComposition as BoosterCompositionFile;
-    return raw?.version === 1 ? raw : null;
-  },
-  listSetPrints: async ({ setId, language, includeUnprinted }) => {
-    const lang = (language ?? "fr").trim().toLowerCase() || "fr";
-    const key = setId.trim().toLowerCase();
-    if (!key) return [];
-    return (
-      checklistPrintsForLanguage(lang, { includeUnprinted }).get(key) ?? []
-    );
-  },
-  searchPrints: async ({
-    query,
-    language,
-    limit,
-    signal,
-    setId,
-    catalogueBrowse,
-  }) => {
-    /*
-      La base locale d'abord : même donnée, sans le réseau. Mesuré avant
-      moisson — 327 ms l'appel distant, contre 42 à 56 ms pour les packs qui
-      lisent leur base. Le distant reste le repli tant que la moisson n'a pas
-      tourné : un catalogue vide ne doit pas rendre l'ajout impossible.
-    */
-    const localRows = searchTcgdexRows(query, {
-      language: language ?? undefined,
-      limit,
-      setId,
-      catalogueBrowse,
-    });
-    const cards =
-      localRows.length > 0
-        ? localRows.map(cardFromLocalRow)
-        : await searchTcgdexCards(query, {
-            language: tcgdexLanguageFromLiveOrDex(language) ?? undefined,
-            limit,
-            signal,
-            setId,
-          });
-    /*
-      Une carte sans face **descend**, elle ne disparaît pas.
-
-      Elle était écartée pour ne pas remplir la grille de tuiles vides. Mais
-      1507 tirages n'ont pas d'image chez la source — dont les 406 Kits du
-      dresseur, qui n'en ont aucune — et les écarter les rendait tout
-      simplement **impossibles à ajouter** : la carte existe, le collectionneur
-      l'a en main, et le catalogue prétendait le contraire.
-
-      Reléguer plutôt que cacher, c'est la règle qu'on applique déjà aux visuels
-      de la mauvaise console.
-    */
-    const candidates = cards.map(toPrintCandidate);
-    const hasFace = (candidate: (typeof candidates)[number]) =>
-      Boolean(candidate.thumbnailUrl || candidate.imageUrl);
-    return [
-      ...candidates.filter(hasFace),
-      ...candidates.filter((candidate) => !hasFace(candidate)),
-    ];
-  },
-  lookupPrint: async ({ printKey, name, language, signal }) => {
-    if (parsePrintKey(printKey)?.game !== POKEMON_GAME) return null;
-    const card = await fetchTcgdexCardByPrintKey(printKey, {
-      language: tcgdexLanguageFromLiveOrDex(language) ?? undefined,
-      name,
-      signal,
-    });
-    return card ? toPrintCandidate(card) : null;
-  },
+  // Cover / price attribution — not picker ownership (owner = pokemontcglive).
+  printGames: ["pokemon"],
   suggestFoilPlayroomSamples: (needs) =>
     suggestTcgdexFoilPlayroomSamples(needs),
   refreshBarcodePriceOffers: refreshTcgdexOffers,

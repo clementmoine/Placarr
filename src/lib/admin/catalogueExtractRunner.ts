@@ -396,7 +396,8 @@ async function invokePackPipeline(
     case "leclerc-marvel22":
     case "leclerc-marvel23":
     case "leclerc-marvel24":
-    case "leclerc-disney25": {
+    case "leclerc-disney25":
+    case "leclerc-disney26": {
       const { runLeclercExtractTargetPipeline } = await import(
         "@/providers/leclerc/extract"
       );

@@ -36,13 +36,14 @@ function catalogueFaceThumbFile(files: CardsIndexLangFiles): string | null {
   return null;
 }
 
-function catalogueFaceSourceRank(artFile: string): number {
+/**
+ * Filename convention: `art.<source>.<ext>`. Rank = typical scan quality
+ * (publisher / shop / reconstructed beat marketplace glare). Shared with
+ * `/prints/…/face` resolve so sealed previews match Catalogue → Cards.
+ */
+export function catalogueFaceSourceRank(artFile: string): number {
   const match = /^art\.([^.]+)\./i.exec(artFile.trim());
   const source = match?.[1]?.toLowerCase() ?? "";
-  /*
-    Filename convention across packs: `art.<source>.<ext>`. Rank reflects typical
-    scan quality, not TCG identity — publisher/shop photos beat marketplace glare.
-  */
   if (source.includes("corrected")) return 100;
   if (source.includes("reconstructed")) return 95;
   // AnimeCollection HD FR — source principale Ninja Ranks (au-dessus de Coleka).
@@ -50,6 +51,8 @@ function catalogueFaceSourceRank(artFile: string): number {
   if (source === "inkworks" || source === "arcadegamecards") return 85;
   // Official Bandai Carddass site dumps (ex. Bleach SCB FR via carddass.fr).
   if (source === "carddass") return 80;
+  // eBay studio / gallery crops (Leclerc Disney) beat Coleka listing glare.
+  if (source === "ebay") return 70;
   if (source === "imadoki") return 55;
   if (source === "coleka") return 35;
   if (source === "blogger") return 30;

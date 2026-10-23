@@ -12,11 +12,14 @@ import {
 const hasLocalCatalogue = listTcgdexLocalSets().length > 0;
 
 describe("pokemontcglive print surface", () => {
-  it("exposes search / lookup / sets on the dataPack owner", () => {
+  it("owns picker / checklist surface (catalogueLabel + print hooks)", () => {
+    expect(pokemontcgliveModule.info.catalogueLabel).toBe("Pokémon");
+    expect(pokemontcgliveModule.info.nameDatabase).toBe(true);
     expect(pokemontcgliveModule.searchPrints).toBeTypeOf("function");
     expect(pokemontcgliveModule.lookupPrint).toBeTypeOf("function");
     expect(pokemontcgliveModule.listPrintSets).toBeTypeOf("function");
     expect(pokemontcgliveModule.listSetPrints).toBeTypeOf("function");
+    expect(pokemontcgliveModule.loadBoosterComposition).toBeTypeOf("function");
     expect(pokemontcgliveModule.printGames).toEqual(["pokemon"]);
     expect(pokemontcgliveModule.catalog?.dataPack).toBe("pokemon");
   });

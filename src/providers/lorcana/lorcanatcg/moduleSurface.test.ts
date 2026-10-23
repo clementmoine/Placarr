@@ -6,11 +6,14 @@ import { lorcanatcgModule } from "./index";
 const hasLocalCatalogue = listLorcanaTcgSets().length > 0;
 
 describe("lorcanatcg dataPack print surface", () => {
-  it("exposes search / lookup / sets on the local corpus owner", () => {
+  it("owns picker / checklist surface (catalogueLabel + print hooks)", () => {
+    expect(lorcanatcgModule.info.catalogueLabel).toBe("Lorcana");
+    expect(lorcanatcgModule.info.nameDatabase).toBe(true);
     expect(lorcanatcgModule.searchPrints).toBeTypeOf("function");
     expect(lorcanatcgModule.lookupPrint).toBeTypeOf("function");
     expect(lorcanatcgModule.listPrintSets).toBeTypeOf("function");
     expect(lorcanatcgModule.listSetPrints).toBeTypeOf("function");
+    expect(lorcanatcgModule.loadBoosterComposition).toBeTypeOf("function");
     expect(lorcanatcgModule.printGames).toEqual(["lorcana"]);
     expect(lorcanatcgModule.catalog?.dataPack).toBe("lorcana");
   });

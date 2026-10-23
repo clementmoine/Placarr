@@ -18,6 +18,7 @@ const FACTORY_LOCAL_TCG_IDS = new Set([
   "dbslamincards",
   "dbsjcc",
   "leclercdisney25",
+  "leclercdisney26",
   "leclercmarvel21",
   "leclercmarvel22",
   "leclercmarvel23",

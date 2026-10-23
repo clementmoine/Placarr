@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -83,5 +83,14 @@ describe("productsSqlite", () => {
       version: 1,
       appearances: { ni0001: { fr: "s1" } },
     });
+  });
+
+  it("returns null on a corrupt catalog instead of throwing", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-corrupt-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    // Valid header prefix then zeros → open may succeed, queries fail corrupt.
+    const header = Buffer.from("SQLite format 3\0");
+    writeFileSync(dbPath, Buffer.concat([header, Buffer.alloc(4096, 0)]));
+    expect(loadProductsIndexFromSqlite("demo", { dbPath })).toBeNull();
   });
 });

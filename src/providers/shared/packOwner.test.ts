@@ -13,8 +13,8 @@ describe("providerModuleForPack — dual dataPack owners", () => {
     expect(ids).toEqual(["pokemontcglive", "tcgdex"]);
   });
 
-  it("does not let registry order hide sealed logos behind TCGdex", () => {
-    // First registry hit is tcgdex (identity) — no resolveSetLogo.
+  it("resolves logos + checklist prints on the Live catalogue owner", () => {
+    // First registry hit may still be tcgdex (harvest) — no resolveSetLogo.
     expect(providerModuleForPack("pokemon")?.info.id).toBe("tcgdex");
     expect(providerModuleForPack("pokemon")?.resolveSetLogo).toBeUndefined();
 
@@ -23,6 +23,6 @@ describe("providerModuleForPack — dual dataPack owners", () => {
     expect(typeof logos?.resolveSetLogo).toBe("function");
 
     const prints = providerModuleProviding("pokemon", "listSetPrints");
-    expect(prints?.info.id).toBe("tcgdex");
+    expect(prints?.info.id).toBe("pokemontcglive");
   });
 });

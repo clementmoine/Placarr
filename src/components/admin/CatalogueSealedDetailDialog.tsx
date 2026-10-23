@@ -22,14 +22,23 @@ import type {
   CatalogueSealedRow,
 } from "@/lib/admin/catalogueProducts";
 import {
+  formatPackCompositionPossibleChaseLabel,
+  formatPackCompositionProvenanceLabel,
+  formatPackCompositionSlotLabel,
   formatRandomPoolScopeLabel,
+  formatSealedCardsPerOpenUnitLabel,
+  formatSealedKindLine,
+  formatSealedPackCountLabel,
   formatSealedRandomContentsLabel,
+  formatSealedRandomSectionTitle,
   formatSealedStructureUnitLabel,
+  sealedOpenUnitNoun,
 } from "@/lib/admin/sealedContentsLabels";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { sealedSkuNeedsPackComposition } from "@/providers/shared/sealedProducts/packCompositionTypes";
 import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
 import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
+import { splitSealedLotteryChasePrints } from "@/providers/shared/sealedProducts/lotteryChaseSplit";
 
 async function fetchDetail(
   pack: CataloguePackId,
@@ -173,13 +182,13 @@ export function CatalogueSealedDetailDialog({
                 ) : null}
               </div>
               <div className="min-w-0 flex-1 space-y-1 text-xs text-muted-foreground">
-                <p>
-                  <span className="font-medium text-foreground/80">
-                    {sealedKindLabel(detail.kind, fr ? "fr" : "en")}
-                  </span>
-                  {detail.setCode ? (
-                    <span className="ml-1.5 tabular-nums">{detail.setCode}</span>
-                  ) : null}
+                <p className="font-medium text-foreground/80">
+                  {formatSealedKindLine({
+                    kindLabel: sealedKindLabel(detail.kind, fr ? "fr" : "en"),
+                    setCode: detail.setCode,
+                    slug: detail.slug,
+                    fr,
+                  })}
                 </p>
                 <p className="truncate font-mono text-[11px]">{detail.slug}</p>
                 {detail.priceCents != null && detail.priceCents > 0 ? (
@@ -209,8 +218,8 @@ export function CatalogueSealedDetailDialog({
                         ? "Structure attestée — taille fixe (liste carte-à-carte partielle ou absente)"
                         : "Structure attested — fixed size (card list partial or missing)"
                       : fr
-                        ? "Structure attestée — loterie / sachets (pas de liste carte-à-carte)"
-                        : "Structure attested — lottery / packs (no card-by-card list)"}
+                        ? `Structure attestée — loterie / ${sealedOpenUnitNoun({ slug: detail.slug, fr, count: 2 })} (pas de liste carte-à-carte)`
+                        : `Structure attested — lottery / ${sealedOpenUnitNoun({ slug: detail.slug, fr, count: 2 })} (no card-by-card list)`}
                   </p>
                 ) : (
                   <p className="font-medium text-amber-700 dark:text-amber-400">
@@ -220,30 +229,42 @@ export function CatalogueSealedDetailDialog({
                   </p>
                 )}
                 <p className="tabular-nums">
-                  {[
-                    detail.packsContained != null
-                      ? fr
-                        ? `${detail.packsContained} sachet(s)`
-                        : `${detail.packsContained} pack(s)`
-                      : null,
-                    detail.cardsPerPack != null
-                      ? fr
-                        ? `${detail.cardsPerPack} cartes/sachet`
-                        : `${detail.cardsPerPack} cards/pack`
-                      : null,
-                    detail.setCardCount != null
-                      ? fr
+                  {(() => {
+                    const packs = detail.packsContained;
+                    const perPack = detail.cardsPerPack;
+                    const declared = detail.declaredCardCount;
+                    const expectedFromPacks =
+                      packs != null && perPack != null
+                        ? packs * perPack
+                        : perPack;
+                    const showDeclared =
+                      declared != null &&
+                      declared !== expectedFromPacks &&
+                      declared !== perPack;
+                    return [
+                      packs != null
+                        ? formatSealedPackCountLabel(packs, fr, detail.slug)
+                        : null,
+                      perPack != null
+                        ? formatSealedCardsPerOpenUnitLabel(
+                            perPack,
+                            fr,
+                            detail.slug,
+                          )
+                        : null,
+                      detail.setCardCount != null
                         ? `set ${detail.setCardCount}`
-                        : `set ${detail.setCardCount}`
-                      : null,
-                    detail.declaredCardCount != null
-                      ? fr
-                        ? `annoncé ${detail.declaredCardCount}`
-                        : `declared ${detail.declaredCardCount}`
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ") || (fr ? "structure non renseignée" : "no structure yet")}
+                        : null,
+                      showDeclared
+                        ? fr
+                          ? `annoncé ${declared}`
+                          : `declared ${declared}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ");
+                  })() ||
+                    (fr ? "structure non renseignée" : "no structure yet")}
                 </p>
                 {detail.packsBySet && Object.keys(detail.packsBySet).length > 0 ? (
                   <p className="tabular-nums">
@@ -264,34 +285,44 @@ export function CatalogueSealedDetailDialog({
                 {detail.packComposition === "none" ? (
                   <p className="text-[11px] text-muted-foreground">
                     {fr
-                      ? "Composition sachet : aucune (pas de loterie)"
-                      : "Pack composition: none (no lottery)"}
+                      ? `Composition ${sealedOpenUnitNoun({ slug: detail.slug, fr, count: 1 })} : aucune (pas de loterie)`
+                      : `Pack composition: none (no lottery)`}
                   </p>
                 ) : detail.packComposition != null &&
                   typeof detail.packComposition === "object" ? (
                   <div className="space-y-1">
                     <p className="text-[11px] font-medium text-foreground">
-                      {fr ? "Composition sachet" : "Pack composition"}
-                      {detail.packComposition.provenance
-                        ? ` · ${detail.packComposition.provenance}`
-                        : ""}
+                      {fr
+                        ? `Composition ${sealedOpenUnitNoun({ slug: detail.slug, fr, count: 1 })}`
+                        : "Pack composition"}
+                      {(() => {
+                        const prov = formatPackCompositionProvenanceLabel(
+                          detail.packComposition.provenance,
+                          fr,
+                        );
+                        return prov ? ` · ${prov}` : "";
+                      })()}
                     </p>
                     <ul className="list-inside list-disc text-[11px] text-muted-foreground">
                       {detail.packComposition.slots.map((slot) => (
                         <li key={slot.id}>
-                          {slot.count}× {slot.id}
-                          {slot.rarities.length
-                            ? ` (${slot.rarities.join(", ")})`
-                            : ""}
+                          {formatPackCompositionSlotLabel(slot, fr)}
                         </li>
                       ))}
+                      {(() => {
+                        const chase = formatPackCompositionPossibleChaseLabel(
+                          detail.packComposition.possibleChase ?? [],
+                          fr,
+                        );
+                        return chase ? <li>{chase}</li> : null;
+                      })()}
                     </ul>
                   </div>
                 ) : sealedSkuNeedsPackComposition(detail) &&
                   detail.behavior !== "pack_container" ? (
                   <p className="text-[11px] text-amber-700 dark:text-amber-400">
                     {fr
-                      ? "Composition sachet non renseignée"
+                      ? `Composition ${sealedOpenUnitNoun({ slug: detail.slug, fr, count: 1 })} non renseignée`
                       : "Pack composition missing"}
                   </p>
                 ) : null}
@@ -359,7 +390,7 @@ export function CatalogueSealedDetailDialog({
             detail.prints.length > 0 ? (
               <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                 {fr
-                  ? "Tuiles boutique = aperçu marketing (ignorées pour la checklist). Le pool / les sachets ci-dessous font foi."
+                  ? `Tuiles boutique = aperçu marketing (ignorées pour la checklist). Le pool / les ${sealedOpenUnitNoun({ slug: detail.slug, fr, count: 2 })} ci-dessous font foi.`
                   : "Shop tiles are marketing preview (ignored for the checklist). Pool / packs below are authoritative."}
               </p>
             ) : null}
@@ -389,14 +420,17 @@ export function CatalogueSealedDetailDialog({
             {detail.contentsRandom?.length ? (
               <section className="space-y-1.5">
                 <h3 className="text-xs font-medium text-foreground">
-                  {fr ? "Sachets / tirages" : "Packs / random draws"}
+                  {formatSealedRandomSectionTitle(fr, detail.slug)}
                 </h3>
                 <ul className="space-y-1 rounded-md border border-border/60 bg-muted/15 px-3 py-2 text-xs text-muted-foreground">
                   {detail.contentsRandom.map((node, index) => (
                     <li
                       key={`${node.setId ?? "pack"}-${node.packs}-${node.cardsPerPack}-${index}`}
                     >
-                      {formatSealedRandomContentsLabel(node, fr)}
+                      {formatSealedRandomContentsLabel(
+                        { ...node, slug: detail.slug },
+                        fr,
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -415,19 +449,39 @@ export function CatalogueSealedDetailDialog({
                 (detail.kind === "deck" || detail.kind === "deck_bundle")
               }
             />
-            <CatalogueSealedPrintGrid
-              title={
+            {(() => {
+              const { base, chase } = splitSealedLotteryChasePrints(
+                detail.randomPoolPrints,
+              );
+              const baseTitle =
                 detail.randomPoolScope === "set"
                   ? fr
                     ? `Cartes possibles du set${detail.setCode ? ` ${detail.setCode}` : ""}`
                     : `Possible cards from set${detail.setCode ? ` ${detail.setCode}` : ""}`
                   : fr
                     ? "Cartes possibles (liste connue)"
-                    : "Possible cards (listed pool)"
-              }
-              prints={detail.randomPoolPrints}
-              fr={fr}
-            />
+                    : "Possible cards (listed pool)";
+              return (
+                <>
+                  <CatalogueSealedPrintGrid
+                    title={baseTitle}
+                    prints={chase.length ? base : detail.randomPoolPrints}
+                    fr={fr}
+                  />
+                  {chase.length ? (
+                    <CatalogueSealedPrintGrid
+                      title={
+                        fr
+                          ? "Fixeez possibles (aléatoire, non garanti)"
+                          : "Possible Fixeez (random, not guaranteed)"
+                      }
+                      prints={chase}
+                      fr={fr}
+                    />
+                  ) : null}
+                </>
+              );
+            })()}
             {detail.contentsKnown &&
             !detail.containsPrintsIsPreview &&
             detail.prints.length > 0 &&

@@ -93,21 +93,22 @@ describe("pokemon pack assets", () => {
   );
 
   it.skipIf(!hasDump)(
-    "ships mask textures for a sample of FR foil variants",
+    "ships mask textures for a sample of foil variants on disk",
     () => {
       let checked = 0;
       const missing: string[] = [];
       for (const bundleId of BUNDLE_IDS) {
-        if (!/_fr_/i.test(bundleId)) continue;
         const m = /^([a-z0-9.-]+)_([a-z]{2,4})_(\d{3})$/i.exec(bundleId);
         if (!m) continue;
-        const cardDir = path.join(
-          CARDS_ROOT,
-          m[2]!.toLowerCase(),
-          m[1]!.toLowerCase(),
-          m[3]!,
-        );
-        if (!existsSync(cardDir)) continue;
+        const set = m[1]!.toLowerCase();
+        const lang = m[2]!.toLowerCase();
+        const num = m[3]!;
+        // Live dump is still set-first; lang-first URLs remap at serve time.
+        const cardDir = [
+          path.join(CARDS_ROOT, set, lang, num),
+          path.join(CARDS_ROOT, lang, set, num),
+        ].find((dir) => existsSync(dir));
+        if (!cardDir) continue;
         for (const variant of variantsForBundle(bundleId)) {
           const maskTex = variant.maskTex.trim();
           if (!maskTex) continue;

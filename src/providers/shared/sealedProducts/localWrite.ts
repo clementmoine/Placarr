@@ -29,6 +29,7 @@ import {
   sealedKindIsOpaqueContents,
   type SealedKind,
 } from "./kinds";
+import type { PackCompositionField } from "./packCompositionTypes";
 import { resolveContentLayers } from "./contentLayers";
 import { persistSealedProductsIndex } from "./persistProductsIndex";
 
@@ -54,6 +55,8 @@ export type LocalSealedWrite = {
   /** Surcharge si le ledger connaît déjà le contenu (sinon dérivé du nom). */
   cardsPerPack?: number | null;
   packsContained?: number | null;
+  /** Grille sachet attestée (slots / chase) — pas inventée. */
+  packComposition?: PackCompositionField;
   /** Fiche éditeur / page produit, pas une URL d'archive. */
   path?: string;
   /** Octets du packshot, déjà sur disque. Absent = SKU sauté. */
@@ -217,6 +220,9 @@ export function writeLocalSealedProducts(input: {
       priceCents: spec.priceCents ?? null,
       cardsPerPack: spec.cardsPerPack ?? contents.cardsPerPack,
       packsContained: spec.packsContained ?? contents.packsContained,
+      ...(spec.packComposition !== undefined
+        ? { packComposition: spec.packComposition }
+        : {}),
       guaranteedPrints: layers.guaranteedPrints,
       randomPoolScope: layers.randomPoolScope,
       randomPoolPrints: layers.randomPoolPrints,

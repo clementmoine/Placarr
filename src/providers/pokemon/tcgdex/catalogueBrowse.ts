@@ -7,6 +7,7 @@ import { existsSync, statSync } from "node:fs";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { localPokemonCatalogueArtUrl } from "@/providers/pokemon/tcgdex/disk/paperCardDisk";
 import {
   tcgdexImageUrl,
@@ -14,6 +15,7 @@ import {
 } from "@/providers/pokemon/tcgdex/fetch";
 import {
   listTcgdexRowsForLanguage,
+  tcgdexAssetDiskId,
   tcgdexDbPath,
   type TcgdexSearchRow,
 } from "@/providers/pokemon/tcgdex/indexStore";
@@ -39,10 +41,18 @@ function rowToCatalogueCard(row: TcgdexSearchRow): CatalogueCardRow {
   const parsed = parsePrintKey(row.printKey);
   const set = parsed?.set ?? row.setId;
   const card = parsed?.number ?? row.localId;
+  const artBasename = row.art?.trim() || null;
+  const diskId = artBasename ? tcgdexAssetDiskId(row.printKey, lang) : null;
+  const fromAssets =
+    artBasename && diskId
+      ? assetsCardUrl("pokemon", diskId, artBasename)
+      : null;
   const local =
+    fromAssets ??
     localPokemonCatalogueArtUrl(row.printKey, lang, undefined, {
       languages: [lang],
-    }) ?? null;
+    }) ??
+    null;
   const localizedBase = tcgdexLocalizedImageBase(row.imageBaseUrl, lang);
   const remote =
     tcgdexImageUrl(localizedBase, "low") ??

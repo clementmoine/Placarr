@@ -26,6 +26,8 @@ export const LECLERC_MARVEL23_SET = "marvel23";
 export const LECLERC_MARVEL24_SET = "marvel24";
 /** Disney « Découvre la magie de Disney » — Leclerc automne 2025. */
 export const LECLERC_DISNEY25_SET = "disney25";
+/** Disney « Le Monde avec Disney » / album « En route pour l'aventure ! » — Leclerc automne 2026. */
+export const LECLERC_DISNEY26_SET = "disney26";
 
 /**
  * Affichage catalogue : `{année} {Franchise}: {titre}` (± variante Sticker Backs).
@@ -46,6 +48,7 @@ const SET_LABELS_FR: Readonly<Record<string, string>> = {
   [LECLERC_MARVEL23_SET]: "2023 Marvel: Défie tes Héros",
   [LECLERC_MARVEL24_SET]: "2024 Marvel: Explore L'Univers Marvel avec Groot",
   [LECLERC_DISNEY25_SET]: "2025 Disney: Découvre la magie de Disney",
+  [LECLERC_DISNEY26_SET]: "2026 Disney: Le Monde avec Disney",
 };
 
 const SET_SORT: Readonly<Record<string, number>> = {
@@ -61,6 +64,7 @@ const SET_SORT: Readonly<Record<string, number>> = {
   [LECLERC_MARVEL23_SET]: 2023,
   [LECLERC_MARVEL24_SET]: 2024,
   [LECLERC_DISNEY25_SET]: 2025,
+  [LECLERC_DISNEY26_SET]: 2026,
 };
 
 export function leclercPrintKey(

@@ -7,10 +7,14 @@
  * - ygocards.fr — pack sleeve (`cards/original/back.webp`), sealed SKUs,
  *   optional FR shop faces (`--ygocards-faces`)
  *
- * Faces stay locale-specific (no cross-locale borrow). Full catalogue is large —
- * use `--max-cards` / `--max-pages` / `--skip-faces` / `--skip-backs` / `--limit`
- * for smoke runs. Konami Neuron has no public API.
+ * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products`.
+ * `--skip-faces` remains an alias for `--skip faces`. Shop faces stay opt-in
+ * via `--ygocards-faces`. Konami Neuron has no public API.
  */
+import {
+  catalogueArgList,
+  selectCatalogueSteps,
+} from "@/providers/shared/cardCatalogue/catalogueSteps";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 import { ensureCardsFrListDump } from "@/providers/shared/tcgcards/ensureListDump";
 import { fillYgocardsFaces } from "@/providers/shared/tcgcards/fillCardsFrFaces";
@@ -33,6 +37,42 @@ import {
   installYugiohYgoprodeck,
 } from "./ygoprodeck";
 
+export const YUGIOH_STEPS = ["seed", "faces", "products"] as const;
+export type YugiohStep = (typeof YUGIOH_STEPS)[number];
+/** Seed harvest + face CDN need the network; products accept `--offline`. */
+const YUGIOH_ONLINE = new Set<YugiohStep>(["seed", "faces"]);
+
+export function selectYugiohSteps(argv: readonly string[]): YugiohStep[] {
+  const effective = withSkipFacesAlias(argv);
+  return selectCatalogueSteps(effective, YUGIOH_STEPS, {
+    online: YUGIOH_ONLINE,
+  });
+}
+
+/** `--skip-faces` → `--skip faces` (legacy smoke flag). */
+function withSkipFacesAlias(argv: readonly string[]): readonly string[] {
+  if (!argv.includes("--skip-faces")) return argv;
+  const skip = catalogueArgList(argv, "--skip");
+  if (skip.includes("faces")) return argv;
+  const withoutSkipPair: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === "--skip-faces") continue;
+    if (argv[i] === "--skip") {
+      const next = argv[i + 1];
+      if (next && !next.startsWith("--")) {
+        withoutSkipPair.push("--skip", `${next},faces`);
+        i += 1;
+        continue;
+      }
+    }
+    withoutSkipPair.push(argv[i]!);
+  }
+  if (!withoutSkipPair.includes("--skip")) {
+    withoutSkipPair.push("--skip", "faces");
+  }
+  return withoutSkipPair;
+}
+
 function argValue(argv: readonly string[], flag: string): string | null {
   const i = argv.indexOf(flag);
   if (i < 0) return null;
@@ -54,10 +94,14 @@ export async function runYugiohPackPipeline(
 ): Promise<{ cards: number; products: number }> {
   const force = argv.includes("--force");
   const offline = argv.includes("--offline");
-  const skipFaces = argv.includes("--skip-faces");
+  const steps = selectYugiohSteps(argv);
+  console.log(
+    `── Yu-Gi-Oh! — étapes : ${steps.join(" → ") || "(curated only)"}`,
+  );
+
   const skipScanflip = argv.includes("--skip-scanflip");
   const skipYgoprodeck = argv.includes("--skip-ygoprodeck");
-  const skipYgocardsFaces = !argv.includes("--ygocards-faces");
+  const wantShopFaces = argv.includes("--ygocards-faces");
   const skipYgocardsList =
     argv.includes("--skip-ygocards-list") || skipToken(argv, "ygocards-list");
   const skipBacks =
@@ -68,8 +112,9 @@ export async function runYugiohPackPipeline(
   const maxPages = maxPagesRaw ? Number(maxPagesRaw) : undefined;
   const maxCards = maxCardsRaw ? Number(maxCardsRaw) : undefined;
   const limit = limitRaw ? Number(limitRaw) : undefined;
+  const downloadFaces = steps.includes("faces");
 
-  if (!offline && !skipBacks) {
+  if (steps.includes("seed") && !offline && !skipBacks) {
     try {
       const backs = await harvestYgocardsDistinctBacks({ force });
       console.log(
@@ -82,7 +127,7 @@ export async function runYugiohPackPipeline(
     }
   }
 
-  if (!skipYgoprodeck) {
+  if (steps.includes("seed") && !skipYgoprodeck) {
     try {
       const harvested = await harvestYugiohYgoprodeck({
         maxCards: Number.isFinite(maxCards) ? maxCards : undefined,
@@ -97,7 +142,7 @@ export async function runYugiohPackPipeline(
     }
   }
 
-  if (!skipScanflip) {
+  if (steps.includes("seed") && !skipScanflip) {
     try {
       const harvested = await harvestYugiohScanflip({
         maxPages: Number.isFinite(maxPages) ? maxPages : undefined,
@@ -121,40 +166,45 @@ export async function runYugiohPackPipeline(
       let titles = 0;
       let faces = 0;
 
-      if (!skipYgoprodeck) {
-        const installed = await installYugiohYgoprodeck(index, {
-          downloadFaces: !skipFaces,
-          limit: Number.isFinite(limit) ? limit : undefined,
-        });
-        prints += installed.prints;
-        titles += installed.titles;
-        faces += installed.faces;
-        console.log(
-          `── YGO YGOPRODeck — ${installed.prints} prints, ${installed.titles} titres, ${installed.faces} faces`,
-        );
-      }
+      if (steps.includes("seed") || downloadFaces) {
+        if (!skipYgoprodeck && (steps.includes("seed") || downloadFaces)) {
+          const installed = await installYugiohYgoprodeck(index, {
+            downloadFaces,
+            limit: Number.isFinite(limit) ? limit : undefined,
+          });
+          if (steps.includes("seed")) {
+            prints += installed.prints;
+            titles += installed.titles;
+          }
+          faces += installed.faces;
+          console.log(
+            `── YGO YGOPRODeck — ${installed.prints} prints, ${installed.titles} titres, ${installed.faces} faces`,
+          );
+        }
 
-      if (!skipScanflip) {
-        const installed = await installYugiohScanflip(index, {
-          // Prefer CDN artUrl when faces are skipped; still seed titles.
-          downloadFaces: !skipFaces,
-          limit: Number.isFinite(limit) ? limit : undefined,
-        });
-        prints += installed.prints;
-        titles += installed.titles;
-        faces += installed.faces;
-        console.log(
-          `── YGO ScanFlip — ${installed.prints} prints, ${installed.titles} titres, ${installed.faces} faces`,
-        );
-        if (installed.prints > 0) {
-          const purged = promoteAndPurgeYugiohScanflipStaging();
-          if (purged.purged) {
-            console.log("── ScanFlip staging — purgé (ledger → logs/)");
+        if (!skipScanflip && (steps.includes("seed") || downloadFaces)) {
+          const installed = await installYugiohScanflip(index, {
+            downloadFaces,
+            limit: Number.isFinite(limit) ? limit : undefined,
+          });
+          if (steps.includes("seed")) {
+            prints += installed.prints;
+            titles += installed.titles;
+          }
+          faces += installed.faces;
+          console.log(
+            `── YGO ScanFlip — ${installed.prints} prints, ${installed.titles} titres, ${installed.faces} faces`,
+          );
+          if (installed.prints > 0) {
+            const purged = promoteAndPurgeYugiohScanflipStaging();
+            if (purged.purged) {
+              console.log("── ScanFlip staging — purgé (ledger → logs/)");
+            }
           }
         }
       }
 
-      if (!skipYgocardsList && !offline) {
+      if (steps.includes("seed") && !skipYgocardsList && !offline) {
         const list = await ensureCardsFrListDump({
           packId: YUGIOH_PACK_ID,
           site: YGOCARDS_CARD_SITE,
@@ -168,7 +218,7 @@ export async function runYugiohPackPipeline(
         );
       }
 
-      if (!skipFaces && !skipYgocardsFaces && !offline) {
+      if (downloadFaces && wantShopFaces && !offline) {
         const shop = await fillYgocardsFaces({
           index,
           force,
@@ -187,20 +237,26 @@ export async function runYugiohPackPipeline(
       );
       return { prints, titles };
     },
-    seedProducts: async () => {
-      const products = await scrapeYgocardsProducts({
-        force,
-        offline,
-        onProgress: (message) => console.log(`   products — ${message}`),
-      });
-      return {
-        written: products.detail || products.listed,
-        skipped: 0,
-      };
-    },
+    seedProducts: steps.includes("products")
+      ? async () => {
+          const products = await scrapeYgocardsProducts({
+            force,
+            offline,
+            onProgress: (message) => console.log(`   products — ${message}`),
+          });
+          return {
+            written: products.detail || products.listed,
+            skipped: 0,
+          };
+        }
+      : undefined,
   });
 
-  const arts = applyYugiohScanflipArtUrls();
-  console.log(`── ScanFlip artUrl — ${arts.patched} injecté${arts.patched === 1 ? "" : "s"}`);
+  if (steps.includes("seed")) {
+    const arts = applyYugiohScanflipArtUrls();
+    console.log(
+      `── ScanFlip artUrl — ${arts.patched} injecté${arts.patched === 1 ? "" : "s"}`,
+    );
+  }
   return result;
 }

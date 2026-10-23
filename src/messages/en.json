@@ -42,10 +42,17 @@
   "scanner": {
     "title": "Item scan",
     "description": "Hold the barcode inside the frame to scan the item.",
+    "modeBarcode": "Barcode",
+    "modeCard": "Card",
+    "cardDescription": "Photograph a card face. Pick a match — never auto-accepted.",
+    "cardPickPhoto": "Take or choose a photo",
+    "cardSearching": "Matching card faces…",
+    "cardNoMatches": "No close match in the local visual indexes.",
+    "cardConfirmHint": "Confirm the print — identity is never forced.",
     "error": "Something went wrong while scanning",
     "quickScan": "Quick Scan",
     "selectShelf": "Select Shelf",
-    "searching": "Searching matches...",
+    "searching": "Searching matches…",
     "noMatches": "No matching products found.",
     "addItem": "Add Custom Item",
     "customName": "Item name (optional when barcode is set)",
@@ -579,7 +586,10 @@
       "auto": "Auto",
       "autoHint": "Suggest an automatic crop (detected margins)",
       "rotateLeft": "Rotate left",
-      "rotateRight": "Rotate right"
+      "rotateRight": "Rotate right",
+      "modeRect": "Rectangle",
+      "modeFree": "Free (4 corners)",
+      "modeFreeHint": "Drag four corners to flatten a skewed photo (perspective)"
     },
     "variant": "Variant",
     "finishes": {

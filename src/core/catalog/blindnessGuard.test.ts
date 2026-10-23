@@ -91,10 +91,6 @@ const ALLOWED_PROVIDER_LITERALS: ProviderLiteralInventory = {
     onepiece: 1,
     yugioh: 1,
   },
-  "src/providers/shared/tcgcards/fillCardsFrFaces.ts": {
-    mtg: 1,
-    yugioh: 1,
-  },
 };
 
 /**
@@ -118,6 +114,7 @@ const ALLOWED_PROVIDER_KEYS: ProviderLiteralInventory = {
     leclercmarvel23: 1,
     leclercmarvel24: 1,
     leclercdisney25: 1,
+    leclercdisney26: 1,
   },
 };
 

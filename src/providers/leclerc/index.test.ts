@@ -7,9 +7,15 @@ import {
 } from "@/effects/leclerc";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
 
-import { buildLeclercFromLedgers } from "./buildFromLedgers";
+import {
+  buildLeclercFromLedgers,
+  leclercNameDensifyGate,
+  readLeclercChecklistForSet,
+} from "./buildFromLedgers";
+import { colekaLeclercListingForSet } from "./parseColekaLeclerc";
 import {
   leclercDisney25Module,
+  leclercDisney26Module,
   leclercMarvel21Module,
   leclercModules,
 } from "./index";
@@ -28,8 +34,10 @@ describe("leclerc provider hooks", () => {
     );
     expect(leclercMarvel21Module.catalog?.dataPack).toBe("leclerc/marvel21");
     expect(leclercDisney25Module.catalog?.dataPack).toBe("leclerc/disney25");
+    expect(leclercDisney26Module.catalog?.dataPack).toBe("leclerc/disney26");
     expect(leclercMarvel21Module.printGames).toEqual(["leclerc"]);
     expect(leclercDisney25Module.printGames).toEqual(["leclerc"]);
+    expect(leclercDisney26Module.printGames).toEqual(["leclerc"]);
   });
 
   it("does not claim foreign printKeys", async () => {
@@ -57,6 +65,9 @@ describe("leclerc printKey / ledgers", () => {
     expect(leclercSetLabel("disney25")).toBe(
       "2025 Disney: Découvre la magie de Disney",
     );
+    expect(leclercSetLabel("disney26")).toBe(
+      "2026 Disney: Le Monde avec Disney",
+    );
     expect(leclercSetLabel("sw19sb")).toBe(
       "2019 Star Wars: Maîtriser la Force - Sticker Backs",
     );
@@ -71,6 +82,10 @@ describe("leclerc printKey / ledgers", () => {
       setCode: "disney25",
       dryRun: true,
     });
+    const disney26 = buildLeclercFromLedgers({
+      setCode: "disney26",
+      dryRun: true,
+    });
     const marvel24 = buildLeclercFromLedgers({
       setCode: "marvel24",
       dryRun: true,
@@ -81,8 +96,32 @@ describe("leclerc printKey / ledgers", () => {
     expect(disney25.sets).toEqual(["disney25"]);
     expect(disney25.prints).toBe(132);
     expect(disney25.placeholders).toBe(0);
+    expect(disney26.sets).toEqual(["disney26"]);
+    expect(disney26.prints).toBe(132);
+    expect(disney26.placeholders).toBe(132);
     expect(marvel24.prints).toBe(132);
     expect(marvel24.placeholders).toBe(0);
+  });
+
+  it("gates disney26 name densify until Coleka / album evidence (no invent)", () => {
+    expect(colekaLeclercListingForSet("disney26")).toBeNull();
+    const gate = leclercNameDensifyGate("disney26");
+    expect(gate.ready).toBe(false);
+    expect(gate.named).toBe(0);
+    expect(gate.stubs).toBe(132);
+    expect(gate.reasons).toEqual(
+      expect.arrayContaining([
+        "pas de listing Coleka",
+        "checklist stub-only — ne pas inventer de noms",
+      ]),
+    );
+    const ledger = readLeclercChecklistForSet("disney26");
+    expect(ledger?.cards.every((c) => Boolean(c.note))).toBe(true);
+    expect(ledger?.cards.every((c) => /^Carte #|^Fixeez #/i.test(c.name))).toBe(
+      true,
+    );
+    // Named ops stay ungated.
+    expect(leclercNameDensifyGate("disney25").ready).toBe(true);
   });
 });
 

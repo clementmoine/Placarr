@@ -398,8 +398,8 @@ export function checklistRowIdentity(
 }
 
 /**
- * Deux modules Lorcana (JSON + TCG) énumèrent le même set — sans dédup, la
- * check-list double chaque carte (`lorcana:q3-10` ×2 → clé React collision).
+ * Deux modules qui énumèrent le même set (héritage dual-owner, ou overlap
+ * franchise) — sans dédup, la check-list double chaque carte (clé React collision).
  */
 function dedupeChecklistPrints(
   prints: readonly ChecklistPrint[],

@@ -399,7 +399,7 @@ describe("tcgdexModule info", () => {
   it("declares Pokémon catalogue traits", () => {
     expect(tcgdexModule.info.id).toBe("tcgdex");
     expect(tcgdexModule.info.types).toContain("tcg");
-    expect(tcgdexModule.info.nameDatabase).toBe(true);
+    expect(tcgdexModule.info.nameDatabase).toBeFalsy();
     expect(tcgdexModule.info.defaultLanguage).toBe("fr");
     expect(tcgdexModule.info.coverUrlHost).toBe("assets.tcgdex.net");
     expect(tcgdexModule.info.capabilities).toEqual(

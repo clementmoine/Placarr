@@ -1,8 +1,3 @@
-import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
-import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
-import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
-import { mergePrintSetOptions } from "@/providers/shared/cardCatalogue/sets";
-import { lorcanaTcgDbPath } from "@/providers/lorcana/lorcanatcg/indexStore";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
 import {
@@ -11,9 +6,7 @@ import {
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
-  listLorcanaTcgSets,
   lookupLorcanaTcgSearchRow,
-  searchLorcanaTcgRows,
   type LorcanaTcgSearchRow,
 } from "@/providers/lorcana/lorcanatcg/indexStore";
 import {
@@ -60,10 +53,7 @@ import {
   searchLorcanaCards,
   type LorcanaCard,
   type LorcanaLanguage,
-  listLorcanaPrintSets,
 } from "./fetch";
-import lorcanaBoosterComposition from "./curated/booster-composition.json";
-import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 
 export {
   fetchLorcanaCardByPrintKey,
@@ -629,10 +619,7 @@ export const lorcanajsonModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
-    catalogueLabel: "Lorcana",
-    catalogueAliases: ["Disney Lorcana", "Lorcana TCG"],
     types: ["tcg"],
-    nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people"],
     auth: { kind: "none" },
     supplyMode: "api_live",
@@ -647,7 +634,7 @@ export const lorcanajsonModule = defineProvider({
     },
     websiteUrl: "https://lorcanajson.org/",
     notes:
-      "Jeu de cartes Disney Lorcana. Fichiers statiques publics, sans clé, en FR/EN/DE/IT, avec les visuels officiels Ravensburger et — rare — le masque holographique par carte (98 % des tirages). Stocke une jaquette (et titre) par langue pour le même tirage ; la langue préférée reste le défaut. Aucune donnée de prix : voir le provider Lorcast. L'identité vient du tirage imprimé (extension + numéro + promo), jamais d'un code-barres : une carte à l'unité n'en a pas. Complète `lorcanatcg` (dump app/Unity local) — ne pas attribuer les octets app à cette source.",
+      "Enrich metadata Lorcana (JSON public FR/EN/DE/IT + masques foil Ravensburger). Pas de surface picker / check-list — owner = `lorcanatcg` (index local + repli distant). Aucune cote : voir Lorcast / Lorcana.gg / lormarket. Ne pas attribuer les octets app/Unity à cette source.",
   },
   evidence: {
     label: PROVIDER_LABEL,
@@ -661,105 +648,9 @@ export const lorcanajsonModule = defineProvider({
       },
     } satisfies MetadataProviderAdapter;
   },
-  suggestDatabaseTitles: async ({ cleanedName }) => {
-    const cards = await searchLorcanaCards(cleanedName, { limit: 10 });
-    // Several prints share a name; the picker exists to tell them apart.
-    return Array.from(new Set(cards.map((card) => card.fullName)));
-  },
-  /*
-    Les extensions viennent de l'index de logos déjà tenu sur disque : c'est le
-    même relevé qui nomme les sets pour les visuels, donc les deux ne peuvent
-    pas diverger. Absent tant qu'aucune synchro n'a tourné — on rend alors une
-    liste vide plutôt qu'une liste devinée.
-  */
-  /* Les extensions de la base locale ; les JSON distants en repli. */
-  /** Le catalogue local sert fr/en/de/it ; la liste se lit dans la base. Voir `distinctPrintLanguages`. */
-  listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
-  labelPrintSet: ({ setCode, language }) =>
-    labelFromPrintSetOptions(
-      listLorcanaTcgSets(language ?? undefined),
-      setCode,
-    ),
-  listPrintSets: async (_type, language) => {
-    const local = listLorcanaTcgSets(language ?? undefined);
-    const remote = await listLorcanaPrintSets();
-    return mergePrintSetOptions(local, remote);
-  },
-  /*
-    L'énumération lit la base locale, plafond levé — la check-list compte, elle
-    n'échantillonne pas. Pas de repli distant ici : un décompte tiré d'un
-    catalogue absent serait faux, et mieux vaut ne rien annoncer.
-  */
-  printGames: [LORCANA_GAME],
-  loadBoosterComposition: () => {
-    const raw = lorcanaBoosterComposition as BoosterCompositionFile;
-    return raw?.version === 1 ? raw : null;
-  },
-  listSetPrints: async ({ setId, language, includeUnprinted }) =>
-    enumerateSetPrints({
-      setId,
-      language,
-      includeUnprinted,
-      search: (opts) =>
-        searchLorcanaTcgRows(opts.query, {
-          language: opts.language,
-          limit: opts.limit,
-          setId: opts.setId,
-        }).map((row) => toPrintCandidate(cardFromLocalRow(row))),
-    }),
-  searchPrints: async ({
-    query,
-    language,
-    limit,
-    signal,
-    setId,
-    catalogueBrowse,
-  }) => {
-    /*
-      La base locale d'abord : c'est la même donnée, sans le réseau, et c'est
-      elle qui connaît les identifiants d'extension que le sélecteur propose.
-      Les JSON distants restent le repli tant qu'aucune synchro n'a tourné —
-      un catalogue vide ne doit pas rendre l'ajout impossible.
-    */
-    const local = searchLorcanaTcgRows(query, {
-      language: language ?? undefined,
-      limit,
-      setId,
-      catalogueBrowse,
-    });
-    if (local.length > 0) {
-      const seen = new Set<string>();
-      const out: PrintCandidate[] = [];
-      for (const row of local) {
-        if (seen.has(row.printKey)) continue;
-        seen.add(row.printKey);
-        out.push(toPrintCandidate(cardFromLocalRow(row)));
-        if (limit && out.length >= limit) break;
-      }
-      return out;
-    }
-    const cards = await searchLorcanaCards(query, {
-      language: isLorcanaLanguage(language) ? language : undefined,
-      limit,
-      signal,
-      setId,
-    });
-    return cards.map((card) => toPrintCandidate(card));
-  },
-  lookupPrint: async ({ printKey, name, language, signal }) => {
-    if (parsePrintKey(printKey)?.game !== LORCANA_GAME) return null;
-    const local = lookupLorcanaTcgSearchRow(printKey, {
-      language: language ?? undefined,
-    });
-    if (local) return toPrintCandidate(cardFromLocalRow(local));
-    const card = await fetchLorcanaCardByPrintKey(printKey, {
-      language: isLorcanaLanguage(language) ? language : undefined,
-      name,
-      signal,
-    });
-    if (!card) return null;
-    return toPrintCandidate(card);
-  },
+  // Cover attribution for gallery / printKey filters — not picker ownership
+  // (owner = lorcanatcg via listPrintSets).
+  printGames: ["lorcana"],
   suggestFoilPlayroomSamples: (needs) =>
     suggestLorcanaFoilPlayroomSamples(needs),
   healthCheck: createMetadataHealthCheck(

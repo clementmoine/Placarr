@@ -125,8 +125,12 @@ export function pkmcardsTileToPrintKey(
     cardsRoot,
     abbrMap,
   );
-  if (!liveStem) return null;
-  const set = preferPokemonCatalogueStem(liveStem);
+  // No inventing stems: Live folder when present, else TCGdex set id from the
+  // logo index (pbl → me05) so prices still join when the Live dump is pruned.
+  const stem =
+    liveStem ?? abbrMap.get(parsed.setAbbr)?.tcgdexId?.trim().toLowerCase() ?? null;
+  if (!stem) return null;
+  const set = preferPokemonCatalogueStem(stem);
   return buildPrintKey({
     game: POKEMON_GAME,
     set,

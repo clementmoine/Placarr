@@ -12,11 +12,20 @@ import type {
 import { defineProvider } from "@/providers/shared/defineProvider";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import { labelFromPrintSetOptions } from "@/providers/shared/cardCatalogue/labelPrintSet";
+import { mergePrintSetOptions } from "@/providers/shared/cardCatalogue/sets";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
+import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 import {
   cardFromLocalRow,
   toPrintCandidate,
 } from "@/providers/lorcana/lorcanajson";
+import {
+  fetchLorcanaCardByPrintKey,
+  isLorcanaLanguage,
+  listLorcanaPrintSets,
+  searchLorcanaCards,
+} from "@/providers/lorcana/lorcanajson/fetch";
+import lorcanaBoosterComposition from "@/providers/lorcana/lorcanajson/curated/booster-composition.json";
 
 import {
   ensureLorcanaTcgIndex,
@@ -108,7 +117,10 @@ export const lorcanatcgModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Lorcana",
+    catalogueAliases: ["Disney Lorcana", "Lorcana TCG"],
     types: ["tcg"],
+    nameDatabase: true,
     capabilities: ["identify", "cover", "description", "people"],
     auth: { kind: "none" },
     supplyMode: "local_catalog",
@@ -117,7 +129,7 @@ export const lorcanatcgModule = defineProvider({
     defaultLanguage: "fr",
     websiteUrl: "https://cards.disneylorcana.com/",
     notes:
-      "Ingest officiel local → `data/lorcana/catalog.sqlite` (titres + facts FR/EN/DE/IT, URLs) + foil assets. `lorcanajson` reste le catalogue JSON tiers. Sync : Catalogue Extract (admin / worker). Produits scellés : lorcards.fr + complément `www.disneylorcana.com` (logos wordmark + SKU manquants). Dump app/Unity = cette source (`lorcanatcg`), pas `lorcanajson`.",
+      "Owner catalogue Lorcana (picker + check-list + scellés) → `data/lorcana/catalog.sqlite` + foil. Repli distant LorcanaJSON tant que Sync n'a pas peuplé l'index. `lorcanajson` = enrich metadata / masques API seulement. Sync : Catalogue Extract. Produits scellés : lorcards.fr + `www.disneylorcana.com`. Dump app/Unity = cette source.",
   },
   catalog: lorcanatcgCatalog,
   /*
@@ -163,8 +175,8 @@ export const lorcanatcgModule = defineProvider({
       index: loadLorcanaSetLogoIndex(),
     }),
   /*
-    Owner du `dataPack` lorcana : picker + check-list scellés lisent la même
-    base que `lorcanajson` (qui garde le repli API distant).
+    Seul owner checklist / picker Lorcana. Index local d'abord ; JSON distant
+    en repli tant qu'aucune Sync n'a peuplé `catalog.sqlite`.
   */
   listPrintLanguages: () => distinctPrintLanguages(lorcanaTcgDbPath()),
   labelPrintSet: ({ setCode, language }) =>
@@ -172,12 +184,30 @@ export const lorcanatcgModule = defineProvider({
       listLorcanaTcgSets(language ?? undefined),
       setCode,
     ),
-  listPrintSets: async (_type, language) =>
-    listLorcanaTcgSets(language ?? undefined),
+  listPrintSets: async (_type, language) => {
+    const local = listLorcanaTcgSets(language ?? undefined);
+    const remote = await listLorcanaPrintSets();
+    return mergePrintSetOptions(local, remote);
+  },
+  loadBoosterComposition: () => {
+    const raw = lorcanaBoosterComposition as BoosterCompositionFile;
+    return raw?.version === 1 ? raw : null;
+  },
+  suggestDatabaseTitles: async ({ cleanedName }) => {
+    const local = searchLorcanaTcgRows(cleanedName, { limit: 10 });
+    if (local.length > 0) {
+      return Array.from(
+        new Set(local.map((row) => cardFromLocalRow(row).fullName)),
+      );
+    }
+    const cards = await searchLorcanaCards(cleanedName, { limit: 10 });
+    return Array.from(new Set(cards.map((card) => card.fullName)));
+  },
   searchPrints: async ({
     query,
     language,
     limit,
+    signal,
     setId,
     catalogueBrowse,
   }): Promise<PrintCandidate[]> => {
@@ -187,22 +217,37 @@ export const lorcanatcgModule = defineProvider({
       setId,
       catalogueBrowse,
     });
-    const seen = new Set<string>();
-    const out: PrintCandidate[] = [];
-    for (const row of rows) {
-      if (seen.has(row.printKey)) continue;
-      seen.add(row.printKey);
-      out.push(toPrintCandidate(cardFromLocalRow(row)));
-      if (limit && out.length >= limit) break;
+    if (rows.length > 0) {
+      const seen = new Set<string>();
+      const out: PrintCandidate[] = [];
+      for (const row of rows) {
+        if (seen.has(row.printKey)) continue;
+        seen.add(row.printKey);
+        out.push(toPrintCandidate(cardFromLocalRow(row)));
+        if (limit && out.length >= limit) break;
+      }
+      return out;
     }
-    return out;
+    const cards = await searchLorcanaCards(query, {
+      language: isLorcanaLanguage(language) ? language : undefined,
+      limit,
+      signal,
+      setId,
+    });
+    return cards.map((card) => toPrintCandidate(card));
   },
-  lookupPrint: async ({ printKey, language }) => {
+  lookupPrint: async ({ printKey, name, language, signal }) => {
     if (parsePrintKey(printKey)?.game !== "lorcana") return null;
     const row = lookupLorcanaTcgSearchRow(printKey, {
       language: language ?? undefined,
     });
-    return row ? toPrintCandidate(cardFromLocalRow(row)) : null;
+    if (row) return toPrintCandidate(cardFromLocalRow(row));
+    const card = await fetchLorcanaCardByPrintKey(printKey, {
+      language: isLorcanaLanguage(language) ? language : undefined,
+      name,
+      signal,
+    });
+    return card ? toPrintCandidate(card) : null;
   },
   listSetPrints: async ({ setId, language, includeUnprinted }) =>
     /*

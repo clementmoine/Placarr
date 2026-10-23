@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { assetsPrintFaceUrl } from "@/lib/packAssetUrls";
+import { assetsPrintFaceUrl, isPokemonAssetPack } from "@/lib/packAssetUrls";
 import { resolveAssetsDiskRoot, splitAssetsPackPath } from "@/lib/packPaths";
 import {
   matchPrintsAssetRest,
@@ -61,7 +61,7 @@ function resolveAssetFile(
     if (sfHit) return sfHit;
   }
 
-  if (pack === "pokemon" || pack.startsWith("pokemon/")) {
+  if (isPokemonAssetPack(pack)) {
     for (const candidate of pokemonCardsRestFallbacks(rest)) {
       const alt = tryResolveRest(pack, candidate);
       if (alt) return alt;

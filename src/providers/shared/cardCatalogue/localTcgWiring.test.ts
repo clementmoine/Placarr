@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest";
 import { PROVIDER_MODULES } from "@/core/catalog/catalog";
 import { getEffectPack } from "@/core/render/foil/backend";
 import {
+  CATALOGUE_PACK_IDS,
   CATALOGUE_PACKS,
   cataloguePackForDataPack,
 } from "@/lib/admin/cataloguePacks";
@@ -31,6 +32,13 @@ function localCatalogTcgModules(): ProviderModule[] {
 }
 
 describe("local TCG wiring (hub + effect)", () => {
+  it("derives CATALOGUE_PACK_IDS from CATALOGUE_PACKS (no drifted hand-list)", () => {
+    expect([...CATALOGUE_PACK_IDS]).toEqual(
+      CATALOGUE_PACKS.map((pack) => pack.id),
+    );
+    expect(new Set(CATALOGUE_PACK_IDS).size).toBe(CATALOGUE_PACK_IDS.length);
+  });
+
   it("every local_catalog TCG module resolves a CATALOGUE_PACKS hub entry", () => {
     const missing: string[] = [];
     for (const mdl of localCatalogTcgModules()) {

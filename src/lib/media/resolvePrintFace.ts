@@ -9,6 +9,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { parsePrintKey } from "@/core/identify/printKey";
+import { catalogueFaceSourceRank } from "@/lib/admin/catalogueFacePick";
 import { catalogueCorpusPack } from "@/lib/admin/cataloguePacks";
 import { canonicalAssetPack } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
@@ -143,8 +144,10 @@ function readFaceJsonArt(cardDir: string, names: string[]): string | null {
 }
 
 /**
- * Owned face basename — `face.json` wins, then catalogue-grade dumps
- * (reconstructed / AnimeCollection) before listing photos (`art.coleka`, …).
+ * Owned face basename — `face.json` wins, else best `art.*` by
+ * {@link catalogueFaceSourceRank} (same order as Catalogue → Cards quality).
+ * Avoids sealed `/prints/…/face` picking `art.coleka` via readdir order while
+ * the cards tab shows a cleaner `art.ebay` index pointer.
  */
 function pickOwnedArtFile(
   cardDir: string,
@@ -168,14 +171,16 @@ function pickOwnedArtFile(
   }
   const fromDecision = readFaceJsonArt(cardDir, names);
   if (fromDecision) return fromDecision;
-  return (
-    names.find((n) => /^art\.reconstructed\./i.test(n)) ??
-    names.find((n) => /^art\.animecollection\./i.test(n)) ??
-    names.find((n) => /^art\.webp$/i.test(n)) ??
-    names.find((n) => /^art\.(jpe?g|png|gif)$/i.test(n)) ??
-    names.find((n) => /^art\./i.test(n)) ??
-    null
+  const arts = names.filter(
+    (n) => /^art\./i.test(n) && /\.(jpe?g|png|webp|gif)$/i.test(n),
   );
+  if (!arts.length) return null;
+  arts.sort(
+    (a, b) =>
+      catalogueFaceSourceRank(b) - catalogueFaceSourceRank(a) ||
+      a.localeCompare(b),
+  );
+  return arts[0] ?? null;
 }
 
 function resolveOwnedPrintFace(opts: {

@@ -58,7 +58,7 @@ const catalogues = [
     aliases: [{ label: "Naruto Shippuden Card Game", language: "ja" }],
   },
   {
-    id: "lorcanajson",
+    id: "lorcanatcg",
     label: "Lorcana",
     defaultLanguage: "fr",
     languages: ["fr", "en", "de", "it"],
@@ -126,7 +126,7 @@ describe("inferPrintPickerDefaults", () => {
     expect(
       inferPrintPickerDefaults("Lorcana Premier Chapitre", catalogues),
     ).toEqual({
-      catalogueId: "lorcanajson",
+      catalogueId: "lorcanatcg",
       language: "fr",
       setId: "1",
     });
@@ -134,7 +134,7 @@ describe("inferPrintPickerDefaults", () => {
 
   it("does not force a set when the shelf only names the game", () => {
     expect(inferPrintPickerDefaults("Lorcana", catalogues)).toEqual({
-      catalogueId: "lorcanajson",
+      catalogueId: "lorcanatcg",
       language: "fr",
       setId: null,
     });

@@ -1,9 +1,13 @@
 /**
  * Leclerc promo packs — Catalogue Sync / worker (in-process), one opération at a time.
  */
+import { selectCatalogueSteps } from "@/providers/shared/cardCatalogue/catalogueSteps";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 
-import { buildLeclercFromLedgers } from "./buildFromLedgers";
+import {
+  buildLeclercFromLedgers,
+  leclercNameDensifyGate,
+} from "./buildFromLedgers";
 import {
   harvestColekaLeclercFacesForSet,
   installColekaLeclercFaces,
@@ -21,27 +25,51 @@ import {
 } from "./pack";
 import { colekaLeclercListingForSet } from "./parseColekaLeclerc";
 import { leclercSetLabel } from "./printKey";
+import { ingestLeclercSealedProducts } from "./sealed";
+
+/** Ledger seed (offline) + Coleka/eBay faces (online) + sealed album (offline). */
+export const LECLERC_STEPS = ["seed", "faces", "products"] as const;
+export type LeclercStep = (typeof LECLERC_STEPS)[number];
+const LECLERC_ONLINE = new Set<LeclercStep>(["faces"]);
+
+export function selectLeclercSteps(argv: readonly string[]): LeclercStep[] {
+  return selectCatalogueSteps(argv, LECLERC_STEPS, { online: LECLERC_ONLINE });
+}
 
 export async function runLeclercOpPipeline(
   op: LeclercOpSpec,
-  _argv: readonly string[] = [],
+  argv: readonly string[] = [],
 ): Promise<{ cards: number; products: number }> {
   const label = leclercSetLabel(op.setCode);
+  const steps = selectLeclercSteps(argv);
+  console.log(
+    `── ${label} — étapes : ${steps.join(" → ") || "(curated only)"}`,
+  );
   return runLocalTcgPipeline({
     packId: op.packId,
     curatedDir: leclercCuratedDir(),
     label,
     curatedIncludeSetCodes: [op.setCode],
     seed: async (index) => {
-      const built = buildLeclercFromLedgers({ setCode: op.setCode, index });
-      if (built.skipped.length) {
+      let prints = 0;
+      let titles = 0;
+      if (steps.includes("seed")) {
+        const built = buildLeclercFromLedgers({ setCode: op.setCode, index });
+        prints = built.prints;
+        titles = built.titles;
+        if (built.skipped.length) {
+          console.log(
+            `── ${label} — ${built.skipped.length} écartée(s) : ${built.skipped.slice(0, 8).join(", ")}`,
+          );
+        }
         console.log(
-          `── ${label} — ${built.skipped.length} écartée(s) : ${built.skipped.slice(0, 8).join(", ")}`,
+          `── ${label} — ${built.prints} print(s), ${built.placeholders} placeholder(s)`,
         );
       }
-      console.log(
-        `── ${label} — ${built.prints} print(s), ${built.placeholders} placeholder(s)`,
-      );
+
+      if (!steps.includes("faces")) {
+        return { prints, titles };
+      }
 
       const hasListing = Boolean(colekaLeclercListingForSet(op.setCode));
       const harvest = await harvestColekaLeclercFacesForSet(op.setCode, {
@@ -58,8 +86,12 @@ export async function runLeclercOpPipeline(
           `── ${label} — Coleka faces install ${installed.faces} (missing ${installed.missing.length})`,
         );
       } else if (!hasListing) {
+        const gate = leclercNameDensifyGate(op.setCode);
         console.log(
-          `── ${label} — pas de faces Coleka (listing / CDN) pour cette op`,
+          `── ${label} — pas de faces Coleka (listing / CDN) pour cette op` +
+            (gate.ready
+              ? ""
+              : ` — densify noms bloqué (${gate.reasons.join("; ")})`),
         );
       } else {
         console.log(`── ${label} — Coleka listing murée / vide (retry plus tard)`);
@@ -89,7 +121,18 @@ export async function runLeclercOpPipeline(
         }
       }
 
-      return { prints: built.prints, titles: built.titles };
+      return { prints, titles };
+    },
+    seedProducts: () => {
+      if (!steps.includes("products")) return { written: 0, skipped: 0 };
+      const sealed = ingestLeclercSealedProducts(op.setCode);
+      if (sealed.written || sealed.skipped) {
+        console.log(
+          `── ${label} — scellés ${sealed.written} écrit(s), ${sealed.skipped} sauté(s)` +
+            (sealed.file ? ` → ${sealed.file}` : ""),
+        );
+      }
+      return { written: sealed.written, skipped: sealed.skipped };
     },
   });
 }

@@ -186,6 +186,15 @@ export function writeProductsIndexToSqlite(
   });
 }
 
+function isSqliteCorrupt(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const code = Number((err as { errcode?: unknown }).errcode);
+  // 11 = SQLITE_CORRUPT, 26 = SQLITE_NOTADB
+  if (code === 11 || code === 26) return true;
+  const msg = String((err as { message?: unknown }).message ?? err);
+  return /malformed|corrupt|not a database/i.test(msg);
+}
+
 export function loadProductsIndexFromSqlite(
   packId: string,
   opts?: { dbPath?: string },
@@ -222,8 +231,16 @@ export function loadProductsIndexFromSqlite(
       products,
     };
     return isProductsIndexV1(index) ? index : null;
+  } catch (err) {
+    // Corrupt pack DB → null so callers fall back to products-index.json.
+    if (isSqliteCorrupt(err) || isSqliteBusy(err)) return null;
+    throw err;
   } finally {
-    db.close();
+    try {
+      db.close();
+    } catch {
+      /* already closed / corrupt handle */
+    }
   }
 }
 
@@ -240,7 +257,11 @@ export function catalogHasProductsCorpus(packId: string): boolean {
   } catch {
     return false;
   } finally {
-    db.close();
+    try {
+      db.close();
+    } catch {
+      /* corrupt handle */
+    }
   }
 }
 

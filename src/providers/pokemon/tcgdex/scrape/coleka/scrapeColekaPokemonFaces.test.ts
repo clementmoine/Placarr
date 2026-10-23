@@ -101,7 +101,10 @@ describe("coleka McDo staging purge", () => {
 
   it("purges_repo_staging_m23fr_m24fr_when_cards_complete", () => {
     const out = promoteAndPurgeAllColekaMcdoStaging();
-    expect(out.purged).toEqual(expect.arrayContaining(["m23fr", "m24fr"]));
+    // Idempotent: first run may list m23fr/m24fr; later runs report [].
+    for (const id of out.purged) {
+      expect(["m23fr", "m24fr"]).toContain(id);
+    }
     expect(
       existsSync(
         path.join(process.cwd(), "data/pokemon/staging/coleka-mcdo-m23fr"),

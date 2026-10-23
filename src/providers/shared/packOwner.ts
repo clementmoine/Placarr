@@ -8,9 +8,9 @@
  *
  * Le registre est chargé d'un bloc : si un module est là, tous le sont.
  *
- * Plusieurs modules peuvent partager le même `dataPack` (Pokémon : TCGdex =
- * identité / tirages, Live = scellés + logos). `.find()` sur le premier ne
- * suffit pas — il faut résoudre **par hook**.
+ * Plusieurs modules peuvent partager le même `dataPack` (Pokémon : Live =
+ * picker / check-list / logos, TCGdex = harvest + prix). `.find()` sur le
+ * premier ne suffit pas — il faut résoudre **par hook**.
  */
 import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import type { ProviderModule } from "@/types/providerModule";

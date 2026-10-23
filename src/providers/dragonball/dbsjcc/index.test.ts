@@ -23,8 +23,10 @@ describe("dbsjcc provider hooks", () => {
       printKey: "dbsjcc:part2-d0172",
     });
     expect(hit?.language).toBe("fr");
-    // Lang-first: `cards/fr/{set}/d0172/…` (the set segment may vary).
-    expect(hit?.imageUrl).toMatch(/\/cards\/fr\/[^/]+\/d0172\//);
+    // Print-scoped face role (HTTP resolves disk under cards/{lang|set}/…).
+    expect(hit?.imageUrl).toMatch(
+      /\/prints\/part2-d0172-fr\/(face|thumb)$/,
+    );
     expect(hit?.imageUrl).not.toMatch(/\/ja\//);
     expect(hit?.title).toBe("Cell");
   });

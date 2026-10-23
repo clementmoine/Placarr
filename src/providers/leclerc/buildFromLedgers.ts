@@ -10,6 +10,7 @@ import { leclercOpForSetCode } from "./pack";
 import { leclercCuratedDir } from "./curatedPaths";
 import {
   buildLeclercFixeezLookup,
+  colekaLeclercListingForSet,
   type LeclercFixeezLookupRow,
 } from "./parseColekaLeclerc";
 import { leclercPrintKey } from "./printKey";
@@ -61,6 +62,35 @@ export function readLeclercChecklistForSet(
       (ledger) => ledger.set?.code?.trim().toLowerCase() === code,
     ) ?? null
   );
+}
+
+/**
+ * Evidence check for name densify (album / Coleka) — advisory for Sync logs,
+ * not a hard stop on stub seed. Stub-only checklists stay placeholders;
+ * do not invent names until listing + named rows exist.
+ */
+export function leclercNameDensifyGate(setCode: string): {
+  ready: boolean;
+  reasons: string[];
+  named: number;
+  stubs: number;
+} {
+  const code = setCode.trim().toLowerCase();
+  const reasons: string[] = [];
+  if (!colekaLeclercListingForSet(code)) {
+    reasons.push("pas de listing Coleka");
+  }
+  const ledger = readLeclercChecklistForSet(code);
+  if (!ledger) {
+    reasons.push("pas de checklist");
+    return { ready: false, reasons, named: 0, stubs: 0 };
+  }
+  const stubs = ledger.cards.filter((c) => Boolean(c.note?.trim())).length;
+  const named = ledger.cards.length - stubs;
+  if (named === 0 && stubs > 0) {
+    reasons.push("checklist stub-only — ne pas inventer de noms");
+  }
+  return { ready: reasons.length === 0, reasons, named, stubs };
 }
 
 /** Fixeez name → `fNN` for Coleka listings that omit F numbers. */

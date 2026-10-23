@@ -20,32 +20,37 @@ import {
 } from "@/providers/leclerc/pack";
 import { leclercSetLabel } from "@/providers/leclerc/printKey";
 
-export const CATALOGUE_PACK_IDS = [
-  "pokemon",
-  "lorcana",
-  "naruto/carddass",
-  "naruto/shippuden",
-  "naruto/ninja-ranks",
-  "naruto/ultra-challenge",
-  "naruto/mythos",
-  "naruto/kayou",
-  "naruto/data-carddass",
-  "dragonball/cg",
-  "dragonball/fw",
-  "dragonball/lamincards",
-  "dragonball/jcc",
-  "dragonball/heroes",
-  "bleach/scb",
-  "onepiece",
-  "yugioh",
-  "mtg",
-  "leclerc/marvel21",
-  "leclerc/marvel22",
-  "leclerc/marvel23",
-  "leclerc/marvel24",
-  "leclerc/disney25",
-] as const;
-export type CataloguePackId = (typeof CATALOGUE_PACK_IDS)[number];
+/**
+ * Stable pack ids for the admin hub. Declared once — {@link CATALOGUE_PACK_IDS}
+ * is derived from {@link CATALOGUE_PACKS} so the hand-list cannot drift.
+ * Leclerc lines are further derived from `LECLERC_ACTIVE_OPS` inside the packs
+ * array (no per-op hub row to copy).
+ */
+export type CataloguePackId =
+  | "pokemon"
+  | "lorcana"
+  | "naruto/carddass"
+  | "naruto/shippuden"
+  | "naruto/ninja-ranks"
+  | "naruto/ultra-challenge"
+  | "naruto/mythos"
+  | "naruto/kayou"
+  | "naruto/data-carddass"
+  | "dragonball/cg"
+  | "dragonball/fw"
+  | "dragonball/lamincards"
+  | "dragonball/jcc"
+  | "dragonball/heroes"
+  | "bleach/scb"
+  | "onepiece"
+  | "yugioh"
+  | "mtg"
+  | "leclerc/marvel21"
+  | "leclerc/marvel22"
+  | "leclerc/marvel23"
+  | "leclerc/marvel24"
+  | "leclerc/disney25"
+  | "leclerc/disney26";
 
 export type CatalogueBrowseScope = "foils" | "all" | "sealed";
 
@@ -80,7 +85,8 @@ export type CatalogueExtractTarget =
   | "leclerc-marvel22"
   | "leclerc-marvel23"
   | "leclerc-marvel24"
-  | "leclerc-disney25";
+  | "leclerc-disney25"
+  | "leclerc-disney26";
 
 export type CatalogueFranchiseId =
   | "pokemon"
@@ -988,6 +994,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       prelude: [
         "One Piece Card Game: punk-records (JA/FR/EN) + faces Bandai + opecards.fr",
         "Titres et printKeys depuis buhbbl/punk-records ; images cardlist officiel",
+        "Faces boutique opecards.fr (list tiles → art.opecards.webp) sur printKeys connus",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
@@ -1014,8 +1021,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       labelFr: label,
       labelEn: label,
       hasFoilEffects: false,
-      /** Albums / stickers Leclerc — hors catalogue TCG scellé. */
-      hasSealedProducts: false,
+      /**
+       * Disney 2025 : album / cahier curated. Autres ops = stickers only jusqu’à
+       * attestation scellée.
+       */
+      hasSealedProducts: op.setCode === "disney25",
       defaultScope: "all" as const,
       /** E.Leclerc FR ops. */
       catalogueLocales: ["fr"] as const,
@@ -1112,6 +1122,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "Magic catalogue via Scryfall; sealed + prices via mtgcards.fr (commander / prerelease).",
   },
 ];
+
+/** Derived from {@link CATALOGUE_PACKS} — single source of hub pack ids. */
+export const CATALOGUE_PACK_IDS: readonly CataloguePackId[] = CATALOGUE_PACKS.map(
+  (pack) => pack.id,
+);
 
 export function isCataloguePackId(value: unknown): value is CataloguePackId {
   return (
@@ -1251,6 +1266,7 @@ export function resolveCataloguePackId(
     leclercmarvel24: "leclerc/marvel24",
     leclercdisney: "leclerc/disney25",
     leclercdisney25: "leclerc/disney25",
+    leclercdisney26: "leclerc/disney26",
   };
   const mapped = aliases[wanted];
   if (mapped) return mapped;

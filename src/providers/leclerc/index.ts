@@ -78,6 +78,7 @@ export const leclercMarvel22Module = builtBySet.marvel22!.module;
 export const leclercMarvel23Module = builtBySet.marvel23!.module;
 export const leclercMarvel24Module = builtBySet.marvel24!.module;
 export const leclercDisney25Module = builtBySet.disney25!.module;
+export const leclercDisney26Module = builtBySet.disney26!.module;
 
 /** @deprecated Prefer {@link leclercMarvel21Module}. */
 export const leclercMarvelModule = leclercMarvel21Module;

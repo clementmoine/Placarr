@@ -285,6 +285,12 @@ describe("catalogueFacePick", () => {
     );
   });
 
+  it("préfère eBay studio à Coleka listing (Leclerc Disney)", () => {
+    expect(
+      catalogueFaceSlotScore({ art: "art.ebay.jpg" }),
+    ).toBeGreaterThan(catalogueFaceSlotScore({ art: "art.coleka.webp" }));
+  });
+
   it("garde le Coleka FR sur N-412 quand l'index n'a pas artW/artH (ne pas laisser drive voler)", () => {
     const entry = {
       set: "ninja",

@@ -85,12 +85,12 @@ import { narutoShippudenAssetsCardUrl, narutoShippudenCuratedDir, normalizeShipp
       jeu, arrivées avec lui du pack Carddass. Rien d'autre — ce qui se moissonne
       par script vit dans `staging/`, qui se reconstruit et n'est pas versionné.
     */
-    it("keeps the tree to cards + sources + the note, nothing staged", () => {
+    it("keeps the tree to cards + sources + faces + the note, nothing staged", () => {
       expect(
         readdirSync(narutoShippudenCuratedDir())
           .filter((name) => !name.startsWith("."))
           .sort(),
-      ).toEqual(["BACK.md", "cards", "sources"]);
+      ).toEqual(["BACK.md", "cards", "faces", "sources"]);
     });
   });
 }

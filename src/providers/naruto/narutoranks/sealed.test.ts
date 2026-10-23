@@ -97,7 +97,8 @@ import { readInkworksProductsLedger } from "./sources/faces";
         kind: "display",
         lang: "fr",
         packsContained: 24,
-        priceCents: null,
+        // Ledger leaves box MSRP null; sealed backfill estimates 24 × booster EU.
+        priceCents: 3600,
         image:
           "/assets/naruto/ninja-ranks/products/display-eu/fr/art.kleinanzeigen.jpg",
         imageBack:

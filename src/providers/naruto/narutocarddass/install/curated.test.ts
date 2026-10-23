@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, writeFileSync, utimesSync, mkdirSync, existsSync, readdirSync, statSync } from "node:fs";
+import { mkdtempSync, writeFileSync, utimesSync, mkdirSync, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { curatedCardsDir, destBackWebpName, listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
@@ -49,7 +49,10 @@ import trictrac from "../curated/sources/trictrac.json";
 import physical from "../curated/sources/user-physical-ccg.json";
 import vialudibunda from "../curated/sources/vialudibunda.json";
 import vintageNaruto from "../curated/sources/vintage-naruto-ccg.json";
-import { narutoDiskCardId } from "../identity";
+import {
+  narutoCuratedReconstructedProvenancePath,
+  narutoDiskCardId,
+} from "../identity";
 import { parseTcdbNarutoRef } from "../parse/catalogues";
 import { mercariIngestFaces } from "../sources/faces";
 import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCuratedDir } from "./curated";
@@ -305,6 +308,15 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
       const mercariDiskIds = new Set(
         mercariIngestFaces().map((row) => narutoDiskCardId(row.printedRef)),
       );
+      const provenanceDiskIds = new Set(
+        (
+          JSON.parse(
+            readFileSync(narutoCuratedReconstructedProvenancePath(), "utf8"),
+          ) as { installs?: Array<{ cardId?: string }> }
+        ).installs
+          ?.map((row) => row.cardId)
+          .filter((id): id is string => Boolean(id)) ?? [],
+      );
       const sourcePhotoRe = /^source(\.[a-z0-9]+)?\.(jpe?g|png|webp)$/i;
       for (const face of faces) {
         const dir = path.dirname(face.source);
@@ -315,7 +327,11 @@ import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCu
         // neighbour source.jpg (Downloads master lives outside the tree).
         const s6Mij = rel(face).startsWith("fr/s6/");
         if (!hasSourcePhoto && !s6Mij) {
-          expect(mercariDiskIds.has(face.cardId), face.cardId).toBe(true);
+          expect(
+            mercariDiskIds.has(face.cardId) ||
+              provenanceDiskIds.has(face.cardId),
+            face.cardId,
+          ).toBe(true);
         }
       }
     });

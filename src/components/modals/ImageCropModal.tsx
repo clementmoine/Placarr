@@ -26,20 +26,12 @@ type CropSuggestion = {
   height: number;
   imageWidth: number;
   imageHeight: number;
-  /** Quarter-turn applied before the rectangle was drawn, in degrees. */
   rotate?: number;
 };
 
-/**
- * The rotated bitmap the editor actually works on, as a data URL.
- *
- * Rotating the preview rather than the crop rectangle is what keeps this honest:
- * `react-image-crop` measures the element it is given, so a CSS transform would
- * leave the rectangle in the *untransformed* space and every coordinate would
- * need undoing. Handing it a bitmap that is already turned means the box comes
- * out in exactly the space the server will extract from — no conversion, no
- * sign conventions to get wrong.
- */
+type Point2 = { x: number; y: number };
+type CropMode = "rect" | "free";
+
 function rotatedDataUrl(image: HTMLImageElement, degrees: number): string {
   const odd = degrees % 180 === 90;
   const canvas = document.createElement("canvas");
@@ -53,31 +45,31 @@ function rotatedDataUrl(image: HTMLImageElement, degrees: number): string {
   return canvas.toDataURL("image/png");
 }
 
+function defaultInsetQuad(
+  width: number,
+  height: number,
+): [Point2, Point2, Point2, Point2] {
+  const insetX = width * 0.08;
+  const insetY = height * 0.08;
+  return [
+    { x: insetX, y: insetY },
+    { x: width - insetX, y: insetY },
+    { x: width - insetX, y: height - insetY },
+    { x: insetX, y: height - insetY },
+  ];
+}
+
 type ImageCropModalProps = {
-  /** Image to reframe. May be remote — the server localizes it first. */
   imageUrl: string | null;
   isOpen: boolean;
   onClose: () => void;
-  /** Receives the derived crop URL, or the original one on revert. */
   onCropped: (url: string) => void;
-  /**
-   * What the crop is for. The same artwork often serves as both the cover and
-   * the background: keyed on the file alone, cropping one rewrote the other's
-   * image.
-   */
   role?: string;
 };
 
 /**
- * Manual reframing with corner handles, mouse and touch.
- *
- * Two properties make it safe to change your mind: the editor always loads the
- * *original* image (never a previous crop), and the original file is never
- * overwritten — so reverting is just handing back its URL, and re-cropping ten
- * times degrades nothing.
- *
- * The margin detection that used to crop automatically survives here as a
- * starting rectangle: a suggestion to accept, drag, or ignore.
+ * Manual reframing — rectangle (react-image-crop) or free 4-corner
+ * perspective (homography on the server).
  */
 export function ImageCropModal({
   imageUrl,
@@ -88,24 +80,21 @@ export function ImageCropModal({
 }: ImageCropModalProps) {
   const { t } = useLocale();
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const freeWrapRef = useRef<HTMLDivElement | null>(null);
+  const dragIndex = useRef<number | null>(null);
 
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<CropSuggestion | null>(null);
-  /** The rectangle already applied to this image, when there is one. */
   const [current, setCurrent] = useState<CropSuggestion | null>(null);
   const [crop, setCrop] = useState<Crop | undefined>();
+  const [mode, setMode] = useState<CropMode>("rect");
+  const [quad, setQuad] = useState<[Point2, Point2, Point2, Point2] | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** Quarter-turn the collector has asked for, in degrees. */
   const [rotate, setRotate] = useState(0);
-  /**
-   * The turned bitmap, tagged with the angle it was made for.
-   *
-   * Tagged rather than cleared on every turn: a stale bitmap simply stops
-   * matching, so nothing has to be reset synchronously and the previous
-   * rotation can never flash on screen while the next one encodes.
-   */
   const [turned, setTurned] = useState<{ degrees: number; url: string } | null>(
     null,
   );
@@ -119,6 +108,8 @@ export function ImageCropModal({
       setIsLoading(true);
       setError(null);
       setCrop(undefined);
+      setQuad(null);
+      setMode("rect");
       try {
         const response = await fetch(
           `/api/images/crop?url=${encodeURIComponent(imageUrl)}&role=${encodeURIComponent(role)}`,
@@ -127,14 +118,23 @@ export function ImageCropModal({
         const data = (await response.json()) as {
           url: string;
           suggestion: CropSuggestion | null;
-          current: CropSuggestion | null;
+          current:
+            | (CropSuggestion & { kind?: string; points?: Point2[] })
+            | null;
         };
         if (cancelled) return;
         setSourceUrl(data.url);
         setSuggestion(data.suggestion);
-        setCurrent(data.current);
-        // Reopening shows what is applied, rotation included.
-        setRotate(data.current?.rotate ?? 0);
+        const cur = data.current;
+        if (cur && cur.kind === "quad" && Array.isArray(cur.points)) {
+          setCurrent(null);
+          setMode("free");
+          setQuad(cur.points as [Point2, Point2, Point2, Point2]);
+          setRotate(cur.rotate ?? 0);
+        } else {
+          setCurrent(cur as CropSuggestion | null);
+          setRotate(cur?.rotate ?? 0);
+        }
       } catch {
         if (!cancelled) setError(t("errors.genericMessage"));
       } finally {
@@ -147,10 +147,6 @@ export function ImageCropModal({
     };
   }, [isOpen, imageUrl, role, t]);
 
-  /**
-   * Turn the source into the bitmap the editor works on. At 0° that is the
-   * source itself — no re-encode for the overwhelmingly common case.
-   */
   useEffect(() => {
     if (!sourceUrl || rotate === 0) return;
     let cancelled = false;
@@ -162,9 +158,6 @@ export function ImageCropModal({
       }
     };
     image.onerror = () => {
-      // Fall back to the upright source rather than a blank editor; the
-      // rotation is still sent, so the result is right even if the preview
-      // could not be turned.
       if (!cancelled) setTurned({ degrees: rotate, url: sourceUrl });
     };
     image.src = sourceUrl;
@@ -173,11 +166,9 @@ export function ImageCropModal({
     };
   }, [sourceUrl, rotate]);
 
-  /** What the editor shows: the source upright, the turned bitmap otherwise. */
   const previewUrl =
     rotate === 0 ? sourceUrl : turned?.degrees === rotate ? turned.url : null;
 
-  /** Percentages, so a rectangle survives the displayed-size scaling. */
   const asPercentCrop = useCallback((box: CropSuggestion): Crop | null => {
     if (!box.imageWidth || !box.imageHeight) return null;
     return {
@@ -189,22 +180,18 @@ export function ImageCropModal({
     };
   }, []);
 
-  /**
-   * Seed the rectangle once the bitmap size is known. What is already applied
-   * wins: re-proposing the automatic guess over a framing the collector chose
-   * would silently undo their work.
-   */
   const handleImageLoad = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
       const image = event.currentTarget;
       imageRef.current = image;
 
-      /*
-        Both seeds are tied to an orientation: the stored box was drawn in its
-        own rotation's space, and the automatic suggestion was measured on the
-        upright image. Replaying either under a different turn would frame the
-        wrong region, so at a new angle the editor starts from the whole frame.
-      */
+      if (mode === "free") {
+        if (!quad) {
+          setQuad(defaultInsetQuad(image.naturalWidth, image.naturalHeight));
+        }
+        return;
+      }
+
       const seed =
         current && (current.rotate ?? 0) === rotate
           ? current
@@ -225,60 +212,105 @@ export function ImageCropModal({
         ),
       );
     },
-    [current, suggestion, rotate, asPercentCrop],
+    [current, suggestion, rotate, asPercentCrop, mode, quad],
   );
 
-  /**
-   * Turn by a quarter, wrapping. The rectangle is dropped: it was drawn in the
-   * previous orientation, and carrying it over would frame a region the
-   * collector never chose.
-   */
   const turnBy = useCallback((delta: number) => {
     setRotate((previous) => (((previous + delta) % 360) + 360) % 360);
     setCrop(undefined);
+    setQuad(null);
   }, []);
 
-  /** Offer the automatic framing as a one-click alternative, never as a default. */
   const handleAutoCrop = useCallback(() => {
     if (!suggestion) return;
     const percent = asPercentCrop(suggestion);
-    if (percent) setCrop(percent);
+    if (percent) {
+      setMode("rect");
+      setCrop(percent);
+    }
   }, [suggestion, asPercentCrop]);
+
+  const moveQuadCorner = useCallback(
+    (index: number, clientX: number, clientY: number) => {
+      const image = imageRef.current;
+      const wrap = freeWrapRef.current;
+      if (!image || !wrap || !quad) return;
+      const rect = image.getBoundingClientRect();
+      const scaleX = image.naturalWidth / rect.width;
+      const scaleY = image.naturalHeight / rect.height;
+      const x = Math.min(
+        image.naturalWidth - 1,
+        Math.max(0, (clientX - rect.left) * scaleX),
+      );
+      const y = Math.min(
+        image.naturalHeight - 1,
+        Math.max(0, (clientY - rect.top) * scaleY),
+      );
+      setQuad((prev) => {
+        if (!prev) return prev;
+        const next = [...prev] as [Point2, Point2, Point2, Point2];
+        next[index] = { x, y };
+        return next;
+      });
+    },
+    [quad],
+  );
+
+  useEffect(() => {
+    const onMove = (event: PointerEvent) => {
+      if (dragIndex.current == null) return;
+      moveQuadCorner(dragIndex.current, event.clientX, event.clientY);
+    };
+    const onUp = () => {
+      dragIndex.current = null;
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [moveQuadCorner]);
 
   const handleConfirm = useCallback(async () => {
     const image = imageRef.current;
-    if (!image || !crop?.width || !crop?.height || !sourceUrl) return;
+    if (!image || !sourceUrl) return;
 
-    /**
-     * Derived from the rectangle on screen, not from `onComplete`. That callback
-     * only fires at the end of a *user* interaction, so a rectangle set
-     * programmatically — the stored crop on open, or the "Auto" button — left
-     * the previous one in state and the wrong region was written.
-     */
-    const pixelCrop = convertToPixelCrop(crop, image.width, image.height);
-    if (!pixelCrop.width || !pixelCrop.height) return;
-
-    // The editor works in displayed pixels; the file is cropped in natural ones.
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+    let body: Record<string, unknown>;
+    if (mode === "free" && quad) {
+      body = {
+        url: sourceUrl,
+        role,
+        rotate,
+        quad: { points: quad },
+      };
+    } else {
+      if (!crop?.width || !crop?.height) return;
+      const pixelCrop = convertToPixelCrop(crop, image.width, image.height);
+      if (!pixelCrop.width || !pixelCrop.height) return;
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+      body = {
+        url: sourceUrl,
+        role,
+        rotate,
+        crop: {
+          left: Math.round(pixelCrop.x * scaleX),
+          top: Math.round(pixelCrop.y * scaleY),
+          width: Math.round(pixelCrop.width * scaleX),
+          height: Math.round(pixelCrop.height * scaleY),
+        },
+      };
+    }
 
     setIsSaving(true);
     setError(null);
     try {
+
       const response = await fetch("/api/images/crop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: sourceUrl,
-          role,
-          rotate,
-          crop: {
-            left: Math.round(pixelCrop.x * scaleX),
-            top: Math.round(pixelCrop.y * scaleY),
-            width: Math.round(pixelCrop.width * scaleX),
-            height: Math.round(pixelCrop.height * scaleY),
-          },
-        }),
+        body: JSON.stringify(body),
       });
       if (!response.ok) throw new Error(String(response.status));
       const data = (await response.json()) as { url: string };
@@ -289,16 +321,8 @@ export function ImageCropModal({
     } finally {
       setIsSaving(false);
     }
-  }, [crop, sourceUrl, role, rotate, onCropped, onClose, t]);
+  }, [crop, quad, mode, sourceUrl, role, rotate, onCropped, onClose, t]);
 
-  /**
-   * Hand back the untouched original — the crop was only ever a derivative.
-   *
-   * The stored rectangle goes too: reverting means forgetting the framing, so
-   * reopening offers the automatic suggestion again instead of restoring the
-   * very crop that was just discarded. Failing to forget it must not block the
-   * revert itself, which is the part the collector asked for.
-   */
   const handleRevert = useCallback(async () => {
     if (!sourceUrl) return;
     setIsSaving(true);
@@ -308,7 +332,7 @@ export function ImageCropModal({
         { method: "DELETE" },
       );
     } catch {
-      // Ignored on purpose — see above.
+      // Ignored on purpose.
     } finally {
       setIsSaving(false);
     }
@@ -316,6 +340,9 @@ export function ImageCropModal({
     onCropped(sourceUrl);
     onClose();
   }, [sourceUrl, role, onCropped, onClose]);
+
+  const canApply =
+    mode === "free" ? Boolean(quad) : Boolean(crop?.width && crop?.height);
 
   return (
     <BaseModal
@@ -326,7 +353,7 @@ export function ImageCropModal({
       description={t("items.cropImage.description")}
       footer={
         <div className="flex w-full items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleRevert}
@@ -339,16 +366,13 @@ export function ImageCropModal({
             <button
               type="button"
               onClick={handleAutoCrop}
-              disabled={!suggestion || isSaving}
+              disabled={!suggestion || isSaving || mode === "free"}
               title={t("items.cropImage.autoHint")}
               className="inline-flex items-center gap-1.5 rounded-xl h-10 px-3 text-sm font-bold border border-border bg-card hover:bg-accent disabled:opacity-50 cursor-pointer"
             >
               <Wand2 className="size-4" />
               {t("items.cropImage.auto")}
             </button>
-            {/* Quarter turns only: lossless, and the whole point is a scan that
-                arrived on its side. A free angle would need resampling and a
-                background to fill the corners it opens up. */}
             <button
               type="button"
               onClick={() => turnBy(-90)}
@@ -369,6 +393,37 @@ export function ImageCropModal({
             >
               <RotateCwSquare className="size-4" />
             </button>
+            <div className="inline-flex rounded-xl border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMode("rect")}
+                disabled={isSaving}
+                className={`h-10 px-3 text-sm font-bold cursor-pointer ${
+                  mode === "rect" ? "bg-primary text-primary-foreground" : "bg-card hover:bg-accent"
+                }`}
+              >
+                {t("items.cropImage.modeRect")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("free");
+                  const image = imageRef.current;
+                  if (image && !quad) {
+                    setQuad(
+                      defaultInsetQuad(image.naturalWidth, image.naturalHeight),
+                    );
+                  }
+                }}
+                disabled={isSaving}
+                title={t("items.cropImage.modeFreeHint")}
+                className={`h-10 px-3 text-sm font-bold cursor-pointer ${
+                  mode === "free" ? "bg-primary text-primary-foreground" : "bg-card hover:bg-accent"
+                }`}
+              >
+                {t("items.cropImage.modeFree")}
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -381,7 +436,7 @@ export function ImageCropModal({
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={isSaving || isLoading || !crop?.width}
+              disabled={isSaving || isLoading || !canApply}
               className="inline-flex items-center gap-1.5 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 disabled:opacity-50 cursor-pointer"
             >
               {isSaving && <Loader2 className="size-4 animate-spin" />}
@@ -396,7 +451,7 @@ export function ImageCropModal({
         {error && (
           <p className="text-sm font-medium text-destructive">{error}</p>
         )}
-        {!isLoading && previewUrl && (
+        {!isLoading && previewUrl && mode === "rect" && (
           <ReactCrop
             crop={crop}
             onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -410,6 +465,54 @@ export function ImageCropModal({
               className="max-h-[55vh] w-auto"
             />
           </ReactCrop>
+        )}
+        {!isLoading && previewUrl && mode === "free" && (
+          <div ref={freeWrapRef} className="relative max-h-[55vh]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt=""
+              onLoad={handleImageLoad}
+              className="max-h-[55vh] w-auto select-none"
+              draggable={false}
+            />
+            {quad && imageRef.current && (
+              <svg
+                className="pointer-events-none absolute inset-0 h-full w-full"
+                viewBox={`0 0 ${imageRef.current.naturalWidth} ${imageRef.current.naturalHeight}`}
+                preserveAspectRatio="none"
+              >
+                <polygon
+                  points={quad.map((p) => `${p.x},${p.y}`).join(" ")}
+                  fill="rgba(59,130,246,0.15)"
+                  stroke="rgb(59,130,246)"
+                  strokeWidth={Math.max(
+                    2,
+                    imageRef.current.naturalWidth / 200,
+                  )}
+                />
+                {quad.map((p, index) => (
+                  <circle
+                    key={index}
+                    cx={p.x}
+                    cy={p.y}
+                    r={Math.max(10, imageRef.current!.naturalWidth / 40)}
+                    fill="white"
+                    stroke="rgb(59,130,246)"
+                    strokeWidth={3}
+                    className="pointer-events-auto cursor-grab"
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      dragIndex.current = index;
+                      (event.target as Element).setPointerCapture?.(
+                        event.pointerId,
+                      );
+                    }}
+                  />
+                ))}
+              </svg>
+            )}
+          </div>
         )}
       </div>
     </BaseModal>

@@ -1,12 +1,11 @@
 /**
- * Install FR shop faces from ygocards.fr / mtgcards.fr list tiles.
+ * Install FR shop faces from ygocards.fr / mtgcards.fr / opecards.fr list tiles.
  *
- * Catalogue prints stay seeded by YGOPRODeck / Scryfall; this only drops
- * `art.ygocards.webp` / `art.mtgcards.webp` when the printKey already exists
- * and the host file is missing (unless `force`).
+ * Catalogue prints stay seeded by YGOPRODeck / Scryfall / punk-records; this
+ * only drops `art.<host>.webp` when the printKey already exists and the host
+ * file is missing (unless `force`).
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import path from "node:path";
 
 import { packCardDir } from "@/lib/packPaths";
 import {
@@ -20,12 +19,16 @@ import {
 import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 import {
   MTGCARDS_CARD_SITE,
+  OPECARDS_CARD_SITE,
   YGOCARDS_CARD_SITE,
   mtgcardsIndexPath,
+  opecardsIndexPath,
   scrapeDbscardsIndex,
   ygocardsIndexPath,
 } from "@/providers/shared/tcgcards/scrapeList";
 import { tcgCardsSite } from "@/providers/shared/tcgcards/sites";
+
+type CardsFrFaceHost = "ygocards" | "mtgcards" | "opecards";
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -49,7 +52,7 @@ function existingHostArt(cardDir: string, host: string): string | null {
 }
 
 export type FillCardsFrFacesReport = {
-  host: "ygocards" | "mtgcards";
+  host: CardsFrFaceHost;
   indexCards: number;
   tried: number;
   written: number;
@@ -60,9 +63,20 @@ export type FillCardsFrFacesReport = {
   indexFile: string | null;
 };
 
+function cardsFrFaceIndexPath(host: CardsFrFaceHost): string {
+  if (host === "ygocards") return ygocardsIndexPath("fr");
+  if (host === "mtgcards") return mtgcardsIndexPath("fr");
+  return opecardsIndexPath("fr");
+}
+
+function cardsFrFaceSite(host: CardsFrFaceHost) {
+  if (host === "ygocards") return YGOCARDS_CARD_SITE;
+  if (host === "mtgcards") return MTGCARDS_CARD_SITE;
+  return OPECARDS_CARD_SITE;
+}
+
 async function fillCardsFrFaces(opts: {
-  host: "ygocards" | "mtgcards";
-  packId: string;
+  host: CardsFrFaceHost;
   index: LocalPrintsIndex;
   force?: boolean;
   refreshIndex?: boolean;
@@ -71,13 +85,14 @@ async function fillCardsFrFaces(opts: {
   downloadDelayMs?: number;
   limit?: number;
 }): Promise<FillCardsFrFacesReport> {
-  const { host, packId, index } = opts;
-  const indexFile =
-    host === "ygocards" ? ygocardsIndexPath("fr") : mtgcardsIndexPath("fr");
-  const site = host === "ygocards" ? YGOCARDS_CARD_SITE : MTGCARDS_CARD_SITE;
-  const printGame = tcgCardsSite(host).printGame;
-  if (!printGame) {
-    throw new Error(`tcgcards: ${host} has no printGame`);
+  const { host, index } = opts;
+  const indexFile = cardsFrFaceIndexPath(host);
+  const site = cardsFrFaceSite(host);
+  const meta = tcgCardsSite(host);
+  const packId = meta.packId;
+  const printGame = meta.printGame;
+  if (!packId || !printGame) {
+    throw new Error(`tcgcards: ${host} has no packId/printGame`);
   }
 
   if (
@@ -208,7 +223,7 @@ export async function fillYgocardsFaces(
     limit?: number;
   },
 ): Promise<FillCardsFrFacesReport> {
-  return fillCardsFrFaces({ ...opts, host: "ygocards", packId: "yugioh" });
+  return fillCardsFrFaces({ ...opts, host: "ygocards" });
 }
 
 export async function fillMtgcardsFaces(
@@ -222,5 +237,19 @@ export async function fillMtgcardsFaces(
     limit?: number;
   },
 ): Promise<FillCardsFrFacesReport> {
-  return fillCardsFrFaces({ ...opts, host: "mtgcards", packId: "mtg" });
+  return fillCardsFrFaces({ ...opts, host: "mtgcards" });
+}
+
+export async function fillOpecardsFaces(
+  opts: {
+    index: LocalPrintsIndex;
+    force?: boolean;
+    refreshIndex?: boolean;
+    maxPages?: number;
+    delayMs?: number;
+    downloadDelayMs?: number;
+    limit?: number;
+  },
+): Promise<FillCardsFrFacesReport> {
+  return fillCardsFrFaces({ ...opts, host: "opecards" });
 }

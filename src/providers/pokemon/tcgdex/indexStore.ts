@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { parsePrintKey } from "@/core/identify/printKey";
 import {
   finalizeSetOptions,
   isAnsweredQuery,
@@ -27,6 +28,12 @@ import {
   ensurePokemonDbLayout,
   pokemonIdentityDbPath,
 } from "@/providers/pokemon/paths";
+import { resolvePokemonArtFilename } from "./disk/faceChoice";
+import {
+  pokemonCardFolderId,
+  pokemonPaperCardDir,
+} from "./disk/paperCardDisk";
+import { POKEMON_GAME } from "./fetch";
 
 export type TcgdexPrintRow = {
   printKey: string;
@@ -81,6 +88,11 @@ export type TcgdexSearchRow = {
   setOfficialCount: number | null;
   /** 0 / false = not cardboard (Pocket, misc). Omitted columns read as 1. */
   printed?: number | boolean | null;
+  /**
+   * Local face basename under `cards/{lang}/{set}/{num}/` when known
+   * (`print_assets.art`). Null → fall back to CDN `imageBaseUrl`.
+   */
+  art?: string | null;
 };
 
 /** Shared projection for search / lookup / checklist SQL. */
@@ -90,7 +102,16 @@ const TCGDEX_SEARCH_SELECT = `p.print_key AS printKey, p.set_id AS setId,
               COALESCE(p.printed, 1) AS printed,
               t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
               t.rarity, t.stage,
-              s.official_count AS setOfficialCount`;
+              s.official_count AS setOfficialCount,
+              a.art AS art`;
+
+/** Join face assets on the title language (same contract as other TCG packs). */
+const TCGDEX_SEARCH_FROM = `prints p
+         JOIN print_titles t ON t.print_key = p.print_key
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang
+         LEFT JOIN sets s
+                ON s.set_id = p.set_id AND s.lang = t.lang`;
 
 export function tcgdexDbPath(): string {
   ensurePokemonDbLayout();
@@ -152,12 +173,42 @@ function createSchema(db: DatabaseSync): void {
       PRIMARY KEY (set_id, lang)
     );
 
+    CREATE TABLE IF NOT EXISTS print_assets (
+      print_key TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      art TEXT,
+      thumb TEXT,
+      back TEXT,
+      source_url TEXT,
+      printed INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (print_key, lang),
+      FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_prints_set ON prints(set_id);
     CREATE INDEX IF NOT EXISTS idx_titles_name ON print_titles(name);
   `);
   migrateTcgdexSetsColumns(db);
   migrateTcgdexTitleColumns(db);
   migrateTcgdexPrintColumns(db);
+  migrateTcgdexPrintAssetsTable(db);
+}
+
+/** Older catalogs lacked `print_assets` — CREATE IF NOT EXISTS is enough. */
+function migrateTcgdexPrintAssetsTable(db: DatabaseSync): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS print_assets (
+      print_key TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      art TEXT,
+      thumb TEXT,
+      back TEXT,
+      source_url TEXT,
+      printed INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (print_key, lang),
+      FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
+    );
+  `);
 }
 
 /**
@@ -218,7 +269,9 @@ export function writeTcgdexSet(input: {
   prints: readonly TcgdexPrintRow[];
   titles: readonly TcgdexTitleRow[];
   dbPath?: string;
-}): { prints: number; titles: number } {
+  /** Override paper cards root (tests). */
+  cardsRoot?: string;
+}): { prints: number; titles: number; assetsFromDisk: number } {
   const dbPath = input.dbPath ?? tcgdexDbPath();
   mkdirSync(path.dirname(dbPath), { recursive: true });
   const db = new DatabaseSync(dbPath);
@@ -272,6 +325,23 @@ export function writeTcgdexSet(input: {
         official_count = excluded.official_count,
         harvested_at = excluded.harvested_at
     `);
+    const insertAsset = db.prepare(`
+      INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, printed)
+      VALUES (?, ?, ?, NULL, NULL, ?, ?)
+      ON CONFLICT(print_key, lang) DO UPDATE SET
+        art = COALESCE(excluded.art, print_assets.art),
+        source_url = COALESCE(excluded.source_url, print_assets.source_url),
+        printed = excluded.printed
+    `);
+
+    const imageByPrint = new Map(
+      input.prints.map((row) => [row.printKey, row.imageBaseUrl] as const),
+    );
+    const printedByPrint = new Map(
+      input.prints.map(
+        (row) => [row.printKey, row.printed === false ? 0 : 1] as const,
+      ),
+    );
 
     db.exec("BEGIN IMMEDIATE");
     try {
@@ -295,6 +365,18 @@ export function writeTcgdexSet(input: {
           row.rarity ?? null,
           row.stage ?? null,
         );
+        /*
+          Mirror other TCG packs: one print_assets row per title lang.
+          `art` filled later from disk (`syncTcgdexPrintAssetsFromDisk`);
+          `source_url` keeps the CDN base until a local face wins.
+        */
+        insertAsset.run(
+          row.printKey,
+          row.lang,
+          null,
+          imageByPrint.get(row.printKey) ?? null,
+          printedByPrint.get(row.printKey) ?? 1,
+        );
       }
       insertSet.run(
         input.set.setId,
@@ -311,11 +393,114 @@ export function writeTcgdexSet(input: {
       db.exec("ROLLBACK");
       throw error;
     }
-    return { prints: input.prints.length, titles: input.titles.length };
+    const diskSynced = syncTcgdexPrintAssetsFromDisk({
+      dbPath,
+      printKeys: input.prints.map((row) => row.printKey),
+      languages: [...new Set(input.titles.map((row) => row.lang))],
+      cardsRoot: input.cardsRoot,
+    });
+    return {
+      prints: input.prints.length,
+      titles: input.titles.length,
+      assetsFromDisk: diskSynced,
+    };
   } finally {
     db.close();
     resetTcgdexIndexCache();
   }
+}
+
+/**
+ * Index on-disk paper faces into `print_assets.art` (basename only).
+ *
+ * Layout: `cards/{lang}/{set}/{num}/art.*`. CDN stays on `source_url` /
+ * `prints.image_base_url` when no local winner exists.
+ */
+export function syncTcgdexPrintAssetsFromDisk(input: {
+  dbPath?: string;
+  printKeys?: readonly string[];
+  languages?: readonly string[];
+  cardsRoot?: string;
+}): number {
+  const dbPath = input.dbPath ?? tcgdexDbPath();
+  if (!existsSync(dbPath)) return 0;
+  const db = new DatabaseSync(dbPath);
+  try {
+    db.exec("PRAGMA busy_timeout = 30000");
+    createSchema(db);
+
+    const printKeys =
+      input.printKeys?.map((key) => key.trim()).filter(Boolean) ??
+      (
+        db
+          .prepare(`SELECT print_key AS printKey FROM prints`)
+          .all() as { printKey: string }[]
+      ).map((row) => row.printKey);
+
+    const languages =
+      input.languages?.map((lang) => lang.trim().toLowerCase()).filter(Boolean) ??
+      (
+        db
+          .prepare(`SELECT DISTINCT lang FROM print_titles`)
+          .all() as { lang: string }[]
+      ).map((row) => row.lang.trim().toLowerCase());
+
+    if (printKeys.length === 0 || languages.length === 0) return 0;
+
+    const upsert = db.prepare(`
+      INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, printed)
+      VALUES (?, ?, ?, NULL, NULL, NULL, 1)
+      ON CONFLICT(print_key, lang) DO UPDATE SET
+        art = COALESCE(excluded.art, print_assets.art)
+    `);
+    const printExists = db.prepare(
+      `SELECT 1 AS ok FROM prints WHERE print_key = ? LIMIT 1`,
+    );
+
+    let synced = 0;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const printKey of printKeys) {
+        if (!printExists.get(printKey)) continue;
+        const id = parsePrintKey(printKey);
+        if (!id || id.game !== POKEMON_GAME) continue;
+        for (const lang of languages) {
+          const cardDir = pokemonPaperCardDir({
+            setId: id.set,
+            lang,
+            localId: id.number,
+            cardsRoot: input.cardsRoot,
+          });
+          const art = resolvePokemonArtFilename(cardDir, lang);
+          if (!art) continue;
+          upsert.run(printKey, lang, art);
+          synced += 1;
+        }
+      }
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+    return synced;
+  } finally {
+    db.close();
+    resetTcgdexIndexCache();
+  }
+}
+
+/** Build `/assets/pokemon/cards/…` disk id from a printKey + art basename. */
+export function tcgdexAssetDiskId(
+  printKey: string,
+  lang: string,
+): { set: string; lang: string; card: string } | null {
+  const id = parsePrintKey(printKey);
+  if (!id || id.game !== POKEMON_GAME) return null;
+  return {
+    set: id.set.trim().toLowerCase(),
+    lang: lang.trim().toLowerCase() || "fr",
+    card: pokemonCardFolderId(id.number),
+  };
 }
 
 /**
@@ -402,6 +587,7 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
       migrateTcgdexSetsColumns(writable);
       migrateTcgdexTitleColumns(writable);
       migrateTcgdexPrintColumns(writable);
+      migrateTcgdexPrintAssetsTable(writable);
     } finally {
       writable.close();
     }
@@ -503,10 +689,7 @@ export function lookupTcgdexSearchRow(
   const row = db
     .prepare(
       `SELECT ${TCGDEX_SEARCH_SELECT}
-         FROM prints p
-         JOIN print_titles t ON t.print_key = p.print_key
-         LEFT JOIN sets s
-                ON s.set_id = p.set_id AND s.lang = t.lang
+         FROM ${TCGDEX_SEARCH_FROM}
         WHERE p.print_key = ?
         ORDER BY (t.lang = ?) DESC, t.lang ASC
         LIMIT 1`,
@@ -562,10 +745,7 @@ export function searchTcgdexRows(
   return db
     .prepare(
       `SELECT ${TCGDEX_SEARCH_SELECT}
-         FROM prints p
-         JOIN print_titles t ON t.print_key = p.print_key
-         LEFT JOIN sets s
-                ON s.set_id = p.set_id AND s.lang = t.lang
+         FROM ${TCGDEX_SEARCH_FROM}
         WHERE ${scope.where}${printedGate}
         ORDER BY (t.lang = ?) DESC, p.set_id, CAST(p.local_id AS INTEGER)
         LIMIT ?`,
@@ -591,12 +771,8 @@ export function listTcgdexRowsForLanguage(
   return db
     .prepare(
       `SELECT ${TCGDEX_SEARCH_SELECT}
-         FROM prints p
-         JOIN print_titles t
-           ON t.print_key = p.print_key AND t.lang = ?
-         LEFT JOIN sets s
-                ON s.set_id = p.set_id AND s.lang = t.lang
-        WHERE 1=1${printedGate}
+         FROM ${TCGDEX_SEARCH_FROM}
+        WHERE t.lang = ?${printedGate}
         ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id`,
     )
     .all(lang) as TcgdexSearchRow[];
@@ -1127,6 +1303,11 @@ export function pruneTcgdexSets(
   const db = new DatabaseSync(dbPath);
   try {
     db.exec("PRAGMA busy_timeout = 30000");
+    createSchema(db);
+    const dropAssets = db.prepare(
+      `DELETE FROM print_assets
+        WHERE print_key IN (SELECT print_key FROM prints WHERE LOWER(set_id) = ?)`,
+    );
     const dropTitles = db.prepare(
       `DELETE FROM print_titles
         WHERE print_key IN (SELECT print_key FROM prints WHERE LOWER(set_id) = ?)`,
@@ -1139,6 +1320,7 @@ export function pruneTcgdexSets(
       for (const raw of setIds) {
         const setId = raw.trim().toLowerCase();
         if (!setId) continue;
+        dropAssets.run(setId);
         dropTitles.run(setId);
         const result = dropPrints.run(setId);
         dropSet.run(setId);

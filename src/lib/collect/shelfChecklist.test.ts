@@ -126,14 +126,13 @@ describe("le catalogue d'une étagère se lit dans ses sets", () => {
 });
 
 describe("sealedProductModulesForShelf", () => {
-  it("pulls the Lorcana data sibling when only lorcanajson is selected", () => {
+  it("keeps Lorcana sealed on the dataPack owner when lorcanatcg is selected", () => {
     const sealed = sealedProductModulesForShelf({
       type: "tcg",
       games: new Set(["lorcana"]),
-      catalogueIds: new Set(["lorcanajson"]),
+      catalogueIds: new Set(["lorcanatcg"]),
     });
     const ids = sealed.map((pack) => pack.info.id);
-    expect(ids).toContain("lorcanajson");
     expect(ids).toContain("lorcanatcg");
     expect(
       sealed.some((pack) => pack.catalog?.dataPack === "lorcana"),

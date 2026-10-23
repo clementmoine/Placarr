@@ -69,6 +69,12 @@ export type SkuPackComposition = {
   provenance: PullRateConfidence | "structural" | "unknown";
   source?: string;
   verifiedAt?: string;
+  /**
+   * Inserts qui **peuvent** sortir en plus des slots comptés (ex. Fixeez
+   * Leclerc) — hors des N cartes, taux inconnu / non inventé. Pas un slot
+   * partagé « carte ou chase ».
+   */
+  possibleChase?: string[];
 };
 
 /**

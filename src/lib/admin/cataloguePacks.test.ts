@@ -81,14 +81,20 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("leclercmarvel")).toBe("leclerc/marvel21");
     expect(resolveCataloguePackId("leclercmarvel24")).toBe("leclerc/marvel24");
     expect(resolveCataloguePackId("leclercdisney")).toBe("leclerc/disney25");
+    expect(resolveCataloguePackId("leclercdisney25")).toBe("leclerc/disney25");
+    expect(resolveCataloguePackId("leclercdisney26")).toBe("leclerc/disney26");
     expect(resolveCataloguePackId("nope")).toBeNull();
   });
 
-  it("marks arcade / Leclerc as no retail sealed SKUs", () => {
+  it("marks arcade as no retail sealed; Disney 2025 album is sealed", () => {
     expect(cataloguePackInfo("naruto/data-carddass")?.hasSealedProducts).toBe(
       false,
     );
-    expect(cataloguePackInfo("leclerc/disney25")?.hasSealedProducts).toBe(
+    expect(cataloguePackInfo("leclerc/marvel21")?.hasSealedProducts).toBe(
+      false,
+    );
+    expect(cataloguePackInfo("leclerc/disney25")?.hasSealedProducts).toBe(true);
+    expect(cataloguePackInfo("leclerc/disney26")?.hasSealedProducts).toBe(
       false,
     );
     expect(cataloguePackInfo("dragonball/heroes")?.hasSealedProducts).not.toBe(false);
@@ -143,6 +149,7 @@ describe("cataloguePacks", () => {
       "leclerc/marvel23",
       "leclerc/marvel24",
       "leclerc/disney25",
+      "leclerc/disney26",
     ]);
     expect(
       catalogueLineFamilies(leclerc!.lines).map((family) => ({
@@ -159,7 +166,7 @@ describe("cataloguePacks", () => {
           "leclerc/marvel24",
         ],
       },
-      { id: "disney", lines: ["leclerc/disney25"] },
+      { id: "disney", lines: ["leclerc/disney25", "leclerc/disney26"] },
     ]);
     expect(catalogueCorpusPack("naruto/en-ccg")).toBe("naruto/carddass");
     expect(cataloguePackInfo("naruto/en-ccg")).toBeNull();
@@ -544,8 +551,15 @@ describe("Naruto catalogue lines", () => {
       rows.find((row) => row.card === "ni001" && row.lang === "ja")?.name,
     ).toBe("うずまきナルト");
     const jaNi = rows.find((row) => row.card === "ni001" && row.lang === "ja");
+    // Disk resolve may mint a JA-scoped URL; never paste FR art onto the JA tile.
     expect(jaNi?.artLocaleFrom).toBeUndefined();
-    expect(jaNi?.missingArt).toBe(true);
+    expect(jaNi?.artFallbackFrom).toBeUndefined();
+    if (jaNi?.artUrl) {
+      expect(jaNi.artUrl).toMatch(/-ja\//);
+      expect(jaNi.artUrl).not.toMatch(/-fr\//);
+    } else {
+      expect(jaNi?.missingArt).toBe(true);
+    }
     expect(
       rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
     ).toBe(
@@ -960,7 +974,8 @@ describe("Naruto catalogue lines", () => {
     expect(rows.map((r) => r.lang)).toEqual(["ja"]);
     if (rows[0]?.artUrl) {
       expect(rows[0].artUrl).toContain("/prints/");
-      expect(rows[0].artUrl).toMatch(/ni0001-ps/);
+      // Stem leading grouping: `ps-ni0001-ja` (same family as prerelease-/cdf-).
+      expect(rows[0].artUrl).toMatch(/\/ps-ni0001-ja\//);
       expect(rows[0].artUrl).toMatch(/\/face$/);
     } else {
       expect(rows[0]?.missingArt).toBe(true);

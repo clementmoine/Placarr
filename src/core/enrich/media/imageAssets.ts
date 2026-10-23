@@ -98,9 +98,33 @@ export function dedupeByPerceptualHash<
 
 const perceptualHashCache = new Map<string, Promise<string | null>>();
 
+/** dHash 64 bits (chaîne binaire) depuis un buffer image — 9×8 gris, voisin de droite. */
+export async function dHashFromBuffer(
+  buffer: Buffer,
+): Promise<string | null> {
+  try {
+    const { data, info } = await sharp(buffer)
+      .greyscale()
+      .resize(9, 8, { fit: "fill" })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const channels = info.channels;
+    let hash = "";
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const left = data[(row * 9 + col) * channels] ?? 0;
+        const right = data[(row * 9 + col + 1) * channels] ?? 0;
+        hash += left < right ? "1" : "0";
+      }
+    }
+    return hash;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Empreinte perceptuelle (dHash 64 bits, en chaîne binaire) d'un asset local :
- * niveaux de gris réduits en 9×8, chaque pixel comparé à son voisin de droite.
+ * Empreinte perceptuelle (dHash 64 bits, en chaîne binaire) d'un asset local.
  * Mémoïsée.
  */
 export async function perceptualHashForAsset(
@@ -114,21 +138,7 @@ export async function perceptualHashForAsset(
     const filePath = localMediaFilePath(url);
     if (!filePath || !fs.existsSync(filePath)) return null;
     try {
-      const { data, info } = await sharp(filePath)
-        .greyscale()
-        .resize(9, 8, { fit: "fill" })
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      const channels = info.channels;
-      let hash = "";
-      for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-          const left = data[(row * 9 + col) * channels];
-          const right = data[(row * 9 + col + 1) * channels];
-          hash += left < right ? "1" : "0";
-        }
-      }
-      return hash;
+      return await dHashFromBuffer(fs.readFileSync(filePath));
     } catch {
       return null;
     }

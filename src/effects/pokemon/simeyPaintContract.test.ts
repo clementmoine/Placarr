@@ -10,14 +10,20 @@ describe("simeyPaintContract", () => {
     expect(SIMEY_MATERIALS_BRIEFS.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("marks Cosmos/Galaxy ready; other briefs still have adapt slots", () => {
+  it("marks paint-ready families ok; Radiant/SwSecret keep topology adapt", () => {
     const cosmos = SIMEY_MATERIALS_BRIEFS.find((b) =>
       b.finish.startsWith("Cosmos"),
     );
     expect(cosmos && simeyMaterialsReady(cosmos)).toBe(true);
+    const rainbow = SIMEY_MATERIALS_BRIEFS.find((b) =>
+      b.finish.startsWith("Rainbow"),
+    );
+    expect(rainbow && simeyMaterialsReady(rainbow)).toBe(true);
     const stillAdapt = SIMEY_MATERIALS_BRIEFS.filter(
       (b) => !simeyMaterialsReady(b),
     );
-    expect(stillAdapt.length).toBeGreaterThan(0);
+    expect(stillAdapt.map((b) => b.finish)).toEqual(
+      expect.arrayContaining(["RadiantHolo", "SwSecret"]),
+    );
   });
 });

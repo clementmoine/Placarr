@@ -491,9 +491,27 @@ export async function runNarutoPackPipeline(
       case "thumbs":
         await runNarutoFixThumbs({ dryRun });
         break;
-      case "index":
+      case "index": {
         await scrapeNarutoCards({ indexOnly: true });
+        try {
+          const { buildCardVisualIndex } = await import(
+            "@/core/identify/cardVisualIndex"
+          );
+          const visual = await buildCardVisualIndex({
+            packId: "naruto/carddass",
+            lang: "fr",
+            printGame: "naruto",
+          });
+          console.log(
+            `── card visual index FR — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
+          );
+        } catch (err) {
+          console.warn(
+            `── card visual index — skip : ${err instanceof Error ? err.message : err}`,
+          );
+        }
         break;
+      }
       case "products": {
         const trictrac = await installTrictracPackshots({ force });
         if (trictrac.written.length || trictrac.skipped.length) {

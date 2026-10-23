@@ -57,6 +57,7 @@ describe("readFoilPackStatuses", () => {
       "leclerc-marvel23",
       "leclerc-marvel24",
       "leclerc-disney25",
+      "leclerc-disney26",
       "yugioh",
       "mtg",
     ]);

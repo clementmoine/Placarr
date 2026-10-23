@@ -105,6 +105,7 @@ describe("provider mapping probes", () => {
         "latelierdesjeux",
         "launchbox",
         "leclercdisney25",
+        "leclercdisney26",
         "leclercmarvel21",
         "leclercmarvel22",
         "leclercmarvel23",

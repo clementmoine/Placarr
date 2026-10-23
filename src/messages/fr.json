@@ -42,10 +42,17 @@
   "scanner": {
     "title": "Scan d'objet",
     "description": "Tenez le code-barres à l'intérieur du cadre pour scanner l'objet.",
+    "modeBarcode": "Code-barres",
+    "modeCard": "Carte",
+    "cardDescription": "Photographiez une face. Choisissez une proposition — jamais d'acceptation automatique.",
+    "cardPickPhoto": "Prendre ou choisir une photo",
+    "cardSearching": "Correspondance des faces…",
+    "cardNoMatches": "Aucune correspondance proche dans les index visuels locaux.",
+    "cardConfirmHint": "Confirmez le tirage — l'identité n'est jamais forcée.",
     "error": "Quelque chose s'est mal passé lors du scan",
     "quickScan": "Scan rapide",
     "selectShelf": "Sélectionner une étagère",
-    "searching": "Recherche de correspondances...",
+    "searching": "Recherche de correspondances…",
     "noMatches": "Aucun produit correspondant trouvé.",
     "addItem": "Ajouter un objet personnalisé",
     "customName": "Nom de l'objet (optionnel avec code-barres)",
@@ -579,7 +586,10 @@
       "auto": "Auto",
       "autoHint": "Proposer un recadrage automatique (marges détectées)",
       "rotateLeft": "Tourner à gauche",
-      "rotateRight": "Tourner à droite"
+      "rotateRight": "Tourner à droite",
+      "modeRect": "Rectangle",
+      "modeFree": "Libre (4 coins)",
+      "modeFreeHint": "Glisser quatre coins pour redresser une photo en biais (perspective)"
     },
     "variant": "Variante",
     "finishes": {

@@ -30,6 +30,12 @@ export function canonicalAssetPack(pack: string): string {
   return ASSET_PACK_ALIASES[id] ?? id;
 }
 
+/** Live disk layout + face-file aliases — only this corpus needs EN/mask fallbacks. */
+export function isPokemonAssetPack(pack: string): boolean {
+  const id = canonicalAssetPack(pack);
+  return id === "pokemon" || id.startsWith("pokemon/");
+}
+
 /**
  * Rewrite a stored `/assets/<legacy-pack>/…` URL onto the canonical pack tree.
  * Non-asset strings pass through unchanged.

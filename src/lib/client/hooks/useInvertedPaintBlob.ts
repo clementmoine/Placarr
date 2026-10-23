@@ -1,16 +1,16 @@
 "use client";
 
 /**
- * Invert an image for CSS paint (simey `--foil` polarity).
+ * Project Live etch into Simey `--foil` paint space (blob URL).
  *
  * Live `_CardEtch` is dark lines on white (~lum 196). poke-holo's EN foil scans
- * are light lines on black (~lum 26). Under `color-dodge`, those polarities are
- * opposites — we invert RGB once into a blob URL so the coat can use the same
- * `hard-light` stack as upstream (`foil` on top of the pastel rainbow), while
- * keeping the Live engraving for the print's locale (FR/DE/…).
+ * are light lines on black (~lum 26). Polarity + μ projection live in
+ * `simeyPaintSpace` — invert alone left μ≈59; we also gain toward Simey μ.
  */
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+
+import { projectRgbaBufferToSimeyFoil } from "@/effects/pokemon/simeyPaintSpace";
 
 const blobs = new Map<string, string>();
 const pending = new Set<string>();
@@ -51,12 +51,7 @@ async function invertToBlobUrl(source: Blob): Promise<string> {
       if (!ctx) return URL.createObjectURL(source);
       ctx.drawImage(bitmap, 0, 0);
       const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const px = image.data;
-      for (let i = 0; i < px.length; i += 4) {
-        px[i] = 255 - (px[i] ?? 0);
-        px[i + 1] = 255 - (px[i + 1] ?? 0);
-        px[i + 2] = 255 - (px[i + 2] ?? 0);
-      }
+      projectRgbaBufferToSimeyFoil(image.data);
       ctx.putImageData(image, 0, 0);
       const png = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/png"),

@@ -1,6 +1,7 @@
 /**
  * Pokémon TCG Live — official local ingest (CDN / APK → data/pokemon).
  * Live join store: `live.sqlite`. Catalogue identity remains TCGdex (`catalog.sqlite`).
+ * This module owns picker / check-list; `tcgdex` stays harvest + enrich + prix.
  */
 import { existsSync } from "node:fs";
 
@@ -11,11 +12,12 @@ import type {
   MetadataAdapterContext,
 } from "@/types/providerModule";
 import { defineProvider } from "@/providers/shared/defineProvider";
-import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
+import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 import {
   ensurePokemonDbLayout,
   pokemonLiveDbPath,
 } from "@/providers/pokemon/paths";
+import tcgdexBoosterComposition from "@/providers/pokemon/tcgdex/curated/booster-composition.json";
 import {
   ensureTcgdexSetLogoIndex,
   loadTcgdexSetLogoIndex,
@@ -30,10 +32,13 @@ import {
 } from "./disk/liveAssets";
 import { pokemontcgliveCatalog } from "./pipeline";
 import {
+  labelPokemonLivePrintSet,
   listPokemonLivePrintLanguages,
-  listPokemonLivePrintSets,
-  lookupPokemonLivePrint,
+  listPokemonLivePrintSetsMerged,
+  listPokemonLiveSetPrints,
+  lookupPokemonLivePrintWithRemote,
   searchPokemonLivePrints,
+  searchPokemonLivePrintsWithRemote,
 } from "./printSearch";
 
 const PROVIDER_ID = "pokemontcglive";
@@ -77,7 +82,10 @@ export const pokemontcgliveModule = defineProvider({
   info: {
     id: PROVIDER_ID,
     label: PROVIDER_LABEL,
+    catalogueLabel: "Pokémon",
+    catalogueAliases: ["Pokemon", "Pokémon TCG", "Pokemon TCG"],
     types: ["tcg"],
+    nameDatabase: true,
     capabilities: ["identify", "cover"],
     auth: { kind: "none" },
     supplyMode: "local_catalog",
@@ -86,14 +94,12 @@ export const pokemontcgliveModule = defineProvider({
     defaultLanguage: "fr",
     websiteUrl: "https://www.pokemon.com/us/pokemon-tcg/",
     notes:
-      "Ingest officiel TCG Live (CDN + APK) → `data/pokemon/`. Faces Live : **en** + **fr**. Identité / titres : TCGdex **ja** (original) + fr + en (`catalog.sqlite`). Live join / foil : `live.sqlite`. CDN Live parle aussi de/it/es/ptbr (stems). Produits scellés : pkmcards.fr. Sync : Catalogue Extract.",
+      "Owner catalogue Pokémon (picker + check-list + scellés). Ingest Live (CDN + APK) → `data/pokemon/` ; identité = TCGdex `catalog.sqlite` (repli API distant tant que Sync n'a pas peuplé). `tcgdex` = harvest + enrich + prix. Foil : `live.sqlite`. Produits scellés : pkmcards.fr.",
   },
   catalog: pokemontcgliveCatalog,
   /*
-    Le pack `pokemon` est servi par ce module, mais ses logos de set viennent du
-    relevé tcgdex — l'un tient le foil du client Live, l'autre l'identité des
-    cartes. C'est ici que les deux se rejoignent, plutôt que dans du code
-    partagé qui aurait dû connaître les deux.
+    Logos de set = relevé TCGdex ; foil / CDN = ce module. Les deux se
+    rejoignent ici plutôt que dans du code partagé qui connaîtrait les deux.
   */
   refreshSetLogos: async () => {
     const logos = await ensureTcgdexSetLogoIndex();
@@ -102,35 +108,48 @@ export const pokemontcgliveModule = defineProvider({
     return `tcgdex set logos : ${withLogo} wordmarks / ${logos.sets.length} sets`;
   },
   printGames: [POKEMON_GAME],
-  /*
-    Identity corpus = TCGdex `catalog.sqlite`. Exposed on the dataPack owner so
-    checklist / sealed pool match createLocalTcgLine (search sibling alone is
-    not enough for dataPack-bound surfaces).
-  */
   listPrintLanguages: () => listPokemonLivePrintLanguages(),
+  labelPrintSet: ({ setCode, language }) =>
+    labelPokemonLivePrintSet({ setCode, language }),
   listPrintSets: async (_type, language) =>
-    listPokemonLivePrintSets(language),
-  searchPrints: async ({ query, language, limit, setId, catalogueBrowse }) =>
-    searchPokemonLivePrints(query, {
-      language: language ?? undefined,
+    listPokemonLivePrintSetsMerged(language),
+  loadBoosterComposition: () => {
+    const raw = tcgdexBoosterComposition as BoosterCompositionFile;
+    return raw?.version === 1 ? raw : null;
+  },
+  suggestDatabaseTitles: async ({ cleanedName }) => {
+    const local = searchPokemonLivePrints(cleanedName, { limit: 10 });
+    if (local.length > 0) {
+      return Array.from(new Set(local.map((row) => row.title)));
+    }
+    const remote = await searchPokemonLivePrintsWithRemote(cleanedName, {
+      limit: 10,
+    });
+    return Array.from(new Set(remote.map((row) => row.title)));
+  },
+  searchPrints: async ({
+    query,
+    language,
+    limit,
+    signal,
+    setId,
+    catalogueBrowse,
+  }) =>
+    searchPokemonLivePrintsWithRemote(query, {
+      language,
       limit,
+      signal,
       setId,
       catalogueBrowse,
     }),
-  lookupPrint: async ({ printKey, language }) =>
-    lookupPokemonLivePrint(printKey, language),
-  listSetPrints: async ({ setId, language, includeUnprinted }) =>
-    enumerateSetPrints({
-      setId,
+  lookupPrint: async ({ printKey, name, language, signal }) =>
+    lookupPokemonLivePrintWithRemote(printKey, {
       language,
-      includeUnprinted,
-      search: (opts) =>
-        searchPokemonLivePrints(opts.query, {
-          language: opts.language,
-          limit: opts.limit,
-          setId: opts.setId,
-        }),
+      name,
+      signal,
     }),
+  listSetPrints: async ({ setId, language, includeUnprinted }) =>
+    listPokemonLiveSetPrints({ setId, language, includeUnprinted }),
   resolveSetLogo: ({ setCode, slug, name }) =>
     tcgdexLogoUrlForProduct({
       setCode,

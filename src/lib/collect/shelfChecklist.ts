@@ -198,8 +198,8 @@ export function sealedProductModulesForShelf(input: {
     selected.flatMap((pack) => pack.printGames ?? []),
   );
   /*
-    Lorcana : le module JSON énumère, le pack TCG porte `data/lorcana/`. Les
-    deux listent désormais les sets — sans sibling dataPack, zéro booster.
+    Lorcana : l'owner API porte déjà listPrintSets + dataPack. Si un catalogue
+    API sans dataPack est encore sélectionné (héritage), on tire le sibling.
     Naruto : chaque catalogue a déjà son dataPack ; on n'élargit pas à
     Carddass depuis Ninja Ranks.
   */

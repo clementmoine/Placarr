@@ -117,7 +117,11 @@ recette Simey la plus proche (tels quels quand l’id staging existe).
 | Catalogue `holo` | `regularHolo` | `regular-holo` |
 | Catalogue `reverse` | `reverseHolo` | `reverse-holo` |
 
-### ISO compare (playroom)
+### ISO compare (playroom) — **user-gated**
+
+Comparer reste **manuelle** (œil humain dans le playroom) — pas d’auto-QA.
+Prérequis paint livré (`simeyPaintSpace` polarité + μ). Suite dosage CSS /
+parité WebGL = sessions Comparer.
 
 Comparer → **CSS | Simey** (`?pair=simey`). Map leaf → demo :
 `src/effects/pokemon/simeyIsoCompare.ts` (stem, carte démo, checklist).

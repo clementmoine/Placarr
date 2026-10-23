@@ -1,60 +1,67 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  formatRandomPoolScopeLabel,
+  formatPackCompositionPossibleChaseLabel,
+  formatPackCompositionProvenanceLabel,
+  formatPackCompositionSlotLabel,
+  formatSealedKindLine,
+  formatSealedPackCountLabel,
   formatSealedRandomContentsLabel,
-  formatSealedStructureUnitLabel,
+  formatSealedRandomSectionTitle,
 } from "./sealedContentsLabels";
 
-describe("formatSealedRandomContentsLabel", () => {
-  it("phrases a single set-pool pack in French", () => {
+describe("sealedContentsLabels", () => {
+  it("pluralises pochette / sachet without sachet(s)", () => {
+    expect(formatSealedPackCountLabel(1, true, "pochette")).toBe("1 pochette");
+    expect(formatSealedPackCountLabel(2, true, "pochette")).toBe("2 pochettes");
+    expect(formatSealedPackCountLabel(1, true, "booster")).toBe("1 sachet");
+    expect(formatSealedPackCountLabel(3, true, "booster")).toBe("3 sachets");
+  });
+
+  it("humanises structural provenance and dedicated card slots", () => {
+    expect(formatPackCompositionProvenanceLabel("structural", true)).toBe(
+      "structure connue",
+    );
     expect(
-      formatSealedRandomContentsLabel(
-        { packs: 1, cardsPerPack: 12, pool: "set", setId: "12" },
+      formatPackCompositionSlotLabel(
+        { id: "card", count: 4, rarities: ["card"] },
         true,
       ),
-    ).toBe("1 sachet de 12 cartes tirées au hasard dans le set 12");
+    ).toBe("4 cartes");
   });
 
-  it("phrases a display of set-pool packs in English", () => {
+  it("labels optional chase outside counted cards", () => {
+    expect(formatPackCompositionPossibleChaseLabel(["Fixeez"], true)).toBe(
+      "Fixeez : possible (aléatoire, non garanti — hors des cartes comptées)",
+    );
+  });
+
+  it("labels pochette kind line and section title", () => {
+    expect(
+      formatSealedKindLine({
+        kindLabel: "Booster",
+        setCode: "disney25",
+        slug: "pochette",
+        fr: true,
+      }),
+    ).toBe("Pochette · disney25");
+    expect(formatSealedRandomSectionTitle(true, "pochette")).toBe(
+      "Pochettes / tirages",
+    );
+  });
+
+  it("uses pochette in random-contents summary", () => {
     expect(
       formatSealedRandomContentsLabel(
-        { packs: 24, cardsPerPack: 12, pool: "set" },
-        false,
-      ),
-    ).toBe("24 packs of 12 cards drawn at random from the set");
-  });
-
-  it("phrases an unknown pool without jargon", () => {
-    expect(
-      formatSealedRandomContentsLabel(
-        { packs: 1, cardsPerPack: 12, pool: "unknown" },
+        {
+          packs: 1,
+          cardsPerPack: 4,
+          pool: "set",
+          setId: "disney25",
+          slug: "pochette",
+        },
         true,
       ),
-    ).toBe("1 sachet de 12 cartes (origine du tirage inconnue)");
-  });
-});
-
-describe("formatSealedStructureUnitLabel", () => {
-  it("keeps the unit name and size readable", () => {
-    expect(
-      formatSealedStructureUnitLabel(
-        { count: 2, cardsEach: 30, label: "Starting deck" },
-        true,
-      ),
-    ).toBe(
-      "2 × Starting deck · 30 cartes chacune (listes à inventarier)",
-    );
-  });
-});
-
-describe("formatRandomPoolScopeLabel", () => {
-  it("replaces raw scope tokens", () => {
-    expect(formatRandomPoolScopeLabel("none", null, true)).toBe(
-      "aucune au niveau de ce produit",
-    );
-    expect(formatRandomPoolScopeLabel("set", "12", true)).toBe(
-      "cartes au hasard du set 12",
-    );
+    ).toBe("1 pochette de 4 cartes tirées au hasard dans le set disney25");
   });
 });

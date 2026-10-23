@@ -69,6 +69,8 @@ export const LECLERC_OPS: readonly LeclercOpSpec[] = [
   op("marvel23", "marvel", true),
   op("marvel24", "marvel", true),
   op("disney25", "disney", true),
+  /** Stub checklist (108+24) — noms à densifier dès album / Coleka. */
+  op("disney26", "disney", true),
 ];
 
 export const LECLERC_ACTIVE_OPS: readonly LeclercOpSpec[] = LECLERC_OPS.filter(

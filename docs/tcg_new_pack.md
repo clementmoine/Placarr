@@ -24,8 +24,9 @@ provider id hors `providers/`. Aussi : ligne `CATALOGUE_PACKS` + import
 `effects/` (garde `localTcgWiring.test.ts` : `catalog.dataPack` ⇒ hub,
 `catalog.effectPack` ⇒ pack enregistré, `effects/index.ts` couvre chaque
 dossier). **Croissance** (nouveau set / carte / scellé / face) : Sync seul —
-pas de nouvel `if` core. **Nouveau jeu** : encore ces 3 edits manuels jusqu’à
-dérivation hub (backlog P2 wiring auto).
+pas de nouvel `if` core. **Nouveau jeu** : registry + effects + entrée
+`CATALOGUE_PACKS` (les ids hub sont dérivés de ce tableau ; Leclerc = ops).
+Garde `localTcgWiring.test.ts`.
 
 | Factory | Quand |
 | ------- | ----- |

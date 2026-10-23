@@ -97,6 +97,33 @@ describe("resolvePrintFace (owned packs)", () => {
     expect(hit?.artFile).toBe("art.animecollection.jpg");
   });
 
+  it("prefers eBay studio crop over Coleka listing when both sit on disk (Leclerc)", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const dir = path.join(
+      root,
+      "leclerc",
+      "disney25",
+      "cards",
+      "fr",
+      "disney25",
+      "001",
+    );
+    fs.mkdirSync(dir, { recursive: true });
+    // coleka sorts before ebay alphabetically — ranking must still pick ebay.
+    fs.writeFileSync(path.join(dir, "art.coleka.webp"), "glare");
+    fs.writeFileSync(path.join(dir, "art.ebay.jpg"), "clean");
+
+    const hit = resolvePrintFace({
+      pack: "leclerc/disney25",
+      printKey: "leclerc:disney25-001",
+      lang: "fr",
+      role: "face",
+    });
+    expect(hit?.artFile).toBe("art.ebay.jpg");
+  });
+
   it("borrows EN art when IT folder is missing (sd-0004 hole)", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
     roots.push(root);

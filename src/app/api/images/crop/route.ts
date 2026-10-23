@@ -12,6 +12,12 @@ import {
   stripEditSuffixFromUrl,
 } from "@/core/enrich/media/coverUrl";
 import {
+  applyCropQuad,
+  isCropQuad,
+  type CropQuad,
+  type Point2,
+} from "@/core/enrich/media/imageHomography";
+import {
   applyCropBox,
   normalizeRotation,
   orientedDimensions,
@@ -64,23 +70,29 @@ function cropSidecarPath(originalFilePath: string, role: string): string {
   );
 }
 
+type StoredCrop = CropBox | CropQuad;
+
 function readStoredCrop(
   originalFilePath: string,
   role: string,
-): CropBox | null {
+): StoredCrop | null {
   try {
     const sidecar = cropSidecarPath(originalFilePath, role);
     if (!fs.existsSync(sidecar)) return null;
-    const parsed = JSON.parse(fs.readFileSync(sidecar, "utf8")) as CropBox;
+    const parsed = JSON.parse(fs.readFileSync(sidecar, "utf8")) as unknown;
+    if (isCropQuad(parsed)) {
+      return { ...parsed, rotate: normalizeRotation(parsed.rotate) };
+    }
+    const box = parsed as CropBox;
     const usable =
-      Number.isFinite(parsed?.left) &&
-      Number.isFinite(parsed?.top) &&
-      parsed?.width > 0 &&
-      parsed?.height > 0;
+      Number.isFinite(box?.left) &&
+      Number.isFinite(box?.top) &&
+      box?.width > 0 &&
+      box?.height > 0;
     // Normalized on the way out: a sidecar written by an older build has no
     // rotation at all, and a hand-edited one could say anything.
     return usable
-      ? { ...parsed, rotate: normalizeRotation(parsed.rotate) }
+      ? { ...box, rotate: normalizeRotation(box.rotate) }
       : null;
   } catch {
     return null;
@@ -171,7 +183,22 @@ type CropRequest = {
   /** Quarter-turn applied before the box — see {@link CropBox.rotate}. */
   rotate?: unknown;
   crop?: { left?: unknown; top?: unknown; width?: unknown; height?: unknown };
+  /** Free perspective quad (TL→TR→BR→BL). When set, takes precedence over crop. */
+  quad?: { points?: unknown };
 };
+
+function parseQuadPoints(raw: unknown): [Point2, Point2, Point2, Point2] | null {
+  if (!Array.isArray(raw) || raw.length !== 4) return null;
+  const points: Point2[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") return null;
+    const x = positiveInt((entry as { x?: unknown }).x);
+    const y = positiveInt((entry as { y?: unknown }).y);
+    if (x == null || y == null) return null;
+    points.push({ x, y });
+  }
+  return points as [Point2, Point2, Point2, Point2];
+}
 
 function positiveInt(value: unknown): number | null {
   const parsed = typeof value === "number" ? Math.round(value) : Number.NaN;
@@ -209,12 +236,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as CropRequest;
     const raw = typeof body.url === "string" ? body.url : "";
+    const quadPoints = parseQuadPoints(body.quad?.points);
     const left = positiveInt(body.crop?.left);
     const top = positiveInt(body.crop?.top);
     const width = positiveInt(body.crop?.width);
     const height = positiveInt(body.crop?.height);
 
-    if (left == null || top == null || !width || !height) {
+    if (!quadPoints && (left == null || top == null || !width || !height)) {
       return NextResponse.json({ error: "Invalid crop" }, { status: 400 });
     }
 
@@ -239,27 +267,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unreadable image" }, { status: 422 });
     }
 
-    // Clamp instead of rejecting: a rectangle dragged to the very edge can round
-    // a pixel past the bounds, and losing the edit over that would be absurd.
-    const box = {
-      left: Math.min(left, imageWidth - 1),
-      top: Math.min(top, imageHeight - 1),
-      width: Math.min(width, imageWidth - Math.min(left, imageWidth - 1)),
-      height: Math.min(height, imageHeight - Math.min(top, imageHeight - 1)),
-      imageWidth,
-      imageHeight,
-      rotate,
-    };
-
-    const cropped = await toUploadWebp(await applyCropBox(buffer, box));
     const role = parseCropRole(
       typeof (body as { role?: unknown }).role === "string"
         ? (body as { role?: string }).role
         : null,
     );
+
+    let sidecar: StoredCrop;
+    let croppedBuffer: Buffer;
+    if (quadPoints) {
+      const clamped = quadPoints.map((p) => ({
+        x: Math.min(Math.max(0, p.x), imageWidth - 1),
+        y: Math.min(Math.max(0, p.y), imageHeight - 1),
+      })) as [Point2, Point2, Point2, Point2];
+      const quad: CropQuad = {
+        kind: "quad",
+        points: clamped,
+        imageWidth,
+        imageHeight,
+        rotate,
+      };
+      sidecar = quad;
+      croppedBuffer = await applyCropQuad(buffer, quad);
+    } else {
+      // Clamp instead of rejecting: a rectangle dragged to the very edge can round
+      // a pixel past the bounds, and losing the edit over that would be absurd.
+      const box: CropBox = {
+        left: Math.min(left!, imageWidth - 1),
+        top: Math.min(top!, imageHeight - 1),
+        width: Math.min(width!, imageWidth - Math.min(left!, imageWidth - 1)),
+        height: Math.min(height!, imageHeight - Math.min(top!, imageHeight - 1)),
+        imageWidth,
+        imageHeight,
+        rotate,
+      };
+      sidecar = box;
+      croppedBuffer = await applyCropBox(buffer, box);
+    }
+
+    const cropped = await toUploadWebp(croppedBuffer);
     const croppedName = `${derivedBaseName(filePath, role)}${DERIVATIVE_EXTENSION}`;
     fs.writeFileSync(path.join(uploadsDir(), croppedName), cropped);
-    fs.writeFileSync(cropSidecarPath(filePath, role), JSON.stringify(box));
+    fs.writeFileSync(cropSidecarPath(filePath, role), JSON.stringify(sidecar));
 
     return NextResponse.json({
       url: `${UPLOADS_PREFIX}${croppedName}`,

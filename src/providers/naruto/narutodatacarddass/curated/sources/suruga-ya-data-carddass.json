@@ -1,0 +1,38 @@
+{
+  "source": "Suruga-ya.com EN used category 501080113 (Wayback paste 2024-07/12)",
+  "observed": "2026-10-17",
+  "crawl": false,
+  "url": "https://www.suruga-ya.jp/search?category=501080113&search_word=",
+  "urlKaitori": "https://www.suruga-ya.jp/kaitori/search_buy?category=501080113",
+  "urlEn": "https://www.suruga-ya.com/en/category/501080113",
+  "shopTitle": "NARUTO DATA CARDDASS",
+  "results": 603,
+  "listed": 1094,
+  "maker": "Bandai",
+  "line": "data-carddass",
+  "lang": "ja",
+  "disk": "cards/{set}/ja/{number}/",
+  "listings": "suruga-ya-data-carddass-listings.tsv",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "servedPixels": { "width": 349, "height": 512 },
+  "note": "2026-10-17 kaitori crawl pages 1–55 (~1099 live) → TSV 1094 (+91 new shinaban vs prior 1003). Used-stock search only ~603. Snapshot: suruga-cat-501080113-kaitori-2026-10-17.json. 12 new CDN faces written; 11 shinaban still lack pics/game JPEG.",
+  "prefixesSeen": ["DN", "NM", "NF", "NX", "DMP", "DNP", "NC", "NFM", "NFP", "NFF", "NFC", "NXPF", "NX-MAC", "NX-CAM", "NX-SP", "NXP-SP", "CAN", "VJCF"],
+  "cabinets": [
+    {
+      "title": "ナルト ナルティメットカードバトル",
+      "year": 2005,
+      "prefix": "DN"
+    },
+    {
+      "title": "ナルト疾風伝 究極忍務 ナルティメットミッション",
+      "year": 2007,
+      "prefix": "NM"
+    },
+    {
+      "title": "ナルト疾風伝 ナルティメットクロス",
+      "year": 2009,
+      "prefix": "NX"
+    }
+  ],
+  "not": ["carddass", "en-ccg", "ni", "te", "ta", "n", "j", "m"]
+}

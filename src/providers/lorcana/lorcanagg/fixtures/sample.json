@@ -1,0 +1,208 @@
+{
+  "source": {
+    "sets": "https://api.dotgg.gg/cgfw/getsets?game=lorcana",
+    "cards": "https://api.dotgg.gg/cgfw/getcards?game=lorcana"
+  },
+  "sets": [
+    {
+      "id": "001",
+      "name": "The First Chapter",
+      "code": null,
+      "cardsCount": "216"
+    },
+    {
+      "id": "002",
+      "name": "Rise of the Floodborn",
+      "code": null,
+      "cardsCount": "216"
+    },
+    {
+      "id": "003",
+      "name": "Into the Inklands",
+      "code": null,
+      "cardsCount": "222"
+    },
+    {
+      "id": "004",
+      "name": "Ursula's Return",
+      "code": null,
+      "cardsCount": "204"
+    },
+    {
+      "id": "005",
+      "name": "Shimmering Skies",
+      "code": null,
+      "cardsCount": "204"
+    },
+    {
+      "id": "006",
+      "name": "Azurite Sea",
+      "code": null,
+      "cardsCount": "204"
+    },
+    {
+      "id": "007",
+      "name": "Archazia's Island",
+      "code": null,
+      "cardsCount": "204"
+    },
+    {
+      "id": "008",
+      "name": "Reign of Jafar",
+      "code": null,
+      "cardsCount": "25"
+    },
+    {
+      "id": "009",
+      "name": "Fabled",
+      "code": null,
+      "cardsCount": "7"
+    },
+    {
+      "id": "010",
+      "name": "Whispers in the Well",
+      "code": null,
+      "cardsCount": "0"
+    },
+    {
+      "id": "011",
+      "name": "Winterspell",
+      "code": null,
+      "cardsCount": "242"
+    },
+    {
+      "id": "012",
+      "name": "Wilds Unknown",
+      "code": null,
+      "cardsCount": "242"
+    },
+    {
+      "id": "C1",
+      "name": "C1",
+      "code": null,
+      "cardsCount": "3"
+    },
+    {
+      "id": "C2",
+      "name": "C2",
+      "code": null,
+      "cardsCount": "8"
+    },
+    {
+      "id": "D23",
+      "name": "D23",
+      "code": null,
+      "cardsCount": "6"
+    },
+    {
+      "id": "P1",
+      "name": "Promo",
+      "code": null,
+      "cardsCount": "33"
+    },
+    {
+      "id": "P2",
+      "name": "Promo 2",
+      "code": null,
+      "cardsCount": "7"
+    },
+    {
+      "id": "P3",
+      "name": "Promo 3",
+      "code": null,
+      "cardsCount": "2"
+    },
+    {
+      "id": "Q1",
+      "name": "Deep Trouble",
+      "code": null,
+      "cardsCount": "92"
+    },
+    {
+      "id": "Q2",
+      "name": "Palace Heist",
+      "code": null,
+      "cardsCount": "35"
+    }
+  ],
+  "notes": {
+    "mainSetIdFormat": "zero-padded 3-digit strings: '001'..'012' (also '013' on cards but not yet in getsets)",
+    "promoSetIds": "alphanumeric codes: P1/P2/P3/P4, C1/C2, D23, Q1/Q2, plus card-only CC1/DIS/PD1",
+    "cardIdFormat": "{setId}-{number zero-padded to 3}: e.g. 001-001, P3-033",
+    "noCodeField": "getsets has no 'code' field; id doubles as code"
+  },
+  "cards": [
+    {
+      "id": "001-001",
+      "setId": "001",
+      "number": "1",
+      "name": "Ariel",
+      "displayName": "Ariel - On Human Legs",
+      "title": "On Human Legs",
+      "cmPrice": "0.02",
+      "cmFoilPrice": "0.50",
+      "rarity": "Uncommon",
+      "slug": "001-001-ariel-on-human-legs"
+    },
+    {
+      "id": "P3-033",
+      "setId": "P3",
+      "number": "33",
+      "name": "Tinker Bell",
+      "displayName": "Tinker Bell - Snowflake Collector",
+      "title": "Snowflake Collector",
+      "cmPrice": "1.54",
+      "cmFoilPrice": "0.00",
+      "rarity": "Special",
+      "slug": "p3-033-tinker-bell-snowflake-collector"
+    },
+    {
+      "id": "P3-034",
+      "setId": "P3",
+      "number": "34",
+      "name": "Tinker Bell",
+      "displayName": "Tinker Bell - Snowflake Collector",
+      "title": "Snowflake Collector",
+      "cmPrice": "10.50",
+      "cmFoilPrice": "17.25",
+      "rarity": "Enchanted",
+      "slug": "p3-034-tinker-bell-snowflake-collector"
+    },
+    {
+      "id": "013-001",
+      "setId": "013",
+      "number": "1",
+      "name": "Woody",
+      "displayName": "Woody - Helping a Friend",
+      "title": "Helping a Friend",
+      "cmPrice": null,
+      "cmFoilPrice": null,
+      "rarity": "Rare",
+      "slug": "013-001-woody-helping-a-friend"
+    },
+    {
+      "id": "001-205",
+      "setId": "001",
+      "number": "205",
+      "name": "Hades",
+      "displayName": "Hades - King of Olympus",
+      "title": "King of Olympus",
+      "cmPrice": "119.92",
+      "cmFoilPrice": "50.00",
+      "rarity": "Enchanted",
+      "slug": "001-205-hades-king-of-olympus"
+    },
+    {
+      "id": "001-216",
+      "setId": "001",
+      "number": "216",
+      "name": "Tinker Bell",
+      "displayName": "Tinker Bell - Giant Fairy",
+      "title": "Giant Fairy",
+      "cmPrice": "195.00",
+      "cmFoilPrice": "110.00",
+      "rarity": "Enchanted",
+      "slug": "001-216-tinker-bell-giant-fairy"
+    }
+  ]
+}

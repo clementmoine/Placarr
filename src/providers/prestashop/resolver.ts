@@ -190,7 +190,7 @@ export function mapPrestashopMetadata(
   product: PrestashopProduct,
   label: string,
   galleryImages: string[] = [],
-  context?: { shelfName?: string | null },
+  _context?: { shelfName?: string | null },
 ): MetadataResult {
   const coverId = prestashopImageId(product.imageUrl);
   const platformKey = resolveGameAttachmentPlatformKey({

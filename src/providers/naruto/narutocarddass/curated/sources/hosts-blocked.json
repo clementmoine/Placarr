@@ -1,0 +1,48 @@
+{
+  "source": "hôtes fermés à ce conteneur — journal",
+  "observed": "2026-08-20",
+  "ingest": "none",
+  "note": "Journal des hôtes qu'il ne faut plus interroger, et de ce qui les a fermés. Un hôte banni ne se teste pas « pour voir » : chaque tentative supplémentaire prolonge le blocage et peut l'étendre à d'autres adresses.",
+  "hosts": [
+    {
+      "host": "picclick.it",
+      "state": "banni",
+      "since": "2026-08-20",
+      "cause": "Mes propres sondes. Quatre requêtes en cherchant une source de faces italiennes : deux via le client HTTP, deux en curl. La réponse est passée à HTTP 000 (connexion refusée), et l'utilisateur a confirmé le bannissement.",
+      "impact": "Faible côté code : il n'existe aucun crawler PicClick. Le nom ne subsiste que comme alias de source de prix dans `ebay/index.ts` (`sourceAliases`), qui ne l'interroge pas.",
+      "rule": "Ne plus émettre une seule requête vers picclick.*, ni pour tester si le blocage est levé."
+    },
+    {
+      "host": "www.coleka.com",
+      "state": "porte de vérification",
+      "since": "2026-08-20",
+      "cause": "Constaté, pas attribué : toute requête finit sur `/verify/?lang=fr`. Une seule requête a été émise depuis ce conteneur aujourd'hui, ce qui rend une cause de notre fait improbable sans l'exclure.",
+      "impact": "Les 71 faces italiennes déjà moissonnées restent ; la source n'est plus interrogeable en direct.",
+      "rule": "Ne pas boucler dessus pour contourner la porte."
+    },
+    {
+      "host": "cardgameclub.it",
+      "state": "vivant mais vide de cartes",
+      "since": "2026-08-20",
+      "cause": "Pas un blocage : la boutique a migré de Magento vers Shopify. Les anciennes URL Magento répondent 301 vers `/collections/naruto`, dont l'API `products.json` ne rend que **6 produits, tous scellés**.",
+      "impact": "La source est définitivement close pour les cartes à l'unité — ce que le ledger `cardgameclub-it-cardlist.json` annonçait déjà.",
+      "rule": "Ne pas re-tester : la migration est un fait, pas une panne."
+    },
+    {
+      "host": "www.suruga-ya.jp",
+      "state": "403 depuis ce conteneur",
+      "since": "avant cette session",
+      "cause": "Blocage géographique ou par plage d'adresses, constaté sur les catégories comme sur les pages produit.",
+      "impact": "L'intégration Suruga fonctionne par relevé collé à la main (`suruga-ya-carddass-listings.tsv`).",
+      "rule": "Passer par un collage, ne pas crawler."
+    },
+    {
+      "host": "www.spieleforum.de",
+      "state": "403 sur la lecture",
+      "since": "2026-08-20",
+      "cause": "Le fil « Naruto Cardlist » répond 403 à une lecture automatisée.",
+      "impact": "Piste allemande non vérifiée.",
+      "rule": "Ne pas insister — une seule tentative a suffi à voir le refus."
+    }
+  ]
+}

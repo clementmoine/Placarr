@@ -164,8 +164,7 @@ describe("parsePhilibertGalleryImages", () => {
 });
 
 describe("searchPhilibertHits", () => {
-  const PRODUCT_PATH =
-    "/fr/kosmos/123-catan-3558380126133.html";
+  const PRODUCT_PATH = "/fr/kosmos/123-catan-3558380126133.html";
   const PRODUCT_URL = `https://www.philibertnet.com${PRODUCT_PATH}`;
   const SEARCH_HTML = `<a href="${PRODUCT_PATH}">Catan</a>`;
 

@@ -20,6 +20,7 @@ describe("materializeProviderInfo", () => {
       isRealBoxCover: true,
       isSecondary: true,
       retailCatalogImageTitles: false,
+      supplyMode: "api_live",
     });
   });
 });

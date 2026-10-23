@@ -1,0 +1,40 @@
+{
+  "source": "Suruga-ya.jp product detail GL124612 + GL124613 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "faces",
+  "lang": "ja",
+  "line": "carddass-jp",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "note": "Both listings titled OP忍2 / うちはサスケ. Not COIN-9/11. GL124612 = 2004 NOT FOR SALE opening promo (コスト-1). GL124613 = Suruga 金箔押し, BANDAI 2005, different art + ability (+1/+1) — same printed OP忍-2 without -R; staged only until a printed distinguisher is attested.",
+  "not": ["coin", "invent-R"],
+  "faces": [
+    {
+      "productId": "GL124612",
+      "printedRef": "OP忍-2",
+      "title": "うちはサスケ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2004,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL124612",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl124612.jpg",
+      "pixels": { "width": 350, "height": 512 },
+      "effect": "コスト-1 when うずまきナルト on same team",
+      "note": "NOT FOR SALE. Catalogue face for opni0002 (was name-only)."
+    },
+    {
+      "productId": "GL124613",
+      "printedRef": "OP忍-2",
+      "title": "うちはサスケ",
+      "setCode": "promo",
+      "ingest": false,
+      "bandaiYear": 2005,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL124613",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl124613.jpg",
+      "pixels": { "width": 350, "height": 512 },
+      "surugaTitle": "OP忍2[プロモーショカード]：うちはサスケ(金箔押し)",
+      "effect": "+1/+1 when うずまきナルト on same team",
+      "staging": "staging/suruga/op-shinobi/gl124613-opni0002-kinpaku-2005.jpg",
+      "reason": "Same OP忍-2 number, different ability text and art vs GL124612. Do not invent opni0002-R without a printed -R / other distinguisher."
+    }
+  ]
+}

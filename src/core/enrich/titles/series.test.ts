@@ -174,6 +174,17 @@ describe("applySeriesDisplayNames", () => {
     expect(items[0]?.name).toBe("Les Trésors de Picsou n°02");
     expect(items[1]?.name).toBe("Les Trésors de Picsou n°12");
   });
+
+  it("does not invent a series from TCG collector codes", () => {
+    const items = applySeriesDisplayNames(
+      [
+        { id: "a", name: "TFC#001" },
+        { id: "b", name: "TFC#002" },
+      ],
+      { shelfType: "tcg" },
+    );
+    expect(items.map((item) => item.name)).toEqual(["TFC#001", "TFC#002"]);
+  });
 });
 
 describe("seriesTitleEntryFromItemRow", () => {

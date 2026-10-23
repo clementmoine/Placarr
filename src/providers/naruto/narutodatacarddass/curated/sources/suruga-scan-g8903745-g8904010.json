@@ -1,0 +1,2396 @@
+[
+  {
+    "id": "G8903745",
+    "status": 200,
+    "h1": "ガッシュベル/PR/魔/オフィシャルイベントショップ大会参加特典　PR-069[PR]：ガッシュベル＆キャンチョメ＆ティオ/[オフィシャルイベントショップ大会参加特典]",
+    "title": "駿河屋 -<中古>PR-069[PR]：ガッシュベル＆キャンチョメ＆ティオ/[オフィシャルイベントショップ大会参加特典]（ガッシュベル）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Gash Bell"
+  },
+  {
+    "id": "G8903746",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903746?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903747",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-108T[激レア]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-108T[激レア]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-108T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903748",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-109T[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-109T[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-109T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903749",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-110T[爆レア]：自来也",
+    "title": "駿河屋 -<中古>DN-110T[爆レア]：自来也（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-110T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903750",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-111T[爆レア]：三代目火影",
+    "title": "駿河屋 -<中古>DN-111T[爆レア]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-111T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903751",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-112T[N]：三代目火影",
+    "title": "駿河屋 -<中古>DN-112T[N]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-112T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903752",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-113T[激レア]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-113T[激レア]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-113T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903753",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-114T[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-114T[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-114T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903754",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-115T[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-115T[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-115T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903755",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-116T[R]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-116T[R]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-116T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903756",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-117T[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-117T[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-117T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903757",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-118T[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>DN-118T[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-118T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903758",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-119T[R]：シズネ",
+    "title": "駿河屋 -<中古>DN-119T[R]：シズネ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-119T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903759",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-120T[N]：シズネ",
+    "title": "駿河屋 -<中古>DN-120T[N]：シズネ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-120T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903760",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-121T[激レア]：ロック・リー",
+    "title": "駿河屋 -<中古>DN-121T[激レア]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-121T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903761",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-122T[R]：マイト・ガイ",
+    "title": "駿河屋 -<中古>DN-122T[R]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-122T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903762",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-123T[R]：犬塚キバ",
+    "title": "駿河屋 -<中古>DN-123T[R]：犬塚キバ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-123T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903763",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-124T[N]：犬塚キバ",
+    "title": "駿河屋 -<中古>DN-124T[N]：犬塚キバ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-124T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903764",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-125T[R]：テンテン",
+    "title": "駿河屋 -<中古>DN-125T[R]：テンテン（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-125T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903765",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-126T[N]：日向ネジ",
+    "title": "駿河屋 -<中古>DN-126T[N]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-126T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903766",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-127T[N]：日向ヒナタ",
+    "title": "駿河屋 -<中古>DN-127T[N]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-127T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903767",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-128T[N]：秋道チョウジ",
+    "title": "駿河屋 -<中古>DN-128T[N]：秋道チョウジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-128T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903768",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-129T[N]：テマリ",
+    "title": "駿河屋 -<中古>DN-129T[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-129T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903769",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-130T[N]：桃地再不斬",
+    "title": "駿河屋 -<中古>DN-130T[N]：桃地再不斬（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-130T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903770",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-131T[R]：白",
+    "title": "駿河屋 -<中古>DN-131T[R]：白（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-131T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903771",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-132T[N]：薬師カブト",
+    "title": "駿河屋 -<中古>DN-132T[N]：薬師カブト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-132T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903772",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-133T[激レア]：うちはイタチ",
+    "title": "駿河屋 -<中古>DN-133T[激レア]：うちはイタチ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-133T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903773",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-134T[N]：うちはイタチ",
+    "title": "駿河屋 -<中古>DN-134T[N]：うちはイタチ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-134T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903774",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-135T[R]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>DN-135T[R]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-135T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903775",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-136T[R]：九尾のナルト",
+    "title": "駿河屋 -<中古>DN-136T[R]：九尾のナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-136T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903776",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-137T[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-137T[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-137T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903777",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-138T[R]：奈良シカマル",
+    "title": "駿河屋 -<中古>DN-138T[R]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-138T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903778",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-139T[R]：うちはイタチ",
+    "title": "駿河屋 -<中古>DN-139T[R]：うちはイタチ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-139T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903779",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-140T[N]：暗部のカカシ",
+    "title": "駿河屋 -<中古>DN-140T[N]：暗部のカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-140T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903780",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-141T[爆レア]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-141T[爆レア]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-141T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903781",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-142T[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-142T[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-142T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903782",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-143T[N]：碧い魔獣",
+    "title": "駿河屋 -<中古>DN-143T[N]：碧い魔獣（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-143T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903783",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-144T[激レア]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-144T[激レア]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-144T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903784",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-145T[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-145T[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-145T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903785",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-146T[R]：三代目火影",
+    "title": "駿河屋 -<中古>DN-146T[R]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-146T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903786",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-147T[N]：暗部のカカシ",
+    "title": "駿河屋 -<中古>DN-147T[N]：暗部のカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-147T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903787",
+    "status": 200,
+    "h1": "NARUTOデータカードダス/６・７弾　　DN-148T[N]：暗部のカカシ",
+    "title": "駿河屋 -<中古>DN-148T[N]：暗部のカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-148T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903788",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-149T[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-149T[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-149T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903789",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-150T[R]：自来也",
+    "title": "駿河屋 -<中古>DN-150T[R]：自来也（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-150T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903790",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-151T[R]：綱手",
+    "title": "駿河屋 -<中古>DN-151T[R]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-151T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903791",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-152T[R]：綱手",
+    "title": "駿河屋 -<中古>DN-152T[R]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-152T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903792",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-153T[N]：日向ヒナタ",
+    "title": "駿河屋 -<中古>DN-153T[N]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-153T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903793",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-154T[R]：宗家ヒナタ",
+    "title": "駿河屋 -<中古>DN-154T[R]：宗家ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-154T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903794",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-155T[N]：宗家ヒナタ",
+    "title": "駿河屋 -<中古>DN-155T[N]：宗家ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-155T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903795",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-156T[激レア]：日向ネジ",
+    "title": "駿河屋 -<中古>DN-156T[激レア]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-156T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903796",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-157T[R]：ロック・リー",
+    "title": "駿河屋 -<中古>DN-157T[R]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-157T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903797",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-158T[R]：マイト・ガイ",
+    "title": "駿河屋 -<中古>DN-158T[R]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-158T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903798",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-159T[N]：マイト・ガイ",
+    "title": "駿河屋 -<中古>DN-159T[N]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-159T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903799",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-160T[R]：秋道チョウジ",
+    "title": "駿河屋 -<中古>DN-160T[R]：秋道チョウジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-160T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903800",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-161T[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>DN-161T[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-161T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903801",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-162T[R]：春野サクラ",
+    "title": "駿河屋 -<中古>DN-162T[R]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-162T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903802",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-163T[N]：山中いの",
+    "title": "駿河屋 -<中古>DN-163T[N]：山中いの（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-163T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903803",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903803?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903804",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-165T[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>DN-165T[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-165T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903805",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-166T[N]：カンクロウ",
+    "title": "駿河屋 -<中古>DN-166T[N]：カンクロウ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-166T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903806",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-167T[N]：テマリ",
+    "title": "駿河屋 -<中古>DN-167T[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-167T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903807",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-168T[激レア]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>DN-168T[激レア]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-168T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903808",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-169T[N]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>DN-169T[N]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-169T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903809",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-170T[激レア]：大蛇丸",
+    "title": "駿河屋 -<中古>DN-170T[激レア]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-170T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903810",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-171T[N]：大蛇丸",
+    "title": "駿河屋 -<中古>DN-171T[N]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-171T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903811",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-172T[R]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-172T[R]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-172T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903812",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-173T[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-173T[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-173T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903813",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-174T[R]：ロック・リー",
+    "title": "駿河屋 -<中古>DN-174T[R]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-174T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903814",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-175T[R]：ロック・リー",
+    "title": "駿河屋 -<中古>DN-175T[R]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-175T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903815",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-176T[N]：ロック・リー",
+    "title": "駿河屋 -<中古>DN-176T[N]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-176T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903816",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-177T[N]：春野サクラ",
+    "title": "駿河屋 -<中古>DN-177T[N]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-177T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903817",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-178T[R]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-178T[R]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-178T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903818",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-179T[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-179T[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-179T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903819",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-180T[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-180T[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-180T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903820",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-181T[激レア]：三代目火影",
+    "title": "駿河屋 -<中古>DN-181T[激レア]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-181T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903821",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-182T[N]：三代目火影",
+    "title": "駿河屋 -<中古>DN-182T[N]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-182T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903822",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-183T[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>DN-183T[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-183T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903823",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-184T[R]：日向ネジ",
+    "title": "駿河屋 -<中古>DN-184T[R]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-184T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903824",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-185T[R]：日向ネジ",
+    "title": "駿河屋 -<中古>DN-185T[R]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-185T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903825",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-186T[R]：日向ネジ",
+    "title": "駿河屋 -<中古>DN-186T[R]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-186T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903826",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-187T[激レア]：日向ヒナタ",
+    "title": "駿河屋 -<中古>DN-187T[激レア]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-187T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903827",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-188T[N]：宗家のヒナタ",
+    "title": "駿河屋 -<中古>DN-188T[N]：宗家のヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-188T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903828",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-189T[N]：テンテン",
+    "title": "駿河屋 -<中古>DN-189T[N]：テンテン（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-189T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903829",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-190T[N]：山中いの",
+    "title": "駿河屋 -<中古>DN-190T[N]：山中いの（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-190T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903830",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-191T[N]：犬塚キバ",
+    "title": "駿河屋 -<中古>DN-191T[N]：犬塚キバ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-191T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903831",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-192T[R]：油女シノ",
+    "title": "駿河屋 -<中古>DN-192T[R]：油女シノ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-192T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903832",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-193T[激レア]：マイト・ガイ",
+    "title": "駿河屋 -<中古>DN-193T[激レア]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-193T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903833",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-194T[N]：シズネ",
+    "title": "駿河屋 -<中古>DN-194T[N]：シズネ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-194T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903834",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-195T[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>DN-195T[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-195T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903835",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-196T[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>DN-196T[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-196T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903836",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-197T[N]：カンクロウ",
+    "title": "駿河屋 -<中古>DN-197T[N]：カンクロウ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-197T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903837",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-198T[N]：テマリ",
+    "title": "駿河屋 -<中古>DN-198T[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-198T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903838",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-199T[N]：桃地再不斬",
+    "title": "駿河屋 -<中古>DN-199T[N]：桃地再不斬（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-199T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903839",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-200T[爆レア]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-200T[爆レア]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-200T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903840",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-201T[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-201T[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-201T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903841",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-202T[R]：大蛇丸",
+    "title": "駿河屋 -<中古>DN-202T[R]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-202T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903842",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-203T[R]：封印された大蛇丸",
+    "title": "駿河屋 -<中古>DN-203T[R]：封印された大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-203T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903843",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-204T[N]：封印された大蛇丸",
+    "title": "駿河屋 -<中古>DN-204T[N]：封印された大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-204T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903844",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-205T[N]：うちはイタチ",
+    "title": "駿河屋 -<中古>DN-205T[N]：うちはイタチ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-205T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903845",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-206T[N]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>DN-206T[N]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-206T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903846",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-207T[爆レア]：綱手",
+    "title": "駿河屋 -<中古>DN-207T[爆レア]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-207T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903847",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-208T[N]：綱手",
+    "title": "駿河屋 -<中古>DN-208T[N]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-208T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903848",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-209T[N]：綱手",
+    "title": "駿河屋 -<中古>DN-209T[N]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-209T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903849",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-210T[爆レア]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-210T[爆レア]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-210T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903850",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-211T[爆レア]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-211T[爆レア]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-211T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903851",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-212T[R]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-212T[R]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-212T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903852",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-213T[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-213T[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-213T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903853",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903853?branch_number=0078",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903854",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-215T[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>DN-215T[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-215T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903855",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-216T[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-216T[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-216T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903856",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-217T[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-217T[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-217T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903857",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-218T[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>DN-218T[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-218T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903858",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-219T[N]：春野サクラ",
+    "title": "駿河屋 -<中古>DN-219T[N]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-219T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903859",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-220T[激レア]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-220T[激レア]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-220T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903860",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-221T[R]：はたけカカシ",
+    "title": "駿河屋 -<中古>DN-221T[R]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-221T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903861",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-222T[R]：三代目火影",
+    "title": "駿河屋 -<中古>DN-222T[R]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-222T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903862",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-223T[N]：ロック・リー",
+    "title": "駿河屋 -<中古>DN-223T[N]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-223T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903863",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-224T[R]：マイト・ガイ",
+    "title": "駿河屋 -<中古>DN-224T[R]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-224T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903864",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-225T[爆レア]：日向ネジ",
+    "title": "駿河屋 -<中古>DN-225T[爆レア]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-225T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903865",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-226T[N]：日向ヒナタ",
+    "title": "駿河屋 -<中古>DN-226T[N]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-226T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903866",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-227T[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>DN-227T[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-227T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903867",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-228T[N]：テンテン",
+    "title": "駿河屋 -<中古>DN-228T[N]：テンテン（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-228T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903868",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-229T[N]：秋道チョウジ",
+    "title": "駿河屋 -<中古>DN-229T[N]：秋道チョウジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-229T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903869",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-230T[N]：山中いの",
+    "title": "駿河屋 -<中古>DN-230T[N]：山中いの（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-230T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903870",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-231T[N]：犬塚キバ",
+    "title": "駿河屋 -<中古>DN-231T[N]：犬塚キバ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-231T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903871",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-232T[N]：油女シノ",
+    "title": "駿河屋 -<中古>DN-232T[N]：油女シノ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-232T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903872",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-233T[激レア]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>DN-233T[激レア]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-233T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903873",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-234T[R]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>DN-234T[R]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-234T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903874",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-235T[N]：カンクロウ",
+    "title": "駿河屋 -<中古>DN-235T[N]：カンクロウ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-235T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903875",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-236T[N]：テマリ",
+    "title": "駿河屋 -<中古>DN-236T[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-236T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903876",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-237T[N]：大蛇丸",
+    "title": "駿河屋 -<中古>DN-237T[N]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-237T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903877",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-238T[N]：封印された大蛇丸",
+    "title": "駿河屋 -<中古>DN-238T[N]：封印された大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-238T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903878",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-239T[R]：薬師カブト",
+    "title": "駿河屋 -<中古>DN-239T[R]：薬師カブト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-239T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903879",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-240T[N]：桃地再不斬",
+    "title": "駿河屋 -<中古>DN-240T[N]：桃地再不斬（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-240T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903880",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-241T[N]：白",
+    "title": "駿河屋 -<中古>DN-241T[N]：白（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-241T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903881",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-242T[R]：うちはイタチ",
+    "title": "駿河屋 -<中古>DN-242T[R]：うちはイタチ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-242T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903882",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903882?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903883",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-244T[R]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>DN-244T[R]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-244T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903884",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-245T[N]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>DN-245T[N]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-245T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903885",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-246T[激レア]：綱手",
+    "title": "駿河屋 -<中古>DN-246T[激レア]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-246T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903886",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-247T[R]：綱手",
+    "title": "駿河屋 -<中古>DN-247T[R]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-247T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903887",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-248T[N]：綱手",
+    "title": "駿河屋 -<中古>DN-248T[N]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-248T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903888",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　DN-249T[N]：綱手",
+    "title": "駿河屋 -<中古>DN-249T[N]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "DN-249T",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903889",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-001[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-001[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-001",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903890",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-002[R]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-002[R]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-002",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903891",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903891?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903892",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-004[爆レア]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-004[爆レア]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-004",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903893",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-005[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-005[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-005",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903894",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-006[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-006[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-006",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903895",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-007[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-007[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-007",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903896",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-008[激レア]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-008[激レア]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-008",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903897",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-009[N]：ロック・リー",
+    "title": "駿河屋 -<中古>NM-009[N]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-009",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903898",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-010[R]：ロック・リー",
+    "title": "駿河屋 -<中古>NM-010[R]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-010",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903899",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-011[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-011[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-011",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903900",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-012[激レア]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-012[激レア]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-012",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903901",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-013[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>NM-013[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-013",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903902",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-014[N]：日向ネジ",
+    "title": "駿河屋 -<中古>NM-014[N]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-014",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903903",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-015[R]：日向ネジ",
+    "title": "駿河屋 -<中古>NM-015[R]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-015",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903904",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-016[爆レア]：春野サクラ",
+    "title": "駿河屋 -<中古>NM-016[爆レア]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-016",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903905",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-017[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>NM-017[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-017",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903906",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903906?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903907",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-019[N]：大蛇丸",
+    "title": "駿河屋 -<中古>NM-019[N]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-019",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903908",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-020[N]：白",
+    "title": "駿河屋 -<中古>NM-020[N]：白（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-020",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903909",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-021[N]：桃地再不斬",
+    "title": "駿河屋 -<中古>NM-021[N]：桃地再不斬（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-021",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903910",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-022[N]：日向ヒナタ",
+    "title": "駿河屋 -<中古>NM-022[N]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-022",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903911",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-023[R]：日向ヒナタ",
+    "title": "駿河屋 -<中古>NM-023[R]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-023",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903912",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-024[N]：テンテン",
+    "title": "駿河屋 -<中古>NM-024[N]：テンテン（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-024",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903913",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-025[N]：秋道チョウジ",
+    "title": "駿河屋 -<中古>NM-025[N]：秋道チョウジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-025",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903914",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-026[N]：山中いの",
+    "title": "駿河屋 -<中古>NM-026[N]：山中いの（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-026",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903915",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-027[N]：犬塚キバ",
+    "title": "駿河屋 -<中古>NM-027[N]：犬塚キバ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-027",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903916",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-028[N]：油女シノ",
+    "title": "駿河屋 -<中古>NM-028[N]：油女シノ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-028",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903917",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-029[N]：カンクロウ",
+    "title": "駿河屋 -<中古>NM-029[N]：カンクロウ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-029",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903918",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-030[N]：テマリ",
+    "title": "駿河屋 -<中古>NM-030[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-030",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903919",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-031[N]：マイト・ガイ",
+    "title": "駿河屋 -<中古>NM-031[N]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-031",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903920",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-032[N]：自来也",
+    "title": "駿河屋 -<中古>NM-032[N]：自来也（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-032",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903921",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-033[激レア]：自来也",
+    "title": "駿河屋 -<中古>NM-033[激レア]：自来也（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-033",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903922",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-034[N]：三代目火影",
+    "title": "駿河屋 -<中古>NM-034[N]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-034",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903923",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-035[N]：三代目火影",
+    "title": "駿河屋 -<中古>NM-035[N]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-035",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903924",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-036[激レア]：うちはイタチ",
+    "title": "駿河屋 -<中古>NM-036[激レア]：うちはイタチ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-036",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903925",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903925?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903926",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-038[R]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>NM-038[R]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-038",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903927",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-039[N]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>NM-039[N]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-039",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903928",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-040[N]：綱手",
+    "title": "駿河屋 -<中古>NM-040[N]：綱手（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-040",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903929",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903929?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903930",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-042[N]：シズネ",
+    "title": "駿河屋 -<中古>NM-042[N]：シズネ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-042",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903931",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-043[N]：薬師カブト",
+    "title": "駿河屋 -<中古>NM-043[N]：薬師カブト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-043",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903932",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-044[N]：碧い魔獣",
+    "title": "駿河屋 -<中古>NM-044[N]：碧い魔獣（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-044",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903933",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-045[R]：次郎坊",
+    "title": "駿河屋 -<中古>NM-045[R]：次郎坊（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-045",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903934",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-046[R]：鬼童丸",
+    "title": "駿河屋 -<中古>NM-046[R]：鬼童丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-046",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903935",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-047[R]：多由也",
+    "title": "駿河屋 -<中古>NM-047[R]：多由也（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-047",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903936",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-048[R]：左近",
+    "title": "駿河屋 -<中古>NM-048[R]：左近（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-048",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903937",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-049[R]：猿飛アスマ",
+    "title": "駿河屋 -<中古>NM-049[R]：猿飛アスマ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-049",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903938",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-050[N]：みたらしアンコ",
+    "title": "駿河屋 -<中古>NM-050[N]：みたらしアンコ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-050",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903939",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-051[R]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-051[R]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-051",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903940",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-052[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-052[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-052",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903941",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-053[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-053[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-053",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903942",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-054[爆レア]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-054[爆レア]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-054",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903943",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-055[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-055[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-055",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903944",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-056[爆レア]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-056[爆レア]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-056",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903945",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-057[N]：ロック・リー",
+    "title": "駿河屋 -<中古>NM-057[N]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-057",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903946",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-058[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-058[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-058",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903947",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-059[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-059[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-059",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903948",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-060[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-060[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-060",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903949",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-061[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>NM-061[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-061",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903950",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-062[R]：奈良シカマル",
+    "title": "駿河屋 -<中古>NM-062[R]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-062",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903951",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-063[N]：日向ネジ",
+    "title": "駿河屋 -<中古>NM-063[N]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-063",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903952",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903952?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903953",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-065[N]：春野サクラ",
+    "title": "駿河屋 -<中古>NM-065[N]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-065",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903954",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-066[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>NM-066[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-066",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903955",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-067[R]：大蛇丸",
+    "title": "駿河屋 -<中古>NM-067[R]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-067",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903956",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-068[N]：桃地再不斬",
+    "title": "駿河屋 -<中古>NM-068[N]：桃地再不斬（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-068",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903957",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-069[N]：日向ヒナタ",
+    "title": "駿河屋 -<中古>NM-069[N]：日向ヒナタ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-069",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903958",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-070[N]：テンテン",
+    "title": "駿河屋 -<中古>NM-070[N]：テンテン（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-070",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903959",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-071[N]：秋道チョウジ",
+    "title": "駿河屋 -<中古>NM-071[N]：秋道チョウジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-071",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903960",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-072[N]：山中いの",
+    "title": "駿河屋 -<中古>NM-072[N]：山中いの（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-072",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903961",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-073[N]：犬塚キバ",
+    "title": "駿河屋 -<中古>NM-073[N]：犬塚キバ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-073",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903962",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-074[N]：油女シノ",
+    "title": "駿河屋 -<中古>NM-074[N]：油女シノ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-074",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903963",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-075[N]：カンクロウ",
+    "title": "駿河屋 -<中古>NM-075[N]：カンクロウ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-075",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903964",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-076[激レア]：カンクロウ",
+    "title": "駿河屋 -<中古>NM-076[激レア]：カンクロウ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-076",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903965",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-077[N]：テマリ",
+    "title": "駿河屋 -<中古>NM-077[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-077",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903966",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-078[激レア]：テマリ",
+    "title": "駿河屋 -<中古>NM-078[激レア]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-078",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903967",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-079[N]：マイト・ガイ",
+    "title": "駿河屋 -<中古>NM-079[N]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-079",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903968",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-080[N]：マイト・ガイ",
+    "title": "駿河屋 -<中古>NM-080[N]：マイト・ガイ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-080",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903969",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903969?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903970",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903970?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903971",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-083[N]：三代目火影",
+    "title": "駿河屋 -<中古>NM-083[N]：三代目火影（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-083",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903972",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903972?branch_number=0078",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903973",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-085[N]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>NM-085[N]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-085",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903974",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-086[激レア]：干柿鬼鮫",
+    "title": "駿河屋 -<中古>NM-086[激レア]：干柿鬼鮫（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-086",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903975",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903975?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903976",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-088[N]：薬師カブト",
+    "title": "駿河屋 -<中古>NM-088[N]：薬師カブト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-088",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903977",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-089[R]：暗部のカカシ",
+    "title": "駿河屋 -<中古>NM-089[R]：暗部のカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-089",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903978",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-090[R]：次郎坊",
+    "title": "駿河屋 -<中古>NM-090[R]：次郎坊（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-090",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903979",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-091[R]：鬼童丸",
+    "title": "駿河屋 -<中古>NM-091[R]：鬼童丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-091",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903980",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-092[R]：君麻呂",
+    "title": "駿河屋 -<中古>NM-092[R]：君麻呂（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-092",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903981",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-093[R]：うずま���ナルト",
+    "title": "駿河屋 -<中古>NM-093[R]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-093",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903982",
+    "status": 302,
+    "h1": "",
+    "title": "Redirecting to https://www.suruga-ya.jp/product/detail/G8903982?branch_number=0077",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "empty"
+  },
+  {
+    "id": "G8903983",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-095[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-095[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-095",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903984",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-096[N]：うずまきナルト",
+    "title": "駿河屋 -<中古>NM-096[N]：うずまきナルト（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-096",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903985",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-097[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-097[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-097",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903986",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-098[N]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-098[N]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-098",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903987",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-099[R]：うちはサスケ",
+    "title": "駿河屋 -<中古>NM-099[R]：うちはサスケ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-099",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903988",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-100[N]：ロック・リー",
+    "title": "駿河屋 -<中古>NM-100[N]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-100",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903989",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-101[R]：ロック・リー",
+    "title": "駿河屋 -<中古>NM-101[R]：ロック・リー（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-101",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903990",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-102[N]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-102[N]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-102",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903991",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-103[R]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-103[R]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-103",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903992",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-104[激レア]：砂瀑の我愛羅",
+    "title": "駿河屋 -<中古>NM-104[激レア]：砂瀑の我愛羅（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-104",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903993",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-105[N]：奈良シカマル",
+    "title": "駿河屋 -<中古>NM-105[N]：奈良シカマル（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-105",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903994",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-106[R]：日向ネジ",
+    "title": "駿河屋 -<中古>NM-106[R]：日向ネジ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-106",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903995",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-107[N]：春野サクラ",
+    "title": "駿河屋 -<中古>NM-107[N]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-107",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903996",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-108[R]：春野サクラ",
+    "title": "駿河屋 -<中古>NM-108[R]：春野サクラ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-108",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903997",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-109[R]：はたけカカシ",
+    "title": "駿河屋 -<中古>NM-109[R]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-109",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903998",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-110[N]：はたけカカシ",
+    "title": "駿河屋 -<中古>NM-110[N]：はたけカカシ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-110",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8903999",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-111[爆レア]：大蛇丸",
+    "title": "駿河屋 -<中古>NM-111[爆レア]：大蛇丸（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-111",
+    "franchise": "NARUTO"
+  },
+  {
+    "id": "G8904000",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/鎧　EX4：カッパークロス",
+    "title": "駿河屋 -<中古>EX4：カッパークロス（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/鎧　EX4：カッパークロ"
+  },
+  {
+    "id": "G8904001",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/鎧　EX5：ウォーロックローブ",
+    "title": "駿河屋 -<中古>EX5：ウォーロックローブ（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/鎧　EX5：ウォーロック"
+  },
+  {
+    "id": "G8904002",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/鎧　EX6：ディグラティカ",
+    "title": "駿河屋 -<中古>EX6：ディグラティカ（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/鎧　EX6：ディグラティ"
+  },
+  {
+    "id": "G8904003",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/食料　EX10：チョコレート",
+    "title": "駿河屋 -<中古>EX10：チョコレート（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/食料　EX10：チョコレ"
+  },
+  {
+    "id": "G8904004",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/食料　EX11：柿",
+    "title": "駿河屋 -<中古>EX11：柿（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/食料　EX11：柿"
+  },
+  {
+    "id": "G8904005",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/全職業スキル(ナックル)　EX12：トルネードパンチ",
+    "title": "駿河屋 -<中古>EX12：トルネードパンチ（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/全職業スキル(ナックル)"
+  },
+  {
+    "id": "G8904006",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/全職業スキル(ナックル)　EX13：裡門頂肘",
+    "title": "駿河屋 -<中古>EX13：裡門頂肘（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/全職業スキル(ナックル)"
+  },
+  {
+    "id": "G8904007",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/兜　EX14：ゴブリンマスク",
+    "title": "駿河屋 -<中古>EX14：ゴブリンマスク（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/兜　EX14：ゴブリンマ"
+  },
+  {
+    "id": "G8904008",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/全職業スキル　EX15：ルアー",
+    "title": "駿河屋 -<中古>EX15：ルアー（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/全職業スキル　EX15："
+  },
+  {
+    "id": "G8904009",
+    "status": 200,
+    "h1": "Quest　of　D/プロモ/EX/全職業スキル　EX16：プロボーク",
+    "title": "駿河屋 -<中古>EX16：プロボーク（Quest of D）",
+    "isNaruto": false,
+    "ref": null,
+    "franchise": "Quest　of　D/プロモ/EX/全職業スキル　EX16："
+  },
+  {
+    "id": "G8904010",
+    "status": 200,
+    "h1": "NARUTOデータカードダス　NM-122[N]：テマリ",
+    "title": "駿河屋 -<中古>NM-122[N]：テマリ（NARUTOデータカードダス）",
+    "isNaruto": true,
+    "ref": "NM-122",
+    "franchise": "NARUTO"
+  }
+]

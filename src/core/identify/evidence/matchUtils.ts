@@ -17,6 +17,7 @@ import type {
   ProductEvidence,
   ResolvedMatch,
 } from "./types";
+import { regionRank } from "@/core/locale/preference";
 
 export type { CorpusTokenStats };
 
@@ -41,7 +42,7 @@ export function titleSpecificityTokens(
     .split(/[^a-z0-9]+/)
     .filter((token) => {
       if (token.length <= 1) return false;
-      if (GENERIC_TITLE_TOKENS.has(token) || token === "video") return false;
+      if (GENERIC_TITLE_TOKENS.has(token)) return false;
       if (corpusStats && isCorpusGenericToken(token, corpusStats)) return false;
       return true;
     });
@@ -197,11 +198,6 @@ export function pickPreferredClusterDisplayName(
     (item) => item.isCanonical && !item.contradictedByConsensus,
   );
   if (trustworthyCanonical.length > 0) {
-    const regionOrder = ["fr", "eu", "wor", "uk", "us", "jp"];
-    const regionRank = (region?: string | null) => {
-      const index = regionOrder.indexOf((region || "").toLowerCase());
-      return index === -1 ? regionOrder.length : index;
-    };
     const best = trustworthyCanonical.slice().sort((a, b) => {
       const regionDiff = regionRank(a.region) - regionRank(b.region);
       if (regionDiff !== 0) return regionDiff;

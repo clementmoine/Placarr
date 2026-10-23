@@ -1,0 +1,38 @@
+{
+  "source": "Promos US hors checklist Inkworks officielle",
+  "observed": "2026-08-23",
+  "ingest": "titres EN ; absent de narutocklist.htm juin 2006",
+  "lang": "en",
+  "line": "ninja-ranks",
+  "notOnInkworksChecklist": true,
+  "note": "Deux promos absentes de la feuille Inkworks de juin 2006, qui ne liste que PN-1, PN-T, PN-GA et PN-i. Les deux sont listées par nslists.com, qui recense la série promo complète.",
+  "attestedBy": [
+    "https://nslists.com/narutonr.htm — liste PN-SD2006 et PN-P"
+  ],
+  "cards": [
+    {
+      "printed": "PN-SD2006",
+      "setCode": "pn",
+      "number": "sd2006",
+      "name": "SDCC EXCLUSIVE",
+      "rarity": "Promo",
+      "note": "Insert exclusif San Diego Comic-Con 2006.",
+      "attestedBy": [
+        "https://nslists.com/narutonr.htm — « Naruto (San Diego Comic Con) »",
+        "https://www.ebay.com/itm/333930082993 — recto + verso « THE NINJA ARE HERE »"
+      ]
+    },
+    {
+      "printed": "PN-P",
+      "setCode": "pn",
+      "number": "p",
+      "name": "SDCC PASSPORT PROGRAM",
+      "rarity": "Promo",
+      "note": "Recto numéroté PR-001 et signé VIZ Media ; verso codé PN-P, distribué par Inkworks avec le logo Panini. Le numéro PR-001 est la numérotation du recto, pas celle de la série promo — la carte se range sous PN-P, comme son verso l'écrit.",
+      "attestedBy": [
+        "https://nslists.com/narutonr.htm — « PN-P (SDCC Passport Program for Viz Media) »",
+        "curated/cards/pn/en/p/ — recto + verso scannés"
+      ]
+    }
+  ]
+}

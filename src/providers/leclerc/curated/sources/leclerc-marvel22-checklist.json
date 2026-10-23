@@ -1,0 +1,581 @@
+{
+  "source": "coleka.com dump navigateur ?nbpp=240 (listing complet)",
+  "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/cartes-marvel-pars-en-mission-leclerc_r28635?nbpp=240",
+  "set": {
+    "code": "marvel22",
+    "label": "2022 Marvel: Pars en Mission",
+    "year": 2022,
+    "franchise": "Marvel"
+  },
+  "coverage": {
+    "namedCards": 108,
+    "placeholderCards": 0,
+    "fixeez": 0,
+    "holographique": [
+      "010",
+      "022",
+      "028",
+      "057",
+      "100"
+    ],
+    "scintillante": [
+      "009",
+      "037",
+      "047",
+      "077",
+      "090"
+    ]
+  },
+  "cards": [
+    {
+      "number": "001",
+      "name": "Thor",
+      "kind": "card"
+    },
+    {
+      "number": "002",
+      "name": "Iron Man",
+      "kind": "card"
+    },
+    {
+      "number": "003",
+      "name": "Nick Fury",
+      "kind": "card"
+    },
+    {
+      "number": "004",
+      "name": "Miss Marvel",
+      "kind": "card"
+    },
+    {
+      "number": "005",
+      "name": "Vision",
+      "kind": "card"
+    },
+    {
+      "number": "006",
+      "name": "Hawkeye",
+      "kind": "card"
+    },
+    {
+      "number": "007",
+      "name": "Doctor Strange",
+      "kind": "card"
+    },
+    {
+      "number": "008",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "009",
+      "name": "La guêpe",
+      "kind": "card",
+      "rarity": "scintillante"
+    },
+    {
+      "number": "010",
+      "name": "Black Panther",
+      "kind": "card",
+      "rarity": "holographique"
+    },
+    {
+      "number": "011",
+      "name": "Killmonger",
+      "kind": "card"
+    },
+    {
+      "number": "012",
+      "name": "Shuri",
+      "kind": "card"
+    },
+    {
+      "number": "013",
+      "name": "+2 courage",
+      "kind": "card"
+    },
+    {
+      "number": "014",
+      "name": "+2 puissance",
+      "kind": "card"
+    },
+    {
+      "number": "015",
+      "name": "+ 2 Intelligence",
+      "kind": "card"
+    },
+    {
+      "number": "016",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "017",
+      "name": "+ 3 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "018",
+      "name": "Ant-man",
+      "kind": "card"
+    },
+    {
+      "number": "019",
+      "name": "Patriot",
+      "kind": "card"
+    },
+    {
+      "number": "020",
+      "name": "Quake",
+      "kind": "card"
+    },
+    {
+      "number": "021",
+      "name": "Inferno",
+      "kind": "card"
+    },
+    {
+      "number": "022",
+      "name": "Miss Marvel",
+      "kind": "card",
+      "rarity": "holographique"
+    },
+    {
+      "number": "023",
+      "name": "Captain America",
+      "kind": "card"
+    },
+    {
+      "number": "024",
+      "name": "Hela",
+      "kind": "card"
+    },
+    {
+      "number": "025",
+      "name": "+1 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "026",
+      "name": "+1 Puissance",
+      "kind": "card"
+    },
+    {
+      "number": "027",
+      "name": "+1 Intelligence",
+      "kind": "card"
+    },
+    {
+      "number": "028",
+      "name": "Spider-Man",
+      "kind": "card",
+      "rarity": "holographique"
+    },
+    {
+      "number": "029",
+      "name": "Spider-Girl",
+      "kind": "card"
+    },
+    {
+      "number": "030",
+      "name": "Miles Morales",
+      "kind": "card"
+    },
+    {
+      "number": "031",
+      "name": "Ghost-Spider",
+      "kind": "card"
+    },
+    {
+      "number": "032",
+      "name": "Symbiote Spider-Man",
+      "kind": "card"
+    },
+    {
+      "number": "033",
+      "name": "Spider woman",
+      "kind": "card"
+    },
+    {
+      "number": "034",
+      "name": "Spider-Ham",
+      "kind": "card"
+    },
+    {
+      "number": "035",
+      "name": "Venom",
+      "kind": "card"
+    },
+    {
+      "number": "036",
+      "name": "Carnage",
+      "kind": "card"
+    },
+    {
+      "number": "037",
+      "name": "Ant-Man",
+      "kind": "card",
+      "rarity": "scintillante"
+    },
+    {
+      "number": "038",
+      "name": "Gant de l'infini",
+      "kind": "card"
+    },
+    {
+      "number": "039",
+      "name": "Doctor Strange",
+      "kind": "card"
+    },
+    {
+      "number": "040",
+      "name": "Loki",
+      "kind": "card"
+    },
+    {
+      "number": "041",
+      "name": "Miss Hulk",
+      "kind": "card"
+    },
+    {
+      "number": "042",
+      "name": "Thanos",
+      "kind": "card"
+    },
+    {
+      "number": "043",
+      "name": "+ 2 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "044",
+      "name": "+2 puissance",
+      "kind": "card"
+    },
+    {
+      "number": "045",
+      "name": "+ 2 Intelligence",
+      "kind": "card"
+    },
+    {
+      "number": "046",
+      "name": "Star-Lord",
+      "kind": "card"
+    },
+    {
+      "number": "047",
+      "name": "Gamora",
+      "kind": "card",
+      "rarity": "scintillante"
+    },
+    {
+      "number": "048",
+      "name": "Rocket Raccoon",
+      "kind": "card"
+    },
+    {
+      "number": "049",
+      "name": "Groot",
+      "kind": "card"
+    },
+    {
+      "number": "050",
+      "name": "Drax",
+      "kind": "card"
+    },
+    {
+      "number": "051",
+      "name": "Thanos",
+      "kind": "card"
+    },
+    {
+      "number": "052",
+      "name": "Bébé Groot",
+      "kind": "card"
+    },
+    {
+      "number": "053",
+      "name": "Peter Quill",
+      "kind": "card"
+    },
+    {
+      "number": "054",
+      "name": "Rocket & Groot",
+      "kind": "card"
+    },
+    {
+      "number": "055",
+      "name": "War Machine",
+      "kind": "card"
+    },
+    {
+      "number": "056",
+      "name": "Captain Marvel",
+      "kind": "card"
+    },
+    {
+      "number": "057",
+      "name": "Thor",
+      "kind": "card",
+      "rarity": "holographique"
+    },
+    {
+      "number": "058",
+      "name": "Loki",
+      "kind": "card"
+    },
+    {
+      "number": "059",
+      "name": "Vision",
+      "kind": "card"
+    },
+    {
+      "number": "060",
+      "name": "Black Window",
+      "kind": "card"
+    },
+    {
+      "number": "061",
+      "name": "Faucon",
+      "kind": "card"
+    },
+    {
+      "number": "062",
+      "name": "Hulk",
+      "kind": "card"
+    },
+    {
+      "number": "063",
+      "name": "Squirrel Girl",
+      "kind": "card"
+    },
+    {
+      "number": "064",
+      "name": "Vautour",
+      "kind": "card"
+    },
+    {
+      "number": "065",
+      "name": "Homme-Sable",
+      "kind": "card"
+    },
+    {
+      "number": "066",
+      "name": "Le Bouffon Vert",
+      "kind": "card"
+    },
+    {
+      "number": "067",
+      "name": "Kraven le Chasseur",
+      "kind": "card"
+    },
+    {
+      "number": "068",
+      "name": "Dr. Octopus",
+      "kind": "card"
+    },
+    {
+      "number": "069",
+      "name": "Rhino",
+      "kind": "card"
+    },
+    {
+      "number": "070",
+      "name": "Le Super-Bouffon",
+      "kind": "card"
+    },
+    {
+      "number": "071",
+      "name": "Lézard",
+      "kind": "card"
+    },
+    {
+      "number": "072",
+      "name": "Electro",
+      "kind": "card"
+    },
+    {
+      "number": "073",
+      "name": "Iron Man",
+      "kind": "card"
+    },
+    {
+      "number": "074",
+      "name": "Hulk",
+      "kind": "card"
+    },
+    {
+      "number": "075",
+      "name": "La Sorcière Rouge",
+      "kind": "card"
+    },
+    {
+      "number": "076",
+      "name": "La guêpe",
+      "kind": "card"
+    },
+    {
+      "number": "077",
+      "name": "Captain Marvel",
+      "kind": "card",
+      "rarity": "scintillante"
+    },
+    {
+      "number": "078",
+      "name": "Jane Foster",
+      "kind": "card"
+    },
+    {
+      "number": "079",
+      "name": "+1 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "080",
+      "name": "+1 Puissance",
+      "kind": "card"
+    },
+    {
+      "number": "081",
+      "name": "+ 1 Intelligence",
+      "kind": "card"
+    },
+    {
+      "number": "082",
+      "name": "Mantis",
+      "kind": "card"
+    },
+    {
+      "number": "083",
+      "name": "Drax",
+      "kind": "card"
+    },
+    {
+      "number": "084",
+      "name": "Nebula",
+      "kind": "card"
+    },
+    {
+      "number": "085",
+      "name": "Yondu",
+      "kind": "card"
+    },
+    {
+      "number": "086",
+      "name": "Cosmo",
+      "kind": "card"
+    },
+    {
+      "number": "087",
+      "name": "Collectionneur",
+      "kind": "card"
+    },
+    {
+      "number": "088",
+      "name": "Ego",
+      "kind": "card"
+    },
+    {
+      "number": "089",
+      "name": "Ronan L'Accusateur",
+      "kind": "card"
+    },
+    {
+      "number": "090",
+      "name": "Groot",
+      "kind": "card",
+      "rarity": "scintillante"
+    },
+    {
+      "number": "091",
+      "name": "Crâne Rouge",
+      "kind": "card"
+    },
+    {
+      "number": "092",
+      "name": "Valkyrie",
+      "kind": "card"
+    },
+    {
+      "number": "093",
+      "name": "Korg",
+      "kind": "card"
+    },
+    {
+      "number": "094",
+      "name": "Nova",
+      "kind": "card"
+    },
+    {
+      "number": "095",
+      "name": "+ 2 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "096",
+      "name": "Dormammu",
+      "kind": "card"
+    },
+    {
+      "number": "097",
+      "name": "+ 3 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "098",
+      "name": "+3 puissance",
+      "kind": "card"
+    },
+    {
+      "number": "099",
+      "name": "+ 3 Intelligence",
+      "kind": "card"
+    },
+    {
+      "number": "100",
+      "name": "Shuri",
+      "kind": "card",
+      "rarity": "holographique"
+    },
+    {
+      "number": "101",
+      "name": "Back Panther",
+      "kind": "card"
+    },
+    {
+      "number": "102",
+      "name": "Okoye",
+      "kind": "card"
+    },
+    {
+      "number": "103",
+      "name": "+ 2 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "104",
+      "name": "+2 puissance",
+      "kind": "card"
+    },
+    {
+      "number": "105",
+      "name": "+ 2 Intelligence",
+      "kind": "card"
+    },
+    {
+      "number": "106",
+      "name": "+ 3 Courage",
+      "kind": "card"
+    },
+    {
+      "number": "107",
+      "name": "+3 puissance",
+      "kind": "card"
+    },
+    {
+      "number": "108",
+      "name": "+ 3 Intelligence",
+      "kind": "card"
+    }
+  ]
+}

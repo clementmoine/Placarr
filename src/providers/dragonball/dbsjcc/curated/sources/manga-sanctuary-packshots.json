@@ -1,0 +1,75 @@
+{
+  "source": "manga-sanctuary.com news 3101 (09/12/2006) — Dragon Ball Cartes à jouer et à collectionner",
+  "observed": "2026-10-04",
+  "page": "https://www.manga-sanctuary.com/news/3101/dragon-ball-cartes-a-jouer-et-a-collectionner.html",
+  "note": "Seul article presse MS avec packshots JCC. Images utiles = 3 starters (Éveil apparaît 2× dans le HTML). Logos Bandai / bannière ignorés.",
+  "facts": {
+    "launchYear": 2006,
+    "seriesIn2006": 4,
+    "cardsAnnounced2006": 470,
+    "startersPerSeries": 2,
+    "starterCards": 32,
+    "starterExclusiveCards": 25,
+    "starterSharedCards": 7,
+    "boosterCards": 8,
+    "boosterHolographicPerPack": 1,
+    "boosterPoolPerSeries": { "min": 66, "max": 84 },
+    "msrpEur": {
+      "starter": { "min": 10, "max": 15 },
+      "booster": { "min": 3, "max": 5 }
+    },
+    "referenceSite": "http://www.dbzcollection.fr"
+  },
+  "products": [
+    {
+      "slug": "part1-starter-1190",
+      "setCode": "part1",
+      "kind": "deck",
+      "lang": "fr",
+      "title": "Part 1 — Starter Super Saiyans",
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Dragon%20Ball%20CG%20Starter%20super%20saiyans%20Serie%201.JPG",
+      "staging": "staging/manga-sanctuary/part1-starter-super-saiyans.jpg",
+      "ingest": true,
+      "mint": false,
+      "pixels": { "width": 345, "height": 511 }
+    },
+    {
+      "slug": "part1-starter-ennemis",
+      "setCode": "part1",
+      "kind": "deck",
+      "lang": "fr",
+      "title": "Part 1 — Starter Ennemis",
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Dragon%20Ball%20CG%20Starter%20ennemis%20Serie%201.JPG",
+      "staging": "staging/manga-sanctuary/part1-starter-ennemis.jpg",
+      "ingest": true,
+      "mint": true,
+      "pixels": { "width": 333, "height": 493 }
+    },
+    {
+      "slug": "part2-starter-1193",
+      "setCode": "part2",
+      "kind": "deck",
+      "lang": "fr",
+      "title": "Part 2 — Starter L'Éveil de Gohan",
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/Dragon%20Ball%20CG%20Starter%20Eveil%20de%20Gohan%20Serie%202.jpg",
+      "staging": "staging/manga-sanctuary/part2-starter-eveil-de-gohan.jpg",
+      "ingest": true,
+      "mint": false,
+      "pixels": { "width": 444, "height": 653 }
+    }
+  ],
+  "skip": [
+    {
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/logo2-DB(1).jpg",
+      "reason": "Logo licence, pas un SKU scellé"
+    },
+    {
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/LOGOBAN.jpg",
+      "reason": "Logo Bandai, pas un SKU scellé"
+    },
+    {
+      "url": "https://www.manga-sanctuary.com/IMAGES_NEWS/Image/banniere5.jpg",
+      "reason": "Bannière site, pas un SKU scellé"
+    }
+  ]
+}

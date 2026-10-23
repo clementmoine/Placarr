@@ -1,4 +1,5 @@
-import axios from "axios";
+import { isAbortError } from "@/lib/http/abort";
+import { httpGet } from "@/lib/http/httpClient";
 
 import type { MediaType } from "@/types/providerRegistry";
 
@@ -242,7 +243,7 @@ async function fetchSensCritiqueGraphql(
   signal?: AbortSignal,
 ): Promise<unknown | null> {
   try {
-    const response = await axios.get(GRAPHQL_URL, {
+    const response = await httpGet(GRAPHQL_URL, {
       params: { query },
       headers: HEADERS,
       timeout: 10_000,
@@ -250,7 +251,7 @@ async function fetchSensCritiqueGraphql(
     });
     return response.data;
   } catch (error) {
-    if (!axios.isCancel(error)) {
+    if (!isAbortError(error)) {
       console.error(
         "[SensCritique] GraphQL request failed:",
         error instanceof Error ? error.message : error,

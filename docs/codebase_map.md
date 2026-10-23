@@ -25,17 +25,17 @@ src/
 
 ## Où aller selon le bug
 
-| Symptôme | Pilier | Fichiers clés |
-|----------|--------|---------------|
-| Mauvais type au scan | identify | `evidence/compile.ts`, `resolver.ts` |
-| Mauvaise plateforme | identify | `platformPick.ts`, `platforms/platforms.ts` |
-| Metadata / cover | enrich | `fetch.ts` (merge inclus), `storage.ts`, `media/attachmentDisplayScore.ts` |
-| Lien fiche / purge present | enrich | `providerExternalLinks.ts`, `collect/present.ts` |
-| Identité titre (hardware…) | enrich + commerce | `titles/residualIdentity.ts`, `retailer/titleMatch.ts` |
-| Refresh / jobs bloqués | collect | `jobs/workQueue.ts`, `jobs/workRunner.ts` + process `pnpm worker` (`scripts/backgroundWorker.ts`) |
-| Prix | commerce | `pricing/resolver.ts`, `pricing/itemDisplay.ts` |
-| Ajouter un provider | catalog + providers | `catalog/registry.ts`, `providers/<id>/` |
-| Locale covers / titres | locale + collect | `locale/preference.ts`, `collect/media.ts` |
+| Symptôme                   | Pilier              | Fichiers clés                                                                                     |
+| -------------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| Mauvais type au scan       | identify            | `evidence/compile.ts`, `resolver.ts`                                                              |
+| Mauvaise plateforme        | identify            | `platformPick.ts`, `platforms/platforms.ts`                                                       |
+| Metadata / cover           | enrich              | `fetch.ts` (merge inclus), `storage.ts`, `media/attachmentDisplayScore.ts`                        |
+| Lien fiche / purge present | enrich              | `providerExternalLinks.ts`, `collect/present.ts`                                                  |
+| Identité titre (hardware…) | enrich + commerce   | `titles/residualIdentity.ts`, `retailer/titleMatch.ts`                                            |
+| Refresh / jobs bloqués     | collect             | `jobs/workQueue.ts`, `jobs/workRunner.ts` + process `pnpm worker` (`scripts/backgroundWorker.ts`) |
+| Prix                       | commerce            | `pricing/resolver.ts`, `pricing/itemDisplay.ts`                                                   |
+| Ajouter un provider        | catalog + providers | `catalog/registry.ts`, `providers/<id>/`                                                          |
+| Locale covers / titres     | locale + collect    | `locale/preference.ts`, `collect/media.ts`                                                        |
 
 > **Note** : la file in-process `backgroundWorkQueue.ts` reste pour I/O local (covers, pools CPU) — **pas** pour le refresh metadata (DB `BackgroundWorkJob` + worker).
 

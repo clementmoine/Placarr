@@ -1,0 +1,62 @@
+{
+  "source": "カードショップ アヴァロン — NARUTOカードゲーム singles (shop-pro)",
+  "observed": "2026-08-19",
+  "ingest": "faces",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "url": "https://dp00013984.shop-pro.jp/?mode=cate&cbid=1910612&csid=24",
+  "sibling": "?mode=cate&cbid=1910612&csid=133 — ナルティメットシリーズ, a different product line: do not mix",
+  "note": "Live JP shop that lists 巻ノ singles one product per card, with the printed ref and the Japanese name in the title (忍-165 パックン, 忍-190 聖シモン, 忍-194 猿飛アスマ…) and a shop photo. 39 card entries carried a 忍/術/作/依/騎 ref on the 2026-08-19 capture of page 1; the rest of the product blocks on that HTML are the site-wide sidebar, not this category. Page encoding is EUC-JP — decode before parsing or every title turns to mojibake. No pagination link was emitted for csid=24. Ingesteur livré le 2026-08-19 (`scrapeAvalonShop.ts`, étape `scrape` du CLI) : une seule page de catégorie, jamais un crawl de la boutique. Première passe : 39 faces écrites, dont 8 sur des cartes qui n'avaient aucune image.",
+  "imageUrl": {
+    "thumb": "https://img08.shop-pro.jp/PA01034/747/product/{pid}_th.jpg",
+    "full": "https://img08.shop-pro.jp/PA01034/747/product/{pid}.jpg",
+    "measured": "265×400 JPEG (pid 163062619). `_O1` variants 403.",
+    "note": "Shop photo, not a scan — last-resort face only, below nikita / carddas / suruga in faceChoice. Titles carry condition suffixes like （若干傷み）that are not part of the card name."
+  },
+  "why": "The JA hole is the biggest in the catalogue (705 named prints without a face on 2026-08-19). Every other JA host is exhausted: nikita 392 all installed, carddas.com official dump holds only ~18 card GIFs, Suruga listings installed with 33 CDN 404, Mercari/Yahoo are paste-only. This is the first live shop found that addresses cards by their printed ref.",
+  "not": ["crawl-whole-shop", "naruTimate-as-tabletop", "data-carddass"],
+  "samples": [
+    {
+      "printedRef": "忍-165",
+      "title": "パックン",
+      "pid": "163062619"
+    },
+    {
+      "printedRef": "忍-190",
+      "title": "聖シモン",
+      "pid": "163062626"
+    },
+    {
+      "printedRef": "忍-194",
+      "title": "猿飛アスマ",
+      "pid": "163062629"
+    },
+    {
+      "printedRef": "忍-196",
+      "title": "犬塚ツメ",
+      "pid": "163062631"
+    },
+    {
+      "printedRef": "忍-197",
+      "title": "黒丸",
+      "pid": "163062632"
+    },
+    {
+      "printedRef": "忍-198",
+      "title": "蝦蟇",
+      "pid": "163062633"
+    },
+    {
+      "printedRef": "忍-199",
+      "title": "水戸門ホムラ",
+      "pid": "163062634"
+    }
+  ],
+  "result2026_08_19": {
+    "listed": 39,
+    "downloaded": 39,
+    "failed": 0,
+    "onlyFaceOnCard": 8
+  }
+}

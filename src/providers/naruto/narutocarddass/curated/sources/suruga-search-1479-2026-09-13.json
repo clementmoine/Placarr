@@ -1,0 +1,605 @@
+{
+  "source": "https://www.suruga-ya.jp/search?category=&search_word=NARUTO%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0&inStock=On&rankBy=release_date(int):ascending",
+  "observed": "2026-09-13",
+  "note": "Live inStock search NARUTOカードゲーム ranked by release_date asc — tabletop 忍/術/作/依/騎 only (parser drops sealed/DCD/noise).",
+  "pages": 63,
+  "foundTabletop": 1207,
+  "alreadyKnown": 926,
+  "novel": 281,
+  "novelSample": [
+    {
+      "id": "GL124611",
+      "printed": "PR忍-12"
+    },
+    {
+      "id": "GL398671",
+      "printed": "PR作-9"
+    },
+    {
+      "id": "GL124607",
+      "printed": "PR作-3-R"
+    },
+    {
+      "id": "GL124609",
+      "printed": "PR忍-6-R"
+    },
+    {
+      "id": "GL124606",
+      "printed": "PR作-2-R"
+    },
+    {
+      "id": "GL124610",
+      "printed": "PR忍-9"
+    },
+    {
+      "id": "GL124604",
+      "printed": "PR作-21"
+    },
+    {
+      "id": "GL398672",
+      "printed": "PR忍-11"
+    },
+    {
+      "id": "GL124608",
+      "printed": "PR忍-5-R"
+    },
+    {
+      "id": "GL124602",
+      "printed": "PR作-15"
+    },
+    {
+      "id": "GL124605",
+      "printed": "PR作-1-R"
+    },
+    {
+      "id": "GL685036",
+      "printed": "術-342"
+    },
+    {
+      "id": "GL124601",
+      "printed": "PR作-3"
+    },
+    {
+      "id": "GL124603",
+      "printed": "PR作-20"
+    },
+    {
+      "id": "GL398668",
+      "printed": "PR作-6"
+    },
+    {
+      "id": "GL685029",
+      "printed": "忍-346"
+    },
+    {
+      "id": "GL398670",
+      "printed": "PR作-8"
+    },
+    {
+      "id": "GL685031",
+      "printed": "忍-389"
+    },
+    {
+      "id": "GL685037",
+      "printed": "術-343"
+    },
+    {
+      "id": "GL406640",
+      "printed": "作-16"
+    },
+    {
+      "id": "GL398684",
+      "printed": "術-5"
+    },
+    {
+      "id": "GL410641",
+      "printed": "忍-11"
+    },
+    {
+      "id": "GL600975",
+      "printed": "忍-2"
+    },
+    {
+      "id": "GL410567",
+      "printed": "術-4"
+    },
+    {
+      "id": "GL406811",
+      "printed": "忍-25"
+    },
+    {
+      "id": "GL406808",
+      "printed": "忍-7"
+    },
+    {
+      "id": "GL734885",
+      "printed": "術-4"
+    },
+    {
+      "id": "GL410568",
+      "printed": "術-13"
+    },
+    {
+      "id": "GN751192",
+      "printed": "忍-24"
+    },
+    {
+      "id": "GL398685",
+      "printed": "術-7"
+    }
+  ],
+  "orphanHits": [
+    {
+      "id": "GL124610",
+      "printed": "PR忍-9",
+      "diskId": "prni0009"
+    },
+    {
+      "id": "GL398672",
+      "printed": "PR忍-11",
+      "diskId": "prni0011"
+    },
+    {
+      "id": "GL685029",
+      "printed": "忍-346",
+      "diskId": "ni0346"
+    },
+    {
+      "id": "GL398670",
+      "printed": "PR作-8",
+      "diskId": "prta0008"
+    },
+    {
+      "id": "GL759355",
+      "printed": "OP忍-1",
+      "diskId": "opni0001"
+    },
+    {
+      "id": "GL398688",
+      "printed": "忍-373",
+      "diskId": "ni0373"
+    },
+    {
+      "id": "GL406636",
+      "printed": "PR作-2",
+      "diskId": "prta0002"
+    },
+    {
+      "id": "GL406717",
+      "printed": "作-312",
+      "diskId": "ta0312"
+    },
+    {
+      "id": "GG644324",
+      "printed": "忍-333",
+      "diskId": "ni0333"
+    },
+    {
+      "id": "GU872400",
+      "printed": "術-295",
+      "diskId": "te0295"
+    },
+    {
+      "id": "GU872399",
+      "printed": "術-281",
+      "diskId": "te0281"
+    },
+    {
+      "id": "GU872401",
+      "printed": "忍-327",
+      "diskId": "ni0327"
+    },
+    {
+      "id": "GU579678",
+      "printed": "忍-412",
+      "diskId": "ni0412"
+    },
+    {
+      "id": "GU716129",
+      "printed": "忍-376",
+      "diskId": "ni0376"
+    },
+    {
+      "id": "GN486155",
+      "printed": "術-326",
+      "diskId": "te0326"
+    },
+    {
+      "id": "GU716131",
+      "printed": "忍-382",
+      "diskId": "ni0382"
+    },
+    {
+      "id": "GU839407",
+      "printed": "作-288",
+      "diskId": "ta0288"
+    },
+    {
+      "id": "GU782592",
+      "printed": "忍-414",
+      "diskId": "ni0414"
+    }
+  ],
+  "orphanHitCount": 18,
+  "tsvAfter": 1216,
+  "pageStats": [
+    {
+      "page": 1,
+      "parsed": 0,
+      "newIds": 0,
+      "html": 212645
+    },
+    {
+      "page": 2,
+      "parsed": 0,
+      "newIds": 0,
+      "html": 213800
+    },
+    {
+      "page": 3,
+      "parsed": 21,
+      "newIds": 11,
+      "html": 222327
+    },
+    {
+      "page": 4,
+      "parsed": 17,
+      "newIds": 6,
+      "html": 217806
+    },
+    {
+      "page": 5,
+      "parsed": 12,
+      "newIds": 2,
+      "html": 234622
+    },
+    {
+      "page": 6,
+      "parsed": 3,
+      "newIds": 0,
+      "html": 236933
+    },
+    {
+      "page": 7,
+      "parsed": 0,
+      "newIds": 0,
+      "html": 240858
+    },
+    {
+      "page": 8,
+      "parsed": 0,
+      "newIds": 0,
+      "html": 242115
+    },
+    {
+      "page": 9,
+      "parsed": 0,
+      "newIds": 0,
+      "html": 234504
+    },
+    {
+      "page": 10,
+      "parsed": 16,
+      "newIds": 1,
+      "html": 232455
+    },
+    {
+      "page": 11,
+      "parsed": 24,
+      "newIds": 5,
+      "html": 227497
+    },
+    {
+      "page": 12,
+      "parsed": 24,
+      "newIds": 8,
+      "html": 221003
+    },
+    {
+      "page": 13,
+      "parsed": 24,
+      "newIds": 9,
+      "html": 223623
+    },
+    {
+      "page": 14,
+      "parsed": 22,
+      "newIds": 2,
+      "html": 230770
+    },
+    {
+      "page": 15,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 227669
+    },
+    {
+      "page": 16,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 229731
+    },
+    {
+      "page": 17,
+      "parsed": 23,
+      "newIds": 6,
+      "html": 236037
+    },
+    {
+      "page": 18,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 233533
+    },
+    {
+      "page": 19,
+      "parsed": 24,
+      "newIds": 6,
+      "html": 228583
+    },
+    {
+      "page": 20,
+      "parsed": 24,
+      "newIds": 7,
+      "html": 232842
+    },
+    {
+      "page": 21,
+      "parsed": 21,
+      "newIds": 2,
+      "html": 226821
+    },
+    {
+      "page": 22,
+      "parsed": 24,
+      "newIds": 6,
+      "html": 233828
+    },
+    {
+      "page": 23,
+      "parsed": 24,
+      "newIds": 5,
+      "html": 231522
+    },
+    {
+      "page": 24,
+      "parsed": 22,
+      "newIds": 11,
+      "html": 225117
+    },
+    {
+      "page": 25,
+      "parsed": 24,
+      "newIds": 7,
+      "html": 229076
+    },
+    {
+      "page": 26,
+      "parsed": 24,
+      "newIds": 0,
+      "html": 239361
+    },
+    {
+      "page": 27,
+      "parsed": 24,
+      "newIds": 9,
+      "html": 233493
+    },
+    {
+      "page": 28,
+      "parsed": 20,
+      "newIds": 3,
+      "html": 230997
+    },
+    {
+      "page": 29,
+      "parsed": 24,
+      "newIds": 7,
+      "html": 231955
+    },
+    {
+      "page": 30,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 238745
+    },
+    {
+      "page": 31,
+      "parsed": 23,
+      "newIds": 5,
+      "html": 233348
+    },
+    {
+      "page": 32,
+      "parsed": 24,
+      "newIds": 6,
+      "html": 230602
+    },
+    {
+      "page": 33,
+      "parsed": 23,
+      "newIds": 2,
+      "html": 239476
+    },
+    {
+      "page": 34,
+      "parsed": 21,
+      "newIds": 8,
+      "html": 233365
+    },
+    {
+      "page": 35,
+      "parsed": 24,
+      "newIds": 6,
+      "html": 234320
+    },
+    {
+      "page": 36,
+      "parsed": 24,
+      "newIds": 5,
+      "html": 238125
+    },
+    {
+      "page": 37,
+      "parsed": 23,
+      "newIds": 9,
+      "html": 229358
+    },
+    {
+      "page": 38,
+      "parsed": 24,
+      "newIds": 7,
+      "html": 230109
+    },
+    {
+      "page": 39,
+      "parsed": 24,
+      "newIds": 5,
+      "html": 234180
+    },
+    {
+      "page": 40,
+      "parsed": 18,
+      "newIds": 2,
+      "html": 231980
+    },
+    {
+      "page": 41,
+      "parsed": 20,
+      "newIds": 2,
+      "html": 235772
+    },
+    {
+      "page": 42,
+      "parsed": 24,
+      "newIds": 7,
+      "html": 231672
+    },
+    {
+      "page": 43,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 232974
+    },
+    {
+      "page": 44,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 232989
+    },
+    {
+      "page": 45,
+      "parsed": 24,
+      "newIds": 7,
+      "html": 234457
+    },
+    {
+      "page": 46,
+      "parsed": 24,
+      "newIds": 8,
+      "html": 233819
+    },
+    {
+      "page": 47,
+      "parsed": 23,
+      "newIds": 8,
+      "html": 227457
+    },
+    {
+      "page": 48,
+      "parsed": 19,
+      "newIds": 1,
+      "html": 233978
+    },
+    {
+      "page": 49,
+      "parsed": 24,
+      "newIds": 2,
+      "html": 244938
+    },
+    {
+      "page": 50,
+      "parsed": 14,
+      "newIds": 1,
+      "html": 235896
+    },
+    {
+      "page": 51,
+      "parsed": 17,
+      "newIds": 4,
+      "html": 225430
+    },
+    {
+      "page": 52,
+      "parsed": 24,
+      "newIds": 2,
+      "html": 242271
+    },
+    {
+      "page": 53,
+      "parsed": 24,
+      "newIds": 8,
+      "html": 230356
+    },
+    {
+      "page": 54,
+      "parsed": 18,
+      "newIds": 3,
+      "html": 225891
+    },
+    {
+      "page": 55,
+      "parsed": 24,
+      "newIds": 6,
+      "html": 236550
+    },
+    {
+      "page": 56,
+      "parsed": 24,
+      "newIds": 4,
+      "html": 239709
+    },
+    {
+      "page": 57,
+      "parsed": 19,
+      "newIds": 5,
+      "html": 237082
+    },
+    {
+      "page": 58,
+      "parsed": 12,
+      "newIds": 8,
+      "html": 229183
+    },
+    {
+      "page": 59,
+      "parsed": 18,
+      "newIds": 6,
+      "html": 234004
+    },
+    {
+      "page": 60,
+      "parsed": 24,
+      "newIds": 5,
+      "html": 241961
+    },
+    {
+      "page": 61,
+      "parsed": 21,
+      "newIds": 1,
+      "html": 240862
+    },
+    {
+      "page": 62,
+      "parsed": 1,
+      "newIds": 1,
+      "html": 189360
+    },
+    {
+      "page": 63,
+      "parsed": 0,
+      "newIds": 0,
+      "html": 95602
+    }
+  ]
+}

@@ -1,8 +1,10 @@
+import { parsePrintKey } from "@/core/identify/printKey";
 import {
   normalizeVolumeNumber,
   unpaddedVolumeNumbersInTitle,
   volumeNumberFromTitle,
 } from "@/core/enrich/titles/volumeNumber";
+import { itemSlugSetCode } from "@/providers/shared/cardCatalogue/sets";
 
 export function slugify(value?: string | null): string {
   if (!value) return "";
@@ -110,9 +112,77 @@ function parseMetadataAliasLabels(raw?: string | null): string[] {
 }
 
 /** Slugs accepted for item URL resolution (stored slug, names, metadata labels). */
+/**
+ * Le slug d'une carte : sa **référence de collection**, pas son nom.
+ *
+ * Un nom n'identifie pas une carte. Sur une étagère Naruto, deux objets
+ * s'appellent « Naruto Uzumaki » — l'un est `pr-0016` en holo, l'autre
+ * `ni-0046` en normal. Le nommage par titre les rendait `naruto-uzumaki` et
+ * `naruto-uzumaki-copy-2`, ce qui n'est pas seulement peu lisible : `copy`
+ * **affirme** que le second est un exemplaire du premier, alors que ce sont
+ * deux cartes différentes.
+ *
+ * La référence est ce qu'un collectionneur lit sur le carton et ce qu'il tape :
+ * `ni-0046`. La finition ne s'y ajoute que là où elle départage — deux
+ * exemplaires du **même** tirage, eux, sont bien des copies et retombent sur le
+ * suffixe prévu pour ça.
+ *
+ * **La langue en fait partie**, ajoutée le 2026-08-21. Un tirage porte une seule
+ * clé pour toutes ses localisations — c'est ainsi que les sources le modèlent —
+ * si bien que l'Inari française et l'イナリ japonaise sortaient toutes deux
+ * `cl-0001-normal`, et que la seconde héritait de `-copy-2`. Le suffixe
+ * **affirmait** qu'elle dupliquait la première : le défaut même que le nommage
+ * par référence avait été écrit pour supprimer, déplacé de l'homonymie vers la
+ * langue. 898 clés Naruto et 19 673 clés Pokémon portent plusieurs langues.
+ *
+ * Elle est écrite **toujours**, pas seulement quand elle départage : sinon
+ * l'URL de la carte française changerait le jour où l'on ajoute la japonaise.
+ * Un slug ne doit pas dépendre de ce qu'on possède par ailleurs.
+ *
+ * **L'extension catalogue** (`Item.setCode`) aussi, quand le segment « set »
+ * du printKey n'est pas cette extension — legacy Naruto `ta-0074` (famille)
+ * vs set-scoped `s3-ta0074`. Lorcana / set-scoped keys already carry the
+ * chapter : on ne redouble pas.
+ */
+export function printKeyItemSlug(
+  printKey?: string | null,
+  variant?: string | null,
+  language?: string | null,
+  setCode?: string | null,
+): string {
+  const identity = parsePrintKey(printKey);
+  if (!identity) return "";
+  const grouping = identity.grouping?.trim() || "";
+  /*
+    Promo / alternate imprint: the collector reads `16/P4`, not « chapter 13
+    #16 with a p4 stamp ». Slug as `p4-16` so it matches the checklist axis
+    and does not collide with retail `13-16`.
+  */
+  const reference = grouping
+    ? slugify(`${grouping}-${identity.number}`)
+    : slugify(`${identity.set}-${identity.number}`);
+  if (!reference) return "";
+  /*
+    Legacy family-as-set still accepts an Item.setCode prefix. Never prefix a
+    promo grouping slug with the retail chapter (`13-p4-16`).
+  */
+  const catalogue = slugify(itemSlugSetCode(setCode) || setCode);
+  const head =
+    !grouping && catalogue && catalogue !== identity.set
+      ? `${catalogue}-${reference}`
+      : reference;
+  return [head, slugify(language), slugify(variant)]
+    .filter(Boolean)
+    .join("-");
+}
+
 export function itemLookupSlugs(item: {
   name?: string | null;
   slug?: string | null;
+  printKey?: string | null;
+  variant?: string | null;
+  language?: string | null;
+  setCode?: string | null;
   metadata?: { title?: string | null; aliases?: string | null } | null;
 }): string[] {
   const slugs = new Set<string>();
@@ -125,6 +195,43 @@ export function itemLookupSlugs(item: {
     if (!label?.trim()) continue;
     const slug = slugifyItemName(label);
     if (slug) slugs.add(slug);
+  }
+  /*
+    Les formes par référence sont **reconnues** même quand le slug rangé est un
+    ancien slug par nom : c'est ce qui laisse les deux URL fonctionner sans
+    renommer quoi que ce soit en base, et donc sans casser un lien déjà partagé.
+  */
+  /*
+    Variantes langue / set / finish de la référence canonique — pas d'anciennes
+    formes (ex. `13-16-…` pour une P4) : `reconcileDuplicateItemSlugsOnShelf`
+    migre le slug stocké.
+  */
+  const printKeys = new Set<string>();
+  if (item.printKey?.trim()) printKeys.add(item.printKey.trim());
+  /*
+    Manga S1 bags used to be filed as retail `s1-te0007-fr-normal` before the
+    opened non-holo lived on `*-prerelease`. Keep the retail-shaped URL as a
+    lookup alias so old bookmarks still resolve.
+  */
+  const identity = parsePrintKey(item.printKey);
+  if (identity?.grouping?.toLowerCase() === "prerelease") {
+    const retailKey = `${identity.game}:${identity.set}-${identity.number}`;
+    printKeys.add(retailKey);
+  }
+  for (const printKey of printKeys) {
+    for (const withSet of [item.setCode, null]) {
+      for (const withLanguage of [item.language, null]) {
+        for (const withVariant of [item.variant, null]) {
+          const slug = printKeyItemSlug(
+            printKey,
+            withVariant,
+            withLanguage,
+            withSet,
+          );
+          if (slug) slugs.add(slug);
+        }
+      }
+    }
   }
   return [...slugs];
 }

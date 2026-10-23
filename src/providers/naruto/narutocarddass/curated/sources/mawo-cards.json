@@ -1,0 +1,54 @@
+{
+  "source": "mawo-cards.com (German shop, user paste 2026-08-17)",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "crawl": false,
+  "line": "en-ccg",
+  "note": "Shop SKUs SALE-DE### / STO3-DE### are not collector ids. German Bandai USA CCG prints NI/JU/MI like Coleka Storm 3 FR — same cards as EN N/J/M. Disk stays n1358 / n1621, never ni1358 / sale-de001. Locale de is out of current pack (fr/it/en/ja). Do not scrape the shop. NB02 is Chrono Clash 2019, not this game.",
+  "shop": "https://www.mawo-cards.com/",
+  "boosters": [
+    {
+      "url": "https://www.mawo-cards.com/produkte02/Naruto/Einzelkarten/Boosterserien/Sages-Legacy/",
+      "setCode": "s24",
+      "title": "Sage's Legacy",
+      "shopPrefix": "SALE-DE",
+      "lang": "de",
+      "sample": {
+        "shopSku": "SALE-DE001",
+        "printed": "NI-1358",
+        "name": "Choji Akimichi",
+        "diskHint": "n1358",
+        "not": ["sale-de001", "ni1358", "ni0001"],
+        "released": "2012-03-29"
+      }
+    },
+    {
+      "url": "https://www.mawo-cards.com/produkte02/Naruto/Einzelkarten/Boosterserien/Ultimate-Ninja-Storm-3/",
+      "setCode": "s28",
+      "title": "Ultimate Ninja Storm 3",
+      "shopPrefix": "STO3-DE",
+      "lang": "de",
+      "sample": {
+        "shopSku": "STO3-DE001",
+        "printed": "NI-1621",
+        "name": "Choji Akimichi",
+        "diskHint": "n1621",
+        "not": ["sto3-de001", "ni1621"],
+        "released": "2013-03-29"
+      }
+    }
+  ],
+  "skip": [
+    {
+      "url": "https://www.mawo-cards.com/produkte01/Naruto/Starter-Decks/NB02/11955_Naruto-Shippuden--Boruto-Set",
+      "sku": "NB02",
+      "title": "Naruto Shippuden & Boruto Set",
+      "line": "chrono-clash",
+      "released": "2019-07",
+      "contents": "2×50 + 8 swap",
+      "note": "Naruto x Boruto Card Game (Chrono Clash System). Same trap as fandom-en-ccg notReplacements. Not Carddass, not Bandai USA CCG 2006–2013."
+    }
+  ],
+  "samePrefixMapAs": "parseColekaStorm3 colekaEuPrefixToCollector",
+  "not": ["carddass", "data-carddass", "chrono-clash", "kayou"]
+}

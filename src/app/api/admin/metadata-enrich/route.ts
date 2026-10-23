@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -11,7 +10,6 @@ import { PROVIDERS } from "@/core/catalog/catalog";
 
 const DEFAULT_BATCH_LIMIT = 10;
 const MAX_BATCH_LIMIT = 25;
-const ENRICH_ITEM_CONCURRENCY = 2;
 
 // A game item counts as enriched once it has a cover from the primary canonical
 // box-art source for games: the first canonical real-box-cover provider in the
@@ -88,8 +86,10 @@ export async function POST(req: NextRequest) {
     take: limit,
   });
 
-  // Stamp + enqueue only — worker runs enrich off the Next event loop.
-  await runWithConcurrency(items, ENRICH_ITEM_CONCURRENCY, async (item) => {
+  // Stamp + enqueue only: two small writes per item. The pace of the actual
+  // enrichment is the background I/O pool's job (BACKGROUND_IO_CONCURRENCY) —
+  // throttling the enqueue loop as well only slowed the admin response down.
+  for (const item of items) {
     try {
       const lookupQuery = item.metadata?.title || item.name;
       await startItemMetadataRefresh({
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         error,
       );
     }
-  });
+  }
 
   return NextResponse.json(
     {

@@ -1,0 +1,46 @@
+{
+  "sourceId": "scan",
+  "lang": "fr",
+  "setCode": "disney25",
+  "observed": "2026-10-23",
+  "note": "Album = couverture catalogue jouets E.Leclerc p.03 + dos scan. Pochette = packshot stack. Contenu attesté : 4 cartes ; un Fixeez peut sortir (aléatoire, non garanti) — pas de taux inventé.",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Album — Découvre la magie de Disney",
+      "art": "art.scan.png",
+      "back": "back.scan.png",
+      "declaredCardCount": null,
+      "priceCents": null,
+      "packComposition": "none"
+    },
+    {
+      "slug": "pochette",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette — Découvre la magie de Disney",
+      "art": "art.scan.png",
+      "declaredCardCount": 4,
+      "cardsPerPack": 4,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "attestation — 4 cartes / pochette ; un Fixeez peut s’ajouter (aléatoire, non garanti, hors des 4) — pas de taux inventé",
+        "verifiedAt": "2026-10-23",
+        "cardsPerPack": 4,
+        "slots": [
+          {
+            "id": "card",
+            "count": 4,
+            "kind": "dedicated",
+            "rarities": ["card"]
+          }
+        ],
+        "rarityHits": {},
+        "possibleChase": ["Fixeez"]
+      }
+    }
+  ]
+}

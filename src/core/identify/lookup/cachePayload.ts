@@ -27,7 +27,7 @@ import {
   coverUrlQualityRank,
   isbnCoverUrlForBarcode,
 } from "@/core/catalog/catalog";
-import type { BarcodeCache, RawName } from "@prisma/client";
+import type { BarcodeCache, RawName } from "@/generated/prisma/browser";
 
 type CachedBarcodeRecord = BarcodeCache & {
   rawNames: RawName[];

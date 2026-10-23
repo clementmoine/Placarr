@@ -1,0 +1,87 @@
+{
+  "source": "Édition européenne Panini (janvier 2007) — paninimania.com, kleinanzeigen, Vinted, laststicker",
+  "observed": "2026-08-30",
+  "ingest": "3 SKU scellés EU : pochette, display 24 pochettes, album. Conditionnement pan-européen multilingue (« PACKETS TÜTEN POCHETTES … », Made in Italy), vendu en France par Panini France S.A. avec étiquette prix FR — d'où lang fr.",
+  "line": "ninja-ranks",
+  "lang": "fr",
+  "released": "2007-01",
+  "setCode": "nr",
+  "sourceId": "panini-eu",
+  "distinctFromUs": "L'édition US Inkworks (2006-03, 9 cartes/pochette, branding « Shonen Jump's », UPC 0805572055xx) est un autre produit : l'édition EU ouvre 102 cartes (NS1-NS6 Ninja Sensei EU-only, GS1-GS3 « Group Seven » au lieu des boxloaders BL). Des annonces FR vendent le display US en le qualifiant de « version anglaise » — ne pas le rattacher ici.",
+  "skus": [
+    {
+      "slug": "booster-eu",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Naruto: Ninja Ranks booster pack (EU)",
+      "art": "art.paninimania.jpg",
+      "declaredCardCount": 5,
+      "priceCents": 150,
+      "note": "Wrapper métallisé pan-européen (textes anglais, logo Panini). 5 cartes/pochette attesté par la fiche paninimania (« Pochette de 5 cartes ») ; une déclaration vendeur « 6 Karten » (kleinanzeigen 3476392079) reste non corroborée. Prix FR 1,50 € imprimé sur l'étiquette du display (« 1 POCHETTE € 1,50 — PRIX MAXIMUM CONSEILLÉ — PANINI FRANCE S.A. »). Aucun EAN attesté pour la pochette retail.",
+      "attestedBy": [
+        "https://www.paninimania.com/?pag=cid508_alb&idf=15&idm=121 — fiche + scan du wrapper",
+        "https://www.kleinanzeigen.de/s-anzeige/panini-naruto-ninja-ranks-trading-card-pack-aus-dem-jahr-2002/3476392079-234-15597 — pochettes scellées",
+        "https://www.vinted.fr/items/7639665862 — variante promo FR « ÉCHANTILLON GRATUIT. NE PEUT ÊTRE VENDU », dos imprimé checklist NW/FF/NS/SD/GS"
+      ]
+    },
+    {
+      "slug": "display-eu",
+      "kind": "display",
+      "category": "displays",
+      "name": "Naruto: Ninja Ranks display box (EU)",
+      "art": "art.kleinanzeigen.jpg",
+      "back": "back.kleinanzeigen.jpg",
+      "declaredCardCount": null,
+      "packsContained": 24,
+      "priceCents": null,
+      "note": "Tranche imprimée : « CHECKLIST 102 CARDS / 1-72 BASE / NW1-NW9 / FF1-FF6 / NS1-NS6 / SD1-SD6 / GS1-GS3 / PACKETS TÜTEN POCHETTES — 24 — BUSTINE ZAKJES SOBRES / Made in Italy ». Boîte commune à dix pays, bloc prix par pays (FR 1,50 € la pochette). Aucun EAN visible. declaredCardCount laissé à null : 24×5 se déduit, la boîte ne l'imprime pas.",
+      "attestedBy": [
+        "https://www.kleinanzeigen.de/s-anzeige/naruto-24-jahre-alte-deutsche-ovp-displays-vintage-tcg-panini/3427355129-234-23202 — displays scellés, photos dessus/tranche/étiquette prix",
+        "https://www.vinted.fr/items/6996085747 — boîte ouverte, 24 pochettes rouges scellées",
+        "https://www.ebay.de/itm/396389830589 — display scellé"
+      ]
+    },
+    {
+      "slug": "collector-album-eu",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Naruto: Ninja Ranks collector album (EU)",
+      "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
+      "declaredCardCount": null,
+      "priceCents": 260,
+      "ean": "8018190028805",
+      "note": "EAN 8018190028805 imprimé au dos (relu sur le scan paninimania) — le seul EAN européen attesté du set. Dos : « Distributed under licence by PANINI », bloc prix France 2,6 € / Belgique 2,6 € / Suisse Fr. 3,40. Couverture Team 7 fond rouge/jaune, sans branding « Shonen Jump's ».",
+      "attestedBy": [
+        "https://www.paninimania.com/?pag=cid508_alb&idf=15&idm=121 — fiche (code-barres 8018190028805, janvier 2007) + scans couverture/dos",
+        "https://www.laststicker.com/cards/panini_naruto_ninja_ranks/ — même couverture",
+        "https://www.leboncoin.fr/ad/collection/3226348708 — album complet, vente FR"
+      ]
+    }
+  ],
+  "captures": {
+    "art.paninimania.jpg (booster-eu)": "https://www.paninimania.com/files/15/1/?n=121_i1b.jpg",
+    "art.paninimania.jpg (collector-album-eu)": "https://www.paninimania.com/files/15/1/?n=121b.jpg",
+    "back.paninimania.jpg (collector-album-eu)": "https://www.paninimania.com/files/15/1/?n=121_i4b.jpg",
+    "art.kleinanzeigen.jpg (display-eu)": "https://img.kleinanzeigen.de/api/v1/prod-ads/images/f4/f41ea5db-de43-4c75-bd87-934a7b9f4459?rule=$_59.JPG",
+    "back.kleinanzeigen.jpg (display-eu)": "https://img.kleinanzeigen.de/api/v1/prod-ads/images/c8/c8f2a476-2788-486e-82a4-47583cdaff0a?rule=$_59.JPG"
+  },
+  "notIngested": [
+    {
+      "what": "Pochette promo FR « échantillon gratuit » (Vinted 7639665862)",
+      "reason": "Variante promotionnelle « NE PEUT ÊTRE VENDU », pas un SKU retail."
+    },
+    {
+      "what": "Display US Inkworks vendu en France (leboncoin 3216812909, Vinted 7196599756)",
+      "reason": "Produit américain (9 cartes/pochette, UPC 080557205530) — déjà couvert par inkworks-products.json."
+    },
+    {
+      "what": "Set complet scellé vendu par la boutique Panini (Vinted 9693104227)",
+      "reason": "Attesté (« acheté à l'époque sur le site panini ») mais sans packshot propre ni nom de SKU."
+    },
+    {
+      "what": "Scan paninimania 121_i3b.jpg (Akamaru)",
+      "reason": "Face de carte, pas un packshot de produit."
+    }
+  ]
+}

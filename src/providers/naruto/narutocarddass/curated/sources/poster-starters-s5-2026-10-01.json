@@ -1,0 +1,89 @@
+{
+  "source": "poster-starters-s5",
+  "observed": "2026-10-01",
+  "kind": "research-dig",
+  "ingest": "guaranteedPrintKeys → curated/products-contents.json (exclusives only)",
+  "proof": "User-confirmed poster membership (La quête / Un nouveau départ)",
+  "notes": [
+    "Each poster lists 25 exclusives — matches UltraJeux « 25 cartes exclusives ».",
+    "Deck = 40 : 15 shared commons still unknown (no catalogue_s5 qty).",
+    "Correction vs liste_cartes_s5 * : NI-197 Kuromaru is on Un nouveau départ, not La quête.",
+    "Holo finishes still unnamed on posters — finish omitted.",
+    "Face crops from posters not ingested here (membership only)."
+  ],
+  "starters": {
+    "starter-la-quete": {
+      "exclusiveCount": 25,
+      "declaredCardCount": 40,
+      "contentsKnown": false,
+      "exclusives": [
+        "NI-049",
+        "NI-126",
+        "NI-160",
+        "NI-161",
+        "NI-162",
+        "NI-207",
+        "NI-218",
+        "NI-224",
+        "NI-227",
+        "NI-228",
+        "NI-230",
+        "NI-231",
+        "NI-233",
+        "NI-245",
+        "NI-313",
+        "TE-193",
+        "TE-208",
+        "TE-210",
+        "TE-213",
+        "TE-231",
+        "TA-192",
+        "TA-194",
+        "TA-208",
+        "TA-209",
+        "TA-213"
+      ]
+    },
+    "starter-un-nouveau-depart": {
+      "exclusiveCount": 25,
+      "declaredCardCount": 40,
+      "contentsKnown": false,
+      "exclusives": [
+        "NI-029",
+        "NI-159",
+        "NI-191",
+        "NI-196",
+        "NI-197",
+        "NI-219",
+        "NI-225",
+        "NI-226",
+        "NI-229",
+        "NI-237",
+        "NI-241",
+        "NI-242",
+        "NI-243",
+        "NI-244",
+        "NI-246",
+        "TE-200",
+        "TE-211",
+        "TE-212",
+        "TE-217",
+        "TE-219",
+        "TA-196",
+        "TA-210",
+        "TA-211",
+        "TA-212",
+        "TA-216"
+      ]
+    }
+  },
+  "notDone": [
+    "Quantités (sum 40) + 15 communes partagées — hunt 2026-10-01 still empty (s5-starter-qty-web-hunt-2026-10-01.json)"
+  ],
+  "holos": {
+    "source": "Checklist rareté Holo (Manga-News Deck Serie 5 / carddass) ∩ exclusives poster + packaging « 2 holos »",
+    "starter-la-quete": ["NI-218", "NI-313"],
+    "starter-un-nouveau-depart": ["NI-219", "NI-229"],
+    "ingested": true
+  }
+}

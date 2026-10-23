@@ -1,0 +1,207 @@
+{
+  "source": "PokéCardex — scans McDonald's (BunnyCDN)",
+  "observed": "2026-09-20",
+  "note": "Scans HQ (`pokecardex-scans.b-cdn.net/sets/{code}/{FR|US}/{n}.jpg?class=original`). Codes historiques `MC1`…`MC9` (2011–2019), récents `M23`/`M24`. Numéros non paddés. Coleka reste en photo ; le faceChoice privilégie les scans.",
+  "scansOrigin": "https://pokecardex-scans.b-cdn.net",
+  "seriesPage": "https://www.pokecardex.com/series/{code}",
+  "campaigns": [
+    {
+      "id": "mc1-fr",
+      "seriesCode": "MC1",
+      "setId": "2011bw",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2011 FR (PokéCardex MC1)"
+    },
+    {
+      "id": "mc1-en",
+      "seriesCode": "MC1",
+      "setId": "2011bw",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2011 EN (PokéCardex MC1)"
+    },
+    {
+      "id": "mc2-fr",
+      "seriesCode": "MC2",
+      "setId": "2012bw",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2012 FR (PokéCardex MC2)"
+    },
+    {
+      "id": "mc2-en",
+      "seriesCode": "MC2",
+      "setId": "2012bw",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2012 EN (PokéCardex MC2)"
+    },
+    {
+      "id": "mc3-fr",
+      "seriesCode": "MC3",
+      "setId": "2013bw",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2013 FR (PokéCardex MC3)"
+    },
+    {
+      "id": "mc3-en",
+      "seriesCode": "MC3",
+      "setId": "2013bw",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2013 EN (PokéCardex MC3)"
+    },
+    {
+      "id": "mc4-fr",
+      "seriesCode": "MC4",
+      "setId": "2014xy",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2014 FR (PokéCardex MC4)"
+    },
+    {
+      "id": "mc4-en",
+      "seriesCode": "MC4",
+      "setId": "2014xy",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2014 EN (PokéCardex MC4)"
+    },
+    {
+      "id": "mc5-fr",
+      "seriesCode": "MC5",
+      "setId": "2015xy",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2015 FR (PokéCardex MC5)"
+    },
+    {
+      "id": "mc5-en",
+      "seriesCode": "MC5",
+      "setId": "2015xy",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2015 EN (PokéCardex MC5)"
+    },
+    {
+      "id": "mc6-fr",
+      "seriesCode": "MC6",
+      "setId": "2016xy",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2016 FR (PokéCardex MC6)"
+    },
+    {
+      "id": "mc6-en",
+      "seriesCode": "MC6",
+      "setId": "2016xy",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2016 EN (PokéCardex MC6)"
+    },
+    {
+      "id": "mc7-fr",
+      "seriesCode": "MC7",
+      "setId": "2017sm",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 12,
+      "label": "Promo McDonald's 2017 FR (PokéCardex MC7)"
+    },
+    {
+      "id": "mc7-en",
+      "seriesCode": "MC7",
+      "setId": "2017sm",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 12,
+      "label": "McDonald's Collection 2017 EN (PokéCardex MC7)"
+    },
+    {
+      "id": "mc8-fr",
+      "seriesCode": "MC8",
+      "setId": "2018sm-fr",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 40,
+      "label": "Promo McDonald's 2018 FR (PokéCardex MC8)"
+    },
+    {
+      "id": "mc8-en",
+      "seriesCode": "MC8",
+      "setId": "2018sm-fr",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 40,
+      "label": "McDonald's Collection 2018 EN (PokéCardex MC8)"
+    },
+    {
+      "id": "mc9-fr",
+      "seriesCode": "MC9",
+      "setId": "2019sm-fr",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 40,
+      "label": "Promo McDonald's 2019 FR (PokéCardex MC9)"
+    },
+    {
+      "id": "mc9-en",
+      "seriesCode": "MC9",
+      "setId": "2019sm-fr",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 40,
+      "label": "McDonald's Collection 2019 EN (PokéCardex MC9)"
+    },
+    {
+      "id": "m23-fr",
+      "seriesCode": "M23",
+      "setId": "2023sv",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 15,
+      "label": "Promo McDonald's 2023 FR (PokéCardex M23)"
+    },
+    {
+      "id": "m23-en",
+      "seriesCode": "M23",
+      "setId": "2023sv",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 15,
+      "label": "McDonald's Collection 2023 EN (PokéCardex M23)"
+    },
+    {
+      "id": "m24-fr",
+      "seriesCode": "M24",
+      "setId": "2024sv",
+      "lang": "fr",
+      "zone": "FR",
+      "cardCount": 15,
+      "label": "Promo McDonald's 2024 FR (PokéCardex M24)"
+    },
+    {
+      "id": "m24-en",
+      "seriesCode": "M24",
+      "setId": "2024sv",
+      "lang": "en",
+      "zone": "US",
+      "cardCount": 15,
+      "label": "McDonald's Collection 2024 EN (PokéCardex M24)"
+    }
+  ]
+}

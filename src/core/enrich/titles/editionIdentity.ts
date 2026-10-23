@@ -5,6 +5,7 @@ import { EDITION_QUALIFIER } from "@/core/enrich/titles/gameEditionVariant";
 import { titleTokensEquivalent } from "@/core/enrich/titles/tokenEquivalents";
 import { metadataTitleSimilarity } from "@/core/enrich/titles/titleSimilarity";
 import { variantIdentityTokens } from "@/core/enrich/titles/variantIdentity";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export function splitEditionBaseTitle(title: string): {
   base: string;
@@ -41,7 +42,10 @@ export function editionIdentityBasesMismatch(
     : candidateTitle.trim();
   if (!candidateIdentity) return false;
 
-  if (metadataTitleSimilarity(requested.base, candidateIdentity) >= 0.58) {
+  if (
+    metadataTitleSimilarity(requested.base, candidateIdentity) >=
+    METADATA_TITLE_ALIGN_FLOOR
+  ) {
     return false;
   }
 
@@ -63,4 +67,3 @@ export function catalogEditionIdentityMismatch(
 ): boolean {
   return editionIdentityBasesMismatch(requestedName, catalogTitle);
 }
-

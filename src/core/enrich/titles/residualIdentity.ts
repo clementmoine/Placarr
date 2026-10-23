@@ -35,7 +35,9 @@ import { evaluatePair } from "@/core/enrich/titles/residualPairEvaluate";
 export function residualIdentityMatch(
   input: ResidualIdentityInput,
 ): ResidualIdentityResult {
-  const requestTitles = input.requestTitles.map((t) => t.trim()).filter(Boolean);
+  const requestTitles = input.requestTitles
+    .map((t) => t.trim())
+    .filter(Boolean);
   const candidateTitles = input.candidateTitles
     .map((t) => t.trim())
     .filter(Boolean);
@@ -133,5 +135,7 @@ export function hardwareProductTitlesAlign(
 /** @deprecated structural helper kept for tests — prefer structured authors. */
 export function residualLooksLikeTrailingPersonName(tokens: string[]): boolean {
   if (tokens.length < 2 || tokens.length > 4) return false;
-  return tokens.every((token) => /^[a-z]{2,30}$/i.test(token) && !/\d/.test(token));
+  return tokens.every(
+    (token) => /^[a-z]{2,30}$/i.test(token) && !/\d/.test(token),
+  );
 }

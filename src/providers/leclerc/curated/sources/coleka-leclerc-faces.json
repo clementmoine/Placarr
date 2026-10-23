@@ -1,0 +1,28 @@
+{
+  "source": "coleka.com — dumps navigateur ?nbpp=240 (Turnstile passé à la main) ; Sync Flare = plain/?p= seulement",
+  "sourceId": "coleka",
+  "lang": "fr",
+  "sets": {
+    "marvel21": {
+      "listingPath": "/fr/cartes-de-collection/cartes-de-supermarche/revele-ton-pouvoir_r22334",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/revele-ton-pouvoir_r22334"
+    },
+    "marvel22": {
+      "listingPath": "/fr/cartes-de-collection/cartes-de-supermarche/cartes-marvel-pars-en-mission-leclerc_r28635",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/cartes-marvel-pars-en-mission-leclerc_r28635"
+    },
+    "marvel23": {
+      "listingPath": "/fr/cartes-de-collection/cartes-de-supermarche/cartes-marvel-defie-tes-heros_r35559",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/cartes-marvel-defie-tes-heros_r35559"
+    },
+    "marvel24": {
+      "listingPath": "/fr/cartes-de-collection/cartes-de-supermarche/explore-l-univers-marvel-avec-groot-leclerc_r41370",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/explore-l-univers-marvel-avec-groot-leclerc_r41370"
+    },
+    "disney25": {
+      "listingPath": "/fr/cartes-de-collection/cartes-de-supermarche/decouvre-la-magie-de-disney-leclerc_r46879",
+      "url": "https://www.coleka.com/fr/cartes-de-collection/cartes-de-supermarche/decouvre-la-magie-de-disney-leclerc_r46879"
+    }
+  },
+  "note": "Faces installées depuis dumps HTML staging listing-nbpp.html. marvel23/disney25 Fixeez sans n° F côté Coleka — checklist Paninimania. marvel24 Fixeez numérotés Coleka (f01–f24)."
+}

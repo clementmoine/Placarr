@@ -1,0 +1,315 @@
+{
+  "source": "Suruga-ya.jp used product detail (税込)",
+  "sourceId": "suruga-ya-used",
+  "packId": "naruto/carddass",
+  "fetchedAt": "2026-10-22T02:29:43.450Z",
+  "cardCount": 34,
+  "cards": [
+    {
+      "diskId": "ni0022",
+      "printed": "忍-22",
+      "productId": "G8645948",
+      "priceYen": 4200,
+      "priceYenCents": 4200,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8645948",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0026",
+      "printed": "忍-26",
+      "productId": "GL124293",
+      "priceYen": 1510,
+      "priceYenCents": 1510,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124293",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0068",
+      "printed": "忍-68",
+      "productId": "GL124296",
+      "priceYen": 2000,
+      "priceYenCents": 2000,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124296",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0126",
+      "printed": "忍-126",
+      "productId": "GG329080",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GG329080",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0135",
+      "printed": "忍-135",
+      "productId": "G8645952",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8645952",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0144",
+      "printed": "忍-144",
+      "productId": "G8645953",
+      "priceYen": 460,
+      "priceYenCents": 460,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8645953",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0147",
+      "printed": "忍-147",
+      "productId": "G8645955",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/G8645955",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0155",
+      "printed": "忍-155",
+      "productId": "GL124300",
+      "priceYen": 340,
+      "priceYenCents": 340,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124300",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0188",
+      "printed": "忍-188",
+      "productId": "GL124301",
+      "priceYen": 320,
+      "priceYenCents": 320,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124301",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0260",
+      "printed": "忍-260",
+      "productId": "GL124305",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124305",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0261",
+      "printed": "忍-261",
+      "productId": "GL124306",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124306",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0263",
+      "printed": "忍-263",
+      "productId": "GL124307",
+      "priceYen": 2210,
+      "priceYenCents": 2210,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124307",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0326",
+      "printed": "忍-326",
+      "productId": "GL124308",
+      "priceYen": 240,
+      "priceYenCents": 240,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124308",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0365",
+      "printed": "忍-365",
+      "productId": "GG594467",
+      "priceYen": 17200,
+      "priceYenCents": 17200,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GG594467",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ni0383",
+      "printed": "忍-383",
+      "productId": "GL124309",
+      "priceYen": 1200,
+      "priceYenCents": 1200,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124309",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0021",
+      "printed": "作-21",
+      "productId": "GL124312",
+      "priceYen": 390,
+      "priceYenCents": 390,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124312",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0041",
+      "printed": "作-41",
+      "productId": "GL124314",
+      "priceYen": 260,
+      "priceYenCents": 260,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124314",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0043",
+      "printed": "作-43",
+      "productId": "GL124315",
+      "priceYen": 250,
+      "priceYenCents": 250,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124315",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0048",
+      "printed": "作-48",
+      "productId": "GL124317",
+      "priceYen": 230,
+      "priceYenCents": 230,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124317",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0058",
+      "printed": "作-58",
+      "productId": "GL124318",
+      "priceYen": 230,
+      "priceYenCents": 230,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124318",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0062",
+      "printed": "作-62",
+      "productId": "GL124319",
+      "priceYen": 250,
+      "priceYenCents": 250,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124319",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0087",
+      "printed": "作-87",
+      "productId": "GL124325",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124325",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "ta0151",
+      "printed": "作-151",
+      "productId": "GL124331",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124331",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0154",
+      "printed": "作-154",
+      "productId": "GL124332",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124332",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0177",
+      "printed": "作-177",
+      "productId": "GL124333",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124333",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0188",
+      "printed": "作-188",
+      "productId": "GL124334",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124334",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0212",
+      "printed": "作-212",
+      "productId": "GL124337",
+      "priceYen": 360,
+      "priceYenCents": 360,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124337",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0223",
+      "printed": "作-223",
+      "productId": "GL124340",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124340",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0224",
+      "printed": "作-224",
+      "productId": "GL124341",
+      "priceYen": 550,
+      "priceYenCents": 550,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124341",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "ta0273",
+      "printed": "作-273",
+      "productId": "GG329078",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GG329078",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "te0020",
+      "printed": "術-20",
+      "productId": "GL124350",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124350",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "te0021",
+      "printed": "術-21",
+      "productId": "GL124351",
+      "priceYen": 160,
+      "priceYenCents": 160,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GL124351",
+      "observedAt": "2026-10-22T02:29:43.450Z"
+    },
+    {
+      "diskId": "te0211",
+      "printed": "術-211",
+      "productId": "GG594465",
+      "priceYen": 3500,
+      "priceYenCents": 3500,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GG594465",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    },
+    {
+      "diskId": "te0294",
+      "printed": "術-294",
+      "productId": "GG329079",
+      "priceYen": 180,
+      "priceYenCents": 180,
+      "productUrl": "https://www.suruga-ya.jp/product/detail/GG329079",
+      "observedAt": "2026-10-11T20:39:41.683Z"
+    }
+  ]
+}

@@ -298,7 +298,10 @@ describe("attachmentDisplayScore", () => {
 
   it("priorise System Only quand preferSystemOnlyCover (console loose)", () => {
     const metrics = new Map([
-      ["/uploads/system-only.jpg", { width: 1200, height: 900, format: "jpeg" }],
+      [
+        "/uploads/system-only.jpg",
+        { width: 1200, height: 900, format: "jpeg" },
+      ],
       ["/uploads/box.jpg", { width: 800, height: 1100, format: "jpeg" }],
     ]);
 
@@ -891,9 +894,9 @@ describe("attachmentDisplayScore", () => {
       url: "/uploads/xbox.jpg",
       platformKey: "xbox-360",
     };
-    expect(shouldShowCoverAttachmentOnShelf(xboxCover, "ps3", [xboxCover])).toBe(
-      false,
-    );
+    expect(
+      shouldShowCoverAttachmentOnShelf(xboxCover, "ps3", [xboxCover]),
+    ).toBe(false);
   });
 
   it("keeps strict retail covers without a platform tag in the gallery", () => {
@@ -1005,9 +1008,9 @@ describe("attachmentDisplayScore", () => {
       { requestedPlatformKey: "gb", uiLocale: "fr" },
     );
 
-    expect(ranked.slice(0, 2).every((attachment) => attachment.role === "fr")).toBe(
-      true,
-    );
+    expect(
+      ranked.slice(0, 2).every((attachment) => attachment.role === "fr"),
+    ).toBe(true);
     expect(ranked[2]?.url).toBe("/uploads/lb-eu.jpg");
   });
 
@@ -1020,7 +1023,9 @@ describe("attachmentDisplayScore", () => {
       title: "Angry Birds Star Wars",
       strictShelfPlatformCoverSource: true,
     };
-    expect(shouldShowCoverAttachmentOnShelf(cover, "psvita", [cover])).toBe(true);
+    expect(shouldShowCoverAttachmentOnShelf(cover, "psvita", [cover])).toBe(
+      true,
+    );
     expect(
       rankCoverGalleryAttachments([cover], undefined, {
         requestedPlatformKey: "psvita",
@@ -1087,9 +1092,202 @@ describe("attachmentDisplayScore", () => {
     ).toBe(true);
   });
 
+  it("on a square shelf, prefers a square cover over a tall portrait poster", () => {
+    const squareLd = {
+      type: "cover" as const,
+      source: "lddb",
+      role: "fr",
+      url: "/uploads/ld-square.jpg",
+    };
+    const tallPoster = {
+      type: "cover" as const,
+      source: "tmdb",
+      role: "fr",
+      url: "/uploads/tmdb-tall.jpg",
+    };
+    const metrics = new Map([
+      [squareLd.url, { width: 800, height: 800 }],
+      [tallPoster.url, { width: 1000, height: 1500 }],
+    ]);
+    const ranked = rankCoverGalleryAttachments(
+      [tallPoster, squareLd],
+      metrics,
+      { expectedCoverAspectRatio: 1 },
+    );
+    expect(ranked.map((a) => a.url)).toEqual([
+      squareLd.url,
+      tallPoster.url,
+    ]);
+    const squareScore = explainAttachmentScoreForDisplay(
+      squareLd,
+      metrics.get(squareLd.url),
+      { expectedCoverAspectRatio: 1 },
+    );
+    const tallScore = explainAttachmentScoreForDisplay(
+      tallPoster,
+      metrics.get(tallPoster.url),
+      { expectedCoverAspectRatio: 1 },
+    );
+    expect(squareScore.score).toBeGreaterThan(tallScore.score);
+    expect(
+      tallScore.signals.some((s) => s.includes("tall portrait vs square shelf")),
+    ).toBe(true);
+  });
+
+  it("on a square shelf, demotes a content-portrait that was padded to a square canvas", () => {
+    // Persisted metrics after measureDisplayImageDimensions: file was 500×500
+    // but content box is 347×500 (Chasse marketplace padding).
+    const paddedMarketplace = {
+      type: "cover" as const,
+      source: "chasseauxlivres",
+      role: "fr",
+      url: "/uploads/chasse-padded-square.webp",
+    };
+    const squareLd = {
+      type: "cover" as const,
+      source: "lddb",
+      role: "fr",
+      url: "/uploads/ld-square.jpg",
+    };
+    const metrics = new Map([
+      [paddedMarketplace.url, { width: 347, height: 500 }],
+      [squareLd.url, { width: 500, height: 500 }],
+    ]);
+    const ranked = rankCoverGalleryAttachments(
+      [paddedMarketplace, squareLd],
+      metrics,
+      { expectedCoverAspectRatio: 1 },
+    );
+    expect(ranked[0]?.url).toBe(squareLd.url);
+    const paddedScore = explainAttachmentScoreForDisplay(
+      paddedMarketplace,
+      metrics.get(paddedMarketplace.url),
+      { expectedCoverAspectRatio: 1 },
+    );
+    expect(
+      paddedScore.signals.some((s) =>
+        s.includes("tall portrait vs square shelf"),
+      ),
+    ).toBe(true);
+  });
+
+  it("on a square shelf, a modest square sleeve beats a 2MP tall TMDB poster", () => {
+    const squareCd = {
+      type: "cover" as const,
+      source: "cdandlp",
+      role: "fr",
+      url: "/uploads/ld-sleeve.jpg",
+    };
+    const tallHiRes = {
+      type: "cover" as const,
+      source: "tmdb",
+      role: "fr",
+      url: "/uploads/tmdb-2mp.jpg",
+    };
+    const metrics = new Map([
+      [squareCd.url, { width: 801, height: 801 }],
+      [tallHiRes.url, { width: 1280, height: 1882 }],
+    ]);
+    const ranked = rankCoverGalleryAttachments(
+      [tallHiRes, squareCd],
+      metrics,
+      { expectedCoverAspectRatio: 1 },
+    );
+    expect(ranked[0]?.url).toBe(squareCd.url);
+  });
+
+  it("on a DVD-like shelf, still prefers portrait over square", () => {
+    const square = {
+      type: "cover" as const,
+      source: "lddb",
+      role: "fr",
+      url: "/uploads/square.jpg",
+    };
+    const portrait = {
+      type: "cover" as const,
+      source: "tmdb",
+      role: "fr",
+      url: "/uploads/portrait.jpg",
+    };
+    const metrics = new Map([
+      [square.url, { width: 800, height: 800 }],
+      [portrait.url, { width: 700, height: 1000 }],
+    ]);
+    const ranked = rankCoverGalleryAttachments([square, portrait], metrics, {
+      expectedCoverAspectRatio: 0.7,
+    });
+    expect(ranked[0]?.url).toBe(portrait.url);
+  });
+
+  it("includes sleeve backs in the Affiche picker, scored below fronts", () => {
+    const front = {
+      type: "cover" as const,
+      source: "lddb",
+      role: "fr",
+      title: "Box - Front",
+      url: "/uploads/ld-front.jpg",
+    };
+    const back = {
+      type: "image" as const,
+      source: "lddb",
+      role: "back-fr",
+      title: "Box - Back",
+      url: "/uploads/ld-back.jpg",
+    };
+    const spine = {
+      type: "image" as const,
+      source: "lddb",
+      role: "spine-fr",
+      title: "Box - Spine",
+      url: "/uploads/ld-spine.jpg",
+    };
+    const metrics = new Map([
+      [front.url, { width: 800, height: 800 }],
+      [back.url, { width: 800, height: 800 }],
+      [spine.url, { width: 200, height: 800 }],
+    ]);
+    const ranked = rankCoverGalleryAttachments(
+      [back, spine, front],
+      metrics,
+      { expectedCoverAspectRatio: 1 },
+    );
+    expect(ranked.map((a) => a.url)).toEqual([front.url, back.url]);
+    expect(ranked).not.toContainEqual(spine);
+  });
+
+  it("parks sleeve backs after same-region fronts, not under the poster tail", () => {
+    const frFront = {
+      type: "cover" as const,
+      source: "lddb",
+      role: "fr",
+      url: "/uploads/ld-front-fr.jpg",
+    };
+    const frBack = {
+      type: "image" as const,
+      source: "lddb",
+      role: "back-fr",
+      title: "Box - Back",
+      url: "/uploads/ld-back-fr.jpg",
+    };
+    const worldPosters = Array.from({ length: 8 }, (_, index) => ({
+      type: "cover" as const,
+      source: "tmdb",
+      role: "world",
+      url: `/uploads/tmdb-world-${index}.jpg`,
+    }));
+    const ranked = rankCoverGalleryAttachments(
+      [frBack, ...worldPosters, frFront],
+      undefined,
+      { uiLocale: "fr", expectedCoverAspectRatio: 1 },
+    );
+    const urls = ranked.map((attachment) => attachment.url);
+    expect(urls.indexOf(frBack.url)).toBeGreaterThan(urls.indexOf(frFront.url));
+    expect(urls.indexOf(frBack.url)).toBeLessThan(urls.indexOf(worldPosters[0]!.url));
+  });
+
   it("keeps LaunchBox disc/back/spine when reordering for persist", () => {
-    // rankCoverGalleryAttachments omits backs/spines from the cover-picker
-    // order; persist must still keep them (same trailing recovery as merge).
+    // rankCoverGalleryAttachments keeps backs in Affiche order (low score);
+    // spines stay out of the picker but persist recovery still retains them.
     const front = {
       type: "cover" as const,
       source: "launchbox",

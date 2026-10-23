@@ -1,4 +1,5 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
+import { variantUsesFoilMarketPrice } from "@/core/enrich/variants";
 
 /**
  * Shelf item grades, ordered best → worst.
@@ -18,7 +19,9 @@ export const ITEM_CONDITIONS = [
 
 export type ItemCondition = (typeof ITEM_CONDITIONS)[number];
 
-export function isItemCondition(value: string | null | undefined): value is Condition {
+export function isItemCondition(
+  value: string | null | undefined,
+): value is Condition {
   return (
     typeof value === "string" &&
     (ITEM_CONDITIONS as readonly string[]).includes(value)
@@ -65,13 +68,51 @@ export function itemConditionsForShelfType(
   return ITEM_CONDITIONS.filter((condition) => condition !== "loose");
 }
 
+/**
+ * TCG singles are chosen by finish (`Item.variant`), not blister grade.
+ * Neuf / occasion stays in the schema for other shelf types but is hidden
+ * for cards — you open the pack to know what you own.
+ */
+export function shelfShowsItemCondition(shelfType?: string | null): boolean {
+  return shelfType !== "tcg";
+}
+
 /** Which market observation conditions belong on the item detail price list. */
 export function marketOfferConditionsForItem(
   condition?: string | null,
   shelfType?: string | null,
-  prices?: { priceUsedCIB?: number | null } | null,
+  prices?: {
+    priceUsedCIB?: number | null;
+    priceObservations?: Array<{ condition?: string | null }> | null;
+  } | null,
+  options?: {
+    variant?: string | null;
+    plainFinishes?: readonly (string | null | undefined)[] | null;
+  },
 ): string[] {
-  if (condition === "new") return ["new"];
+  if (shelfType === "tcg") {
+    // Finish drives the market bucket; blister grade is not shown for cards.
+    const wantsFoil = variantUsesFoilMarketPrice(
+      options?.variant,
+      options?.plainFinishes,
+    );
+    const observed = new Set(
+      (prices?.priceObservations ?? [])
+        .map((observation) => observation.condition)
+        .filter((value): value is string => Boolean(value)),
+    );
+    if (wantsFoil) {
+      if (observed.has("foil")) return ["foil"];
+      // Foil-only Enchanted rows used to persist as `new` — still attribute them.
+      if (observed.has("new")) return ["new"];
+      return ["foil"];
+    }
+    return ["new"];
+  }
+
+  if (condition === "new") {
+    return ["new"];
+  }
 
   if (condition === "used") {
     if (shelfSupportsLooseCondition(shelfType)) {
@@ -89,7 +130,9 @@ export function marketOfferConditionsForItem(
 
   if (condition === "damaged") {
     if (shelfSupportsLooseCondition(shelfType)) {
-      return prices?.priceUsedCIB ? ["cib", "loose", "used"] : ["loose", "used"];
+      return prices?.priceUsedCIB
+        ? ["cib", "loose", "used"]
+        : ["loose", "used"];
     }
     return ["used"];
   }

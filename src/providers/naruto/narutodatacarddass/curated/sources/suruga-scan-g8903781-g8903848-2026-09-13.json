@@ -1,0 +1,18 @@
+{
+  "source": "suruga-ya CDN paste",
+  "observed": "2026-09-13",
+  "range": "g8903781.jpg … g8903848.jpg",
+  "line": "data-carddass",
+  "note": "Not Carddass tabletop — NARUTOデータカードダス DN-142T…DN-209T. All 68 SKUs already in suruga-ya-data-carddass-listings.tsv (prior g8903745…g8904010 dig). 63/68 already have art.suruga on disk. 5 CDN 404s with no alternate image in product HTML.",
+  "cdnBase": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "listed": 68,
+  "withSurugaArt": 63,
+  "cdn404": [
+    { "id": "G8903783", "printed": "DN-144T" },
+    { "id": "G8903796", "printed": "DN-157T" },
+    { "id": "G8903803", "printed": "DN-164T" },
+    { "id": "G8903813", "printed": "DN-174T" },
+    { "id": "G8903834", "printed": "DN-195T" }
+  ],
+  "cdn404Detail": "classic /database/pics/game/*.jpg → 404; HTML still references /database/pics_webp/game/*.jpg.webp but that host returns 403 without Suruga session cookies"
+}

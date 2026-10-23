@@ -1,8 +1,11 @@
 /**
  * Build, localize, rank, and filter attachments for metadata persistence.
  */
-import path from "path";
-import type { Attachment, AttachmentType, Type } from "@prisma/client";
+import type {
+  Attachment,
+  AttachmentType,
+  Type,
+} from "@/generated/prisma/browser";
 import {
   deriveAttachmentPlatformKeyFromUrl,
   shouldShowCoverAttachmentOnShelf,
@@ -11,7 +14,7 @@ import {
   type AttachmentImageMetrics,
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
-import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/galleryPreservation";
+import { preserveGalleryAttachmentsOnRegression } from "@/core/enrich/media/galleryPreservation";
 import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
 import {
   withProviderAttachmentTraits,
@@ -21,6 +24,7 @@ import {
 } from "@/core/catalog/sourceTraits";
 import { resolveCoverAttachmentRole } from "@/core/enrich/media/coverPerspective";
 import { prisma } from "@/lib/db/prisma";
+import { localMediaFilePath } from "@/lib/media/localMediaPath";
 import {
   readFileImageMetrics,
   isCoverResolutionAcceptable,
@@ -42,7 +46,10 @@ import {
   prepareDeferredAttachments,
   selectAttachmentsForLocalization,
 } from "@/core/enrich/media/attachmentLocalization";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import type {
+  MetadataAttachment,
+  MetadataResult,
+} from "@/types/metadataProvider";
 
 export type StoreItemContext = {
   id: string;
@@ -50,6 +57,8 @@ export type StoreItemContext = {
   name?: string | null;
   imageUrl?: string | null;
   backgroundImageUrl?: string | null;
+  /** Catalog print identity — scopes gallery preservation to that game. */
+  printKey?: string | null;
   updatedAt?: Date | string | null;
   shelf?: { name: string; type: Type } | null;
   metadata?: {
@@ -265,7 +274,7 @@ export async function prepareMetadataGalleryForStore(input: {
     previousLocalCoverRaw &&
     isCoverResolutionAcceptable(
       await readFileImageMetrics(
-        path.join(process.cwd(), "public", previousLocalCoverRaw),
+        localMediaFilePath(previousLocalCoverRaw) ?? "",
       ),
     )
       ? previousLocalCoverRaw
@@ -321,21 +330,21 @@ export async function prepareMetadataGalleryForStore(input: {
         })()
       : rankedLocalizedAttachments
   ).filter((attachment) =>
-    attachmentTitleAllowedForItem(
-      formattedTitle || name,
-      attachment,
-      { mediaType: type },
-    ),
+    attachmentTitleAllowedForItem(formattedTitle || name, attachment, {
+      mediaType: type,
+    }),
   );
 
   const withOrphanUserPins = preserveGalleryAttachmentsOnRegression(
     item?.metadata?.attachments ?? undefined,
     injectOrphanUserCoverAttachment(item, storableAttachments),
     requestedPlatformKey ?? undefined,
+    item?.printKey ??
+      metadata.externalIds?.printKey ??
+      null,
   );
   const finalStorableAttachments =
     await retargetUserHonorPinsInAttachmentGallery(withOrphanUserPins);
-
 
   return {
     attachmentsForRanking,

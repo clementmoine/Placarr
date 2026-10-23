@@ -1,0 +1,24 @@
+{
+  "source": "img.leboncoin.fr — photos d'annonce, checklist carte 72",
+  "observed": "2026-08-22",
+  "ingest": "titres `fr` 55–72 uniquement — la checklist Coleka s'arrête à 54",
+  "note": "Trois photos d'une même annonce (classeur Panini). La troisième (`checklist-3.jpg`) recoupe la checklist 1–54 et corrobore la transcription Coleka. La deuxième (`checklist-2.jpg`) montre le bas de la carte 72 : entrées 55–72 lisibles. Pas de crawl annonce — URLs collées, `ad-large` 600×800.",
+  "stagingDir": "staging/leboncoin-checklist",
+  "photos": [
+    {
+      "file": "checklist-1.jpg",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/8c/3b/0e/8c3b0ebb425264b5f8ce0ad83427657f103f2f0c.jpg?rule=ad-large",
+      "yields": "checklist 1–54 partielle (coin bas-droit)"
+    },
+    {
+      "file": "checklist-2.jpg",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/19/a9/06/19a90644da48c78ae8597b51e998e04846006a05.jpg?rule=ad-large",
+      "yields": "checklist 55–72 complète (coin bas-gauche)"
+    },
+    {
+      "file": "checklist-3.jpg",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/c3/ff/91/c3ff9103e4859ea30663500eb01b8913b60fa449.jpg?rule=ad-large",
+      "yields": "checklist 1–54 complète (coin bas-droit)"
+    }
+  ]
+}

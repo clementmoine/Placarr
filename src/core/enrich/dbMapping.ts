@@ -5,7 +5,7 @@ import {
   Metadata,
   Publisher,
   Type,
-} from "@prisma/client";
+} from "@/generated/prisma/browser";
 
 import { type AttachmentImageMetrics } from "@/core/enrich/media/attachmentDisplayScore";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
@@ -84,8 +84,7 @@ export const toAttachmentCreateData = (
   source: attachment.source ?? undefined,
   coverProvenance: attachment.coverProvenance ?? undefined,
   platformKey: attachment.platformKey ?? undefined,
-  // Persist the metrics measured during this enrichment so the read-time cover
-  // ranking can reorder the gallery from stored data (no refresh required).
+  // Persist display content metrics (trimmed when margins pad the canvas).
   width: metrics?.width ?? null,
   height: metrics?.height ?? null,
   meanLuminance: metrics?.meanLuminance ?? null,

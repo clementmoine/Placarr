@@ -1,0 +1,10 @@
+{
+  "source": "gamexfood.it — guessed S6 IT booster URL from the backlog",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "line": "carddass-it",
+  "page": "https://gamexfood.it/carte-naruto/naruto-card-game-rivalita-eterna-booster-ed-ita",
+  "status": 404,
+  "note": "Live product URL 404. Category /carte-naruto/ 404. HTML search is a JS shop shell (naruto count = 1, no product). wp-json 404. Wayback CDX for *naruto* empty. Do not brute-force SKUs. S6 IT sealed packshot this session = Martina starter Il Fascino del Male, not a booster.",
+  "skip": ["site-wide-crawl", "js-search"]
+}

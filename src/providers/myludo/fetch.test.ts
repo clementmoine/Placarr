@@ -212,9 +212,7 @@ describe("searchMyLudoHits", () => {
     expect(hits[0]?.gameId).toBe("4503");
     expect(promoteMyLudoSearchEvidence).toHaveBeenCalledWith(
       expect.stringContaining("type=search"),
-      expect.arrayContaining([
-        expect.objectContaining({ gameId: "4503" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ gameId: "4503" })]),
     );
   });
 });

@@ -1,0 +1,1859 @@
+{
+  "source": "rakuten",
+  "observed": "2026-09-04",
+  "note": "Pasted CDN URLs only — do not crawl Rakuten listings or seller stores. Faces: curated/sources/rakuten.json faces[] → installRakutenFaces → art.rakuten.* (recoverable; CDN may 403 without browser cookies). FR shopping product pages 403 without browser cookies; photos fetched once from open product page.",
+  "faces": [
+    {
+      "printedRef": "NI-3",
+      "diskId": "ni0003",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da75-cbb4-7685-bf77-b786c3a79aca_NOPAD.jpg",
+      "staging": "cards/ninja/ni0003/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.65,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-16",
+      "diskId": "ni0016",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da75-fddd-7b93-8136-a82ca19f279c_NOPAD.jpg",
+      "staging": "cards/ninja/ni0016/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.18,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "NI-71",
+      "diskId": "ni0071",
+      "lang": "fr",
+      "title": "Shikamaru Nara",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7737-8f8a-0a70c958e1c5_NOPAD.jpg",
+      "staging": "cards/ninja/ni0071/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "NI-84",
+      "diskId": "ni0084",
+      "lang": "fr",
+      "title": "Orochimaru",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-da05-7a7d-ab21-d64755ae0132_NOPAD.jpg",
+      "staging": "cards/ninja/ni0084/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "NI-102",
+      "diskId": "ni0102",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-397b-7b5f-a926-1fe47c8b2b4c_NOPAD.jpg",
+      "staging": "cards/ninja/ni0102/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.25,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-107",
+      "diskId": "ni0107",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-71d5-966c-ce0aace93c0e_NOPAD.jpg",
+      "staging": "cards/ninja/ni0107/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.75,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "NI-110",
+      "diskId": "ni0110",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-73e5-9f18-9d3f79d13e3d_NOPAD.jpg",
+      "staging": "cards/ninja/ni0110/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.34,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-113",
+      "diskId": "ni0113",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-740c-9148-83c209b1f3cc_NOPAD.jpg",
+      "staging": "cards/ninja/ni0113/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.03,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-117",
+      "diskId": "ni0117",
+      "lang": "fr",
+      "title": "Gaara",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-e154-7296-917f-7af8d86e6a5e_NOPAD.jpg",
+      "staging": "cards/ninja/ni0117/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "NI-120",
+      "diskId": "ni0120",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c0c9-71c1-bbc3-e18930849cbc_NOPAD.jpg",
+      "staging": "cards/ninja/ni0120/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 237.35,
+        "ahashDist": 2
+      }
+    },
+    {
+      "printedRef": "NI-121",
+      "diskId": "ni0121",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c0c9-7bc2-9289-7bd2896e1315_NOPAD.jpg",
+      "staging": "cards/ninja/ni0121/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 269.92,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "NI-123",
+      "diskId": "ni0123",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c0c9-7d87-b98a-98b6a6d93ac8_NOPAD.jpg",
+      "staging": "cards/ninja/ni0123/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 239.85,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "NI-139",
+      "diskId": "ni0139",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c0c9-766e-9a82-bf69494dc981_NOPAD.jpg",
+      "staging": "cards/ninja/ni0139/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 232.78,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "NI-142",
+      "diskId": "ni0142",
+      "lang": "fr",
+      "title": "Izumo Kamizuki",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-defa-7d54-919e-44fab7c501f0_NOPAD.jpg",
+      "staging": "cards/ninja/ni0142/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "NI-144",
+      "diskId": "ni0144",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c2b5-7d05-8ef0-06541a1d1258_NOPAD.jpg",
+      "staging": "cards/ninja/ni0144/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 223.44,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "NI-156",
+      "diskId": "ni0156",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-f8db-72cc-9175-5fffb1777ce0_NOPAD.jpg",
+      "staging": "cards/ninja/ni0156/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.97,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-159",
+      "diskId": "ni0159",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-157d-7937-a128-fb79295c32c9_NOPAD.jpg",
+      "staging": "cards/ninja/ni0159/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.01,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-161",
+      "diskId": "ni0161",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-157d-7893-93db-75bcd5f9755a_NOPAD.jpg",
+      "staging": "cards/ninja/ni0161/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.38,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-175",
+      "diskId": "ni0175",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-240f-7e97-894a-e4cc6be14a5f_NOPAD.jpg",
+      "staging": "cards/ninja/ni0175/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.26,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-178",
+      "diskId": "ni0178",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-240f-7e67-a473-3b183ac9eb48_NOPAD.jpg",
+      "staging": "cards/ninja/ni0178/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.48,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-180",
+      "diskId": "ni0180",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-240f-7bad-bac3-700ea7fd5f26_NOPAD.jpg",
+      "staging": "cards/ninja/ni0180/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.36,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-190",
+      "diskId": "ni0190",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-224b-7d11-9025-38de16dd8a92_NOPAD.jpg",
+      "staging": "cards/ninja/ni0190/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.52,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-196",
+      "diskId": "ni0196",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-240f-70d1-a76a-2b636c09fd39_NOPAD.jpg",
+      "staging": "cards/ninja/ni0196/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.6,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "NI-197",
+      "diskId": "ni0197",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-224b-78a5-bcd8-17643112d34e_NOPAD.jpg",
+      "staging": "cards/ninja/ni0197/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "by": "vision"
+      }
+    },
+    {
+      "printedRef": "NI-200",
+      "diskId": "ni0200",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-793c-b3fb-22ea21323533_NOPAD.jpg",
+      "staging": "cards/ninja/ni0200/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "by": "vision"
+      }
+    },
+    {
+      "printedRef": "NI-204",
+      "diskId": "ni0204",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-afe8-78d8-91fd-867c9259bb7a_NOPAD.jpg",
+      "staging": "cards/ninja/ni0204/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 496
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.73,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-6",
+      "diskId": "ta0006",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-3c3b-72e8-825f-ac236ea7db2f_NOPAD.jpg",
+      "staging": "cards/mission/ta0006/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.85,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-70",
+      "diskId": "ta0070",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7d-6f9a-7c39-aa7d-3e954063e43e_NOPAD.jpg",
+      "staging": "cards/mission/ta0070/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-75",
+      "diskId": "ta0075",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7cb0-bab0-385b99fa680b_NOPAD.jpg",
+      "staging": "cards/mission/ta0075/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.08,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-76",
+      "diskId": "ta0076",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7493-83b8-50594b069ef1_NOPAD.jpg",
+      "staging": "cards/mission/ta0076/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.9,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-78",
+      "diskId": "ta0078",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7301-bada-8c3875346f00_NOPAD.jpg",
+      "staging": "cards/mission/ta0078/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.91,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-79",
+      "diskId": "ta0079",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7ffb-b5c1-5b53d5195cc2_NOPAD.jpg",
+      "staging": "cards/mission/ta0079/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.67,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-93",
+      "diskId": "ta0093",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da6d-864e-709e-bb84-f765827d3fe5_NOPAD.jpg",
+      "staging": "cards/mission/ta0093/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.17,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-95",
+      "diskId": "ta0095",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-59d1-71a6-8318-f4936e7ae0d7_NOPAD.jpg",
+      "staging": "cards/mission/ta0095/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.1,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-97",
+      "diskId": "ta0097",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7ea5-8856-d08cf29876c7_NOPAD.jpg",
+      "staging": "cards/mission/ta0097/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.48,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-100",
+      "diskId": "ta0100",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-76b0-9857-82abce636217_NOPAD.jpg",
+      "staging": "cards/mission/ta0100/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.18,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-107",
+      "diskId": "ta0107",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7381-9509-08f76a1f1065_NOPAD.jpg",
+      "staging": "cards/mission/ta0107/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "by": "vision"
+      }
+    },
+    {
+      "printedRef": "TA-113",
+      "diskId": "ta0113",
+      "lang": "fr",
+      "title": "Une blessure non guérie",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-cbe6-7c11-901d-e33df8e9fe57_NOPAD.jpg",
+      "staging": "cards/mission/ta0113/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TA-114",
+      "diskId": "ta0114",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c7c2-713f-8d18-fa8c934b7042_NOPAD.jpg",
+      "staging": "cards/mission/ta0114/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 238.65,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "TA-116",
+      "diskId": "ta0116",
+      "lang": "fr",
+      "title": "Le pouvoir des neuf queues",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-cbe6-7a66-832b-0c3b9f0950ca_NOPAD.jpg",
+      "staging": "cards/mission/ta0116/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TA-118",
+      "diskId": "ta0118",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-605d-780a-aab9-d0ed0a9bcafa_NOPAD.jpg",
+      "staging": "cards/mission/ta0118/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.15,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-126",
+      "diskId": "ta0126",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199dab3-f117-7e8c-9ce2-0230765fe258_NOPAD.jpg",
+      "staging": "cards/mission/ta0126/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 235.86,
+        "ahashDist": 2
+      }
+    },
+    {
+      "printedRef": "TA-134",
+      "diskId": "ta0134",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c7c2-72e2-b672-26885506c28f_NOPAD.jpg",
+      "staging": "cards/mission/ta0134/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 197.85,
+        "ahashDist": 5
+      }
+    },
+    {
+      "printedRef": "TA-141",
+      "diskId": "ta0141",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa9-387f-7b54-b3e3-2ce69ce8dbf1_NOPAD.jpg",
+      "staging": "cards/mission/ta0141/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 221.58,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-142",
+      "diskId": "ta0142",
+      "lang": "fr",
+      "title": "Le kidnapping",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-cdd5-7f4d-9514-6a23e3d8a76a_NOPAD.jpg",
+      "staging": "cards/mission/ta0142/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TA-147",
+      "diskId": "ta0147",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa9-387f-7017-b0b5-c03616f3efa8_NOPAD.jpg",
+      "staging": "cards/mission/ta0147/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 241.66,
+        "ahashDist": 2
+      }
+    },
+    {
+      "printedRef": "TA-155",
+      "diskId": "ta0155",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-6277-79fd-b7ef-b2f24826eb09_NOPAD.jpg",
+      "staging": "cards/mission/ta0155/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.26,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-162",
+      "diskId": "ta0162",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-5baf-724c-87b6-0d7d0d947140_NOPAD.jpg",
+      "staging": "cards/mission/ta0162/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.93,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-165",
+      "diskId": "ta0165",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-5baf-72c8-b303-9cb3005c68f6_NOPAD.jpg",
+      "staging": "cards/mission/ta0165/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.73,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-166",
+      "diskId": "ta0166",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-5baf-76cf-83d5-464cac94568f_NOPAD.jpg",
+      "staging": "cards/mission/ta0166/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.85,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-167",
+      "diskId": "ta0167",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-5baf-719a-80d4-8fc695a9e8e1_NOPAD.jpg",
+      "staging": "cards/mission/ta0167/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.5,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-168",
+      "diskId": "ta0168",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-82b7-7392-ac79-51c9857bc432_NOPAD.jpg",
+      "staging": "cards/mission/ta0168/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.19,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-171",
+      "diskId": "ta0171",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-7f5c-7c1f-bbd6-b15d9d5842c1_NOPAD.jpg",
+      "staging": "cards/mission/ta0171/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.16,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-174",
+      "diskId": "ta0174",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-7f5c-798b-bf52-6e7db970cac8_NOPAD.jpg",
+      "staging": "cards/mission/ta0174/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.62,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-175",
+      "diskId": "ta0175",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-7c78-775d-8aa7-5117c471849e_NOPAD.jpg",
+      "staging": "cards/mission/ta0175/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.38,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-178",
+      "diskId": "ta0178",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa2-28d7-7d93-87a7-46167405f16a_NOPAD.jpg",
+      "staging": "cards/mission/ta0178/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.7,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-181",
+      "diskId": "ta0181",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-7c78-7c42-a207-82e843e7b97a_NOPAD.jpg",
+      "staging": "cards/mission/ta0181/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.93,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-183",
+      "diskId": "ta0183",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-8528-72c9-b918-7ece4f1a0cfe_NOPAD.jpg",
+      "staging": "cards/mission/ta0183/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.75,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-188",
+      "diskId": "ta0188",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-8528-7152-8c08-e6fb51d8fc58_NOPAD.jpg",
+      "staging": "cards/mission/ta0188/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 2.83,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-192",
+      "diskId": "ta0192",
+      "lang": "fr",
+      "title": "STRIIIKE !!",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da10-b27a-7ef6-9992-a0d8e00c63b1_NOPAD.jpg",
+      "staging": "cards/mission/ta0192/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TA-209",
+      "diskId": "ta0209",
+      "lang": "fr",
+      "title": "Rendez-vous avec le profresseur",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da0f-6b22-7565-b3ee-d43dcf306dd3_NOPAD.jpg",
+      "staging": "cards/mission/ta0209/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TA-214",
+      "diskId": "ta0214",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199d95a-fb8b-7e55-ba86-e5e7a26590cb_NOPAD.jpg",
+      "staging": "cards/mission/ta0214/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 518,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 182.32,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TA-219",
+      "diskId": "ta0219",
+      "lang": "fr",
+      "title": "Leçon de morale",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199d26f-368e-7da1-91e2-385f199588d2_NOPAD.jpg",
+      "staging": "cards/mission/ta0219/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 280,
+        "height": 400
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "note": "watermark ultrajeux visible"
+    },
+    {
+      "printedRef": "TA-219",
+      "diskId": "ta0219",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da44-f3cb-701d-92aa-c3e60897c72c_NOPAD.jpg",
+      "staging": "cards/mission/ta0219/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 309.24,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "TA-224",
+      "diskId": "ta0224",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199d968-8b15-735d-b8d7-30769e9c278e_NOPAD.jpg",
+      "staging": "cards/mission/ta0224/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 220.07,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TA-225",
+      "diskId": "ta0225",
+      "lang": "fr",
+      "title": "Angle mort",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da0e-e3d3-7168-a73c-bc47848b1a8b_NOPAD.jpg",
+      "staging": "cards/mission/ta0225/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TE-78",
+      "diskId": "te0078",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7c5c-9315-c7179ff3ee58_NOPAD.jpg",
+      "staging": "cards/jutsu/te0078/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.97,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-80",
+      "diskId": "te0080",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-4e11-704e-bf78-06810ef0533f_NOPAD.jpg",
+      "staging": "cards/jutsu/te0080/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.76,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-81",
+      "diskId": "te0081",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-4e11-7a0f-8ad5-c8f8ab91bd9b_NOPAD.jpg",
+      "staging": "cards/jutsu/te0081/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.18,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-93",
+      "diskId": "te0093",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7b94-b3bf-c645fe96f31a_NOPAD.jpg",
+      "staging": "cards/jutsu/te0093/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.71,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-96",
+      "diskId": "te0096",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199d9ee-ac97-7e7d-92b9-d5a166ca4ccc_NOPAD.jpg",
+      "staging": "cards/jutsu/te0096/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 164.67,
+        "ahashDist": 3
+      }
+    },
+    {
+      "printedRef": "TE-99",
+      "diskId": "te0099",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-5626-7bcd-97fa-fce8c331bbdb_NOPAD.jpg",
+      "staging": "cards/jutsu/te0099/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.97,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-109",
+      "diskId": "te0109",
+      "lang": "fr",
+      "title": "Invocation",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-defa-7bc8-8b5e-c621ae9afe23_NOPAD.jpg",
+      "staging": "cards/jutsu/te0109/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TE-110",
+      "diskId": "te0110",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c7c2-74d0-81b6-45e62034fd40_NOPAD.jpg",
+      "staging": "cards/jutsu/te0110/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 245.68,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-112",
+      "diskId": "te0112",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-35f6-7fc0-b4d7-c7d0d6e707c8_NOPAD.jpg",
+      "staging": "cards/jutsu/te0112/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.52,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-113",
+      "diskId": "te0113",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-397b-7e5a-9af4-9c1142dc5c86_NOPAD.jpg",
+      "staging": "cards/jutsu/te0113/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.11,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-114",
+      "diskId": "te0114",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-cbfa-7ace-84c5-43e7de0dfb3e_NOPAD.jpg",
+      "staging": "cards/jutsu/te0114/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.1,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-123",
+      "diskId": "te0123",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da7c-cbfa-7f8c-b378-97e1e39eeb24_NOPAD.jpg",
+      "staging": "cards/jutsu/te0123/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.75,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-125",
+      "diskId": "te0125",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa9-5e19-7587-88fa-031b3c8473da_NOPAD.jpg",
+      "staging": "cards/jutsu/te0125/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 280.61,
+        "ahashDist": 5
+      }
+    },
+    {
+      "printedRef": "TE-126",
+      "diskId": "te0126",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa9-5e19-7306-a309-09c4714115d9_NOPAD.jpg",
+      "staging": "cards/jutsu/te0126/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 251.35,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-127",
+      "diskId": "te0127",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9c-c7c2-7b13-a76a-f2bc268075b3_NOPAD.jpg",
+      "staging": "cards/jutsu/te0127/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 300,
+        "height": 424
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 219.49,
+        "ahashDist": 2
+      }
+    },
+    {
+      "printedRef": "TE-142",
+      "diskId": "te0142",
+      "lang": "fr",
+      "title": "Le sceau secret de la branche principale",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da9a-c5af-7d2d-a71a-f0b17a2bba23_NOPAD.jpg",
+      "staging": "cards/jutsu/te0142/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TE-146",
+      "diskId": "te0146",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-7d80-a790-09a7220383b5_NOPAD.jpg",
+      "staging": "cards/jutsu/te0146/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.88,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-147",
+      "diskId": "te0147",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-72e8-92ad-886a623be68f_NOPAD.jpg",
+      "staging": "cards/jutsu/te0147/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.12,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-152",
+      "diskId": "te0152",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-77c9-b69b-e22e256e488e_NOPAD.jpg",
+      "staging": "cards/jutsu/te0152/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.09,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-154",
+      "diskId": "te0154",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-7473-8680-82c79a6c1dc7_NOPAD.jpg",
+      "staging": "cards/jutsu/te0154/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.42,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-156",
+      "diskId": "te0156",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-7d8c-9c10-097c63dfbd35_NOPAD.jpg",
+      "staging": "cards/jutsu/te0156/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.3,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-157",
+      "diskId": "te0157",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-713e-ab22-e705d63035f0_NOPAD.jpg",
+      "staging": "cards/jutsu/te0157/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.33,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-159",
+      "diskId": "te0159",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa3-948e-7337-96b0-bf751c05b153_NOPAD.jpg",
+      "staging": "cards/jutsu/te0159/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.51,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-160",
+      "diskId": "te0160",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-7ad4-84f8-f029cf3e2420_NOPAD.jpg",
+      "staging": "cards/jutsu/te0160/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.43,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-162",
+      "diskId": "te0162",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-7847-8882-06d0372500d8_NOPAD.jpg",
+      "staging": "cards/jutsu/te0162/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.78,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-163",
+      "diskId": "te0163",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-7f9e-9e01-81f974fafd0b_NOPAD.jpg",
+      "staging": "cards/jutsu/te0163/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.93,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-164",
+      "diskId": "te0164",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-7dec-a6d3-907e8cc3c2d3_NOPAD.jpg",
+      "staging": "cards/jutsu/te0164/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.59,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-166",
+      "diskId": "te0166",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-7bfd-a029-1de92cd7dcf0_NOPAD.jpg",
+      "staging": "cards/jutsu/te0166/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.49,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-167",
+      "diskId": "te0167",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-76ec-8140-6cef900b67f6_NOPAD.jpg",
+      "staging": "cards/jutsu/te0167/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.64,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-169",
+      "diskId": "te0169",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-7929-ae75-f1d9bf4fb9f0_NOPAD.jpg",
+      "staging": "cards/jutsu/te0169/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.62,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-170",
+      "diskId": "te0170",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-75b5-b637-084bad9a4acc_NOPAD.jpg",
+      "staging": "cards/jutsu/te0170/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.75,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-172",
+      "diskId": "te0172",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-7d6a-bfb9-3e7f61606d55_NOPAD.jpg",
+      "staging": "cards/jutsu/te0172/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.37,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-174",
+      "diskId": "te0174",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-986e-7111-8a90-44950f77e587_NOPAD.jpg",
+      "staging": "cards/jutsu/te0174/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.5,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-176",
+      "diskId": "te0176",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-96ad-769b-ba27-d281b4bd8126_NOPAD.jpg",
+      "staging": "cards/jutsu/te0176/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.34,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-183",
+      "diskId": "te0183",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-6277-7e97-a2ce-02faab2f1537_NOPAD.jpg",
+      "staging": "cards/jutsu/te0183/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 4.89,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-187",
+      "diskId": "te0187",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-6277-725a-a91b-a5e6568c96e5_NOPAD.jpg",
+      "staging": "cards/jutsu/te0187/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.35,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-188",
+      "diskId": "te0188",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-5db4-7828-9d5d-9e178bd8368a_NOPAD.jpg",
+      "staging": "cards/jutsu/te0188/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.42,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-189",
+      "diskId": "te0189",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-6277-7129-863d-bc8f87ed7e85_NOPAD.jpg",
+      "staging": "cards/jutsu/te0189/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.73,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-191",
+      "diskId": "te0191",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199daa1-6277-7745-9585-29a87e78fa94_NOPAD.jpg",
+      "staging": "cards/jutsu/te0191/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 350,
+        "height": 495
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 3.65,
+        "ahashDist": 0
+      }
+    },
+    {
+      "printedRef": "TE-192",
+      "diskId": "te0192",
+      "lang": "fr",
+      "title": "Pichenette",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199d9af-667d-7ffc-b59d-1d5f6de9fb11_NOPAD.jpg",
+      "staging": "cards/jutsu/te0192/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "note": "watermark carddass.fr visible"
+    },
+    {
+      "printedRef": "TE-205",
+      "diskId": "te0205",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da44-fd17-792d-b68e-142fcac33ada_NOPAD.jpg",
+      "staging": "cards/jutsu/te0205/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "by": "vision"
+      }
+    },
+    {
+      "printedRef": "TE-209",
+      "diskId": "te0209",
+      "lang": "fr",
+      "title": "Les marécages des limbes",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da10-74d6-7ed9-b491-40ec35393ec4_NOPAD.jpg",
+      "staging": "cards/jutsu/te0209/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    },
+    {
+      "printedRef": "TE-213",
+      "diskId": "te0213",
+      "lang": "fr",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da10-74d6-7370-aaf2-964c09fa5c83_NOPAD.jpg",
+      "staging": "cards/jutsu/te0213/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg",
+      "match": {
+        "mse": 264.27,
+        "ahashDist": 1
+      }
+    },
+    {
+      "printedRef": "TE-217",
+      "diskId": "te0217",
+      "lang": "fr",
+      "title": "Technique de contrôle de la corde",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199da10-8f6c-7e8c-99e7-b62f3ade03c4_NOPAD.jpg",
+      "staging": "cards/jutsu/te0217/fr/art.rakuten.jpg",
+      "pixels": {
+        "width": 517,
+        "height": 740
+      },
+      "ingest": true,
+      "face": "art.carddass.jpg"
+    }
+  ],
+  "products": [
+    {
+      "slug": "tin-box-hobby",
+      "kind": "coffret",
+      "lang": "FR",
+      "title": "NARUTO JCC - Tin box hobby",
+      "listing": "https://fr.shopping.rakuten.com/offer/buy/1962181402/naruto-jcc-tin-box-hobby.html",
+      "productId": "1962181402",
+      "ean": null,
+      "printedRef": null,
+      "stock": "Aucun vendeur ne propose ce produit (alerte prix only)",
+      "staging": "staging/rakuten/tin-box-hobby/01-face.webp",
+      "url": "https://fr.shopping.rakuten.com/pictures/0199c8c5-d9a1-714c-8a15-28695c603f54_L_NOPAD.jpg",
+      "ingest": false,
+      "role": "art",
+      "note": "Archival only — même art tin que Invocation ; au scorer 500×500 bat Tin-box-hobby.jpg (étui bleu). Face catalogue = contenu-tin-box / Tin-box-hobby.jpg. Ne pas fusionner les SKU.",
+      "gallery": [
+        {
+          "staging": "staging/rakuten/tin-box-hobby/02-side-kakashi.jpg",
+          "url": "https://fr.shopping.rakuten.com/pictures/0199c8c5-fe4b-7793-b7f2-53cea353efb7_L.jpg",
+          "role": "side-kakashi",
+          "ingest": false
+        },
+        {
+          "staging": "staging/rakuten/tin-box-hobby/03-lid-embossed.jpg",
+          "url": "https://fr.shopping.rakuten.com/pictures/0199c8c5-45fa-7b5c-8165-5d8ed57e065b_L.jpg",
+          "role": "lid-embossed",
+          "ingest": false
+        }
+      ]
+    }
+  ]
+}

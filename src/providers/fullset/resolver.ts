@@ -221,7 +221,8 @@ export function createFullSetResolver() {
           if (seenUrls.has(hit.url)) continue;
           seenUrls.add(hit.url);
 
-          if (!fullSetCategoryMatchesMediaType(hit.category, ctx.type)) continue;
+          if (!fullSetCategoryMatchesMediaType(hit.category, ctx.type))
+            continue;
           // Console SKUs are the product; platformKey on the card is the
           // console family — only enforce for game shelves.
           if (

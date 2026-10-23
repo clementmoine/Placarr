@@ -29,6 +29,10 @@
  * espérance ne se comparent pas sans le préciser.
  */
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
+import {
+  isSkuPackComposition,
+  type PackCompositionField,
+} from "@/providers/shared/sealedProducts/packCompositionTypes";
 import { sealedProductDisplayName } from "@/providers/shared/sealedProducts/kinds";
 
 import {
@@ -129,6 +133,11 @@ export type BuyProduct = {
   randomPoolScope?: "set" | "listed" | "none" | "unknown" | null;
   /** Pool listé quand `randomPoolScope === "listed"`. */
   randomPoolPrints?: readonly string[] | null;
+  /**
+   * Composition de sachet de **ce** SKU (slots + taux). Portée depuis
+   * `SealedProductEntry.packComposition` — pas un héritage set runtime.
+   */
+  packComposition?: PackCompositionField;
 };
 
 function buyOptionDisplayName(
@@ -514,9 +523,19 @@ export function projectBuyProductForSet(
   const hasGuaranteeSets = guaranteeSets.length > 0;
   const guaranteesHere = hasGuaranteeSets && guaranteeSets.includes(sid);
 
+  /*
+    Gift box multi-sets : `packsContained: 5` + `packComposition: "none"` sans
+    `packsBySet` attesté. Sinon le catalogueSetId (ex. Elsa → 9) collait 5
+    sachets de loterie sur Fabled alors que seuls les guarantees comptent.
+  */
+  const opaqueUnattestedPacks =
+    !hasPacksBySet &&
+    product.packComposition === "none" &&
+    (product.packsInContainer ?? 0) > 1;
+
   const packsInContainer = hasPacksBySet
     ? packsInSetRecord(packsBySet, sid)
-    : productSetId === sid
+    : productSetId === sid && !opaqueUnattestedPacks
       ? (product.packsInContainer ?? null)
       : 0;
 
@@ -1563,7 +1582,22 @@ export function packsOpenedForProduct(product: BuyProduct): number | null {
  * depuis les scellés **du même set** — jamais un booster d'une autre série,
  * jamais `packs × cartes` fusionnés (voir {@link expectedNewCards}).
  */
+/**
+ * Pour les containers (display / trove) : hériter `packSize`, `packsContained`
+ * et **`packComposition`** du sachet enfant du même set / langue.
+ * Alias historique : les tests / call sites gardent ce nom.
+ */
 export function withContainerPackSizes(
+  products: readonly BuyProduct[],
+): BuyProduct[] {
+  return withContainerPackCompositions(products);
+}
+
+/**
+ * Display / trove / blister carton : composition = celle du booster frère,
+ * pas une grille inventée au niveau set.
+ */
+export function withContainerPackCompositions(
   products: readonly BuyProduct[],
 ): BuyProduct[] {
   type SetHints = {
@@ -1571,6 +1605,8 @@ export function withContainerPackSizes(
     anyPackSize: number | null;
     packsByLang: Map<string, number>;
     anyPacks: number | null;
+    compositionByLang: Map<string, PackCompositionField>;
+    anyComposition: PackCompositionField | undefined;
   };
   const bySet = new Map<string, SetHints>();
 
@@ -1583,6 +1619,8 @@ export function withContainerPackSizes(
         anyPackSize: null,
         packsByLang: new Map(),
         anyPacks: null,
+        compositionByLang: new Map(),
+        anyComposition: undefined,
       };
       bySet.set(key, row);
     }
@@ -1607,6 +1645,17 @@ export function withContainerPackSizes(
         row.packSizeByLang.set(lang, product.packSize);
       }
       if (row.anyPackSize == null) row.anyPackSize = product.packSize;
+    }
+    if (
+      product.behavior === "random_pack" &&
+      isSkuPackComposition(product.packComposition)
+    ) {
+      if (!row.compositionByLang.has(lang)) {
+        row.compositionByLang.set(lang, product.packComposition);
+      }
+      if (row.anyComposition == null) {
+        row.anyComposition = product.packComposition;
+      }
     }
     /*
       Taille de boîte : ignorer les containers ×1 (blister) — sinon
@@ -1636,10 +1685,17 @@ export function withContainerPackSizes(
       product.packsInContainer != null && product.packsInContainer > 0
         ? product.packsInContainer
         : (row.packsByLang.get(lang) ?? row.anyPacks ?? null);
+    const packComposition =
+      isSkuPackComposition(product.packComposition) ||
+      product.packComposition === "none"
+        ? product.packComposition
+        : (row.compositionByLang.get(lang) ?? row.anyComposition);
     if (
       (packSize == null || packSize === product.packSize) &&
       (packsInContainer == null ||
-        packsInContainer === product.packsInContainer)
+        packsInContainer === product.packsInContainer) &&
+      (packComposition == null ||
+        packComposition === product.packComposition)
     ) {
       return product;
     }
@@ -1647,6 +1703,7 @@ export function withContainerPackSizes(
       ...product,
       ...(packSize != null ? { packSize } : null),
       ...(packsInContainer != null ? { packsInContainer } : null),
+      ...(packComposition != null ? { packComposition } : null),
     };
   });
 }

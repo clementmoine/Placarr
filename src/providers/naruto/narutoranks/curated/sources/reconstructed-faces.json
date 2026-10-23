@@ -107,8 +107,8 @@
       "lang": "en",
       "printed": "PN-1",
       "sourceFile": "curated/cards/en/pn/0001/art.reconstructed.png",
-      "backSourceFile": "curated/cards/en/pn/0001/back.reconstructed.png",
-      "note": "Promo US « GENERAL DISTRIBUTION » — scan eBay Browse 168447402726. Pas d'édition FR/IT ; les tuiles empruntent le recto EN."
+      "backSourceFile": "curated/cards/pn/en/0001/back.reconstructed.png",
+      "note": "Promo US « GENERAL DISTRIBUTION » — recto eBay Browse 168447402726 ; verso nettoyé 2026-10-22 (Downloads PN-1 Back.png), ancien verso en source.back.png. Pas d'édition FR/IT ; les tuiles empruntent le recto EN."
     },
     {
       "setCode": "pn",
@@ -116,8 +116,8 @@
       "lang": "en",
       "printed": "PN-T",
       "sourceFile": "curated/cards/en/pn/t/art.reconstructed.png",
-      "backSourceFile": "curated/cards/en/pn/t/back.reconstructed.png",
-      "note": "Promo US « TRADE SHOWS, SPECIAL OFFERS » (conventions) — scan eBay Browse 131295739285."
+      "backSourceFile": "curated/cards/pn/en/t/back.reconstructed.png",
+      "note": "Promo US « TRADE SHOWS, SPECIAL OFFERS » — recto eBay 131295739285 ; verso nettoyé 2026-10-22 (PN-T Back.png), ancien en source.back.png."
     },
     {
       "setCode": "pn",
@@ -125,8 +125,8 @@
       "lang": "en",
       "printed": "PN-GA",
       "sourceFile": "curated/cards/en/pn/ga/art.reconstructed.png",
-      "backSourceFile": "curated/cards/en/pn/ga/back.reconstructed.webp",
-      "note": "Promo US « GAMA SHOW » — scan eBay Browse 233533784889."
+      "backSourceFile": "curated/cards/pn/en/ga/back.reconstructed.png",
+      "note": "Promo US « GAMA SHOW » — recto eBay 233533784889 ; verso nettoyé 2026-10-22 (PN-GA Back.png), ancien webp en source.back.webp."
     },
     {
       "setCode": "pn",
@@ -134,8 +134,8 @@
       "lang": "en",
       "printed": "PN-i",
       "sourceFile": "curated/cards/en/pn/i/art.reconstructed.png",
-      "backSourceFile": "curated/cards/en/pn/i/back.reconstructed.png",
-      "note": "Promo US exclusivité inkworks.com (Team 7) — scan eBay Browse 158128123948."
+      "backSourceFile": "curated/cards/pn/en/i/back.reconstructed.png",
+      "note": "Promo US exclusivité inkworks.com (Team 7) — recto eBay 158128123948 ; verso nettoyé 2026-10-22 (PN-I Back.png), ancien en source.back.png."
     },
     {
       "setCode": "pn",

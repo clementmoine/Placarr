@@ -1,4 +1,7 @@
+import type { PackCompositionField } from "./packCompositionTypes";
 import type { SealedBehavior, SealedKind } from "./kinds";
+
+export type { PackCompositionField, SkuPackComposition } from "./packCompositionTypes";
 
 export type SealedPrintLink = {
   name: string;
@@ -97,6 +100,13 @@ export type SealedProductEntry = {
    * `null` = non vérifié — pas « zéro ».
    */
   cardsPerPack: number | null;
+  /**
+   * Composition de sachet (slots C/U/R/foil + taux) — **fait SKU**, au même
+   * rang que contenu / art / prix. `null` = non vérifié ; `"none"` = pas de
+   * loterie ; objet = grille de **ce** produit (collector ≠ booster set).
+   * Voir `docs/sealed_product_contents.md`.
+   */
+  packComposition?: PackCompositionField;
   /**
    * Sachets que **ce** produit contient.
    * Booster = 1 ; display annoncé « 24 boosters » = 24 ; `null` si inconnu.

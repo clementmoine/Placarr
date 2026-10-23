@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync, mkdtempSync, existsSync, readFileSync, rmSync
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { comparePrintKeys } from "@/core/identify/printKey";
-import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isNarutoFrUnpublishedHtmlNumber, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, isNarutoS6FrPreprodNamedNumber, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, reconcileNarutoFrChecklistSet, resolveNarutoLedgerPrintTarget, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel, keepNarutoFrSeriesMembership } from "./identity";
+import { collectPhotoFallbackArt, formatKnownCardsMarkdown, isCollectorPhotoFallbackFace, isNarutoFrAbsentFromPrintedChecklistNumber, isNarutoFrUnpublishedHtmlNumber, isUnpublishedHtmlRef, PHYSICAL_KNOWN_SOURCES, type KnownCardsReport, type KnownSource, canonicalNarutoDiskPrefix, compareNarutoCollectors, canonicalizeNarutoPrintKey, formatNarutoReference, isJpOnlyNarutoArtwork, isNarutoS6FrPreprodNamedNumber, mintNarutoPrintKey, narutoCollectorKey, narutoCollectorNumberKey, narutoCollectorSearchNeedles, narutoCollectorsMatch, narutoDiskCardId, parseNarutoCollector, applyOfficialNames, collectorNumberOf, loadOfficialNames, type OfficialNames, appearanceSetsOf, appearanceValueForJson, mergeAppearanceValues, primaryAppearanceSet, NARUTO_PACK_ID, isNarutoDataCarddassPrintedRef, narutoCatalogueLineForCard, narutoCatalogueLineForSealed, narutoDataPackForCard, checklistIdToNumberForms, officialFrChecklistSetsForNumber, reconcileNarutoFrChecklistSet, resolveNarutoLedgerPrintTarget, resetOfficialFrChecklistCache, syncOfficialFrChecklistAppearances, loadNarutoAppearancesFile, narutoPrintFacts, narutoSetLabel, keepNarutoFrSeriesMembership } from "./identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "./indexStore";
 import type { NarutoPrintDetail } from "./search";
 
@@ -54,6 +54,17 @@ import type { NarutoPrintDetail } from "./search";
       expect(isNarutoFrUnpublishedHtmlNumber("ta0240")).toBe(true);
       expect(isNarutoFrUnpublishedHtmlNumber("te0263")).toBe(true);
       expect(isNarutoFrUnpublishedHtmlNumber("ni0309")).toBe(true);
+    });
+  });
+
+  describe("isNarutoFrAbsentFromPrintedChecklistNumber", () => {
+    it("flags TE-191 S4 PDF hole and S5 MIJ inserts, not paper checklist cards", () => {
+      expect(isNarutoFrAbsentFromPrintedChecklistNumber("te191")).toBe(true);
+      expect(isNarutoFrAbsentFromPrintedChecklistNumber("te0191")).toBe(true);
+      expect(isNarutoFrAbsentFromPrintedChecklistNumber("ni0232")).toBe(true);
+      expect(isNarutoFrAbsentFromPrintedChecklistNumber("ta226")).toBe(true);
+      expect(isNarutoFrAbsentFromPrintedChecklistNumber("te189")).toBe(false);
+      expect(isNarutoFrAbsentFromPrintedChecklistNumber("ta0090")).toBe(false);
     });
   });
 

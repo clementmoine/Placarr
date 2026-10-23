@@ -50,18 +50,72 @@ describe("Lorcana booster composition seed", () => {
     ).toBe(1152);
   });
 
-  it("builds per-print rates from a FR set pool", () => {
+  it("builds per-print rates from a FR set pool (incl. communes structurales)", () => {
     const profile = resolveBoosterComposition(file, "1");
     const pool = [
       ...Array.from({ length: 12 }, (_, i) => ({
         printKey: `lorcana:1-20${i}`,
         rarity: "Enchantée",
       })),
-      { printKey: "lorcana:1-21", rarity: "Commune" },
+      ...Array.from({ length: 90 }, (_, i) => ({
+        printKey: `lorcana:1-c${i}`,
+        rarity: "Commune",
+      })),
     ];
     const rates = specificPacksPerHitByPrint({ profile, pool });
     expect(rates.get("lorcana:1-205")).toBe(1152);
-    expect(rates.has("lorcana:1-21")).toBe(false);
+    /* 1/6 × 90 communes = 15 sachets pour une commune précise */
+    expect(rates.get("lorcana:1-c0")).toBeCloseTo(15, 5);
+  });
+});
+
+describe("dedicated slot listing several spellings of one rarity", () => {
+  /*
+    Régression : un slot `dedicated` avec `["commune","common","C"]` était
+    rejeté comme multi-rareté → aucune commune Naruto / Pokémon n'avait de
+    taux (156 cartes S1 sans « 1 sur N »). Les graphies sont des alias.
+  */
+  it("Naruto: les communes FR tirent du slot non_holo (7 / 8 cartes)", () => {
+    const profile = resolveBoosterComposition(
+      narutoComposition as BoosterCompositionFile,
+    );
+    const pool = [
+      ...Array.from({ length: 156 }, (_, i) => ({
+        printKey: `nc:s1-${i}`,
+        rarity: "commune",
+      })),
+      ...Array.from({ length: 28 }, (_, i) => ({
+        printKey: `nc:s1-h${i}`,
+        rarity: "holo",
+      })),
+    ];
+    const rates = specificPacksPerHitByPrint({ profile, pool });
+    /* 7 tirages communs / sachet, 156 communes → 156 / 7 ≈ 22,3 sachets */
+    expect(rates.get("nc:s1-0")).toBeCloseTo(156 / 7, 5);
+    expect(rates.get("nc:s1-h0")).toBe(28);
+    expect(rates.size).toBe(184);
+  });
+
+  it("Pokémon: Common et Commune comptent dans le même pool", () => {
+    const profile = resolveBoosterComposition(
+      pokemonComposition as BoosterCompositionFile,
+    );
+    const pool = [
+      ...Array.from({ length: 40 }, (_, i) => ({
+        printKey: `pk:c${i}`,
+        rarity: "Common",
+      })),
+      ...Array.from({ length: 40 }, (_, i) => ({
+        printKey: `pk:cf${i}`,
+        rarity: "Commune",
+      })),
+    ];
+    const rates = specificPacksPerHitByPrint({ profile, pool });
+    expect(rates.get("pk:c0")).toBeDefined();
+    expect(rates.get("pk:c0")).toBe(rates.get("pk:cf0"));
+    /* N_r = 80, pas 40 : les deux graphies forment un seul pool. */
+    const commonSlot = profile.slots!.find((s) => s.id === "common")!;
+    expect(rates.get("pk:c0")).toBeCloseTo(80 / commonSlot.count, 5);
   });
 });
 

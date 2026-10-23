@@ -1131,11 +1131,13 @@
     "coffret-cadeau-balthazar-picsou": {
       "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box",
       "verifiedAt": "2026-08-26",
-      "notes": "1 promo Scrooge S.H.U.S.H. Agent (glimmer) + 5 boosters × 12.",
+      "notes": "1 promo Scrooge S.H.U.S.H. Agent (glimmer) + 5 boosters multi-sets (tuiles boutique ≠ mix figé). packsBySet null : ne pas projeter la loterie sur Archazia/etc.",
       "packsContained": 5,
+      "packsBySet": null,
       "behavior": "mixed_bundle",
       "randomPoolScope": "none",
       "cardsPerPack": null,
+      "packComposition": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -1145,11 +1147,13 @@
     "coffret-cadeau-fabuleux-elsa": {
       "source": "https://bleedingcool.com/collectibles/new-disney-lorcana-fabled-gift-sets-coming-soon-from-ravensburger/",
       "verifiedAt": "2026-08-26",
-      "notes": "1 promo Elsa The Fifth Spirit (glimmer) + 5 boosters random multi-sets.",
+      "notes": "1 promo Elsa The Fifth Spirit (glimmer) + 5 boosters random multi-sets. packsBySet null (tuiles boutique).",
       "packsContained": 5,
+      "packsBySet": null,
       "behavior": "mixed_bundle",
       "randomPoolScope": "none",
       "cardsPerPack": null,
+      "packComposition": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -1159,11 +1163,13 @@
     "coffret-cadeau-l-ile-d-archazia-lilo-et-stitch": {
       "source": "https://www.ravensburger.us/en-US/products/disney-lorcana/gift-sets/disney-lorcana-tcg-lilo-gift-box-11098517",
       "verifiedAt": "2026-08-26",
-      "notes": "1 promo Lilo Escape Artist (glimmer) + 5 boosters assortis sets 2–6 (pas un seul set).",
+      "notes": "1 promo Lilo Escape Artist (glimmer) + 5 boosters assortis sets 2–6 (pas un seul set). packsBySet null.",
       "packsContained": 5,
+      "packsBySet": null,
       "behavior": "mixed_bundle",
       "randomPoolScope": "none",
       "cardsPerPack": null,
+      "packComposition": "none",
       "contentsKnown": true,
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
@@ -1744,7 +1750,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:10-36-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "scrooge-mcduck-gift-box-collector_box-en": {
       "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box-en ← coffret-cadeau-balthazar-picsou)",
@@ -1758,7 +1766,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:10-36-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "scrooge-mcduck-gift-box-collector_box-de": {
       "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box-de ← coffret-cadeau-balthazar-picsou)",
@@ -1772,7 +1782,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:10-36-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "scrooge-mcduck-gift-box-collector_box-it": {
       "source": "https://www.disneylorcana.com/en-US/product/scrooge-mcduck-gift-box (alias locale scrooge-mcduck-gift-box-collector_box-it ← coffret-cadeau-balthazar-picsou)",
@@ -1786,7 +1798,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:10-36-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "elsa-gift-box-collector_box-en": {
       "source": "https://www.disneylorcana.com/en-GB/product/elsa-gift-box (+ bleedingcool early look; alias ← coffret-cadeau-fabuleux-elsa)",
@@ -1800,7 +1814,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:5-6-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "elsa-gift-box-collector_box-de": {
       "source": "https://bleedingcool.com/collectibles/new-disney-lorcana-fabled-gift-sets-coming-soon-from-ravensburger/ (alias locale elsa-gift-box-collector_box-de ← coffret-cadeau-fabuleux-elsa)",
@@ -1814,7 +1830,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:5-6-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "elsa-gift-box-collector_box-it": {
       "source": "https://bleedingcool.com/collectibles/new-disney-lorcana-fabled-gift-sets-coming-soon-from-ravensburger/ (alias locale elsa-gift-box-collector_box-it ← coffret-cadeau-fabuleux-elsa)",
@@ -1828,7 +1846,9 @@
       "containsPrintsIsPreview": false,
       "guaranteedPrintKeys": [
         "lorcana:5-6-p3"
-      ]
+      ],
+      "packsBySet": null,
+      "packComposition": "none"
     },
     "great-hunny-rescue-quest-en": {
       "source": "https://www.disneylorcana.com/en-GB/product/great-hunny-rescue + TCGplayer early look",

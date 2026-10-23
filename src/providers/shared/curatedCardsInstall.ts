@@ -8,16 +8,19 @@
  * of the tree and is not copied.
  */
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   statSync,
   unlinkSync,
 } from "node:fs";
 import path from "node:path";
 
-import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
+import {
+  writeBufferIfChanged,
+  writeLosslessWebpFile,
+} from "@/lib/media/losslessWebp";
 
 /** Pack/set sleeve — `back.webp`, locale `back.fr.*`, tier `back.ur.*` (Kayou). */
 const BACK_FILE = /^back(?:\.([a-z0-9][a-z0-9-]*))?\.(webp|png|jpe?g)$/i;
@@ -154,7 +157,7 @@ function unlinkLegacySiblings(destPath: string): void {
 async function writeBackWebp(src: string, dest: string): Promise<void> {
   mkdirSync(path.dirname(dest), { recursive: true });
   if (/\.webp$/i.test(src)) {
-    copyFileSync(src, dest);
+    writeBufferIfChanged(dest, readFileSync(src));
     return;
   }
   await writeLosslessWebpFile(src, dest);

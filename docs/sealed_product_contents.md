@@ -3,6 +3,9 @@
 Pour le conseil d'achat (« singles vs booster vs display »), **chaque** SKU de
 `products-index.json` doit décrire ce qu'il contient. Absent = non vérifié.
 
+Quatre faits catalogue au même rang : **contenu** (quantité / garanties / pool),
+**composition de sachet** (slots C/U/R/foil + taux), **art**, **prix**.
+
 ## Modèle : arbre imbriqué (tous TCGs)
 
 Tout SKU scellé est une **composition** de trois sortes de nœuds, éventuellement
@@ -77,6 +80,7 @@ réécrits via `rewriteSealedProductsIndex`.
 | Champ | Sens | Exemple |
 | --- | --- | --- |
 | `cardsPerPack` | Cartes dans **un** sachet / unité d'ouverture | Lorcana booster nommé « 12 cartes » → `12` |
+| `packComposition` | Grille de sachet **de ce SKU** (slots + `rarityHits`) | Booster set : 6C/3U/2Rare+/1foil ; collector = autre objet ; `null` = non vérifié ; `"none"` = pas de loterie |
 | `packsContained` | Sachets dans **ce** produit | `display-24-boosters-…` → `24` ; booster → `1` |
 | `packsBySet` | Sachets **par** extension (coffret multi-séries) | Coffret Métal → `{ "s1": 1, "s2": 1 }` ; sans ça un SKU à `setId` null n'entre dans aucun conseil d'achat |
 | `guaranteeSets` | Extensions où les **garanties** comptent | Coffret Métal → `["s4", "promo"]` — évite qu'un reprint catalogue accroche une autre série |
@@ -87,6 +91,25 @@ réécrits via `rewriteSealedProductsIndex`.
 
 `declaredCardCount` (fiche boutique) **n'est pas** `cardsPerPack` : chez
 lorcards c'est souvent la taille du **set** (420), pas du sachet.
+
+### Composition de sachet (`packComposition`) — fait SKU
+
+Pas un héritage « set → tous les boosters » : un collector ou Jumpstart du
+même chapitre a une autre grille. Le fichier
+`curated/booster-composition.json` (templates `default` / `bySet`) est une
+**graine** : à `mergeCuratedSealedContents`, on **copie** slots + `rarityHits`
+sur chaque SKU loterie encore `null`. Ensuite le SKU est la source de vérité.
+
+| Valeur | Sens |
+| --- | --- |
+| `null` / absent | Non vérifié — conseil d'achat indéterminé pour ce produit |
+| `"none"` | Pas de loterie sachet (deck known, ephemera) |
+| `{ slots, rarityHits, provenance, … }` | Grille attestée de **ce** SKU |
+
+Un **display / trove / multipack** n'invente pas de slots : au conseil, on
+réutilise la `packComposition` du sachet enfant (même set / langue) ×
+`packsContained`. Voir `withContainerPackCompositions` /
+`sealedProductFromLegacy`.
 
 ## Comportements × couches (raccourcis legacy)
 

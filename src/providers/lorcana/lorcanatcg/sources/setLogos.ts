@@ -181,7 +181,15 @@ export function loadLorcanaSetLogoIndex(
   }
   const staging = readIndexFile(lorcanaSetLogoCachePath());
   if (staging) {
-    persistLorcanaSetLogoIndex(staging);
+    /*
+      Migrate staging → sqlite when possible. A malformed catalog.sqlite must
+      not abort sealed-product loads (checklist buy advice returned []).
+    */
+    try {
+      persistLorcanaSetLogoIndex(staging);
+    } catch {
+      memory = { file: SQLITE_MEMORY_FILE, index: staging };
+    }
     return staging;
   }
   memory = null;

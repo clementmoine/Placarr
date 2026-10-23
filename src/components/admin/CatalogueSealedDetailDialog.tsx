@@ -27,6 +27,7 @@ import {
   formatSealedStructureUnitLabel,
 } from "@/lib/admin/sealedContentsLabels";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
+import { sealedSkuNeedsPackComposition } from "@/providers/shared/sealedProducts/packCompositionTypes";
 import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
 import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
 
@@ -260,6 +261,40 @@ export function CatalogueSealedDetailDialog({
                     fr,
                   )}
                 </p>
+                {detail.packComposition === "none" ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    {fr
+                      ? "Composition sachet : aucune (pas de loterie)"
+                      : "Pack composition: none (no lottery)"}
+                  </p>
+                ) : detail.packComposition != null &&
+                  typeof detail.packComposition === "object" ? (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-medium text-foreground">
+                      {fr ? "Composition sachet" : "Pack composition"}
+                      {detail.packComposition.provenance
+                        ? ` · ${detail.packComposition.provenance}`
+                        : ""}
+                    </p>
+                    <ul className="list-inside list-disc text-[11px] text-muted-foreground">
+                      {detail.packComposition.slots.map((slot) => (
+                        <li key={slot.id}>
+                          {slot.count}× {slot.id}
+                          {slot.rarities.length
+                            ? ` (${slot.rarities.join(", ")})`
+                            : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : sealedSkuNeedsPackComposition(detail) &&
+                  detail.behavior !== "pack_container" ? (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                    {fr
+                      ? "Composition sachet non renseignée"
+                      : "Pack composition missing"}
+                  </p>
+                ) : null}
                 {detail.contentsKnown &&
                 detail.randomPoolScope === "set" &&
                 detail.setCode &&

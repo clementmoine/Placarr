@@ -925,6 +925,67 @@ describe("projectBuyProductsBySet", () => {
     expect(projectBuyProductForSet(tin, "s5", printSetIds)).toBeNull();
   });
 
+  it("does not attach a multi-set gift box to Archazia via shop booster tiles", () => {
+    const picsou = {
+      slug: "coffret-cadeau-balthazar-picsou",
+      name: "Coffret Cadeau - Balthazar Picsou",
+      kind: "collector_box",
+      behavior: "mixed_bundle" as const,
+      setId: "10",
+      prints: ["lorcana:10-36-p3"],
+      printsArePreview: false,
+      packsInContainer: 5,
+      /* Après fix curated : pas de packsBySet inventé depuis les tuiles. */
+      packsBySet: null as Record<string, number> | null,
+      guaranteeSets: ["10"],
+      packComposition: "none" as const,
+      priceCents: 399,
+    };
+    const memberships = new Map([
+      ["lorcana:10-36-p3", "10"],
+    ]);
+    expect(projectBuyProductForSet(picsou, "7", memberships)).toBeNull();
+    expect(projectBuyProductForSet(picsou, "10", memberships)).toMatchObject({
+      setId: "10",
+      prints: ["lorcana:10-36-p3"],
+      /* Sachets opaques : promo seulement, pas 5× loterie. */
+      packsInContainer: 0,
+    });
+    /* Régression : l'ancien packsBySet {7:2,…} accrochait Archazia. */
+    const legacyInvented = {
+      ...picsou,
+      packsBySet: { "6": 1, "7": 2, "8": 1, "10": 1 },
+    };
+    expect(projectBuyProductForSet(legacyInvented, "7", memberships)).toMatchObject({
+      packsInContainer: 2,
+      prints: [],
+    });
+  });
+
+  it("does not treat Elsa gift box as 5 Fabled lottery packs", () => {
+    const elsa = {
+      slug: "coffret-cadeau-fabuleux-elsa",
+      name: "Coffret Cadeau - Elsa",
+      kind: "collector_box",
+      behavior: "mixed_bundle" as const,
+      setId: "9",
+      prints: ["lorcana:5-6-p3"],
+      printsArePreview: false,
+      packsInContainer: 5,
+      packsBySet: null as Record<string, number> | null,
+      guaranteeSets: ["5"],
+      packComposition: "none" as const,
+      priceCents: 1500,
+    };
+    const memberships = new Map([["lorcana:5-6-p3", "5"]]);
+    expect(projectBuyProductForSet(elsa, "9", memberships)).toBeNull();
+    expect(projectBuyProductForSet(elsa, "5", memberships)).toMatchObject({
+      setId: "5",
+      prints: ["lorcana:5-6-p3"],
+      packsInContainer: 0,
+    });
+  });
+
   it("does not recommend an S1 starter to complete S4 via shared reprints", () => {
     const starter = {
       slug: "starter-maitre-hokage",

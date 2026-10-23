@@ -240,10 +240,15 @@
           "id": "mkt-lbc-te34",
           "url": "https://www.leboncoin.fr/ad/collection/3205143041",
           "note": "2026-08-13 — titre « Carte promo La grande cataracte » ; desc TE-34 / 2 shuriken ; photo foil TECHNIQUE + marque Promo / 2★"
+        },
+        {
+          "id": "user-scan-te34-pr-fr",
+          "url": "file:///Users/clement.moine/Downloads/TE-34%20PR%20FR.png",
+          "note": "2026-10-21 — scan FR 350×495 → curated/cards/fr/promo/te0034-promo/source.png (PROMO CARD + 2★)"
         }
       ],
       "shuriken": 2,
-      "notes": "Vinted + LBC: TE-34 promo 2★"
+      "notes": "Vinted + LBC + scan user: TE-34 promo 2★"
     },
     {
       "number": "te114",

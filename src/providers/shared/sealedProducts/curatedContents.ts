@@ -19,6 +19,14 @@ import path from "node:path";
 
 import { packDataDir } from "@/lib/packPaths";
 
+import {
+  profileToSkuPackComposition,
+  readBoosterCompositionFile,
+  resolveBoosterComposition,
+  sealedSkuNeedsPackComposition,
+  type BoosterCompositionProfile,
+  type PackCompositionField,
+} from "./boosterComposition";
 import type {
   RandomPoolScope,
   SealedPrintLink,
@@ -94,6 +102,11 @@ export type CuratedSealedSku = {
   }[];
   randomPoolScope?: RandomPoolScope;
   randomPoolPrintKeys?: readonly string[];
+  /**
+   * Composition sachet de **ce** SKU. `"none"` / objet écrasent ; `null` dans
+   * le patch = pas d'avis (ne pas effacer une graine byKind).
+   */
+  packComposition?: PackCompositionField;
   /** Quand le produit est un starter + booster, etc. */
   behavior?: SealedProductEntry["behavior"];
   contentsKnown?: boolean;
@@ -287,6 +300,10 @@ function applyPatch(
         : entry.structureUnits,
     randomPoolPrints: pool ?? entry.randomPoolPrints,
     randomPoolScope: patch.randomPoolScope ?? entry.randomPoolScope,
+    packComposition:
+      patch.packComposition !== undefined && patch.packComposition !== null
+        ? patch.packComposition
+        : entry.packComposition,
     behavior: patch.behavior ?? entry.behavior,
     // Explicit curated flag wins — partial exclusives (S5 posters) keep
     // contentsKnown=false even with guaranteedPrints filled.
@@ -386,35 +403,91 @@ function stubSealedEntry(_packId: string, slug: string): SealedProductEntry {
 }
 
 /**
+ * Applique un profil graine sur un SKU encore `null`.
+ * Ne touche pas `"none"` / objet déjà présent ; ignore les containers.
+ */
+export function seedPackCompositionFromProfile(
+  entry: SealedProductEntry,
+  profile: BoosterCompositionProfile,
+): SealedProductEntry {
+  if (entry.packComposition != null) return entry;
+  if (!sealedSkuNeedsPackComposition(entry)) return entry;
+  if (entry.behavior === "pack_container") return entry;
+  /*
+    mixed_bundle opaque : N sachets sans set unique (gift box) ou déjà un
+    packsBySet multi-séries — ne pas coller la grille d'un booster de set.
+    Starter ×1 sachet du catalogueSetId : OK (bySet vide, packsContained ≤ 1).
+  */
+  if (entry.behavior === "mixed_bundle") {
+    const bySetKeys = entry.packsBySet
+      ? Object.keys(entry.packsBySet).length
+      : 0;
+    if (bySetKeys >= 2) return entry;
+    if (bySetKeys === 0 && (entry.packsContained ?? 0) > 1) return entry;
+  }
+  if (!(profile.slots && profile.slots.length > 0)) return entry;
+  return {
+    ...entry,
+    packComposition: profileToSkuPackComposition(profile),
+  };
+}
+
+/**
+ * Graine `data/…/booster-composition.json` → objet SKU si encore `null`.
+ */
+export function seedPackCompositionFromFile(
+  entry: SealedProductEntry,
+  packId: string,
+): SealedProductEntry {
+  if (entry.packComposition != null) return entry;
+  const file = readBoosterCompositionFile(packId);
+  if (!file) return entry;
+  const setId = entry.catalogueSetId ?? entry.setCode;
+  return seedPackCompositionFromProfile(
+    entry,
+    resolveBoosterComposition(file, setId),
+  );
+}
+
+/**
  * Applique le ledger curated sur un index déjà projeté depuis la boutique.
  * SKU dédié gagne sur `byKind`.
  *
  * SKUs curated with a known inventory that are **absent** from the index are
  * minted (sqlite sometimes drops FR Naruto starters while curated still lists
  * them) — otherwise checklist / buy advice cannot attach deck cards.
+ *
+ * Ensuite : graine composition depuis `booster-composition.json` si le SKU
+ * loterie n'a toujours pas de `packComposition`.
  */
 export function mergeCuratedSealedContents(
   packId: string,
   products: Record<string, SealedProductEntry>,
 ): Record<string, SealedProductEntry> {
   const curated = readCuratedSealedContents(packId);
-  if (!curated) return products;
   const out: Record<string, SealedProductEntry> = {};
   const seenSlugs = new Set<string>();
   for (const [key, entry] of Object.entries(products)) {
-    const bySku = curated.skus[entry.slug];
-    const byKind = curated.byKind?.[entry.kind];
     let next = entry;
-    if (byKind) next = applyPatch(next, byKind);
-    if (bySku) next = applyPatch(next, bySku);
-    out[key] = next;
+    if (curated) {
+      const bySku = curated.skus[entry.slug];
+      const byKind = curated.byKind?.[entry.kind];
+      if (byKind) next = applyPatch(next, byKind);
+      if (bySku) next = applyPatch(next, bySku);
+    }
+    out[key] = seedPackCompositionFromFile(next, packId);
     seenSlugs.add(entry.slug);
   }
-  for (const [slug, patch] of Object.entries(curated.skus)) {
-    if (seenSlugs.has(slug)) continue;
-    if (!curatedHasInventory(patch)) continue;
-    const key = sealedProductKey(packId, slug);
-    out[key] = applyPatch(stubSealedEntry(packId, slug), patch);
+  if (curated) {
+    for (const [slug, patch] of Object.entries(curated.skus)) {
+      if (seenSlugs.has(slug)) continue;
+      if (!curatedHasInventory(patch)) continue;
+      const key = sealedProductKey(packId, slug);
+      out[key] = seedPackCompositionFromFile(
+        applyPatch(stubSealedEntry(packId, slug), patch),
+        packId,
+      );
+    }
   }
   return out;
 }

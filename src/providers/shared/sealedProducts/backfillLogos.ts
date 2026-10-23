@@ -100,6 +100,76 @@ function copyShopIdentityFields(
 }
 
 /**
+ * Même rôle retail (display 24 set 9 FR ↔ EN) — au-delà du seul suffixe locale.
+ * `packsContained` vide = coffret / quest sans sachets comptés.
+ */
+export function sealedRetailRoleSignature(
+  entry: SealedProductEntry,
+): string | null {
+  const setId = (entry.catalogueSetId ?? entry.setCode)?.trim().toLowerCase();
+  if (!setId) return null;
+  const packs =
+    entry.packsContained != null && entry.packsContained > 0
+      ? String(Math.floor(entry.packsContained))
+      : "";
+  return [entry.kind, entry.behavior, setId, packs].join("\0");
+}
+
+const CONTAINER_KINDS_FOR_BOOSTER_ESTIMATE = new Set([
+  "display",
+  "trove",
+  "blister_case",
+  "multipack",
+  "blister",
+  "etb",
+  "tin",
+  "special",
+  "collector_box",
+  "coffret",
+  "prerelease",
+]);
+
+/**
+ * Display / ETB / trove / multipack sans prix boutique :
+ * min(booster du set) × packsContained.
+ * Borne basse structurelle pour le conseil d'achat — le booster frère est coté.
+ */
+function backfillContainerPricesFromBoosterUnit(
+  entries: readonly SealedProductEntry[],
+): number {
+  const boosterMinBySet = new Map<string, number>();
+  for (const entry of entries) {
+    if (entry.behavior !== "random_pack" && entry.kind !== "booster") continue;
+    const setId = (entry.catalogueSetId ?? entry.setCode)?.trim().toLowerCase();
+    if (!setId) continue;
+    const price = entry.priceCents;
+    if (typeof price !== "number" || !(price > 0)) continue;
+    const prev = boosterMinBySet.get(setId);
+    if (prev == null || price < prev) boosterMinBySet.set(setId, price);
+  }
+  if (boosterMinBySet.size === 0) return 0;
+
+  let filled = 0;
+  for (const entry of entries) {
+    if (typeof entry.priceCents === "number" && entry.priceCents > 0) continue;
+    const packs = entry.packsContained;
+    if (packs == null || packs <= 1) continue;
+    const isContainer =
+      entry.behavior === "pack_container" ||
+      entry.behavior === "mixed_bundle" ||
+      CONTAINER_KINDS_FOR_BOOSTER_ESTIMATE.has(entry.kind);
+    if (!isContainer) continue;
+    const setId = (entry.catalogueSetId ?? entry.setCode)?.trim().toLowerCase();
+    if (!setId) continue;
+    const unit = boosterMinBySet.get(setId);
+    if (unit == null) continue;
+    entry.priceCents = unit * Math.floor(packs);
+    filled += 1;
+  }
+  return filled;
+}
+
+/**
  * Boutique `WHW` → catalogue `10` quand un seul mapping est attesté sur l'index.
  */
 export function boutiqueCodeToCatalogueSetId(
@@ -359,5 +429,59 @@ export function backfillSealedProductSetLogos(
     }
   }
 
+  /*
+    Après résolution des catalogueSetId : copier les prix entre rôles retail
+    (display 24 set N FR → EN), puis estimer display/trove = min booster × N.
+  */
+  const byRetailRole = new Map<string, SealedProductEntry[]>();
+  for (const entry of entries) {
+    const role = sealedRetailRoleSignature(entry);
+    if (!role) continue;
+    const list = byRetailRole.get(role) ?? [];
+    list.push(entry);
+    byRetailRole.set(role, list);
+  }
+  for (const group of byRetailRole.values()) {
+    for (const entry of group) {
+      let touched = false;
+      for (const donor of group) {
+        if (donor === entry) continue;
+        if (copyShopIdentityFields(donor, entry)) touched = true;
+      }
+      if (touched) filled += 1;
+    }
+  }
+  filled += backfillContainerPricesFromBoosterUnit(entries);
+  filled += backfillPricesFromKnownSlugAliases(entries);
+
+  return filled;
+}
+
+/**
+ * Site officiel ↔ fiche lorcards (même boîte, slugs différents).
+ * Clé = famille de slug (suffixe locale retiré).
+ */
+const SEALED_PRICE_SLUG_ALIASES: Readonly<Record<string, string>> = {
+  "gateway-collector_box": "coffret-prelude-pour-apprendre-a-jouer",
+  "2-player-starter-set-collector_box":
+    "coffret-de-demarrage-2-joueurs-set-12-contrees-inconnues",
+};
+
+function backfillPricesFromKnownSlugAliases(
+  entries: readonly SealedProductEntry[],
+): number {
+  const bySlug = new Map(
+    entries.map((entry) => [entry.slug.trim().toLowerCase(), entry] as const),
+  );
+  let filled = 0;
+  for (const entry of entries) {
+    if (typeof entry.priceCents === "number" && entry.priceCents > 0) continue;
+    const family = sealedProductSlugFamily(entry.slug);
+    const donorSlug = SEALED_PRICE_SLUG_ALIASES[family];
+    if (!donorSlug) continue;
+    const donor = bySlug.get(donorSlug);
+    if (!donor) continue;
+    if (copyShopIdentityFields(donor, entry)) filled += 1;
+  }
   return filled;
 }

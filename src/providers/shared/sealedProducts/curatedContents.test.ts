@@ -7,8 +7,12 @@ import {
   guessSealedKindFromSlug,
   guessSealedSetCodeFromSlug,
   mergeCuratedSealedContents,
+  seedPackCompositionFromProfile,
 } from "./curatedContents";
 import type { SealedProductEntry } from "./indexFormat";
+import { isSkuPackComposition } from "./boosterComposition";
+import lorcanaComposition from "@/providers/lorcana/lorcanajson/curated/booster-composition.json";
+import type { BoosterCompositionFile } from "./boosterComposition";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -58,7 +62,99 @@ function entry(partial: Partial<SealedProductEntry> & { slug: string }): SealedP
   };
 }
 
+describe("seedPackCompositionFromProfile", () => {
+  it("copies slots onto a random_pack SKU still null", () => {
+    const file = lorcanaComposition as BoosterCompositionFile;
+    const seeded = seedPackCompositionFromProfile(
+      entry({ slug: "booster-set-3", catalogueSetId: "3" }),
+      file.default,
+    );
+    expect(isSkuPackComposition(seeded.packComposition)).toBe(true);
+    if (!isSkuPackComposition(seeded.packComposition)) return;
+    expect(seeded.packComposition.slots.length).toBeGreaterThan(0);
+  });
+
+  it("does not overwrite an explicit curated composition", () => {
+    const file = lorcanaComposition as BoosterCompositionFile;
+    const custom = {
+      ...file.default,
+      slots: [
+        {
+          id: "only",
+          count: 1,
+          kind: "dedicated" as const,
+          rarities: ["Common"],
+        },
+      ],
+    };
+    const first = seedPackCompositionFromProfile(
+      entry({
+        slug: "collector",
+        packComposition: {
+          slots: custom.slots,
+          rarityHits: {},
+          provenance: "official" as const,
+        },
+      }),
+      file.default,
+    );
+    expect(first.packComposition).toMatchObject({
+      slots: [{ id: "only", count: 1 }],
+    });
+  });
+
+  it("does not seed a gift-box mixed_bundle with opaque multi-set packs", () => {
+    const file = lorcanaComposition as BoosterCompositionFile;
+    const gift = seedPackCompositionFromProfile(
+      entry({
+        slug: "coffret-cadeau-balthazar-picsou",
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        packsContained: 5,
+        packsBySet: null,
+        catalogueSetId: "10",
+      }),
+      file.default,
+    );
+    expect(gift.packComposition == null).toBe(true);
+  });
+});
+
 describe("mergeCuratedSealedContents", () => {
+  it("seeds packComposition from booster-composition.json on disk", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "curated-sealed-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const dir = path.join(root, "lorcana", "curated");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      path.join(dir, "products-contents.json"),
+      `${JSON.stringify({
+        version: 1,
+        pack: "lorcana",
+        updatedAt: "2026-10-20",
+        byKind: {
+          booster: {
+            source: "test",
+            verifiedAt: "2026-10-20",
+            cardsPerPack: 12,
+            packsContained: 1,
+            randomPoolScope: "set",
+          },
+        },
+        skus: {},
+      })}\n`,
+    );
+    writeFileSync(
+      path.join(dir, "booster-composition.json"),
+      `${JSON.stringify(lorcanaComposition)}\n`,
+    );
+    const merged = mergeCuratedSealedContents("lorcana", {
+      a: entry({ slug: "booster-inklands", catalogueSetId: "3" }),
+    });
+    expect(isSkuPackComposition(merged.a?.packComposition)).toBe(true);
+  });
+
   it("does not let SKU cardsPerPack:null wipe byKind pack size (Hyperia trove)", () => {
     stubPack("lorcana", {
       version: 1,

@@ -12,6 +12,7 @@ import {
 import { toContentsTree } from "@/core/collect/sealedContentsTree";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
+import type { PackCompositionField } from "@/providers/shared/sealedProducts/packCompositionTypes";
 import {
   type ProductsIndexV1,
   type SealedPrintLink,
@@ -99,6 +100,11 @@ export type CatalogueSealedDetail = CatalogueSealedRow & {
   packsContained: number | null;
   packsBySet: Record<string, number> | null;
   setCardCount: number | null;
+  /**
+   * Composition de sachet (slots) — fait SKU. `null` = non vérifié ;
+   * `"none"` = pas de loterie ; objet = grille attestée.
+   */
+  packComposition: PackCompositionField;
   randomPoolScope: RandomPoolScope;
   /** SKUs scellés inclus (starters / boosters d'un pack multi-produits). */
   guaranteedProducts: CatalogueSealedContainedProduct[];
@@ -626,6 +632,7 @@ export async function getCatalogueProductDetailAsync(
     packsContained: entry.packsContained,
     packsBySet: entry.packsBySet ?? null,
     setCardCount: entry.setCardCount,
+    packComposition: entry.packComposition ?? null,
     randomPoolScope: entry.randomPoolScope,
     guaranteedProducts: buildGuaranteedProducts(corpus, entry, bySlug),
     contentsRandom: buildContentsRandom(entry),
@@ -657,6 +664,7 @@ export function getCatalogueProductDetail(
     packsContained: entry.packsContained,
     packsBySet: entry.packsBySet ?? null,
     setCardCount: entry.setCardCount,
+    packComposition: entry.packComposition ?? null,
     randomPoolScope: entry.randomPoolScope,
     guaranteedProducts: buildGuaranteedProducts(corpus, entry, bySlug),
     contentsRandom: buildContentsRandom(entry),

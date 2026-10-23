@@ -371,6 +371,78 @@ describe("writeNarutoCcgIndex", () => {
     expect(frTitles).toEqual(["naruto:s2-ta0090"]);
   });
 
+  it("keeps FR title and art for TE-191 on S4 (PDF checklist hole)", () => {
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s1-te0191",
+          setCode: "s1",
+          number: "te0191",
+          cardType: "te",
+        },
+        {
+          printKey: "naruto:s4-te0191",
+          setCode: "s4",
+          number: "te0191",
+          cardType: "te",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:s1-te0191",
+          lang: "fr",
+          fullName: "Les lames de chakra",
+        },
+        {
+          printKey: "naruto:s4-te0191",
+          lang: "fr",
+          fullName: "Les lames de chakra",
+        },
+        {
+          printKey: "naruto:s4-te0191",
+          lang: "it",
+          fullName: "Tirapugni a lama",
+        },
+      ],
+      assets: [
+        {
+          printKey: "naruto:s1-te0191",
+          lang: "fr",
+          art: "art.rakuten.jpg",
+        },
+        {
+          printKey: "naruto:s4-te0191",
+          lang: "fr",
+          art: "art.carddass.jpg",
+        },
+      ],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const frTitles = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey, full_name AS name FROM print_titles WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string; name: string }[]
+    );
+    const frArts = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey, art FROM print_assets WHERE lang='fr' ORDER BY print_key`,
+        )
+        .all() as { printKey: string; art: string }[]
+    );
+    db.close();
+    expect(frTitles).toEqual([
+      { printKey: "naruto:s4-te0191", name: "Les lames de chakra" },
+    ]);
+    expect(frArts).toEqual([
+      { printKey: "naruto:s4-te0191", art: "art.carddass.jpg" },
+    ]);
+  });
+
   it("keeps JA s1 print but does not fan FR title onto it (NI-316)", () => {
     /*
       `ja/s1/ni0316` mints s1 for JA; FR scan lives under fr/s6. Expanding every

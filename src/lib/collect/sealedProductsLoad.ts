@@ -14,10 +14,15 @@ import {
 import type {
   ContainmentProduct,
 } from "@/core/collect/sealedContainment";
+import { existsSync, readFileSync } from "node:fs";
+
+import { packProductsIndexPath } from "@/lib/packPaths";
+import { mergeCuratedSealedContents } from "@/providers/shared/sealedProducts/curatedContents";
 import type {
   SealedProductEntry,
   SealedPrintLink,
 } from "@/providers/shared/sealedProducts/indexFormat";
+import { isProductsIndexV1 } from "@/providers/shared/sealedProducts/indexFormat";
 import {
   sealedBehaviorForKind,
   withRefinedSealedKind,
@@ -82,7 +87,28 @@ export function loadSealedProductEntries(
     }
     return dedupeSealedEntriesBySlug(refined);
   } catch {
-    return [];
+    /*
+      Full load can fail (ex. malformed pack sqlite during logo migrate).
+      Fall back to JSON projection + curated merge so buy advice keeps sealed
+      options instead of silently returning [].
+    */
+    try {
+      const file = packProductsIndexPath(pack);
+      if (!existsSync(file)) return [];
+      const raw: unknown = JSON.parse(readFileSync(file, "utf8"));
+      if (!isProductsIndexV1(raw)) return [];
+      const products = mergeCuratedSealedContents(pack, raw.products);
+      const refined: Record<string, SealedProductEntry> = {};
+      for (const [key, entry] of Object.entries(products)) {
+        refined[key] = withRefinedSealedKind({
+          ...entry,
+          behavior: entry.behavior ?? sealedBehaviorForKind(entry.kind),
+        });
+      }
+      return dedupeSealedEntriesBySlug(refined);
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -128,6 +154,9 @@ export function toBuyProduct(entry: SealedProductEntry): BuyProduct {
     ...(guaranteedProducts.length > 0 ? { guaranteedProducts } : {}),
     ...(entry.structureUnits?.length
       ? { structureUnits: entry.structureUnits }
+      : {}),
+    ...(entry.packComposition !== undefined
+      ? { packComposition: entry.packComposition }
       : {}),
   };
 }

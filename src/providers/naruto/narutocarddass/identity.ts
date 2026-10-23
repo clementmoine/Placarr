@@ -1802,14 +1802,36 @@ function loadNumbersBySet(): Map<string, string[]> {
 export function resetOfficialFrChecklistCache(): void {
   numbersBySet = null;
   frUnpublishedHtmlNumbers = null;
+  frAbsentFromPrintedNumbers = null;
 }
 
 /**
  * Site HTML href only, never on FR paper checklist (ex. TA-090 « Le don de la
  * copie »). Kept in the ledger as unreleased — not a collectible checklist slot.
- * `absentFromPrintedChecklists` (real S5 MIJ inserts) are excluded.
+ * `absentFromPrintedChecklists` (real S5 MIJ inserts / TE-191 S4 PDF hole) are
+ * excluded — those are printed cardboard, not phantoms.
  */
 let frUnpublishedHtmlNumbers: Set<string> | null = null;
+let frAbsentFromPrintedNumbers: Set<string> | null = null;
+
+function loadFrAbsentFromPrintedNumbers(): Set<string> {
+  if (frAbsentFromPrintedNumbers) return frAbsentFromPrintedNumbers;
+  const out = new Set<string>();
+  try {
+    const checklist = JSON.parse(
+      readFileSync(checklistPath(), "utf8"),
+    ) as {
+      absentFromPrintedChecklists?: { cards?: readonly string[] };
+    };
+    for (const id of checklist.absentFromPrintedChecklists?.cards ?? []) {
+      for (const form of checklistIdToNumberForms(id)) out.add(form);
+    }
+  } catch {
+    /* curated files missing in unit stubs */
+  }
+  frAbsentFromPrintedNumbers = out;
+  return out;
+}
 
 function loadFrUnpublishedHtmlNumbers(): Set<string> {
   if (frUnpublishedHtmlNumbers) return frUnpublishedHtmlNumbers;
@@ -1821,16 +1843,7 @@ function loadFrUnpublishedHtmlNumbers(): Set<string> {
         "utf8",
       ),
     ) as { refs?: Record<string, string[]> };
-    const checklist = JSON.parse(
-      readFileSync(checklistPath(), "utf8"),
-    ) as {
-      absentFromPrintedChecklists?: { cards?: readonly string[] };
-    };
-    const realButAbsent = new Set(
-      (checklist.absentFromPrintedChecklists?.cards ?? []).flatMap((id) =>
-        checklistIdToNumberForms(id),
-      ),
-    );
+    const realButAbsent = loadFrAbsentFromPrintedNumbers();
     for (const raw of Object.keys(html.refs ?? {})) {
       const forms = checklistIdToNumberForms(raw);
       if (!forms.length) continue;
@@ -1845,6 +1858,19 @@ function loadFrUnpublishedHtmlNumbers(): Set<string> {
   }
   frUnpublishedHtmlNumbers = out;
   return out;
+}
+
+/**
+ * Real FR cardboard the S1–S5 paper PDFs omit (TE-191 S4 hole after TE-189;
+ * S5 MIJ inserts later parked on checklist chapter `s6`).
+ */
+export function isNarutoFrAbsentFromPrintedChecklistNumber(
+  raw: string,
+): boolean {
+  const base = (narutoRetailDiskNumber(raw) ?? raw).trim().toLowerCase();
+  if (!base) return false;
+  const absent = loadFrAbsentFromPrintedNumbers();
+  return checklistIdToNumberForms(base).some((f) => absent.has(f));
 }
 
 /** FR Carddass: HTML-only phantom, never printed on paper (TA-090 class). */

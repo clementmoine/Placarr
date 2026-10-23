@@ -46,6 +46,27 @@
       }
     ],
     "rarityHits": {
+      "Common": {
+        "packsPerHit": 0.1666666667,
+        "confidence": "official",
+        "source": "6 dedicated Common slots / pack (fiche Ravensburger)",
+        "notes": "packsPerHit = 1/6 : six tirages Common par sachet. Une commune précise ≈ (1/6)×N_Common.",
+        "aliases": ["Commune", "Gemeinsam", "Comune"]
+      },
+      "Uncommon": {
+        "packsPerHit": 0.3333333333,
+        "confidence": "official",
+        "source": "3 dedicated Uncommon slots / pack (fiche Ravensburger)",
+        "notes": "packsPerHit = 1/3 : trois tirages Uncommon par sachet.",
+        "aliases": ["Inhabituelle", "Ungewöhnlich", "Non comune"]
+      },
+      "Rare": {
+        "packsPerHit": 0.55,
+        "confidence": "community",
+        "source": "community openings — ~1,8 Rare / sachet (résidu slot Rare+ après SR/Legendary)",
+        "notes": "Slot shared Rare/SR/Legendary (×2). Pas officiel ; ordre de grandeur community.",
+        "aliases": ["Rare", "Selten", "Rara"]
+      },
       "Super Rare": {
         "packsPerHit": 2,
         "confidence": "community",

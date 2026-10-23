@@ -1,9 +1,4 @@
-import {
-  mkdtempSync,
-  mkdirSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -257,12 +252,16 @@ describe("catalogue sealed rows", () => {
           packsContained: 1,
           cardsPerPack: 12,
         }),
+        /*
+          Autre set : un booster frère du même set hériterait du prix
+          (`sealedRetailRoleSignature`) et ne serait plus « sans prix ».
+        */
         "lorcana::free": baseEntry({
           slug: "free",
           kind: "booster",
           behavior: "random_pack",
           name: "Free",
-          setCode: "TFC",
+          setCode: "ROF",
           priceCents: null,
           randomPoolScope: "set",
           packsContained: 1,
@@ -375,9 +374,7 @@ describe("catalogue sealed rows", () => {
           randomPoolScope: "set",
           declaredCardCount: 246,
           containsPrintsIsPreview: true,
-          prints: [
-            { name: "Tile", slug: "tile", ref: null, printKey: null },
-          ],
+          prints: [{ name: "Tile", slug: "tile", ref: null, printKey: null }],
         }),
       },
     };
@@ -539,9 +536,9 @@ describe("catalogue sealed rows", () => {
     expect(rows.filter((row) => row.contentsKnown).map((r) => r.slug)).toEqual([
       "starter",
     ]);
-    expect(rows.filter((row) => !row.contentsKnown).map((r) => r.slug)).toEqual([
-      "mystery",
-    ]);
+    expect(rows.filter((row) => !row.contentsKnown).map((r) => r.slug)).toEqual(
+      ["mystery"],
+    );
     // Qty sum of guarantees (2+3), not shop `prints.length`.
     expect(rows.find((r) => r.slug === "starter")?.printCount).toBe(5);
   });
@@ -610,7 +607,8 @@ describe("catalogue sealed rows", () => {
           kind: "deck",
           behavior: "known_bundle",
           name: "Starter Pays du Vent",
-          image: "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.webp",
+          image:
+            "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.webp",
           contentsKnown: true,
         }),
         "naruto/carddass::pack-decouverte": baseEntry({
@@ -641,7 +639,8 @@ describe("catalogue sealed rows", () => {
         slug: "starter-pays-du-vent",
         qty: 1,
         name: "Starter Pays du Vent",
-        image: "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.webp",
+        image:
+          "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.webp",
         contentsKnown: true,
         resolvable: true,
       }),
@@ -683,10 +682,7 @@ describe("catalogue sealed rows", () => {
       `${JSON.stringify(index, null, 2)}\n`,
     );
     resetCatalogueProductsCache();
-    const detail = getCatalogueProductDetail(
-      "lorcana",
-      "lorcana::display-24",
-    );
+    const detail = getCatalogueProductDetail("lorcana", "lorcana::display-24");
     expect(detail?.contentsRandom).toEqual([
       { packs: 24, cardsPerPack: 12, pool: "set" },
     ]);
@@ -714,7 +710,8 @@ describe("catalogue sealed rows", () => {
           kind: "booster",
           behavior: "random_pack",
           name: "Booster Série 1",
-          image: "/assets/naruto/carddass/products/booster-s1/fr/art.carddass.gif",
+          image:
+            "/assets/naruto/carddass/products/booster-s1/fr/art.carddass.gif",
           setCode: "s1",
         }),
         "naruto/carddass::tin-box": baseEntry({

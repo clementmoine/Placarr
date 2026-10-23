@@ -22,21 +22,29 @@ import {
   type ShelfChecklist,
 } from "@/core/collect/checklist";
 import {
-  buyOptionsForMissing,
   buyProductsForSet,
-  planSetCompletion,
   projectBuyProductsBySet,
+  sealedProductAllowed,
   sealedSourcesByPrint,
   singlesCostBreakdown,
-  type BuyOption,
+  withContainerPackCompositions,
   type BuyProduct,
-  type CompletionPlan,
   type SealedPrintSource,
 } from "@/core/collect/buyAdvice";
+import {
+  bestPackHitByPrint,
+  buildRequirements,
+  imputeRequirementPrices,
+  packsPerHit,
+  sealedSkusFromProducts,
+  solveBuyPlan,
+  type CompletionPlan,
+} from "@/core/collect/buyPlan";
 import { displayEstimatedCentsFromOffers } from "@/core/commerce/pricing/pricePipeline";
 import type { PriceObservation } from "@/core/commerce/pricing/priceTypes";
 import { normalizeVariantOptions } from "@/core/enrich/variants";
 import {
+  profileToSkuPackComposition,
   readBoosterCompositionFile,
   resolveBoosterComposition,
   specificPacksPerHitByPrint,
@@ -82,8 +90,12 @@ export type ChecklistSetAdvice = {
    * gift…), y compris déjà possédées. Absent = seulement le pool booster.
    */
   sealedSources: Record<string, SealedPrintSource[]>;
-  options: BuyOption[];
-  /** Singles (chase / fin de set) + fill scellé milieu de set si l'EV tient. */
+  /**
+   * Taux de tirage observé : `printKey` → « 1 sachet sur N » (meilleur
+   * sachet connu), possédées comprises. Absent = aucun taux.
+   */
+  packsPerHit: Record<string, number>;
+  /** Trois voies (singles / mixte / scellé) + recommandation. */
   plan: CompletionPlan;
 };
 
@@ -133,9 +145,7 @@ function providersForShelf(input: {
     input.games.size === 0
       ? candidates
       : candidates.filter((pack) =>
-          (pack.printGames ?? []).some((game: string) =>
-            input.games.has(game),
-          ),
+          (pack.printGames ?? []).some((game: string) => input.games.has(game)),
         );
   const scoped = byGame.length > 0 ? byGame : candidates;
   if (!input.catalogueIds || input.catalogueIds.size === 0) return scoped;
@@ -160,8 +170,7 @@ export function sealedProductModulesForShelf(input: {
   games: ReadonlySet<string>;
   catalogueIds: ReadonlySet<string>;
 }): ProviderModule[] {
-  const typeOk = (pack: ProviderModule) =>
-    pack.info.types.includes(input.type);
+  const typeOk = (pack: ProviderModule) => pack.info.types.includes(input.type);
 
   if (input.catalogueIds.size === 0) {
     return PROVIDER_MODULES.filter((pack) => {
@@ -200,10 +209,7 @@ export function sealedProductModulesForShelf(input: {
       continue;
     }
     if (!pack.catalog?.dataPack) continue;
-    if (
-      typeof pack.listPrintSets === "function" &&
-      !selectedNeedDataSibling
-    ) {
+    if (typeof pack.listPrintSets === "function" && !selectedNeedDataSibling) {
       continue;
     }
     if (!(pack.printGames ?? []).some((game) => selectedGames.has(game))) {
@@ -245,10 +251,7 @@ export async function cataloguesInShelf(
   const owners = new Set<string>();
   for (const pack of modules) {
     const sets = await Promise.resolve(
-      pack.listPrintSets?.(
-        pack.info.types[0] ?? "tcg",
-        language,
-      ) ?? [],
+      pack.listPrintSets?.(pack.info.types[0] ?? "tcg", language) ?? [],
     );
     for (const set of sets) {
       if (ownedSets.has(set.id.trim().toLowerCase())) {
@@ -512,7 +515,9 @@ export async function buildChecklistForShelf(input: {
       if (set.languages?.length) {
         setCardLanguages.set(
           set.id,
-          set.languages.map((code) => code.trim().toLowerCase()).filter(Boolean),
+          set.languages
+            .map((code) => code.trim().toLowerCase())
+            .filter(Boolean),
         );
       }
       for (const row of await Promise.resolve(
@@ -529,6 +534,11 @@ export async function buildChecklistForShelf(input: {
           title: row.title ?? row.reference ?? row.printKey,
           thumbnailUrl: row.thumbnailUrl ?? row.imageUrl ?? null,
           rarity: row.rarity ?? null,
+          ...(row.landscapeFace ? { landscapeFace: true as const } : {}),
+          ...(row.faceQuarterTurns
+            ? { faceQuarterTurns: row.faceQuarterTurns }
+            : {}),
+          ...(row.landscapePrint ? { landscapePrint: true as const } : {}),
         };
         const finishes = normalizeVariantOptions(row.finishes);
         const printKeyLower = row.printKey.trim().toLowerCase();
@@ -651,9 +661,6 @@ export async function buildChecklistForShelf(input: {
       plan n'en gardait qu'une (panier 18 au lieu de 19).
     */
     const missingRows = set.missing;
-    const missingPrintKeys = [
-      ...new Set(missingRows.map((row) => row.printKey)),
-    ];
     /*
       Cotes + sources scellées pour **toutes** les cartes du set (possédées
       comprises). Le plan d'achat ne porte que sur les manquantes.
@@ -670,13 +677,36 @@ export async function buildChecklistForShelf(input: {
     const allowedLanguages = language
       ? [language]
       : (setCardLanguages.get(set.id) ?? []);
-    const products = buyProductsForSet(productsBySet, set.id);
+    const productsRaw = buyProductsForSet(productsBySet, set.id);
 
     const setPrints = prints.filter((row) => row.setId === set.id);
-    const packsPerHitByPrint =
+    const setProfile =
       compositionFile != null
+        ? resolveBoosterComposition(compositionFile, set.id)
+        : null;
+    /*
+      Bridge runtime : si l'index n'a pas encore packComposition (re-ingest
+      pending), attacher la graine module/set puis propager aux containers.
+    */
+    const productsSeeded = productsRaw.map((product) => {
+      if (
+        product.packComposition != null ||
+        setProfile == null ||
+        product.behavior !== "random_pack"
+      ) {
+        return product;
+      }
+      if (!(setProfile.slots && setProfile.slots.length > 0)) return product;
+      return {
+        ...product,
+        packComposition: profileToSkuPackComposition(setProfile),
+      };
+    });
+    const products = withContainerPackCompositions(productsSeeded);
+    const packsPerHitByPrint =
+      setProfile != null
         ? specificPacksPerHitByPrint({
-            profile: resolveBoosterComposition(compositionFile, set.id),
+            profile: setProfile,
             pool: setPrints.map((row) => ({
               printKey: row.printKey,
               rarity: row.rarity,
@@ -684,18 +714,21 @@ export async function buildChecklistForShelf(input: {
           })
         : undefined;
 
-    const options =
-      missingPrintKeys.length === 0
-        ? []
-        : buyOptionsForMissing({
-            // EV scellé : pool de *tirages*, une clé par print (pas par finish).
-            missing: new Set(missingPrintKeys),
-            poolSize: set.total,
-            products,
-            allowedLanguages,
-            preferredLanguage: language,
-            packsPerHitByPrint,
-          });
+    /*
+      Scellés de la langue des cartes (ou du filtre). Si aucun n'y passe,
+      repli sur les autres langues plutôt que « aucun scellé ».
+    */
+    const languageAllowed =
+      allowedLanguages.length > 0
+        ? allowedLanguages
+        : language
+          ? [language]
+          : null;
+    const productsInLanguage = products.filter((product) =>
+      sealedProductAllowed(product.language, languageAllowed),
+    );
+    const planProducts =
+      productsInLanguage.length > 0 ? productsInLanguage : products;
     /*
       Sources scellées **du set** seulement. Un starter S1 qui contient NI-009
       ne doit pas s'afficher sur la checklist S4 (autre extension), même si le
@@ -707,25 +740,57 @@ export async function buildChecklistForShelf(input: {
       const sources = sourcesIndex.get(key);
       if (sources?.length) sealedSources[key] = sources;
     }
-    const missingPrices = new Map(
-      missingRows.map((row) => [
-        checklistRowIdentity(row),
-        prices.get(row.printKey) ?? null,
-      ]),
+    const missingPrices = missingRows.map(
+      (row) => prices.get(row.printKey) ?? null,
     );
+    const missingIds = new Set(
+      missingRows.map((row) => checklistRowIdentity(row)),
+    );
+    const rarityByPrint = new Map(
+      setPrints.map((row) => [row.printKey, row.rarity ?? null] as const),
+    );
+    const requirementRows = set.cards.map((row) => {
+      const rowId = checklistRowIdentity(row);
+      return {
+        rowId,
+        printKey: row.printKey,
+        finish: row.finish ?? null,
+        priceCents: prices.get(row.printKey) ?? null,
+        owned: !missingIds.has(rowId),
+        rarity: rarityByPrint.get(row.printKey) ?? null,
+      };
+    });
+    const mode = masterSet ? "master-set" : "base-set";
+    /*
+      Trous sans cote : médiane de rareté du set plutôt que 0 € — sinon une
+      carte non cotée vaut « rien » et le scellé est sous-estimé. Flaggé.
+    */
+    const requirements = imputeRequirementPrices({
+      requirements: buildRequirements({ mode, rows: requirementRows }),
+      reference: requirementRows,
+    });
+    const skus = sealedSkusFromProducts({
+      products: planProducts,
+      pool: setPrints.map((row) => ({
+        printKey: row.printKey,
+        rarity: row.rarity,
+      })),
+      /* Repli set-level si un SKU n'a pas encore de packComposition. */
+      packsPerHitByPrint,
+    });
+    const rates: Record<string, number> = {};
+    const hitByPrint = bestPackHitByPrint(skus);
+    for (const key of allKeys) {
+      const n = packsPerHit(hitByPrint.get(key.toLowerCase()));
+      if (n != null) rates[key] = n;
+    }
     advice.push({
       setId: set.id,
-      singles: singlesCostBreakdown([...missingPrices.values()]),
+      singles: singlesCostBreakdown(missingPrices),
       prices: Object.fromEntries(prices),
       sealedSources,
-      options,
-      plan: planSetCompletion({
-        missingPrices,
-        poolSize: set.total,
-        options,
-        products,
-        packsPerHitByPrint,
-      }),
+      packsPerHit: rates,
+      plan: solveBuyPlan({ requirements, skus, mode }),
     });
   }
 

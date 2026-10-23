@@ -32,6 +32,7 @@ import {
   expandNarutoPrintsToSetScoped,
   isJpOnlyNarutoArtwork,
   isNarutoCatalogueSetCode,
+  isNarutoFrAbsentFromPrintedChecklistNumber,
   isNarutoFrUnpublishedHtmlNumber,
   isNarutoJapaneseVolumeSet,
   loadOfficialNames,
@@ -572,6 +573,15 @@ export function writeNarutoCcgIndex(input: {
         keep the FR title on the official serie only, not every JA-parked sN.
       */
       if (isNarutoFrUnpublishedHtmlNumber(raw)) {
+        const ledger = narutoLedgerNumber(raw)?.replace(/-.*$/, "") ?? "";
+        const officialSerie = officialNames.get(ledger)?.serie;
+        if (officialSerie != null && officialSerie === n) return true;
+      }
+      /*
+        Real cardboard the PDF checklists omit (TE-191 S4 hole; S5 MIJ later
+        on `s6`) — same serie gate via carddass-card-names.json.
+      */
+      if (isNarutoFrAbsentFromPrintedChecklistNumber(raw)) {
         const ledger = narutoLedgerNumber(raw)?.replace(/-.*$/, "") ?? "";
         const officialSerie = officialNames.get(ledger)?.serie;
         if (officialSerie != null && officialSerie === n) return true;

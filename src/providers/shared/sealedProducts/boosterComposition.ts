@@ -10,62 +10,35 @@
  * exposée via `ProviderModule.loadBoosterComposition`.
  *
  * Absent / `null` = on ne sait pas ; le conseil retombe sur le modèle uniforme.
+ *
+ * Types / helpers purs (client-safe) : {@link ./packCompositionTypes}.
  */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { packDataDir } from "@/lib/packPaths";
 
-/** Confiance sur le chiffre — jamais inventé sans le dire. */
-export type PullRateConfidence = "official" | "community" | "estimate";
+export type {
+  BoosterCompositionFile,
+  BoosterCompositionProfile,
+  BoosterSlot,
+  PackCompositionField,
+  PullRateConfidence,
+  RarityHitRate,
+  SkuPackComposition,
+} from "./packCompositionTypes";
+export {
+  isSkuPackComposition,
+  profileToSkuPackComposition,
+  sealedSkuNeedsPackComposition,
+  skuPackCompositionAsProfile,
+} from "./packCompositionTypes";
 
-/**
- * Combien de sachets (en moyenne) pour voir **au moins une** carte de cette
- * rareté. Ex. Enchanted Lorcana ≈ 96 packs ≈ 4 displays (casier courant).
- */
-export type RarityHitRate = {
-  packsPerHit: number;
-  /** Raccourci d'affichage : packsPerHit / packsPerDisplay. */
-  displaysPerHit?: number | null;
-  confidence: PullRateConfidence;
-  source?: string;
-  notes?: string;
-  /**
-   * Libellés catalogue localisés (FR `Enchantée`, DE `Verzaubert`, …).
-   * La clé de `rarityHits` reste le nom canonique EN.
-   */
-  aliases?: string[];
-};
-
-export type BoosterSlot = {
-  id: string;
-  count: number;
-  kind: "dedicated" | "shared";
-  /** Libellés de rareté qui peuvent tomber dans ce slot. */
-  rarities: string[];
-};
-
-export type BoosterCompositionProfile = {
-  source: string;
-  verifiedAt: string;
-  notes?: string;
-  cardsPerPack: number;
-  packsPerDisplay?: number | null;
-  displaysPerCase?: number | null;
-  slots?: BoosterSlot[];
-  /** Clé = libellé rareté catalogue (`Enchanted`, `Legendary`, …). */
-  rarityHits: Record<string, RarityHitRate>;
-};
-
-export type BoosterCompositionFile = {
-  version: 1;
-  pack: string;
-  updatedAt: string;
-  notes?: string;
-  default: BoosterCompositionProfile;
-  /** Surcharges par id de set catalogue (`1`, `9`, …). */
-  bySet?: Record<string, Partial<BoosterCompositionProfile>>;
-};
+import type {
+  BoosterCompositionFile,
+  BoosterCompositionProfile,
+  RarityHitRate,
+} from "./packCompositionTypes";
 
 export function curatedBoosterCompositionPath(packId: string): string {
   return path.join(packDataDir(packId), "curated", "booster-composition.json");
@@ -77,7 +50,9 @@ export function readBoosterCompositionFile(
   const file = curatedBoosterCompositionPath(packId);
   if (!existsSync(file)) return null;
   try {
-    const parsed = JSON.parse(readFileSync(file, "utf8")) as BoosterCompositionFile;
+    const parsed = JSON.parse(
+      readFileSync(file, "utf8"),
+    ) as BoosterCompositionFile;
     if (parsed?.version !== 1 || !parsed.default?.rarityHits) return null;
     return parsed;
   } catch {
@@ -87,11 +62,7 @@ export function readBoosterCompositionFile(
 
 /** Normalise `Super_rare` / `Super Rare` / `super  rare` pour matcher. */
 export function normalizeRarityKey(label: string): string {
-  return label
-    .trim()
-    .toLowerCase()
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ");
+  return label.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
 
 export function resolveBoosterComposition(
@@ -145,8 +116,89 @@ export function packsPerHitForSpecificPrint(input: {
 }
 
 /**
+ * Clé canonique de rareté (entrée `rarityHits` si connue, sinon normalisée).
+ * Agrège `Commune` / `Common` sous la même clé pour compter N_r.
+ */
+export function canonicalRarityKey(
+  profile: BoosterCompositionProfile,
+  rarity: string | null | undefined,
+): string | null {
+  if (!rarity?.trim()) return null;
+  const want = normalizeRarityKey(rarity);
+  for (const [label, hit] of Object.entries(profile.rarityHits)) {
+    if (normalizeRarityKey(label) === want) return normalizeRarityKey(label);
+    for (const alias of hit.aliases ?? []) {
+      if (normalizeRarityKey(alias) === want) return normalizeRarityKey(label);
+    }
+  }
+  return want;
+}
+
+/**
+ * Slots `dedicated` qui accueillent cette rareté. La liste `rarities` d'un
+ * slot dédié = les **graphies** d'une même rareté (`Common` / `Commune` /
+ * `C`), pas plusieurs raretés en concurrence (ça, c'est `shared`).
+ */
+function dedicatedSlotsFor(profile: BoosterCompositionProfile, rarity: string) {
+  const canon = canonicalRarityKey(profile, rarity);
+  if (!canon) return [];
+  return (profile.slots ?? []).filter(
+    (slot) =>
+      slot.kind === "dedicated" &&
+      slot.rarities.some(
+        (label) => canonicalRarityKey(profile, label) === canon,
+      ),
+  );
+}
+
+/**
+ * Tirages dédiés / sachet pour une rareté.
+ * `packsPerHit` structural = 1 / draws — pas un taux inventé, lecture des slots.
+ */
+export function dedicatedDrawsPerPack(
+  profile: BoosterCompositionProfile,
+  rarity: string | null | undefined,
+): number | null {
+  if (!rarity?.trim()) return null;
+  let draws = 0;
+  for (const slot of dedicatedSlotsFor(profile, rarity)) draws += slot.count;
+  return draws > 0 ? draws : null;
+}
+
+/**
+ * Clé de regroupement pour compter N_r : les graphies d'un même slot dédié
+ * (`Common` et `Commune` dans un même pool) comptent ensemble ; sinon la
+ * clé canonique.
+ */
+function rarityGroupKey(
+  profile: BoosterCompositionProfile,
+  rarity: string | null | undefined,
+): string | null {
+  if (!rarity?.trim()) return null;
+  const slot = dedicatedSlotsFor(profile, rarity)[0];
+  return slot ? `slot:${slot.id}` : canonicalRarityKey(profile, rarity);
+}
+
+/**
+ * packsPerHit « une carte de cette rareté » : rarityHits, sinon 1/dedicatedDraws.
+ */
+export function packsPerHitAnyOfRarity(
+  profile: BoosterCompositionProfile,
+  rarity: string | null | undefined,
+): number | null {
+  const hit = rarityHitFor(profile, rarity);
+  if (hit && hit.packsPerHit > 0) return hit.packsPerHit;
+  const draws = dedicatedDrawsPerPack(profile, rarity);
+  if (draws == null || draws <= 0) return null;
+  return 1 / draws;
+}
+
+/**
  * Construit `printKey → packs pour toucher CE print` à partir du profil et des
  * raretés du set (compte des pairs inclus).
+ *
+ * Sans `rarityHits` pour une rareté : dérive des slots **dedicated** (provenance
+ * structurale). Slot shared sans poids → pas de taux (indéterminé).
  */
 export function specificPacksPerHitByPrint(input: {
   profile: BoosterCompositionProfile;
@@ -155,18 +207,20 @@ export function specificPacksPerHitByPrint(input: {
 }): Map<string, number> {
   const counts = new Map<string, number>();
   for (const row of input.pool) {
-    if (!row.rarity?.trim()) continue;
-    const key = normalizeRarityKey(row.rarity);
+    const key = rarityGroupKey(input.profile, row.rarity);
+    if (!key) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
   const out = new Map<string, number>();
   for (const row of input.pool) {
-    const hit = rarityHitFor(input.profile, row.rarity);
-    if (!hit || !row.rarity) continue;
-    const n = counts.get(normalizeRarityKey(row.rarity)) ?? 0;
+    if (!row.rarity) continue;
+    const packsAny = packsPerHitAnyOfRarity(input.profile, row.rarity);
+    if (packsAny == null) continue;
+    const group = rarityGroupKey(input.profile, row.rarity);
+    const n = group ? (counts.get(group) ?? 0) : 0;
     const packs = packsPerHitForSpecificPrint({
-      packsPerHitAnyOfRarity: hit.packsPerHit,
+      packsPerHitAnyOfRarity: packsAny,
       printsOfSameRarityInPool: n,
     });
     if (packs != null) out.set(row.printKey, packs);

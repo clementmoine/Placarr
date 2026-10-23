@@ -42,10 +42,18 @@ function finalizeSealedProducts(
   products: Record<string, SealedProductEntry>,
   opts?: { productsDir?: string },
 ): Record<string, SealedProductEntry> {
-  backfillSealedProductPackshots(packId, products, opts);
-  // Logos : même filet que les packshots — un index écrit avant que le
-  // résolveur soit branché (ou avant le relevé TCGdex) ne reste pas nu.
-  backfillSealedProductSetLogos(packId, products);
+  try {
+    backfillSealedProductPackshots(packId, products, opts);
+  } catch {
+    /* Packshots optional — never block sealed index load. */
+  }
+  try {
+    // Logos : même filet que les packshots — un index écrit avant que le
+    // résolveur soit branché (ou avant le relevé TCGdex) ne reste pas nu.
+    backfillSealedProductSetLogos(packId, products);
+  } catch {
+    /* Logo resolve may touch a malformed pack sqlite — keep products. */
+  }
   return products;
 }
 

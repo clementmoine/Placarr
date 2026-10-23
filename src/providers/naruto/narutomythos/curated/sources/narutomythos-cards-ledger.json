@@ -1,9 +1,9 @@
 {
   "source": "narutomythos.com/api/cards",
   "url": "https://www.narutomythos.com/fr/cards",
-  "observed": "2026-10-18",
+  "observed": "2026-10-22",
   "note": "Faces sans watermark — art.narutomythos.webp sur printKeys existants uniquement",
-  "count": 210,
+  "count": 203,
   "cards": [
     {
       "id": "KS-000-GOLD",
@@ -1254,18 +1254,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-103.webp"
     },
     {
-      "id": "KS-104-A",
-      "nameEn": "Tsunade — \"I'm the Fifth Hokage of the Leaf Village!\"",
-      "nameFr": "Tsunade — \"Je suis le Cinquième Hokage du Village de Konoha !\"",
-      "imageUrl": "cards/KS-104-ART.webp",
-      "imageUrlFr": "cards/fr/KS-104-ART.webp",
-      "rarity": "AR",
-      "set": "KS",
-      "cardNumber": 104,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-104-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-104-ART.webp"
-    },
-    {
       "id": "KS-104-V",
       "nameEn": "Tsunade — Legendary Sannin",
       "nameFr": "Tsunade — Le Trio Légendaire",
@@ -1276,6 +1264,18 @@
       "cardNumber": 104,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-104-V.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-104-V.webp"
+    },
+    {
+      "id": "KS-104-A",
+      "nameEn": "Tsunade — \"I'm the Fifth Hokage of the Leaf Village!\"",
+      "nameFr": "Tsunade — \"Je suis le Cinquième Hokage du Village de Konoha !\"",
+      "imageUrl": "cards/KS-104-ART.webp",
+      "imageUrlFr": "cards/fr/KS-104-ART.webp",
+      "rarity": "AR",
+      "set": "KS",
+      "cardNumber": 104,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-104-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-104-ART.webp"
     },
     {
       "id": "KS-104",
@@ -1338,18 +1338,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-106-ART.webp"
     },
     {
-      "id": "KS-107-A",
-      "nameEn": "Sasuke Uchiha — The last Uchiha",
-      "nameFr": "Sasuke Uchiwa — Le dernier Uchiwa",
-      "imageUrl": "cards/KS-107-ART.webp",
-      "imageUrlFr": "cards/fr/KS-107-ART.webp",
-      "rarity": "AR",
-      "set": "KS",
-      "cardNumber": 107,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-107-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-107-ART.webp"
-    },
-    {
       "id": "KS-107",
       "nameEn": "Sasuke Uchiha — Chidori",
       "nameFr": "Sasuke Uchiwa — Les Mille Oiseaux",
@@ -1362,16 +1350,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-107.webp"
     },
     {
-      "id": "KS-108-V",
-      "nameEn": "Naruto Uzumaki — \"I won't run away!\"",
-      "nameFr": "Naruto Uzumaki — \"Je ne m'enfuirai plus jamais !\"",
-      "imageUrl": "cards/KS-108-V.webp",
-      "imageUrlFr": "cards/fr/KS-108-V.webp",
-      "rarity": "MYTHOS",
+      "id": "KS-107-A",
+      "nameEn": "Sasuke Uchiha — The last Uchiha",
+      "nameFr": "Sasuke Uchiwa — Le dernier Uchiwa",
+      "imageUrl": "cards/KS-107-ART.webp",
+      "imageUrlFr": "cards/fr/KS-107-ART.webp",
+      "rarity": "AR",
       "set": "KS",
-      "cardNumber": 108,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-108-V.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-108-V.webp"
+      "cardNumber": 107,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-107-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-107-ART.webp"
     },
     {
       "id": "KS-108-A",
@@ -1396,6 +1384,18 @@
       "cardNumber": 108,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-108.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-108.webp"
+    },
+    {
+      "id": "KS-108-V",
+      "nameEn": "Naruto Uzumaki — \"I won't run away!\"",
+      "nameFr": "Naruto Uzumaki — \"Je ne m'enfuirai plus jamais !\"",
+      "imageUrl": "cards/KS-108-V.webp",
+      "imageUrlFr": "cards/fr/KS-108-V.webp",
+      "rarity": "MYTHOS",
+      "set": "KS",
+      "cardNumber": 108,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-108-V.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-108-V.webp"
     },
     {
       "id": "KS-109-A",
@@ -1482,6 +1482,18 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-111.webp"
     },
     {
+      "id": "KS-112-A",
+      "nameEn": "Choji Akimichi — \"Who you calling fat?\"",
+      "nameFr": "Chôji Akimichi — \"Personne ne me traite de baudruche !\"",
+      "imageUrl": "cards/KS-112-ART.webp",
+      "imageUrlFr": "cards/fr/KS-112-ART.webp",
+      "rarity": "AR",
+      "set": "KS",
+      "cardNumber": 112,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-112-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-112-ART.webp"
+    },
+    {
       "id": "KS-112",
       "nameEn": "Choji Akimichi — Chili Pepper Pill",
       "nameFr": "Chôji Akimichi — Pilule au Piment",
@@ -1494,16 +1506,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-112.webp"
     },
     {
-      "id": "KS-112-A",
-      "nameEn": "Choji Akimichi — \"Who you calling fat?\"",
-      "nameFr": "Chôji Akimichi — \"Personne ne me traite de baudruche !\"",
-      "imageUrl": "cards/KS-112-ART.webp",
-      "imageUrlFr": "cards/fr/KS-112-ART.webp",
-      "rarity": "AR",
+      "id": "KS-113",
+      "nameEn": "Kiba Inuzuka — Fang Over Fang",
+      "nameFr": "Kiba Inuzuka — La Morsure de l'Homme-Bête",
+      "imageUrl": "cards/KS-113.webp",
+      "imageUrlFr": "cards/fr/KS-113.webp",
+      "rarity": "R",
       "set": "KS",
-      "cardNumber": 112,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-112-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-112-ART.webp"
+      "cardNumber": 113,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-113.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-113.webp"
     },
     {
       "id": "KS-113-V",
@@ -1528,18 +1540,6 @@
       "cardNumber": 113,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-113-ART.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-113-ART.webp"
-    },
-    {
-      "id": "KS-113",
-      "nameEn": "Kiba Inuzuka — Fang Over Fang",
-      "nameFr": "Kiba Inuzuka — La Morsure de l'Homme-Bête",
-      "imageUrl": "cards/KS-113.webp",
-      "imageUrlFr": "cards/fr/KS-113.webp",
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 113,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-113.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-113.webp"
     },
     {
       "id": "KS-114",
@@ -1590,18 +1590,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-115.webp"
     },
     {
-      "id": "KS-116-A",
-      "nameEn": "Neji Hyuga — Eight Trigrams Sixty-Four Palms",
-      "nameFr": "Neji Hyûga — Les 64 Poings du Hakke",
-      "imageUrl": "cards/KS-116-ART.webp",
-      "imageUrlFr": "cards/fr/KS-116-ART.webp",
-      "rarity": "AR",
-      "set": "KS",
-      "cardNumber": 116,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-116-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-116-ART.webp"
-    },
-    {
       "id": "KS-116",
       "nameEn": "Neji Hyuga — Eight Trigrams Sixty-Four Palms",
       "nameFr": "Neji Hyûga — Les 64 Poings du Hakke",
@@ -1614,16 +1602,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-116.webp"
     },
     {
-      "id": "KS-117",
-      "nameEn": "Rock Lee — Loopy Fist",
-      "nameFr": "Rock Lee — Suiken, la Technique de \"l'Homme Ivre\"",
-      "imageUrl": "cards/KS-117.webp",
-      "imageUrlFr": "cards/fr/KS-117.webp",
-      "rarity": "R",
+      "id": "KS-116-A",
+      "nameEn": "Neji Hyuga — Eight Trigrams Sixty-Four Palms",
+      "nameFr": "Neji Hyûga — Les 64 Poings du Hakke",
+      "imageUrl": "cards/KS-116-ART.webp",
+      "imageUrlFr": "cards/fr/KS-116-ART.webp",
+      "rarity": "AR",
       "set": "KS",
-      "cardNumber": 117,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-117.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-117.webp"
+      "cardNumber": 116,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-116-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-116-ART.webp"
     },
     {
       "id": "KS-117-A",
@@ -1636,6 +1624,18 @@
       "cardNumber": 117,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-117-ART.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-117-ART.webp"
+    },
+    {
+      "id": "KS-117",
+      "nameEn": "Rock Lee — Loopy Fist",
+      "nameFr": "Rock Lee — Suiken, la Technique de \"l'Homme Ivre\"",
+      "imageUrl": "cards/KS-117.webp",
+      "imageUrlFr": "cards/fr/KS-117.webp",
+      "rarity": "R",
+      "set": "KS",
+      "cardNumber": 117,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-117.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-117.webp"
     },
     {
       "id": "KS-117-V",
@@ -1674,18 +1674,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-118-ART.webp"
     },
     {
-      "id": "KS-119-A",
-      "nameEn": "Kankuro — \"...We'll have a Puppet Show!\"",
-      "nameFr": "Kankurô — \"Tu vas voir, le Théâtre de Marionnettes !\"",
-      "imageUrl": "cards/KS-119-ART.webp",
-      "imageUrlFr": "cards/fr/KS-119-ART.webp",
-      "rarity": "AR",
-      "set": "KS",
-      "cardNumber": 119,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-119-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-119-ART.webp"
-    },
-    {
       "id": "KS-119",
       "nameEn": "Kankuro — Secret Black Move: Iron Maiden",
       "nameFr": "Kankuro — Le théâtre de marionnettes, La technique de la Chambre Noire",
@@ -1696,6 +1684,18 @@
       "cardNumber": 119,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-119.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-119.webp"
+    },
+    {
+      "id": "KS-119-A",
+      "nameEn": "Kankuro — \"...We'll have a Puppet Show!\"",
+      "nameFr": "Kankurô — \"Tu vas voir, le Théâtre de Marionnettes !\"",
+      "imageUrl": "cards/KS-119-ART.webp",
+      "imageUrlFr": "cards/fr/KS-119-ART.webp",
+      "rarity": "AR",
+      "set": "KS",
+      "cardNumber": 119,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-119-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-119-ART.webp"
     },
     {
       "id": "KS-120-A",
@@ -1710,18 +1710,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-120-ART.webp"
     },
     {
-      "id": "KS-120",
-      "nameEn": "Gaara — Sand Coffin",
-      "nameFr": "Gaara — Le Sarcophage de Sable",
-      "imageUrl": "cards/KS-120.webp",
-      "imageUrlFr": "cards/fr/KS-120.webp",
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 120,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-120.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-120.webp"
-    },
-    {
       "id": "KS-120-V",
       "nameEn": "Gaara — Sand Coffin",
       "nameFr": "Gaara — Le Sarcophage de Sable",
@@ -1734,16 +1722,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-120-V.webp"
     },
     {
-      "id": "KS-121-A",
-      "nameEn": "Temari — \"It's finished.\"",
-      "nameFr": "Temari — \"C'est fini.\"",
-      "imageUrl": "cards/KS-121-ART.webp",
-      "imageUrlFr": "cards/fr/KS-121-ART.webp",
-      "rarity": "AR",
+      "id": "KS-120",
+      "nameEn": "Gaara — Sand Coffin",
+      "nameFr": "Gaara — Le Sarcophage de Sable",
+      "imageUrl": "cards/KS-120.webp",
+      "imageUrlFr": "cards/fr/KS-120.webp",
+      "rarity": "R",
       "set": "KS",
-      "cardNumber": 121,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-121-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-121-ART.webp"
+      "cardNumber": 120,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-120.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-120.webp"
     },
     {
       "id": "KS-121",
@@ -1756,6 +1744,18 @@
       "cardNumber": 121,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-121.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-121.webp"
+    },
+    {
+      "id": "KS-121-A",
+      "nameEn": "Temari — \"It's finished.\"",
+      "nameFr": "Temari — \"C'est fini.\"",
+      "imageUrl": "cards/KS-121-ART.webp",
+      "imageUrlFr": "cards/fr/KS-121-ART.webp",
+      "rarity": "AR",
+      "set": "KS",
+      "cardNumber": 121,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-121-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-121-ART.webp"
     },
     {
       "id": "KS-122",
@@ -1782,18 +1782,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-122-ART.webp"
     },
     {
-      "id": "KS-123",
-      "nameEn": "Kimimaro — Earth Curse Mark",
-      "nameFr": "Kimimaro — Marque maudite de la Terre",
-      "imageUrl": "cards/KS-123.webp",
-      "imageUrlFr": "cards/fr/KS-123.webp",
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 123,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-123.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-123.webp"
-    },
-    {
       "id": "KS-123-A",
       "nameEn": "Kimimaro — \"It's over.\"",
       "nameFr": "Kimimaro — \"Je vais en finir avec toi.\"",
@@ -1804,6 +1792,18 @@
       "cardNumber": 123,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-123-ART.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-123-ART.webp"
+    },
+    {
+      "id": "KS-123",
+      "nameEn": "Kimimaro — Earth Curse Mark",
+      "nameFr": "Kimimaro — Marque maudite de la Terre",
+      "imageUrl": "cards/KS-123.webp",
+      "imageUrlFr": "cards/fr/KS-123.webp",
+      "rarity": "R",
+      "set": "KS",
+      "cardNumber": 123,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-123.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-123.webp"
     },
     {
       "id": "KS-124-A",
@@ -1854,18 +1854,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-125.webp"
     },
     {
-      "id": "KS-126-A",
-      "nameEn": "Orochimaru — \"Stay out of my way.\"",
-      "nameFr": "Orochimaru — \"Ne te mets pas en travers de mon chemin.\"",
-      "imageUrl": "cards/KS-126-ART.webp",
-      "imageUrlFr": "cards/fr/KS-126-ART.webp",
-      "rarity": "AR",
-      "set": "KS",
-      "cardNumber": 126,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-126-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-126-ART.webp"
-    },
-    {
       "id": "KS-126",
       "nameEn": "Orochimaru — \"Stay out of my way.\"",
       "nameFr": "Orochimaru — \"Ne te mets pas en travers de mon chemin.\"",
@@ -1876,6 +1864,18 @@
       "cardNumber": 126,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-126.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-126.webp"
+    },
+    {
+      "id": "KS-126-A",
+      "nameEn": "Orochimaru — \"Stay out of my way.\"",
+      "nameFr": "Orochimaru — \"Ne te mets pas en travers de mon chemin.\"",
+      "imageUrl": "cards/KS-126-ART.webp",
+      "imageUrlFr": "cards/fr/KS-126-ART.webp",
+      "rarity": "AR",
+      "set": "KS",
+      "cardNumber": 126,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-126-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-126-ART.webp"
     },
     {
       "id": "KS-127-A",
@@ -1914,18 +1914,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-128-ART.webp"
     },
     {
-      "id": "KS-128",
-      "nameEn": "Itachi Uchiha — Amaterasu",
-      "nameFr": "Itachi Uchiwa — Amaterasu",
-      "imageUrl": "cards/KS-128.webp",
-      "imageUrlFr": "cards/fr/KS-128.webp",
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 128,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-128.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-128.webp"
-    },
-    {
       "id": "KS-128-V",
       "nameEn": "Itachi Uchiha — Amaterasu",
       "nameFr": "Itachi Uchiwa — Amaterasu",
@@ -1938,16 +1926,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-128-V.webp"
     },
     {
-      "id": "KS-129-A",
-      "nameEn": "Nine-Tailed Fox — \"You better be grateful to me...\"",
-      "nameFr": "Kyûbi — \"Tu devrais être reconnaissant envers moi...\"",
-      "imageUrl": "cards/KS-129-ART.webp",
-      "imageUrlFr": "cards/fr/KS-129-ART.webp",
-      "rarity": "AR",
+      "id": "KS-128",
+      "nameEn": "Itachi Uchiha — Amaterasu",
+      "nameFr": "Itachi Uchiwa — Amaterasu",
+      "imageUrl": "cards/KS-128.webp",
+      "imageUrlFr": "cards/fr/KS-128.webp",
+      "rarity": "R",
       "set": "KS",
-      "cardNumber": 129,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-129-ART.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-129-ART.webp"
+      "cardNumber": 128,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-128.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-128.webp"
     },
     {
       "id": "KS-129",
@@ -1962,16 +1950,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-129.webp"
     },
     {
-      "id": "KS-130",
-      "nameEn": "One-Tail — \"I hope you're ready to die!\"",
-      "nameFr": "Ichibi — \"Voici ma première victime !\"",
-      "imageUrl": "cards/KS-130.webp",
-      "imageUrlFr": "cards/fr/KS-130.webp",
-      "rarity": "R",
+      "id": "KS-129-A",
+      "nameEn": "Nine-Tailed Fox — \"You better be grateful to me...\"",
+      "nameFr": "Kyûbi — \"Tu devrais être reconnaissant envers moi...\"",
+      "imageUrl": "cards/KS-129-ART.webp",
+      "imageUrlFr": "cards/fr/KS-129-ART.webp",
+      "rarity": "AR",
       "set": "KS",
-      "cardNumber": 130,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-130.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-130.webp"
+      "cardNumber": 129,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-129-ART.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-129-ART.webp"
     },
     {
       "id": "KS-130-A",
@@ -1984,6 +1972,18 @@
       "cardNumber": 130,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-130-ART.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-130-ART.webp"
+    },
+    {
+      "id": "KS-130",
+      "nameEn": "One-Tail — \"I hope you're ready to die!\"",
+      "nameFr": "Ichibi — \"Voici ma première victime !\"",
+      "imageUrl": "cards/KS-130.webp",
+      "imageUrlFr": "cards/fr/KS-130.webp",
+      "rarity": "R",
+      "set": "KS",
+      "cardNumber": 130,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-130.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-130.webp"
     },
     {
       "id": "KS-131-SV",
@@ -2034,18 +2034,6 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-133.webp"
     },
     {
-      "id": "KS-133-V",
-      "nameEn": "Naruto Uzumaki — \"Je vais me prendre un bol de nouilles chez Ichiraku!\"",
-      "nameFr": "Naruto Uzumaki — \"Je vais me prendre un bol de nouilles chez Ichiraku!\"",
-      "imageUrl": "cards/KS-133-V.webp",
-      "imageUrlFr": "cards/fr/KS-133-V.webp",
-      "rarity": "MYTHOS",
-      "set": "KS",
-      "cardNumber": 133,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-133-V.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-133-V.webp"
-    },
-    {
       "id": "KS-133-ES",
       "nameEn": "Naruto Uzumaki — \"Ninja Art! Summoning Jutsu!\"",
       "nameFr": "Naruto Uzumaki — \"Ninja Art! Summoning Jutsu!\"",
@@ -2056,6 +2044,18 @@
       "cardNumber": 133,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-133-ES.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-133-ES.webp"
+    },
+    {
+      "id": "KS-133-V",
+      "nameEn": "Naruto Uzumaki — \"Ready or not, Ramen, here I come!\"",
+      "nameFr": "Naruto Uzumaki — \"Je vais me prendre un bol de nouilles chez Ichiraku!\"",
+      "imageUrl": "cards/KS-133-V.webp",
+      "imageUrlFr": "cards/fr/KS-133-V.webp",
+      "rarity": "MYTHOS",
+      "set": "KS",
+      "cardNumber": 133,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-133-V.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-133-V.webp"
     },
     {
       "id": "KS-133-SV",
@@ -2082,16 +2082,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-134.webp"
     },
     {
-      "id": "KS-135-SV",
-      "nameEn": "Sakura Haruno — The Leaf Medical Corps",
-      "nameFr": "Sakura Haruno — Corps Médical du Village de la Feuille",
-      "imageUrl": "cards/KS-135-SV.webp",
-      "imageUrlFr": "cards/fr/KS-135-SV.webp",
-      "rarity": "S",
+      "id": "KS-135-V",
+      "nameEn": "Sakura Haruno — \"He's looking... right at me!\"",
+      "nameFr": "Sakura Haruno — \"Sasuke est en train de me regarder !\"",
+      "imageUrl": "cards/KS-135-V.webp",
+      "imageUrlFr": "cards/fr/KS-135-V.webp",
+      "rarity": "MYTHOS",
       "set": "KS",
       "cardNumber": 135,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-135-SV.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-135-SV.webp"
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-135-V.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-135-V.webp"
     },
     {
       "id": "KS-135",
@@ -2106,16 +2106,16 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-135.webp"
     },
     {
-      "id": "KS-135-V",
-      "nameEn": "Sakura Haruno — \"He's looking... right at me!\"",
-      "nameFr": "Sakura Haruno — \"Sasuke est en train de me regarder !\"",
-      "imageUrl": "cards/KS-135-V.webp",
-      "imageUrlFr": "cards/fr/KS-135-V.webp",
-      "rarity": "MYTHOS",
+      "id": "KS-135-SV",
+      "nameEn": "Sakura Haruno — The Leaf Medical Corps",
+      "nameFr": "Sakura Haruno — Corps Médical du Village de la Feuille",
+      "imageUrl": "cards/KS-135-SV.webp",
+      "imageUrlFr": "cards/fr/KS-135-SV.webp",
+      "rarity": "S",
       "set": "KS",
       "cardNumber": 135,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-135-V.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-135-V.webp"
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-135-SV.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-135-SV.webp"
     },
     {
       "id": "KS-136-V",
@@ -2154,6 +2154,18 @@
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-136.webp"
     },
     {
+      "id": "KS-137-V",
+      "nameEn": "Kakashi Hatake — \"I won't be able to read Make-Out Paradise now.\"",
+      "nameFr": "Kakashi Hatake — \"I won't be able to read Make-Out Paradise now.\"",
+      "imageUrl": "cards/KS-137-V.webp",
+      "imageUrlFr": "cards/fr/KS-137-V.webp",
+      "rarity": "MYTHOS",
+      "set": "KS",
+      "cardNumber": 137,
+      "faceEn": "https://www.narutomythos.com/storage/cards/KS-137-V.webp",
+      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-137-V.webp"
+    },
+    {
       "id": "KS-137-SV",
       "nameEn": "Kakashi Hatake — Lightning Blade",
       "nameFr": "Kakashi Hatake — L'Éclair Pourfendeur",
@@ -2176,18 +2188,6 @@
       "cardNumber": 137,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-137.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-137.webp"
-    },
-    {
-      "id": "KS-137-V",
-      "nameEn": "Kakashi Hatake — \"I won't be able to read Make-Out Paradise now.\"",
-      "nameFr": "Kakashi Hatake — \"I won't be able to read Make-Out Paradise now.\"",
-      "imageUrl": "cards/KS-137-V.webp",
-      "imageUrlFr": "cards/fr/KS-137-V.webp",
-      "rarity": "MYTHOS",
-      "set": "KS",
-      "cardNumber": 137,
-      "faceEn": "https://www.narutomythos.com/storage/cards/KS-137-V.webp",
-      "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-137-V.webp"
     },
     {
       "id": "KS-138",
@@ -2320,90 +2320,6 @@
       "cardNumber": 148,
       "faceEn": "https://www.narutomythos.com/storage/cards/KS-148.webp",
       "faceFr": "https://www.narutomythos.com/storage/cards/fr/KS-148.webp"
-    },
-    {
-      "id": "KS-149",
-      "nameEn": "Sand Burial",
-      "nameFr": "Sand Burial",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 149,
-      "faceEn": null,
-      "faceFr": null
-    },
-    {
-      "id": "KS-150",
-      "nameEn": "Naruto Uzumaki — Mythos: Sage of Six Paths",
-      "nameFr": "Naruto Uzumaki — Mythos: Sage of Six Paths",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "L",
-      "set": "KS",
-      "cardNumber": 150,
-      "faceEn": null,
-      "faceFr": null
-    },
-    {
-      "id": "KS-151",
-      "nameEn": "Sasuke Uchiha — Mythos: Eternal Mangekyou",
-      "nameFr": "Sasuke Uchiha — Mythos: Eternal Mangekyou",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "L",
-      "set": "KS",
-      "cardNumber": 151,
-      "faceEn": null,
-      "faceFr": null
-    },
-    {
-      "id": "KS-152",
-      "nameEn": "Madara Uchiha — Mythos: The Ghost of the Uchiha",
-      "nameFr": "Madara Uchiha — Mythos: The Ghost of the Uchiha",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "L",
-      "set": "KS",
-      "cardNumber": 152,
-      "faceEn": null,
-      "faceFr": null
-    },
-    {
-      "id": "KS-153",
-      "nameEn": "Rasengan",
-      "nameFr": "Rasengan",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 153,
-      "faceEn": null,
-      "faceFr": null
-    },
-    {
-      "id": "KS-154",
-      "nameEn": "Chidori",
-      "nameFr": "Chidori",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "R",
-      "set": "KS",
-      "cardNumber": 154,
-      "faceEn": null,
-      "faceFr": null
-    },
-    {
-      "id": "KS-155",
-      "nameEn": "Shadow Clone Jutsu",
-      "nameFr": "Multi-clonage",
-      "imageUrl": null,
-      "imageUrlFr": null,
-      "rarity": "UC",
-      "set": "KS",
-      "cardNumber": 155,
-      "faceEn": null,
-      "faceFr": null
     },
     {
       "id": "KS-M01",

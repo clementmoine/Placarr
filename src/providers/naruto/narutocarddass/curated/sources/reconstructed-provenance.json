@@ -1,15 +1,15 @@
 {
- "generatedAt": "2026-10-18T22:47:48.799Z",
+ "generatedAt": "2026-10-22T07:51:15.246Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{lang}/{set}/{id}/ (Mercari restorations: the mercdn ingest row in sources/mercari.json)",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
  "installs": [
   {
    "cardId": "ki0001",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s1/ki0001/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ki0001/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0001/art.reconstructed.webp",
    "from": {
     "width": 951,
     "height": 1371
@@ -18,10 +18,10 @@
   },
   {
    "cardId": "ki0002",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s1/ki0002/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ki0002/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0002/art.reconstructed.webp",
    "from": {
     "width": 988,
     "height": 1420
@@ -30,10 +30,10 @@
   },
   {
    "cardId": "ki0003",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s1/ki0003/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ki0003/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0003/art.reconstructed.webp",
    "from": {
     "width": 941,
     "height": 1369
@@ -42,10 +42,10 @@
   },
   {
    "cardId": "ki0004",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s1/ki0004/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ki0004/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0004/art.reconstructed.webp",
    "from": {
     "width": 944,
     "height": 1374
@@ -54,10 +54,10 @@
   },
   {
    "cardId": "ki0005",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s1/ki0005/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ki0005/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0005/art.reconstructed.webp",
    "from": {
     "width": 946,
     "height": 1372
@@ -66,10 +66,10 @@
   },
   {
    "cardId": "ki0006",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s1/ki0006/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ki0006/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0006/art.reconstructed.webp",
    "from": {
     "width": 942,
     "height": 1367
@@ -78,10 +78,10 @@
   },
   {
    "cardId": "ki0007",
-   "set": "maki13",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/maki13/ki0007/art.reconstructed.png",
-   "dest": "cards/ja/maki13/ki0007/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0007/art.reconstructed.webp",
    "from": {
     "width": 941,
     "height": 1375
@@ -90,10 +90,10 @@
   },
   {
    "cardId": "ki0008",
-   "set": "maki13",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/maki13/ki0008/art.reconstructed.png",
-   "dest": "cards/ja/maki13/ki0008/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ki0008/art.reconstructed.webp",
    "from": {
     "width": 942,
     "height": 1374
@@ -474,10 +474,10 @@
   },
   {
    "cardId": "ni0280",
-   "set": "unknown",
+   "set": "s1",
    "lang": "ja",
    "source": "cards/ja/s6/ni0280/art.reconstructed.png",
-   "dest": "cards/ja/unknown/ni0280/art.reconstructed.webp",
+   "dest": "cards/ja/s1/ni0280/art.reconstructed.webp",
    "from": {
     "width": 631,
     "height": 920
@@ -594,10 +594,10 @@
   },
   {
    "cardId": "ta0005-prerelease",
-   "set": "prerelease",
+   "set": "s1",
    "lang": "fr",
    "source": "cards/fr/s1/ta0005-prerelease/art.reconstructed.png",
-   "dest": "cards/fr/prerelease/ta0005-prerelease/art.reconstructed.webp",
+   "dest": "cards/fr/s1/ta0005-prerelease/art.reconstructed.webp",
    "from": {
     "width": 350,
     "height": 495
@@ -747,6 +747,18 @@
     "height": 833
    },
    "cropped": true
+  },
+  {
+   "cardId": "te0034-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0034-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0034-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
   },
   {
    "cardId": "te0073-promo",

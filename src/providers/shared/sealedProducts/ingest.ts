@@ -388,6 +388,10 @@ export async function ingestSealedProducts(
 /**
  * Coffret multi-set (Foudre + Flamme) : `packsBySet` from child boosters'
  * `catalogueSetId` / `setCode` once the full index exists.
+ *
+ * Ne pas inventer un mix figé dès que la boutique liste ≥3 sets distincts
+ * (coffrets cadeau : tuiles booster marketing, pas une composition attestée).
+ * Sinon le conseil d'achat traite p.ex. Picsou comme 2 sachets Archazia à 4 €.
  */
 export function backfillPacksBySetFromGuaranteedProducts(
   products: Record<string, SealedProductEntry>,
@@ -408,8 +412,10 @@ export function backfillPacksBySetFromGuaranteedProducts(
       const qty = link.qty != null && link.qty > 0 ? Math.floor(link.qty) : 1;
       packsBySet[setId] = (packsBySet[setId] ?? 0) + qty;
     }
-    if (Object.keys(packsBySet).length > 0) {
-      entry.packsBySet = packsBySet;
-    }
+    const distinctSets = Object.keys(packsBySet).length;
+    if (distinctSets === 0) continue;
+    /* Assortiment multi-chapitres non attesté (gift boxes) — laisser null. */
+    if (distinctSets >= 3) continue;
+    entry.packsBySet = packsBySet;
   }
 }

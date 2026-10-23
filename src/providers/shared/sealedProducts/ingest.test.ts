@@ -10,11 +10,12 @@ import {
   withRefinedSealedKind,
 } from "./kinds";
 import {
+  backfillPacksBySetFromGuaranteedProducts,
   printKeyFromCollectorRef,
   sealedPriceCentsFromShop,
   sealedProductFromStaging,
 } from "./ingest";
-import { sealedProductKey } from "./indexFormat";
+import { sealedProductKey, type SealedProductEntry } from "./indexFormat";
 import {
   inferSealedLangFromSlug,
   normalizeSealedLang,
@@ -762,5 +763,87 @@ describe("sealed ingest", () => {
       behavior: "known_bundle",
       category: "puzzles",
     });
+  });
+});
+
+describe("backfillPacksBySetFromGuaranteedProducts", () => {
+  function booster(
+    slug: string,
+    catalogueSetId: string,
+  ): SealedProductEntry {
+    return {
+      path: `/products/boosters/${slug}`,
+      slug,
+      name: slug,
+      kind: "booster",
+      behavior: "random_pack",
+      category: "boosters",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: null,
+      catalogueSetId,
+      lang: "fr",
+      releaseDate: null,
+      priceCents: null,
+      cardsPerPack: 12,
+      packsContained: 1,
+      packsBySet: null,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: false,
+      containsPrintsIsPreview: true,
+      prints: [],
+    };
+  }
+
+  it("invents packsBySet for a dual-set collector (Foudre + Flamme)", () => {
+    const products: Record<string, SealedProductEntry> = {
+      a: booster("booster-flamme", "10"),
+      b: booster("booster-foudre", "11"),
+      box: {
+        ...booster("coffret-dual", "10"),
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        packsContained: 4,
+        packsBySet: null,
+        guaranteedProducts: [
+          { slug: "booster-flamme", qty: 2 },
+          { slug: "booster-foudre", qty: 2 },
+        ],
+      },
+    };
+    backfillPacksBySetFromGuaranteedProducts(products);
+    expect(products.box?.packsBySet).toEqual({ "10": 2, "11": 2 });
+  });
+
+  it("does not invent packsBySet for gift-box marketing tiles spanning 3+ sets", () => {
+    const products: Record<string, SealedProductEntry> = {
+      b6: booster("booster-6", "6"),
+      b7a: booster("booster-7a", "7"),
+      b7b: booster("booster-7b", "7"),
+      b8: booster("booster-8", "8"),
+      b10: booster("booster-10", "10"),
+      picsou: {
+        ...booster("coffret-cadeau-balthazar-picsou", "10"),
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        packsContained: 5,
+        packsBySet: null,
+        guaranteeSets: ["10"],
+        guaranteedProducts: [
+          { slug: "booster-10" },
+          { slug: "booster-8" },
+          { slug: "booster-7a" },
+          { slug: "booster-7b" },
+          { slug: "booster-6" },
+        ],
+      },
+    };
+    backfillPacksBySetFromGuaranteedProducts(products);
+    expect(products.picsou?.packsBySet).toBeNull();
   });
 });

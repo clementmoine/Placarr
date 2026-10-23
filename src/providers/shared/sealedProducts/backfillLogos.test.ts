@@ -129,6 +129,88 @@ describe("backfillSealedProductSetLogos", () => {
     expect(products["pokemon::a"]?.setLogo).toBeNull();
   });
 
+  it("copies price across same retail role (display set × packs)", () => {
+    const products = {
+      "lorcana::fr": entry({
+        slug: "display-24-boosters-set-9-fabuleux",
+        kind: "display",
+        behavior: "pack_container",
+        catalogueSetId: "9",
+        packsContained: 24,
+        priceCents: 12600,
+        lang: "fr",
+      }),
+      "lorcana::en": entry({
+        slug: "fabled-display-en",
+        kind: "display",
+        behavior: "pack_container",
+        catalogueSetId: "9",
+        packsContained: 24,
+        priceCents: null,
+        lang: "en",
+      }),
+    };
+    backfillSealedProductSetLogos("no-such-pack", products);
+    expect(products["lorcana::en"]?.priceCents).toBe(12600);
+  });
+
+  it("estimates trove price from cheapest booster × packsContained", () => {
+    const products = {
+      "lorcana::booster": entry({
+        slug: "booster-set-7",
+        kind: "booster",
+        behavior: "random_pack",
+        catalogueSetId: "7",
+        packsContained: 1,
+        priceCents: 340,
+        lang: "fr",
+      }),
+      "lorcana::trove": entry({
+        slug: "archazias-island-trove-en",
+        kind: "trove",
+        behavior: "mixed_bundle",
+        catalogueSetId: "7",
+        packsContained: 8,
+        priceCents: null,
+        lang: "en",
+      }),
+    };
+    backfillSealedProductSetLogos("no-such-pack", products);
+    expect(products["lorcana::trove"]?.priceCents).toBe(2720);
+  });
+
+  it("estimates ETB / special from booster × packsContained", () => {
+    const products = {
+      "poke::booster": entry({
+        slug: "booster-sv02",
+        kind: "booster",
+        behavior: "random_pack",
+        catalogueSetId: "sv02",
+        packsContained: 1,
+        priceCents: 450,
+      }),
+      "poke::etb": entry({
+        slug: "coffret-dresseur-elite-sv02",
+        kind: "etb",
+        behavior: "mixed_bundle",
+        catalogueSetId: "sv02",
+        packsContained: 9,
+        priceCents: null,
+      }),
+      "poke::special": entry({
+        slug: "offre-special-portfolio",
+        kind: "special",
+        behavior: "mixed_bundle",
+        catalogueSetId: "sv02",
+        packsContained: 2,
+        priceCents: null,
+      }),
+    };
+    backfillSealedProductSetLogos("no-such-pack", products);
+    expect(products["poke::etb"]?.priceCents).toBe(4050);
+    expect(products["poke::special"]?.priceCents).toBe(900);
+  });
+
   it("copies logos across locale twins and shared guarantee lists", () => {
     const products = {
       "lorcana::fr": entry({

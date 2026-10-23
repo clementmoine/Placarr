@@ -34,7 +34,8 @@
     "test:record:all": "tsx scripts/record-all-barcode-fixtures.ts",
     "providers:audit:mapping": "tsx scripts/providerMappingAudit.ts",
     "title-idf:update": "tsx scripts/buildTitleIdfIndex.ts",
-    "cards:migrate:lang-first": "tsx scripts/migrateCardsLangFirst.ts"
+    "cards:migrate:lang-first": "tsx scripts/migrateCardsLangFirst.ts",
+    "sealed:prices:refresh": "tsx scripts/refreshSealedPrices.ts"
   },
   "dependencies": {
     "@arkntools/unity-js": "5.1.0",

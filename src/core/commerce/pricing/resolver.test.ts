@@ -202,6 +202,54 @@ describe("summarizeShelfItemPrices", () => {
     });
   });
 
+  it("fills remaining TCG holes from peer median (~) when digs are empty", async () => {
+    h.barcodeCache.findMany.mockResolvedValue([]);
+    h.priceOffer.findMany.mockResolvedValue([
+      {
+        itemId: "item-priced",
+        source: "Cardmarket",
+        productName: "NI-001",
+        condition: "new",
+        priceCents: 100,
+        observedAt: new Date("2026-09-01T12:00:00.000Z"),
+      },
+      {
+        itemId: "item-priced",
+        source: "Cardmarket",
+        productName: "NI-001",
+        condition: "new",
+        priceCents: 300,
+        observedAt: new Date("2026-09-02T12:00:00.000Z"),
+      },
+    ]);
+    h.collectRefreshBarcodePriceOffers.mockResolvedValue([]);
+
+    const map = await summarizeShelfItemPrices(
+      "tcg",
+      [
+        {
+          id: "item-priced",
+          barcode: null,
+          name: "NI-001",
+          printKey: "naruto:s1-ni0001",
+        },
+        {
+          id: "item-hole",
+          barcode: null,
+          name: "NI-002",
+          printKey: "naruto:s1-ni0002",
+        },
+      ],
+      "Naruto Carddass",
+    );
+
+    expect(map.get("item-priced")?.priceNew).toBeTruthy();
+    expect(map.get("item-hole")?.priceEstimated).toEqual(
+      expect.any(Number),
+    );
+    expect(map.get("item-hole")?.priceNew ?? null).toBeNull();
+  });
+
   it("skips printKey estimate fill when priceEstimated already present", async () => {
     h.barcodeCache.findMany.mockResolvedValue([]);
     h.priceOffer.findMany.mockResolvedValue([

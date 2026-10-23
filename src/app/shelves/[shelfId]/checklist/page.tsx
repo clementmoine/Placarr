@@ -228,6 +228,7 @@ function SetRow({
 
   const listOpen = forceExpand || (searching ? rows.length > 0 : open);
   const prices = advice?.prices ?? {};
+  const imputedPrices = advice?.imputedPrices ?? {};
   const sealedSources = advice?.sealedSources ?? {};
   const packsPerHit = advice?.packsPerHit ?? {};
   /* Niveaux de rareté relatifs au set (rang parmi ses « 1 sur N »). */
@@ -314,6 +315,8 @@ function SetRow({
             const priceCents = showPrices
               ? (prices[row.printKey] ?? null)
               : null;
+            const priceImputed =
+              priceCents != null && imputedPrices[row.printKey] === true;
             const sources = sealedSources[row.printKey] ?? [];
             const rate = showPrices
               ? (packsPerHit[row.printKey] ?? null)
@@ -416,8 +419,20 @@ function SetRow({
                     />
                   )}
                   {priceCents != null && (
-                    <span className={styles.cardPrice}>
-                      {euros(priceCents)}
+                    <span
+                      className={cn(
+                        styles.cardPrice,
+                        priceImputed && styles.cardPriceImputed,
+                      )}
+                      title={
+                        priceImputed
+                          ? t("items.checklistPriceImputedTitle")
+                          : undefined
+                      }
+                    >
+                      {priceImputed
+                        ? `~${euros(priceCents)}`
+                        : euros(priceCents)}
                     </span>
                   )}
                 </span>
@@ -575,12 +590,17 @@ export default function ChecklistPage() {
     const languageLabel = langCode ? printLanguageLabel(langCode).name : null;
     const setsForMd = data.sets.map((set) => {
       if (!showPrices) return set;
-      const prices = adviceBySet.get(set.id)?.prices;
+      const advice = adviceBySet.get(set.id);
+      const prices = advice?.prices;
       if (!prices || Object.keys(prices).length === 0) return set;
+      const imputed = advice?.imputedPrices ?? {};
       const labels: Record<string, string> = {};
       for (const [printKey, cents] of Object.entries(prices)) {
         if (typeof cents === "number" && Number.isFinite(cents)) {
-          labels[printKey] = euros(cents);
+          labels[printKey] =
+            imputed[printKey] === true
+              ? `~${euros(cents)}`
+              : euros(cents);
         }
       }
       return { ...set, prices: labels };

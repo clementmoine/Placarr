@@ -80,11 +80,17 @@ export type ChecklistSetAdvice = {
   /**
    * Prix unitaire par carte du set (`printKey` → centimes), **possédées
    * comprises** — pour afficher la cote même une fois la case cochée.
-   * Absent = pas de cote connue. Devise d'affichage (EUR), y compris après
+   * Inclut les estimations (médiane de rareté) quand aucune cote n'existe ;
+   * voir {@link imputedPrices}. Devise d'affichage (EUR), y compris après
    * fallback FX USD→EUR. Le plan d'achat (`singles` / `plan`) ne compte que
    * les manquantes.
    */
   prices: Record<string, number>;
+  /**
+   * `printKey` → true : le montant dans {@link prices} est une estimation
+   * (médiane de rareté / set), pas une cote marketplace.
+   */
+  imputedPrices: Record<string, true>;
   /**
    * Produits scellés qui **garantissent** chaque carte du set (starter, promo
    * gift…), y compris déjà possédées. Absent = seulement le pool booster.
@@ -740,9 +746,6 @@ export async function buildChecklistForShelf(input: {
       const sources = sourcesIndex.get(key);
       if (sources?.length) sealedSources[key] = sources;
     }
-    const missingPrices = missingRows.map(
-      (row) => prices.get(row.printKey) ?? null,
-    );
     const missingIds = new Set(
       missingRows.map((row) => checklistRowIdentity(row)),
     );
@@ -769,6 +772,31 @@ export async function buildChecklistForShelf(input: {
       requirements: buildRequirements({ mode, rows: requirementRows }),
       reference: requirementRows,
     });
+    /*
+      Affichage liste + breakdown singles : mêmes ~estimations que le plan,
+      y compris sur les cartes déjà possédées.
+    */
+    const displayPriced = imputeRequirementPrices({
+      requirements: set.cards.map((row) => ({
+        id: row.printKey,
+        acceptedPrints: [row.printKey],
+        requiredCopies: 1,
+        ownedCopies: 0,
+        priceCents: prices.get(row.printKey) ?? null,
+        rarity: rarityByPrint.get(row.printKey) ?? null,
+      })),
+      reference: requirementRows,
+    });
+    const displayPrices: Record<string, number> = {};
+    const imputedPrices: Record<string, true> = {};
+    for (const req of displayPriced) {
+      if (req.priceCents == null) continue;
+      displayPrices[req.id] = req.priceCents;
+      if (req.priceImputed) imputedPrices[req.id] = true;
+    }
+    const missingDisplayPrices = missingRows.map(
+      (row) => displayPrices[row.printKey] ?? null,
+    );
     const skus = sealedSkusFromProducts({
       products: planProducts,
       pool: setPrints.map((row) => ({
@@ -786,8 +814,9 @@ export async function buildChecklistForShelf(input: {
     }
     advice.push({
       setId: set.id,
-      singles: singlesCostBreakdown(missingPrices),
-      prices: Object.fromEntries(prices),
+      singles: singlesCostBreakdown(missingDisplayPrices),
+      prices: displayPrices,
+      imputedPrices,
       sealedSources,
       packsPerHit: rates,
       plan: solveBuyPlan({ requirements, skus, mode }),

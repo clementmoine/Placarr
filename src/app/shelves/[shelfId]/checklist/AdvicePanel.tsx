@@ -42,6 +42,8 @@ export type SetAdvice = {
     medianCents: number | null;
   };
   prices: Record<string, number>;
+  /** Clés dont le montant dans `prices` est une estimation (médiane). */
+  imputedPrices?: Record<string, true>;
   sealedSources: Record<
     string,
     { slug: string; name: string; kind: string; imageUrl?: string | null }[]
@@ -271,9 +273,9 @@ function SinglesGrid({
           <li
             key={row.rowKey}
             className={styles.singlesCartItem}
-            title={`${row.reference} ${row.title} — ${euros(row.priceCents)}${
-              row.priceImputed ? " (est.)" : ""
-            }`}
+            title={`${row.reference} ${row.title} — ${
+              row.priceImputed ? "~" : ""
+            }${euros(row.priceCents)}${row.priceImputed ? " (est.)" : ""}`}
           >
             {row.thumbnailUrl ? (
               <ChecklistHoverThumb
@@ -295,7 +297,9 @@ function SinglesGrid({
                 row.priceImputed && styles.singlesCartPriceImputed,
               )}
             >
-              {euros(row.priceCents)}
+              {row.priceImputed
+                ? `~${euros(row.priceCents)}`
+                : euros(row.priceCents)}
             </span>
           </li>
         ))}

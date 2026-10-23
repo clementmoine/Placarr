@@ -37,6 +37,7 @@ import {
   displayEstimatedCentsFromOffers,
 } from "@/core/commerce/pricing/pricePipeline";
 import { runWithConcurrency } from "@/lib/async";
+import { imputePriceCents } from "@/core/collect/buyPlan";
 
 export type {
   PriceObservation,
@@ -497,6 +498,71 @@ function shelfItemHasMarketPrice(
   );
 }
 
+function shelfItemDisplayCents(
+  fields: ShelfItemPriceFields | undefined,
+): number | null {
+  if (!fields) return null;
+  const candidates = [
+    fields.priceNew,
+    fields.priceFoil,
+    fields.priceUsed,
+    fields.priceUsedCIB,
+    fields.priceEstimated,
+    fields.priceEstimatedFoil,
+  ];
+  for (const cents of candidates) {
+    if (typeof cents === "number" && Number.isFinite(cents) && cents > 0) {
+      return cents;
+    }
+  }
+  return null;
+}
+
+function writeShelfPriceEstimated(
+  result: Map<string, ShelfItemPriceFields>,
+  itemId: string,
+  estimated: number,
+): void {
+  const prev = result.get(itemId);
+  result.set(itemId, {
+    priceNew: prev?.priceNew ?? null,
+    ...(prev?.priceFoil != null ? { priceFoil: prev.priceFoil } : {}),
+    priceUsed: prev?.priceUsed ?? null,
+    priceUsedCIB: prev?.priceUsedCIB ?? null,
+    priceEstimated: estimated,
+    ...(prev?.priceEstimatedFoil != null
+      ? { priceEstimatedFoil: prev.priceEstimatedFoil }
+      : {}),
+    priceLastUpdated: prev?.priceLastUpdated ?? null,
+  });
+}
+
+/**
+ * Après les cotes evidence-only : cartes encore sans aucun montant → médiane
+ * des pairs déjà cotés sur l'étagère (`~`). Aligne la grille / total avec la
+ * checklist (approximation), sans rareté catalogue ici (référence globale).
+ */
+function fillShelfPeerMedianEstimates(
+  result: Map<string, ShelfItemPriceFields>,
+  items: Array<{ id: string; printKey?: string | null }>,
+): void {
+  const reference: { priceCents: number; rarity?: null }[] = [];
+  for (const item of items) {
+    const cents = shelfItemDisplayCents(result.get(item.id));
+    if (cents != null) reference.push({ priceCents: cents });
+  }
+  if (reference.length === 0) return;
+
+  for (const item of items) {
+    if (shelfItemDisplayCents(result.get(item.id)) != null) continue;
+    // Print shelves only — barcode products keep empty rather than inventing.
+    if (!item.printKey?.trim()) continue;
+    const imputed = imputePriceCents({ reference });
+    if (imputed == null) continue;
+    writeShelfPriceEstimated(result, item.id, imputed);
+  }
+}
+
 async function fillShelfPrintKeyEstimates(
   result: Map<string, ShelfItemPriceFields>,
   items: Array<{
@@ -516,35 +582,26 @@ async function fillShelfPrintKeyEstimates(
     if (fields?.priceEstimated != null) return false;
     return !shelfItemHasMarketPrice(fields);
   });
-  if (needsEstimate.length === 0) return;
+  if (needsEstimate.length > 0) {
+    await runWithConcurrency(
+      needsEstimate,
+      PRINT_KEY_ESTIMATE_CONCURRENCY,
+      async (item) => {
+        const printKey = item.printKey!.trim();
+        const name =
+          item.name?.trim() || item.metadataTitle?.trim() || printKey;
+        const estimated = await estimatedCentsForPrintKey({
+          shelfType,
+          printKey,
+          name,
+        });
+        if (estimated == null) return;
+        writeShelfPriceEstimated(result, item.id, estimated);
+      },
+    );
+  }
 
-  await runWithConcurrency(
-    needsEstimate,
-    PRINT_KEY_ESTIMATE_CONCURRENCY,
-    async (item) => {
-      const printKey = item.printKey!.trim();
-      const name =
-        item.name?.trim() || item.metadataTitle?.trim() || printKey;
-      const estimated = await estimatedCentsForPrintKey({
-        shelfType,
-        printKey,
-        name,
-      });
-      if (estimated == null) return;
-      const prev = result.get(item.id);
-      result.set(item.id, {
-        priceNew: prev?.priceNew ?? null,
-        ...(prev?.priceFoil != null ? { priceFoil: prev.priceFoil } : {}),
-        priceUsed: prev?.priceUsed ?? null,
-        priceUsedCIB: prev?.priceUsedCIB ?? null,
-        priceEstimated: estimated,
-        ...(prev?.priceEstimatedFoil != null
-          ? { priceEstimatedFoil: prev.priceEstimatedFoil }
-          : {}),
-        priceLastUpdated: prev?.priceLastUpdated ?? null,
-      });
-    },
-  );
+  fillShelfPeerMedianEstimates(result, items);
 }
 
 export async function getCachedItemPrices(

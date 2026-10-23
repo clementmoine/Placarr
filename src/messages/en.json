@@ -567,8 +567,9 @@
     "checklistAdviceYieldNewCards": "New cards",
     "checklistAdviceYieldPerCard": "€ / new card",
     "checklistAdviceIndependenceAssumed": "Packs assumed independent (no per-box guarantee).",
-    "checklistAdviceImputedNote": "{count} prices estimated from rarity median (italic).",
+    "checklistAdviceImputedNote": "{count} prices estimated from rarity median (~ italic).",
     "checklistAdviceUnpricedNote": "{count} cards with no price or estimate — excluded from totals.",
+    "checklistPriceImputedTitle": "About (set rarity median) — not a marketplace quote.",
     "cropImage": {
       "title": "Edit image",
       "description": "Rotate, then adjust the corners. Editing always starts from the original image, so you can revert or redo it as often as you like.",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildRequirements } from "./requirements";
+import { buildRequirements, imputeRequirementPrices } from "./requirements";
 
 describe("buildRequirements", () => {
   it("base-set collapses finishes into one hole per printKey", () => {
@@ -57,5 +57,65 @@ describe("buildRequirements", () => {
     });
     expect(reqs).toHaveLength(2);
     expect(reqs.map((r) => r.id).sort()).toEqual(["pk1|Foil", "pk1|Normal"]);
+  });
+});
+
+describe("imputeRequirementPrices", () => {
+  it("fills missing holes with same-rarity median and marks priceImputed", () => {
+    const filled = imputeRequirementPrices({
+      requirements: [
+        {
+          id: "a",
+          acceptedPrints: ["a"],
+          requiredCopies: 1,
+          ownedCopies: 0,
+          priceCents: null,
+          rarity: "commune",
+        },
+        {
+          id: "b",
+          acceptedPrints: ["b"],
+          requiredCopies: 1,
+          ownedCopies: 0,
+          priceCents: 500,
+          rarity: "commune",
+        },
+      ],
+      reference: [
+        { priceCents: 100, rarity: "commune" },
+        { priceCents: 300, rarity: "commune" },
+        { priceCents: 900, rarity: "holo" },
+      ],
+    });
+    expect(filled[0]).toMatchObject({
+      id: "a",
+      priceCents: 200,
+      priceImputed: true,
+    });
+    expect(filled[1]).toMatchObject({ id: "b", priceCents: 500 });
+    expect(filled[1]?.priceImputed).toBeUndefined();
+  });
+
+  it("falls back to overall median when rarity has no priced peers", () => {
+    const filled = imputeRequirementPrices({
+      requirements: [
+        {
+          id: "x",
+          acceptedPrints: ["x"],
+          requiredCopies: 1,
+          ownedCopies: 0,
+          priceCents: null,
+          rarity: "promo",
+        },
+      ],
+      reference: [
+        { priceCents: 100, rarity: "commune" },
+        { priceCents: 300, rarity: "commune" },
+      ],
+    });
+    expect(filled[0]).toMatchObject({
+      priceCents: 200,
+      priceImputed: true,
+    });
   });
 });

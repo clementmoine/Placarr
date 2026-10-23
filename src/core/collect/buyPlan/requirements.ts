@@ -90,16 +90,19 @@ function validPrice(value: number | null | undefined): number | null {
   return value != null && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
+type PriceRarityRef = {
+  priceCents: number | null;
+  rarity?: string | null;
+};
+
 /**
- * Trous sans cote → médiane des cotes de **même rareté** (sur tout le set,
- * possédées comprises), sinon médiane globale. Marqués `priceImputed`.
- * Sans aucune cote de référence : le trou reste `null` (exclu, flag).
+ * Médiane de rareté (sinon globale) parmi des cotes de référence.
+ * `null` si aucune référence utilisable.
  */
-export function imputeRequirementPrices(input: {
-  requirements: readonly Requirement[];
-  /** Référence : toutes les lignes du set avec leur cote et rareté. */
-  reference: readonly { priceCents: number | null; rarity?: string | null }[];
-}): Requirement[] {
+export function imputePriceCents(input: {
+  rarity?: string | null;
+  reference: readonly PriceRarityRef[];
+}): number | null {
   const byRarity = new Map<string, number[]>();
   const all: number[] = [];
   for (const row of input.reference) {
@@ -112,13 +115,27 @@ export function imputeRequirementPrices(input: {
     bag.push(price);
     byRarity.set(rarity, bag);
   }
-  const overall = median(all);
+  const rarity = normalizeRarity(input.rarity);
+  const sameRarity = rarity ? median(byRarity.get(rarity) ?? []) : null;
+  return sameRarity ?? median(all);
+}
 
+/**
+ * Trous sans cote → médiane des cotes de **même rareté** (sur tout le set,
+ * possédées comprises), sinon médiane globale. Marqués `priceImputed`.
+ * Sans aucune cote de référence : le trou reste `null` (exclu, flag).
+ */
+export function imputeRequirementPrices(input: {
+  requirements: readonly Requirement[];
+  /** Référence : toutes les lignes du set avec leur cote et rareté. */
+  reference: readonly PriceRarityRef[];
+}): Requirement[] {
   return input.requirements.map((req) => {
     if (req.priceCents != null) return req;
-    const rarity = normalizeRarity(req.rarity);
-    const sameRarity = rarity ? median(byRarity.get(rarity) ?? []) : null;
-    const imputed = sameRarity ?? overall;
+    const imputed = imputePriceCents({
+      rarity: req.rarity,
+      reference: input.reference,
+    });
     if (imputed == null) return req;
     return { ...req, priceCents: imputed, priceImputed: true };
   });

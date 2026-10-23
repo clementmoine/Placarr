@@ -567,8 +567,9 @@
     "checklistAdviceYieldNewCards": "Cartes neuves",
     "checklistAdviceYieldPerCard": "€ / carte neuve",
     "checklistAdviceIndependenceAssumed": "Sachets supposés indépendants (pas de garantie par boîte).",
-    "checklistAdviceImputedNote": "{count} cotes estimées par médiane de rareté (en italique).",
+    "checklistAdviceImputedNote": "{count} cotes estimées par médiane de rareté (~ en italique).",
     "checklistAdviceUnpricedNote": "{count} cartes sans cote ni estimation — hors total.",
+    "checklistPriceImputedTitle": "Environ (médiane de rareté du set) — pas une cote marketplace.",
     "cropImage": {
       "title": "Modifier l'image",
       "description": "Tournez puis ajustez les coins. L'édition part toujours de l'image d'origine, vous pouvez donc y revenir ou la refaire autant de fois que vous voulez.",

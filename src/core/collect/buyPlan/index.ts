@@ -14,7 +14,11 @@ export type {
   SkuMetrics,
   TargetMode,
 } from "./types";
-export { buildRequirements, imputeRequirementPrices } from "./requirements";
+export {
+  buildRequirements,
+  imputePriceCents,
+  imputeRequirementPrices,
+} from "./requirements";
 export type { RequirementInputRow } from "./requirements";
 export {
   HitTable,

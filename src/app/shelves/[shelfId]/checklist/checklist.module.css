@@ -530,6 +530,13 @@
   white-space: nowrap;
 }
 
+/* Estimation (médiane de rareté) — pas une cote marketplace. */
+.cardPriceImputed {
+  font-style: italic;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
 /* Icône seule — le titre porte la liste des produits (tooltip + aria). */
 .cardSources {
   flex: none;

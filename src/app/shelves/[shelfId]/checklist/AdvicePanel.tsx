@@ -6,6 +6,7 @@ import type {
   PlanItem,
   SinglesLine,
 } from "@/core/collect/buyPlan/types";
+import { withoutImputedPrices } from "@/core/collect/buyPlan/withoutImputedPrices";
 import {
   Dialog,
   DialogContent,
@@ -327,16 +328,23 @@ export function Advice({
   advice,
   cards,
   hideZeroSealedExpectation,
+  hideImputedPrices = false,
   t,
 }: {
   advice: SetAdvice;
   cards: readonly ChecklistPrint[];
   hideZeroSealedExpectation: boolean;
+  /** Hors total / listes : cotes ~ traitées comme « sans cote ». */
+  hideImputedPrices?: boolean;
   t: Translate;
 }) {
   const [selected, setSelected] = useState<Track | null>(null);
   const [yieldLimit, setYieldLimit] = useState(YIELD_PAGE);
-  const { plan } = advice;
+  const plan = useMemo(
+    () =>
+      hideImputedPrices ? withoutImputedPrices(advice.plan) : advice.plan,
+    [advice.plan, hideImputedPrices],
+  );
   const { singles, mixed, sealed, recommendation } = plan;
   const recommended = recommendation.track;
   const badge = t(

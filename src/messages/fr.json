@@ -525,6 +525,7 @@
     "checklistMasterSetSuggestDismiss": "Plus tard",
     "checklistAlwaysShowFinishLabels": "Afficher toutes les finitions",
     "checklistShowPrices": "Afficher les prix",
+    "checklistHideImputedPrices": "Masquer les prix approximés (~)",
     "checklistHideZeroSealedExpectation": "Masquer les scellés sans cartes neuves estimées",
     "checklistUntaggedOwned": "{count} cartes sur l'étagère n'ont pas de finition — le master set les ignore tant que None ou Silver n'est pas renseigné sur chaque exemplaire.",
     "checklistSearch": "Rechercher une carte ou une extension…",
@@ -575,7 +576,7 @@
     "checklistAdviceYieldPerCard": "€ / carte neuve",
     "checklistAdviceIndependenceAssumed": "Sachets supposés indépendants (pas de garantie par boîte).",
     "checklistAdviceImputedNote": "{count} cotes estimées par médiane de rareté (~ en italique).",
-    "checklistAdviceUnpricedNote": "{count} cartes sans cote ni estimation — hors total.",
+    "checklistAdviceUnpricedNote": "{count} cartes sans prix connu — hors total.",
     "checklistPriceImputedTitle": "Environ (médiane de rareté du set) — pas une cote marketplace.",
     "cropImage": {
       "title": "Modifier l'image",

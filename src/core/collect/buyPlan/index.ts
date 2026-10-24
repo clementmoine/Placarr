@@ -44,6 +44,10 @@ export {
 export type { Candidates, CompletePlan, PackFamily } from "./optimize";
 export { solveBuyPlan } from "./solve";
 export {
+  pricesWithoutImputed,
+  withoutImputedPrices,
+} from "./withoutImputedPrices";
+export {
   hitProbabilityFromPacksPerHit,
   sealedSkuFromProduct,
   sealedSkusFromProducts,

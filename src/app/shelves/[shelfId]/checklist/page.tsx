@@ -40,6 +40,7 @@ import {
   checklistShouldShowFinish,
 } from "@/core/collect/checklist";
 import { pullRateRank, pullRateScale } from "@/core/collect/buyPlan/pullRates";
+import { pricesWithoutImputed } from "@/core/collect/buyPlan/withoutImputedPrices";
 import {
   checklistSetsForMarkdown,
   formatChecklistMarkdown,
@@ -141,6 +142,7 @@ function Advice(props: {
   advice: SetAdvice;
   cards: readonly ChecklistPrint[];
   hideZeroSealedExpectation: boolean;
+  hideImputedPrices: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return <AdvicePanel {...props} />;
@@ -153,6 +155,7 @@ function SetRow({
   showOwned,
   alwaysShowFinishLabels,
   showPrices,
+  hideImputedPrices,
   hideZeroSealedExpectation,
   searchQuery,
   forceExpand,
@@ -164,6 +167,7 @@ function SetRow({
   showOwned: boolean;
   alwaysShowFinishLabels: boolean;
   showPrices: boolean;
+  hideImputedPrices: boolean;
   hideZeroSealedExpectation: boolean;
   searchQuery: string;
   /**
@@ -227,8 +231,10 @@ function SetRow({
   );
 
   const listOpen = forceExpand || (searching ? rows.length > 0 : open);
-  const prices = advice?.prices ?? {};
   const imputedPrices = advice?.imputedPrices ?? {};
+  const prices = hideImputedPrices
+    ? pricesWithoutImputed(advice?.prices ?? {}, imputedPrices)
+    : (advice?.prices ?? {});
   const sealedSources = advice?.sealedSources ?? {};
   const packsPerHit = advice?.packsPerHit ?? {};
   /* Niveaux de rareté relatifs au set (rang parmi ses « 1 sur N »). */
@@ -304,6 +310,7 @@ function SetRow({
             advice={advice}
             cards={set.missing}
             hideZeroSealedExpectation={hideZeroSealedExpectation}
+            hideImputedPrices={hideImputedPrices}
             t={t}
           />
         )}
@@ -316,7 +323,9 @@ function SetRow({
               ? (prices[row.printKey] ?? null)
               : null;
             const priceImputed =
-              priceCents != null && imputedPrices[row.printKey] === true;
+              !hideImputedPrices &&
+              priceCents != null &&
+              imputedPrices[row.printKey] === true;
             const sources = sealedSources[row.printKey] ?? [];
             const rate = showPrices
               ? (packsPerHit[row.printKey] ?? null)
@@ -471,6 +480,9 @@ export default function ChecklistPage() {
   const [showPrices, setShowPrices] = useState(
     DEFAULT_CHECKLIST_PREFS.showPrices,
   );
+  const [hideImputedPrices, setHideImputedPrices] = useState(
+    DEFAULT_CHECKLIST_PREFS.hideImputedPrices,
+  );
   const [hideZeroSealedExpectation, setHideZeroSealedExpectation] = useState(
     DEFAULT_CHECKLIST_PREFS.hideZeroSealedExpectation,
   );
@@ -487,6 +499,7 @@ export default function ChecklistPage() {
     setMasterSetSuggestDismissed(prefs.masterSetSuggestDismissed);
     setAlwaysShowFinishLabels(prefs.alwaysShowFinishLabels);
     setShowPrices(prefs.showPrices);
+    setHideImputedPrices(prefs.hideImputedPrices);
     setHideZeroSealedExpectation(prefs.hideZeroSealedExpectation);
     setPrefsReady(true);
   }, [shelfId]);
@@ -499,6 +512,7 @@ export default function ChecklistPage() {
       masterSetSuggestDismissed,
       alwaysShowFinishLabels,
       showPrices,
+      hideImputedPrices,
       hideZeroSealedExpectation,
     });
   }, [
@@ -508,6 +522,7 @@ export default function ChecklistPage() {
     masterSetSuggestDismissed,
     alwaysShowFinishLabels,
     showPrices,
+    hideImputedPrices,
     hideZeroSealedExpectation,
     prefsReady,
   ]);
@@ -594,11 +609,14 @@ export default function ChecklistPage() {
       const prices = advice?.prices;
       if (!prices || Object.keys(prices).length === 0) return set;
       const imputed = advice?.imputedPrices ?? {};
+      const visible = hideImputedPrices
+        ? pricesWithoutImputed(prices, imputed)
+        : prices;
       const labels: Record<string, string> = {};
-      for (const [printKey, cents] of Object.entries(prices)) {
+      for (const [printKey, cents] of Object.entries(visible)) {
         if (typeof cents === "number" && Number.isFinite(cents)) {
           labels[printKey] =
-            imputed[printKey] === true
+            !hideImputedPrices && imputed[printKey] === true
               ? `~${euros(cents)}`
               : euros(cents);
         }
@@ -633,7 +651,15 @@ export default function ChecklistPage() {
     anchor.download = `${slug}${langSuffix}-checklist.md`;
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [data, showOwned, alwaysShowFinishLabels, showPrices, adviceBySet, t]);
+  }, [
+    data,
+    showOwned,
+    alwaysShowFinishLabels,
+    showPrices,
+    hideImputedPrices,
+    adviceBySet,
+    t,
+  ]);
 
   return (
     <TooltipPrimitive.Provider
@@ -726,6 +752,15 @@ export default function ChecklistPage() {
                     }
                   >
                     {t("items.checklistShowPrices")}
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={hideImputedPrices}
+                    disabled={!showPrices}
+                    onCheckedChange={(checked) =>
+                      setHideImputedPrices(checked === true)
+                    }
+                  >
+                    {t("items.checklistHideImputedPrices")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={hideZeroSealedExpectation}
@@ -866,6 +901,7 @@ export default function ChecklistPage() {
                   showOwned={showOwned}
                   alwaysShowFinishLabels={alwaysShowFinishLabels}
                   showPrices={showPrices}
+                  hideImputedPrices={hideImputedPrices}
                   hideZeroSealedExpectation={hideZeroSealedExpectation}
                   searchQuery={searchQuery}
                   forceExpand={printing}

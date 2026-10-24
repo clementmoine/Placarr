@@ -160,7 +160,7 @@ import { NARUTO_INDICATIVE_PRICE_SOURCE, refreshNarutoIndicativePriceOffers, nar
       ).toMatchObject({ cents: 1000, tier: "premium" });
     });
 
-    it("does not invent quotes outside S1–S5 FR Carddass", () => {
+    it("does not invent quotes outside S1–S6 FR Carddass / s24 bulk", () => {
       expect(
         narutoIndicativeQuoteForPrint({
           setCode: "s28",
@@ -173,6 +173,38 @@ import { NARUTO_INDICATIVE_PRICE_SOURCE, refreshNarutoIndicativePriceOffers, nar
           setCode: "s1",
           number: "n0001",
           rarity: "common",
+        }),
+      ).toBeNull();
+    });
+
+    it("prices Sage's Legacy s24 Normale (communes) at ~3 €, skips foil Rare/SR", () => {
+      expect(
+        narutoIndicativeQuoteForPrint({
+          setCode: "s24",
+          number: "j0897",
+          rarity: "Common",
+        }),
+      ).toMatchObject({ cents: 300, tier: "normal", displayValue: "3 €" });
+      expect(
+        narutoIndicativeQuoteForPrint({
+          setCode: "s24",
+          number: "n1360",
+          rarity: null,
+        }),
+      ).toMatchObject({ cents: 300, tier: "normal" });
+      // Foil-only Rare/SR (s24-fr-physical-finishes) — pas de cote bulk.
+      expect(
+        narutoIndicativeQuoteForPrint({
+          setCode: "s24",
+          number: "n1395",
+          rarity: null,
+        }),
+      ).toBeNull();
+      expect(
+        narutoIndicativeQuoteForPrint({
+          setCode: "s24",
+          number: "j0895",
+          rarity: "Rare",
         }),
       ).toBeNull();
     });

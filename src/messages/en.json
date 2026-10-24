@@ -525,6 +525,7 @@
     "checklistMasterSetSuggestDismiss": "Not now",
     "checklistAlwaysShowFinishLabels": "Show all finishes",
     "checklistShowPrices": "Show prices",
+    "checklistHideImputedPrices": "Hide approximate prices (~)",
     "checklistHideZeroSealedExpectation": "Hide sealed products with no estimated new cards",
     "checklistUntaggedOwned": "{count} cards on the shelf have no finish set — master set ignores them until you choose None or Silver on each copy.",
     "checklistSearch": "Search for a card or set…",
@@ -575,7 +576,7 @@
     "checklistAdviceYieldPerCard": "€ / new card",
     "checklistAdviceIndependenceAssumed": "Packs assumed independent (no per-box guarantee).",
     "checklistAdviceImputedNote": "{count} prices estimated from rarity median (~ italic).",
-    "checklistAdviceUnpricedNote": "{count} cards with no price or estimate — excluded from totals.",
+    "checklistAdviceUnpricedNote": "{count} cards with no known price — excluded from totals.",
     "checklistPriceImputedTitle": "About (set rarity median) — not a marketplace quote.",
     "cropImage": {
       "title": "Edit image",

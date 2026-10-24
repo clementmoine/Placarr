@@ -19,6 +19,7 @@ import { narutoCatalogueLineForCard } from "../identity";
 import { lookupNarutoPrintDetail } from "../search";
 import { loadAttestedPromos } from "./promos";
 import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./priceSourceId";
+import { attestedNarutoCarddassFinishes } from "./faces";
 
 export { NARUTO_INDICATIVE_PRICE_SOURCE } from "./priceSourceId";
 
@@ -60,6 +61,8 @@ type DigFile = {
     s4?: SeriesQuotes;
     s5?: SeriesQuotes;
     s6?: SeriesQuotes;
+    /** Sage's Legacy (CCG FR/EN late line) — bulk Normale. */
+    s24?: SeriesQuotes;
     promo?: PromoQuotes;
   };
   prerelease?: {
@@ -132,7 +135,17 @@ function seriesBucket(setCode: string): SeriesQuotes | null {
   if (id === "s4") return prices.s4 ?? null;
   if (id === "s5") return prices.s5 ?? null;
   if (id === "s6") return prices.s6 ?? null;
+  if (id === "s24") return prices.s24 ?? null;
   return null;
+}
+
+/** Bulk Normale (communes) — pas les foil-only Rare/SR attestés. */
+function isS24BulkNormal(number: string, rarity: string | null | undefined): boolean {
+  if (isHoloRarity(rarity)) return false;
+  const finishes = attestedNarutoCarddassFinishes("s24", number);
+  if (finishes) return finishes.includes("normal");
+  // Rareté explicite Common / commune si finishes absents.
+  return /^(common|commune|c)$/i.test(rarity?.trim() ?? "");
 }
 
 /** Dig lists use bare `ni023` ; catalogue prints are `ni0023-promo`. */
@@ -248,9 +261,11 @@ function promoQuoteForNumber(
 }
 
 /**
- * Cote ~ pour un tirage FR Carddass S1–S6, ou promo hors série (shuriken / tin).
+ * Cote ~ pour un tirage FR Carddass S1–S6, Sage's Legacy s24 (bulk), ou promo
+ * hors série (shuriken / tin).
  * Premium > printKey `-prerelease` > rareté holo > normale.
  * S6 = premiums inserts seulement (pas de tier bulk).
+ * S24 = Normale ~3 € (hors foil Rare/SR) — ligne en-ccg FR.
  * Promo : specials dig (NI-023 CdF 100 €, PR tin) puis paliers 1★/2★/3★.
  */
 export function narutoIndicativeQuoteForPrint(input: {
@@ -282,11 +297,23 @@ export function narutoIndicativeQuoteForPrint(input: {
     }
   }
 
-  if (narutoCatalogueLineForCard(input.number, input.setCode) !== "carddass-fr") {
-    return null;
-  }
+  const line = narutoCatalogueLineForCard(input.number, input.setCode);
   const series = seriesBucket(input.setCode);
   if (!series) return null;
+
+  // Sage's Legacy : CCG late-line (préfixes n/j/m), pas Carddass FR ni/te/ta.
+  if (set === "s24") {
+    if (line !== "en-ccg") return null;
+    if (!isS24BulkNormal(input.number, input.rarity)) return null;
+    if (typeof series.normalEur !== "number") return null;
+    const cents = euroToCents(series.normalEur);
+    if (cents == null) return null;
+    return quoteFromCents(cents, sourceUrl, observed, "normal");
+  }
+
+  if (line !== "carddass-fr") {
+    return null;
+  }
 
   const premium = premiumCents(series, input.number);
   if (premium != null) {

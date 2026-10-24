@@ -20,6 +20,11 @@ export type ChecklistShelfPrefs = {
   /** Cotes par carte + panneau conseil d'achat. */
   showPrices: boolean;
   /**
+   * Masquer les cotes ~ (médiane de rareté) : hors total, comptées « sans
+   * cote ». Défaut off — elles restent dans le total avec le préfixe ~.
+   */
+  hideImputedPrices: boolean;
+  /**
    * Conseil scellé : masquer les SKU à espérance 0 (déjà couverts / sans
    * impact estimé). Défaut off — on liste tout, trié du plus rentable.
    */
@@ -32,6 +37,7 @@ export const DEFAULT_CHECKLIST_PREFS: ChecklistShelfPrefs = {
   masterSetSuggestDismissed: false,
   alwaysShowFinishLabels: false,
   showPrices: true,
+  hideImputedPrices: false,
   hideZeroSealedExpectation: false,
 };
 
@@ -71,6 +77,10 @@ export function parseChecklistPrefs(raw: unknown): ChecklistShelfPrefs {
       typeof raw.showPrices === "boolean"
         ? raw.showPrices
         : DEFAULT_CHECKLIST_PREFS.showPrices,
+    hideImputedPrices:
+      typeof raw.hideImputedPrices === "boolean"
+        ? raw.hideImputedPrices
+        : DEFAULT_CHECKLIST_PREFS.hideImputedPrices,
     hideZeroSealedExpectation:
       typeof raw.hideZeroSealedExpectation === "boolean"
         ? raw.hideZeroSealedExpectation

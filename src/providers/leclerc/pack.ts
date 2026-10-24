@@ -17,7 +17,7 @@ export type LeclercOpSpec = {
   extractTarget: string;
   effectPackId: string;
   family: LeclercFamilyId;
-  /** Only ops with a curated checklist are registered. */
+  /** Toujours `true` pour une op listée — sinon elle n’est pas dans `LECLERC_OPS`. */
   enabled: boolean;
 };
 
@@ -53,23 +53,22 @@ function op(
 }
 
 /**
- * Toutes les opérations connues. `enabled` = checklist curated présente
- * (sinon réservé pour un Sync ultérieur, pas encore une ligne admin).
+ * Toutes les opérations connues = lignes admin. Stub checklist OK
+ * (densifier les noms plus tard) — pas de `enabled: false` « pour plus tard ».
  */
 export const LECLERC_OPS: readonly LeclercOpSpec[] = [
-  op("sw15", "starwars", false),
-  op("sw16", "starwars", false),
-  op("sw18", "starwars", false),
-  op("sw19", "starwars", false),
-  op("sw19sb", "starwars", false),
-  op("marvel20", "marvel", false),
-  op("marvel20sb", "marvel", false),
+  op("sw15", "starwars", true),
+  op("sw16", "starwars", true),
+  op("sw18", "starwars", true),
+  /** Stickers + dos jeu J1–J18 = une campagne (pas de ligne « Sticker Backs »). */
+  op("sw19", "starwars", true),
+  /** Stickers 1–144 + cartes mémoire C1–C40 = une campagne (Paninimania idm=7013). */
+  op("marvel20", "marvel", true),
   op("marvel21", "marvel", true),
   op("marvel22", "marvel", true),
   op("marvel23", "marvel", true),
   op("marvel24", "marvel", true),
   op("disney25", "disney", true),
-  /** Stub checklist (108+24) — noms à densifier dès album / Coleka. */
   op("disney26", "disney", true),
 ];
 
@@ -77,8 +76,15 @@ export const LECLERC_ACTIVE_OPS: readonly LeclercOpSpec[] = LECLERC_OPS.filter(
   (row) => row.enabled,
 );
 
+/** TCDB « Sticker Backs » n’est pas une op séparée — alias → campagne canonique. */
+const SET_CODE_ALIASES: Readonly<Record<string, string>> = {
+  sw19sb: "sw19",
+  marvel20sb: "marvel20",
+};
+
 export function leclercOpForSetCode(setCode: string): LeclercOpSpec | null {
-  const code = setCode.trim().toLowerCase();
+  const raw = setCode.trim().toLowerCase();
+  const code = SET_CODE_ALIASES[raw] ?? raw;
   return LECLERC_OPS.find((row) => row.setCode === code) ?? null;
 }
 
@@ -106,3 +112,4 @@ export const LECLERC_MARVEL_PROVIDER_ID = "leclercmarvel21";
 export const LECLERC_DISNEY_PROVIDER_ID = "leclercdisney25";
 export const LECLERC_MARVEL_EFFECT_PACK_ID = FAMILY_EFFECT.marvel;
 export const LECLERC_DISNEY_EFFECT_PACK_ID = FAMILY_EFFECT.disney;
+export const LECLERC_STARWARS_EFFECT_PACK_ID = FAMILY_EFFECT.starwars;

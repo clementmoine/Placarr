@@ -589,6 +589,11 @@ describe("catalogue sealed rows", () => {
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const packDir = path.join(root, "naruto", "carddass");
     mkdirSync(packDir, { recursive: true });
+    for (const slug of ["booster-s1", "starter-pays-du-vent"]) {
+      const artDir = path.join(packDir, "products", slug, "fr");
+      mkdirSync(artDir, { recursive: true });
+      writeFileSync(path.join(artDir, "art.webp"), "webp");
+    }
     const index: ProductsIndexV1 = {
       version: 1,
       pack: "naruto/carddass",
@@ -640,7 +645,7 @@ describe("catalogue sealed rows", () => {
         qty: 1,
         name: "Starter Pays du Vent",
         image:
-          "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.webp",
+          "/assets/naruto/carddass/products/starter-pays-du-vent/fr/face",
         contentsKnown: true,
         resolvable: true,
       }),
@@ -648,7 +653,7 @@ describe("catalogue sealed rows", () => {
         slug: "booster-s1",
         qty: 2,
         name: "Booster Série 1",
-        image: "/assets/naruto/carddass/products/booster-s1/fr/art.webp",
+        image: "/assets/naruto/carddass/products/booster-s1/fr/face",
         resolvable: true,
       }),
     ]);
@@ -734,7 +739,7 @@ describe("catalogue sealed rows", () => {
       "naruto/carddass::tin-box",
     );
     expect(detail?.guaranteedProducts?.[0]?.image).toBe(
-      "/assets/naruto/carddass/products/booster-s1/fr/art.vialudibunda.jpg",
+      "/assets/naruto/carddass/products/booster-s1/fr/face",
     );
   });
 

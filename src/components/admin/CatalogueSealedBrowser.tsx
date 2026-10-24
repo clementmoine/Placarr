@@ -188,7 +188,7 @@ export function CatalogueSealedBrowser({
   } = useInfiniteQuery({
     queryKey: [
       "catalogueProducts",
-      "v2",
+      "v3",
       packId,
       debouncedQ,
       contentsUnknownOnly,

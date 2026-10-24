@@ -105,7 +105,7 @@ import type { ImadokiSheet } from "../parse/catalogues";
       expect(index.products["naruto/ninja-ranks::booster"]).toMatchObject({
         kind: "booster",
         name: "Naruto: Ninja Ranks booster pack",
-        image: "/assets/naruto/ninja-ranks/products/booster/en/art.inkworks.jpg",
+        image: "/assets/naruto/ninja-ranks/products/booster/en/face",
       });
       expect(index.products["naruto/ninja-ranks::display"].kind).toBe("display");
       expect(index.products["naruto/ninja-ranks::collector-album"].kind).toBe(

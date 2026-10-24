@@ -63,15 +63,15 @@ import { NARUTO_ULTRA_PACK_ID } from "./pack";
         kind: "coffret",
         setCode: "uc",
         image:
-          "/assets/naruto/ultra-challenge/products/collector-album/fr/art.reconstructed.png",
+          "/assets/naruto/ultra-challenge/products/collector-album/fr/face",
         imageBack:
-          "/assets/naruto/ultra-challenge/products/collector-album/fr/back.reconstructed.png",
+          "/assets/naruto/ultra-challenge/products/collector-album/fr/back",
       });
       expect(index.products["naruto/ultra-challenge::booster"]).toMatchObject({
         kind: "booster",
         setCode: "uc",
         image:
-          "/assets/naruto/ultra-challenge/products/booster/fr/art.reconstructed.png",
+          "/assets/naruto/ultra-challenge/products/booster/fr/face",
       });
 
       const albumDir = path.join(
@@ -109,7 +109,7 @@ import { NARUTO_ULTRA_PACK_ID } from "./pack";
       expect(
         index.products["naruto/ultra-challenge::collector-album"]?.image,
       ).toBe(
-        "/assets/naruto/ultra-challenge/products/collector-album/fr/art.coleka.webp",
+        "/assets/naruto/ultra-challenge/products/collector-album/fr/face",
       );
     });
   });

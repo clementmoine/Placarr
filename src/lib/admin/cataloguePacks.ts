@@ -3,7 +3,7 @@
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
  * Dragon Ball has Masters + Fusion World + Lamincards (Edibas). Naruto has several lines (Carddass,
- * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Kayou, Data Carddass) under
+ * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Card Game 2027, Kayou, Data Carddass) under
  * one franchise tab. When a franchise has many lines, packs may declare a
  * `lineFamily` (éditeur) so the UI can group them in a select instead of a
  * flat chip strip.
@@ -34,6 +34,7 @@ export type CataloguePackId =
   | "naruto/ninja-ranks"
   | "naruto/ultra-challenge"
   | "naruto/mythos"
+  | "naruto/cardgame"
   | "naruto/kayou"
   | "naruto/data-carddass"
   | "dragonball/cg"
@@ -45,6 +46,11 @@ export type CataloguePackId =
   | "onepiece"
   | "yugioh"
   | "mtg"
+  | "leclerc/sw15"
+  | "leclerc/sw16"
+  | "leclerc/sw18"
+  | "leclerc/sw19"
+  | "leclerc/marvel20"
   | "leclerc/marvel21"
   | "leclerc/marvel22"
   | "leclerc/marvel23"
@@ -70,6 +76,7 @@ export type CatalogueExtractTarget =
   | "naruto-ranks"
   | "naruto-ultra"
   | "naruto-mythos"
+  | "naruto-cardgame"
   | "naruto-kayou"
   | "naruto-data-carddass"
   | "dbs-cg"
@@ -81,6 +88,11 @@ export type CatalogueExtractTarget =
   | "onepiece"
   | "yugioh"
   | "mtg"
+  | "leclerc-sw15"
+  | "leclerc-sw16"
+  | "leclerc-sw18"
+  | "leclerc-sw19"
+  | "leclerc-marvel20"
   | "leclerc-marvel21"
   | "leclerc-marvel22"
   | "leclerc-marvel23"
@@ -657,6 +669,39 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "CICABOOM Naruto Mythos TCG — Konoha Shidō (KS1) + Shinobi Shiren (SS2). Set 3 Akatsuki: sealed only for now.",
   },
   {
+    id: "naruto/cardgame",
+    franchiseId: "naruto",
+    franchiseLabelFr: "Naruto",
+    franchiseLabelEn: "Naruto",
+    lineLabelFr: "Card Game 2027",
+    lineLabelEn: "Card Game 2027",
+    lineFamily: {
+      id: "bandai-card-games",
+      labelFr: "Bandai Card Games",
+      labelEn: "Bandai Card Games",
+    },
+    labelFr: "Naruto Card Game",
+    labelEn: "Naruto Card Game",
+    hasFoilEffects: false,
+    hasSealedProducts: true,
+    catalogueLocales: ["fr", "en"],
+    defaultScope: "sealed",
+    extractTarget: "naruto-cardgame",
+    catalogueOnly: true,
+    extractMarkers: ["catalog.sqlite", "cards"],
+    emptyUnless: ["catalog.sqlite"],
+    extract: {
+      prelude: [
+        "Naruto Card Game (Bandai 2027) : display FR précommande → data/naruto/cardgame",
+      ],
+      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
+    },
+    blurbFr:
+      "Bandai Card Games — nouveau TCG mondial (été 2027). 12 Character SAMPLE (galerie officielle) + display FR Pixel Heart.",
+    blurbEn:
+      "Bandai Card Games — new worldwide TCG (summer 2027). 12 official SAMPLE Characters + FR Pixel Heart display.",
+  },
+  {
     id: "naruto/kayou",
     franchiseId: "naruto",
     franchiseLabelFr: "Naruto",
@@ -1022,10 +1067,10 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       labelEn: label,
       hasFoilEffects: false,
       /**
-       * Disney 2025 : album / cahier curated. Autres ops = stickers only jusqu’à
-       * attestation scellée.
+       * Seed album + pochette + display pour toute op (overlay curated
+       * packshots / prix quand attesté — Paninimania, Cartes & Stickers…).
        */
-      hasSealedProducts: op.setCode === "disney25",
+      hasSealedProducts: true,
       defaultScope: "all" as const,
       /** E.Leclerc FR ops. */
       catalogueLocales: ["fr"] as const,
@@ -1231,6 +1276,8 @@ export function resolveCataloguePackId(
     ultrachallenge: "naruto/ultra-challenge",
     lamincards: "naruto/ultra-challenge",
     mythos: "naruto/mythos",
+    cardgame: "naruto/cardgame",
+    ncg: "naruto/cardgame",
     kayou: "naruto/kayou",
     datacarddass: "naruto/data-carddass",
     narultimate: "naruto/data-carddass",
@@ -1260,6 +1307,15 @@ export function resolveCataloguePackId(
     scryfall: "mtg",
     leclerc: "leclerc/marvel21",
     leclercmarvel: "leclerc/marvel21",
+    leclercsw15: "leclerc/sw15",
+    leclercsw16: "leclerc/sw16",
+    leclercsw18: "leclerc/sw18",
+    leclercsw19: "leclerc/sw19",
+    /** Ancien id TCDB « Sticker Backs » → même campagne. */
+    leclercsw19sb: "leclerc/sw19",
+    leclercmarvel20: "leclerc/marvel20",
+    /** Ancien id TCDB « Sticker Backs » → même campagne. */
+    leclercmarvel20sb: "leclerc/marvel20",
     leclercmarvel21: "leclerc/marvel21",
     leclercmarvel22: "leclerc/marvel22",
     leclercmarvel23: "leclerc/marvel23",

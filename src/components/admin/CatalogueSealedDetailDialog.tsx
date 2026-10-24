@@ -38,7 +38,10 @@ import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { sealedSkuNeedsPackComposition } from "@/providers/shared/sealedProducts/packCompositionTypes";
 import { sealedGuaranteedPrintsSectionTitle } from "@/providers/shared/sealedProducts/guaranteedPrintsTitle";
 import { sealedKindLabel } from "@/providers/shared/sealedProducts/kinds";
-import { splitSealedLotteryChasePrints } from "@/providers/shared/sealedProducts/lotteryChaseSplit";
+import {
+  sealedFixeezLotteryRole,
+  sealedLotteryDisplayPools,
+} from "@/providers/shared/sealedProducts/lotteryChaseSplit";
 
 async function fetchDetail(
   pack: CataloguePackId,
@@ -450,32 +453,41 @@ export function CatalogueSealedDetailDialog({
               }
             />
             {(() => {
-              const { base, chase } = splitSealedLotteryChasePrints(
+              const { base, optionalChase } = sealedLotteryDisplayPools(
                 detail.randomPoolPrints,
+                detail.packComposition,
               );
+              const fixeezRole = sealedFixeezLotteryRole(
+                detail.packComposition,
+              );
+              const setSuffix = detail.setCode ? ` ${detail.setCode}` : "";
               const baseTitle =
-                detail.randomPoolScope === "set"
+                fixeezRole === "primary"
                   ? fr
-                    ? `Cartes possibles du set${detail.setCode ? ` ${detail.setCode}` : ""}`
-                    : `Possible cards from set${detail.setCode ? ` ${detail.setCode}` : ""}`
-                  : fr
-                    ? "Cartes possibles (liste connue)"
-                    : "Possible cards (listed pool)";
+                    ? `Fixeez du set${setSuffix}`
+                    : `Fixeez from set${setSuffix}`
+                  : detail.randomPoolScope === "set"
+                    ? fr
+                      ? `Cartes possibles du set${setSuffix}`
+                      : `Possible cards from set${setSuffix}`
+                    : fr
+                      ? "Cartes possibles (liste connue)"
+                      : "Possible cards (listed pool)";
               return (
                 <>
                   <CatalogueSealedPrintGrid
                     title={baseTitle}
-                    prints={chase.length ? base : detail.randomPoolPrints}
+                    prints={base}
                     fr={fr}
                   />
-                  {chase.length ? (
+                  {optionalChase.length ? (
                     <CatalogueSealedPrintGrid
                       title={
                         fr
                           ? "Fixeez possibles (aléatoire, non garanti)"
                           : "Possible Fixeez (random, not guaranteed)"
                       }
-                      prints={chase}
+                      prints={optionalChase}
                       fr={fr}
                     />
                   ) : null}

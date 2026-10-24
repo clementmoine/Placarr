@@ -44,12 +44,10 @@ describe("resolveSealedPackshotUrl", () => {
         fallback:
           "/assets/naruto/carddass/products/booster-s1/fr/art.carddass.gif",
       }),
-    ).toBe(
-      "/assets/naruto/carddass/products/booster-s1/fr/art.vialudibunda.jpg",
-    );
+    ).toBe("/assets/naruto/carddass/products/booster-s1/fr/face");
   });
 
-  it("falls back to the index image when face.json is absent", () => {
+  it("returns null when nothing is on disk (no phantom filename URL)", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -60,10 +58,10 @@ describe("resolveSealedPackshotUrl", () => {
         lang: "fr",
         fallback: "/assets/naruto/carddass/products/tin-box/fr/art.jpeg",
       }),
-    ).toBe("/assets/naruto/carddass/products/tin-box/fr/art.jpeg");
+    ).toBeNull();
   });
 
-  it("picks an art.* dump when index image is null and face.json is absent", () => {
+  it("emits /face when an art.* dump exists (no basename in URL)", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -85,7 +83,7 @@ describe("resolveSealedPackshotUrl", () => {
         lang: "fr",
         fallback: null,
       }),
-    ).toBe("/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg");
+    ).toBe("/assets/naruto/carddass/products/booster-s24/fr/face");
   });
 });
 
@@ -94,7 +92,7 @@ describe("backfillSealedProductPackshots", () => {
     vi.unstubAllEnvs();
   });
 
-  it("fills null image from face.json without rewriting existing URLs", () => {
+  it("fills null image as /face from face.json", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-bf-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const dir = path.join(
@@ -126,18 +124,15 @@ describe("backfillSealedProductPackshots", () => {
     };
     expect(backfillSealedProductPackshots("naruto/carddass", products)).toBe(1);
     expect(products.a.image).toBe(
-      "/assets/naruto/carddass/products/display-s7/en/art.bandai-drive.png",
+      "/assets/naruto/carddass/products/display-s7/en/face",
     );
+    // No dump for `other` → stale filename URL left alone.
     expect(products.b.image).toBe(
       "/assets/naruto/carddass/products/other/fr/art.webp",
     );
   });
 
-  it("rewrites mislabeled art.mercari when face.json is art.reconstructed", () => {
-    /*
-      Historical bug: several reconstructed packshots (Kana DVD, pack-découverte,
-      tin-box-hobby) were indexed as art.mercari.* — file never existed / 404.
-    */
+  it("rewrites mislabeled art.mercari to /face when face.json is art.reconstructed", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-mislabeled-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const products: Record<
@@ -151,7 +146,10 @@ describe("backfillSealedProductPackshots", () => {
     ]) {
       const dir = path.join(root, "naruto", "carddass", "products", slug, "fr");
       mkdirSync(dir, { recursive: true });
-      const art = slug === "tin-box-hobby" ? "art.reconstructed.png" : "art.reconstructed.jpg";
+      const art =
+        slug === "tin-box-hobby"
+          ? "art.reconstructed.png"
+          : "art.reconstructed.jpg";
       writeFileSync(path.join(dir, art), "bytes");
       writeFileSync(
         path.join(dir, "face.json"),
@@ -164,14 +162,18 @@ describe("backfillSealedProductPackshots", () => {
       };
     }
     expect(backfillSealedProductPackshots("naruto/carddass", products)).toBe(3);
-    expect(products["tin-box-hobby"]!.image).toContain("art.reconstructed.png");
-    expect(products["pack-decouverte"]!.image).toContain("art.reconstructed.jpg");
-    expect(products["kana-dvd-naruto-vol3"]!.image).toContain(
-      "art.reconstructed.jpg",
+    expect(products["tin-box-hobby"]!.image).toBe(
+      "/assets/naruto/carddass/products/tin-box-hobby/fr/face",
+    );
+    expect(products["pack-decouverte"]!.image).toBe(
+      "/assets/naruto/carddass/products/pack-decouverte/fr/face",
+    );
+    expect(products["kana-dvd-naruto-vol3"]!.image).toBe(
+      "/assets/naruto/carddass/products/kana-dvd-naruto-vol3/fr/face",
     );
   });
 
-  it("rewrites a 404 index URL when face.json points at a real packshot", () => {
+  it("rewrites a 404 index URL to /face when face.json points at a real packshot", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-stale-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const dir = path.join(
@@ -199,7 +201,7 @@ describe("backfillSealedProductPackshots", () => {
     };
     expect(backfillSealedProductPackshots("naruto/carddass", products)).toBe(1);
     expect(products.hobby.image).toBe(
-      "/assets/naruto/carddass/products/tin-box-hobby/fr/art.reconstructed.png",
+      "/assets/naruto/carddass/products/tin-box-hobby/fr/face",
     );
   });
 });

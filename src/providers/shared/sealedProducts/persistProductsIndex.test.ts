@@ -123,7 +123,7 @@ describe("persistSealedProductsIndex", () => {
 
       const loaded = loadSealedProductsIndex("naruto/carddass");
       expect(loaded.products["naruto/carddass::booster-s24"]?.image).toBe(
-        "/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg",
+        "/assets/naruto/carddass/products/booster-s24/fr/face",
       );
 
       const { index } = persistSealedProductsIndex("naruto/carddass", {
@@ -137,11 +137,11 @@ describe("persistSealedProductsIndex", () => {
         }),
       });
       expect(index.products["naruto/carddass::booster-s24"]?.image).toBe(
-        "/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg",
+        "/assets/naruto/carddass/products/booster-s24/fr/face",
       );
       const reloaded = loadSealedProductsIndex("naruto/carddass");
       expect(reloaded.products["naruto/carddass::booster-s24"]?.image).toBe(
-        "/assets/naruto/carddass/products/booster-s24/fr/art.toywiz.jpg",
+        "/assets/naruto/carddass/products/booster-s24/fr/face",
       );
     });
   });
@@ -220,14 +220,14 @@ describe("persistSealedProductsIndex", () => {
       slug: "starter-maitre-hokage",
       name: "Starter Maître Hokage",
       lang: "FR",
-      image: "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.jpg",
+      image: "/assets/naruto/carddass/products/starter-maitre-hokage/fr/face",
       contentsKnown: false,
       guaranteedPrints: [],
     });
     expect(coalesceSealedProductEntry(stub, boutique)).toMatchObject({
       name: "Starter Maître Hokage",
       lang: "FR",
-      image: "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.jpg",
+      image: "/assets/naruto/carddass/products/starter-maitre-hokage/fr/face",
       contentsKnown: true,
       guaranteedPrints: stub.guaranteedPrints,
     });

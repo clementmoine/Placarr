@@ -11,6 +11,10 @@ import {
   resolveRoleBack,
 } from "@/lib/media/resolveRoleBack";
 import {
+  matchSealedProductsAssetRest,
+  resolveSealedProductFace,
+} from "@/providers/shared/sealedProducts/resolveProductFace";
+import {
   legacyLangFirstCardsRest,
   legacySetFirstCardsRest,
   pokemonCardsRestFallbacks,
@@ -122,6 +126,32 @@ export async function GET(req: Request, ctx: Ctx) {
           "X-Placarr-Art-Source, X-Placarr-Art-Disk",
       },
     });
+  }
+
+  // Sealed SKU roles: /assets/<pack>/products/{slug}/{lang}/face|thumb|back|logo
+  if (split.rest[0] === "products") {
+    const matched = matchSealedProductsAssetRest(split.rest);
+    if (matched) {
+      const hit = resolveSealedProductFace({
+        packId: split.pack,
+        slug: matched.slug,
+        lang: matched.lang,
+        role: matched.role,
+      });
+      if (!hit) {
+        return new NextResponse("Not found", { status: 404 });
+      }
+      return streamFileResponse(hit.filePath, {
+        request: req,
+        cache: "revalidate",
+        headers: {
+          "X-Placarr-Art-Source": "owned",
+          "X-Placarr-Art-Disk": `${hit.disk.slug}/${hit.disk.lang}/${hit.artFile}`,
+          "Access-Control-Expose-Headers":
+            "X-Placarr-Art-Source, X-Placarr-Art-Disk",
+        },
+      });
+    }
   }
 
   // Print-scoped face: /assets/<pack>/prints/{set}-{id}-{lang}/face

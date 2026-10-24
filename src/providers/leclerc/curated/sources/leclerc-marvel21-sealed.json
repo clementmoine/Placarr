@@ -1,0 +1,59 @@
+{
+  "sourceId": "cartesetstickers",
+  "lang": "fr",
+  "setCode": "marvel21",
+  "observed": "2026-10-24",
+  "note": "Cartes & Stickers 2021-11-06 — album collector 1,99€ ; pochette de 4 cartes (02/11–19/12/2021). Packshots album/dos/pochette : Paninimania idm=7251. Pas de Fixeez cette année. Visuel annonce catalogue : annonce.cartesetstickers.jpg. Display : art.packshot.png (studio Leclerc).",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Album — Révèle ton Pouvoir",
+      "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
+      "declaredCardCount": null,
+      "priceCents": 199,
+      "packComposition": "none"
+    },
+    {
+      "slug": "pochette",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette — Révèle ton Pouvoir",
+      "art": "art.paninimania.jpg",
+      "declaredCardCount": 4,
+      "cardsPerPack": 4,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "cartesetstickers 2021-11-06 + paninimania idm=7251 — pochette de 4 cartes",
+        "verifiedAt": "2026-10-24",
+        "cardsPerPack": 4,
+        "slots": [
+          {
+            "id": "card",
+            "count": 4,
+            "kind": "dedicated",
+            "rarities": [
+              "card"
+            ]
+          }
+        ],
+        "rarityHits": {}
+      }
+    },
+    {
+      "slug": "display",
+      "kind": "display",
+      "category": "displays",
+      "source": "packshot",
+      "art": "art.packshot.png",
+      "declaredCardCount": null,
+      "cardsPerPack": 4,
+      "packsContained": null,
+      "priceCents": null,
+      "name": "Display — Révèle ton Pouvoir"
+    }
+  ]
+}

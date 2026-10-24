@@ -151,6 +151,24 @@ export function assetsPackFileUrl(pack: string, ...segments: string[]): string {
   return `${assetsPackBase(pack)}/${segments.map((s) => encodeURIComponent(s)).join("/")}`;
 }
 
+/** Roles served for sealed SKUs — basename stays on disk (`face.json` + `art.*`). */
+export type AssetsSealedProductRole = "face" | "thumb" | "back" | "logo";
+
+/**
+ * Sealed packshot role URL — no filename in the public path.
+ * `/assets/<pack>/products/{slug}/{lang}/face` (also `thumb` / `back` / `logo`).
+ */
+export function assetsSealedProductRoleUrl(
+  pack: string,
+  slug: string,
+  lang: string,
+  role: AssetsSealedProductRole = "face",
+): string {
+  const code = lang.trim().toLowerCase() || "fr";
+  const id = slug.trim();
+  return `${assetsPackBase(pack)}/products/${encodeURIComponent(id)}/${encodeURIComponent(code)}/${role}`;
+}
+
 /** Lorcana printKey → set + card folder (`20-p1` when grouping). */
 export function cardDiskIdFromPrintKey(
   printKey: string,

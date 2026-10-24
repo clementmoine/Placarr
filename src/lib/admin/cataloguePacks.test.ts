@@ -83,20 +83,22 @@ describe("cataloguePacks", () => {
     expect(resolveCataloguePackId("leclercdisney")).toBe("leclerc/disney25");
     expect(resolveCataloguePackId("leclercdisney25")).toBe("leclerc/disney25");
     expect(resolveCataloguePackId("leclercdisney26")).toBe("leclerc/disney26");
+    expect(resolveCataloguePackId("leclercsw19")).toBe("leclerc/sw19");
+    expect(resolveCataloguePackId("leclercsw19sb")).toBe("leclerc/sw19");
+    expect(resolveCataloguePackId("leclercmarvel20sb")).toBe("leclerc/marvel20");
     expect(resolveCataloguePackId("nope")).toBeNull();
   });
 
-  it("marks arcade as no retail sealed; Disney 2025 album is sealed", () => {
+  it("marks arcade as no retail sealed; Leclerc ops expose album/pochette sealed", () => {
     expect(cataloguePackInfo("naruto/data-carddass")?.hasSealedProducts).toBe(
       false,
     );
-    expect(cataloguePackInfo("leclerc/marvel21")?.hasSealedProducts).toBe(
-      false,
-    );
+    expect(cataloguePackInfo("leclerc/marvel21")?.hasSealedProducts).toBe(true);
+    expect(cataloguePackInfo("leclerc/marvel23")?.hasSealedProducts).toBe(true);
     expect(cataloguePackInfo("leclerc/disney25")?.hasSealedProducts).toBe(true);
-    expect(cataloguePackInfo("leclerc/disney26")?.hasSealedProducts).toBe(
-      false,
-    );
+    expect(cataloguePackInfo("leclerc/disney26")?.hasSealedProducts).toBe(true);
+    expect(cataloguePackInfo("leclerc/sw19")?.hasSealedProducts).toBe(true);
+    expect(cataloguePackInfo("leclerc/sw15")?.lineFamily?.id).toBe("starwars");
     expect(cataloguePackInfo("dragonball/heroes")?.hasSealedProducts).not.toBe(false);
     expect(cataloguePackInfo("onepiece")?.hasSealedProducts).not.toBe(false);
   });
@@ -130,6 +132,7 @@ describe("cataloguePacks", () => {
       "naruto/ninja-ranks",
       "naruto/ultra-challenge",
       "naruto/mythos",
+      "naruto/cardgame",
       "naruto/kayou",
       "naruto/data-carddass",
     ]);
@@ -144,6 +147,11 @@ describe("cataloguePacks", () => {
     ]);
     const leclerc = catalogueFranchises().find((row) => row.id === "leclerc");
     expect(leclerc?.lines.map((line) => line.id)).toEqual([
+      "leclerc/sw15",
+      "leclerc/sw16",
+      "leclerc/sw18",
+      "leclerc/sw19",
+      "leclerc/marvel20",
       "leclerc/marvel21",
       "leclerc/marvel22",
       "leclerc/marvel23",
@@ -158,8 +166,18 @@ describe("cataloguePacks", () => {
       })),
     ).toEqual([
       {
+        id: "starwars",
+        lines: [
+          "leclerc/sw15",
+          "leclerc/sw16",
+          "leclerc/sw18",
+          "leclerc/sw19",
+        ],
+      },
+      {
         id: "marvel",
         lines: [
+          "leclerc/marvel20",
           "leclerc/marvel21",
           "leclerc/marvel22",
           "leclerc/marvel23",
@@ -198,6 +216,7 @@ describe("cataloguePacks", () => {
         lines: ["naruto/ninja-ranks", "naruto/ultra-challenge"],
       },
       { id: "cicaboom", lines: ["naruto/mythos"] },
+      { id: "bandai-card-games", lines: ["naruto/cardgame"] },
       { id: "kayou", lines: ["naruto/kayou"] },
     ]);
     expect(

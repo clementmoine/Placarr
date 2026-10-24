@@ -77,7 +77,7 @@ import { readInkworksProductsLedger } from "./sources/faces";
       // Le lot US garde sa provenance Inkworks.
       expect(index.products["naruto/ninja-ranks::booster"]).toMatchObject({
         lang: "EN",
-        image: "/assets/naruto/ninja-ranks/products/booster/en/art.inkworks.jpg",
+        image: "/assets/naruto/ninja-ranks/products/booster/en/face",
       });
 
       // Chaque SKU EU est rattaché au set nr et nommé d'après l'hôte du packshot.
@@ -89,8 +89,7 @@ import { readInkworksProductsLedger } from "./sources/faces";
         cardsPerPack: 5,
         packsContained: 1,
         priceCents: 150,
-        image:
-          "/assets/naruto/ninja-ranks/products/booster-eu/fr/art.paninimania.jpg",
+        image: "/assets/naruto/ninja-ranks/products/booster-eu/fr/face",
         imageBack: null,
       });
       expect(index.products["naruto/ninja-ranks::display-eu"]).toMatchObject({
@@ -99,10 +98,8 @@ import { readInkworksProductsLedger } from "./sources/faces";
         packsContained: 24,
         // Ledger leaves box MSRP null; sealed backfill estimates 24 × booster EU.
         priceCents: 3600,
-        image:
-          "/assets/naruto/ninja-ranks/products/display-eu/fr/art.kleinanzeigen.jpg",
-        imageBack:
-          "/assets/naruto/ninja-ranks/products/display-eu/fr/back.kleinanzeigen.jpg",
+        image: "/assets/naruto/ninja-ranks/products/display-eu/fr/face",
+        imageBack: "/assets/naruto/ninja-ranks/products/display-eu/fr/back",
       });
       expect(
         index.products["naruto/ninja-ranks::collector-album-eu"],
@@ -111,9 +108,9 @@ import { readInkworksProductsLedger } from "./sources/faces";
         lang: "fr",
         priceCents: 260,
         image:
-          "/assets/naruto/ninja-ranks/products/collector-album-eu/fr/art.paninimania.jpg",
+          "/assets/naruto/ninja-ranks/products/collector-album-eu/fr/face",
         imageBack:
-          "/assets/naruto/ninja-ranks/products/collector-album-eu/fr/back.paninimania.jpg",
+          "/assets/naruto/ninja-ranks/products/collector-album-eu/fr/back",
       });
       expect(
         existsSync(

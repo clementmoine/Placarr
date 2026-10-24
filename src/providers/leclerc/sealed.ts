@@ -21,6 +21,8 @@ export type LeclercSealedSku = {
   kind: SealedKind;
   category: string;
   name: string;
+  /** Marque de dump si ≠ `sourceId` du ledger. */
+  source?: string;
   /** Fichier art curated — absent = stub sans packshot. */
   art?: string | null;
   back?: string | null;
@@ -118,6 +120,7 @@ export function ingestLeclercSealedProducts(
       kind: sku.kind,
       category: sku.category,
       name: sku.name,
+      ...(sku.source?.trim() ? { source: sku.source.trim() } : {}),
       setCode: code,
       lang,
       releaseDate: null,

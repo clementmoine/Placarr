@@ -85,10 +85,10 @@ describe("writeLocalSealedProducts", () => {
     const entry = index.products["naruto/ninja-ranks::booster"];
     expect(entry.kind).toBe("booster");
     expect(entry.image).toBe(
-      "/assets/naruto/ninja-ranks/products/booster/en/art.inkworks.jpg",
+      "/assets/naruto/ninja-ranks/products/booster/en/face",
     );
     expect(entry.setLogo).toBe(
-      "/assets/naruto/ninja-ranks/products/booster/en/logo.inkworks.jpg",
+      "/assets/naruto/ninja-ranks/products/booster/en/logo",
     );
     expect(index.products["naruto/ninja-ranks::missing"]).toBeUndefined();
   });
@@ -193,7 +193,7 @@ describe("writeLocalSealedProducts", () => {
     expect(existsSync(path.join(dest, "art.coleka.jpg"))).toBe(true);
     const index = loadSealedProductsIndex("naruto/ultra-challenge");
     expect(index.products["naruto/ultra-challenge::booster"]?.image).toBe(
-      "/assets/naruto/ultra-challenge/products/booster/fr/art.reconstructed.jpg",
+      "/assets/naruto/ultra-challenge/products/booster/fr/face",
     );
   });
 });

@@ -1,0 +1,67 @@
+{
+  "sourceId": "paninimania",
+  "lang": "fr",
+  "setCode": "marvel20",
+  "observed": "2026-10-24",
+  "note": "Paninimania idm=7013 « Marvel - Deviens un héros ». Une seule campagne : 144 stickers + 40 cartes mémoire (C1–C40) au dos / en pochette. Album 1,99€ ; pochette = 4 images + 2 cartes. Ancien setCode marvel20sb (TCDB « Sticker Backs ») fusionné ici.",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Album — Deviens un Héros",
+      "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
+      "declaredCardCount": null,
+      "priceCents": 199,
+      "packComposition": "none"
+    },
+    {
+      "slug": "pochette",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette — Deviens un Héros",
+      "art": "art.paninimania.jpg",
+      "declaredCardCount": 6,
+      "cardsPerPack": 6,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "paninimania idm=7013 — pochette de 4 images et 2 cartes",
+        "verifiedAt": "2026-10-24",
+        "cardsPerPack": 6,
+        "slots": [
+          {
+            "id": "sticker",
+            "count": 4,
+            "kind": "dedicated",
+            "rarities": [
+              "sticker"
+            ]
+          },
+          {
+            "id": "card",
+            "count": 2,
+            "kind": "dedicated",
+            "rarities": [
+              "card"
+            ]
+          }
+        ],
+        "rarityHits": {}
+      }
+    },
+    {
+      "slug": "display",
+      "kind": "display",
+      "category": "displays",
+      "source": "packshot",
+      "art": "art.packshot.png",
+      "declaredCardCount": null,
+      "cardsPerPack": 4,
+      "packsContained": null,
+      "priceCents": null,
+      "name": "Display — Deviens un Héros"
+    }
+  ]
+}

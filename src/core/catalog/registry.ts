@@ -56,6 +56,7 @@ import { narutoshippudenModule } from "@/providers/naruto/narutoshippuden";
 import { narutoranksModule } from "@/providers/naruto/narutoranks";
 import { narutoultraModule } from "@/providers/naruto/narutoultra";
 import { narutomythosModule } from "@/providers/naruto/narutomythos";
+import { narutocardgameModule } from "@/providers/naruto/narutocardgame";
 import { narutokayouModule } from "@/providers/naruto/narutokayou";
 import { narutodatacarddassModule } from "@/providers/naruto/narutodatacarddass";
 import { onepieceModule } from "@/providers/onepiece";
@@ -152,6 +153,7 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   narutoranksModule,
   narutoultraModule,
   narutomythosModule,
+  narutocardgameModule,
   narutokayouModule,
   narutodatacarddassModule,
   onepieceModule,

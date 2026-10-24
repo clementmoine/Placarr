@@ -2,8 +2,12 @@
 
 Dos de carte (Paninimania) curés par opération :
 
-| Set | Source Paninimania |
+| Set | Source Paninimania / Bibelotmania |
 |-----|--------------------|
+| `sw15` | Bibelotmania idm=6150 (jetons Cosmic Shells) |
+| `sw16` | Bibelotmania idm=7174 (jetons Cosmic Shells II / Rogue One) |
+| `sw18` | Paninimania idm=6421 (Solo — 90 cartes) |
+| `sw19` | Paninimania idm=6809 (Maîtriser la Force — stickers) |
 | `marvel21` | idm=7251 « Dos de carte » |
 | `marvel22` | idm=7429 |
 | `marvel23` | idm=7561 |
@@ -24,9 +28,62 @@ Overlay curated `sources/leclerc-<set>-sealed.json` + packshots sous
 
 | Set | SKU | Art curated |
 |-----|-----|-------------|
-| `disney25` | `collector-album` — « Découvre la magie de Disney » | `art.scan.png` (couverture) + `back.scan.png` (dos) |
-| `disney25` | `pochette` — 4 cartes ; Fixeez possible non garanti (`kind: booster`) | `products/disney25/pochette/fr/art.scan.png` (packshot stack) |
+| `disney25` | `collector-album` — « Découvre la magie de Disney » ; **1,99€** (Paninimania idm=7872, EAN 4251906523445) | `art.paninimania.jpg` + `back.paninimania.jpg` (plus de composites `art.scan`) |
+| `disney25` | `pochette` — 4 cartes ; Fixeez possible non garanti (`kind: booster`) | `products/disney25/pochette/fr/art.paninimania.jpg` |
 | `disney25` | `display` — stub (nb pochettes inconnu) | — |
+| `marvel23` | `collector-album` — « Défie tes Héros » ; **1,99€** (Paninimania idm=7561) | `art.paninimania.jpg` + `back.paninimania.jpg` |
+| `marvel23` | `pochette` — 4 cartes (SKU distinct) | `products/marvel23/pochette/fr/art.paninimania.jpg` |
+| `marvel23` | `pochette-fixeez` — 1 Fixeez (Paninimania « Pochette de 1 fixeez » + dos) | `art.paninimania.jpg` + `back.paninimania.jpg` |
+| `marvel23` | `display` — stub | — |
+| `marvel20` | `collector-album` — « Deviens un Héros » ; **1,99€** ; EAN 8718973054556 / 8718973054525 (idm=7013) — stickers 1–144 + cartes mémoire C1–C40 (une campagne ; pas de ligne « Sticker Backs ») | `art.paninimania.jpg` + `back.paninimania.jpg` |
+| `marvel20` | `pochette` — **4 images + 2 cartes** (pas le seed 4 cartes) | `products/marvel20/pochette/fr/art.paninimania.jpg` |
+| `marvel21` | `collector-album` — « Révèle ton Pouvoir » ; **1,99€** ([C&S 2021-11-06](https://cartesetstickers.fr/2021/11/06/e-leclerc-propose-une-collection-de-cartes-marvel/) + idm=7251) | `art.paninimania.jpg` + `back.paninimania.jpg` (+ `annonce.cartesetstickers.jpg`) |
+| `marvel21` | `pochette` — 4 cartes ; **pas de Fixeez** | `products/marvel21/pochette/fr/art.paninimania.jpg` |
+| `marvel22` | `collector-album` — « Pars en Mission » ; **1,99€** ([C&S 2022-11-01](https://cartesetstickers.fr/2022/11/01/e-leclerc-propose-une-collection-de-cartes-marvel-automne-2022/) + idm=7429) | idem pattern |
+| `marvel22` | `pochette` — 4 cartes ; **pas de Fixeez** | `products/marvel22/pochette/fr/art.paninimania.jpg` |
+| `marvel24` | `collector-album` — « Explore L'Univers Marvel avec Groot » ; **1,99€** ([C&S 2024-10-29](https://cartesetstickers.fr/2024/10/29/e-leclerc-propose-une-collection-de-cartes-marvel-automne-2024/) + idm=7726) | idem pattern |
+| `marvel24` | `pochette` — 4 cartes ; Fixeez possible au centre (`possibleChase`, ≠ SKU séparée marvel23) | `art.crop.jpg` (1 pochette — crop manuel ; dual Paninimania = `art.paninimania.dual.jpg`) |
+| `sw15` | `collector-album` — Cosmic Shells ; **2,99€** (Bibelotmania idm=6150) | `art.bibelotmania.jpg` + `back.bibelotmania.jpg` |
+| `sw15` | `pochette` — **2 jetons** (pas le seed 4 cartes) | `art.bibelotmania.jpg` + `back.bibelotmania.jpg` |
+| `sw16` | `collector-album` — Cosmic Shells II / Rogue One ; **2,99€** (idm=7174) | idem |
+| `sw16` | `pochette` — **2 jetons** | `art.bibelotmania.jpg` |
+| `sw18` | `collector-album` — Solo 90 cartes ; **1,99€** (Paninimania idm=6421) | `art.paninimania.jpg` + `back.paninimania.jpg` |
+| `sw18` | `pochette` — 4 cartes | `art.paninimania.jpg` + `back.paninimania.jpg` |
+| `sw19` | `collector-album` — « Maîtriser la Force » ; **1,99€** (idm=6809, EAN 8718973040399) — stickers + dos jeu J1–J18 (une campagne ; pas de ligne « Sticker Backs ») | `art.paninimania.jpg` |
+| `sw19` | `pochette` — 4 images | `art.paninimania.jpg` + `back.paninimania.jpg` |
+| `sw19` | `display` — **244** pochettes × 4 = **976** stickers (carton distribution d’origine) | `art.packshot.png` → `/face` |
+| `sw18`/`disney25`/`disney26`/`marvel20`–`24` | `display` — présentoir caisse (studio packshot) ; **`packsContained` null** tant que carton non attesté (Paninimania/C&S ne publient pas le nb) | `products/<set>/display/fr/art.packshot.png` → `/face` |
+
+### Pochette / display — attesté vs Gemini (2026-10-24)
+
+Pochettes (contenu) : OK partout via Paninimania / C&S / Bibelotmania.
+**Display carton** : Gemini a proposé des chiffres pour tout — **rejetés sauf 2**.
+
+| Set | Pochette | Display Gemini | Verdict recherche | Placarr |
+|-----|----------|----------------|-------------------|---------|
+| `sw15`/`sw16` | **2** jetons | 320 | aucune source carton | `null` |
+| `sw18` | **4** cartes | 400 | aucune source carton | `null` |
+| `sw19` | **4** images | 244 | [LBC 3185056359](https://www.leboncoin.fr/ad/collection/3185056359) « Lot en carton de 244 pochettes… 976 vignettes… 2019 » | **244** |
+| `marvel20` | **4** stickers + **2** cartes | 280 | PicClick/eBay = lot **320** pochettes (revendeur), **pas** « boîte officielle 280 » ; [LBC 3230874383](https://www.leboncoin.fr/ad/collection/3230874383) « boîte… Complète » sans nb de pochettes | `null` |
+| `marvel21`–`22` | **4** cartes | 320 | liens Vinted = catalogues génériques, **0** mention 320 | `null` |
+| `marvel23` | **4** + Fixeez SKU à part | 420 | eBay [itm 405598492303](https://www.ebay.fr/itm/405598492303) titre « **BOITE** … **COMPLETE 420 POCHETTES** » | **420** |
+| `marvel24`/`disney25` | **4** (+ Fixeez possible) | 400 | aucune attestation carton | `null` |
+| `disney26` | seed **4** cartes (pas stickers) | 300 | inventé ; Gemini dit « stickers » à tort | `null` |
+
+Audit dump URLs (2026-10-24) — **aucun nouveau `packsContained`** :
+
+| URL | Verdict |
+|-----|---------|
+| [LBC 3185056359](https://www.leboncoin.fr/ad/collection/3185056359) | **OK** — sw19 carton **244** / 976 (déjà écrit) |
+| [eBay 405598492303](https://www.ebay.fr/itm/405598492303) | **OK** — marvel23 **420** (déjà écrit) |
+| [LBC 3230951597](https://www.leboncoin.fr/ad/collection/3230951597) | sw19 boîte remplie ; « nombreuses pochettes » ; **pas de chiffre** (photos = shipper multi-présentoirs ≠ carton 244) |
+| [LBC 3230874383](https://www.leboncoin.fr/ad/collection/3230874383) | marvel20 boîte « Complète » ; set size 144 stickers ; **pas de nb pochettes** |
+| [LBC 3113994907](https://www.leboncoin.fr/ad/collection/3113994907) | « Carton marvel plein » — **0** count |
+| [eBay 143457174172](https://www.ebay.fr/itm/143457174172) | lot revente **25** pochettes sw19 — ≠ display |
+| Vinted brand/leclerc (fr/at) | catalogues génériques — **0** carton size |
+| Presse / Paninimania / C&S / Ouest-France / WTComics / Planète SW | ops + contenu pochette / album ; **pas** taille display |
+
+Règle : lot revente ≠ taille display. On n’écrit `packsContained` que si carton / boîte complète est nommé.
 
 Sync étape `products` → `data/leclerc/<set>/products-index.json`.
 

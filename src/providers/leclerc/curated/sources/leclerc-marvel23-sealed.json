@@ -1,0 +1,88 @@
+{
+  "sourceId": "paninimania",
+  "lang": "fr",
+  "setCode": "marvel23",
+  "observed": "2026-10-24",
+  "note": "Paninimania idm=7561 « Marvel - Défie tes Héros ». Album Collector : 1,99€. Pochette cartes = 4. Fixeez vendu en pochette dédiée (1) — pas inventé dans la pochette 4 cartes. Display : 420 pochettes × 4 = 1680 cartes (annonce eBay « BOITE LECLERC MARVEL 2023 COMPLETE 420 POCHETTES », itm=405598492303).",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Album — Défie tes Héros",
+      "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
+      "declaredCardCount": null,
+      "priceCents": 199,
+      "packComposition": "none"
+    },
+    {
+      "slug": "pochette",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette — Défie tes Héros",
+      "art": "art.paninimania.jpg",
+      "declaredCardCount": 4,
+      "cardsPerPack": 4,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "paninimania idm=7561 — pochette de 4 cartes (SKU distinct de la pochette Fixeez)",
+        "verifiedAt": "2026-10-24",
+        "cardsPerPack": 4,
+        "slots": [
+          {
+            "id": "card",
+            "count": 4,
+            "kind": "dedicated",
+            "rarities": [
+              "card"
+            ]
+          }
+        ],
+        "rarityHits": {}
+      }
+    },
+    {
+      "slug": "pochette-fixeez",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette Fixeez — Défie tes Héros",
+      "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
+      "declaredCardCount": 1,
+      "cardsPerPack": 1,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "paninimania idm=7561 — pochette de 1 Fixeez",
+        "verifiedAt": "2026-10-24",
+        "cardsPerPack": 1,
+        "slots": [
+          {
+            "id": "fixeez",
+            "count": 1,
+            "kind": "dedicated",
+            "rarities": [
+              "Fixeez"
+            ]
+          }
+        ],
+        "rarityHits": {}
+      }
+    },
+    {
+      "slug": "display",
+      "kind": "display",
+      "category": "displays",
+      "source": "packshot",
+      "art": "art.packshot.png",
+      "declaredCardCount": 1680,
+      "cardsPerPack": 4,
+      "packsContained": 420,
+      "priceCents": null,
+      "name": "Display — Défie tes Héros",
+      "packComposition": "none"
+    }
+  ]
+}

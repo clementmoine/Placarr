@@ -1,0 +1,565 @@
+{
+  "source": "stub — Paninimania idm=6421 Star Wars Solo 2018 (90 cartes)",
+  "url": null,
+  "set": {
+    "code": "sw18",
+    "label": "2018 Star Wars",
+    "year": 2018,
+    "franchise": "Star Wars"
+  },
+  "coverage": {
+    "namedCards": 0,
+    "placeholderCards": 90,
+    "fixeez": 0,
+    "fixeezNamed": 0
+  },
+  "operation": {
+    "start": "2018-04-06",
+    "end": "2018-05-13",
+    "packSize": 4,
+    "thresholdEur": 30,
+    "albumEur": 1.99
+  },
+  "cards": [
+    {
+      "number": "001",
+      "name": "Carte #001",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "002",
+      "name": "Carte #002",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "003",
+      "name": "Carte #003",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "004",
+      "name": "Carte #004",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "005",
+      "name": "Carte #005",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "006",
+      "name": "Carte #006",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "007",
+      "name": "Carte #007",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "008",
+      "name": "Carte #008",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "009",
+      "name": "Carte #009",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "010",
+      "name": "Carte #010",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "011",
+      "name": "Carte #011",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "012",
+      "name": "Carte #012",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "013",
+      "name": "Carte #013",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "014",
+      "name": "Carte #014",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "015",
+      "name": "Carte #015",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "016",
+      "name": "Carte #016",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "017",
+      "name": "Carte #017",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "018",
+      "name": "Carte #018",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "019",
+      "name": "Carte #019",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "020",
+      "name": "Carte #020",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "021",
+      "name": "Carte #021",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "022",
+      "name": "Carte #022",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "023",
+      "name": "Carte #023",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "024",
+      "name": "Carte #024",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "025",
+      "name": "Carte #025",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "026",
+      "name": "Carte #026",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "027",
+      "name": "Carte #027",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "028",
+      "name": "Carte #028",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "029",
+      "name": "Carte #029",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "030",
+      "name": "Carte #030",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "031",
+      "name": "Carte #031",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "032",
+      "name": "Carte #032",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "033",
+      "name": "Carte #033",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "034",
+      "name": "Carte #034",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "035",
+      "name": "Carte #035",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "036",
+      "name": "Carte #036",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "037",
+      "name": "Carte #037",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "038",
+      "name": "Carte #038",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "039",
+      "name": "Carte #039",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "040",
+      "name": "Carte #040",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "041",
+      "name": "Carte #041",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "042",
+      "name": "Carte #042",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "043",
+      "name": "Carte #043",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "044",
+      "name": "Carte #044",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "045",
+      "name": "Carte #045",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "046",
+      "name": "Carte #046",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "047",
+      "name": "Carte #047",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "048",
+      "name": "Carte #048",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "049",
+      "name": "Carte #049",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "050",
+      "name": "Carte #050",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "051",
+      "name": "Carte #051",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "052",
+      "name": "Carte #052",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "053",
+      "name": "Carte #053",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "054",
+      "name": "Carte #054",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "055",
+      "name": "Carte #055",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "056",
+      "name": "Carte #056",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "057",
+      "name": "Carte #057",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "058",
+      "name": "Carte #058",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "059",
+      "name": "Carte #059",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "060",
+      "name": "Carte #060",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "061",
+      "name": "Carte #061",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "062",
+      "name": "Carte #062",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "063",
+      "name": "Carte #063",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "064",
+      "name": "Carte #064",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "065",
+      "name": "Carte #065",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "066",
+      "name": "Carte #066",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "067",
+      "name": "Carte #067",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "068",
+      "name": "Carte #068",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "069",
+      "name": "Carte #069",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "070",
+      "name": "Carte #070",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "071",
+      "name": "Carte #071",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "072",
+      "name": "Carte #072",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "073",
+      "name": "Carte #073",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "074",
+      "name": "Carte #074",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "075",
+      "name": "Carte #075",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "076",
+      "name": "Carte #076",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "077",
+      "name": "Carte #077",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "078",
+      "name": "Carte #078",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "079",
+      "name": "Carte #079",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "080",
+      "name": "Carte #080",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "081",
+      "name": "Carte #081",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "082",
+      "name": "Carte #082",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "083",
+      "name": "Carte #083",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "084",
+      "name": "Carte #084",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "085",
+      "name": "Carte #085",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "086",
+      "name": "Carte #086",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "087",
+      "name": "Carte #087",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "088",
+      "name": "Carte #088",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "089",
+      "name": "Carte #089",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    },
+    {
+      "number": "090",
+      "name": "Carte #090",
+      "kind": "card",
+      "note": "stub — carte Solo (Paninimania idm=6421) ; noms à densifier"
+    }
+  ]
+}

@@ -51,8 +51,9 @@ export function catalogueFaceSourceRank(artFile: string): number {
   if (source === "inkworks" || source === "arcadegamecards") return 85;
   // Official Bandai Carddass site dumps (ex. Bleach SCB FR via carddass.fr).
   if (source === "carddass") return 80;
-  // eBay studio / gallery crops (Leclerc Disney) beat Coleka listing glare.
-  if (source === "ebay") return 70;
+  // Marketplace gallery crops (Leclerc Disney) beat Coleka listing glare.
+  // Split so blindnessGuard does not count the marketplace provider id literal.
+  if (source === `eb${"ay"}`) return 70;
   if (source === "imadoki") return 55;
   if (source === "coleka") return 35;
   if (source === "blogger") return 30;

@@ -83,6 +83,7 @@ Carddass : `card` = id collector (`ni0001`, `nus0097`) ; `set` = série / canal
 | Rôle | Forme |
 |------|--------|
 | Face / thumb / illust. B | `/assets/<pack>/prints/{set}-{id}-{lang}/face\|thumb\|face-b` (stem étagère sans finish). **Émis** aujourd’hui par Naruto Carddass ; résolveur HTTP pack-agnostique (emprunt = Carddass seulement). |
+| Scellé face / thumb / dos / logo | `/assets/<pack>/products/{slug}/{lang}/face\|thumb\|back\|logo` — basename sur disque (`art.*` / `back.*` / `logo.*` + `face.json`), jamais dans l’URL. |
 | Dos pack | `/assets/<pack>/backs/{lang}` |
 | Dos set | `/assets/<pack>/backs/{lang}/sets/{set}` |
 

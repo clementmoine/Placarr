@@ -20,13 +20,14 @@ import {
 } from "node:fs";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 import { resolveContentLayers } from "@/providers/shared/sealedProducts/contentLayers";
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { assetsSealedProductRoleUrl } from "@/lib/packAssetUrls";
 import {
   emptyProductsIndex,
   sealedProductKey,
   type SealedProductEntry,
 } from "@/providers/shared/sealedProducts/indexFormat";
 import { sealedBehaviorForKind } from "@/providers/shared/sealedProducts/kinds";
+import { writeSealedProductFaceDecision } from "@/providers/shared/sealedProducts/resolveProductFace";
 import {
   atomicempireIngestPackshots,
   bandaiFrUsDriveIngestPackshots,
@@ -1873,6 +1874,13 @@ export async function ingestSealedLine(opts: {
     pruneUnclaimedRole(destDir, "back", backDumps);
     const backFile = await promoteProductRole(destDir, lang, "back", sharp);
     const logoFile = await promoteProductRole(destDir, lang, "logo", sharp);
+    if (artFile || backFile || logoFile) {
+      writeSealedProductFaceDecision(destDir, {
+        art: artFile,
+        back: backFile,
+        logo: logoFile,
+      });
+    }
     const artDump = artFile
       ? artDumps.find(
           (dump) => narutoProductFileOf(artFile)?.source === dump.source,
@@ -1900,13 +1908,13 @@ export async function ingestSealedLine(opts: {
       category: spec.category,
       name: spec.name,
       image: artFile
-        ? assetsPackFileUrl(opts.packId, "products", spec.slug, lang, artFile)
+        ? assetsSealedProductRoleUrl(opts.packId, spec.slug, lang, "face")
         : null,
       imageBack: backFile
-        ? assetsPackFileUrl(opts.packId, "products", spec.slug, lang, backFile)
+        ? assetsSealedProductRoleUrl(opts.packId, spec.slug, lang, "back")
         : null,
       setLogo: logoFile
-        ? assetsPackFileUrl(opts.packId, "products", spec.slug, lang, logoFile)
+        ? assetsSealedProductRoleUrl(opts.packId, spec.slug, lang, "logo")
         : null,
       setCardCount: spec.setKinds ?? null,
       setCode: spec.setCode,

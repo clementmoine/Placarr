@@ -1,0 +1,135 @@
+{
+  "sourceId": "bandai-welcome",
+  "url": "https://www.naruto-cardgame.com/en/welcome/#artwork",
+  "observed": "2026-10-23",
+  "note": "12 Character SAMPLE de la galerie officielle (ordre card01…card12). Pas de n° collector imprimé — numéros g01–g12 = ordre gallery. Stats 3/6/6 = mock-up Bandai, pas le jeu final. Faces EN + JP sur le CDN officiel.",
+  "setCode": "preview",
+  "cards": [
+    {
+      "gallery": "01",
+      "number": "g01",
+      "nameEn": "Orochimaru",
+      "nameJa": "大蛇丸",
+      "category": "Character",
+      "frame": "teal",
+      "tagsEn": ["Special", "The Legendary Sannin", "Village Hidden in the Sound"],
+      "tagsJa": ["特", "雨隠れの里"]
+    },
+    {
+      "gallery": "02",
+      "number": "g02",
+      "nameEn": "Boruto Uzumaki",
+      "nameJa": "うずまきボルト",
+      "category": "Character",
+      "frame": "magenta",
+      "tagsEn": ["Lightning", "Hidden Leaf Village"],
+      "tagsJa": ["雷", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "03",
+      "number": "g03",
+      "nameEn": "Sasuke Uchiha",
+      "nameJa": "うちはサスケ",
+      "category": "Character",
+      "frame": "teal",
+      "variant": "manga-panels",
+      "tagsEn": ["Special", "Hidden Leaf Village"],
+      "tagsJa": ["特", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "04",
+      "number": "g04",
+      "nameEn": "Naruto Uzumaki",
+      "nameJa": "うずまきナルト",
+      "category": "Character",
+      "frame": "magenta",
+      "variant": "manga-panels",
+      "tagsEn": ["Special", "Hidden Leaf Village"],
+      "tagsJa": ["特", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "05",
+      "number": "g05",
+      "nameEn": "Jiraiya",
+      "nameJa": "自来也",
+      "category": "Character",
+      "frame": "magenta",
+      "tagsEn": ["Special", "Hidden Leaf Village"],
+      "tagsJa": ["特", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "06",
+      "number": "g06",
+      "nameEn": "Itachi Uchiha",
+      "nameJa": "うちはイタチ",
+      "category": "Character",
+      "frame": "teal",
+      "tagsEn": ["Special", "Akatsuki Organization"],
+      "tagsJa": ["特", "暁"]
+    },
+    {
+      "gallery": "07",
+      "number": "g07",
+      "nameEn": "Sasuke Uchiha",
+      "nameJa": "うちはサスケ",
+      "category": "Character",
+      "frame": "teal",
+      "variant": "the-taka",
+      "tagsEn": ["Lightning", "The Taka"],
+      "tagsJa": ["雷", "鷹"]
+    },
+    {
+      "gallery": "08",
+      "number": "g08",
+      "nameEn": "Naruto Uzumaki",
+      "nameJa": "うずまきナルト",
+      "category": "Character",
+      "frame": "magenta",
+      "variant": "wind",
+      "tagsEn": ["Wind", "Hidden Leaf Village"],
+      "tagsJa": ["風", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "09",
+      "number": "g09",
+      "nameEn": "Sakura Haruno",
+      "nameJa": "春野サクラ",
+      "category": "Character",
+      "frame": "magenta",
+      "tagsEn": ["Special", "Hidden Leaf Village"],
+      "tagsJa": ["特", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "10",
+      "number": "g10",
+      "nameEn": "Tsunade",
+      "nameJa": "綱手",
+      "category": "Character",
+      "frame": "green",
+      "tagsEn": ["Special", "Hidden Leaf Village"],
+      "tagsJa": ["特", "木ノ葉隠れの里"]
+    },
+    {
+      "gallery": "11",
+      "number": "g11",
+      "nameEn": "Sasuke Uchiha",
+      "nameJa": "うちはサスケ",
+      "category": "Character",
+      "frame": "teal",
+      "variant": "uchiha-clan",
+      "tagsEn": ["Lightning", "Uchiha Clan"],
+      "tagsJa": ["雷", "うちは一族"]
+    },
+    {
+      "gallery": "12",
+      "number": "g12",
+      "nameEn": "Naruto Uzumaki",
+      "nameJa": "うずまきナルト",
+      "category": "Character",
+      "frame": "magenta",
+      "variant": "jinchuriki-team7",
+      "tagsEn": ["Special", "Jinchuriki", "Hidden Leaf Village", "Team 7"],
+      "tagsJa": ["特", "人柱力", "木ノ葉隠れの里", "第七班"]
+    }
+  ]
+}

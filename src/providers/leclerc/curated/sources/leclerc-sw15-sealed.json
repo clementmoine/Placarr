@@ -1,0 +1,46 @@
+{
+  "sourceId": "bibelotmania",
+  "lang": "fr",
+  "setCode": "sw15",
+  "observed": "2026-10-24",
+  "note": "Bibelotmania idm=6150 « Star Wars Disney - 54 Jetons Cosmic Shells - Leclerc 2015 ». Album collector : 2,99€. Pochette = 2 jetons (pas le seed 4 cartes).",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Album — Star Wars Cosmic Shells",
+      "art": "art.bibelotmania.jpg",
+      "back": "back.bibelotmania.jpg",
+      "declaredCardCount": null,
+      "priceCents": 299,
+      "packComposition": "none"
+    },
+    {
+      "slug": "pochette",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette — Star Wars Cosmic Shells",
+      "art": "art.bibelotmania.jpg",
+      "back": "back.bibelotmania.jpg",
+      "declaredCardCount": 2,
+      "cardsPerPack": 2,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "bibelotmania idm=6150 — pochette de 2 jetons Cosmic Shells",
+        "verifiedAt": "2026-10-24",
+        "cardsPerPack": 2,
+        "slots": [
+          {
+            "id": "jeton",
+            "count": 2,
+            "kind": "dedicated",
+            "rarities": ["jeton"]
+          }
+        ],
+        "rarityHits": {}
+      }
+    }
+  ]
+}

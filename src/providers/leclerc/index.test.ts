@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   leclercDisneyEffectPack,
   leclercMarvelEffectPack,
+  leclercStarWarsEffectPack,
 } from "@/effects/leclerc";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
 
@@ -69,7 +70,10 @@ describe("leclerc printKey / ledgers", () => {
       "2026 Disney: Le Monde avec Disney",
     );
     expect(leclercSetLabel("sw19sb")).toBe(
-      "2019 Star Wars: Maîtriser la Force - Sticker Backs",
+      "2019 Star Wars: Maîtriser la Force",
+    );
+    expect(leclercSetLabel("marvel20sb")).toBe(
+      "2020 Marvel: Deviens un Héros",
     );
   });
 
@@ -143,6 +147,7 @@ describe("leclerc curated back", () => {
   it("registers family catalogue-only effect packs", () => {
     expect(leclercMarvelEffectPack.id).toBe("leclerc-marvel");
     expect(leclercDisneyEffectPack.id).toBe("leclerc-disney");
+    expect(leclercStarWarsEffectPack.id).toBe("leclerc-starwars");
     expect(leclercMarvelEffectPack.listMaterials()).toEqual([]);
     expect(leclercDisneyEffectPack.resolveMaterial("foil", null)).toBeNull();
   });

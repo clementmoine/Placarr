@@ -1,37 +1,31 @@
 /**
- * Packshot URL for a sealed SKU — prefer `face.json`, then index URL, then any
- * `art.*` still on disk (recovery often left `image: null` while dumps stayed).
+ * Packshot URL for a sealed SKU — role URLs (`…/face`), never embed `art.*`
+ * basenames. Disk ranking stays in `face.json` + dumps.
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import {
   ASSETS_URL_PREFIX,
-  assetsPackFileUrl,
+  assetsSealedProductRoleUrl,
   canonicalAssetPack,
   rewriteAssetPackUrl,
 } from "@/lib/packAssetUrls";
 import { packSealedProductsDir } from "@/lib/packPaths";
-import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
 
 import { resolveSealedLang } from "./lang";
-
-type FaceDecision = {
-  art?: string | null;
-};
+import { resolveSealedProductFace } from "./resolveProductFace";
 
 function langFolder(lang: string | null | undefined, slug: string): string {
   return resolveSealedLang({ lang, slug })?.trim().toLowerCase() || "fr";
 }
 
-function artFilesIn(dir: string): string[] {
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((name) => /^art\./i.test(name))
-    .sort((a, b) => a.localeCompare(b));
+function hasArtDump(dir: string): boolean {
+  if (!existsSync(dir)) return false;
+  return readdirSync(dir).some((name) => /^art\./i.test(name));
 }
 
-/** True when `/assets/<pack>/products/…` points at a file that still exists. */
+/** True when a sealed product role (or legacy file URL) still resolves. */
 function sealedProductAssetExists(
   packId: string,
   assetUrl: string,
@@ -53,91 +47,138 @@ function sealedProductAssetExists(
   if (!rel.length || rel.some((part) => !part || part === ".." || part === ".")) {
     return false;
   }
+  // Role URL: products/{slug}/{lang}/face
+  if (rel.length === 3 && /^(face|thumb|back|logo)$/i.test(rel[2]!)) {
+    return Boolean(
+      resolveSealedProductFace({
+        packId,
+        slug: rel[0]!,
+        lang: rel[1]!,
+        role: rel[2]!.toLowerCase() as "face" | "thumb" | "back" | "logo",
+        productsDir,
+      }),
+    );
+  }
   return existsSync(path.join(productsDir, ...rel));
 }
 
 /**
- * Absolute `/assets/…` URL for the displayed packshot, or `fallback` /
- * `null` when nothing is on disk.
+ * Absolute `/assets/…/products/{slug}/{lang}/face` URL, or `null` when
+ * nothing is on disk.
  */
 export function resolveSealedPackshotUrl(input: {
   packId: string;
   slug: string;
   lang?: string | null;
-  /** Index / listing image — used when face.json is missing or stale. */
+  /** Index / listing image — kept only to detect stale 404 filenames. */
   fallback?: string | null;
   productsDir?: string;
 }): string | null {
   const slug = input.slug.trim();
-  if (!slug) return input.fallback?.trim() || null;
+  if (!slug) return null;
   const lang = langFolder(input.lang, slug);
   const productsDir = input.productsDir ?? packSealedProductsDir(input.packId);
   const dir = path.join(productsDir, slug, lang);
 
-  try {
-    const facePath = path.join(dir, CARD_FACE_DECISION_FILE);
-    if (existsSync(facePath)) {
-      const raw: unknown = JSON.parse(readFileSync(facePath, "utf8"));
-      const art =
-        raw && typeof raw === "object" && "art" in raw
-          ? String((raw as FaceDecision).art ?? "").trim()
-          : "";
-      if (art && existsSync(path.join(dir, art))) {
-        return assetsPackFileUrl(input.packId, "products", slug, lang, art);
-      }
-    }
-  } catch {
-    /* fall through */
+  const hit = resolveSealedProductFace({
+    packId: input.packId,
+    slug,
+    lang,
+    role: "face",
+    productsDir,
+  });
+  if (hit) {
+    return assetsSealedProductRoleUrl(input.packId, slug, lang, "face");
   }
 
+  // No dump on disk — keep a still-valid legacy fallback URL if any.
   const fallback = input.fallback?.trim()
     ? rewriteAssetPackUrl(input.fallback)
     : null;
-  /*
-    Skip 404 index URLs (tin-box-hobby still pointed at art.mercari.png after
-    face.json moved to art.reconstructed.png) so disk dumps can win.
-  */
   if (
     fallback &&
-    (!fallback.startsWith(`${ASSETS_URL_PREFIX}/`) ||
-      sealedProductAssetExists(input.packId, fallback, productsDir))
+    sealedProductAssetExists(input.packId, fallback, productsDir)
   ) {
+    // Legacy filename URL that still exists → promote to role URL when art.* present
+    if (hasArtDump(dir)) {
+      return assetsSealedProductRoleUrl(input.packId, slug, lang, "face");
+    }
     return fallback;
   }
-
-  const arts = artFilesIn(dir);
-  if (arts[0]) {
-    return assetsPackFileUrl(input.packId, "products", slug, lang, arts[0]);
-  }
-  return fallback;
+  return null;
 }
 
 /**
- * Remplit `entry.image` depuis face.json / dumps disque quand l'index a perdu
- * l'URL (réinsertion SKU, merge, …). Mutates `products` in place.
+ * Remplit `entry.image` avec l'URL rôle `/face` dès qu'un dump existe.
+ * Mutates `products` in place.
  */
 export function backfillSealedProductPackshots(
   packId: string,
-  products: Record<string, { slug: string; lang?: string | null; image?: string | null }>,
+  products: Record<
+    string,
+    {
+      slug: string;
+      lang?: string | null;
+      image?: string | null;
+      imageBack?: string | null;
+      setLogo?: string | null;
+    }
+  >,
   opts?: { productsDir?: string },
 ): number {
   let filled = 0;
+  const productsDir = opts?.productsDir;
   for (const entry of Object.values(products)) {
-    const next = resolveSealedPackshotUrl({
+    const lang = langFolder(entry.lang, entry.slug);
+    const face = resolveSealedPackshotUrl({
       packId,
       slug: entry.slug,
       lang: entry.lang,
       fallback: entry.image,
-      productsDir: opts?.productsDir,
+      productsDir,
     });
-    if (!next) continue;
-    if (entry.image === next) continue;
-    /*
-      face.json / on-disk resolution wins over a stale sqlite URL. Skipping
-      any non-empty image left tin-box-hobby on a 404 art.mercari.png forever.
-    */
-    entry.image = next;
-    filled += 1;
+    if (face && entry.image !== face) {
+      entry.image = face;
+      filled += 1;
+    }
+    const backHit = resolveSealedProductFace({
+      packId,
+      slug: entry.slug,
+      lang,
+      role: "back",
+      productsDir,
+    });
+    if (backHit) {
+      const backUrl = assetsSealedProductRoleUrl(
+        packId,
+        entry.slug,
+        lang,
+        "back",
+      );
+      if (entry.imageBack !== backUrl) {
+        entry.imageBack = backUrl;
+        filled += 1;
+      }
+    }
+    const logoHit = resolveSealedProductFace({
+      packId,
+      slug: entry.slug,
+      lang,
+      role: "logo",
+      productsDir,
+    });
+    if (logoHit) {
+      const logoUrl = assetsSealedProductRoleUrl(
+        packId,
+        entry.slug,
+        lang,
+        "logo",
+      );
+      if (entry.setLogo !== logoUrl) {
+        entry.setLogo = logoUrl;
+        filled += 1;
+      }
+    }
   }
   return filled;
 }

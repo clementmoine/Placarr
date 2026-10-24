@@ -1,16 +1,18 @@
 /**
- * Packs d'effets Leclerc — une ligne Marvel, une ligne Disney (catalogue only).
+ * Packs d'effets Leclerc — Marvel / Disney / Star Wars (catalogue only).
  */
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 
 export const LECLERC_MARVEL_EFFECT_PACK_ID = "leclerc-marvel";
 export const LECLERC_DISNEY_EFFECT_PACK_ID = "leclerc-disney";
+export const LECLERC_STARWARS_EFFECT_PACK_ID = "leclerc-starwars";
 
 /** @deprecated Use line-specific ids. */
 export const LECLERC_EFFECT_PACK_ID = LECLERC_MARVEL_EFFECT_PACK_ID;
 
 const MARVEL_ASSET_BASE = "/assets/leclerc/marvel";
 const DISNEY_ASSET_BASE = "/assets/leclerc/disney";
+const STARWARS_ASSET_BASE = "/assets/leclerc/starwars";
 
 export const leclercMarvelEffectPack = defineCatalogueOnlyPack({
   id: LECLERC_MARVEL_EFFECT_PACK_ID,
@@ -26,6 +28,14 @@ export const leclercDisneyEffectPack = defineCatalogueOnlyPack({
   blurb: "Catalogue local opération Disney Leclerc — dos à curer, sans foil",
   assetBase: DISNEY_ASSET_BASE,
   cardBackUrl: `${DISNEY_ASSET_BASE}/backs/en`,
+});
+
+export const leclercStarWarsEffectPack = defineCatalogueOnlyPack({
+  id: LECLERC_STARWARS_EFFECT_PACK_ID,
+  label: "Leclerc Star Wars",
+  blurb: "Catalogue local opérations Star Wars Leclerc — dos à curer, sans foil",
+  assetBase: STARWARS_ASSET_BASE,
+  cardBackUrl: `${STARWARS_ASSET_BASE}/backs/en`,
 });
 
 /** @deprecated Prefer leclercMarvelEffectPack. */

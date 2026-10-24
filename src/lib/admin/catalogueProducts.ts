@@ -13,6 +13,7 @@ import { toContentsTree } from "@/core/collect/sealedContentsTree";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
 import type { PackCompositionField } from "@/providers/shared/sealedProducts/packCompositionTypes";
+import { sealedLotteryPoolForSku } from "@/providers/shared/sealedProducts/lotteryChaseSplit";
 import {
   type ProductsIndexV1,
   type SealedPrintLink,
@@ -31,6 +32,8 @@ import { resolveSealedLang } from "@/providers/shared/sealedProducts/lang";
 import { curatedProductsContentsPath } from "@/providers/shared/sealedProducts/curatedContents";
 import { sealedStructureAttested } from "@/providers/shared/sealedProducts/contentLayers";
 import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
+import { resolveSealedProductFace } from "@/providers/shared/sealedProducts/resolveProductFace";
+import { assetsSealedProductRoleUrl } from "@/lib/packAssetUrls";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { providerModuleProviding } from "@/providers/shared/packOwner";
 
@@ -284,6 +287,19 @@ function rowFromEntry(
         fallback: entry.image,
       })
     : entry.image;
+  const imageBack = corpusPack
+    ? (() => {
+        const hit = resolveSealedProductFace({
+          packId: corpusPack,
+          slug: entry.slug,
+          lang,
+          role: "back",
+        });
+        return hit
+          ? assetsSealedProductRoleUrl(corpusPack, entry.slug, lang, "back")
+          : (entry.imageBack ?? null);
+      })()
+    : (entry.imageBack ?? null);
   return {
     productKey,
     slug: entry.slug,
@@ -293,7 +309,7 @@ function rowFromEntry(
     setCode: entry.setCode,
     lang,
     image,
-    imageBack: entry.imageBack ?? null,
+    imageBack,
     poster: entry.poster ?? null,
     setLogo: entry.setLogo ?? null,
     declaredCardCount: entry.declaredCardCount,
@@ -621,11 +637,16 @@ export async function getCatalogueProductDetailAsync(
     }),
   ]);
   // Listed pools often store name=printKey until lookup fills FR/JA titles.
-  const randomPoolPrints = await enrichSealedPrintLinks({
+  const enrichedPool = await enrichSealedPrintLinks({
     packId: corpus,
     lang: row.lang,
     prints: rawPool,
   });
+  // SKU composition wins over « whole set » — e.g. pochette-fixeez ≠ 108 cards.
+  const randomPoolPrints = sealedLotteryPoolForSku(
+    enrichedPool,
+    entry.packComposition,
+  );
   return {
     ...row,
     cardsPerPack: entry.cardsPerPack,

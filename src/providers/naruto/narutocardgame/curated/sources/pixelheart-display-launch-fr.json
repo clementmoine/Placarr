@@ -1,0 +1,14 @@
+{
+  "sourceId": "pixelheart",
+  "url": "https://www.pixelheart.eu/fr/produit/naruto-card-game-by-bandai-worldwide-launch-summer-2027-francais/",
+  "observed": "2026-10-23",
+  "slug": "display-launch-fr",
+  "lang": "fr",
+  "priceCents": 17999,
+  "currency": "EUR",
+  "status": "preorder",
+  "releaseWindow": "Summer 2027",
+  "packshot": "https://www.pixelheart.eu/wp-content/uploads/2026/08/NFR.png",
+  "official": "https://www.naruto-cardgame.com/en/welcome/",
+  "note": "Fiche boutique FR ; détail produit Pixel Heart mentionne aussi « Langue : anglais » — on garde lang=fr (URL / section Langue du jeu FR)."
+}

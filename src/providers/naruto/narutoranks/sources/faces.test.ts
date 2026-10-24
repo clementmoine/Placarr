@@ -512,7 +512,7 @@ import {
         "naruto/ninja-ranks::display",
       ]);
       expect(products.products["naruto/ninja-ranks::booster"]?.image).toBe(
-        "/assets/naruto/ninja-ranks/products/booster/en/art.inkworks.jpg",
+        "/assets/naruto/ninja-ranks/products/booster/en/face",
       );
       expect(Object.keys(products.products).some((key) => /tin/i.test(key))).toBe(
         false,

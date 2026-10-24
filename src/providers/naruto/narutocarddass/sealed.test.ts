@@ -497,12 +497,12 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.declaredCardCount).toBe(8);
       expect(starter.declaredCardCount).toBe(40);
       expect(booster.image).toBe(
-        "/assets/naruto/carddass/products/booster-s1/fr/art.carddass.gif",
+        "/assets/naruto/carddass/products/booster-s1/fr/face",
       );
       expect(starter.setLogo).toBe(
         // Le badge de série découpé (224×88) l'emporte sur le `logos_series` de
         // carddass.fr (100×39) — même image, cinq fois la surface.
-        "/assets/naruto/carddass/products/starter-maitre-hokage/fr/logo.badge.png",
+        "/assets/naruto/carddass/products/starter-maitre-hokage/fr/logo",
       );
       expect(
         fs.existsSync(
@@ -559,13 +559,13 @@ import productsContentsLedger from "./curated/products-contents.json";
       const vent = index.products["naruto/carddass::starter-pays-du-vent"]!;
       const hokage = index.products["naruto/carddass::starter-maitre-hokage"]!;
       expect(vent.image).toBe(
-        "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.vialudibunda.jpg",
+        "/assets/naruto/carddass/products/starter-pays-du-vent/fr/face",
       );
       expect(vent.path).toBe(
         "staging/vialudibunda/naruto-serie-1-deck-pays-du-vent.jpg",
       );
       expect(hokage.image).toBe(
-        "/assets/naruto/carddass/products/starter-maitre-hokage/fr/art.vialudibunda.jpg",
+        "/assets/naruto/carddass/products/starter-maitre-hokage/fr/face",
       );
       expect(hokage.path).toBe(
         "staging/vialudibunda/starter-naruto-serie-1-maitre-hokage.jpg",
@@ -680,13 +680,13 @@ import productsContentsLedger from "./curated/products-contents.json";
       const booster = index.products["naruto/carddass::booster-s1"]!;
       const vent = index.products["naruto/carddass::starter-pays-du-vent"]!;
       expect(booster.image).toBe(
-        "/assets/naruto/carddass/products/booster-s1/fr/art.vialudibunda.jpg",
+        "/assets/naruto/carddass/products/booster-s1/fr/face",
       );
       expect(booster.path).toBe(
         "staging/vialudibunda/naruto-serie-1-booster.jpg",
       );
       expect(vent.image).toBe(
-        "/assets/naruto/carddass/products/starter-pays-du-vent/fr/art.vialudibunda.jpg",
+        "/assets/naruto/carddass/products/starter-pays-du-vent/fr/face",
       );
       expect(vent.path).toBe(
         "staging/vialudibunda/naruto-serie-1-deck-pays-du-vent.jpg",
@@ -734,7 +734,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       ) as { products: Record<string, { image: string; path: string }> };
       const booster = index.products["naruto/carddass::booster-s2"]!;
       expect(booster.image).toBe(
-        "/assets/naruto/carddass/products/booster-s2/fr/art.ebay.webp",
+        "/assets/naruto/carddass/products/booster-s2/fr/face",
       );
       expect(booster.path).toBe("staging/ebay/booster-s2.webp");
     });
@@ -768,7 +768,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         "staging/vialudibunda/naruto-serie-1-booster.jpg",
       );
       expect(index.products["naruto/carddass::booster-s3"]?.image).toBe(
-        "/assets/naruto/carddass/products/booster-s3/fr/art.manga-news.jpg",
+        "/assets/naruto/carddass/products/booster-s3/fr/face",
       );
       expect(index.products["naruto/carddass::booster-s3"]?.path).toBe(
         "staging/manga-news/images/tcg-naruto-deck-serie-3.jpg",
@@ -840,7 +840,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(display.declaredCardCount).toBeNull();
       expect(display.path).toBe("curated/products/wrappers/display-s28.png");
       expect(display.image).toBe(
-        "/assets/naruto/carddass/products/display-s28/en/art.reconstructed.png",
+        "/assets/naruto/carddass/products/display-s28/en/face",
       );
       /*
         La couverture du display n'est pas un logo — mais le wordmark du jeu en
@@ -848,7 +848,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         partagent : c'est le logo du **jeu**, pas d'une série.
       */
       expect(display.setLogo).toBe(
-        "/assets/naruto/carddass/products/display-s28/en/logo.kingslayer.jpg",
+        "/assets/naruto/carddass/products/display-s28/en/logo",
       );
       expect(display.lang).toBe("EN");
     });
@@ -976,8 +976,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       // Curated products-contents : 40 deck + 8 + 8 + 1 promo.
       expect(tin.declaredCardCount).toBe(57);
       expect(tin.path).toBe("curated/products/wrappers/tin-box.png");
-      expect(tin.image).toContain("tin-box/fr/art.reconstructed.png");
-      expect(tin.imageBack).toContain("tin-box/fr/back.leboncoin.jpg");
+      expect(tin.image).toBe("/assets/naruto/carddass/products/tin-box/fr/face");
+      expect(tin.imageBack).toBe("/assets/naruto/carddass/products/tin-box/fr/back");
       expect(index.products["naruto/carddass::tin-box-hobby"]!.path).toBe(
         "curated/products/wrappers/tin-box-hobby.png",
       );
@@ -1049,24 +1049,35 @@ import productsContentsLedger from "./curated/products-contents.json";
       // Curated products-contents : 2×8 + promo PR-096.
       expect(duo.declaredCardCount).toBe(17);
       expect(duo.path).toBe("curated/products/wrappers/duopack-s28.png");
-      expect(duo.imageBack).toContain(
-        "duopack-s28/fr/back.reconstructed.png",
+      expect(duo.imageBack).toBe(
+        "/assets/naruto/carddass/products/duopack-s28/fr/back",
       );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "duopack-s28",
+            "fr",
+            "back.reconstructed.png",
+          ),
+        ),
+      ).toBe(true);
       const org =
         index.products["naruto/carddass::duopack-s24-organisation-pacifique"]!;
       expect(org.path).toBe(
         "curated/products/wrappers/duopack-s24-organisation-pacifique.png",
       );
-      expect(org.imageBack).toContain(
-        "duopack-s24-organisation-pacifique/fr/back.reconstructed.png",
+      expect(org.imageBack).toBe(
+        "/assets/naruto/carddass/products/duopack-s24-organisation-pacifique/fr/back",
       );
       const loup =
         index.products["naruto/carddass::duopack-s24-loup-bicephale"]!;
       expect(loup.path).toBe(
         "curated/products/wrappers/duopack-s24-loup-bicephale.png",
       );
-      expect(loup.imageBack).toContain(
-        "duopack-s24-loup-bicephale/fr/back.reconstructed.png",
+      expect(loup.imageBack).toBe(
+        "/assets/naruto/carddass/products/duopack-s24-loup-bicephale/fr/back",
       );
     });
 
@@ -1096,7 +1107,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.lang).toBe("FR");
       expect(booster.declaredCardCount).toBe(8);
       expect(booster.path).toBe("staging/sunnystore/booster-s28-01.jpg");
-      expect(booster.imageBack).toContain("booster-s28/fr/back.sunnystore.jpg");
+      expect(booster.imageBack).toBe("/assets/naruto/carddass/products/booster-s28/fr/back");
     });
 
     it("keeps ES Carddass Serie 3 off the catalogue index (JA+FR+EN contract)", async () => {
@@ -1148,7 +1159,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.declaredCardCount).toBe(10);
       expect(booster.cardsPerPack).toBe(10);
       expect(booster.path).toBe("staging/sunnystore/booster-tp3-01.jpg");
-      expect(booster.imageBack).toContain("booster-tp3/en/back.sunnystore.jpg");
+      expect(booster.imageBack).toBe("/assets/naruto/carddass/products/booster-tp3/en/back");
       expect(index.products["naruto/carddass::display-tp3"]).toBeUndefined();
     });
 
@@ -1182,9 +1193,20 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.declaredCardCount).toBe(9);
       expect(booster.cardsPerPack).toBe(9);
       expect(booster.path).toBe("staging/sunnystore/booster-s5-en-01.jpg");
-      expect(booster.imageBack).toContain(
-        "booster-s5-en/en/back.sunnystore.jpg",
+      expect(booster.imageBack).toBe(
+        "/assets/naruto/carddass/products/booster-s5-en/en/back",
       );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "booster-s5-en",
+            "en",
+            "back.sunnystore.jpg",
+          ),
+        ),
+      ).toBe(true);
     });
 
     it("publishes EN Storm 3 booster as booster-s28-en from Sunny Store USA (not FR)", async () => {
@@ -1218,10 +1240,23 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.declaredCardCount).toBe(10);
       expect(booster.cardsPerPack).toBe(10);
       expect(booster.path).toBe("staging/sunnystore/booster-s28-en-01.jpg");
-      expect(booster.imageBack).toContain(
-        "booster-s28-en/en/back.sunnystore.jpg",
+      expect(booster.imageBack).toBe(
+        "/assets/naruto/carddass/products/booster-s28-en/en/back",
       );
-      expect(booster.setLogo).toContain("logo.kingslayer.jpg");
+      expect(booster.setLogo).toBe(
+        "/assets/naruto/carddass/products/booster-s28-en/en/logo",
+      );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "booster-s28-en",
+            "en",
+            "logo.kingslayer.jpg",
+          ),
+        ),
+      ).toBe(true);
     });
 
     it("publishes EN Emerging Alliance booster-s14 from ToyWiz", async () => {
@@ -1254,7 +1289,20 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.declaredCardCount).toBe(10);
       expect(booster.cardsPerPack).toBe(10);
       expect(booster.path).toBe("staging/toywiz/booster-s14.jpg");
-      expect(booster.setLogo).toContain("logo.kingslayer.jpg");
+      expect(booster.setLogo).toBe(
+        "/assets/naruto/carddass/products/booster-s14/en/logo",
+      );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "booster-s14",
+            "en",
+            "logo.kingslayer.jpg",
+          ),
+        ),
+      ).toBe(true);
     });
 
     it("files the JP 巻ノ五 booster on Carddass with 6 cards, not FR s5", async () => {
@@ -1291,7 +1339,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       expect(booster.name).toContain("巻ノ五");
       expect(booster.setLogo).toBeNull();
       expect(booster.image).toBe(
-        "/assets/naruto/carddass/products/booster-vol5-jp/ja/art.gradedcardcenter.jpg",
+        "/assets/naruto/carddass/products/booster-vol5-jp/ja/face",
       );
       expect(booster.path).toBe("staging/gradedcardcenter/booster-vol5-jp.jpg");
       expect(index.products["naruto/carddass::booster-s5"]).toBeUndefined();
@@ -1336,7 +1384,7 @@ import productsContentsLedger from "./curated/products-contents.json";
         "staging/goat-en-boxes/s16.gif",
       );
       expect(index.products["naruto/carddass::display-s16"]?.image).toBe(
-        "/assets/naruto/carddass/products/display-s16/en/art.goat.gif",
+        "/assets/naruto/carddass/products/display-s16/en/face",
       );
       expect(index.products["naruto/carddass::display-s1"]).toBeUndefined();
       expect(fs.existsSync(path.join(root, "products", "display-s1.jpg"))).toBe(
@@ -1374,9 +1422,20 @@ import productsContentsLedger from "./curated/products-contents.json";
       ]);
       expect(index.products["naruto/carddass::booster-s1"]?.lang).toBe("FR");
       expect(index.products["naruto/carddass::display-s28"]?.lang).toBe("EN");
-      expect(index.products["naruto/carddass::display-s28"]?.image).toContain(
-        "art.reconstructed.png",
+      expect(index.products["naruto/carddass::display-s28"]?.image).toBe(
+        "/assets/naruto/carddass/products/display-s28/en/face",
       );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "display-s28",
+            "en",
+            "art.reconstructed.png",
+          ),
+        ),
+      ).toBe(true);
       expect(fs.existsSync(path.join(root, ".en-ccg"))).toBe(false);
     });
   });
@@ -1414,10 +1473,23 @@ import productsContentsLedger from "./curated/products-contents.json";
       };
       const ps = index.products["naruto/carddass::ps-yoyaku-tokuten"];
       expect(ps?.imageBack).toBe(
-        "/assets/naruto/carddass/products/ps-yoyaku-tokuten/ja/back.reconstructed.jpg",
+        "/assets/naruto/carddass/products/ps-yoyaku-tokuten/ja/back",
       );
       // Le recto reste le visuel officiel : le verso ne le remplace pas.
-      expect(ps?.image).toContain("art.tvtokyo");
+      expect(ps?.image).toBe(
+        "/assets/naruto/carddass/products/ps-yoyaku-tokuten/ja/face",
+      );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "ps-yoyaku-tokuten",
+            "ja",
+            "art.tvtokyo.gif",
+          ),
+        ),
+      ).toBe(true);
     });
 
     it("garde le verso curé même quand le pack ne contient rien", async () => {
@@ -1441,7 +1513,20 @@ import productsContentsLedger from "./curated/products-contents.json";
       */
       expect(
         index.products["naruto/carddass::ps-yoyaku-tokuten"]?.imageBack,
-      ).toContain("back.reconstructed.jpg");
+      ).toBe(
+        "/assets/naruto/carddass/products/ps-yoyaku-tokuten/ja/back",
+      );
+      expect(
+        fs.existsSync(
+          path.join(
+            root,
+            "products",
+            "ps-yoyaku-tokuten",
+            "ja",
+            "back.reconstructed.jpg",
+          ),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -1495,7 +1580,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       });
       expect(shippuden.length).toBeGreaterThanOrEqual(3);
       expect(
-        shippuden.every((p) => p.setLogo?.endsWith("logo.kingslayer.jpg")),
+        shippuden.every((p) => p.setLogo?.endsWith("/logo")),
       ).toBe(true);
       const earlyOrTp = Object.values(index.products).filter(
         (p) =>

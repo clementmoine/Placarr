@@ -943,7 +943,7 @@ Option ultérieure (hors spike) : module `pkmmarket` depuis le dump liste
 | --- | --- |
 | `dragonball/heroes` | **Ingesté** (EBP1–4 + Selection + BOX + Namek) via `dbh/sealed.ts` |
 | `naruto/data-carddass` | Arcade only — pas de retail scellé attesté ; UI `hasSealedProducts: false` |
-| `leclerc/*` | Stickers / albums — hors TCG scellé ; `hasSealedProducts: false` |
+| `leclerc/*` | Album + pochette (+ display stub) seedés ; `hasSealedProducts: true` — Sync étape `products` |
 
 ## Liens
 

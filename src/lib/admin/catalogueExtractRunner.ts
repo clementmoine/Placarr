@@ -335,6 +335,13 @@ async function invokePackPipeline(
       await runNarutoMythosPackPipeline(argv);
       return;
     }
+    case "naruto-cardgame": {
+      const { runNarutoCardgamePackPipeline } = await import(
+        "@/providers/naruto/narutocardgame/extract"
+      );
+      await runNarutoCardgamePackPipeline(argv);
+      return;
+    }
     case "naruto-kayou": {
       const { runNarutoKayouPackPipeline } = await import(
         "@/providers/naruto/narutokayou/extract"
@@ -392,6 +399,11 @@ async function invokePackPipeline(
       await runOnepiecePackPipeline(argv);
       return;
     }
+    case "leclerc-sw15":
+    case "leclerc-sw16":
+    case "leclerc-sw18":
+    case "leclerc-sw19":
+    case "leclerc-marvel20":
     case "leclerc-marvel21":
     case "leclerc-marvel22":
     case "leclerc-marvel23":

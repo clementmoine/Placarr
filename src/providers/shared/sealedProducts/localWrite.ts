@@ -10,7 +10,10 @@
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import {
+  assetsPackFileUrl,
+  assetsSealedProductRoleUrl,
+} from "@/lib/packAssetUrls";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 import {
@@ -32,6 +35,7 @@ import {
 import type { PackCompositionField } from "./packCompositionTypes";
 import { resolveContentLayers } from "./contentLayers";
 import { persistSealedProductsIndex } from "./persistProductsIndex";
+import { writeSealedProductFaceDecision } from "./resolveProductFace";
 
 export type LocalSealedWrite = {
   slug: string;
@@ -148,6 +152,13 @@ export function writeLocalSealedProducts(input: {
       installRole(destDir, "back", extra.source, extra.imageBackPath);
       installRole(destDir, "poster", extra.source, extra.posterPath);
     }
+    if (artFile || backFile || logoFile) {
+      writeSealedProductFaceDecision(destDir, {
+        art: artFile,
+        back: backFile,
+        logo: logoFile,
+      });
+    }
     const preview = sealedKindIsOpaqueContents(spec.kind);
     const contents = resolveSealedContents({
       kind: spec.kind,
@@ -176,21 +187,19 @@ export function writeLocalSealedProducts(input: {
       category: spec.category,
       name: spec.name,
       image: artFile
-        ? assetsPackFileUrl(
+        ? assetsSealedProductRoleUrl(
             input.packId,
-            "products",
             spec.slug,
             langFolder,
-            artFile,
+            "face",
           )
         : null,
       imageBack: backFile
-        ? assetsPackFileUrl(
+        ? assetsSealedProductRoleUrl(
             input.packId,
-            "products",
             spec.slug,
             langFolder,
-            backFile,
+            "back",
           )
         : null,
       ...(posterFile
@@ -205,12 +214,11 @@ export function writeLocalSealedProducts(input: {
           }
         : {}),
       setLogo: logoFile
-        ? assetsPackFileUrl(
+        ? assetsSealedProductRoleUrl(
             input.packId,
-            "products",
             spec.slug,
             langFolder,
-            logoFile,
+            "logo",
           )
         : null,
       setCode: spec.setCode,

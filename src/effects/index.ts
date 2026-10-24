@@ -5,6 +5,7 @@ import "@/effects/narutoshippuden";
 import "@/effects/narutoranks";
 import "@/effects/narutoultra";
 import "@/effects/narutomythos";
+import "@/effects/narutocardgame";
 import "@/effects/narutokayou";
 import "@/effects/narutodatacarddass";
 import "@/effects/dbscg";
@@ -39,6 +40,7 @@ export { NARUTO_SHIPPUDEN_EFFECT_PACK_ID } from "@/effects/narutoshippuden";
 export { NARUTO_RANKS_EFFECT_PACK_ID } from "@/effects/narutoranks";
 export { NARUTO_ULTRA_EFFECT_PACK_ID } from "@/effects/narutoultra";
 export { NARUTO_MYTHOS_EFFECT_PACK_ID } from "@/effects/narutomythos";
+export { NARUTO_CARDGAME_EFFECT_PACK_ID } from "@/effects/narutocardgame";
 export { NARUTO_KAYOU_EFFECT_PACK_ID } from "@/effects/narutokayou";
 export { NARUTO_DATA_CARDDASS_EFFECT_PACK_ID } from "@/effects/narutodatacarddass";
 export { ONEPIECE_EFFECT_PACK_ID } from "@/effects/onepiece";
@@ -48,4 +50,5 @@ export {
   LECLERC_DISNEY_EFFECT_PACK_ID,
   LECLERC_EFFECT_PACK_ID,
   LECLERC_MARVEL_EFFECT_PACK_ID,
+  LECLERC_STARWARS_EFFECT_PACK_ID,
 } from "@/effects/leclerc";

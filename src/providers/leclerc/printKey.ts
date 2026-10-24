@@ -10,11 +10,17 @@ export const LECLERC_SW16_SET = "sw16";
 export const LECLERC_SW18_SET = "sw18";
 /** Star Wars « Maîtriser la Force » — Leclerc 2019. */
 export const LECLERC_SW19_SET = "sw19";
-/** Star Wars « Maîtriser la Force » — Sticker Backs — Leclerc 2019. */
+/**
+ * @deprecated Alias TCDB « Sticker Backs » — même campagne que {@link LECLERC_SW19_SET}.
+ * Ne pas créer de ligne admin séparée.
+ */
 export const LECLERC_SW19_STICKER_SET = "sw19sb";
-/** Marvel « Deviens un Héros » — Leclerc 2020. */
+/** Marvel « Deviens un Héros » — Leclerc 2020 (stickers + cartes mémoire). */
 export const LECLERC_MARVEL20_SET = "marvel20";
-/** Marvel « Deviens un Héros » — Sticker Backs — Leclerc 2020. */
+/**
+ * @deprecated Alias TCDB « Sticker Backs » — même campagne que {@link LECLERC_MARVEL20_SET}.
+ * Ne pas créer de ligne admin séparée.
+ */
 export const LECLERC_MARVEL20_STICKER_SET = "marvel20sb";
 /** Marvel « Révèle ton Pouvoir » — Leclerc automne 2021. */
 export const LECLERC_MARVEL21_SET = "marvel21";
@@ -29,20 +35,26 @@ export const LECLERC_DISNEY25_SET = "disney25";
 /** Disney « Le Monde avec Disney » / album « En route pour l'aventure ! » — Leclerc automne 2026. */
 export const LECLERC_DISNEY26_SET = "disney26";
 
+/** Anciens codes TCDB « … - Sticker Backs » → set canonique Placarr. */
+const SET_ALIASES: Readonly<Record<string, string>> = {
+  [LECLERC_SW19_STICKER_SET]: LECLERC_SW19_SET,
+  [LECLERC_MARVEL20_STICKER_SET]: LECLERC_MARVEL20_SET,
+};
+
+export function canonicalLeclercSetCode(setCode: string): string {
+  const code = setCode.trim().toLowerCase();
+  return SET_ALIASES[code] ?? code;
+}
+
 /**
- * Affichage catalogue : `{année} {Franchise}: {titre}` (± variante Sticker Backs).
- * Aligné sur les intitulés collectionneur / TCDB.
+ * Affichage catalogue : `{année} {Franchise}: {titre}`.
  */
 const SET_LABELS_FR: Readonly<Record<string, string>> = {
   [LECLERC_SW15_SET]: "2015 Star Wars Cosmic Shells",
   [LECLERC_SW16_SET]: "2016 Star Wars Cosmic Shells II",
   [LECLERC_SW18_SET]: "2018 Star Wars",
   [LECLERC_SW19_SET]: "2019 Star Wars: Maîtriser la Force",
-  [LECLERC_SW19_STICKER_SET]:
-    "2019 Star Wars: Maîtriser la Force - Sticker Backs",
   [LECLERC_MARVEL20_SET]: "2020 Marvel: Deviens un Héros",
-  [LECLERC_MARVEL20_STICKER_SET]:
-    "2020 Marvel: Deviens un Héros - Sticker Backs",
   [LECLERC_MARVEL21_SET]: "2021 Marvel: Révèle ton Pouvoir",
   [LECLERC_MARVEL22_SET]: "2022 Marvel: Pars en Mission",
   [LECLERC_MARVEL23_SET]: "2023 Marvel: Défie tes Héros",
@@ -56,9 +68,7 @@ const SET_SORT: Readonly<Record<string, number>> = {
   [LECLERC_SW16_SET]: 2016,
   [LECLERC_SW18_SET]: 2018,
   [LECLERC_SW19_SET]: 2019,
-  [LECLERC_SW19_STICKER_SET]: 2019.1,
   [LECLERC_MARVEL20_SET]: 2020,
-  [LECLERC_MARVEL20_STICKER_SET]: 2020.1,
   [LECLERC_MARVEL21_SET]: 2021,
   [LECLERC_MARVEL22_SET]: 2022,
   [LECLERC_MARVEL23_SET]: 2023,
@@ -73,19 +83,19 @@ export function leclercPrintKey(
 ): string | null {
   return buildPrintKey({
     game: LECLERC_PRINT_GAME,
-    set: setCode.trim().toLowerCase(),
+    set: canonicalLeclercSetCode(setCode),
     number: number.trim().toLowerCase(),
     grouping: null,
   });
 }
 
 export function leclercSetLabel(setCode: string, _language?: string | null): string {
-  const code = setCode.trim().toLowerCase();
+  const code = canonicalLeclercSetCode(setCode);
   return SET_LABELS_FR[code] ?? setCode.toUpperCase();
 }
 
 export function leclercSetSortKey(setCode: string): number | null {
-  const code = setCode.trim().toLowerCase();
+  const code = canonicalLeclercSetCode(setCode);
   return SET_SORT[code] ?? null;
 }
 

@@ -1,0 +1,349 @@
+{
+  "source": "stub — Bibelotmania idm=6150 Cosmic Shells 2015 (54 jetons)",
+  "url": null,
+  "set": {
+    "code": "sw15",
+    "label": "2015 Star Wars Cosmic Shells",
+    "year": 2015,
+    "franchise": "Star Wars"
+  },
+  "coverage": {
+    "namedCards": 0,
+    "placeholderCards": 54,
+    "fixeez": 0,
+    "fixeezNamed": 0
+  },
+  "operation": {
+    "start": "2015-10-27",
+    "end": "2015-12-13",
+    "packSize": 2,
+    "thresholdEur": 30,
+    "albumEur": 2.99
+  },
+  "cards": [
+    {
+      "number": "001",
+      "name": "Jeton #001",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "002",
+      "name": "Jeton #002",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "003",
+      "name": "Jeton #003",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "004",
+      "name": "Jeton #004",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "005",
+      "name": "Jeton #005",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "006",
+      "name": "Jeton #006",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "007",
+      "name": "Jeton #007",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "008",
+      "name": "Jeton #008",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "009",
+      "name": "Jeton #009",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "010",
+      "name": "Jeton #010",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "011",
+      "name": "Jeton #011",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "012",
+      "name": "Jeton #012",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "013",
+      "name": "Jeton #013",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "014",
+      "name": "Jeton #014",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "015",
+      "name": "Jeton #015",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "016",
+      "name": "Jeton #016",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "017",
+      "name": "Jeton #017",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "018",
+      "name": "Jeton #018",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "019",
+      "name": "Jeton #019",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "020",
+      "name": "Jeton #020",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "021",
+      "name": "Jeton #021",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "022",
+      "name": "Jeton #022",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "023",
+      "name": "Jeton #023",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "024",
+      "name": "Jeton #024",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "025",
+      "name": "Jeton #025",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "026",
+      "name": "Jeton #026",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "027",
+      "name": "Jeton #027",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "028",
+      "name": "Jeton #028",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "029",
+      "name": "Jeton #029",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "030",
+      "name": "Jeton #030",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "031",
+      "name": "Jeton #031",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "032",
+      "name": "Jeton #032",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "033",
+      "name": "Jeton #033",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "034",
+      "name": "Jeton #034",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "035",
+      "name": "Jeton #035",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "036",
+      "name": "Jeton #036",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "037",
+      "name": "Jeton #037",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "038",
+      "name": "Jeton #038",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "039",
+      "name": "Jeton #039",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "040",
+      "name": "Jeton #040",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "041",
+      "name": "Jeton #041",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "042",
+      "name": "Jeton #042",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "043",
+      "name": "Jeton #043",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "044",
+      "name": "Jeton #044",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "045",
+      "name": "Jeton #045",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "046",
+      "name": "Jeton #046",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "047",
+      "name": "Jeton #047",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "048",
+      "name": "Jeton #048",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "049",
+      "name": "Jeton #049",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "050",
+      "name": "Jeton #050",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "051",
+      "name": "Jeton #051",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "052",
+      "name": "Jeton #052",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "053",
+      "name": "Jeton #053",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    },
+    {
+      "number": "054",
+      "name": "Jeton #054",
+      "kind": "card",
+      "note": "stub — jeton Cosmic Shells (Bibelotmania idm=6150) ; noms à densifier"
+    }
+  ]
+}

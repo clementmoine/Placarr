@@ -21,6 +21,11 @@ export type LeclercSealedSkuDraft = {
   kind: SealedKind;
   category: string;
   name: string;
+  /**
+   * Marque de dump (`art.<source>.*`) quand ≠ source du ledger
+   * (ex. display `packshot` à côté d’album `paninimania`).
+   */
+  source?: string;
   /** Nom de fichier sous `products/<set>/<slug>/<lang>/` — absent = stub sans art. */
   art?: string | null;
   back?: string | null;

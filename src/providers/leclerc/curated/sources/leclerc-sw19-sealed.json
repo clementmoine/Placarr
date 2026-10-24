@@ -1,0 +1,60 @@
+{
+  "sourceId": "paninimania",
+  "lang": "fr",
+  "setCode": "sw19",
+  "observed": "2026-10-24",
+  "note": "Paninimania idm=6809 « Star Wars Maitriser la force - Sticker Album - Leclerc 2019 ». Une campagne : stickers + dos jeu J1–J18 (ancien code TCDB sw19sb fusionné). Album 1,99€ (EAN 8718973040399). Pochette = 4 images. Display : 244 pochettes × 4 = 976 stickers — Leboncoin ad/collection/3185056359 (« Lot en carton de 244 pochettes de 4 vignettes soit 976 vignettes de Star Wars édition 2019 Leclerc »).",
+  "products": [
+    {
+      "slug": "collector-album",
+      "kind": "coffret",
+      "category": "albums",
+      "name": "Album — Maîtriser la Force",
+      "art": "art.paninimania.jpg",
+      "declaredCardCount": null,
+      "priceCents": 199,
+      "packComposition": "none"
+    },
+    {
+      "slug": "pochette",
+      "kind": "booster",
+      "category": "boosters",
+      "name": "Pochette — Maîtriser la Force",
+      "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
+      "declaredCardCount": 4,
+      "cardsPerPack": 4,
+      "priceCents": null,
+      "packComposition": {
+        "provenance": "structural",
+        "source": "paninimania idm=6809 — pochette de 4 images",
+        "verifiedAt": "2026-10-24",
+        "cardsPerPack": 4,
+        "slots": [
+          {
+            "id": "sticker",
+            "count": 4,
+            "kind": "dedicated",
+            "rarities": [
+              "sticker"
+            ]
+          }
+        ],
+        "rarityHits": {}
+      }
+    },
+    {
+      "slug": "display",
+      "kind": "display",
+      "category": "displays",
+      "source": "packshot",
+      "art": "art.packshot.png",
+      "declaredCardCount": 976,
+      "cardsPerPack": 4,
+      "packsContained": 244,
+      "priceCents": null,
+      "name": "Display — Maîtriser la Force",
+      "packComposition": "none"
+    }
+  ]
+}

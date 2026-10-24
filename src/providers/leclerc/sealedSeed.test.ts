@@ -44,7 +44,7 @@ describe("leclercSealedSeed", () => {
         kind: "booster",
         category: "boosters",
         name: "Pochette — Découvre la magie de Disney",
-        art: "art.scan.png",
+        art: "art.paninimania.jpg",
         declaredCardCount: 4,
         cardsPerPack: 4,
         packComposition: {
@@ -64,7 +64,7 @@ describe("leclercSealedSeed", () => {
         kind: "coffret",
         category: "albums",
         name: "Album — Découvre la magie de Disney",
-        art: "art.scan.png",
+        art: "art.paninimania.jpg",
         declaredCardCount: null,
         packComposition: "none",
       },
@@ -74,7 +74,7 @@ describe("leclercSealedSeed", () => {
       "pochette",
       "display",
     ]);
-    expect(merged[0]?.art).toBe("art.scan.png");
+    expect(merged[0]?.art).toBe("art.paninimania.jpg");
     expect(merged[1]?.packComposition).toMatchObject({
       possibleChase: ["Fixeez"],
     });

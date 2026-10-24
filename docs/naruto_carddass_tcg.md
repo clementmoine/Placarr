@@ -21,7 +21,7 @@
 | **Naruto Collectible Card Game** (EN / US)               | Bandai America                 | **2006-04 → 2013-05**             | ~28 sets (_Path to Hokage_ → _Ultimate Ninja Storm 3_) ; même famille de jeu que les early FR « CACG » |
 | **Data Carddass ナルティメットカードバトル**             | Bandai arcade                  | ~2005+                            | Cartes à code barre arcade (`DN-…`) — **autre ligne**                                                  |
 | **Naruto Mythos TCG**                                    | CICABOOM                       | 2025–                             | Jeu distinct                                                                                           |
-| **Naruto Card Game** (nouveau)                           | Bandai Card Games + Asmodee EU | Annonce 2026, **sortie été 2027** | Nouveau TCG mondial — hors scope de _cette_ collection legacy                                          |
+| **Naruto Card Game** (nouveau)                           | Bandai Card Games + Asmodee EU | Annonce 2026, **sortie été 2027** | Ligne catalogue `naruto/cardgame` (display FR précommande) — **pas** cette collection Carddass legacy |
 | **Kayou / Dual Story / etc.**                            | Divers CN / modern             | 2020s                             | Hors Bandai Carddass legacy                                                                            |
 
 Le besoin Placarr ici = **legacy Bandai jouable / Carddass** (surtout **FR + JP**, éventuellement EN CCG). Traiter Mythos / Kayou / 2027 comme d’autres `game` ids plus tard.

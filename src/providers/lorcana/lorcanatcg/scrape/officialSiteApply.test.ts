@@ -102,7 +102,7 @@ describe("upsertOfficialSiteProducts without staging", () => {
     expect(row!.kind).toBe("trove");
     expect(row!.lang).toBe("fr");
     expect(row!.image).toBe(
-      "/assets/lorcana/products/hyperia-city-trove/fr/art.disneysite.png",
+      "/assets/lorcana/products/hyperia-city-trove/fr/face",
     );
     expect(row!.catalogueSetId).toBe("14");
   });
@@ -166,7 +166,7 @@ describe("upsertOfficialSiteProducts without staging", () => {
             category: "official-site",
             name: "Le Règne de Jafar",
             image:
-              "/assets/lorcana/products/reign-of-jafar-collector_box/fr/art.disneysite.png",
+              "/assets/lorcana/products/reign-of-jafar-collector_box/fr/face",
             imageBack: null,
             setLogo: null,
             setCode: "8",
@@ -296,7 +296,7 @@ describe("upsertOfficialSiteProducts product-shot upgrade", () => {
       category: "official-site",
       name: "Elsa Gift Box",
       image:
-        "/assets/lorcana/products/elsa-gift-box-collector_box-en/en/art.disneysite.jpg",
+        "/assets/lorcana/products/elsa-gift-box-collector_box-en/en/face",
       imageBack: null,
       setLogo: null,
       setCode: null,
@@ -336,7 +336,7 @@ describe("upsertOfficialSiteProducts product-shot upgrade", () => {
       loadSealedProductsIndex("lorcana").products,
     ).find((p) => p.slug === "elsa-gift-box-collector_box-en");
     expect(row?.image).toBe(
-      "/assets/lorcana/products/elsa-gift-box-collector_box-en/en/art.disneysite.png",
+      "/assets/lorcana/products/elsa-gift-box-collector_box-en/en/face",
     );
     expect(
       readFileSync(path.join(heroDir, "art.disneysite.png")).equals(shot),

@@ -11,7 +11,8 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { assetsSealedProductRoleUrl } from "@/lib/packAssetUrls";
+import { writeSealedProductFaceDecision } from "@/providers/shared/sealedProducts/resolveProductFace";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import {
   sealedProductKey,
@@ -331,12 +332,12 @@ function installOfficialArtOnEntry(opts: {
     }
   }
   copyFileSync(opts.stagingArt, dest);
-  opts.entry.image = assetsPackFileUrl(
+  writeSealedProductFaceDecision(destDir, { art: artFile });
+  opts.entry.image = assetsSealedProductRoleUrl(
     opts.packId,
-    "products",
     opts.entry.slug,
     destLang,
-    artFile,
+    "face",
   );
 }
 
@@ -609,7 +610,7 @@ export function upsertOfficialSiteProducts(opts: {
         behavior,
         category: "official-site",
         name,
-        image: assetsPackFileUrl(packId, "products", productSlug, lang, artFile),
+        image: assetsSealedProductRoleUrl(packId, productSlug, lang, "face"),
         imageBack: null,
         setLogo,
         setCode: officialSetIdToSetCode(page.setId),

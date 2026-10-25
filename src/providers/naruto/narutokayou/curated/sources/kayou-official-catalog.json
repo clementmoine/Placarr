@@ -1,11 +1,11 @@
 {
   "source": "kayouofficial.com — Naruto IP catalogue crawl",
   "ipId": "ip-rtqgm0xa",
-  "observed": "2026-10-22",
-  "crawledAt": "2026-10-22T22:24:48.096Z",
-  "contentHash": "2582593b66bab38f",
+  "observed": "2026-10-24",
+  "crawledAt": "2026-10-24T22:53:26.998Z",
+  "contentHash": "6fb529297a90e4d6",
   "previousHash": "2582593b66bab38f",
-  "changed": false,
+  "changed": true,
   "series": [
     {
       "seriesId": "series-0nyket49",
@@ -4024,7 +4024,7 @@
         }
       ],
       "sectionEyebrow": "Smriti Collectible Cards",
-      "sectionTitle": "Earth Scroll",
+      "sectionTitle": "Series 3",
       "url": "https://www.kayouofficial.com/en-US/series/series-8idoe481"
     },
     {
@@ -8926,6 +8926,1246 @@
       "sectionEyebrow": "Smriti Collectible Cards",
       "sectionTitle": "Series 2",
       "url": "https://www.kayouofficial.com/en-US/series/series-ldbindyv"
+    },
+    {
+      "seriesId": "series-md6xr8u7",
+      "seriesTypeName": "Earth Scroll",
+      "seriesTypeDescription": "Smriti Collectible Cards",
+      "productSpecs": {
+        "Product Name": "NARUTO-Smriti Collectible Cards-Earth Scroll-003-NA",
+        "Model": "NR-KP-DZJ-003-NA",
+        "Packaging Specs": "1/Carton = 24/Box 1/Box = 20/Pack 1/Pack =8/Card",
+        "Package Dimension": "160x145x53mm",
+        "Release Date": "October 2026"
+      },
+      "productName": "NARUTO-Smriti Collectible Cards-Earth Scroll-003-NA",
+      "model": "NR-KP-DZJ-003-NA",
+      "heroBoxImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0a3935fbfe0cb158dc892bd0512798bb-4724-4134.png",
+      "cards": [
+        {
+          "idCode": "NRI01-CR-001L5",
+          "name": "Naruto Uzumaki",
+          "rarity": "CR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2d4244f1eef7552c921761f3e91f412e-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/e2528961841ed739a369082ce781dc3e-733-1028.png",
+          "sortOrder": 1
+        },
+        {
+          "idCode": "NRI01-CR-002L5",
+          "name": "Zabuza Momochi",
+          "rarity": "CR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c753ba0069f99117084142bb8b5cc62e-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/90bc71c86e384916820fb59e7ce79262-733-1028.png",
+          "sortOrder": 2
+        },
+        {
+          "idCode": "NRI01-CR-003L5",
+          "name": "Haku",
+          "rarity": "CR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/886d5b5a07aa9bf5b4cd4e9047113f40-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d59e38a3e32a688634fc665b80e11a9-733-1028.png",
+          "sortOrder": 3
+        },
+        {
+          "idCode": "NRI01-CR-004L5",
+          "name": "Boruto Uzumaki",
+          "rarity": "CR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/623fbbbe0b0f1fa88bd603f5d1dd42c1-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/50bbd8ae359901359a7e9234dce795ca-733-1029.png",
+          "sortOrder": 4
+        },
+        {
+          "idCode": "NREA03-SP-001L5",
+          "name": "Naruto Uzumaki",
+          "rarity": "SP",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/7b62e7bb3fd7d18a67585a0b248136db-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a9e78d03581b5340e374c69321717b80-733-1028.png",
+          "sortOrder": 5
+        },
+        {
+          "idCode": "NREA03-SP-002L5",
+          "name": "Zabuza Momochi",
+          "rarity": "SP",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c064f58ca291254f31dba997fccf9559-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/3d8d3d85a266addc24833e8889d240fa-733-1028.png",
+          "sortOrder": 6
+        },
+        {
+          "idCode": "NREA03-SP-003L5",
+          "name": "Haku",
+          "rarity": "SP",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/12c80369616d70fb66d44ef0b2a471cf-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d7f6a7d9ca3ffc545f5a6723d1999500-733-1028.png",
+          "sortOrder": 7
+        },
+        {
+          "idCode": "NREA03-SP-004L5",
+          "name": "Boruto Uzumaki",
+          "rarity": "SP",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/4a38cd458dba71c076b88ea11d76c3c1-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d54c49164736a68264e8928e0de35d0c-733-1029.png",
+          "sortOrder": 8
+        },
+        {
+          "idCode": "NREA03-MR-001L4",
+          "name": "Naruto Uzumaki",
+          "rarity": "MR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/71bee13d063c6a41e5017a1374869970-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a02166b914edcfd6f210a2d64485c07d-733-1029.png",
+          "sortOrder": 9
+        },
+        {
+          "idCode": "NREA03-MR-002L4",
+          "name": "Sasuke Uchiha",
+          "rarity": "MR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/43917af6da948490024cd0a0716fa62b-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a02166b914edcfd6f210a2d64485c07d-733-1029.png",
+          "sortOrder": 10
+        },
+        {
+          "idCode": "NREA03-MR-003L4",
+          "name": "Sakura Haruno",
+          "rarity": "MR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6c76acdaa778221bdf459bb3a7a9b48c-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a02166b914edcfd6f210a2d64485c07d-733-1029.png",
+          "sortOrder": 11
+        },
+        {
+          "idCode": "NREA03-MR-004L4",
+          "name": "Kakashi Hatake",
+          "rarity": "MR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a9833dc981d9865e8539d2547be74e08-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a02166b914edcfd6f210a2d64485c07d-733-1029.png",
+          "sortOrder": 12
+        },
+        {
+          "idCode": "NREA03-UR-001L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/089ca7b228d02f26689d18829148b5cf-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/62437c6f8ebb17e2e73107eddc6380bd-733-1029.png",
+          "sortOrder": 13
+        },
+        {
+          "idCode": "NREA03-UR-002L3",
+          "name": "Sakura Haruno",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b6159f73ee794a3489841c12822ec31b-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/7c58be3caf01ea0a2ccd343144ca3eb8-733-1029.png",
+          "sortOrder": 14
+        },
+        {
+          "idCode": "NREA03-UR-003L3",
+          "name": "Kakashi Hatake",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f7c24c2a7e6fdde28fd6baf6157887ca-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/1688b11bb6d9e8cf9a14dac8d4609d42-733-1029.png",
+          "sortOrder": 15
+        },
+        {
+          "idCode": "NREA03-UR-004L3",
+          "name": "Iruka Umino",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ec7602e5926e9769ead8fa5beefeb50d-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f97ef8233f738612f7d9da37aa290803-733-1029.png",
+          "sortOrder": 16
+        },
+        {
+          "idCode": "NREA03-UR-005L3",
+          "name": "Kakashi Hatake",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/7c146bbd792f4d79420ef436d7a1df4e-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6a4ac961b9cbffe3556b99cf5d4bb7bd-733-1029.png",
+          "sortOrder": 17
+        },
+        {
+          "idCode": "NREA03-UR-006L3",
+          "name": "Zabuza Momochi",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d7e3161d94f41be6a91043b221c8dcca-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8f9118f2cb2ad6650dc582f0e81e50df-733-1029.png",
+          "sortOrder": 18
+        },
+        {
+          "idCode": "NREA03-UR-007L3",
+          "name": "Gaara",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/679aff27a568c3e9ee9f485903ea7f12-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d0e39cffd5fa477fa79c6124a6018624-733-1029.png",
+          "sortOrder": 19
+        },
+        {
+          "idCode": "NREA03-UR-008L3",
+          "name": "Haku",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/bd2d435f206660e4ba2d69e77b62a1f7-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/dd2e93dd4d3cf9462bc1867b94c94f43-733-1029.png",
+          "sortOrder": 20
+        },
+        {
+          "idCode": "NREA03-UR-009L3",
+          "name": "Rock Lee",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b20eb14142171e4d0911ed8cd73ab22c-1221-1743.png",
+          "frontWidth": 1221,
+          "frontHeight": 1743,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ac4d1182c96dfafe90af32489a5fdefd-733-1029.png",
+          "sortOrder": 21
+        },
+        {
+          "idCode": "NREA03-UR-010L3",
+          "name": "Might Guy",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/3faa923fdaa673a95db131da933b1560-1251-1713.png",
+          "frontWidth": 1251,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/bab7f45701388fb299032dd93a71d498-733-1029.png",
+          "sortOrder": 22
+        },
+        {
+          "idCode": "NREA03-UR-011L3",
+          "name": "Ebisu",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/5da8052eaf4c1d65620f2d658d6d7a5c-1221-1743.png",
+          "frontWidth": 1221,
+          "frontHeight": 1743,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c1c4b6a8c4a2eb1accd32eeaa403dd39-733-1029.png",
+          "sortOrder": 23
+        },
+        {
+          "idCode": "NREA03-UR-012L3",
+          "name": "Hyuga Hanabi",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/62ade15ccb770fa746a2038da54effb5-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a9c8e7b414f5f74222f416809821b766-733-1029.png",
+          "sortOrder": 24
+        },
+        {
+          "idCode": "NREA03-UR-013L3",
+          "name": "Sarada Uchiha",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/562d85c31325e17f904f67059f5b6b8f-1221-1713.png",
+          "frontWidth": 1221,
+          "frontHeight": 1713,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/7dc57dee23a055816008f6fb206748b3-733-1029.png",
+          "sortOrder": 25
+        },
+        {
+          "idCode": "NREA03-UR-014L3",
+          "name": "Boruto Uzumaki",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/dbe7b0b2e62f507e612b53408d4f085e-1251-1743.png",
+          "frontWidth": 1251,
+          "frontHeight": 1743,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8ab9e6ba88eec8ebc446c49d2605fb36-733-1029.png",
+          "sortOrder": 26
+        },
+        {
+          "idCode": "NREA03-UR-015L3",
+          "name": "Boruto Uzumaki",
+          "rarity": "UR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/14e43c7c968f246d371dc4805cacf650-1221-1743.png",
+          "frontWidth": 1221,
+          "frontHeight": 1743,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0457e833f780606c91067ea179a6c9f9-733-1029.png",
+          "sortOrder": 27
+        },
+        {
+          "idCode": "NREA03-SSR-001L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/fefe613ccb8669a4414902f12b3b4583-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/18d6a70fa553b37ffd58d861f5915593-733-1029.png",
+          "sortOrder": 28
+        },
+        {
+          "idCode": "NREA03-SSR-002L3",
+          "name": "Kakashi Hatake",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0ceb4a271110152d596611a4aaecccb8-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/dcd41a6868c4b3788ff041665cf0ac14-733-1029.png",
+          "sortOrder": 29
+        },
+        {
+          "idCode": "NREA03-SSR-003L3",
+          "name": "Mizuki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/7cd10ad16683d7325687a3d2bfc9d255-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d3e204cbb377be4a0e22f47f0770040f-733-1029.png",
+          "sortOrder": 30
+        },
+        {
+          "idCode": "NREA03-SSR-004L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/1af293395cbfeaa08c4e53abf1a58b69-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/83bed0dbf85d7469dd481b3df7a41880-733-1029.png",
+          "sortOrder": 31
+        },
+        {
+          "idCode": "NREA03-SSR-005L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d3f67aa8dc65bfb8a806ff83f82d0599-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/e341b67943b84fd96f2f209f4b49b836-733-1029.png",
+          "sortOrder": 32
+        },
+        {
+          "idCode": "NREA03-SSR-006L3",
+          "name": "Sasuke Uchiha",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/21f2793944e984e412dcae6316ea7f08-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f72ce587e52424dc8013cd55951a106c-733-1029.png",
+          "sortOrder": 33
+        },
+        {
+          "idCode": "NREA03-SSR-007L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/38425e697995c37ae7f230309be57fe0-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/729591cde05669eff13c3ccb63674a4d-733-1029.png",
+          "sortOrder": 34
+        },
+        {
+          "idCode": "NREA03-SSR-008L3",
+          "name": "Ebisu",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c8a6e16351a7e943cc121bd0f8b9a90f-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/4f0dfc167fb075ceee8ed7159d4bd570-733-1029.png",
+          "sortOrder": 35
+        },
+        {
+          "idCode": "NREA03-SSR-009L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ec221b607e49e9ab175fffdc6bfcaa4a-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/3265576e07c6df150e15326b6385a118-733-1029.png",
+          "sortOrder": 36
+        },
+        {
+          "idCode": "NREA03-SSR-010L3",
+          "name": "Sasuke Uchiha",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c0f63201b9fae945689d91e3e5e4132e-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/74d310906a2e1ac5b73c20f10198beb5-733-1029.png",
+          "sortOrder": 37
+        },
+        {
+          "idCode": "NREA03-SSR-011L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d2c463f331dcc041ca33772234727e91-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8a0fe088721e0f9289a0a2d245681b24-733-1029.png",
+          "sortOrder": 38
+        },
+        {
+          "idCode": "NREA03-SSR-012L3",
+          "name": "Sakura Haruno",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/99ff4b103705f2fc45a00f088e735086-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c76ea59883dd6c96584116f38ac943ce-733-1029.png",
+          "sortOrder": 39
+        },
+        {
+          "idCode": "NREA03-SSR-013L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ec9ca353ed346b74475ac99a21025561-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8b559e3d98076bfcb9639d71b4bd09ef-733-1029.png",
+          "sortOrder": 40
+        },
+        {
+          "idCode": "NREA03-SSR-014L3",
+          "name": "Naruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/1c1e7e27f314df0e4d593bf00732935c-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/4f31dd2c65b8fe9d41a28be21cedddbf-733-1029.png",
+          "sortOrder": 41
+        },
+        {
+          "idCode": "NREA03-SSR-015L3",
+          "name": "Haku",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/306c3dee99f06b137936656afd679487-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d5475b11a64317328d64ddc7d9e1260e-733-1029.png",
+          "sortOrder": 42
+        },
+        {
+          "idCode": "NREA03-SSR-016L3",
+          "name": "Iruka Umino",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/81421a87c3f68aa73bba4db5c8c518b1-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/e6cd67f94e4685f60f5b9ae2b28b12f3-733-1029.png",
+          "sortOrder": 43
+        },
+        {
+          "idCode": "NREA03-SSR-017L3",
+          "name": "Sasuke Uchiha",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/eb279859d8c40103e020fb0883395374-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0566edf5b35ef8d028b0d3c2d8b8a23e-733-1029.png",
+          "sortOrder": 44
+        },
+        {
+          "idCode": "NREA03-SSR-018L3",
+          "name": "Sasuke Uchiha",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/edcbf5c975f97e5095000c9dacad9d0d-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b5f8c8bbfe12c353c6e1a2fb9e951dca-733-1029.png",
+          "sortOrder": 45
+        },
+        {
+          "idCode": "NREA03-SSR-019L3",
+          "name": "Sasuke Uchiha",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f71f69032acd81b8f41e050c0775541d-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/bb33c91be0345e5df643842de895997b-733-1029.png",
+          "sortOrder": 46
+        },
+        {
+          "idCode": "NREA03-SSR-020L3",
+          "name": "Hanabi Hyuga",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ffeec558422add6aa33be793e373a156-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/68a3e8ebc17a056c40af3db54643164a-733-1029.png",
+          "sortOrder": 47
+        },
+        {
+          "idCode": "NREA03-SSR-021L3",
+          "name": "Shino Aburame",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/3f20daabf849273c83ff07fe95164a0d-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/473ad3cef4ee83750fc74be1100ddea0-733-1029.png",
+          "sortOrder": 48
+        },
+        {
+          "idCode": "NREA03-SSR-022L3",
+          "name": "Chocho Akimichi",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2c9fb284900e55092cef346c0436aaa7-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/5c8b05da7ccbf3e9cb272d3e4cd427f0-733-1029.png",
+          "sortOrder": 49
+        },
+        {
+          "idCode": "NREA03-SSR-023L3",
+          "name": "Sumire Kakei",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d1d8d4c2c1de46e2957b8677814a3037-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/647944132dbeb5d6e453ece799418549-733-1029.png",
+          "sortOrder": 50
+        },
+        {
+          "idCode": "NREA03-SSR-024L3",
+          "name": "Boruto Uzumaki",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/fde1eec939eb8884bf3d5c4a5f9e49a9-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/890bdafc0acafcb740e262e8f4136eca-733-1029.png",
+          "sortOrder": 51
+        },
+        {
+          "idCode": "NREA03-SSR-025L3",
+          "name": "Sarada Uchiha",
+          "rarity": "SSR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c6b35ce6d92831fbe407b7a6ed429d64-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/18d6a70fa553b37ffd58d861f5915593-733-1029.png",
+          "sortOrder": 52
+        },
+        {
+          "idCode": "NREA03-SR-001L2",
+          "name": "Naruto Uzumaki",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2ace410d77ace45c3b6958944132177a-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/dfa465f341b7cfc5ced395b9a1d6ccbc-733-1029.png",
+          "sortOrder": 53
+        },
+        {
+          "idCode": "NREA03-SR-002L2",
+          "name": "Sasuke Uchiha",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0c53d7231901fee432ef6b82f65dbc2b-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/7718b6b947b62e857671563a7130b532-733-1029.png",
+          "sortOrder": 54
+        },
+        {
+          "idCode": "NREA03-SR-003L2",
+          "name": "Kakashi Hatake",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/bf8d745dd3de8ffa40e3710c60ab9e5d-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/5c6e4638e821da68f8f4035f04a54205-733-1029.png",
+          "sortOrder": 55
+        },
+        {
+          "idCode": "NREA03-SR-004L2",
+          "name": "Sakura Haruno",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a5c4e8f432634efd2d6b30927516834a-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/382383c1eba4ea00376928372ac291ea-733-1029.png",
+          "sortOrder": 56
+        },
+        {
+          "idCode": "NREA03-SR-005L2",
+          "name": "Konohamaru Sarutobi",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/240564b3c9e3fa1bf63ba0c9f9ef6100-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/60d0fa6e95a3fa133f860a2041b37ba4-733-1029.png",
+          "sortOrder": 57
+        },
+        {
+          "idCode": "NREA03-SR-006L2",
+          "name": "Moegi Kazamatsuri",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a802a77586f846641ac6f6aa2cb49ab2-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/9ec137c04d51988a8549fb11407777d9-733-1029.png",
+          "sortOrder": 58
+        },
+        {
+          "idCode": "NREA03-SR-007L2",
+          "name": "Gatō",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a47487fb39734bcb9254ecfc8446face-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2feec9b9716569fa6ba21f13148f1caf-733-1029.png",
+          "sortOrder": 59
+        },
+        {
+          "idCode": "NREA03-SR-008L2",
+          "name": "Inari",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8ec73fa6e66fb307a777109e96b18234-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/aa320b1d8cc724c6ccb3a2e683725e22-733-1029.png",
+          "sortOrder": 60
+        },
+        {
+          "idCode": "NREA03-SR-009L2",
+          "name": "Zabuza Momochi",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2c9e94c6aeba3c4a041e3eb3c7d13648-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/200c77abe3407a659517838e110e7bad-733-1029.png",
+          "sortOrder": 61
+        },
+        {
+          "idCode": "NREA03-SR-010L2",
+          "name": "Kakashi Hatake",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a152e09296046d3368a0f08d6b307e23-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/1f20eed3227e7e7aacad0fb7b7bb816e-733-1029.png",
+          "sortOrder": 62
+        },
+        {
+          "idCode": "NREA03-SR-011L2",
+          "name": "Tsunami",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/71482071384847ad1101570269f4aa9b-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/9fc631edd37f42d5073aee4281a2d3e4-733-1029.png",
+          "sortOrder": 63
+        },
+        {
+          "idCode": "NREA03-SR-012L2",
+          "name": "Naruto Uzumaki",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0c846b2554181c6cc803ec1061d7d539-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/62bf52922cea636331804e076170855d-733-1029.png",
+          "sortOrder": 64
+        },
+        {
+          "idCode": "NREA03-SR-013L2",
+          "name": "Might Guy",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b152effc693188f6f59817e5e01cf135-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/9121bfd194227eda53a7ae914cf10974-733-1029.png",
+          "sortOrder": 65
+        },
+        {
+          "idCode": "NREA03-SR-014L2",
+          "name": "Udon Ise",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/35195b706bf26d0408a3b1adb5cb8d5e-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/45f2e429efeab6c6f65cc6a8c3d871d1-733-1029.png",
+          "sortOrder": 66
+        },
+        {
+          "idCode": "NREA03-SR-015L2",
+          "name": "Sasuke Uchiha",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2f34437a08974c0123c035c5e7572bc1-733-1029.png",
+          "frontWidth": 733,
+          "frontHeight": 1029,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b1cbb5c7d493bf99f8b360d312a80576-733-1029.png",
+          "sortOrder": 67
+        },
+        {
+          "idCode": "NREA03-SR-016L2",
+          "name": "Boruto Uzumaki",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/9ff2e7d07d8d888d396f1d41be3821bd-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/dcf0add1aa50abd092757186749e31dd-733-1029.png",
+          "sortOrder": 68
+        },
+        {
+          "idCode": "NREA03-SR-017L2",
+          "name": "Boruto Uzumaki",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ecb9a7cbc8a1cbf67d7fa4b9a0ad2f93-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/47043de3d4f4ecd068425889dad576d3-733-1029.png",
+          "sortOrder": 69
+        },
+        {
+          "idCode": "NREA03-SR-018L2",
+          "name": "Sarada Uchiha",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f8f912f495997ff665255c65b6385b3e-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/02259022c6d236877d31f87f7aa5c30d-733-1029.png",
+          "sortOrder": 70
+        },
+        {
+          "idCode": "NREA03-SR-019L2",
+          "name": "Mitsuki",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0ad3ec4628211ed157eb077b70148a4b-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/1f6429d67db508f47f024e60a8275fbf-733-1029.png",
+          "sortOrder": 71
+        },
+        {
+          "idCode": "NREA03-SR-020L2",
+          "name": "Boruto Uzumaki",
+          "rarity": "SR",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/0fb9ba879be121104902241faad7601d-733-1028.png",
+          "frontWidth": 733,
+          "frontHeight": 1028,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/29c5ee6d1fb13c786c0ee9032dfa266f-733-1029.png",
+          "sortOrder": 72
+        },
+        {
+          "idCode": "NREA03-R-001L1",
+          "name": "My Name Is Konohamaru!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/80bbfba2b2d9a51179b72105113aa3ef-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 73
+        },
+        {
+          "idCode": "NREA03-R-002L1",
+          "name": "My Name Is Konohamaru!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8451ce840223cc14f1c2d0f54ecb99db-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 74
+        },
+        {
+          "idCode": "NREA03-R-003L1",
+          "name": "My Name Is Konohamaru!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f56480b4ba403fb23bee7ade67fe34cb-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 75
+        },
+        {
+          "idCode": "NREA03-R-004L1",
+          "name": "My Name Is Konohamaru!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/486c61a865c4642dd1107a4630f25d35-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 76
+        },
+        {
+          "idCode": "NREA03-R-005L1",
+          "name": "My Name Is Konohamaru!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/83e746a598d27b464fac148cd5fd137f-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 77
+        },
+        {
+          "idCode": "NREA03-R-006L1",
+          "name": "Sasuke and Sakura: Friends or Foes?",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b113b4e809330c2d27d2e0785241ffa3-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 78
+        },
+        {
+          "idCode": "NREA03-R-007L1",
+          "name": "Sasuke and Sakura: Friends or Foes?",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/14618a477d9c88e8c2b79249792ba9c9-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 79
+        },
+        {
+          "idCode": "NREA03-R-008L1",
+          "name": "Sasuke and Sakura: Friends or Foes?",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a9038043408c800ed1b3aa6a72833338-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 80
+        },
+        {
+          "idCode": "NREA03-R-009L1",
+          "name": "Sasuke and Sakura: Friends or Foes?",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/e40eacbb5f71f35d982643ff105ce5da-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 81
+        },
+        {
+          "idCode": "NREA03-R-010L1",
+          "name": "Sasuke and Sakura: Friends or Foes?",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/5644a4c9e28a21e3a2970eee621721d5-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 82
+        },
+        {
+          "idCode": "NREA03-R-011L1",
+          "name": "Pass or Fail: Survival Test",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/44a5fe53b362ecac1ad7906c3f213d5e-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 83
+        },
+        {
+          "idCode": "NREA03-R-012L1",
+          "name": "Pass or Fail: Survival Test",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/9088c45282a4aa558b9d40ad3087f45e-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 84
+        },
+        {
+          "idCode": "NREA03-R-013L1",
+          "name": "Pass or Fail: Survival Test",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/af37fd41f07b47cc6f7057d954b19d2b-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 85
+        },
+        {
+          "idCode": "NREA03-R-014L1",
+          "name": "Pass or Fail: Survival Test",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/076dd90008f6caa43f3bdb830c2a2df4-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 86
+        },
+        {
+          "idCode": "NREA03-R-015L1",
+          "name": "Pass or Fail: Survival Test",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2639436e0a883d91d9b4e3063be811c7-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 87
+        },
+        {
+          "idCode": "NREA03-R-016L1",
+          "name": "You Failed! Kakashi's Final Decision",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ea1f78dcabe9f588d1594cc923a3f057-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 88
+        },
+        {
+          "idCode": "NREA03-R-017L1",
+          "name": "You Failed! Kakashi's Final Decision",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/45215f8259c6114546ceb72c77ffd678-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 89
+        },
+        {
+          "idCode": "NREA03-R-018L1",
+          "name": "You Failed! Kakashi's Final Decision",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ef527dfc6ccb0fddc93c8932ec0f9ae4-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 90
+        },
+        {
+          "idCode": "NREA03-R-019L1",
+          "name": "You Failed! Kakashi's Final Decision",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/e8542cf088c59638814ad05850fe6d4d-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 91
+        },
+        {
+          "idCode": "NREA03-R-020L1",
+          "name": "You Failed! Kakashi's Final Decision",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/3fd59a0e486f0f7ded4a5d826b3c0c5d-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 92
+        },
+        {
+          "idCode": "NREA03-R-021L1",
+          "name": "The Forest of Chakra",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/95e5417a67d474d9fdb5b36d65de8a05-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 93
+        },
+        {
+          "idCode": "NREA03-R-022L1",
+          "name": "The Forest of Chakra",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/e431564367cb1d762f128c9c68f69313-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 94
+        },
+        {
+          "idCode": "NREA03-R-023L1",
+          "name": "The Forest of Chakra",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c58aae20b0cd60dce6bc08d2489f7e15-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 95
+        },
+        {
+          "idCode": "NREA03-R-024L1",
+          "name": "The Forest of Chakra",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/de75c0e1fcd88bd7ea57787ff89d9be3-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 96
+        },
+        {
+          "idCode": "NREA03-R-025L1",
+          "name": "The Forest of Chakra",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/5ba3dc75daf73b2f4cad5120251acb2d-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 97
+        },
+        {
+          "idCode": "NREA03-R-026L1",
+          "name": "Haku's Secret Jutsu: Crystal Ice Mirrors",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/1b9fb3bfbf52427fc890fc46d7f7d04a-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 98
+        },
+        {
+          "idCode": "NREA03-R-027L1",
+          "name": "Haku's Secret Jutsu: Crystal Ice Mirrors",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/99d7edb60da6babb58068fb7ec8dbdb9-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 99
+        },
+        {
+          "idCode": "NREA03-R-028L1",
+          "name": "Haku's Secret Jutsu: Crystal Ice Mirrors",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/815dd6b683d98bbffb089459c982cc37-1029-732.png",
+          "frontWidth": 1029,
+          "frontHeight": 732,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 100
+        },
+        {
+          "idCode": "NREA03-R-029L1",
+          "name": "Haku's Secret Jutsu: Crystal Ice Mirrors",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f9ba1db9fcee31111e57dca0e303a885-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 101
+        },
+        {
+          "idCode": "NREA03-R-030L1",
+          "name": "Haku's Secret Jutsu: Crystal Ice Mirrors",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/c8fe8adfd789d0e13ec953180a3cdf6e-1028-733.png",
+          "frontWidth": 1028,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 102
+        },
+        {
+          "idCode": "NREA03-R-031L1",
+          "name": "The Number One Hyperactive, Knucklehead Ninja Joins the Fight!!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8a666f58dd307f469b43231e4541d6a9-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 103
+        },
+        {
+          "idCode": "NREA03-R-032L1",
+          "name": "The Number One Hyperactive, Knucklehead Ninja Joins the Fight!!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/948300ab9eb40d6921a875bb180b204f-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 104
+        },
+        {
+          "idCode": "NREA03-R-033L1",
+          "name": "The Number One Hyperactive, Knucklehead Ninja Joins the Fight!!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/9db593a729664c828f092d66fbd18932-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 105
+        },
+        {
+          "idCode": "NREA03-R-034L1",
+          "name": "The Number One Hyperactive, Knucklehead Ninja Joins the Fight!!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/2ac497a7c280327add1f07aa6948c34f-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 106
+        },
+        {
+          "idCode": "NREA03-R-035L1",
+          "name": "The Number One Hyperactive, Knucklehead Ninja Joins the Fight!!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d604c62e4a7983268ed08feee1b0c9e5-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 107
+        },
+        {
+          "idCode": "NREA03-R-036L1",
+          "name": "The Number One Hyperactive, Knucklehead Ninja Joins the Fight!!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/920c3d212525116430f371eca14cea62-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 108
+        },
+        {
+          "idCode": "NREA03-R-037L1",
+          "name": "The Broken Seal",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f71c3bfac3d24019ab2419e1b09c414f-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 109
+        },
+        {
+          "idCode": "NREA03-R-038L1",
+          "name": "The Broken Seal",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b53b7e97f1472415466c8e16458de32f-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 110
+        },
+        {
+          "idCode": "NREA03-R-039L1",
+          "name": "The Broken Seal",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/372ff17bd3a99850ac63f3c359c7b6f2-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 111
+        },
+        {
+          "idCode": "NREA03-R-040L1",
+          "name": "The Broken Seal",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/245d3fbfb388a99b65ea286d3cffea57-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 112
+        },
+        {
+          "idCode": "NREA03-R-041L1",
+          "name": "The Demon in the Snow",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/ecccb27eb915b2a1a5645ba65022e96f-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 113
+        },
+        {
+          "idCode": "NREA03-R-042L1",
+          "name": "The Demon in the Snow",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/bb920c7e7d108e4fb2335a0ef4169b7c-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 114
+        },
+        {
+          "idCode": "NREA03-R-043L1",
+          "name": "The Demon in the Snow",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d5c49ae44adaafde516b2136396c88aa-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 115
+        },
+        {
+          "idCode": "NREA03-R-044L1",
+          "name": "The Demon in the Snow",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d79e731854ad4e94dba0ca50d5c6271b-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 116
+        },
+        {
+          "idCode": "NREA03-R-045L1",
+          "name": "The Demon in the Snow",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/b2ecd1d096a6ab5fd2aab3984678aac7-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 117
+        },
+        {
+          "idCode": "NREA03-R-046L1",
+          "name": "A New Chapter Begins: The Chunin Exam!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a32e4102f8b3f17732dcb1c2bf0be002-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 118
+        },
+        {
+          "idCode": "NREA03-R-047L1",
+          "name": "A New Chapter Begins: The Chunin Exam!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/f85755856b1b0d3be46d342e51d152ce-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 119
+        },
+        {
+          "idCode": "NREA03-R-048L1",
+          "name": "A New Chapter Begins: The Chunin Exam!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/a08e9fa80cb4c88a3c748cbc84130fdf-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 120
+        },
+        {
+          "idCode": "NREA03-R-049L1",
+          "name": "A New Chapter Begins: The Chunin Exam!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/8f5e354f6ec9b442072585fd14302409-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 121
+        },
+        {
+          "idCode": "NREA03-R-050L1",
+          "name": "A New Chapter Begins: The Chunin Exam!",
+          "rarity": "R",
+          "frontImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/d3bea10521404b268b44bb266197d460-1029-733.png",
+          "frontWidth": 1029,
+          "frontHeight": 733,
+          "backImage": "https://static-sg.kayouofficial.com/overseas/website/2026/10/21/6d31f4283c6f440fc62088c366d9ab4e-1029-733.png",
+          "sortOrder": 122
+        }
+      ],
+      "sectionEyebrow": "Smriti Collectible Cards",
+      "sectionTitle": "Earth Scroll",
+      "url": "https://www.kayouofficial.com/en-US/series/series-md6xr8u7"
     }
   ]
 }

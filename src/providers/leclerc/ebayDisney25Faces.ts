@@ -15,7 +15,7 @@ import path from "node:path";
 
 import sharp from "sharp";
 
-import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import {
@@ -377,12 +377,11 @@ export async function installEbayDisney25Faces(
       }
       const ext = path.extname(src).toLowerCase() || ".jpg";
       const art = `art.${sourceId}${ext}`;
-      const destDir = path.join(
-        packCardsDir(packId),
-        "disney25",
+      const destDir = packCardDir(packId, {
+        set: "disney25",
         lang,
-        row.number,
-      );
+        card: row.number,
+      });
       mkdirSync(destDir, { recursive: true });
       const dest = path.join(destDir, art);
       if (isEbayDisney25CardNumber(row.number)) {

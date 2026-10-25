@@ -22,6 +22,7 @@
       "category": "boosters",
       "name": "Pochette — Deviens un Héros",
       "art": "art.paninimania.jpg",
+      "back": "back.paninimania.jpg",
       "declaredCardCount": 6,
       "cardsPerPack": 6,
       "priceCents": null,

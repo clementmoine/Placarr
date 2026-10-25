@@ -15,7 +15,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
@@ -245,8 +245,14 @@ export async function harvestColekaLeclercFacesForSet(
     }
   }
 
+  const stagingCards = readStagingListingCards(staging, setCode);
   const cdnCards = cardsFromCdnLedger(setCode);
-  const cards = mergeCardsByNumber(...pageCards, cdnCards);
+  // Live pages + browser dumps (`listing-N.html` / `listing-nbpp.html`) + CDN.
+  const cards = mergeCardsByNumber(
+    ...pageCards,
+    ...stagingCards,
+    cdnCards,
+  );
   if (!cards.length) {
     return { setCode, cards: 0, ok: 0, skip: 0, fail: 0, pages: pagesOk };
   }
@@ -303,12 +309,12 @@ function installCardFiles(
     }
     const ext = path.extname(src).toLowerCase() || ".webp";
     const art = `art.${sourceId}${ext}`;
-    const destDir = path.join(
-      packCardsDir(packId),
-      setCode,
+    // Canonical: cards/{lang}/{set}/{card} — not the legacy set/lang invert.
+    const destDir = packCardDir(packId, {
+      set: setCode,
       lang,
-      card.number,
-    );
+      card: card.number,
+    });
     mkdirSync(destDir, { recursive: true });
     copyFileSync(src, path.join(destDir, art));
     assets.push({

@@ -75,13 +75,16 @@ export async function runLeclercOpPipeline(
       const harvest = await harvestColekaLeclercFacesForSet(op.setCode, {
         packId: op.packId,
       });
-      if (harvest && harvest.cards > 0) {
+      if (harvest) {
         console.log(
           `── ${label} — Coleka faces harvest cards=${harvest.cards} pages=${harvest.pages} ok=${harvest.ok} skip=${harvest.skip} fail=${harvest.fail}`,
         );
-        const installed = installColekaLeclercFaces(index, op.setCode, {
-          packId: op.packId,
-        });
+      }
+      // Always try install: staging dumps / CDN may exist when live listing is walled.
+      const installed = installColekaLeclercFaces(index, op.setCode, {
+        packId: op.packId,
+      });
+      if (installed.faces || installed.missing.length) {
         console.log(
           `── ${label} — Coleka faces install ${installed.faces} (missing ${installed.missing.length})`,
         );
@@ -93,8 +96,8 @@ export async function runLeclercOpPipeline(
               ? ""
               : ` — densify noms bloqué (${gate.reasons.join("; ")})`),
         );
-      } else {
-        console.log(`── ${label} — Coleka listing murée / vide (retry plus tard)`);
+      } else if (!harvest?.cards) {
+        console.log(`── ${label} — Coleka listing murée / vide (dump ?nbpp=240 puis Sync)`);
       }
 
       if (op.setCode === "disney25") {

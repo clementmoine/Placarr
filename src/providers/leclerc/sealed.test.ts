@@ -274,6 +274,8 @@ describe("leclerc marvel20 sealed products (Paninimania idm=7013)", () => {
     expect(index.products["leclerc/marvel20::pochette"]).toMatchObject({
       cardsPerPack: 6,
       declaredCardCount: 6,
+      image: "/assets/leclerc/marvel20/products/pochette/fr/face",
+      imageBack: "/assets/leclerc/marvel20/products/pochette/fr/back",
       packComposition: {
         provenance: "structural",
         cardsPerPack: 6,
@@ -415,6 +417,11 @@ describe.each([
         priceCents,
         image: `/assets/leclerc/${setCode}/products/collector-album/fr/face`,
       });
+      if (setCode === "sw19") {
+        expect(
+          index.products[`leclerc/${setCode}::collector-album`]?.imageBack,
+        ).toBe(`/assets/leclerc/${setCode}/products/collector-album/fr/back`);
+      }
       const pochette = index.products[`leclerc/${setCode}::pochette`];
       expect(pochette).toMatchObject({
         name: pochetteName,

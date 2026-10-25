@@ -36,6 +36,18 @@ export function colekaLeclercRefToNumber(
   if (!raw) return null;
   const fixeez = /^f\s*(\d{1,2})$/i.exec(raw);
   if (fixeez) return `f${String(Number(fixeez[1])).padStart(2, "0")}`;
+  const letter = /^([A-H])$/i.exec(raw);
+  if (letter) {
+    const ord = letter[1]!.toUpperCase().charCodeAt(0) - "A".charCodeAt(0);
+    return String(89 + ord).padStart(3, "0");
+  }
+  const prefixed = /^([CJc])\s*(\d{1,3})$/i.exec(raw);
+  if (prefixed) {
+    const p = prefixed[1]!.toLowerCase();
+    const num = Number(prefixed[2]);
+    if (!Number.isFinite(num) || num < 1 || num > 200) return null;
+    if (p === "c" || p === "j") return `${p}${String(num).padStart(2, "0")}`;
+  }
   const n = /^(\d{1,3})$/.exec(raw);
   if (!n) return null;
   const num = Number(n[1]);

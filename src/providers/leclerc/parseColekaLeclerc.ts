@@ -15,8 +15,37 @@ export type ColekaLeclercListing = {
   listingPath: string;
 };
 
-/** Rubriques Coleka (marvel21 FR : `revele-ton-pouvoir_r22334`). */
+/**
+ * Rubriques Coleka harvestables.
+ * Cosmic / Maîtriser = `cartes-star-wars` ; marvel20 = `stickers-de-supermarche` ;
+ * marvel21+ / disney = `cartes-de-supermarche`. Hub Cosmic `_r440` = doc only.
+ */
 export const COLEKA_LECLERC_LISTINGS: readonly ColekaLeclercListing[] = [
+  {
+    setCode: "sw15",
+    listingPath:
+      "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/cartes-leclerc-star-wars-2015_r35",
+  },
+  {
+    setCode: "sw16",
+    listingPath:
+      "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/leclerc-cosmic-shell-2016-rogue-one_r343",
+  },
+  {
+    setCode: "sw18",
+    listingPath:
+      "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/leclerc-star-wars-solo_r4483",
+  },
+  {
+    setCode: "sw19",
+    listingPath:
+      "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/star-wars-maitriser-la-force-leclerc-2019_r11922",
+  },
+  {
+    setCode: "marvel20",
+    listingPath:
+      "/fr/stickers-autocollants/stickers-de-supermarche/marvel-2020-deviens-un-heros-leclerc_r15811",
+  },
   {
     setCode: "marvel21",
     listingPath:
@@ -43,6 +72,10 @@ export const COLEKA_LECLERC_LISTINGS: readonly ColekaLeclercListing[] = [
       "/fr/cartes-de-collection/cartes-de-supermarche/decouvre-la-magie-de-disney-leclerc_r46879",
   },
 ] as const;
+
+/** Hub Cosmic Shells (pas une feuille harvest — doc / navigation). */
+export const COLEKA_LECLERC_COSMIC_SHELLS_HUB_PATH =
+  "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc_r440";
 
 export type ColekaLeclercCard = {
   setCode: string;
@@ -131,7 +164,60 @@ export function colekaLeclercNumberFromCdnPath(
 }
 
 const SKIP_TITLE =
-  /^(album|pochette|bo[iî]te|display|starter|lot\b)/i;
+  /^(album|pochette|bo[iî]te|display|starter|lot\b|classeur|cosmic\s*box|poster|plateau)/i;
+
+/** sw19 letter stickers Ref. A–H → checklist `089`–`096`. */
+const SW19_LETTER_TO_NUMBER: Record<string, string> = {
+  A: "089",
+  B: "090",
+  C: "091",
+  D: "092",
+  E: "093",
+  F: "094",
+  G: "095",
+  H: "096",
+};
+
+/**
+ * Coleka listing `Ref.` / slug → checklist number (`001`, `c12`, `j03`, `089` for A–H).
+ */
+export function colekaLeclercListingRefToNumber(
+  refRaw: string | null | undefined,
+  href = "",
+  title = "",
+): string | null {
+  const ref = (refRaw ?? "").trim();
+  if (ref) {
+    const letter = /^([A-H])$/i.exec(ref);
+    if (letter) return SW19_LETTER_TO_NUMBER[letter[1]!.toUpperCase()] ?? null;
+    const prefixed = /^([CJc])\s*(\d{1,3})$/i.exec(ref);
+    if (prefixed) {
+      const p = prefixed[1]!.toLowerCase();
+      const n = Number(prefixed[2]);
+      if (!Number.isFinite(n) || n < 1 || n > 200) return null;
+      return p === "c" || p === "j"
+        ? `${p}${String(n).padStart(2, "0")}`
+        : null;
+    }
+    const digits = /^(\d{1,3})$/.exec(ref);
+    if (digits) {
+      const n = Number(digits[1]);
+      if (!Number.isFinite(n) || n < 1 || n > 200) return null;
+      return String(n).padStart(3, "0");
+    }
+  }
+  const fromHref =
+    href.match(/[-_/]j[-_]?(\d{1,2})(?:[-_/]|$)/i) ||
+    title.match(/\bJ\s*(\d{1,2})\s*\/\s*\d{1,2}\b/i) ||
+    title.match(/\bJ\s*0*(\d{1,2})\b/i);
+  if (fromHref) {
+    const n = Number(fromHref[1]);
+    if (Number.isFinite(n) && n >= 1 && n <= 40) {
+      return `j${String(n).padStart(2, "0")}`;
+    }
+  }
+  return null;
+}
 
 function parseFixeezNumber(
   title: string,
@@ -243,7 +329,10 @@ export function parseColekaLeclercListing(
     /<li class="[^"]*\bcol-md-4\b[^"]*"[\s\S]*?<\/li>/gi,
   )) {
     const block = m[0] ?? "";
-    const titleMatch = block.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
+    // Allow browser-injected attrs (`data-cursor-ref`) on title nodes.
+    const titleMatch = block.match(
+      /<h3 class="product-title"[^>]*>([^<]+)<\/h3>/i,
+    );
     const imgMatch = block.match(
       /src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
     );
@@ -268,17 +357,13 @@ export function parseColekaLeclercListing(
         continue;
       }
     } else {
-      const ref = block.match(/Ref\.\s*(\d{1,3})\b/i);
-      if (!ref) {
-        rejected.push({ name, reason: "no-ref" });
+      const refMatch = block.match(/class="ref">\s*Ref\.\s*([^<]+?)\s*</i);
+      const refRaw = refMatch?.[1]?.trim() ?? null;
+      number = colekaLeclercListingRefToNumber(refRaw, href, name);
+      if (!number) {
+        rejected.push({ name, reason: refRaw ? "bad-ref" : "no-ref" });
         continue;
       }
-      const n = Number(ref[1]);
-      if (!Number.isFinite(n) || n < 1 || n > 200) {
-        rejected.push({ name, reason: "bad-ref" });
-        continue;
-      }
-      number = String(n).padStart(3, "0");
     }
 
     if (seen.has(number)) continue;

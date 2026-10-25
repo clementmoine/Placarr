@@ -1,9 +1,9 @@
 {
-  "sourceId": "pixelheart",
+  "sourceId": "pixelheart+bandai-fest+deckdynastie",
   "lang": "fr",
   "setCode": "launch",
-  "observed": "2026-10-23",
-  "note": "Display FR précommande Pixel Heart — Worldwide Launch summer 2027. packsContained / cardsPerPack inconnus (pas inventés). Prix 179,99 €. Site officiel : naruto-cardgame.com.",
+  "observed": "2026-10-24",
+  "note": "Displays launch FR/EN (Pixel Heart) + Display/Case JP 1st Edition (Deck Dynastie, tag lang-jp) + Premium Card Collection vol.00 JP (BANDAI CARD GAMES Fest Tokyo). packsContained / cardsPerPack inconnus hors contenu annoncé 6 cartes pour le Premium.",
   "products": [
     {
       "slug": "display-launch-fr",
@@ -19,6 +19,66 @@
       "packsContained": null,
       "priceCents": 17999,
       "path": "https://www.pixelheart.eu/fr/produit/naruto-card-game-by-bandai-worldwide-launch-summer-2027-francais/"
+    },
+    {
+      "slug": "display-launch-en",
+      "kind": "display",
+      "category": "displays",
+      "name": "Display — Worldwide Launch (Summer 2027) (EN)",
+      "art": "art.pixelheart.webp",
+      "lang": "en",
+      "setCode": "launch",
+      "releaseDate": "2027-07",
+      "declaredCardCount": null,
+      "cardsPerPack": null,
+      "packsContained": null,
+      "priceCents": 17999,
+      "path": "https://www.pixelheart.eu/en/produit/naruto-card-game-by-bandai-worldwide-launch-summer-2027-english/"
+    },
+    {
+      "slug": "display-launch-jp",
+      "kind": "display",
+      "category": "displays",
+      "name": "Display — 1st Edition (JP)",
+      "art": "art.deckdynastie.webp",
+      "lang": "ja",
+      "setCode": "launch",
+      "releaseDate": "2027-07",
+      "declaredCardCount": null,
+      "cardsPerPack": null,
+      "packsContained": null,
+      "priceCents": 10000,
+      "path": "https://deckdynastie.com/products/naruto-card-game-1st-edition?variant=58417751195992"
+    },
+    {
+      "slug": "case-launch-jp",
+      "kind": "case",
+      "category": "cases",
+      "name": "Case — 1st Edition (JP)",
+      "art": "art.deckdynastie.webp",
+      "lang": "ja",
+      "setCode": "launch",
+      "releaseDate": "2027-07",
+      "declaredCardCount": null,
+      "cardsPerPack": null,
+      "packsContained": null,
+      "priceCents": 120000,
+      "path": "https://deckdynastie.com/products/naruto-card-game-1st-edition?variant=58417751228760"
+    },
+    {
+      "slug": "premium-chakra-vol00-jp",
+      "kind": "collector_box",
+      "category": "collector",
+      "name": "プレミアムカードコレクション vol.00 -チャクラセット-",
+      "art": "art.bandai.webp",
+      "lang": "ja",
+      "setCode": "premium00",
+      "releaseDate": "2026-12",
+      "declaredCardCount": 6,
+      "cardsPerPack": null,
+      "packsContained": null,
+      "priceCents": 1650,
+      "path": "https://www.bandaicardgames-fest.com/26-27/jp/tokyo/products/828.html"
     }
   ]
 }

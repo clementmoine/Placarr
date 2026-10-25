@@ -16,9 +16,14 @@ describe("colekaLeclercRefToNumber", () => {
 });
 
 describe("colekaLeclercDealsTargets", () => {
-  it("covers the five Coleka Leclerc rubriques", () => {
+  it("covers Cosmic / Maîtriser / Deviens + supermarché Coleka rubriques", () => {
     const targets = colekaLeclercDealsTargets();
     expect(targets.map((t) => t.rubriqueId)).toEqual([
+      "35",
+      "343",
+      "4483",
+      "11922",
+      "15811",
       "22334",
       "28635",
       "35559",
@@ -26,6 +31,9 @@ describe("colekaLeclercDealsTargets", () => {
       "46879",
     ]);
     expect(targets[0]!.resolvePrintKey({ refItem: "009" } as never)).toBe(
+      "leclerc:sw15-009",
+    );
+    expect(targets[5]!.resolvePrintKey({ refItem: "009" } as never)).toBe(
       "leclerc:marvel21-009",
     );
   });

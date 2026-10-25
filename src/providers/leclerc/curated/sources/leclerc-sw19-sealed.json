@@ -11,6 +11,7 @@
       "category": "albums",
       "name": "Album — Maîtriser la Force",
       "art": "art.paninimania.jpg",
+      "back": "back.scan.jpg",
       "declaredCardCount": null,
       "priceCents": 199,
       "packComposition": "none"

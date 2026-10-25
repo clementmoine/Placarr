@@ -208,6 +208,7 @@ describe("cataloguePacks", () => {
         lines: [
           "naruto/carddass",
           "naruto/shippuden",
+          "naruto/cardgame",
           "naruto/data-carddass",
         ],
       },
@@ -216,7 +217,6 @@ describe("cataloguePacks", () => {
         lines: ["naruto/ninja-ranks", "naruto/ultra-challenge"],
       },
       { id: "cicaboom", lines: ["naruto/mythos"] },
-      { id: "bandai-card-games", lines: ["naruto/cardgame"] },
       { id: "kayou", lines: ["naruto/kayou"] },
     ]);
     expect(
@@ -1926,6 +1926,14 @@ describe("same-number art fallback (Naruto)", () => {
       "fr",
       "en",
     ]);
+    expect(cataloguePackInfo("naruto/cardgame")?.catalogueLocales).toEqual([
+      "ja",
+      "fr",
+      "en",
+    ]);
+    expect(
+      cataloguePackInfo("naruto/cardgame")?.localeArt?.bestFaceAcrossLocales,
+    ).toBe(true);
     expect(cataloguePackInfo("pokemon")?.catalogueLocales).toEqual([
       "ja",
       "fr",

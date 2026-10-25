@@ -22,8 +22,11 @@ import {
 } from "../printKey";
 
 const CDN = "https://www.naruto-cardgame.com";
-const REFERER = `${CDN}/en/welcome/`;
 const ART_NAME = "art.bandai.webp";
+
+function welcomeReferer(folder: "en" | "jp"): string {
+  return folder === "jp" ? `${CDN}/jp/welcome/` : `${CDN}/en/welcome/`;
+}
 
 type GalleryCard = {
   gallery: string;
@@ -102,10 +105,15 @@ export async function installNarutoCardgameWelcomeGallery(
       number: card.number.trim().toLowerCase(),
       cardType: "card",
       category: card.category,
-      sourceUrl: faceUrl("en", card.gallery),
+      sourceUrl: faceUrl("jp", card.gallery),
       titles: [
         {
           lang: "en",
+          fullName: displayName(card, "en"),
+          rarity: "SAMPLE",
+        },
+        {
+          lang: "fr",
           fullName: displayName(card, "en"),
           rarity: "SAMPLE",
         },
@@ -121,6 +129,9 @@ export async function installNarutoCardgameWelcomeGallery(
 
     for (const { lang, folder } of [
       { lang: "en", folder: "en" as const },
+      // Pas de dossier FR sur le CDN Bandai — art EN.
+      { lang: "fr", folder: "en" as const },
+      // JA = faces `/jp/` (texte japonais), pas le miroir EN.
       { lang: "ja", folder: "jp" as const },
     ]) {
       const destDir = packCardDir(NARUTO_CARDGAME_PACK_ID, {
@@ -132,7 +143,7 @@ export async function installNarutoCardgameWelcomeGallery(
         destDir,
         artName: ART_NAME,
         url: faceUrl(folder, card.gallery),
-        referer: REFERER,
+        referer: welcomeReferer(folder),
         minBytes: 8_000,
       });
       if (!installed) continue;
@@ -152,7 +163,10 @@ export async function installNarutoCardgameWelcomeGallery(
     const w = index.writePrints(printRows);
     prints = w.prints;
     titles = w.titles;
-    index.prunePrintsExcept(new Set(printRows.map((r) => r.printKey)));
+    /*
+      Ne pas `prunePrintsExcept` ici : le Sync pose aussi narutomarket
+      (demo / promo / premium00). Un prune galerie-only effacerait ces tirages.
+    */
   }
   if (assets.length) index.writeAssets(assets);
   return { prints, titles, faces };

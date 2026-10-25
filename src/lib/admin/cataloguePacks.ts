@@ -3,7 +3,7 @@
  *
  * Tabs are **franchise → product line**: Pokémon / Lorcana stay one line;
  * Dragon Ball has Masters + Fusion World + Lamincards (Edibas). Naruto has several lines (Carddass,
- * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Card Game 2027, Kayou, Data Carddass) under
+ * 疾風伝, Ninja Ranks, Ultra Challenge, Mythos, Card Game, Kayou, Data Carddass) under
  * one franchise tab. When a franchise has many lines, packs may declare a
  * `lineFamily` (éditeur) so the UI can group them in a select instead of a
  * flat chip strip.
@@ -673,18 +673,24 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     franchiseId: "naruto",
     franchiseLabelFr: "Naruto",
     franchiseLabelEn: "Naruto",
-    lineLabelFr: "Card Game 2027",
-    lineLabelEn: "Card Game 2027",
+    lineLabelFr: "Card Game",
+    lineLabelEn: "Card Game",
     lineFamily: {
-      id: "bandai-card-games",
-      labelFr: "Bandai Card Games",
-      labelEn: "Bandai Card Games",
+      id: "bandai",
+      labelFr: "Bandai",
+      labelEn: "Bandai",
     },
     labelFr: "Naruto Card Game",
     labelEn: "Naruto Card Game",
     hasFoilEffects: false,
     hasSealedProducts: true,
-    catalogueLocales: ["fr", "en"],
+    /**
+     * JA original (Bandai JP) + EN + FR. Expand so « Toutes locales » montre
+     * les trois ; borrow face tant que certains JA n'ont pas leur recto.
+     */
+    expandLocales: true,
+    catalogueLocales: ["ja", "fr", "en"],
+    localeArt: { bestFaceAcrossLocales: true },
     defaultScope: "sealed",
     extractTarget: "naruto-cardgame",
     catalogueOnly: true,
@@ -692,14 +698,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
-        "Naruto Card Game (Bandai 2027) : display FR précommande → data/naruto/cardgame",
+        "Naruto Card Game (Bandai) : JA+EN+FR → data/naruto/cardgame",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
-      "Bandai Card Games — nouveau TCG mondial (été 2027). 12 Character SAMPLE (galerie officielle) + display FR Pixel Heart.",
+      "Bandai — TCG mondial (été 2027). Scope JA (original) + EN + FR. Galerie SAMPLE + display Pixel Heart.",
     blurbEn:
-      "Bandai Card Games — new worldwide TCG (summer 2027). 12 official SAMPLE Characters + FR Pixel Heart display.",
+      "Bandai — worldwide TCG (summer 2027). Scope JA (original) + EN + FR. SAMPLE gallery + Pixel Heart display.",
   },
   {
     id: "naruto/kayou",

@@ -141,6 +141,7 @@ describe("leclerc curated back", () => {
       "marvel22/back.webp",
       "marvel23/back.webp",
       "marvel24/back.webp",
+      "sw18/back.webp",
     ]);
   });
 

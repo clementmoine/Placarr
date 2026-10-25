@@ -1,0 +1,29 @@
+{
+  "sourceId": "deckdynastie",
+  "url": "https://deckdynastie.com/products/naruto-card-game-1st-edition",
+  "observed": "2026-10-24",
+  "note": "Deck Dynastie (DE) — Naruto Card Game 1st Edition. Tags Shopify `lang-jp`. Variantes Display (58417751195992, 100 €) et Case (58417751228760, 1 200 €). packsContained inconnu.",
+  "currency": "EUR",
+  "variants": [
+    {
+      "variantId": 58417751195992,
+      "slug": "display-launch-jp",
+      "kind": "display",
+      "lang": "ja",
+      "title": "Display",
+      "priceCents": 10000,
+      "packshot": "https://cdn.shopify.com/s/files/1/0979/2759/4328/files/naruto2.webp?v=1788799528",
+      "path": "https://deckdynastie.com/products/naruto-card-game-1st-edition?variant=58417751195992"
+    },
+    {
+      "variantId": 58417751228760,
+      "slug": "case-launch-jp",
+      "kind": "case",
+      "lang": "ja",
+      "title": "Case",
+      "priceCents": 120000,
+      "packshot": "https://cdn.shopify.com/s/files/1/0979/2759/4328/files/naruto2.webp?v=1788799528",
+      "path": "https://deckdynastie.com/products/naruto-card-game-1st-edition?variant=58417751228760"
+    }
+  ]
+}

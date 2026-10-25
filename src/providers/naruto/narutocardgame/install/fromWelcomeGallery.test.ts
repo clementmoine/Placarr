@@ -31,33 +31,26 @@ describe("naruto cardgame welcome gallery", () => {
     });
   });
 
-  it("seeds prints and downloads Bandai EN+JP faces", async () => {
+  it("seeds prints and downloads Bandai EN+FR+JP faces", async () => {
     const index = createLocalPrintsIndex(NARUTO_CARDGAME_PACK_ID);
     const out = await installNarutoCardgameWelcomeGallery(index, {
       downloadFaces: true,
     });
     expect(out.prints).toBe(12);
-    expect(out.titles).toBeGreaterThanOrEqual(24);
-    expect(out.faces).toBeGreaterThanOrEqual(1);
+    expect(out.titles).toBeGreaterThanOrEqual(36);
+    // Resume Sync : faces déjà sur disque → downloaded=0, art toujours là.
 
-    const enArt = path.join(
-      packCardDir(NARUTO_CARDGAME_PACK_ID, {
-        set: "preview",
-        lang: "en",
-        card: "g01",
-      }),
-      "art.bandai.webp",
-    );
-    const jaArt = path.join(
-      packCardDir(NARUTO_CARDGAME_PACK_ID, {
-        set: "preview",
-        lang: "ja",
-        card: "g01",
-      }),
-      "art.bandai.webp",
-    );
-    expect(existsSync(enArt)).toBe(true);
-    expect(existsSync(jaArt)).toBe(true);
+    for (const lang of ["en", "fr", "ja"] as const) {
+      const art = path.join(
+        packCardDir(NARUTO_CARDGAME_PACK_ID, {
+          set: "preview",
+          lang,
+          card: "g01",
+        }),
+        "art.bandai.webp",
+      );
+      expect(existsSync(art)).toBe(true);
+    }
 
     const row = index.lookupRow("narutocardgame:preview-g01", {
       language: "en",
@@ -65,5 +58,10 @@ describe("naruto cardgame welcome gallery", () => {
     expect(row?.fullName).toBe("Orochimaru");
     expect(row?.rarity).toBe("SAMPLE");
     expect(row?.art).toBe("art.bandai.webp");
+
+    const fr = index.lookupRow("narutocardgame:preview-g01", {
+      language: "fr",
+    });
+    expect(fr?.art).toBe("art.bandai.webp");
   }, 120_000);
 });

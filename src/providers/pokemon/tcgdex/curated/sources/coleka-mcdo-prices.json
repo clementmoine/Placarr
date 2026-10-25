@@ -2,7 +2,7 @@
   "source": "coleka.com deals ajax (pokemon)",
   "sourceId": "coleka-deals",
   "packId": "pokemon",
-  "fetchedAt": "2026-10-23T21:43:58.100Z",
+  "fetchedAt": "2026-10-24T22:08:49.711Z",
   "rubriques": [
     {
       "id": "35163",
@@ -51,12 +51,12 @@
       "title": "Dunaconda",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 1.17,
-      "offerCents": 117,
-      "shippingEuro": 1.5,
+      "offerEuro": 1.84,
+      "offerCents": 184,
+      "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 03:34:47",
-      "affiliatePath": "/oo/1518504/ebay/266598042567/fr"
+      "affiliatePath": "/oo/1518504/ebay/126844230713/fr"
     },
     {
       "printKey": "pokemon:2023sv-11",
@@ -83,12 +83,12 @@
       "title": "Leuphorie",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 1.17,
-      "offerCents": 117,
-      "shippingEuro": 2.85,
+      "offerEuro": 4.38,
+      "offerCents": 438,
+      "shippingEuro": 1.6,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 03:34:47",
-      "affiliatePath": "/oo/1518506/ebay/186469356845/fr"
+      "affiliatePath": "/oo/1518506/ebay/267463429513/fr"
     },
     {
       "printKey": "pokemon:2023sv-13",
@@ -99,12 +99,12 @@
       "title": "Compagnol",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 2.02,
-      "offerCents": 202,
-      "shippingEuro": 0,
+      "offerEuro": 15.08,
+      "offerCents": 1508,
+      "shippingEuro": 0.95,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 20:00:22",
-      "affiliatePath": "/oo/1518507/ebay/156594905667/fr"
+      "affiliatePath": "/oo/1518507/ebay/186654056906/fr"
     },
     {
       "printKey": "pokemon:2023sv-14",
@@ -115,12 +115,12 @@
       "title": "Motorizard",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 3.1,
-      "offerCents": 310,
-      "shippingEuro": 2.78,
+      "offerEuro": 1.17,
+      "offerCents": 117,
+      "shippingEuro": 2.85,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 20:00:22",
-      "affiliatePath": "/oo/1518508/ebay/407274250575/fr"
+      "affiliatePath": "/oo/1518508/ebay/186978325513/fr"
     },
     {
       "printKey": "pokemon:2023sv-15",
@@ -131,12 +131,12 @@
       "title": "Kirlia",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 4.5,
-      "offerCents": 450,
-      "shippingEuro": 1.52,
+      "offerEuro": 1.17,
+      "offerCents": 117,
+      "shippingEuro": 2.85,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 20:00:22",
-      "affiliatePath": "/oo/1518509/ebay/800778808734/fr"
+      "affiliatePath": "/oo/1518509/ebay/186978328594/fr"
     },
     {
       "printKey": "pokemon:2023sv-2",
@@ -151,7 +151,7 @@
       "offerCents": 866,
       "shippingEuro": 1.6,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:31:13",
+      "observedAt": "2026-10-24 22:59:28",
       "affiliatePath": "/oo/1518496/ebay/267463429513/fr"
     },
     {
@@ -163,12 +163,12 @@
       "title": "Coiffeton",
       "quotationEuro": 0.3,
       "quotationCents": 30,
-      "offerEuro": 2.76,
-      "offerCents": 276,
-      "shippingEuro": 2.9,
+      "offerEuro": 2.23,
+      "offerCents": 223,
+      "shippingEuro": 1.99,
       "marketplace": "eBay",
       "observedAt": "2026-10-22 22:31:13",
-      "affiliatePath": "/oo/1518497/ebay/377039707387/fr"
+      "affiliatePath": "/oo/1518497/ebay/356337314296/fr"
     },
     {
       "printKey": "pokemon:2023sv-4",
@@ -179,12 +179,12 @@
       "title": "Piétacé",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 1.44,
-      "offerCents": 144,
-      "shippingEuro": 1.7,
+      "offerEuro": 1.79,
+      "offerCents": 179,
+      "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-22 22:31:13",
-      "affiliatePath": "/oo/1518498/ebay/176091331596/fr"
+      "affiliatePath": "/oo/1518498/ebay/157888359371/fr"
     },
     {
       "printKey": "pokemon:2023sv-5",
@@ -199,7 +199,7 @@
       "offerCents": 652,
       "shippingEuro": 1.6,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:31:13",
+      "observedAt": "2026-10-24 22:59:28",
       "affiliatePath": "/oo/1518499/ebay/267463429513/fr"
     },
     {
@@ -211,12 +211,12 @@
       "title": "Pikachu",
       "quotationEuro": 1.9,
       "quotationCents": 190,
-      "offerEuro": 4.36,
-      "offerCents": 436,
-      "shippingEuro": 3,
+      "offerEuro": 12.94,
+      "offerCents": 1294,
+      "shippingEuro": 1.6,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 03:34:47",
-      "affiliatePath": "/oo/1518500/ebay/356604388578/fr"
+      "affiliatePath": "/oo/1518500/ebay/267463429513/fr"
     },
     {
       "printKey": "pokemon:2023sv-7",
@@ -227,12 +227,12 @@
       "title": "Pohm",
       "quotationEuro": 0.15,
       "quotationCents": 15,
-      "offerEuro": 9.06,
-      "offerCents": 906,
-      "shippingEuro": 0,
+      "offerEuro": 1.17,
+      "offerCents": 117,
+      "shippingEuro": 1.5,
       "marketplace": "eBay",
-      "observedAt": "2026-10-20 11:39:13",
-      "affiliatePath": "/oo/1518501/ebay/800800147789/fr"
+      "observedAt": "2026-10-23 03:34:47",
+      "affiliatePath": "/oo/1518501/ebay/266603046923/fr"
     },
     {
       "printKey": "pokemon:2023sv-8",
@@ -243,12 +243,12 @@
       "title": "Fulgulairo",
       "quotationEuro": 0.1,
       "quotationCents": 10,
-      "offerEuro": 2.23,
-      "offerCents": 223,
-      "shippingEuro": 1.99,
+      "offerEuro": 1.2,
+      "offerCents": 120,
+      "shippingEuro": 2,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 03:34:47",
-      "affiliatePath": "/oo/1518502/ebay/356337414899/fr"
+      "affiliatePath": "/oo/1518502/ebay/406850614551/fr"
     },
     {
       "printKey": "pokemon:2023sv-9",
@@ -291,12 +291,12 @@
       "title": "Trioxhydre Holographique",
       "quotationEuro": 1.1,
       "quotationCents": 110,
-      "offerEuro": 4.49,
-      "offerCents": 449,
+      "offerEuro": 5.21,
+      "offerCents": 521,
       "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:30:12",
-      "affiliatePath": "/oo/1792831/ebay/156907020576/fr"
+      "observedAt": "2026-10-24 20:45:18",
+      "affiliatePath": "/oo/1792831/ebay/126820236543/fr"
     },
     {
       "printKey": "pokemon:2024sv-11",
@@ -307,12 +307,12 @@
       "title": "Rugit-Lune Holographique",
       "quotationEuro": 3.4,
       "quotationCents": 340,
-      "offerEuro": 3.31,
-      "offerCents": 331,
-      "shippingEuro": 0,
+      "offerEuro": 5.45,
+      "offerCents": 545,
+      "shippingEuro": 3,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:30:14",
-      "affiliatePath": "/oo/1792832/ebay/227504009920/fr"
+      "observedAt": "2026-10-24 20:45:19",
+      "affiliatePath": "/oo/1792832/ebay/405433163163/fr"
     },
     {
       "printKey": "pokemon:2024sv-12",
@@ -323,12 +323,12 @@
       "title": "Dracolosse Holographique",
       "quotationEuro": 1.7,
       "quotationCents": 170,
-      "offerEuro": 9.75,
-      "offerCents": 975,
-      "shippingEuro": 0,
+      "offerEuro": 28.69,
+      "offerCents": 2869,
+      "shippingEuro": 3.47,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:30:16",
-      "affiliatePath": "/oo/1792833/ebay/358347356286/fr"
+      "observedAt": "2026-10-24 20:45:19",
+      "affiliatePath": "/oo/1792833/ebay/377594225756/fr"
     },
     {
       "printKey": "pokemon:2024sv-13",
@@ -339,12 +339,12 @@
       "title": "Évoli",
       "quotationEuro": 0.2,
       "quotationCents": 20,
-      "offerEuro": 1.19,
-      "offerCents": 119,
-      "shippingEuro": 15.51,
+      "offerEuro": 3.29,
+      "offerCents": 329,
+      "shippingEuro": 1.49,
       "marketplace": "eBay",
-      "observedAt": "2026-10-15 00:23:08",
-      "affiliatePath": "/oo/1792834/ebay/127285465228/fr"
+      "observedAt": "2026-10-22 22:30:16",
+      "affiliatePath": "/oo/1792834/ebay/326425935304/fr"
     },
     {
       "printKey": "pokemon:2024sv-14",
@@ -371,12 +371,12 @@
       "title": "Draïeul Holographique",
       "quotationEuro": 2.2,
       "quotationCents": 220,
-      "offerEuro": 8.02,
-      "offerCents": 802,
-      "shippingEuro": 0,
+      "offerEuro": 14.9,
+      "offerCents": 1490,
+      "shippingEuro": 9.8,
       "marketplace": "eBay",
       "observedAt": "2026-10-23 20:34:38",
-      "affiliatePath": "/oo/1792836/ebay/156564103809/fr"
+      "affiliatePath": "/oo/1792836/ebay/326389659233/fr"
     },
     {
       "printKey": "pokemon:2024sv-2",
@@ -387,12 +387,12 @@
       "title": "Pikachu Holographique",
       "quotationEuro": 4.2,
       "quotationCents": 420,
-      "offerEuro": 18.91,
-      "offerCents": 1891,
-      "shippingEuro": 0,
+      "offerEuro": 274.89,
+      "offerCents": 27489,
+      "shippingEuro": 24.53,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:30:13",
-      "affiliatePath": "/oo/1792823/ebay/365922639021/fr"
+      "observedAt": "2026-10-18 11:25:40",
+      "affiliatePath": "/oo/1792823/ebay/267741097707/fr"
     },
     {
       "printKey": "pokemon:2024sv-3",
@@ -403,12 +403,12 @@
       "title": "Miraidon Holographique",
       "quotationEuro": 2.8,
       "quotationCents": 280,
-      "offerEuro": 9.35,
-      "offerCents": 935,
-      "shippingEuro": 7.03,
+      "offerEuro": 9.78,
+      "offerCents": 978,
+      "shippingEuro": 14.26,
       "marketplace": "eBay",
       "observedAt": "2026-10-18 11:25:40",
-      "affiliatePath": "/oo/1792824/ebay/398315069498/fr"
+      "affiliatePath": "/oo/1792824/ebay/168756330491/fr"
     },
     {
       "printKey": "pokemon:2024sv-4",
@@ -435,12 +435,12 @@
       "title": "Bibichut",
       "quotationEuro": 0.2,
       "quotationCents": 20,
-      "offerEuro": 1.81,
-      "offerCents": 181,
-      "shippingEuro": 1.5,
+      "offerEuro": 2.24,
+      "offerCents": 224,
+      "shippingEuro": 0,
       "marketplace": "eBay",
       "observedAt": "2026-10-22 11:18:27",
-      "affiliatePath": "/oo/1792826/ebay/326419392364/fr"
+      "affiliatePath": "/oo/1792826/ebay/267130160312/fr"
     },
     {
       "printKey": "pokemon:2024sv-6",
@@ -451,12 +451,12 @@
       "title": "Lanssorien",
       "quotationEuro": 0.65,
       "quotationCents": 65,
-      "offerEuro": 1.17,
-      "offerCents": 117,
-      "shippingEuro": 2,
+      "offerEuro": 2.24,
+      "offerCents": 224,
+      "shippingEuro": 3,
       "marketplace": "eBay",
       "observedAt": "2026-10-22 14:14:04",
-      "affiliatePath": "/oo/1792827/ebay/187097893118/fr"
+      "affiliatePath": "/oo/1792827/ebay/128141090663/fr"
     },
     {
       "printKey": "pokemon:2024sv-7",
@@ -467,12 +467,12 @@
       "title": "Maraiste",
       "quotationEuro": 0.65,
       "quotationCents": 65,
-      "offerEuro": 3.29,
-      "offerCents": 329,
-      "shippingEuro": 1.49,
+      "offerEuro": 2.24,
+      "offerCents": 224,
+      "shippingEuro": 3,
       "marketplace": "eBay",
       "observedAt": "2026-10-22 14:14:04",
-      "affiliatePath": "/oo/1792828/ebay/326425955087/fr"
+      "affiliatePath": "/oo/1792828/ebay/128141089478/fr"
     },
     {
       "printKey": "pokemon:2024sv-8",
@@ -483,12 +483,12 @@
       "title": "Koraidon Holographique",
       "quotationEuro": 1.7,
       "quotationCents": 170,
-      "offerEuro": 2.61,
-      "offerCents": 261,
-      "shippingEuro": 12.99,
+      "offerEuro": 7.95,
+      "offerCents": 795,
+      "shippingEuro": 10.92,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:30:11",
-      "affiliatePath": "/oo/1792829/ebay/860019349966/fr"
+      "observedAt": "2026-10-18 23:50:35",
+      "affiliatePath": "/oo/1792829/ebay/137841037187/fr"
     },
     {
       "printKey": "pokemon:2024sv-9",
@@ -499,12 +499,12 @@
       "title": "Noctali",
       "quotationEuro": 0.3,
       "quotationCents": 30,
-      "offerEuro": 1.81,
-      "offerCents": 181,
-      "shippingEuro": 1.39,
+      "offerEuro": 3.31,
+      "offerCents": 331,
+      "shippingEuro": 0,
       "marketplace": "eBay",
-      "observedAt": "2026-10-22 22:30:11",
-      "affiliatePath": "/oo/1792830/ebay/278317341499/fr"
+      "observedAt": "2026-10-24 22:58:31",
+      "affiliatePath": "/oo/1792830/ebay/267130150802/fr"
     }
   ]
 }

@@ -10,6 +10,7 @@ import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import { packCardDir } from "@/lib/packPaths";
 import {
+  listLorcanaCatalogueBrowsePage,
   listLorcanaTcgRowsForLanguage,
   lorcanaTcgDbPath,
   type LorcanaTcgSearchRow,
@@ -65,13 +66,39 @@ function remoteArtUrl(row: LorcanaTcgSearchRow): string | null {
   return null;
 }
 
+/**
+ * Prefer sqlite art basename / remote CDN — `existsSync` only as last resort
+ * (cold browse was ~3 stats × every title).
+ */
+export function resolveLorcanaCatalogueArtUrl(
+  row: Pick<
+    LorcanaTcgSearchRow,
+    | "printKey"
+    | "lang"
+    | "art"
+    | "imageUrl"
+    | "thumbnailUrl"
+    | "fullFoilUrl"
+  >,
+): string {
+  const lang = (row.lang ?? "en").trim().toLowerCase() || "en";
+  const artBasename = row.art?.trim() || null;
+  const diskId = artBasename
+    ? cardDiskIdFromPrintKey(row.printKey, lang)
+    : null;
+  const fromAssets =
+    artBasename && diskId
+      ? assetsCardUrl("lorcana", diskId, artBasename)
+      : null;
+  const remote = remoteArtUrl(row as LorcanaTcgSearchRow);
+  return fromAssets ?? remote ?? localLorcanaArtUrl(row.printKey, lang) ?? "";
+}
+
 function rowToCatalogueCard(row: LorcanaTcgSearchRow): CatalogueCardRow {
   const lang = (row.lang ?? "en").trim().toLowerCase() || "en";
   const set = (row.setCode ?? "").trim() || "—";
   const card = (row.number ?? "").trim() || "—";
-  const local = localLorcanaArtUrl(row.printKey, lang);
-  const remote = remoteArtUrl(row);
-  const artUrl = local ?? remote ?? "";
+  const artUrl = resolveLorcanaCatalogueArtUrl(row);
   const name =
     row.fullName?.trim() ||
     [row.name, row.version].filter(Boolean).join(" — ").trim() ||
@@ -120,4 +147,33 @@ export function buildLorcanaCatalogueBrowseRows(): CatalogueCardRow[] {
 /** Test seam — drop in-process cache. */
 export function clearLorcanaCatalogueBrowseCache(): void {
   cache = null;
+}
+
+export type LorcanaCatalogueBrowsePageInput = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+  foilOnly?: boolean;
+};
+
+/** Paginated admin browse — SQL LIMIT/OFFSET. */
+export function listLorcanaCatalogueBrowsePageRows(
+  input: LorcanaCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  const page = listLorcanaCatalogueBrowsePage({
+    langs: input.langs,
+    q: input.q,
+    offset: input.offset,
+    limit: input.limit,
+    missingArtOnly: input.missingArtOnly,
+    missingNameOnly: input.missingNameOnly,
+    foilOnly: input.foilOnly,
+  });
+  return {
+    total: page.total,
+    rows: page.rows.map((row) => rowToCatalogueCard(row)),
+  };
 }

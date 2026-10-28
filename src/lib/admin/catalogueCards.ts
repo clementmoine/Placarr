@@ -53,6 +53,16 @@ import {
   loadLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
 import { catalogueCardPriceQuoteByPrintKey } from "@/lib/admin/catalogueCardPrices";
+import {
+  listPokemonCatalogueBrowsePage,
+  POKEMON_CATALOGUE_BROWSE_LOCALES,
+} from "@/providers/pokemon/tcgdex/catalogueBrowse";
+import {
+  listLorcanaCatalogueBrowsePageRows,
+  LORCANA_CATALOGUE_BROWSE_LOCALES,
+} from "@/providers/lorcana/lorcanatcg/catalogueBrowse";
+import { POKEMON_PACK_ID } from "@/providers/pokemon/paths";
+import { LORCANA_PACK_ID } from "@/providers/lorcana/lorcanatcg/indexStore";
 
 export { isNarutoJapaneseVolumeSet };
 
@@ -1718,11 +1728,110 @@ export function restrictRowsToCatalogueLocales(
   });
 }
 
+/** Heavy audit filters that still need the full in-memory corpus. */
+function needsFullCatalogueMaterialize(input: ListCatalogueCardsInput): boolean {
+  return Boolean(
+    input.missingPriceOnly ||
+      input.incompleteOnly ||
+      input.borrowedArtOnly ||
+      (input.foilOnly && input.pack === POKEMON_PACK_ID),
+  );
+}
+
+async function listSqlPagedCatalogueCards(
+  input: ListCatalogueCardsInput,
+  offset: number,
+  limit: number,
+): Promise<ListCatalogueCardsResult | null> {
+  if (needsFullCatalogueMaterialize(input)) return null;
+  const packInfo = cataloguePackInfo(input.pack);
+  const declared =
+    packInfo?.catalogueLocales ??
+    (input.pack === POKEMON_PACK_ID
+      ? [...POKEMON_CATALOGUE_BROWSE_LOCALES]
+      : input.pack === LORCANA_PACK_ID
+        ? [...LORCANA_CATALOGUE_BROWSE_LOCALES]
+        : null);
+  if (!declared?.length) return null;
+  if (input.pack !== POKEMON_PACK_ID && input.pack !== LORCANA_PACK_ID) {
+    return null;
+  }
+
+  const localeMode = input.locales ?? "preferred";
+  let preferLang = input.preferLang?.trim().toLowerCase();
+  const availableLocales = [...declared];
+  if (
+    localeMode === "preferred" &&
+    preferLang &&
+    !availableLocales.includes(preferLang)
+  ) {
+    preferLang = availableLocales.includes("en")
+      ? "en"
+      : availableLocales[0]!;
+  }
+  const langs =
+    localeMode === "all"
+      ? availableLocales
+      : preferLang
+        ? [preferLang]
+        : availableLocales;
+
+  const page =
+    input.pack === POKEMON_PACK_ID
+      ? listPokemonCatalogueBrowsePage({
+          langs,
+          q: input.q,
+          offset,
+          limit,
+          printed: input.printed ?? "all",
+          missingArtOnly: input.missingArtOnly,
+          missingNameOnly: input.missingNameOnly,
+        })
+      : listLorcanaCatalogueBrowsePageRows({
+          langs,
+          q: input.q,
+          offset,
+          limit,
+          missingArtOnly: input.missingArtOnly,
+          missingNameOnly: input.missingNameOnly,
+          foilOnly: input.foilOnly,
+        });
+
+  // Back tiles are cheap existsSync — prepend on the first page only.
+  // `total` stays face COUNT so offset/limit stay SQL-aligned (client advances
+  // by `limit`, not by cards.length which would skip faces when backs inflate).
+  let cards = page.rows;
+  if (offset === 0) {
+    cards = withCatalogueBackRows(input.pack, cards);
+  }
+  const total = page.total;
+
+  const corpus = catalogueCorpusPack(input.pack);
+  const pageKeys = [
+    ...new Set(cards.filter(isFaceRow).map((row) => row.printKey)),
+  ];
+  const priceByKey = await catalogueCardPriceQuoteByPrintKey(
+    corpus,
+    pageKeys,
+  );
+  return {
+    pack: input.pack,
+    total,
+    offset,
+    limit,
+    cards: cards.map((row) => attachPriceQuote(row, priceByKey)),
+    availableLocales,
+  };
+}
+
 export async function listCatalogueCards(
   input: ListCatalogueCardsInput,
 ): Promise<ListCatalogueCardsResult> {
   const offset = Math.max(0, Math.floor(input.offset ?? 0));
   const limit = Math.min(1000, Math.max(1, Math.floor(input.limit ?? 48)));
+  const sqlPage = await listSqlPagedCatalogueCards(input, offset, limit);
+  if (sqlPage) return sqlPage;
+
   let rows = rowsForPack(input.pack, input.preferLang);
   const availableLocales = catalogueAvailableLocales(input.pack, rows);
   const localeMode = input.locales ?? "preferred";

@@ -159,7 +159,20 @@ function indexMtimeMs(pack: string): number {
 }
 
 function loadIndex(pack: string): ProductsIndexV1 {
-  return loadSealedProductsIndex(catalogueCorpusPack(pack));
+  // Browse already trusts stored role URLs / resolves sparsely in rowFromEntry.
+  return loadSealedProductsIndex(catalogueCorpusPack(pack), {
+    skipDiskFinalize: true,
+  });
+}
+
+/** True when `image` is already `/assets/…/products/{slug}/{lang}/{role}`. */
+export function isSealedProductRoleUrl(
+  url: string | null | undefined,
+  role: "face" | "back" | "thumb" | "logo" = "face",
+): boolean {
+  const trimmed = url?.trim() ?? "";
+  if (!trimmed.startsWith("/assets/")) return false;
+  return new RegExp(`/products/[^/]+/[^/]+/${role}$`, "i").test(trimmed);
 }
 
 export type ListCatalogueProductsInput = {
@@ -185,12 +198,14 @@ function rowFromEntry(
   productKey: string,
   raw: SealedProductEntry,
   corpusPack?: string,
+  labelSet?: ((setCode: string) => string | null) | null,
 ): CatalogueSealedRow {
   const entry = withRefinedSealedKind(raw);
-  const lang = resolveSealedLang({
-    lang: entry.lang,
-    slug: entry.slug,
-  });
+  const lang =
+    resolveSealedLang({
+      lang: entry.lang,
+      slug: entry.slug,
+    })?.trim().toLowerCase() || "fr";
   const name = sealedProductDisplayName({
     name: entry.name,
     kind: entry.kind,
@@ -279,27 +294,35 @@ function rowFromEntry(
   } else {
     count = String(printCount);
   }
-  const image = corpusPack
-    ? resolveSealedPackshotUrl({
-        packId: corpusPack,
-        slug: entry.slug,
-        lang,
-        fallback: entry.image,
-      })
-    : entry.image;
-  const imageBack = corpusPack
-    ? (() => {
-        const hit = resolveSealedProductFace({
+  const image = !corpusPack
+    ? entry.image
+    : isSealedProductRoleUrl(entry.image, "face")
+      ? entry.image
+      : resolveSealedPackshotUrl({
           packId: corpusPack,
           slug: entry.slug,
           lang,
-          role: "back",
+          fallback: entry.image,
         });
-        return hit
-          ? assetsSealedProductRoleUrl(corpusPack, entry.slug, lang, "back")
-          : (entry.imageBack ?? null);
-      })()
-    : (entry.imageBack ?? null);
+  const imageBack = !corpusPack
+    ? (entry.imageBack ?? null)
+    : isSealedProductRoleUrl(entry.imageBack, "back")
+      ? entry.imageBack
+      : (() => {
+          const hit = resolveSealedProductFace({
+            packId: corpusPack,
+            slug: entry.slug,
+            lang,
+            role: "back",
+          });
+          if (!hit) return entry.imageBack ?? null;
+          return assetsSealedProductRoleUrl(
+            corpusPack,
+            entry.slug,
+            hit.disk.lang,
+            "back",
+          );
+        })();
   return {
     productKey,
     slug: entry.slug,
@@ -324,7 +347,13 @@ function rowFromEntry(
       typeof entry.priceCents === "number" && entry.priceCents > 0
         ? entry.priceCents
         : null,
-    label: sealedRowLabel(corpusPack ?? "", entry.setCode, name, count),
+    label: sealedRowLabel(
+      corpusPack ?? "",
+      entry.setCode,
+      name,
+      count,
+      labelSet,
+    ),
   };
 }
 
@@ -333,13 +362,21 @@ function sealedRowLabel(
   setCode: string | null | undefined,
   name: string,
   count: string,
+  labelSet?: ((setCode: string) => string | null) | null,
 ): string {
   const code = setCode?.trim();
   if (!code) return `${name} · ${count}`;
-  const owner = providerModuleProviding(pack, "labelPrintSet");
-  const set =
-    owner?.labelPrintSet?.({ setCode: code })?.trim() || code;
+  const set = labelSet?.(code)?.trim() || code;
   return `${set} · ${name} · ${count}`;
+}
+
+function labelPrintSetFn(
+  corpusPack: string,
+): ((setCode: string) => string | null) | null {
+  const owner = providerModuleProviding(corpusPack, "labelPrintSet");
+  if (!owner?.labelPrintSet) return null;
+  return (setCode: string) =>
+    owner.labelPrintSet!({ setCode })?.trim() || null;
 }
 
 export function buildCatalogueSealedRows(
@@ -348,9 +385,11 @@ export function buildCatalogueSealedRows(
 ): CatalogueSealedRow[] {
   const corpus = catalogueCorpusPack(pack);
   const locales = cataloguePackInfo(pack)?.catalogueLocales;
+  // Resolve once — Pokémon `labelPrintSet` hits TCGdex set SQL on first call.
+  const labelSet = labelPrintSetFn(corpus);
   const rows: CatalogueSealedRow[] = [];
   for (const [productKey, raw] of Object.entries(index.products)) {
-    const row = rowFromEntry(productKey, raw, corpus);
+    const row = rowFromEntry(productKey, raw, corpus, labelSet);
     // Catalogue contract: original + FR + EN (pack locales). Hide DE/IT/ES
     // sealed tiles without deleting harvest ledgers.
     if (!isCatalogueProductLang(row.lang, locales)) continue;
@@ -614,7 +653,7 @@ export async function getCatalogueProductDetailAsync(
   const bySlug = new Map(
     Object.values(index.products).map((row) => [row.slug, row] as const),
   );
-  const row = rowFromEntry(key, entry, corpus);
+  const row = rowFromEntry(key, entry, corpus, labelPrintSetFn(corpus));
   const lotterySetId = resolveSealedLotterySetId({
     packId: corpus,
     setCode: entry.setCode,
@@ -680,7 +719,7 @@ export function getCatalogueProductDetail(
     Object.values(index.products).map((row) => [row.slug, row] as const),
   );
   return {
-    ...rowFromEntry(key, entry, corpus),
+    ...rowFromEntry(key, entry, corpus, labelPrintSetFn(corpus)),
     cardsPerPack: entry.cardsPerPack,
     packsContained: entry.packsContained,
     packsBySet: entry.packsBySet ?? null,

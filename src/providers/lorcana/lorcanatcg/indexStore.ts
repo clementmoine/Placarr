@@ -191,6 +191,13 @@ function createSchema(db: DatabaseSync): void {
   `);
 }
 
+type LorcanaSetsCache = {
+  mtimeMs: number;
+  lang: string;
+  rows: { id: string; label: string; sortKey?: number; languages?: string[] }[];
+};
+let lorcanaSetsCache: LorcanaSetsCache | null = null;
+
 export function resetLorcanaTcgDbCache(): void {
   try {
     activeDb?.close();
@@ -200,6 +207,7 @@ export function resetLorcanaTcgDbCache(): void {
   activeDb = null;
   activePath = null;
   activeMtimeMs = null;
+  lorcanaSetsCache = null;
 }
 
 /** Une ligne de recherche : le tirage et son titre, joints. */
@@ -239,6 +247,8 @@ export type LorcanaTcgSearchRow = {
   foilMaskUrl: string | null;
   varnishMaskUrl: string | null;
   secondVarnishMaskUrl: string | null;
+  /** Local dump basename when present under print_assets. */
+  art?: string | null;
 };
 
 export type WriteLorcanaTcgIndexInput = {
@@ -923,15 +933,7 @@ export function lookupLorcanaTcgSearchRow(
 /**
  * Toutes les lignes titre d'une langue — admin Catalogue (= checklist).
  */
-export function listLorcanaTcgRowsForLanguage(
-  language = "en",
-): LorcanaTcgSearchRow[] {
-  const db = ensureLorcanaTcgIndex();
-  if (!db) return [];
-  const lang = language.trim().toLowerCase() || "en";
-  return db
-    .prepare(
-      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+const LORCANA_SEARCH_SELECT = `p.print_key AS printKey, p.set_code AS setCode, p.number,
               p.variant, p.promo_grouping AS promoGrouping,
               p.provider_id AS providerId, p.cost,
               p.artists_json AS artistsJson,
@@ -949,14 +951,106 @@ export function listLorcanaTcgRowsForLanguage(
               t.full_foil_url AS fullFoilUrl,
               t.foil_mask_url AS foilMaskUrl,
               t.varnish_mask_url AS varnishMaskUrl,
-              t.second_varnish_mask_url AS secondVarnishMaskUrl
-         FROM prints p
+              t.second_varnish_mask_url AS secondVarnishMaskUrl,
+              a.art AS art`;
+
+const LORCANA_SEARCH_FROM = `prints p
          JOIN print_titles t
-           ON t.print_key = p.print_key AND t.lang = ?
+           ON t.print_key = p.print_key
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang`;
+
+export function listLorcanaTcgRowsForLanguage(
+  language = "en",
+): LorcanaTcgSearchRow[] {
+  const db = ensureLorcanaTcgIndex();
+  if (!db) return [];
+  const lang = language.trim().toLowerCase() || "en";
+  return db
+    .prepare(
+      `SELECT ${LORCANA_SEARCH_SELECT}
+         FROM ${LORCANA_SEARCH_FROM}
+        WHERE t.lang = ?
         ORDER BY CAST(p.set_code AS INTEGER), CAST(p.number AS INTEGER),
                  p.set_code, p.number`,
     )
     .all(lang) as LorcanaTcgSearchRow[];
+}
+
+export type LorcanaCatalogueBrowsePageOpts = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+  foilOnly?: boolean;
+};
+
+/** Paginated admin Catalogue browse — COUNT + LIMIT/OFFSET. */
+export function listLorcanaCatalogueBrowsePage(
+  opts: LorcanaCatalogueBrowsePageOpts,
+): { rows: LorcanaTcgSearchRow[]; total: number } {
+  const db = ensureLorcanaTcgIndex();
+  if (!db) return { rows: [], total: 0 };
+  const langs = [
+    ...new Set(
+      opts.langs.map((lang) => lang.trim().toLowerCase()).filter(Boolean),
+    ),
+  ];
+  if (!langs.length) return { rows: [], total: 0 };
+  const offset = Math.max(0, Math.floor(opts.offset));
+  const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
+  const params: unknown[] = [];
+  const where: string[] = [
+    `t.lang IN (${langs.map(() => "?").join(",")})`,
+  ];
+  params.push(...langs);
+  if (opts.missingArtOnly) {
+    where.push(
+      `(a.art IS NULL OR TRIM(a.art) = '')
+       AND (t.image_url IS NULL OR TRIM(t.image_url) = '')
+       AND (t.full_foil_url IS NULL OR TRIM(t.full_foil_url) = '')
+       AND (t.thumbnail_url IS NULL OR TRIM(t.thumbnail_url) = '')`,
+    );
+  }
+  if (opts.missingNameOnly) {
+    where.push(
+      `(t.full_name IS NULL OR TRIM(t.full_name) = '')
+       AND (t.name IS NULL OR TRIM(t.name) = '')`,
+    );
+  }
+  if (opts.foilOnly) {
+    where.push(
+      `p.foil_types_json IS NOT NULL AND TRIM(p.foil_types_json) != '' AND TRIM(p.foil_types_json) != '[]'`,
+    );
+  }
+  const q = opts.q?.trim().toLowerCase();
+  if (q) {
+    where.push(
+      `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
+        OR LOWER(COALESCE(t.full_name, '')) LIKE ? OR LOWER(COALESCE(t.name, '')) LIKE ?)`,
+    );
+    const like = `%${q}%`;
+    params.push(like, like, like, like, like);
+  }
+  const whereSql = where.join(" AND ");
+  const totalRow = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM ${LORCANA_SEARCH_FROM} WHERE ${whereSql}`,
+    )
+    .get(...params) as { n: number };
+  const rows = db
+    .prepare(
+      `SELECT ${LORCANA_SEARCH_SELECT}
+         FROM ${LORCANA_SEARCH_FROM}
+        WHERE ${whereSql}
+        ORDER BY CAST(p.set_code AS INTEGER), CAST(p.number AS INTEGER),
+                 p.set_code, p.number, t.lang
+        LIMIT ? OFFSET ?`,
+    )
+    .all(...params, limit, offset) as LorcanaTcgSearchRow[];
+  return { rows, total: Number(totalRow?.n ?? 0) };
 }
 
 export function searchLorcanaTcgRows(
@@ -1063,6 +1157,14 @@ export function listLorcanaTcgSets(
   const db = ensureLorcanaTcgIndex();
   if (!db) return [];
   const lang = language.trim().toLowerCase();
+  const mtimeMs = activeMtimeMs ?? 0;
+  if (
+    lorcanaSetsCache &&
+    lorcanaSetsCache.mtimeMs === mtimeMs &&
+    lorcanaSetsCache.lang === lang
+  ) {
+    return lorcanaSetsCache.rows;
+  }
   const rows = db
     .prepare(
       `SELECT p.set_code AS setCode,
@@ -1140,5 +1242,7 @@ export function listLorcanaTcgSets(
     });
   }
 
-  return finalizeSetOptions(options);
+  const out = finalizeSetOptions(options);
+  lorcanaSetsCache = { mtimeMs, lang, rows: out };
+  return out;
 }

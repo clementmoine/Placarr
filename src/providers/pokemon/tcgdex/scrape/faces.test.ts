@@ -22,6 +22,8 @@ import {
 } from "../disk/faceChoice";
 import {
   buildPkmcardsAbbrToLiveStem,
+  clearPkmcardsAbbrToLiveStemCache,
+  resolvePkmcardsAbbrToLiveStem,
   fillMcdnFacesForSet,
   fillPkmcardsFaces,
   fillPokemonComMcdoCampaign,
@@ -134,12 +136,16 @@ describe("parsePkmcardsPokemonSlug", () => {
 
 describe("buildPkmcardsAbbrToLiveStem", () => {
   it("reconnaît un stem Live déjà sur disque", () => {
+    clearPkmcardsAbbrToLiveStemCache();
     const root = mkdtempSync(path.join(os.tmpdir(), "pkm-map-"));
     mkdirSync(path.join(root, "fr", "me5"), { recursive: true });
     mkdirSync(path.join(root, "fr", "sv10"), { recursive: true });
     const map = buildPkmcardsAbbrToLiveStem(root);
     expect(map.get("me5")?.liveStem).toBe("me5");
     expect(map.get("sv10")?.liveStem).toBe("sv10");
+    // Misses stay O(1) — no second liveStems() walk per abbr.
+    expect(resolvePkmcardsAbbrToLiveStem("unknown-abbr", root, map)).toBeNull();
+    expect(resolvePkmcardsAbbrToLiveStem("me5", root, map)).toBe("me5");
   });
 });
 

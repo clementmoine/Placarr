@@ -299,12 +299,28 @@ function loadLogoSets(): LogoSet[] {
   return (index?.sets ?? []) as LogoSet[];
 }
 
+type AbbrMapCache = {
+  cardsRoot: string;
+  map: Map<string, PkmcardsSetResolve>;
+};
+
+let abbrMapByRoot: AbbrMapCache | null = null;
+
+/** Test seam — drop process-level abbr→stem memo. */
+export function clearPkmcardsAbbrToLiveStemCache(): void {
+  abbrMapByRoot = null;
+}
+
 /**
  * Build abbr → live stem once per process / cardsRoot.
+ * Includes every Live stem in the map so callers never need a second tree walk.
  */
 export function buildPkmcardsAbbrToLiveStem(
   cardsRoot = packCardsDir("pokemon"),
 ): Map<string, PkmcardsSetResolve> {
+  if (abbrMapByRoot && abbrMapByRoot.cardsRoot === cardsRoot) {
+    return abbrMapByRoot.map;
+  }
   const live = liveStems(cardsRoot);
   const map = new Map<string, PkmcardsSetResolve>();
 
@@ -327,6 +343,7 @@ export function buildPkmcardsAbbrToLiveStem(
     }
   }
 
+  abbrMapByRoot = { cardsRoot, map };
   return map;
 }
 
@@ -338,7 +355,9 @@ export function resolvePkmcardsAbbrToLiveStem(
   const key = abbr.trim().toLowerCase();
   if (!key) return null;
   const table = cache ?? buildPkmcardsAbbrToLiveStem(cardsRoot);
-  return table.get(key)?.liveStem ?? (liveStems(cardsRoot).has(key) ? key : null);
+  // Do NOT fall back to liveStems() here — that re-walks cards/ per miss and
+  // was ~2 min when mapping ~17k pkmcards tiles (most logo abbrs have null liveStem).
+  return table.get(key)?.liveStem ?? null;
 }
 
 // —— fillPokemontcgIo.ts ——

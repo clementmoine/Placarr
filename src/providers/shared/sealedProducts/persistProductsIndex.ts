@@ -37,6 +37,14 @@ export type PersistSealedProductsIndexOpts = {
   productsDir?: string;
 };
 
+export type LoadSealedProductsIndexOpts = {
+  /**
+   * Admin Catalogue browse: skip packshot/logo disk walks when the index
+   * already carries role URLs (avoids double I/O with row builders).
+   */
+  skipDiskFinalize?: boolean;
+};
+
 function finalizeSealedProducts(
   packId: string,
   products: Record<string, SealedProductEntry>,
@@ -138,7 +146,10 @@ export function unionSealedProductsPreferPrimary(
  * lecteur (Catalogue, conseil d'achat, …) pour ne pas dépendre d'un disque
  * éventuellement stale.
  */
-export function loadSealedProductsIndex(packId: string): ProductsIndexV1 {
+export function loadSealedProductsIndex(
+  packId: string,
+  opts: LoadSealedProductsIndexOpts = {},
+): ProductsIndexV1 {
   const fromSqlite = loadProductsIndexFromSqlite(packId);
   const fromJson = readProductsIndexJson(packId);
   let index = fromSqlite ?? fromJson ?? emptyProductsIndex(packId);
@@ -155,7 +166,9 @@ export function loadSealedProductsIndex(packId: string): ProductsIndexV1 {
   return {
     ...index,
     pack: packId,
-    products: finalizeSealedProducts(packId, products),
+    products: opts.skipDiskFinalize
+      ? products
+      : finalizeSealedProducts(packId, products),
   };
 }
 

@@ -138,12 +138,19 @@ export function pkmcardsTileToPrintKey(
   });
 }
 
+/** Hoist abbr map once per dump load — never rebuild per tile. */
+function pkmcardsPrintKeyOf(tile: DbscardsTile): string | null {
+  const cardsRoot = packCardsDir("pokemon");
+  const abbrMap = buildPkmcardsAbbrToLiveStem(cardsRoot);
+  return pkmcardsTileToPrintKey(tile, cardsRoot, abbrMap);
+}
+
 const SPEC: CardsFrMappedPriceSpec = {
   cacheId: "pkmmarket",
   game: POKEMON_GAME,
   origin: "https://www.pkmcards.fr",
   indexPath: pkmcardsIndexPath("fr"),
-  printKeyOf: (tile) => pkmcardsTileToPrintKey(tile),
+  printKeyOf: pkmcardsPrintKeyOf,
 };
 
 /**

@@ -83,4 +83,28 @@ describe("resolveSealedProductFace", () => {
     });
     expect(thumb?.artFile).toBe("art.paninimania.jpg");
   });
+
+  it("infers lang from slug when index lang is null", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "sealed-face-null-lang-"));
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const dir = path.join(
+      root,
+      "lorcana",
+      "products",
+      "elsa-gift-box-collector_box-en",
+      "en",
+    );
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, "art.disneysite.png"), "art");
+    writeFileSync(path.join(dir, "back.disneysite.png"), "back");
+
+    const back = resolveSealedProductFace({
+      packId: "lorcana",
+      slug: "elsa-gift-box-collector_box-en",
+      lang: null,
+      role: "back",
+    });
+    expect(back?.disk.lang).toBe("en");
+    expect(back?.artFile).toBe("back.disneysite.png");
+  });
 });

@@ -203,6 +203,8 @@ export function CatalogueSealedBrowser({
         missingPrice: missingPriceOnly,
       }),
     initialPageParam: 0,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((n, page) => n + page.products.length, 0);
       return loaded < lastPage.total

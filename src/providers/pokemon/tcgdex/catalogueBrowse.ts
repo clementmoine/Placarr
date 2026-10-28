@@ -14,6 +14,7 @@ import {
   tcgdexLocalizedImageBase,
 } from "@/providers/pokemon/tcgdex/fetch";
 import {
+  listTcgdexCatalogueBrowsePage,
   listTcgdexRowsForLanguage,
   tcgdexAssetDiskId,
   tcgdexDbPath,
@@ -107,4 +108,36 @@ export function buildPokemonCatalogueBrowseRows(): CatalogueCardRow[] {
 /** Test seam — drop in-process cache. */
 export function clearPokemonCatalogueBrowseCache(): void {
   cache = null;
+}
+
+export type PokemonCatalogueBrowsePageInput = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  printed?: "all" | "printed" | "unprinted";
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+};
+
+/** Paginated admin browse — SQL LIMIT/OFFSET (avoids ~60k row materialize). */
+export function listPokemonCatalogueBrowsePage(
+  input: PokemonCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  const printed = input.printed ?? "all";
+  const page = listTcgdexCatalogueBrowsePage({
+    langs: input.langs,
+    q: input.q,
+    offset: input.offset,
+    limit: input.limit,
+    includeUnprinted: true,
+    printedOnly: printed === "printed",
+    unprintedOnly: printed === "unprinted",
+    missingArtOnly: input.missingArtOnly,
+    missingNameOnly: input.missingNameOnly,
+  });
+  return {
+    total: page.total,
+    rows: page.rows.map((row) => rowToCatalogueCard(row)),
+  };
 }

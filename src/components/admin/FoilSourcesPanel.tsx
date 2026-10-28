@@ -186,6 +186,8 @@ export function FoilPackSources({
   const { data: statusPayload, refetch: refetchStatus } = useQuery({
     queryKey: ["foilStatus"],
     queryFn: fetchFoilStatus,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
     refetchInterval: jobRunning ? 4_000 : 30_000,
     refetchOnWindowFocus: true,
   });

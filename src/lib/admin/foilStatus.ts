@@ -108,15 +108,51 @@ function toIso(mtimeMs: number | null): string | null {
   return new Date(mtimeMs).toISOString();
 }
 
+type FoilStatusCache = {
+  fingerprint: string;
+  packs: FoilPackStatus[];
+};
+
+let foilStatusCache: FoilStatusCache | null = null;
+
+/** Test seam — drop in-process foil-status memo. */
+export function clearFoilPackStatusesCache(): void {
+  foilStatusCache = null;
+}
+
+async function foilStatusFingerprint(dataRoot: string): Promise<string> {
+  const parts: string[] = [dataRoot];
+  for (const pack of CATALOGUE_PACKS) {
+    const apkDir = path.join(dataRoot, pack.id, "staging", "apks");
+    const shadersDir = path.join(dataRoot, pack.id, "foil", "shaders");
+    for (const root of [apkDir, shadersDir, ...pack.extractMarkers.map((m) =>
+      path.join(dataRoot, pack.id, m),
+    )]) {
+      const info = await safeStat(root);
+      parts.push(
+        info
+          ? `${root}:${info.mtimeMs}:${info.isDirectory() ? "d" : "f"}:${info.size}`
+          : `${root}:0`,
+      );
+    }
+  }
+  return parts.join("\0");
+}
+
 /**
  * Observe on-disk APK + foil extract state for the admin APK lab.
  * Pure FS walk — one row per CATALOGUE_PACKS entry, paths from the registry.
+ * Memoized by aggregate mtime of apk / shaders / extract markers.
  */
 export async function readFoilPackStatuses(opts: {
   dataRoot: string;
   repoRoot: string;
 }): Promise<FoilPackStatus[]> {
   const { dataRoot } = opts;
+  const fingerprint = await foilStatusFingerprint(dataRoot);
+  if (foilStatusCache && foilStatusCache.fingerprint === fingerprint) {
+    return foilStatusCache.packs;
+  }
 
   const packs: Array<{
     id: FoilPackId;
@@ -184,5 +220,6 @@ export async function readFoilPackStatuses(opts: {
       extractTarget: pack.extractTarget,
     });
   }
+  foilStatusCache = { fingerprint, packs: results };
   return results;
 }

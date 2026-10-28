@@ -122,6 +122,13 @@ let activeDb: DatabaseSync | null = null;
 let activePath: string | null = null;
 let activeMtimeMs: number | null = null;
 
+type TcgdexLocalSetsCache = {
+  mtimeMs: number;
+  key: string;
+  rows: { id: string; label: string; sortKey?: number }[];
+};
+let localSetsCache: TcgdexLocalSetsCache | null = null;
+
 export function resetTcgdexIndexCache(): void {
   try {
     activeDb?.close();
@@ -131,6 +138,7 @@ export function resetTcgdexIndexCache(): void {
   activeDb = null;
   activePath = null;
   activeMtimeMs = null;
+  localSetsCache = null;
 }
 
 function createSchema(db: DatabaseSync): void {
@@ -778,6 +786,86 @@ export function listTcgdexRowsForLanguage(
     .all(lang) as TcgdexSearchRow[];
 }
 
+export type TcgdexCatalogueBrowsePageOpts = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  /** Admin default: include Pocket / unprinted. */
+  includeUnprinted?: boolean;
+  printedOnly?: boolean;
+  unprintedOnly?: boolean;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+};
+
+/**
+ * Paginated admin Catalogue browse — COUNT + LIMIT/OFFSET (no full materialize).
+ */
+export function listTcgdexCatalogueBrowsePage(
+  opts: TcgdexCatalogueBrowsePageOpts,
+): { rows: TcgdexSearchRow[]; total: number } {
+  const db = ensureTcgdexIndex();
+  if (!db) return { rows: [], total: 0 };
+  const langs = [
+    ...new Set(
+      opts.langs.map((lang) => lang.trim().toLowerCase()).filter(Boolean),
+    ),
+  ];
+  if (!langs.length) return { rows: [], total: 0 };
+  const offset = Math.max(0, Math.floor(opts.offset));
+  const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
+  const params: unknown[] = [];
+  const where: string[] = [
+    `t.lang IN (${langs.map(() => "?").join(",")})`,
+  ];
+  params.push(...langs);
+
+  if (opts.printedOnly) {
+    where.push("COALESCE(p.printed, 1) != 0");
+  } else if (opts.unprintedOnly) {
+    where.push("COALESCE(p.printed, 1) = 0");
+  } else if (opts.includeUnprinted !== true) {
+    where.push("COALESCE(p.printed, 1) != 0");
+  }
+
+  if (opts.missingArtOnly) {
+    where.push(
+      `(a.art IS NULL OR TRIM(a.art) = '') AND (p.image_base_url IS NULL OR TRIM(p.image_base_url) = '')`,
+    );
+  }
+  if (opts.missingNameOnly) {
+    where.push(`(t.name IS NULL OR TRIM(t.name) = '')`);
+  }
+  const q = opts.q?.trim().toLowerCase();
+  if (q) {
+    where.push(
+      `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_id) LIKE ? OR LOWER(p.local_id) LIKE ? OR LOWER(COALESCE(t.name, '')) LIKE ?)`,
+    );
+    const like = `%${q}%`;
+    params.push(like, like, like, like);
+  }
+
+  const whereSql = where.join(" AND ");
+  const totalRow = db
+    .prepare(
+      `SELECT COUNT(*) AS n
+         FROM ${TCGDEX_SEARCH_FROM}
+        WHERE ${whereSql}`,
+    )
+    .get(...params) as { n: number };
+  const rows = db
+    .prepare(
+      `SELECT ${TCGDEX_SEARCH_SELECT}
+         FROM ${TCGDEX_SEARCH_FROM}
+        WHERE ${whereSql}
+        ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id, t.lang
+        LIMIT ? OFFSET ?`,
+    )
+    .all(...params, limit, offset) as TcgdexSearchRow[];
+  return { rows, total: Number(totalRow?.n ?? 0) };
+}
+
 export type TcgdexTitleDetailGap = {
   printKey: string;
   lang: string;
@@ -877,6 +965,15 @@ export function listTcgdexLocalSets(
   if (!db) return [];
   const lang = language.trim().toLowerCase();
   const includeUnprinted = opts?.includeUnprinted === true;
+  const cacheKey = `${lang}\0${includeUnprinted ? 1 : 0}`;
+  const mtimeMs = activeMtimeMs ?? 0;
+  if (
+    localSetsCache &&
+    localSetsCache.mtimeMs === mtimeMs &&
+    localSetsCache.key === cacheKey
+  ) {
+    return localSetsCache.rows;
+  }
   /*
     Shelf / checklist: hide sets whose every print is `printed=0` (Pocket).
     Admin browse reads rows directly and does not use this list.
@@ -907,7 +1004,7 @@ export function listTcgdexLocalSets(
   const eraSerie = tcgdexEraSerieNames(rows);
   const ids = new Set(rows.map((row) => row.setId));
   const sortKeys = tcgdexBlockAwareSortKeys(rows);
-  return finalizeSetOptions(
+  const out = finalizeSetOptions(
     rows
       .filter((row) => !isLegacyTcgdexTrainerGalleryId(row.setId, ids))
       .map((row) => {
@@ -925,6 +1022,8 @@ export function listTcgdexLocalSets(
         };
       }),
   );
+  localSetsCache = { mtimeMs, key: cacheKey, rows: out };
+  return out;
 }
 
 /** `YYYY-MM-DD` / ISO → epoch ms for checklist `sortKey`. Invalid → null. */

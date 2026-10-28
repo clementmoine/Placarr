@@ -14,6 +14,8 @@ import {
 } from "@/providers/shared/cardFaces";
 import { catalogueFaceSourceRank } from "@/lib/admin/catalogueFacePick";
 
+import { resolveSealedLang } from "./lang";
+
 export type SealedProductFaceHit = {
   filePath: string;
   artFile: string;
@@ -74,13 +76,15 @@ function readDecision(dir: string): FaceDecision {
 export function resolveSealedProductFace(input: {
   packId: string;
   slug: string;
-  lang: string;
+  /** Index rows may keep `lang: null` (locale inferred from slug). */
+  lang?: string | null;
   role: AssetsSealedProductRole;
   productsDir?: string;
 }): SealedProductFaceHit | null {
-  const slug = input.slug.trim();
-  const lang = input.lang.trim().toLowerCase() || "fr";
+  const slug = (input.slug ?? "").trim();
   if (!slug) return null;
+  const lang =
+    resolveSealedLang({ lang: input.lang, slug })?.trim().toLowerCase() || "fr";
   const productsDir =
     input.productsDir ?? packSealedProductsDir(input.packId);
   const dir = path.join(productsDir, slug, lang);

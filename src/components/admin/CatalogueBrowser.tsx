@@ -289,11 +289,13 @@ export function CatalogueBrowser({
         printed: printedFilter,
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((n, page) => n + page.cards.length, 0);
-      return loaded < lastPage.total
-        ? lastPage.offset + lastPage.cards.length
-        : undefined;
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    getNextPageParam: (lastPage) => {
+      // Advance by requested limit (not cards.length) so optional pack-back
+      // tiles on page 0 do not shift the SQL/face offset.
+      const next = lastPage.offset + lastPage.limit;
+      return next < lastPage.total ? next : undefined;
     },
   });
 

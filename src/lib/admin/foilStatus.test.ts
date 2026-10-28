@@ -4,12 +4,16 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { readFoilPackStatuses } from "./foilStatus";
+import {
+  clearFoilPackStatusesCache,
+  readFoilPackStatuses,
+} from "./foilStatus";
 import { CATALOGUE_PACKS } from "./cataloguePacks";
 
 const tmpDirs: string[] = [];
 
 afterEach(async () => {
+  clearFoilPackStatusesCache();
   const { rm } = await import("node:fs/promises");
   await Promise.all(
     tmpDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
@@ -102,5 +106,18 @@ describe("readFoilPackStatuses", () => {
     expect(lorcana?.extract.stale).toBe(true);
     expect(lorcana?.canExtract).toBe(true);
     expect(lorcana?.extract.shaders).toBe(1);
+  });
+
+  it("memoizes by FS fingerprint across identical reads", async () => {
+    const { repo, data } = await makeRepo();
+    const first = await readFoilPackStatuses({
+      dataRoot: data,
+      repoRoot: repo,
+    });
+    const second = await readFoilPackStatuses({
+      dataRoot: data,
+      repoRoot: repo,
+    });
+    expect(second).toBe(first);
   });
 });

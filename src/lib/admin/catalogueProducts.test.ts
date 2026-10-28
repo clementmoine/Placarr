@@ -8,6 +8,7 @@ import {
   enrichSealedPrintLinks,
   getCatalogueProductDetail,
   getCatalogueProductDetailAsync,
+  isSealedProductRoleUrl,
   listCatalogueProducts,
   resetCatalogueProductsCache,
   resolveSealedLotterySetId,
@@ -190,6 +191,32 @@ function baseEntry(
     ...overrides,
   };
 }
+
+describe("isSealedProductRoleUrl", () => {
+  it("recognizes role URLs and rejects legacy / remote", () => {
+    expect(
+      isSealedProductRoleUrl(
+        "/assets/pokemon/products/booster-sv8/fr/face",
+        "face",
+      ),
+    ).toBe(true);
+    expect(
+      isSealedProductRoleUrl(
+        "/assets/pokemon/products/booster-sv8/fr/back",
+        "back",
+      ),
+    ).toBe(true);
+    expect(
+      isSealedProductRoleUrl(
+        "/assets/pokemon/products/booster-sv8/fr/face.webp",
+        "face",
+      ),
+    ).toBe(false);
+    expect(
+      isSealedProductRoleUrl("https://cdn.example/face.jpg", "face"),
+    ).toBe(false);
+  });
+});
 
 describe("catalogue sealed rows", () => {
   it("labels a preview booster without claiming known contents", () => {

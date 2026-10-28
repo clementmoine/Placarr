@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { packSyncedSourcePath } from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 export const NARUTO_KAYOU_PACK_ID = "naruto/kayou";
 export const NARUTO_KAYOU_EFFECT_PACK_ID = "naruto-kayou";
@@ -21,7 +21,8 @@ export function narutoKayouCuratedDir(): string {
   );
 }
 
-/** Synced crawl ledgers — `data/naruto/kayou/sources/<file>`. */
-export function narutoKayouSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(NARUTO_KAYOU_PACK_ID, fileName);
-}
+const synced = definePackSyncedSources(NARUTO_KAYOU_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const narutoKayouSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const narutoKayouSourcePath = synced.sourcePath;

@@ -51,7 +51,7 @@ import {
 } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { narutoRanksSyncedSourcePath, NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "../pack";
+import { narutoRanksSourcePath, NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "../pack";
 import { ninjaRanksPrintKey } from "../printKey";
 import { readInkworksChecklist } from "../pipeline/ledgers";
 import {
@@ -149,7 +149,7 @@ export type AnimeCollectionRanksLedger = {
 };
 
 export function animeCollectionRanksLedgerPath(): string {
-  return narutoRanksSyncedSourcePath(AC_LEDGER_FILE);
+  return narutoRanksSourcePath(AC_LEDGER_FILE);
 }
 
 export function readAnimeCollectionRanksLedger(): AnimeCollectionRanksLedger {
@@ -555,7 +555,7 @@ export type ColekaNinjaRanksLedger = {
 };
 
 export function colekaNinjaRanksLedgerPath(): string {
-  return narutoRanksSyncedSourcePath(COLEKA_LEDGER_FILE);
+  return narutoRanksSourcePath(COLEKA_LEDGER_FILE);
 }
 
 export function readColekaNinjaRanksLedger(): ColekaNinjaRanksLedger {
@@ -1142,7 +1142,7 @@ export type EbayNinjaRanksLedger = {
 };
 
 export function ebayNinjaRanksLedgerPath(): string {
-  return narutoRanksSyncedSourcePath(EBAY_LEDGER_FILE);
+  return narutoRanksSourcePath(EBAY_LEDGER_FILE);
 }
 
 export function readEbayNinjaRanksLedger(): EbayNinjaRanksLedger {
@@ -1282,7 +1282,7 @@ const INKWORKS_STAGING_FOLDER = "inkworks";
 const INKWORKS_ART_FILE = "art.inkworks.jpg";
 
 export function inkworksProductsPath(): string {
-  return narutoRanksSyncedSourcePath(INKWORKS_LEDGER_FILE);
+  return narutoRanksSourcePath(INKWORKS_LEDGER_FILE);
 }
 
 export function readInkworksProductsLedger(): InkworksProductsLedger {
@@ -1551,7 +1551,7 @@ const BLOGGER_LEDGER_FILE = "blogger-pack-rip.json";
 const BLOGGER_STAGING_FOLDER = "blogger-pack-rip";
 
 export function bloggerPackRipPath(): string {
-  return narutoRanksSyncedSourcePath(BLOGGER_LEDGER_FILE);
+  return narutoRanksSourcePath(BLOGGER_LEDGER_FILE);
 }
 
 export function readBloggerPackRipLedger(): BloggerPackRipLedger {
@@ -2001,7 +2001,7 @@ export function readArcadeGameCardsLedger(): {
 } {
   return JSON.parse(
     readFileSync(
-      narutoRanksSyncedSourcePath(ARCADE_LEDGER_FILE),
+      narutoRanksSourcePath(ARCADE_LEDGER_FILE),
       "utf8",
     ),
   );

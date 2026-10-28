@@ -7,7 +7,7 @@ import path from "node:path";
 
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { NARUTO_MYTHOS_PACK_ID, narutoMythosSyncedSourcePath } from "../pack";
+import { narutoMythosSourcePath, NARUTO_MYTHOS_PACK_ID } from "../pack";
 import {
   NARUTO_MYTHOS_KS1_SET_CODE,
   NARUTO_MYTHOS_KS1E2_SET_CODE,
@@ -48,7 +48,7 @@ export const MYTHOS_TITLE_LANG = "fr";
 export function mythosChecklistPath(
   file: string = LORENZONE_FILES[0],
 ): string {
-  return narutoMythosSyncedSourcePath(file);
+  return narutoMythosSourcePath(file);
 }
 
 export function mythosOfficialChecklistPath(): string {

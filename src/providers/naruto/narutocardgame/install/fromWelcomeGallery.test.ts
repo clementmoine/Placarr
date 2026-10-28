@@ -9,14 +9,14 @@ import {
   NARUTO_CARDGAME_PACK_ID,
   narutoCardgameCuratedDir,
 } from "../pack";
-import { narutoCardgameSyncedSourcePath } from "../syncedSources";
+import { narutoCardgameSourcePath } from "../syncedSources";
 import { installNarutoCardgameWelcomeGallery } from "./fromWelcomeGallery";
 
 describe("naruto cardgame welcome gallery", () => {
   it("ships a curated ledger of 12 SAMPLE characters", () => {
     const ledger = JSON.parse(
       readFileSync(
-        narutoCardgameSyncedSourcePath("bandai-welcome-gallery.json"),
+        narutoCardgameSourcePath("bandai-welcome-gallery.json"),
         "utf8",
       ),
     ) as { cards: { number: string; nameEn: string }[] };

@@ -1,11 +1,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  packSyncedSourcesDir,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { packSyncedSourcesDir } from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 /** Family pack id for shared deals + synced source ledgers. */
 export const LECLERC_FAMILY_PACK_ID = "leclerc";
@@ -15,15 +12,11 @@ export function leclercCuratedDir(): string {
   return path.join(process.cwd(), "src", "providers", "leclerc", "curated");
 }
 
+const synced = definePackSyncedSources(LECLERC_FAMILY_PACK_ID);
 /** Synced crawl ledgers — write target under `data/leclerc/sources/`. */
-export function leclercSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(LECLERC_FAMILY_PACK_ID, fileName);
-}
-
+export const leclercSyncedSourcePath = synced.syncedSourcePath;
 /** Read path — falls back to repo `cwd/data` when `PLACARR_DATA_DIR` is empty. */
-export function leclercSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(LECLERC_FAMILY_PACK_ID, fileName);
-}
+export const leclercSourcePath = synced.sourcePath;
 
 /** Read dir for synced ledgers (prefer live dataRoot, else repo fixtures). */
 export function leclercSyncedSourcesDir(): string {

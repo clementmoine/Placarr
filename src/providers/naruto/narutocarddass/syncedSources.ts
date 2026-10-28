@@ -5,14 +5,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 import { NARUTO_PACK_ID } from "./packs";
 
 const cache = new Map<string, unknown>();
+const synced = definePackSyncedSources(NARUTO_PACK_ID);
 
 function curatedSourcesDir(): string {
   return path.join(
@@ -26,17 +24,16 @@ function curatedSourcesDir(): string {
   );
 }
 
-export function narutoCarddassSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(NARUTO_PACK_ID, fileName);
-}
+/** Write target under `dataRoot()`. */
+export const narutoCarddassSyncedSourcePath = synced.syncedSourcePath;
 
 /**
  * Prefer synced data/ copy (incl. repo fallback when `PLACARR_DATA_DIR` is an
  * empty stub); then curated dig/attestation path.
  */
 export function narutoCarddassSourcePath(fileName: string): string {
-  const synced = resolvePackSyncedSourcePath(NARUTO_PACK_ID, fileName);
-  if (existsSync(synced)) return synced;
+  const resolved = synced.sourcePath(fileName);
+  if (existsSync(resolved)) return resolved;
   return path.join(curatedSourcesDir(), fileName);
 }
 
@@ -46,7 +43,7 @@ export function readNarutoCarddassSyncedSource<T = any>(
 ): T {
   const hit = cache.get(fileName);
   if (hit !== undefined) return hit as T;
-  const p = resolvePackSyncedSourcePath(NARUTO_PACK_ID, fileName);
+  const p = synced.sourcePath(fileName);
   if (!existsSync(p)) {
     throw new Error(`missing synced Carddass source: ${fileName} (${p})`);
   }

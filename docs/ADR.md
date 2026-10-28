@@ -85,7 +85,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   n'existent plus en ligne (visuels Naruto, reconstructions).
 - **Décision** : tout ce qu'un **Sync / harvest** peut reconstruire vit sous
   `data/<pack>/` (gitignored) — ledgers crawlés (`sources/`,
-  `packSyncedSourcePath`), cotes marketplace, faces/backs/packshots
+  `definePackSyncedSources` / `packSyncedSourcePath`), cotes marketplace, faces/backs/packshots
   récupérables par URL (`cards/`, `products/`, `staging/`). Ce qui est
   **assemblé à la main et non rejouable** vit dans
   `src/providers/<id>/curated/` (commité) : digs, reconstructions,

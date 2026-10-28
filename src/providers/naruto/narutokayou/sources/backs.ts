@@ -31,6 +31,7 @@ import {
 } from "../identity";
 import {
   NARUTO_KAYOU_PACK_ID,
+  narutoKayouSourcePath,
   narutoKayouSyncedSourcePath,
 } from "../pack";
 import {
@@ -81,7 +82,7 @@ const MANIFEST = "kayou-official-card-backs.json";
 let cached: KayouOfficialCardBackManifest | null | undefined;
 
 export function kayouOfficialCardBackManifestPath(): string {
-  return narutoKayouSyncedSourcePath(MANIFEST);
+  return narutoKayouSourcePath(MANIFEST);
 }
 
 export function readKayouOfficialCardBackManifest():
@@ -209,7 +210,7 @@ let aliasFileCache: KayouBackAliasFile | null = null;
 
 function loadKayouBackAliasFile(): KayouBackAliasFile {
   if (aliasFileCache) return aliasFileCache;
-  const p = narutoKayouSyncedSourcePath("kayou-back-aliases.json");
+  const p = narutoKayouSourcePath("kayou-back-aliases.json");
   if (!existsSync(p)) {
     aliasFileCache = {};
     return aliasFileCache;
@@ -645,7 +646,7 @@ export function dedupeKayouCuratedTierBacks(
 
 /** True when pack tier PNG is older than the manifest (re-harvest hint). */
 export function kayouOfficialBacksStale(curatedCardsDir: string): boolean {
-  const manifestPath = narutoKayouSyncedSourcePath(
+  const manifestPath = narutoKayouSourcePath(
     "kayou-official-tier-backs.json");
   if (!existsSync(manifestPath)) return true;
   const manifestMtime = statSync(manifestPath).mtimeMs;

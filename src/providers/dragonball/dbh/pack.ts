@@ -1,10 +1,8 @@
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
+/** Disk / admin pack. */
 export const DBH_PACK_ID = "dragonball/heroes";
 export const DBH_EFFECT_PACK_ID = "dbs-heroes";
 export const DBH_PROVIDER_ID = "dbh";
@@ -21,11 +19,8 @@ export function dbhCuratedDir(): string {
   );
 }
 
-export function dbhSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(DBH_PACK_ID, fileName);
-}
-
-export function dbhSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(DBH_PACK_ID, fileName);
-}
-
+const synced = definePackSyncedSources(DBH_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const dbhSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const dbhSourcePath = synced.sourcePath;

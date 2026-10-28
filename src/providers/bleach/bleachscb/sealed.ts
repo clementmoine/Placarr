@@ -27,7 +27,6 @@ import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 import {
   BLEACH_SCB_PACK_ID,
   bleachScbCuratedDir,
-  bleachScbSyncedSourcePath,
   bleachScbSourcePath,
 } from "./pack";
 import { bleachScbPrintKey } from "./printKey";
@@ -130,7 +129,7 @@ export function bleachScbSealedContentHash(): string {
  * non-promo FR printKeys — exact starter-only vs booster split not keyed yet.
  */
 export function bleachFrS1BoosterPoolPrintKeys(): string[] {
-  const ledgerPath = bleachScbSyncedSourcePath("carddass-fr-bleach.json");
+  const ledgerPath = bleachScbSourcePath("carddass-fr-bleach.json");
   if (!existsSync(ledgerPath)) return [];
   try {
     const raw = JSON.parse(readFileSync(ledgerPath, "utf8")) as {

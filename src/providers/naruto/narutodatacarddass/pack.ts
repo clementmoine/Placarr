@@ -1,9 +1,6 @@
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 export const NARUTO_DATA_CARDDASS_PACK_ID = "naruto/data-carddass";
 export const NARUTO_DATA_CARDDASS_EFFECT_PACK_ID = "naruto-data-carddass";
@@ -22,12 +19,8 @@ export function narutoDataCarddassCuratedDir(): string {
   );
 }
 
+const synced = definePackSyncedSources(NARUTO_DATA_CARDDASS_PACK_ID);
 /** Write target under `dataRoot()`. */
-export function narutoDataCarddassSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(NARUTO_DATA_CARDDASS_PACK_ID, fileName);
-}
-
-/** Read path — falls back to repo `cwd/data` when `PLACARR_DATA_DIR` is empty. */
-export function narutoDataCarddassSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(NARUTO_DATA_CARDDASS_PACK_ID, fileName);
-}
+export const narutoDataCarddassSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const narutoDataCarddassSourcePath = synced.sourcePath;

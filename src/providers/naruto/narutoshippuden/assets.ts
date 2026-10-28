@@ -9,10 +9,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 import { NARUTO_SHIPPUDEN_PACK_ID } from "./indexStore";
 
@@ -90,15 +87,11 @@ export function narutoShippudenCuratedDir(): string {
   );
 }
 
+const synced = definePackSyncedSources(NARUTO_SHIPPUDEN_PACK_ID);
 /** Synced crawl ledgers — write target under `dataRoot()`. */
-export function narutoShippudenSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(NARUTO_SHIPPUDEN_PACK_ID, fileName);
-}
-
+export const narutoShippudenSyncedSourcePath = synced.syncedSourcePath;
 /** Read path — falls back to repo `cwd/data` when `PLACARR_DATA_DIR` is empty. */
-export function narutoShippudenSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(NARUTO_SHIPPUDEN_PACK_ID, fileName);
-}
+export const narutoShippudenSourcePath = synced.sourcePath;
 
 const syncedJsonCache = new Map<string, unknown>();
 

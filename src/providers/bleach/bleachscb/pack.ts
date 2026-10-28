@@ -1,9 +1,6 @@
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 /** Disk / admin pack. */
 export const BLEACH_SCB_PACK_ID = "bleach/scb";
@@ -22,11 +19,8 @@ export function bleachScbCuratedDir(): string {
   );
 }
 
-export function bleachScbSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(BLEACH_SCB_PACK_ID, fileName);
-}
-
-export function bleachScbSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(BLEACH_SCB_PACK_ID, fileName);
-}
-
+const synced = definePackSyncedSources(BLEACH_SCB_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const bleachScbSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const bleachScbSourcePath = synced.sourcePath;

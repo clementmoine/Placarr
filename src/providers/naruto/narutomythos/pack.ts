@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { packSyncedSourcePath } from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 export const NARUTO_MYTHOS_PACK_ID = "naruto/mythos";
 export const NARUTO_MYTHOS_EFFECT_PACK_ID = "naruto-mythos";
@@ -19,6 +19,8 @@ export function narutoMythosCuratedDir(): string {
   );
 }
 
-export function narutoMythosSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(NARUTO_MYTHOS_PACK_ID, fileName);
-}
+const synced = definePackSyncedSources(NARUTO_MYTHOS_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const narutoMythosSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const narutoMythosSourcePath = synced.sourcePath;

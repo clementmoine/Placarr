@@ -11,7 +11,7 @@ import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import { ninjaRanksPrintKey } from "../printKey";
-import { narutoRanksSyncedSourcePath, NARUTO_RANKS_PACK_ID } from "../pack";
+import { narutoRanksSourcePath, NARUTO_RANKS_PACK_ID } from "../pack";
 
 export type InkworksChecklistCard = {
   printed: string;
@@ -42,7 +42,7 @@ type EuropeanNsChecklist = {
 const CHECKLIST_FILE = "inkworks-checklist.json";
 
 export function inkworksChecklistPath(): string {
-  return narutoRanksSyncedSourcePath(CHECKLIST_FILE);
+  return narutoRanksSourcePath(CHECKLIST_FILE);
 }
 
 export function readInkworksChecklist(): Checklist {
@@ -122,7 +122,7 @@ export function buildNinjaRanksFromLedgers(
 const EUROPEAN_NS_FILE = "european-ns-checklist.json";
 
 export function europeanNsChecklistPath(): string {
-  return narutoRanksSyncedSourcePath(EUROPEAN_NS_FILE);
+  return narutoRanksSourcePath(EUROPEAN_NS_FILE);
 }
 
 export function readEuropeanNsChecklist(): EuropeanNsChecklist {
@@ -144,7 +144,7 @@ export function buildEuropeanNsFromLedger(
 const SUPPLEMENTAL_PROMOS_FILE = "supplemental-promos-checklist.json";
 
 export function supplementalPromosChecklistPath(): string {
-  return narutoRanksSyncedSourcePath(SUPPLEMENTAL_PROMOS_FILE);
+  return narutoRanksSourcePath(SUPPLEMENTAL_PROMOS_FILE);
 }
 
 export function readSupplementalPromosChecklist(): SupplementalChecklist {

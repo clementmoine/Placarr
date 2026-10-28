@@ -38,7 +38,7 @@ import { readDataCarddassChecklist } from "../pipeline/ledgers";
 import {
   NARUTO_DATA_CARDDASS_PACK_ID,
   narutoDataCarddassCuratedDir,
-  narutoDataCarddassSyncedSourcePath,
+  narutoDataCarddassSyncedSourcePath, narutoDataCarddassSourcePath,
 } from "../pack";
 import {
   dataCarddassPrintKey,
@@ -89,7 +89,7 @@ function curatedSourceBytes(file: string): Buffer {
 }
 
 function syncedSourceBytes(file: string): Buffer {
-  return readFileSync(narutoDataCarddassSyncedSourcePath(file));
+  return readFileSync(narutoDataCarddassSourcePath(file));
 }
 
 export function dataCarddassChitoroshopContentHash(): string {

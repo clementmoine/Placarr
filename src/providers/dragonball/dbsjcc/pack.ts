@@ -1,9 +1,6 @@
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 /** Disk / admin pack — under the Dragon Ball franchise tree. */
 export const DBS_JCC_PACK_ID = "dragonball/jcc";
@@ -23,11 +20,8 @@ export function dbsJccCuratedDir(): string {
   );
 }
 
-export function dbsJccSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(DBS_JCC_PACK_ID, fileName);
-}
-
-export function dbsJccSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(DBS_JCC_PACK_ID, fileName);
-}
-
+const synced = definePackSyncedSources(DBS_JCC_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const dbsJccSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const dbsJccSourcePath = synced.sourcePath;

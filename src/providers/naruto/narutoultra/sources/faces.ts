@@ -25,7 +25,7 @@ import {
   promoteAndPurgeNarutoDig,
 } from "@/providers/naruto/shared/promoteNarutoDig";
 
-import { narutoUltraSyncedSourcePath, NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "../pack";
+import { narutoUltraSourcePath, NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "../pack";
 import {
   COLEKA_ULTRA_LANG,
   COLEKA_ULTRA_LISTING_PATH,
@@ -85,7 +85,7 @@ export type AnimeCollectionFacesLedger = {
 };
 
 export function animeCollectionFacesLedgerPath(): string {
-  return narutoUltraSyncedSourcePath(AC_LEDGER_FILE);
+  return narutoUltraSourcePath(AC_LEDGER_FILE);
 }
 
 export function readAnimeCollectionFacesLedger(): AnimeCollectionFacesLedger {
@@ -321,7 +321,7 @@ export type ColekaUltraFacesLedger = {
 };
 
 export function colekaUltraFacesLedgerPath(): string {
-  return narutoUltraSyncedSourcePath(COLEKA_ULTRA_LEDGER_FILE);
+  return narutoUltraSourcePath(COLEKA_ULTRA_LEDGER_FILE);
 }
 
 export function readColekaUltraFacesLedger(): ColekaUltraFacesLedger {
@@ -580,7 +580,7 @@ const COLEKA_ALBUM_LEDGER_FILE = "coleka-album.json";
 const COLEKA_ALBUM_STAGING_FOLDER = "coleka";
 
 export function colekaAlbumPath(): string {
-  return narutoUltraSyncedSourcePath(COLEKA_ALBUM_LEDGER_FILE);
+  return narutoUltraSourcePath(COLEKA_ALBUM_LEDGER_FILE);
 }
 
 export function readColekaAlbumLedger(): ColekaAlbumLedger {

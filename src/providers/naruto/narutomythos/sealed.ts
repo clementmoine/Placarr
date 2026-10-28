@@ -11,7 +11,7 @@ import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 import {
   NARUTO_MYTHOS_PACK_ID,
-  narutoMythosSyncedSourcePath,
+  narutoMythosSourcePath,
 } from "./pack";
 
 const LEDGER_FILE = "lorenzone-products.json";
@@ -42,7 +42,7 @@ export type LorenzoneProductsLedger = {
 };
 
 export function lorenzoneProductsPath(): string {
-  return narutoMythosSyncedSourcePath(LEDGER_FILE);
+  return narutoMythosSourcePath(LEDGER_FILE);
 }
 
 export function readLorenzoneProductsLedger(): LorenzoneProductsLedger {

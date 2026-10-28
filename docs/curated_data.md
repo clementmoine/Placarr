@@ -121,12 +121,20 @@ pack : `narutocarddass` (`mergeAttestedLedgers.ts`), `narutoshippuden`
 (`buildFromLedgers.ts`), `narutoranks`, `narutoultra`.
 
 **Syncables ≠ curated.** Checklists / ledgers crawlés + `observed` (y compris
-dumps historiques plus jamais réécrits) → `data/<pack>/sources/`
-(`packSyncedSourcePath` / `resolvePackSyncedSourcePath`). Cotes marketplace →
-`data/<pack>/coleka-prices.json`, `suruga-prices.json`, `pkmcards-fr.json`, etc.
-Curated ne garde que digs / maps d’ids / Wayback durable / reconstructions.
-Ledgers Carddass / Shippuden / Ranks / Ultra / Cardgame / Pokémon McDo /
-Leclerc lus au runtime depuis `data/` (pas d’import TS statique des syncables).
+dumps historiques plus jamais réécrits) → `data/<pack>/sources/` via
+`definePackSyncedSources(packId)` (`@/providers/shared/syncedSources`) :
+
+- `*SyncedSourcePath` — **écriture** (`packSyncedSourcePath` / `dataRoot`)
+- `*SourcePath` — **lecture** (`resolvePackSyncedSourcePath`, fallback
+  `cwd/data` si `PLACARR_DATA_DIR` est un stub vide)
+
+Ne pas importer ces helpers depuis un module atteint par le graphe effects
+client (`pack.ts` = constantes OK ; Leclerc / Card Game séparent déjà disk
+helpers). Cotes marketplace → `data/<pack>/coleka-prices.json`,
+`suruga-prices.json`, `pkmcards-fr.json`, etc. Curated ne garde que digs /
+maps d’ids / Wayback durable / reconstructions. Ledgers Carddass / Shippuden /
+Ranks / Ultra / Cardgame / Pokémon McDo / Leclerc lus au runtime depuis
+`data/` (pas d’import TS statique des syncables).
 
 ## Markdown
 

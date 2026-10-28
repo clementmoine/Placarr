@@ -15,7 +15,7 @@ import {
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import { ninjaRanksPrintKey } from "../printKey";
-import { narutoRanksSyncedSourcePath, NARUTO_RANKS_PACK_ID } from "../pack";
+import { narutoRanksSourcePath, NARUTO_RANKS_PACK_ID } from "../pack";
 
 /** Locales EU hors EN : noms partagés = titre Inkworks, sauf attestation. */
 export const NINJA_RANKS_SHARED_TITLE_LANGS = ["fr", "it"] as const;
@@ -50,11 +50,11 @@ const LANGUAGE_SPECIFIC_FILE = "language-specific-cards.json";
 const SET_CODE = "nr";
 
 export function frenchTitlesLedgerPath(): string {
-  return narutoRanksSyncedSourcePath(LEDGER_FILE);
+  return narutoRanksSourcePath(LEDGER_FILE);
 }
 
 export function languageSpecificCardsPath(): string {
-  return narutoRanksSyncedSourcePath(LANGUAGE_SPECIFIC_FILE);
+  return narutoRanksSourcePath(LANGUAGE_SPECIFIC_FILE);
 }
 
 export function readFrenchTitlesLedger(): FrenchTitlesLedger {

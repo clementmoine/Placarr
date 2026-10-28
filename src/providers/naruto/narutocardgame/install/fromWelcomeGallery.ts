@@ -16,7 +16,7 @@ import {
   NARUTO_CARDGAME_PACK_ID,
   narutoCardgameCuratedDir,
 } from "../pack";
-import { narutoCardgameSyncedSourcePath } from "../syncedSources";
+import { narutoCardgameSourcePath } from "../syncedSources";
 import {
   NARUTO_CARDGAME_PREVIEW_SET,
   narutoCardgamePrintKey,
@@ -47,7 +47,7 @@ type GalleryLedger = {
 };
 
 function loadLedger(): GalleryLedger {
-  const file = narutoCardgameSyncedSourcePath("bandai-welcome-gallery.json");
+  const file = narutoCardgameSourcePath("bandai-welcome-gallery.json");
   return JSON.parse(readFileSync(file, "utf8")) as GalleryLedger;
 }
 

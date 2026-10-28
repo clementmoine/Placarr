@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { resolvePackSyncedSourcePath } from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 /** Ligne Catalogue / data pack. */
 export const NARUTO_RANKS_PACK_ID = "naruto/ninja-ranks";
@@ -18,7 +18,8 @@ export function narutoRanksCuratedDir(): string {
   );
 }
 
-/** Synced crawl ledgers — `data/naruto/ninja-ranks/sources/<file>`. */
-export function narutoRanksSyncedSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(NARUTO_RANKS_PACK_ID, fileName);
-}
+const synced = definePackSyncedSources(NARUTO_RANKS_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const narutoRanksSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const narutoRanksSourcePath = synced.sourcePath;

@@ -24,7 +24,7 @@ import {
   NARUTO_CARDGAME_PACK_ID,
   narutoCardgameCuratedDir,
 } from "../pack";
-import { narutoCardgameSyncedSourcePath } from "../syncedSources";
+import {  } from "../syncedSources";
 import {
   absoluteNarutoMarketUrl,
   narutoMarketDetailUrl,

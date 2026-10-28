@@ -1,9 +1,6 @@
 import path from "node:path";
 
-import {
-  packSyncedSourcePath,
-  resolvePackSyncedSourcePath,
-} from "@/lib/packPaths";
+import { definePackSyncedSources } from "@/providers/shared/syncedSources";
 
 /** Disk / admin pack — under the Dragon Ball franchise tree. */
 export const DBS_LAMINCARDS_PACK_ID = "dragonball/lamincards";
@@ -23,10 +20,8 @@ export function dbsLamincardsCuratedDir(): string {
   );
 }
 
-export function dbsLamincardsSyncedSourcePath(fileName: string): string {
-  return packSyncedSourcePath(DBS_LAMINCARDS_PACK_ID, fileName);
-}
-
-export function dbsLamincardsSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath(DBS_LAMINCARDS_PACK_ID, fileName);
-}
+const synced = definePackSyncedSources(DBS_LAMINCARDS_PACK_ID);
+/** Write target under `dataRoot()`. */
+export const dbsLamincardsSyncedSourcePath = synced.syncedSourcePath;
+/** Read path — dataRoot first, then repo `cwd/data` fallback. */
+export const dbsLamincardsSourcePath = synced.sourcePath;

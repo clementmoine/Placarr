@@ -55,6 +55,7 @@ import {
 } from "../parse/catalogues";
 import {
   narutoMythosCuratedDir,
+  narutoMythosSourcePath,
   narutoMythosSyncedSourcePath,
   NARUTO_MYTHOS_PACK_ID,
 } from "../pack";

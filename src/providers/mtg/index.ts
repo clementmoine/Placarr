@@ -2,6 +2,7 @@
  * Magic: The Gathering — catalogue local Scryfall.
  */
 import { createEmptyLocalTcgProvider } from "@/providers/shared/cardCatalogue/createEmptyLocalTcgProvider";
+import { fullsetSetLabel } from "@/providers/shared/fullset/setLabels";
 
 import { decorateMtgCandidate } from "./finishes";
 import {
@@ -34,16 +35,19 @@ const built = createEmptyLocalTcgProvider({
     syncHint: "Catalogue Sync (admin) — Scryfall all_cards",
     websiteUrl: "https://scryfall.com/",
     notes:
-      "Magic: The Gathering → `data/mtg/`. Moisson Scryfall `all_cards` — titres/faces **en** (original) + **fr**, plus exclusives hors EN/FR. Finishes sur le candidat, pas dans la printKey. Catalogue-only.",
+      "Magic: The Gathering → `data/mtg/`. Moisson Scryfall `all_cards` — titres/faces **en** (original) + **fr**, plus exclusives hors EN/FR. Fullset.fr libellés FR set (pack_documents). Finishes sur le candidat, pas dans la printKey. Catalogue-only.",
     formatReference: formatMtgReference,
     borrowFaceAcrossLocales: true,
     decorateCandidate: (base) => decorateMtgCandidate(base),
-    listRemotePrintSets: async () => {
+    setLabel: (code, language) =>
+      fullsetSetLabel(MTG_PACK_ID, code, language) ??
+      code.trim().toUpperCase(),
+    listRemotePrintSets: async (language) => {
       const { listScryfallRemoteSets } = await import(
         /* webpackIgnore: true */
         "./harvest/listScryfallSets"
       );
-      return listScryfallRemoteSets();
+      return listScryfallRemoteSets({ language });
     },
   },
   runPipeline: async (argv) => {

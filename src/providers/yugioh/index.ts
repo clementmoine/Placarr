@@ -2,6 +2,7 @@
  * Yu-Gi-Oh! — ligne catalogue locale (vide jusqu'à la moisson).
  */
 import { createEmptyLocalTcgProvider } from "@/providers/shared/cardCatalogue/createEmptyLocalTcgProvider";
+import { fullsetSetLabel } from "@/providers/shared/fullset/setLabels";
 
 import {
   YUGIOH_EFFECT_PACK_ID,
@@ -37,10 +38,13 @@ const built = createEmptyLocalTcgProvider({
     listSetLanguages: ["en", "fr"],
     formatReference: (set, number) => formatYugiohReference(set, number),
     normalizeSearchQuery: normalizeYugiohSearchQuery,
+    setLabel: (code, language) =>
+      fullsetSetLabel(YUGIOH_PACK_ID, code, language) ??
+      code.trim().toUpperCase(),
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.db.yugioh-card.com/yugiohdb/",
     notes:
-      "Yu-Gi-Oh! TCG → `data/yugioh/`. YGOPRODeck (EN+FR names, images) + ScanFlip FR (codes LDD-F…). Konami Neuron sans API publique.",
+      "Yu-Gi-Oh! TCG → `data/yugioh/`. YGOPRODeck (EN+FR names, images) + ScanFlip FR (codes LDD-F…). Fullset.fr libellés FR set (pack_documents). Konami Neuron sans API publique.",
   },
   runPipeline: async (argv) => {
     const { runYugiohPackPipeline } = await import(

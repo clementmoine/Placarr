@@ -157,6 +157,63 @@ export async function runYugiohPackPipeline(
     }
   }
 
+  if (steps.includes("seed") && !skipToken(argv, "fullset")) {
+    if (!offline) {
+      try {
+        const { harvestFullsetSets } = await import(
+          "@/providers/shared/fullset/harvestSets"
+        );
+        const { installFullsetSetLabelsFromLedger } = await import(
+          "@/providers/shared/fullset/setLabels"
+        );
+        const ledger = await harvestFullsetSets({
+          packId: YUGIOH_PACK_ID,
+          game: "yugioh",
+        });
+        const installed = installFullsetSetLabelsFromLedger(
+          YUGIOH_PACK_ID,
+          ledger,
+        );
+        console.log(
+          `── Fullset.fr sets — ${ledger.sets.length} moissonnés, ${installed.codes} libellés → pack_documents`,
+        );
+      } catch (err) {
+        console.warn(
+          `── Fullset.fr sets — échec : ${err instanceof Error ? err.message : err}`,
+        );
+        try {
+          const { installFullsetSetLabelsFromDisk } = await import(
+            "@/providers/shared/fullset/setLabels"
+          );
+          const fallback = installFullsetSetLabelsFromDisk(YUGIOH_PACK_ID);
+          if (fallback) {
+            console.log(
+              `── Fullset.fr sets — ledger disque : ${fallback.codes} libellés`,
+            );
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    } else {
+      try {
+        const { installFullsetSetLabelsFromDisk } = await import(
+          "@/providers/shared/fullset/setLabels"
+        );
+        const fallback = installFullsetSetLabelsFromDisk(YUGIOH_PACK_ID);
+        if (fallback) {
+          console.log(
+            `── Fullset.fr sets — offline ledger : ${fallback.codes} libellés`,
+          );
+        }
+      } catch (err) {
+        console.warn(
+          `── Fullset.fr sets — offline : ${err instanceof Error ? err.message : err}`,
+        );
+      }
+    }
+  }
+
   const result = await runLocalTcgPipeline({
     packId: YUGIOH_PACK_ID,
     curatedDir: yugiohCuratedDir(),

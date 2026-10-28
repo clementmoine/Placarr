@@ -5,7 +5,12 @@
  * local. `products-index.json` may still be written as a projection during
  * transition; runtime prefers sqlite when the tables are present.
  */
-import { existsSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  renameSync,
+  unlinkSync,
+} from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -19,6 +24,16 @@ import {
 
 /** Wait for writers (Sync / browse / worker) instead of failing SQLITE_BUSY. */
 const PACK_SQLITE_BUSY_MS = 30_000;
+
+/**
+ * Tables rewritten wholesale by sealed ingest — safe to drop on salvage.
+ * Identity / pack docs are copied when still readable.
+ */
+const PRODUCTS_REWRITE_TABLES = new Set([
+  "products",
+  "product_contents",
+  "sqlite_sequence",
+]);
 
 function configurePackSqlite(
   db: DatabaseSync,
@@ -121,12 +136,156 @@ export function migrateProductsSchema(db: DatabaseSync): void {
   `);
 }
 
-export function writeProductsIndexToSqlite(
+function unlinkSqliteSidecars(dbPath: string): void {
+  for (const side of [`${dbPath}-wal`, `${dbPath}-shm`, `${dbPath}-journal`]) {
+    try {
+      unlinkSync(side);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/**
+ * Quarantine a malformed catalog, copy surviving non-product tables into a
+ * fresh file, and swap it in. Next sealed write can then populate products.
+ * Same WAL/sidecar discipline as Naruto identity rebuild.
+ */
+export function salvageCorruptPackCatalog(dbPath: string): {
+  quarantined: string;
+  copiedTables: string[];
+} {
+  const quarantine = `${dbPath}.malformed-${Date.now()}`;
+  unlinkSqliteSidecars(dbPath);
+  if (existsSync(dbPath)) {
+    renameSync(dbPath, quarantine);
+  }
+  unlinkSqliteSidecars(dbPath);
+
+  const building = `${dbPath}.salvaging`;
+  try {
+    unlinkSync(building);
+  } catch {
+    /* ignore */
+  }
+  unlinkSqliteSidecars(building);
+
+  const dest = openPackSqliteWrite(building);
+  const copiedTables: string[] = [];
+  try {
+    migrateProductsSchema(dest);
+    if (!existsSync(quarantine)) {
+      dest.close();
+      unlinkSqliteSidecars(dbPath);
+      renameSync(building, dbPath);
+      unlinkSqliteSidecars(dbPath);
+      return { quarantined: quarantine, copiedTables };
+    }
+
+    let src: DatabaseSync | null = null;
+    try {
+      src = new DatabaseSync(quarantine, { readOnly: true });
+    } catch {
+      src = null;
+    }
+
+    if (src) {
+      try {
+        let tables: Array<{ name: string; sql: string | null }> = [];
+        try {
+          tables = src
+            .prepare(
+              `SELECT name AS name, sql AS sql FROM sqlite_master
+               WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+               ORDER BY name`,
+            )
+            .all() as Array<{ name: string; sql: string | null }>;
+        } catch {
+          tables = [];
+        }
+
+        if (tables.length > 0) {
+          try {
+            dest.exec(
+              `ATTACH DATABASE '${quarantine.replace(/'/g, "''")}' AS salvage`,
+            );
+          } catch {
+            tables = [];
+          }
+        }
+        if (tables.length > 0) {
+          try {
+            for (const table of tables) {
+              if (PRODUCTS_REWRITE_TABLES.has(table.name)) continue;
+              if (!table.sql) continue;
+              try {
+                // Probe readability before creating the dest table.
+                src.prepare(`SELECT 1 FROM "${table.name}" LIMIT 1`).get();
+                dest.exec(`DROP TABLE IF EXISTS "${table.name}"`);
+                dest.exec(table.sql);
+                const cols = (
+                  src
+                    .prepare(`PRAGMA table_info("${table.name}")`)
+                    .all() as Array<{ name: string }>
+                ).map((c) => `"${c.name}"`);
+                if (!cols.length) continue;
+                const colList = cols.join(", ");
+                dest.exec(
+                  `INSERT INTO "${table.name}" (${colList})
+                   SELECT ${colList} FROM salvage."${table.name}"`,
+                );
+                copiedTables.push(table.name);
+              } catch {
+                /* table unreadable — skip; Sync can re-seed identity */
+                try {
+                  dest.exec(`DROP TABLE IF EXISTS "${table.name}"`);
+                } catch {
+                  /* ignore */
+                }
+              }
+            }
+          } finally {
+            try {
+              dest.exec("DETACH DATABASE salvage");
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+      } finally {
+        try {
+          src.close();
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  } finally {
+    try {
+      dest.close();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  unlinkSqliteSidecars(dbPath);
+  if (existsSync(dbPath)) {
+    try {
+      unlinkSync(dbPath);
+    } catch {
+      /* ignore */
+    }
+  }
+  renameSync(building, dbPath);
+  unlinkSqliteSidecars(dbPath);
+  return { quarantined: quarantine, copiedTables };
+}
+
+function writeProductsIndexToSqliteOnce(
   packId: string,
   index: ProductsIndexV1,
-  opts?: { dbPath?: string },
+  dbPath: string,
 ): { dbPath: string; products: number; contents: number } {
-  const dbPath = opts?.dbPath ?? packCatalogDb(packId);
   return withPackSqliteBusyRetry(() => {
     const db = openPackSqliteWrite(dbPath);
     try {
@@ -184,6 +343,24 @@ export function writeProductsIndexToSqlite(
       db.close();
     }
   });
+}
+
+export function writeProductsIndexToSqlite(
+  packId: string,
+  index: ProductsIndexV1,
+  opts?: { dbPath?: string },
+): { dbPath: string; products: number; contents: number } {
+  const dbPath = opts?.dbPath ?? packCatalogDb(packId);
+  try {
+    return writeProductsIndexToSqliteOnce(packId, index, dbPath);
+  } catch (error) {
+    if (!isSqliteCorrupt(error)) throw error;
+    const salvage = salvageCorruptPackCatalog(dbPath);
+    console.warn(
+      `[productsSqlite] ${packId}: catalog malformed — quarantined ${path.basename(salvage.quarantined)}; kept [${salvage.copiedTables.join(", ") || "—"}]; rewriting products`,
+    );
+    return writeProductsIndexToSqliteOnce(packId, index, dbPath);
+  }
 }
 
 function isSqliteCorrupt(err: unknown): boolean {

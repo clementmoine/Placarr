@@ -1,6 +1,7 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -92,5 +93,80 @@ describe("productsSqlite", () => {
     const header = Buffer.from("SQLite format 3\0");
     writeFileSync(dbPath, Buffer.concat([header, Buffer.alloc(4096, 0)]));
     expect(loadProductsIndexFromSqlite("demo", { dbPath })).toBeNull();
+  });
+
+  it("salvages a corrupt catalog then rewrites products", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-salvage-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const seed = new DatabaseSync(dbPath);
+    seed.exec(`
+      CREATE TABLE prints (
+        print_key TEXT PRIMARY KEY,
+        set_code TEXT NOT NULL,
+        number TEXT NOT NULL
+      );
+      CREATE TABLE products (
+        product_key TEXT PRIMARY KEY,
+        slug TEXT NOT NULL,
+        lang TEXT,
+        set_code TEXT,
+        kind TEXT,
+        name TEXT,
+        image TEXT,
+        price_cents INTEGER,
+        entry_json TEXT NOT NULL
+      );
+      CREATE TABLE product_contents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_key TEXT NOT NULL,
+        print_key TEXT,
+        name TEXT,
+        slug TEXT,
+        ref TEXT,
+        qty INTEGER,
+        finish TEXT,
+        image TEXT
+      );
+      INSERT INTO prints VALUES ('demo:s1-001', 's1', '001');
+    `);
+    seed.close();
+
+    // Truncate after a valid header so DELETE/migrate hits SQLITE_CORRUPT.
+    const buf = readFileSync(dbPath);
+    writeFileSync(dbPath, buf.subarray(0, Math.min(buf.length, 1024)));
+
+    const index = emptyProductsIndex("demo");
+    index.products["demo::booster"] = {
+      slug: "booster",
+      path: "products/booster",
+      kind: "booster",
+      behavior: "random_pack",
+      category: "booster",
+      name: "Booster",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: "s1",
+      lang: "fr",
+      releaseDate: null,
+      priceCents: 100,
+      cardsPerPack: 5,
+      packsContained: 1,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: false,
+      containsPrintsIsPreview: false,
+      prints: [],
+    };
+
+    const written = writeProductsIndexToSqlite("demo", index, { dbPath });
+    expect(written.products).toBe(1);
+    expect(
+      loadProductsIndexFromSqlite("demo", { dbPath })?.products["demo::booster"]
+        ?.name,
+    ).toBe("Booster");
   });
 });

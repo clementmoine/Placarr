@@ -2,26 +2,29 @@ import { describe, expect, it, afterEach } from "vitest";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import amazonFr from "../curated/sources/amazon-fr.json";
-import amazonJa from "../curated/sources/amazon-ja.json";
-import carddasCom from "../curated/sources/carddas-com-naruto.json";
-import checklist from "../curated/sources/carddass-fr-checklist.json";
 import dig_collectionNarutoYoutube from "../curated/sources/collection-naruto-youtube-2026-08-29.json";
-import dreamHobby from "../curated/sources/dream-hobby.json";
 import dig from "../curated/sources/facebook-naruto-collection-france-2026-09-02.json";
-import hobbysearch from "../curated/sources/hobbysearch.json";
-import juggernauts from "../curated/sources/juggernauts-xrea.json";
-import ledger from "../curated/sources/s6-fr-printed.json";
 import sets from "../curated/sources/sets.json";
-import trictrac from "../curated/sources/trictrac.json";
-import tvTokyo from "../curated/sources/tv-tokyo-naruto-goods.json";
-import vialudibunda from "../curated/sources/vialudibunda.json";
-import yahooShopping from "../curated/sources/yahoo-shopping.json";
 import dig_youtubeGapsWebHunt from "../curated/sources/youtube-gaps-web-hunt-2026-08-29.json";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
 import { loadNarutoAppearancesFile } from "../identity";
 import { carteSemaineCardId, guessSetForCarteSemaineId, mergeCarteSemaineIntoIndex, parseCarteSemaineHtml, isNarutoS6FrInediteNumber, isNarutoS6FrPrintedNumber, keepsNarutoS6FrTitle, narutoS6FrPrintedDiskNumbers, narutoS6FrInediteNumbers, resetNarutoS6FrPrintedCache, syncNarutoS6FrPrintedAppearances, canonicalizeUrl, stagingRelFromUrl } from "./titles";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const dreamHobby = readNarutoCarddassSyncedSource("dream-hobby.json");
+const hobbysearch = readNarutoCarddassSyncedSource("hobbysearch.json");
+const juggernauts = readNarutoCarddassSyncedSource("juggernauts-xrea.json");
+
+const trictrac = readNarutoCarddassSyncedSource("trictrac.json");
+const tvTokyo = readNarutoCarddassSyncedSource("tv-tokyo-naruto-goods.json");
+const vialudibunda = readNarutoCarddassSyncedSource("vialudibunda.json");
+const yahooShopping = readNarutoCarddassSyncedSource("yahoo-shopping.json");
+const amazonFr = readNarutoCarddassSyncedSource("amazon-fr.json");
+const amazonJa = readNarutoCarddassSyncedSource("amazon-ja.json");
+const carddasCom = readNarutoCarddassSyncedSource("carddas-com-naruto.json");
+const checklist = readNarutoCarddassSyncedSource("carddass-fr-checklist.json");
+const ledger = readNarutoCarddassSyncedSource("s6-fr-printed.json");
 
 // —— carteSemaine ——
 {

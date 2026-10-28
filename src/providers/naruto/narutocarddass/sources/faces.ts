@@ -2,8 +2,6 @@
  * Naruto Carddass face / marketplace ledgers (card scans, not sealed packshots).
  */
 
-import bandaiFrSerie1DetailleeJson from "../curated/sources/bandai-fr-serie-1-detaillee.json";
-import mercariLedgerJson from "../curated/sources/mercari.json";
 import s2FrPhysicalFinishesJson from "../curated/sources/s2-fr-physical-finishes.json";
 import s3FrPhysicalFinishesJson from "../curated/sources/s3-fr-physical-finishes.json";
 import s4FrPhysicalFinishesJson from "../curated/sources/s4-fr-physical-finishes.json";
@@ -12,9 +10,6 @@ import s6FrPhysicalFinishesJson from "../curated/sources/s6-fr-physical-finishes
 import s11FrPhysicalFinishesJson from "../curated/sources/s11-fr-physical-finishes.json";
 import s24FrPhysicalFinishesJson from "../curated/sources/s24-fr-physical-finishes.json";
 import s28FrPhysicalFinishesJson from "../curated/sources/s28-fr-physical-finishes.json";
-import slabzLedgerJson from "../curated/sources/slab-z-ja.json";
-import tvtokyoLedgerJson from "../curated/sources/tvtokyo.json";
-import yahooAuctionsLedgerJson from "../curated/sources/yahoo-auctions.json";
 import {
   canonicalizeNarutoPrintKey,
   canonicalNarutoDiskPrefix,
@@ -24,6 +19,14 @@ import {
 } from "../identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const bandaiFrSerie1DetailleeJson = readNarutoCarddassSyncedSource("bandai-fr-serie-1-detaillee.json");
+const mercariLedgerJson = readNarutoCarddassSyncedSource("mercari.json");
+const slabzLedgerJson = readNarutoCarddassSyncedSource("slab-z-ja.json");
+const tvtokyoLedgerJson = readNarutoCarddassSyncedSource("tvtokyo.json");
+const yahooAuctionsLedgerJson = readNarutoCarddassSyncedSource("yahoo-auctions.json");
+
 
 // ─── Coleka listing fetch ──────────────────────────────────────────────────
 

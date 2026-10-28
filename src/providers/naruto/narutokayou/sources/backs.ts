@@ -16,6 +16,7 @@ import {
   assetsCardUrl,
   assetsPackTierBackRoleUrl,
 } from "@/lib/packAssetUrls";
+import { packCardsDir } from "@/lib/packPaths";
 import { httpGet } from "@/lib/http/httpClient";
 import {
   installDistinctBacks,
@@ -28,7 +29,10 @@ import {
   kayouOfficialIdSuffixKeys,
   kayouOfficialLookupKeys,
 } from "../identity";
-import { NARUTO_KAYOU_PACK_ID, narutoKayouCuratedDir } from "../pack";
+import {
+  NARUTO_KAYOU_PACK_ID,
+  narutoKayouSyncedSourcePath,
+} from "../pack";
 import {
   KAYOU_OFFICIAL_IP_COLLECTIONS,
   KAYOU_OFFICIAL_SERIES_URL,
@@ -77,7 +81,7 @@ const MANIFEST = "kayou-official-card-backs.json";
 let cached: KayouOfficialCardBackManifest | null | undefined;
 
 export function kayouOfficialCardBackManifestPath(): string {
-  return path.join(narutoKayouCuratedDir(), "sources", MANIFEST);
+  return narutoKayouSyncedSourcePath(MANIFEST);
 }
 
 export function readKayouOfficialCardBackManifest():
@@ -205,11 +209,7 @@ let aliasFileCache: KayouBackAliasFile | null = null;
 
 function loadKayouBackAliasFile(): KayouBackAliasFile {
   if (aliasFileCache) return aliasFileCache;
-  const p = path.join(
-    narutoKayouCuratedDir(),
-    "sources",
-    "kayou-back-aliases.json",
-  );
+  const p = narutoKayouSyncedSourcePath("kayou-back-aliases.json");
   if (!existsSync(p)) {
     aliasFileCache = {};
     return aliasFileCache;
@@ -424,7 +424,7 @@ export async function harvestKayouOfficialTierBacks(opts: {
 } = {}): Promise<KayouOfficialBackHarvest> {
   const report = opts.onProgress ?? ((m: string) => console.log(`   kayou backs — ${m}`));
   const cardsDir =
-    opts.curatedCardsDir ?? path.join(narutoKayouCuratedDir(), "cards");
+    opts.curatedCardsDir ?? packCardsDir(NARUTO_KAYOU_PACK_ID);
   mkdirSync(cardsDir, { recursive: true });
 
   const catalog = opts.catalog ?? null;
@@ -468,7 +468,7 @@ export async function harvestKayouOfficialTierBacks(opts: {
     })),
   };
   writeFileSync(
-    path.join(narutoKayouCuratedDir(), "sources", "kayou-official-tier-backs.json"),
+    narutoKayouSyncedSourcePath("kayou-official-tier-backs.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
 
@@ -563,7 +563,7 @@ export async function harvestKayouOfficialTierBacks(opts: {
     cardManifest.source = prior.source;
   }
   writeFileSync(
-    path.join(narutoKayouCuratedDir(), "sources", "kayou-official-card-backs.json"),
+    narutoKayouSyncedSourcePath("kayou-official-card-backs.json"),
     `${JSON.stringify(cardManifest, null, 2)}\n`,
   );
   resetKayouOfficialCardBackManifestCache();
@@ -623,7 +623,7 @@ export function dedupeKayouCuratedTierBacks(
     pruneDefaultDuplicates: true,
   });
   writeFileSync(
-    path.join(narutoKayouCuratedDir(), "sources", "kayou-back-aliases.json"),
+    narutoKayouSyncedSourcePath("kayou-back-aliases.json"),
     `${JSON.stringify(
       {
         source: "kayouofficial tier back hash collapse",
@@ -643,13 +643,10 @@ export function dedupeKayouCuratedTierBacks(
   };
 }
 
-/** True when curated tier PNG is older than the manifest (re-harvest hint). */
+/** True when pack tier PNG is older than the manifest (re-harvest hint). */
 export function kayouOfficialBacksStale(curatedCardsDir: string): boolean {
-  const manifestPath = path.join(
-    narutoKayouCuratedDir(),
-    "sources",
-    "kayou-official-tier-backs.json",
-  );
+  const manifestPath = narutoKayouSyncedSourcePath(
+    "kayou-official-tier-backs.json");
   if (!existsSync(manifestPath)) return true;
   const manifestMtime = statSync(manifestPath).mtimeMs;
   for (const name of ["back.r.png", "back.ur.png"]) {
@@ -709,7 +706,7 @@ export async function harvestNarutodbMissingCardBacks(opts?: {
   const report =
     opts?.onProgress ?? ((m: string) => console.log(`   narutodb backs — ${m}`));
   const cardsDir =
-    opts?.curatedCardsDir ?? path.join(narutoKayouCuratedDir(), "cards");
+    opts?.curatedCardsDir ?? packCardsDir(NARUTO_KAYOU_PACK_ID);
   const officialDir = path.join(cardsDir, "official");
   mkdirSync(officialDir, { recursive: true });
 

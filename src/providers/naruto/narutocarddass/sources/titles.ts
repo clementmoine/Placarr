@@ -30,12 +30,12 @@ import {
   writeNarutoAppearancesFile,
   type NarutoLangAppearances,
 } from "../identity";
-import { narutoCuratedSourcesDir } from "../install/curated";
 import { isImplausibleNarutoTitle } from "../pipeline";
 import { NARUTO_PACK_ID } from "../indexStore";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
 import { waybackRawUrl } from "../parse/bandai";
+import { narutoCarddassSourcePath } from "../syncedSources";
 import {
   MANGA_NEWS_DECKS,
   htmlToChecklistText,
@@ -626,10 +626,7 @@ function numberForms(id: string): string[] {
 
 function loadFile(): S6FrPrintedFile {
   return JSON.parse(
-    readFileSync(
-      path.join(narutoCuratedSourcesDir(), "s6-fr-printed.json"),
-      "utf8",
-    ),
+    readFileSync(narutoCarddassSourcePath("s6-fr-printed.json"), "utf8"),
   ) as S6FrPrintedFile;
 }
 

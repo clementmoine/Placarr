@@ -24,7 +24,7 @@ import {
 } from "@/providers/commerce/ebay/browseItem";
 import { bestEbayCoverUrl } from "@/providers/commerce/ebay/ebayConfig";
 
-import { leclercCuratedDir } from "./curatedPaths";
+import { leclercSourcePath } from "./curatedPaths";
 import { leclercOpForSetCode } from "./pack";
 import {
   foldLeclercFixeezKey,
@@ -193,16 +193,12 @@ export function ebayDisney25VariationsFromMenuItemMap(
 }
 
 export function ebayDisney25FacesLedgerPath(): string {
-  return path.join(leclercCuratedDir(), "sources", "ebay-disney25-faces.json");
+  return leclercSourcePath("ebay-disney25-faces.json");
 }
 
 /** Fixeez-only MSKU (`236423984089`) — separate from the 108 cards listing. */
 export function ebayDisney25FixeezFacesLedgerPath(): string {
-  return path.join(
-    leclercCuratedDir(),
-    "sources",
-    "ebay-disney25-fixeez-faces.json",
-  );
+  return leclercSourcePath("ebay-disney25-fixeez-faces.json");
 }
 
 export function readEbayDisney25FacesLedger(): EbayDisney25FacesLedger {

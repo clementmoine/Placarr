@@ -39,4 +39,5 @@ Provenance arts : `curated/sources/press-packshots.json`.
 | `display-s1-shinigami-and-ichigo` | display · **24** sachets (collectthemall) · loterie = enfants | **ultrajeux** (fiche « booster » + même EAN — ne pas fusionner) |
 
 Packshots curated : `compagnons_adilsons.jpg`, `rivaux_ultrajeux.jpg`, `booster_s1_tempslibre.jpg`, `display_s1_ultrajeux.jpg`.
-Graine : `curated/products-contents.json` (régénérée au Sync via `ingestBleachScbSealedProducts`).
+Graine git : `curated/products-contents.json`. Rebuild Sync →
+`data/bleach/scb/curated/products-contents.json` (`writeInstalledProductsContents`).

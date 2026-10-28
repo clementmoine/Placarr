@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import ledger from "../curated/sources/ultrajeux-s5.json";
 import { loadStorm3Ledger, storm3LedgerPath, ultrajeuxWaybackUrl } from "./marketplace";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const ledger = readNarutoCarddassSyncedSource("ultrajeux-s5.json");
+
 
 // —— scrapeStorm3 ——
 {

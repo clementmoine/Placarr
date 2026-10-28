@@ -38,6 +38,7 @@ import { readDataCarddassChecklist } from "../pipeline/ledgers";
 import {
   NARUTO_DATA_CARDDASS_PACK_ID,
   narutoDataCarddassCuratedDir,
+  narutoDataCarddassSyncedSourcePath,
 } from "../pack";
 import {
   dataCarddassPrintKey,
@@ -87,8 +88,12 @@ function curatedSourceBytes(file: string): Buffer {
   );
 }
 
+function syncedSourceBytes(file: string): Buffer {
+  return readFileSync(narutoDataCarddassSyncedSourcePath(file));
+}
+
 export function dataCarddassChitoroshopContentHash(): string {
-  return hashCatalogArtefactBytes(curatedSourceBytes("chitoroshop.json"));
+  return hashCatalogArtefactBytes(syncedSourceBytes("chitoroshop.json"));
 }
 
 export function dataCarddassEbayContentHash(): string {

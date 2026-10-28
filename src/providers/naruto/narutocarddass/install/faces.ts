@@ -19,10 +19,6 @@ import { dataRoot } from "@/lib/runtimeData";
 import { downloadMercariOrigPhoto } from "@/providers/naruto/shared/mercariCdn";
 
 import { parseNarutoCollector, narutoDiskCardId } from "../identity";
-import carddasDoubleIllustrations from "../curated/sources/carddas-jp-double-illustrations.json";
-import goatLocalePromoLedger from "../curated/sources/goat-locale-promos.json";
-import leboncoinLedger from "../curated/sources/leboncoin.json";
-import driveLedger from "../curated/sources/naruto-ccg-drive.json";
 import { narutoCuratedDir } from "../identity";
 import type { NarutoFaceSource } from "../disk";
 import { upsertNarutoAppearances } from "../pipeline";
@@ -73,6 +69,13 @@ import {
   yahooIngestFaces,
   type NarutoCcgTvTokyoFace,
 } from "../sources/faces";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const goatLocalePromoLedger = readNarutoCarddassSyncedSource("goat-locale-promos.json");
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
+
+const leboncoinLedger = readNarutoCarddassSyncedSource("leboncoin.json");
+const carddasDoubleIllustrations = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.json");
 
 /** Local copy — importing from harvest/catalogues creates install ↔ scrape cycles. */
 const NARUTO_STAGING_DRIVE = path.join("staging", "naruto-ccg-drive");
@@ -133,9 +136,7 @@ function walkImageFiles(dir: string, re: RegExp): string[] {
   return out;
 }
 
-
 // ─── eBay faces ──────────────────────────────────────────────────
-
 
 export type InstallEbayFacesOptions = {
   packRoot?: string;
@@ -217,7 +218,6 @@ export async function installEbayFaces(
 
 // ─── Rakuten faces ───────────────────────────────────────────────
 
-
 export type InstallRakutenFacesOptions = {
   packRoot?: string;
   force?: boolean;
@@ -268,7 +268,6 @@ export async function installRakutenFaces(
 }
 
 // ─── Leboncoin faces ─────────────────────────────────────────────
-
 
 export type LeboncoinFace = (typeof leboncoinLedger.faces)[number];
 export function leboncoinFaceLedger() {
@@ -477,7 +476,6 @@ export async function installYahooAuctionFaces(
 
 // ─── Slabz faces ─────────────────────────────────────────────────
 
-
 export type InstallSlabzFacesOptions = {
   packRoot?: string;
   force?: boolean;
@@ -523,7 +521,6 @@ export async function installSlabzFaces(
 }
 
 // ─── TV Tokyo faces ──────────────────────────────────────────────
-
 
 export type InstallTvTokyoFacesOptions = {
   packRoot?: string;
@@ -626,7 +623,6 @@ export async function installTvTokyoFaces(
 }
 
 // ─── Goat locale promo faces ─────────────────────────────────────
-
 
 export type GoatLocalePromoFace = (typeof goatLocalePromoLedger.faces)[number];
 export function goatLocalePromoFaceLedger() {

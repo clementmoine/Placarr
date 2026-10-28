@@ -3,52 +3,13 @@ import { mkdtempSync, writeFileSync, utimesSync, mkdirSync, existsSync, readdirS
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { curatedCardsDir, destBackWebpName, listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
-import aventurasAventurescas7 from "../curated/sources/aventurasaventurescas7.json";
-import hawk from "../curated/sources/band-of-the-hawk.json";
-import bandaiCom from "../curated/sources/bandai-com-naruto.json";
-import bandaicgEnCardlist from "../curated/sources/bandaicg-en-cardlist.json";
-import bggEnCcgS1 from "../curated/sources/bgg-en-ccg-s1.json";
-import carddasCom from "../curated/sources/carddas-com-naruto.json";
-import carddasJpCardlist from "../curated/sources/carddas-jp-cardlist.json";
-import carddasJpPromo from "../curated/sources/carddas-jp-promo.json";
-import carddas20Pro from "../curated/sources/carddas20-pro.json";
-import noihjpCarddass from "../curated/sources/noihjp-carddass.json";
-import cardgameclubItCardlist from "../curated/sources/cardgameclub-it-cardlist.json";
 import chatLinks from "../curated/sources/chat-links-2026-08-16.json";
-import colekaHoloType from "../curated/sources/coleka-holo-type.json";
-import colekaS24 from "../curated/sources/coleka-s24.json";
-import colekaS28 from "../curated/sources/coleka-s28.json";
-import colekaS6It from "../curated/sources/coleka-s6-it.json";
-import colekaUsPromos from "../curated/sources/coleka-us-promos.json";
-import coleka from "../curated/sources/coleka.json";
-import collectorsComet from "../curated/sources/collectors-comet.json";
-import ebay from "../curated/sources/ebay.json";
 import enCcgSeries from "../curated/sources/en-ccg-series.json";
-import fandomEnCcg from "../curated/sources/fandom-en-ccg.json";
-import goat from "../curated/sources/goat-en-ccg.json";
-import leboncoin from "../curated/sources/leboncoin.json";
-import lineage2 from "../curated/sources/lineage2universe.json";
-import mangaNewsPackshots from "../curated/sources/manga-news-packshots.json";
-import mawo from "../curated/sources/mawo-cards.json";
-import narutoCcgApp from "../curated/sources/naruto-ccg-app.json";
-import narutoCcgDrive from "../curated/sources/naruto-ccg-drive.json";
-import narutoCcgFansetsDrive from "../curated/sources/naruto-ccg-fansets-drive.json";
-import montreal from "../curated/sources/naruto-montreal.json";
-import narutocardsCa from "../curated/sources/narutocards-ca.json";
-import narutozabuza from "../curated/sources/narutozabuza.json";
-import neokyoGuide from "../curated/sources/neokyo-naruto-cards-guide.json";
-import primalMarketplace from "../curated/sources/primal-tcg-marketplace.json";
 import puja39 from "../curated/sources/puja39-deviantart.json";
 import redditNarutoccg from "../curated/sources/reddit-narutoccg.json";
 import slabZ2002 from "../curated/sources/slab-z-2002-carddass.json";
-import surugaCarddass from "../curated/sources/suruga-ya-carddass.json";
-import surugaDataCarddass from "../curated/sources/suruga-ya-data-carddass.json";
 import tcdb from "../curated/sources/tcdb-en-ccg.json";
-import tradecardsonline from "../curated/sources/tradecardsonline.json";
-import trictrac from "../curated/sources/trictrac.json";
 import physical from "../curated/sources/user-physical-ccg.json";
-import vialudibunda from "../curated/sources/vialudibunda.json";
-import vintageNaruto from "../curated/sources/vintage-naruto-ccg.json";
 import {
   narutoCuratedReconstructedProvenancePath,
   narutoDiskCardId,
@@ -56,6 +17,48 @@ import {
 import { parseTcdbNarutoRef } from "../parse/catalogues";
 import { mercariIngestFaces } from "../sources/faces";
 import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCuratedDir } from "./curated";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const mangaNewsPackshots = readNarutoCarddassSyncedSource("manga-news-packshots.json");
+const narutoCcgApp = readNarutoCarddassSyncedSource("naruto-ccg-app.json");
+const narutoCcgDrive = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
+const narutoCcgFansetsDrive = readNarutoCarddassSyncedSource("naruto-ccg-fansets-drive.json");
+const neokyoGuide = readNarutoCarddassSyncedSource("neokyo-naruto-cards-guide.json");
+const primalMarketplace = readNarutoCarddassSyncedSource("primal-tcg-marketplace.json");
+
+const aventurasAventurescas7 = readNarutoCarddassSyncedSource("aventurasaventurescas7.json");
+const hawk = readNarutoCarddassSyncedSource("band-of-the-hawk.json");
+const bandaiCom = readNarutoCarddassSyncedSource("bandai-com-naruto.json");
+const bggEnCcgS1 = readNarutoCarddassSyncedSource("bgg-en-ccg-s1.json");
+const carddas20Pro = readNarutoCarddassSyncedSource("carddas20-pro.json");
+const noihjpCarddass = readNarutoCarddassSyncedSource("noihjp-carddass.json");
+const colekaHoloType = readNarutoCarddassSyncedSource("coleka-holo-type.json");
+const colekaS24 = readNarutoCarddassSyncedSource("coleka-s24.json");
+const colekaS28 = readNarutoCarddassSyncedSource("coleka-s28.json");
+const colekaS6It = readNarutoCarddassSyncedSource("coleka-s6-it.json");
+const colekaUsPromos = readNarutoCarddassSyncedSource("coleka-us-promos.json");
+const collectorsComet = readNarutoCarddassSyncedSource("collectors-comet.json");
+const fandomEnCcg = readNarutoCarddassSyncedSource("fandom-en-ccg.json");
+const goat = readNarutoCarddassSyncedSource("goat-en-ccg.json");
+const leboncoin = readNarutoCarddassSyncedSource("leboncoin.json");
+const lineage2 = readNarutoCarddassSyncedSource("lineage2universe.json");
+const mawo = readNarutoCarddassSyncedSource("mawo-cards.json");
+const montreal = readNarutoCarddassSyncedSource("naruto-montreal.json");
+const narutocardsCa = readNarutoCarddassSyncedSource("narutocards-ca.json");
+const narutozabuza = readNarutoCarddassSyncedSource("narutozabuza.json");
+const tradecardsonline = readNarutoCarddassSyncedSource("tradecardsonline.json");
+const trictrac = readNarutoCarddassSyncedSource("trictrac.json");
+const vialudibunda = readNarutoCarddassSyncedSource("vialudibunda.json");
+const vintageNaruto = readNarutoCarddassSyncedSource("vintage-naruto-ccg.json");
+const bandaicgEnCardlist = readNarutoCarddassSyncedSource("bandaicg-en-cardlist.json");
+const carddasCom = readNarutoCarddassSyncedSource("carddas-com-naruto.json");
+const carddasJpCardlist = readNarutoCarddassSyncedSource("carddas-jp-cardlist.json");
+const carddasJpPromo = readNarutoCarddassSyncedSource("carddas-jp-promo.json");
+const cardgameclubItCardlist = readNarutoCarddassSyncedSource("cardgameclub-it-cardlist.json");
+const coleka = readNarutoCarddassSyncedSource("coleka.json");
+const ebay = readNarutoCarddassSyncedSource("ebay.json");
+const surugaCarddass = readNarutoCarddassSyncedSource("suruga-ya-carddass.json");
+const surugaDataCarddass = readNarutoCarddassSyncedSource("suruga-ya-data-carddass.json");
 
 // —— curated ——
 {

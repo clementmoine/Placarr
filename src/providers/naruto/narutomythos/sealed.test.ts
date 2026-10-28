@@ -1,11 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { packProductsIndexPath } from "@/lib/packPaths";
+import { packSealedProductsDir } from "@/lib/packPaths";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
-import { indexNarutomythosMarketplaceListings, loadNarutomythosMarketplaceIndex, type NarutomythosMarketplaceListing, quoteFromNarutomythosListings, refreshNarutomythosMarketplacePriceOffers, resetNarutomythosMarketplaceCache } from "./sources/prices";
-import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
+import {
+  indexNarutomythosMarketplaceListings,
+  loadNarutomythosMarketplaceIndex,
+  type NarutomythosMarketplaceListing,
+  quoteFromNarutomythosListings,
+  refreshNarutomythosMarketplacePriceOffers,
+  resetNarutomythosMarketplaceCache,
+} from "./sources/prices";
+import { NARUTO_MYTHOS_PACK_ID } from "./pack";
 import { readLorenzoneProductsLedger } from "./sealed";
 
 // —— sealedProducts ——
@@ -57,53 +72,58 @@ import { readLorenzoneProductsLedger } from "./sealed";
       expect(bySet.get("ak3")).toBe(4);
     });
 
-    it("keeps curated display packshots as real images (not PNG stubs)", () => {
-      const curated = narutoMythosCuratedDir();
+    it("keeps display packshots under data products (URL-recoverable)", () => {
+      const products = packSealedProductsDir(NARUTO_MYTHOS_PACK_ID);
       for (const slug of [
         "display-konoha-shido-ch1-ed1-fr",
         "display-konoha-shido-ch1-ed2-fr",
       ]) {
-        const dest = path.join(curated, "products", slug, "fr", "art.lorenzone.png");
+        const dest = path.join(products, slug, "fr", "art.lorenzone.png");
         expect(existsSync(dest), dest).toBe(true);
         expect(readFileSync(dest).byteLength).toBeGreaterThan(500);
       }
     });
 
     it("writes sealed products when packshots are staged", async () => {
-      tmpDataRoot();
+      const root = tmpDataRoot();
+      const realLedger = path.join(
+        process.cwd(),
+        "data",
+        "naruto",
+        "mythos",
+        "sources",
+        "lorenzone-products.json",
+      );
+      const destLedger = path.join(
+        root,
+        "naruto",
+        "mythos",
+        "sources",
+        "lorenzone-products.json",
+      );
+      mkdirSync(path.dirname(destLedger), { recursive: true });
+      copyFileSync(realLedger, destLedger);
+
       const ledger = readLorenzoneProductsLedger();
       const partial = { ...ledger, products: ledger.products.slice(0, 2) };
-      const curated = narutoMythosCuratedDir();
-      const backups: { dest: string; prev: Buffer | null }[] = [];
-      try {
-        for (const product of partial.products) {
-          const dest = path.join(
-            curated,
-            "products",
-            product.slug,
-            product.lang,
-            "art.lorenzone.png",
-          );
-          backups.push({
-            dest,
-            prev: existsSync(dest) ? readFileSync(dest) : null,
-          });
-          mkdirSync(path.dirname(dest), { recursive: true });
-          writeFileSync(dest, STAGED_PNG);
-        }
-        const { ingestMythosSealedProducts } = await import("./sealed");
-        const report = await ingestMythosSealedProducts({ ledger: partial });
-        expect(report.written).toBe(2);
-        const index = loadSealedProductsIndex(NARUTO_MYTHOS_PACK_ID);
-        expect(Object.keys(index.products).length).toBe(2);
-        for (const key of Object.keys(index.products)) {
-          const entry = index.products[key] as { image: string | null };
-          expect(entry.image).toMatch(/^\/assets\/naruto\/mythos\//);
-        }
-      } finally {
-        for (const row of backups) {
-          if (row.prev) writeFileSync(row.dest, row.prev);
-        }
+      for (const product of partial.products) {
+        const dest = path.join(
+          packSealedProductsDir(NARUTO_MYTHOS_PACK_ID),
+          product.slug,
+          product.lang,
+          "art.lorenzone.png",
+        );
+        mkdirSync(path.dirname(dest), { recursive: true });
+        writeFileSync(dest, STAGED_PNG);
+      }
+      const { ingestMythosSealedProducts } = await import("./sealed");
+      const report = await ingestMythosSealedProducts({ ledger: partial });
+      expect(report.written).toBe(2);
+      const index = loadSealedProductsIndex(NARUTO_MYTHOS_PACK_ID);
+      expect(Object.keys(index.products).length).toBe(2);
+      for (const key of Object.keys(index.products)) {
+        const entry = index.products[key] as { image: string | null };
+        expect(entry.image).toMatch(/^\/assets\/naruto\/mythos\//);
       }
     });
   });

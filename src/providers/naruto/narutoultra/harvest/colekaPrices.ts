@@ -1,14 +1,13 @@
 /**
  * Coleka deals prices for Naruto Ultra Challenge (`_r18770`).
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
   type ColekaDealsRubriqueTarget,
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
+import { packColekaPricesPath } from "@/lib/packPaths";
 
 import {
   COLEKA_ULTRA_CARD_COUNT,
@@ -20,11 +19,7 @@ import { ultraChallengePrintKey } from "../printKey";
 const RUBRIQUE_ID = "18770";
 
 export function colekaUltraPriceLedgerPath(): string {
-  return path.join(
-    process.cwd(),
-    "src/providers/naruto/narutoultra/curated/sources",
-    "coleka-prices.json",
-  );
+  return packColekaPricesPath(NARUTO_ULTRA_PACK_ID);
 }
 
 function ultraTargets(): ColekaDealsRubriqueTarget[] {

@@ -22,7 +22,10 @@ import {
 } from "./identity";
 import { narutoCatalogueLineForCard } from "./packs";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
-import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
+
+const ledgerDoubleIllustrations = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.json");
+
 
 const ART_B_BY_DISK = new Map(
   (ledgerDoubleIllustrations.cards as { number: string; artB: string }[]).map(

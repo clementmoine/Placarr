@@ -11,7 +11,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { packStagingDir } from "@/lib/packPaths";
+import { packStagingDir, resolvePackSyncedSourcePath } from "@/lib/packPaths";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import {
   catalogArtefactIsFresh,
@@ -56,27 +56,19 @@ export type ColekaMcdoLedger = {
   branches: ColekaMcdoBranch[];
 };
 
-function curatedSourcesDir(): string {
-  return path.join(
-    process.cwd(),
-    "src",
-    "providers",
-    "pokemon",
-    "tcgdex",
-    "curated",
-    "sources",
-  );
+function pokemonSyncedSourcePath(fileName: string): string {
+  return resolvePackSyncedSourcePath("pokemon", fileName);
 }
 
 export function readColekaMcdoFrLedger(): ColekaMcdoLedger {
   return JSON.parse(
-    readFileSync(path.join(curatedSourcesDir(), "coleka-mcdo-fr.json"), "utf8"),
+    readFileSync(pokemonSyncedSourcePath("coleka-mcdo-fr.json"), "utf8"),
   ) as ColekaMcdoLedger;
 }
 
 export function readColekaMcdoEnLedger(): ColekaMcdoLedger {
   return JSON.parse(
-    readFileSync(path.join(curatedSourcesDir(), "coleka-mcdo-en.json"), "utf8"),
+    readFileSync(pokemonSyncedSourcePath("coleka-mcdo-en.json"), "utf8"),
   ) as ColekaMcdoLedger;
 }
 

@@ -16,7 +16,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { packCardsDir } from "@/lib/packPaths";
+import { packCardsDir, resolvePackSyncedSourcePath } from "@/lib/packPaths";
 import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
 import {
   PKMCARDS_CARD_SITE,
@@ -127,16 +127,7 @@ export type McdnGalleryAliasLedger = {
 };
 
 function curatedAliasPath(): string {
-  return path.join(
-    process.cwd(),
-    "src",
-    "providers",
-    "pokemon",
-    "tcgdex",
-    "curated",
-    "sources",
-    "mcdn-gallery.json",
-  );
+  return resolvePackSyncedSourcePath("pokemon", "mcdn-gallery.json");
 }
 
 export function loadMcdnGalleryAliases(
@@ -659,16 +650,7 @@ export type PokemonComFillReport = {
 };
 
 function pokemonComMcdoLedgerPath(): string {
-  return path.join(
-    process.cwd(),
-    "src",
-    "providers",
-    "pokemon",
-    "tcgdex",
-    "curated",
-    "sources",
-    "pokemoncom-mcdo.json",
-  );
+  return resolvePackSyncedSourcePath("pokemon", "pokemoncom-mcdo.json");
 }
 
 export function loadPokemonComMcdoLedger(
@@ -1005,16 +987,7 @@ export type McdnFillReport = {
 };
 
 function mcdnGalleryLedgerPath(): string {
-  return path.join(
-    process.cwd(),
-    "src",
-    "providers",
-    "pokemon",
-    "tcgdex",
-    "curated",
-    "sources",
-    "mcdn-gallery.json",
-  );
+  return resolvePackSyncedSourcePath("pokemon", "mcdn-gallery.json");
 }
 
 export function loadMcdnGalleryLedger(

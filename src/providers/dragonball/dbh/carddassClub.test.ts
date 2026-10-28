@@ -2,11 +2,10 @@
  * Carddass club (sec.carddass.com) — official SDBH product ledger.
  */
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { dbhCuratedDir } from "./pack";
+import { dbhSourcePath } from "./pack";
 
 type ClubProduct = {
   jan: string;
@@ -20,10 +19,7 @@ type ClubProduct = {
 describe("dbh carddass club ledger", () => {
   it("lists official SDBH products with JAN + title (packshots often absent)", () => {
     const raw = JSON.parse(
-      readFileSync(
-        join(dbhCuratedDir(), "sources", "carddass-official-products.json"),
-        "utf8",
-      ),
+      readFileSync(dbhSourcePath("carddass-official-products.json"), "utf8"),
     ) as { count: number; products: ClubProduct[]; url: string };
 
     expect(raw.url).toContain("sec.carddass.com/club/products");

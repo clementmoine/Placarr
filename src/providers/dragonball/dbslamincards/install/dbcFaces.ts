@@ -29,7 +29,7 @@ import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPri
 
 import {
   DBS_LAMINCARDS_PACK_ID,
-  dbsLamincardsCuratedDir,
+  dbsLamincardsSyncedSourcePath,
 } from "../pack";
 import {
   DBC_ORIGIN,
@@ -76,7 +76,7 @@ export type DbcCardManifest = {
 };
 
 export function dbcFacesLedgerPath(): string {
-  return path.join(dbsLamincardsCuratedDir(), "sources", LEDGER_FILE);
+  return dbsLamincardsSyncedSourcePath(LEDGER_FILE);
 }
 
 export function readDbcFacesLedger(): DbcFacesLedger {

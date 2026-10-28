@@ -3,34 +3,37 @@
  * One file for sealedProducts / install / tests; curated JSON paths unchanged.
  */
 
-import amazonFrLedgerJson from "../curated/sources/amazon-fr.json";
-import amazonJaLedgerJson from "../curated/sources/amazon-ja.json";
-import atomicempireLedgerJson from "../curated/sources/atomicempire.json";
-import potomacLedgerJson from "../curated/sources/potomac.json";
-import cardgameclubLedgerJson from "../curated/sources/cardgameclub.json";
-import ebayLedgerJson from "../curated/sources/ebay.json";
-import emporiodimiloLedgerJson from "../curated/sources/emporiodimilo.json";
-import goatLedgerJson from "../curated/sources/goat-en-ccg.json";
-import gradedcardcenterLedgerJson from "../curated/sources/gradedcardcenter.json";
-import kinkaiLedgerJson from "../curated/sources/kinkai.json";
-import micromaniaLedgerJson from "../curated/sources/micromania.json";
-import fnacLedgerJson from "../curated/sources/fnac.json";
-import leboncoinLedgerJson from "../curated/sources/leboncoin.json";
-import mangaNewsLedgerJson from "../curated/sources/manga-news-packshots.json";
-import mangaSanctuaryLedgerJson from "../curated/sources/manga-sanctuary-packshots.json";
-import martinaLedgerJson from "../curated/sources/martina.json";
-import psYoyakuLedgerJson from "../curated/sources/ps-yoyaku-tokuten.json";
-import rakutenLedgerJson from "../curated/sources/rakuten.json";
-import sunnystoreLedgerJson from "../curated/sources/sunnystore.json";
-import toywizLedgerJson from "../curated/sources/toywiz.json";
-import trictracLedgerJson from "../curated/sources/trictrac.json";
-import vintedLedgerJson from "../curated/sources/vinted.json";
-import bandaiFrUsDriveLedgerJson from "../curated/sources/bandai-fr-us-drive.json";
-import colekaEnCcgCoversLedgerJson from "../curated/sources/coleka-en-ccg-covers.json";
-import colekaFrStartersLedgerJson from "../curated/sources/coleka-fr-starters.json";
-import scifiUniverseLedgerJson from "../curated/sources/scifi-universe.json";
-import ultrajeuxSealedLedgerJson from "../curated/sources/ultrajeux-sealed.json";
-import vialudibundaLedgerJson from "../curated/sources/vialudibunda.json";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const mangaNewsLedgerJson = readNarutoCarddassSyncedSource("manga-news-packshots.json");
+const psYoyakuLedgerJson = readNarutoCarddassSyncedSource("ps-yoyaku-tokuten.json");
+
+const atomicempireLedgerJson = readNarutoCarddassSyncedSource("atomicempire.json");
+const potomacLedgerJson = readNarutoCarddassSyncedSource("potomac.json");
+const emporiodimiloLedgerJson = readNarutoCarddassSyncedSource("emporiodimilo.json");
+const goatLedgerJson = readNarutoCarddassSyncedSource("goat-en-ccg.json");
+const gradedcardcenterLedgerJson = readNarutoCarddassSyncedSource("gradedcardcenter.json");
+const kinkaiLedgerJson = readNarutoCarddassSyncedSource("kinkai.json");
+const micromaniaLedgerJson = readNarutoCarddassSyncedSource("micromania.json");
+const fnacLedgerJson = readNarutoCarddassSyncedSource("fnac.json");
+const leboncoinLedgerJson = readNarutoCarddassSyncedSource("leboncoin.json");
+const martinaLedgerJson = readNarutoCarddassSyncedSource("martina.json");
+const sunnystoreLedgerJson = readNarutoCarddassSyncedSource("sunnystore.json");
+const toywizLedgerJson = readNarutoCarddassSyncedSource("toywiz.json");
+const trictracLedgerJson = readNarutoCarddassSyncedSource("trictrac.json");
+const bandaiFrUsDriveLedgerJson = readNarutoCarddassSyncedSource("bandai-fr-us-drive.json");
+const colekaEnCcgCoversLedgerJson = readNarutoCarddassSyncedSource("coleka-en-ccg-covers.json");
+const colekaFrStartersLedgerJson = readNarutoCarddassSyncedSource("coleka-fr-starters.json");
+const scifiUniverseLedgerJson = readNarutoCarddassSyncedSource("scifi-universe.json");
+const ultrajeuxSealedLedgerJson = readNarutoCarddassSyncedSource("ultrajeux-sealed.json");
+const vialudibundaLedgerJson = readNarutoCarddassSyncedSource("vialudibunda.json");
+const amazonFrLedgerJson = readNarutoCarddassSyncedSource("amazon-fr.json");
+const amazonJaLedgerJson = readNarutoCarddassSyncedSource("amazon-ja.json");
+const cardgameclubLedgerJson = readNarutoCarddassSyncedSource("cardgameclub.json");
+const ebayLedgerJson = readNarutoCarddassSyncedSource("ebay.json");
+const mangaSanctuaryLedgerJson = readNarutoCarddassSyncedSource("manga-sanctuary-packshots.json");
+const rakutenLedgerJson = readNarutoCarddassSyncedSource("rakuten.json");
+const vintedLedgerJson = readNarutoCarddassSyncedSource("vinted.json");
 
 // ─── shared ledger factory ─────────────────────────────────────────────────
 

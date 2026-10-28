@@ -26,7 +26,6 @@ import { extFromMagic } from "./disk";
 import { NARUTO_PACK_ID } from "./identity";
 import { NARUTO_STAGING_CARDDAS_JP } from "./scrape/bandai";
 import { fetchCdxRows, stagingRelFromUrl, WAYBACK_UA } from "./sources/titles";
-import driveLedger from "./curated/sources/naruto-ccg-drive.json";
 import {
   driveDownloadUrl,
   driveEmbeddedFolderUrl,
@@ -36,14 +35,22 @@ import {
   NARUTO_STAGING_DRIVE,
   type DriveFolderEntry,
 } from "./parse/catalogues";
-
-export { NARUTO_STAGING_DRIVE };
-import comicplanet from "./curated/sources/comicplanet-de.json";
-import official from "./curated/sources/carddass-official-products.json";
-import surugaLedger from "./curated/sources/suruga-ya-kaitori-packshots.json";
-import tvtokyo from "./curated/sources/tvtokyo-goods.json";
 import { harvestBandaiPackshots } from "@/providers/naruto/shared/bandaiPackshots";
 import { volumeNumber, volumeOfficialProducts, volumeProductFormat } from "./sealed";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
+
+export { NARUTO_STAGING_DRIVE };
+
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
+const comicplanet = readNarutoCarddassSyncedSource("comicplanet-de.json");
+const surugaLedger = readNarutoCarddassSyncedSource(
+  "suruga-ya-kaitori-packshots.json",
+);
+const tvtokyo = readNarutoCarddassSyncedSource("tvtokyo-goods.json");
+const official = readNarutoCarddassSyncedSource(
+  "carddass-official-products.json",
+);
+
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 

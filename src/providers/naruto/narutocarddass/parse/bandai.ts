@@ -3,7 +3,6 @@
  */
 
 import { buildPrintKey } from "@/core/identify/printKey";
-import ledger from "../curated/sources/bandaicg-en-cardlist.json";
 import {
   canonicalizeNarutoPrintKey,
   mintNarutoPrintKey,
@@ -12,12 +11,15 @@ import {
   resolveNarutoLedgerPrintTarget,
 } from "../identity";
 import { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
-import carddasJpCardlist from "../curated/sources/carddas-jp-cardlist.json";
-import promoLedger from "../curated/sources/carddas-jp-promo.json";
-import carddas20ProLedger from "../curated/sources/carddas20-pro.json";
-import noihjpCarddassLedger from "../curated/sources/noihjp-carddass.json";
 import { narutoDumpFaceRank } from "../disk";
-import bggEnCcgS1 from "../curated/sources/bgg-en-ccg-s1.json";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const carddas20ProLedger = readNarutoCarddassSyncedSource("carddas20-pro.json");
+const noihjpCarddassLedger = readNarutoCarddassSyncedSource("noihjp-carddass.json");
+const bggEnCcgS1 = readNarutoCarddassSyncedSource("bgg-en-ccg-s1.json");
+const ledger = readNarutoCarddassSyncedSource("bandaicg-en-cardlist.json");
+const carddasJpCardlist = readNarutoCarddassSyncedSource("carddas-jp-cardlist.json");
+const promoLedger = readNarutoCarddassSyncedSource("carddas-jp-promo.json");
 
 // ─── parseBandaicgAsset ──────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 /**
  * Crawl suruga-ya.jp for Naruto Shippuden cards (忍伝, 術伝, 作伝)
- * and update curated/sources/suruga-ya-shippuden-listings.tsv.
+ * and update `data/naruto/shippuden/sources/suruga-ya-shippuden-listings.tsv`.
  * Requires direct connection or Japanese VPN.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
+import { narutoShippudenSyncedSourcePath } from "../assets";
 import {
   parseSurugaShippudenHtml,
   parseSurugaShippudenListingsTsv,
@@ -18,10 +19,8 @@ import {
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-const TSV_PATH = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../curated/sources/suruga-ya-shippuden-listings.tsv",
-);
+const TSV_PATH = narutoShippudenSyncedSourcePath(
+  "suruga-ya-shippuden-listings.tsv");
 
 const QUERIES = [
   { word: "NARUTO 忍伝-", maxPages: 13 },

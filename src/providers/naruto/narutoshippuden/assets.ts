@@ -5,9 +5,14 @@
  * `cards/{langue}/{famille}/{diskId}/fichier` — ex. `ja/gaku/gaku0038/`
  * (lang-first, la famille tient lieu de set).
  */
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import {
+  packSyncedSourcePath,
+  resolvePackSyncedSourcePath,
+} from "@/lib/packPaths";
 
 import { NARUTO_SHIPPUDEN_PACK_ID } from "./indexStore";
 
@@ -83,4 +88,31 @@ export function narutoShippudenCuratedDir(): string {
     "narutoshippuden",
     "curated",
   );
+}
+
+/** Synced crawl ledgers — write target under `dataRoot()`. */
+export function narutoShippudenSyncedSourcePath(fileName: string): string {
+  return packSyncedSourcePath(NARUTO_SHIPPUDEN_PACK_ID, fileName);
+}
+
+/** Read path — falls back to repo `cwd/data` when `PLACARR_DATA_DIR` is empty. */
+export function narutoShippudenSourcePath(fileName: string): string {
+  return resolvePackSyncedSourcePath(NARUTO_SHIPPUDEN_PACK_ID, fileName);
+}
+
+const syncedJsonCache = new Map<string, unknown>();
+
+/** Cached JSON parse of a synced Shippuden ledger. */
+export function readNarutoShippudenSyncedSource<T = any>(
+  fileName: string,
+): T {
+  const hit = syncedJsonCache.get(fileName);
+  if (hit !== undefined) return hit as T;
+  const p = narutoShippudenSourcePath(fileName);
+  if (!existsSync(p)) {
+    throw new Error(`missing synced Shippuden source: ${fileName} (${p})`);
+  }
+  const data = JSON.parse(readFileSync(p, "utf8")) as T;
+  syncedJsonCache.set(fileName, data);
+  return data;
 }

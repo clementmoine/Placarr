@@ -6,18 +6,21 @@ import {
 } from "./priceIndex";
 
 describe("coleka priceIndex", () => {
-  it("maps known TCG packs to curated ledgers", () => {
+  it("maps known TCG packs to synced data/ ledgers", () => {
     expect(colekaPriceLedgerPathsForPack("bleach/scb")[0]).toMatch(
-      /coleka-prices\.json$/,
+      /data[/\\]bleach[/\\]scb[/\\]coleka-prices\.json$/,
     );
     expect(colekaPriceLedgerPathsForPack("naruto/carddass")[0]).toMatch(
-      /coleka-prices\.json$/,
+      /data[/\\]naruto[/\\]carddass[/\\]coleka-prices\.json$/,
     );
     expect(colekaPriceLedgerPathsForPack("dragonball/lamincards")[0]).toMatch(
-      /coleka-prices\.json$/,
+      /data[/\\]dragonball[/\\]lamincards[/\\]coleka-prices\.json$/,
     );
     expect(colekaPriceLedgerPathsForPack("pokemon")[0]).toMatch(
-      /coleka-mcdo-prices\.json$/,
+      /data[/\\]pokemon[/\\]coleka-mcdo-prices\.json$/,
+    );
+    expect(colekaPriceLedgerPathsForPack("leclerc/marvel24")[0]).toMatch(
+      /data[/\\]leclerc[/\\]coleka-prices\.json$/,
     );
     expect(colekaPriceLedgerPathsForPack("lorcana")).toEqual([]);
   });

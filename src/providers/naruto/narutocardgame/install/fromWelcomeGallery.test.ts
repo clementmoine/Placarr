@@ -5,18 +5,18 @@ import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { packCardDir } from "@/lib/packPaths";
 
-import { narutoCardgameCuratedDir, NARUTO_CARDGAME_PACK_ID } from "../pack";
+import {
+  NARUTO_CARDGAME_PACK_ID,
+  narutoCardgameCuratedDir,
+} from "../pack";
+import { narutoCardgameSyncedSourcePath } from "../syncedSources";
 import { installNarutoCardgameWelcomeGallery } from "./fromWelcomeGallery";
 
 describe("naruto cardgame welcome gallery", () => {
   it("ships a curated ledger of 12 SAMPLE characters", () => {
     const ledger = JSON.parse(
       readFileSync(
-        path.join(
-          narutoCardgameCuratedDir(),
-          "sources",
-          "bandai-welcome-gallery.json",
-        ),
+        narutoCardgameSyncedSourcePath("bandai-welcome-gallery.json"),
         "utf8",
       ),
     ) as { cards: { number: string; nameEn: string }[] };

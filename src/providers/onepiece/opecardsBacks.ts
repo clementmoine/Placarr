@@ -4,13 +4,11 @@
  * Discovery is observation-driven (`/cards` HTML + type-label CDN probes),
  * not a hardcoded category list. See `harvestCommonBacks.ts`.
  */
-import path from "node:path";
-
 import { packCardsDir } from "@/lib/packPaths";
 import { harvestTcgCardsDistinctBacks } from "@/providers/shared/tcgcards/harvestCommonBacks";
 import { tcgCardsStaticOrigin } from "@/providers/shared/tcgcards/parseCommonBacks";
 
-import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
+import { ONEPIECE_PACK_ID } from "./pack";
 
 /** @deprecated Prefer harvest observation; kept for URL unit tests. */
 export function opecardsBackUrl(slug: string): string {
@@ -21,7 +19,6 @@ export function opecardsBackUrl(slug: string): string {
 
 export async function harvestOpecardsDistinctBacks(opts?: {
   force?: boolean;
-  curatedCardsDir?: string;
   dataCardsDir?: string;
 }): Promise<{
   probed: number;
@@ -33,8 +30,6 @@ export async function harvestOpecardsDistinctBacks(opts?: {
 }> {
   const result = await harvestTcgCardsDistinctBacks("opecards", {
     force: opts?.force,
-    curatedCardsDir:
-      opts?.curatedCardsDir ?? path.join(onepieceCuratedDir(), "cards"),
     dataCardsDir: opts?.dataCardsDir ?? packCardsDir(ONEPIECE_PACK_ID),
   });
   return {

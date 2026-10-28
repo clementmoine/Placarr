@@ -5,10 +5,11 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { packSealedProductsDir } from "@/lib/packPaths";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { NARUTO_KAYOU_PACK_ID, narutoKayouCuratedDir } from "./pack";
+import { NARUTO_KAYOU_PACK_ID } from "./pack";
 import { parseKayouOfficialSeriesDetail } from "./parse/hosts";
 import {
   readKayouOfficialCatalog,
@@ -105,9 +106,9 @@ async function resolveHeroBoxImage(
 }
 
 function stagingPath(slug: string): string {
+  // CDN packshots are URL-recoverable → data/products only (ADR-006).
   return path.join(
-    narutoKayouCuratedDir(),
-    "products",
+    packSealedProductsDir(NARUTO_KAYOU_PACK_ID),
     slug,
     "en",
     "art.kayouofficial.png",

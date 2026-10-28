@@ -17,7 +17,10 @@ import type {
   LocalPrintsIndex,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { bleachScbCuratedDir, BLEACH_SCB_PACK_ID } from "../pack";
+import {
+  BLEACH_SCB_PACK_ID,
+  bleachScbSyncedSourcePath,
+} from "../pack";
 import {
   COLEKA_BLEACH_ORIGIN,
   COLEKA_BLEACH_S1_LISTING_PATH,
@@ -41,7 +44,7 @@ export type ColekaBleachLedger = {
 };
 
 export function colekaBleachLedgerPath(): string {
-  return path.join(bleachScbCuratedDir(), "sources", LEDGER_FILE);
+  return bleachScbSyncedSourcePath(LEDGER_FILE);
 }
 
 export function colekaBleachStagingDir(): string {

@@ -16,14 +16,15 @@ import {
 import path from "node:path";
 import { promisify } from "node:util";
 import { dataRoot } from "@/lib/runtimeData";
-import driveLedger from "../curated/sources/naruto-ccg-drive.json";
 import {
   NARUTO_STAGING_DRIVE,
   type DriveHarvestManifest,
 } from "../harvest";
 import { driveHubHarvestRoots } from "../parse/catalogues";
 import { NARUTO_PACK_ID } from "../identity";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
 
 // --- from ingestNarutoCcgDriveLocalExport.ts ---
 
@@ -34,8 +35,6 @@ import { NARUTO_PACK_ID } from "../identity";
  * Each part is a standalone zip sharing the same root folder (`Naruto CCG/`).
  * Extract all parts into `staging/naruto-ccg-drive/`, then fold the root into `hub/`.
  */
-
-
 
 const execFileAsync = promisify(execFile);
 

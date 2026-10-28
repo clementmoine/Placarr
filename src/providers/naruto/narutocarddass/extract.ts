@@ -67,7 +67,7 @@ import {
   driveStagingHubPopulated,
 } from "./harvest";
 import { ingestNarutoCcgDriveLocalExport } from "./pipeline/drive";
-import driveLedger from "./curated/sources/naruto-ccg-drive.json";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
 import {
   installCardgameclubPackshots,
   installEbayPackshots,
@@ -94,12 +94,13 @@ import {
 } from "./scrape/catalogues";
 import { installVialudibundaPackshots } from "./install/packshots";
 import { ingestNarutoSealedProducts } from "./sealed";
-
 import {
   catalogueArgList,
   catalogueArgValue,
   selectCatalogueSteps,
 } from "@/providers/shared/cardCatalogue/catalogueSteps";
+
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
 
 const STEPS = [
   "scrape",

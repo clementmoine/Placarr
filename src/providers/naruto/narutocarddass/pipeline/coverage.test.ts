@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
-import cardlist from "../curated/sources/bandaicg-en-cardlist.json";
-import home from "../curated/sources/bandaicg-home.json";
 import { buildNarutoCompleteness, faceSourceOfFilename, renderCompletenessMarkdown, parseApacheIndexHtml } from "./coverage";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const cardlist = readNarutoCarddassSyncedSource("bandaicg-en-cardlist.json");
+const home = readNarutoCarddassSyncedSource("bandaicg-home.json");
+
 
 // —— buildCompleteness ——
 {

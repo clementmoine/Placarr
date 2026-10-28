@@ -31,7 +31,8 @@ import {
   preferredFaceFile,
   type DbsjccCanonicalPrint,
 } from "../canonicalPrint";
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 
 export type DedupePrintSetsReport = {
   canonical: number;
@@ -702,11 +703,7 @@ export async function dedupeDbsjccPrintSets(
   const sqlite = rewriteSqlite(packId, prints, aliasToCanonical);
   const itemsRemapped = await remapPrismaItems(aliasToCanonical);
 
-  const aliasLedgerPath = path.join(
-    dbsJccCuratedDir(),
-    "sources",
-    "print-key-aliases.json",
-  );
+  const aliasLedgerPath = dbsJccSyncedSourcePath("print-key-aliases.json");
   ensureDir(path.dirname(aliasLedgerPath));
   /*
     The ledger is curated history: legacy multi-set clones (`part3-d0123` →

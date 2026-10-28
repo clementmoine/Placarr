@@ -22,7 +22,6 @@ import {
   type FaceDecision,
   type StoredFace as SharedStoredFace,
 } from "@/providers/shared/cardFaces";
-import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
 import {
   narutoCardDiskFolder,
   narutoDiskCardId,
@@ -31,6 +30,10 @@ import {
   type NarutoLangAppearances,
 } from "./identity";
 import { carddasJpCardlistCards } from "./parse/bandai";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
+
+const ledgerDoubleIllustrations = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.json");
+
 
 // --- from narutoCardPath.ts ---
 

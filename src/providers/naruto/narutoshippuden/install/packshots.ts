@@ -8,11 +8,18 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
-import { harvestBandaiPackshots } from "@/providers/naruto/shared/bandaiPackshots";
+import {
+  harvestBandaiPackshots,
+  type BandaiProductRow,
+} from "@/providers/naruto/shared/bandaiPackshots";
 
-import official from "../curated/sources/carddass-official-products.json";
+import { readNarutoShippudenSyncedSource } from "../assets";
 import { NARUTO_SHIPPUDEN_PACK_ID } from "../indexStore";
 import { shippudenSealedReleases } from "../sealed";
+
+const official = readNarutoShippudenSyncedSource<{
+  products: BandaiProductRow[];
+}>("carddass-official-products.json");
 
 const DELAY_MS = 1200;
 

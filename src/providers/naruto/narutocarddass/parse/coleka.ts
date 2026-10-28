@@ -2,11 +2,13 @@
  * Naruto Carddass coleka parsers.
  */
 
-import coleka from "../curated/sources/coleka.json";
-import ledger from "../curated/sources/coleka-s6-it.json";
 import { STORM3_SET } from "./marketplace";
 import { narutoDiskCardId } from "../identity";
-import colekaUsPromos from "../curated/sources/coleka-us-promos.json";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const ledger = readNarutoCarddassSyncedSource("coleka-s6-it.json");
+const colekaUsPromos = readNarutoCarddassSyncedSource("coleka-us-promos.json");
+const coleka = readNarutoCarddassSyncedSource("coleka.json");
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 
-import { dbhCuratedDir } from "../pack";
+import { dbhSyncedSourcePath } from "../pack";
 import { parseDbhPrinted } from "../printKey";
 
 const ORIGIN = "https://www.carddass.com";
@@ -160,7 +160,7 @@ export async function scrapeDbhCardlists(
   const cards = [...byPrinted.values()].sort((a, b) =>
     a.printed.localeCompare(b.printed),
   );
-  const outPath = path.join(dbhCuratedDir(), "sources", "carddass-dbh.json");
+  const outPath = dbhSyncedSourcePath("carddass-dbh.json");
   mkdirSync(path.dirname(outPath), { recursive: true });
   writeFileSync(
     outPath,

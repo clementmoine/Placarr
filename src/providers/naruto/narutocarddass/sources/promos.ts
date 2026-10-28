@@ -27,7 +27,6 @@ import {
   NARUTO_PACK_ID,
 } from "../identity";
 import type { NarutoCollectorId } from "../identity";
-import ledger from "../curated/sources/coleka-us-promos.json";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { narutoPackDbPath } from "../indexStore";
 import { upsertNarutoAppearances } from "../pipeline";
@@ -36,6 +35,7 @@ import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../dis
 import { resolveNarutoDiskArtFilename } from "../diskArtAttachments";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
 import { COLEKA_ORIGIN } from "../parse/coleka";
+import { narutoCarddassSourcePath, readNarutoCarddassSyncedSource} from "../syncedSources";
 import {
   COLEKA_US_PROMO_LANG,
   COLEKA_US_PROMO_LISTING_PATH,
@@ -46,6 +46,8 @@ import {
 import type { ColekaUsPromoCard } from "../parse/coleka";
 import { fetchColekaListingHtml } from "./faces";
 
+const ledger = readNarutoCarddassSyncedSource("coleka-us-promos.json");
+
 /**
  * Promo checklist = dedicated `PR-…` / `OP忍` **or** the FR tournament
  * reprints Collection Naruto enumerated (YT 7r7 shuriken / CdF lists).
@@ -53,7 +55,6 @@ import { fetchColekaListingHtml } from "./faces";
  * Inserts S6 manga/DVD share retail numbers (`NI-232`) — they are not promo
  * reprints and must not mint `ni0232-promo` twins.
  */
-
 
 type DigFile = {
   promos?: {
@@ -137,8 +138,6 @@ export function belongsOnNarutoPromoChecklist(raw: string): boolean {
  * Source: `curated/sources/attested-promos.json` (editorial ledger).
  * On-disk faces under `cards/promo/fr/` still win via `buildIndexFromDisk`.
  */
-
-
 
 export type AttestedPromoSource = {
   id: string;
@@ -329,7 +328,6 @@ export function mergeAttestedPromos(input: {
  * Source: `curated/sources/s1-fr-prerelease.json`.
  */
 
-
 export type S1FrPrereleaseRow = {
   number: string;
   name: string;
@@ -352,7 +350,7 @@ const GROUPING = "prerelease";
 const SET_CODE = "s1";
 
 export function s1FrPrereleasePath(): string {
-  return path.join(narutoCuratedSourcesDir(), "s1-fr-prerelease.json");
+  return narutoCarddassSourcePath("s1-fr-prerelease.json");
 }
 
 export function loadS1FrPrerelease(
@@ -582,8 +580,6 @@ export function mergeS1FrPrerelease(input: {
  * Faces are pulled from `thumbs.coleka.com`. Staging:
  * `data/naruto/carddass/staging/coleka-us-promos/`.
  */
-
-
 
 export const NARUTO_STAGING_COLEKA_US_PROMOS = path.join(
   "staging",
@@ -943,8 +939,6 @@ export async function scrapeNarutoColekaUsPromoCards(
     }),
   );
 }
-
-
 
 export type NarutoAttestedPair = {
   a: string;

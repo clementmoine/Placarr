@@ -12,7 +12,6 @@ import {
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
-import goatLedger from "../curated/sources/goat-en-ccg.json";
 import { NARUTO_PACK_ID } from "../identity";
 import {
   readPackDocument,
@@ -79,10 +78,7 @@ import {
   resolveNarutoLedgerPrintKeys,
 } from "../identity";
 import { bandaicgEnCardlistCards, parseEnCcgPrintedRef } from "../parse/bandai";
-import ledger from "../curated/sources/collectors-comet.json";
-import hinokunianJp from "../curated/sources/hinokunian-jp.json";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
-import narutocardsNet from "../curated/sources/narutocards-net.json";
 import {
   ggArchiveIndexUrl,
   ggCardName,
@@ -90,7 +86,13 @@ import {
   parseGgCardIndex,
   type GgCard,
 } from "@/providers/naruto/shared/gg/parseNarutoCardGameGg";
-import zabuza from "../curated/sources/narutozabuza.json";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const goatLedger = readNarutoCarddassSyncedSource("goat-en-ccg.json");
+const ledger = readNarutoCarddassSyncedSource("collectors-comet.json");
+const zabuza = readNarutoCarddassSyncedSource("narutozabuza.json");
+const hinokunianJp = readNarutoCarddassSyncedSource("hinokunian-jp.json");
+const narutocardsNet = readNarutoCarddassSyncedSource("narutocards-net.json");
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 

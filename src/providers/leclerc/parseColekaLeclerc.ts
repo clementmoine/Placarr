@@ -2,7 +2,7 @@
  * Listing Coleka — opérations collector Leclerc (supermarché).
  * Pages `?p=` : parfois OK via Flare (cache HIT). `?nbpp=240` = toujours
  * uncached → Turnstile — ne pas l’utiliser pour le harvest auto.
- * Complément CDN : `curated/sources/coleka-cdn-faces.json` (index Bing → thumbs.coleka.com).
+ * Complément CDN : `data/leclerc/sources/coleka-cdn-faces.json` (index Bing → thumbs.coleka.com).
  */
 export const COLEKA_LECLERC_ORIGIN = "https://www.coleka.com";
 export const COLEKA_LECLERC_LANG = "fr";

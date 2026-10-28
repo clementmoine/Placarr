@@ -1,13 +1,14 @@
 /**
  * Packshots presse / retail FR → starters & boosters JCC.
  *
- * Ledger `curated/sources/press-packshots.json` : download staging, copy
+ * Ledger `data/dragonball/jcc/sources/press-packshots.json` : download staging, copy
  * `art.<host>.*`, `face.json`, rename SKU, mint 2ᵉ starters manquants.
  */
 import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readFileSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -29,9 +30,15 @@ import {
   persistSealedProductsIndexDoc,
 } from "@/providers/shared/sealedProducts/persistProductsIndex";
 
-import carddassFrPackshotsLedgerJson from "../curated/sources/carddass-fr-packshots.json";
-import pressPackshotsLedgerJson from "../curated/sources/press-packshots.json";
-import { DBS_JCC_PACK_ID } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccSourcePath } from "../pack";
+
+type PressLedger = { products: Array<{ ingest?: boolean; host?: string; [key: string]: unknown }> };
+const pressPackshotsLedgerJson = JSON.parse(
+  readFileSync(dbsJccSourcePath("press-packshots.json"), "utf8"),
+) as PressLedger;
+const carddassFrPackshotsLedgerJson = JSON.parse(
+  readFileSync(dbsJccSourcePath("carddass-fr-packshots.json"), "utf8"),
+) as PressLedger;
 
 export type PressPackshotRow =
   (typeof pressPackshotsLedgerJson.products)[number];

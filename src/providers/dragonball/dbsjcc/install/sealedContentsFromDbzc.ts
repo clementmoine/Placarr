@@ -1,12 +1,16 @@
 /**
- * Reconstruit `products-contents.json` skus depuis le ledger
- * `dbzcollection-contents` (canal Autres infos).
+ * Reconstruit les skus scellés depuis le ledger `dbzcollection-contents`
+ * (canal Autres infos) → overlay sous `data/<pack>/curated/products-contents.json`.
+ * La graine git `providers/.../curated/products-contents.json` n'est pas écrite.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import type { SealedPrintLink } from "@/providers/shared/sealedProducts/indexFormat";
-import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
+import {
+  writeInstalledProductsContents,
+  type CuratedSealedContentsFile,
+} from "@/providers/shared/sealedProducts/curatedContents";
 import {
   loadSealedProductsIndex,
   persistSealedProductsIndexDoc,
@@ -219,25 +223,26 @@ function dedupeLinks(links: SealedPrintLink[]): SealedPrintLink[] {
   );
 }
 
-/** Fusionne les skus reconstruits dans products-contents.json + charge l'index. */
+/** Fusionne les skus reconstruits sous data/ + recharge l'index. */
 export function writeSealedContentsFromDbzc(): BuildSealedContentsReport {
-  const contentsPath = path.join(dbsJccCuratedDir(), "products-contents.json");
-  const current = JSON.parse(readFileSync(contentsPath, "utf8")) as {
-    version: number;
-    pack: string;
-    updatedAt: string;
-    byKind: Record<string, unknown>;
-    skus: Record<string, unknown>;
-  };
+  const seedPath = path.join(dbsJccCuratedDir(), "products-contents.json");
+  if (!existsSync(seedPath)) {
+    throw new Error(`missing products-contents seed: ${seedPath}`);
+  }
+  const seed = JSON.parse(
+    readFileSync(seedPath, "utf8"),
+  ) as CuratedSealedContentsFile;
   const { skus, report } = buildSealedContentsFromDbzcLedger();
-  const next = {
-    ...current,
+  const next: CuratedSealedContentsFile = {
+    ...seed,
     updatedAt: new Date().toISOString().slice(0, 10),
-    skus: { ...current.skus, ...skus },
+    skus: {
+      ...seed.skus,
+      ...(skus as CuratedSealedContentsFile["skus"]),
+    },
   };
-  writeFileSync(contentsPath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  installProviderProductsContents(DBS_JCC_PACK_ID, contentsPath);
-  // Recharge + merge curated → sqlite (sinon entry_json reste sans Détecteur).
+  writeInstalledProductsContents(DBS_JCC_PACK_ID, next);
+  // Recharge + merge → sqlite (sinon entry_json reste sans Détecteur).
   persistSealedProductsIndexDoc(loadSealedProductsIndex(DBS_JCC_PACK_ID), {
     alreadyMerged: true,
   });

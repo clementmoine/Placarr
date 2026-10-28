@@ -53,7 +53,11 @@ import {
   parseOfficialMythosApiPayload,
   type MythosOfficialPrint,
 } from "../parse/catalogues";
-import { narutoMythosCuratedDir, NARUTO_MYTHOS_PACK_ID } from "../pack";
+import {
+  narutoMythosCuratedDir,
+  narutoMythosSyncedSourcePath,
+  NARUTO_MYTHOS_PACK_ID,
+} from "../pack";
 import {
   MYTHOS_TITLE_LANG,
   mythosOfficialChecklistPath,
@@ -449,7 +453,7 @@ export function mythosScanflipTitle(card: ScanflipCardRow): string {
 }
 
 export function mythosScanflipLedgerPath(): string {
-  return path.join(narutoMythosCuratedDir(), "sources", SCANFLIP_LEDGER);
+  return narutoMythosSyncedSourcePath(SCANFLIP_LEDGER);
 }
 
 export async function harvestMythosScanflip(opts: {
@@ -581,7 +585,7 @@ export type NarutomythosSiteLedgerCard = NarutomythosSiteCard & {
 };
 
 export function mythosNarutomythosLedgerPath(): string {
-  return path.join(narutoMythosCuratedDir(), "sources", SITE_LEDGER);
+  return narutoMythosSyncedSourcePath(SITE_LEDGER);
 }
 
 export function narutomythosStorageUrl(
@@ -1168,7 +1172,7 @@ export type NarutopiaMythosLedgerCard = {
 };
 
 export function mythosNarutopiaLedgerPath(): string {
-  return path.join(narutoMythosCuratedDir(), "sources", NARUTOPIA_LEDGER);
+  return narutoMythosSyncedSourcePath(NARUTOPIA_LEDGER);
 }
 
 export async function harvestMythosNarutopia(opts: {

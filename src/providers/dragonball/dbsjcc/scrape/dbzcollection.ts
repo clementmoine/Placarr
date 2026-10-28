@@ -37,7 +37,8 @@ import {
 } from "@/providers/shared/sealedProducts/localWrite";
 import { sealedSlugHostId } from "@/providers/shared/sealedProducts/rewrite";
 
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 import {
   DBZC_COLLECTION_IDC,
   dbzcAbsoluteUrl,
@@ -93,11 +94,11 @@ export type DbzcLedger = {
 };
 
 export function dbzcollectionLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", LEDGER_FILE);
+  return dbsJccSyncedSourcePath(LEDGER_FILE);
 }
 
 export function dbzcollectionSuperLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", SUPER_LEDGER_FILE);
+  return dbsJccSyncedSourcePath(SUPER_LEDGER_FILE);
 }
 
 export function readDbzcollectionLedger(): DbzcLedger {

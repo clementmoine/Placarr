@@ -13,7 +13,8 @@ import type { CarddassFrNameRow } from "../harvest/carddassFrNames";
 import { dbsJccCarddassFrNamesLedgerPath } from "../harvest/carddassFrNames";
 import type { DbzcollectionNameRow } from "../harvest/dbzcollectionNames";
 import { dbsJccDbzcollectionNamesLedgerPath } from "../harvest/dbzcollectionNames";
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 import {
   formatDbsjccCollectorReference,
   formatDbsjccReference,
@@ -88,14 +89,14 @@ export function auditDbsjccFrTitles(opts?: {
       titleJa?: string;
       title?: string;
     }>;
-  }>(path.join(dbsJccCuratedDir(), "sources", "hatatoy.json"));
+  }>(dbsJccSyncedSourcePath("hatatoy.json"));
   const chitoroDoc = readJson<{
     faces?: Array<{
       number?: string;
       setHint?: string;
       title?: string;
     }>;
-  }>(path.join(dbsJccCuratedDir(), "sources", "chitoroshop.json"));
+  }>(dbsJccSyncedSourcePath("chitoroshop.json"));
 
   const dbzcByKey = new Map<string, string>();
   for (const row of dbzcDoc?.names ?? []) {

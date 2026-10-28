@@ -12,7 +12,10 @@ import path from "node:path";
 import { auditDbsjccFrTitles } from "../audit/titleSources";
 import { harvestCarddassFrDbzNames } from "../harvest/carddassFrNames";
 import { harvestDbzcollectionNames } from "../harvest/dbzcollectionNames";
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
@@ -32,11 +35,7 @@ async function main(): Promise<void> {
   }
 
   const rows = auditDbsjccFrTitles();
-  const reportPath = path.join(
-    dbsJccCuratedDir(),
-    "sources",
-    "title-audit-fr.json",
-  );
+  const reportPath = dbsJccSyncedSourcePath("title-audit-fr.json");
   writeFileSync(
     reportPath,
     `${JSON.stringify(

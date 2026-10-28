@@ -46,6 +46,7 @@ import { mergeSurugaHtmlIntoListingsTsv } from "./pipeline/surugaPaste";
 import {
   NARUTO_DATA_CARDDASS_PACK_ID,
   narutoDataCarddassCuratedDir,
+  narutoDataCarddassSyncedSourcePath,
 } from "./pack";
 import {
   formatDataCarddassReference,
@@ -211,11 +212,7 @@ export function buildChitoroshopLedger(
 
 export function writeChitoroshopLedger(
   ledger: ChitoroshopLedger,
-  outPath = path.join(
-    narutoDataCarddassCuratedDir(),
-    "sources",
-    "chitoroshop.json",
-  ),
+  outPath = narutoDataCarddassSyncedSourcePath("chitoroshop.json"),
 ): string {
   writeFileSync(outPath, `${JSON.stringify(ledger, null, 2)}\n`, "utf8");
   return outPath;
@@ -253,7 +250,7 @@ export type NaoYoshiSeesaaLedger = {
 };
 
 export function naoYoshiSeesaaLedgerPath(): string {
-  return path.join(narutoDataCarddassCuratedDir(), "sources", LEDGER_FILE);
+  return narutoDataCarddassSyncedSourcePath(LEDGER_FILE);
 }
 
 export function readNaoYoshiSeesaaLedger(): NaoYoshiSeesaaLedger | null {
@@ -643,11 +640,8 @@ export function assembleOfficialDataCarddassChecklist(opts?: {
     if (card) mergeCard(byPrinted, card);
   }
 
-  const surugaScanGl411Path = path.join(
-    narutoDataCarddassCuratedDir(),
-    "sources",
-    "suruga-scan-gl411.json",
-  );
+  const surugaScanGl411Path = narutoDataCarddassSyncedSourcePath(
+    "suruga-scan-gl411.json");
   if (existsSync(surugaScanGl411Path)) {
     sources.push("suruga-scan-gl411.json");
     try {
@@ -732,11 +726,7 @@ export function writeOfficialDataCarddassChecklist(opts?: {
   });
   const outPath =
     opts?.outPath ??
-    path.join(
-      narutoDataCarddassCuratedDir(),
-      "sources",
-      "data-carddass-checklist.json",
-    );
+    narutoDataCarddassSyncedSourcePath("data-carddass-checklist.json");
   const payload = {
     source:
       "carddass.com mission (miroir) + fudanin formation/cross (Wayback) + hinokunian DN/DT + ebay seed",

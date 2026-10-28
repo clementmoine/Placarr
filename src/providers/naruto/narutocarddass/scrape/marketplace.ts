@@ -65,8 +65,11 @@ import { loadSurugaVol1ProbeListings } from "../pipeline/suruga";
 import { japaneseReleaseBands } from "../sources/sealed";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import { upsertNarutoAppearances } from "../pipeline";
-import ledger from "../curated/sources/ultrajeux-s5.json";
 import { promoteAndPurgeNarutoDig } from "@/providers/naruto/shared/promoteNarutoDig";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const ledger = readNarutoCarddassSyncedSource("ultrajeux-s5.json");
+
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 

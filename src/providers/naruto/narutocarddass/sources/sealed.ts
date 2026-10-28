@@ -3,8 +3,10 @@
  */
 
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
-import jpVolumesLedger from "../curated/sources/cardcheckbox-jp.json";
-import ledger from "../curated/sources/comicplanet-de.json";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const ledger = readNarutoCarddassSyncedSource("comicplanet-de.json");
+const jpVolumesLedger = readNarutoCarddassSyncedSource("cardcheckbox-jp.json");
 
 /**
  * Le scellé allemand, d'après comicplanet.de.
@@ -89,7 +91,6 @@ export function germanSealedReleases(): GermanSealedSpec[] {
  * quatre cases et aucune ne dit « feuille d'extension ». Le libellé japonais
  * est conservé tel quel dans `name`, il porte la vérité.
  */
-
 
 export type JapaneseReleaseRow = {
   name: string;

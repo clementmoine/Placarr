@@ -1,15 +1,13 @@
 /**
  * Coleka deals prices for E.Leclerc supermarché ops (marvel21–24, disney25).
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
   type ColekaDealsRubriqueTarget,
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
-import { leclercCuratedDir } from "./curatedPaths";
+import { packColekaPricesPath } from "@/lib/packPaths";
 import { COLEKA_LECLERC_LISTINGS } from "./parseColekaLeclerc";
 import { leclercPrintKey } from "./printKey";
 
@@ -17,7 +15,7 @@ import { leclercPrintKey } from "./printKey";
 export const LECLERC_COLEKA_PRICE_PACK_ID = "leclerc";
 
 export function colekaLeclercPriceLedgerPath(): string {
-  return path.join(leclercCuratedDir(), "sources", "coleka-prices.json");
+  return packColekaPricesPath(LECLERC_COLEKA_PRICE_PACK_ID);
 }
 
 function rubriqueIdFromListingPath(listingPath: string): string | null {

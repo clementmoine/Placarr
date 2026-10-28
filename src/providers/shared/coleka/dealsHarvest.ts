@@ -1,5 +1,6 @@
 /**
- * Harvest Coleka deals → curated price ledgers (printKey-anchored).
+ * Harvest Coleka deals → synced price ledgers under `data/<pack>/`
+ * (printKey-anchored). Attested rubrique maps stay in provider curated.
  *
  * One rubrique = one deals ajax call. Packs supply `resolvePrintKey`.
  */

@@ -7,9 +7,8 @@
  */
 
 import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
+import { narutoDataCarddassSourcePath } from "../pack";
 import {
   formatDataCarddassReference,
   parseDataCarddassPrinted,
@@ -613,9 +612,8 @@ export const SURUGA_DCD_LANG = "ja";
 export const SURUGA_DCD_CATEGORY =
   "https://www.suruga-ya.com/en/category/501080113";
 
-const LISTINGS_TSV = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../curated/sources/suruga-ya-data-carddass-listings.tsv",
+const LISTINGS_TSV = narutoDataCarddassSourcePath(
+  "suruga-ya-data-carddass-listings.tsv",
 );
 
 const ITEM_RE =

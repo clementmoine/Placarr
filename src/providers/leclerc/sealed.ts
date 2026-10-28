@@ -1,6 +1,6 @@
 /**
  * Produits scellés Leclerc — seed album / pochette / display pour chaque op,
- * overlay curated (`leclerc-<set>-sealed.json` + packshots) quand dispo.
+ * overlay sync (`data/leclerc/sources/leclerc-<set>-sealed.json` + packshots curated) quand dispo.
  */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -9,7 +9,7 @@ import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/loca
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 import type { PackCompositionField } from "@/providers/shared/sealedProducts/packCompositionTypes";
 
-import { leclercCuratedDir } from "./curatedPaths";
+import { leclercCuratedDir, leclercSourcePath } from "./curatedPaths";
 import { leclercOpForSetCode } from "./pack";
 import {
   mergeLeclercSealedSeedWithLedger,
@@ -49,9 +49,7 @@ export {
 } from "./sealedSeed";
 
 export function leclercSealedLedgerPath(setCode: string): string {
-  return path.join(
-    leclercCuratedDir(),
-    "sources",
+  return leclercSourcePath(
     `leclerc-${setCode.trim().toLowerCase()}-sealed.json`,
   );
 }

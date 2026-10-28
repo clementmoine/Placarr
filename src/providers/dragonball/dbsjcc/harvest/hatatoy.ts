@@ -14,7 +14,10 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import { parseDbsjccNumber } from "../printKey";
 import {
   matchChitoroshopToDbsjccPrint,
@@ -343,7 +346,7 @@ export function buildHatatoyLedger(
 }
 
 export function dbsJccHatatoyLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "hatatoy.json");
+  return dbsJccSyncedSourcePath("hatatoy.json");
 }
 
 export function writeHatatoyLedger(

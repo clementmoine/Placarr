@@ -35,6 +35,7 @@ import {
   readPackDocument,
   writePackDocument,
 } from "@/providers/shared/sealedProducts/productsSqlite";
+import { narutoCarddassSourcePath } from "./syncedSources";
 
 // --- packs (client-safe leaf; re-exported for identity action API) ---
 
@@ -1577,7 +1578,7 @@ type OfficialCard = {
 export type OfficialNames = Map<string, OfficialCard>;
 
 function sourcesFile(): string {
-  return path.join(narutoCuratedSourcesDir(), "carddass-card-names.json");
+  return narutoCarddassSourcePath("carddass-card-names.json");
 }
 
 /** Keyed by collector number (`ni232`). Empty when the file is absent. */
@@ -1740,7 +1741,7 @@ type ChecklistFile = {
 let numbersBySet: Map<string, string[]> | null = null;
 
 function checklistPath(): string {
-  return path.join(narutoCuratedSourcesDir(), "carddass-fr-checklist.json");
+  return narutoCarddassSourcePath("carddass-fr-checklist.json");
 }
 
 /** Formes possibles de `prints.number` / disk id pour un id checklist. */
@@ -1838,10 +1839,7 @@ function loadFrUnpublishedHtmlNumbers(): Set<string> {
   const out = new Set<string>();
   try {
     const html = JSON.parse(
-      readFileSync(
-        path.join(narutoCuratedSourcesDir(), "carddass-html-refs.json"),
-        "utf8",
-      ),
+      readFileSync(narutoCarddassSourcePath("carddass-html-refs.json"), "utf8"),
     ) as { refs?: Record<string, string[]> };
     const realButAbsent = loadFrAbsentFromPrintedNumbers();
     for (const raw of Object.keys(html.refs ?? {})) {
@@ -2256,7 +2254,7 @@ export function buildNarutoKnownCards(): KnownCardsReport {
 
   const official = readJson<{
     sets: Record<string, { ids: string[]; names: Record<string, string> }>;
-  }>(path.join(sourcesDir(), "carddass-fr-checklist.json"));
+  }>(narutoCarddassSourcePath("carddass-fr-checklist.json"));
   for (const [set, body] of Object.entries(official?.sets ?? {})) {
     for (const id of body.ids) {
       attest(attested, id, "carddass-fr-checklist");
@@ -2280,14 +2278,14 @@ export function buildNarutoKnownCards(): KnownCardsReport {
   }
 
   const htmlRefs = readJson<{ refs: Record<string, string[]> }>(
-    path.join(sourcesDir(), "carddass-html-refs.json"),
+    narutoCarddassSourcePath("carddass-html-refs.json"),
   );
   for (const number of Object.keys(htmlRefs?.refs ?? {})) {
     attest(attested, number, "carddass-html");
   }
 
   const coleka = readJson<{ cards: Record<string, { name?: string }> }>(
-    path.join(sourcesDir(), "coleka.json"),
+    narutoCarddassSourcePath("coleka.json"),
   );
   for (const number of Object.keys(coleka?.cards ?? {})) {
     attest(attested, number, "coleka");

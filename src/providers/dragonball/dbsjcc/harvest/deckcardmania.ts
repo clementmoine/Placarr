@@ -10,7 +10,10 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import { parseDbsjccNumber } from "../printKey";
 
 export const DECKCARDMANIA_ORIGIN = "https://www.deckcardmania.com";
@@ -536,7 +539,7 @@ export function buildDeckcardmaniaLedger(
 }
 
 export function dbsJccDeckcardmaniaLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "deckcardmania.json");
+  return dbsJccSyncedSourcePath("deckcardmania.json");
 }
 
 export function writeDeckcardmaniaLedger(

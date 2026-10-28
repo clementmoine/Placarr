@@ -16,6 +16,7 @@ import {
   NARUTO_CARDGAME_PACK_ID,
   narutoCardgameCuratedDir,
 } from "../pack";
+import { narutoCardgameSyncedSourcePath } from "../syncedSources";
 import { narutoCardgamePrintKey } from "../printKey";
 
 const ART_NAME = "art.bandai.webp";
@@ -38,11 +39,7 @@ type FestLedger = {
 };
 
 function loadLedger(): FestLedger {
-  const file = path.join(
-    narutoCardgameCuratedDir(),
-    "sources",
-    "bandai-fest-premium-vol00.json",
-  );
+  const file = narutoCardgameSyncedSourcePath("bandai-fest-premium-vol00.json");
   return JSON.parse(readFileSync(file, "utf8")) as FestLedger;
 }
 

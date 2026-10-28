@@ -2,19 +2,22 @@ import { describe, expect, it } from "vitest";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import official from "./curated/sources/carddass-official-products.json";
-import comicplanet from "./curated/sources/comicplanet-de.json";
-import gamexfood from "./curated/sources/gamexfood.json";
-import liveinternet from "./curated/sources/liveinternet.json";
-import driveLedger from "./curated/sources/naruto-ccg-drive.json";
-import retrotcg from "./curated/sources/retrotcg.json";
-import suruga from "./curated/sources/suruga-ya-kaitori-packshots.json";
-import tradecardsonline from "./curated/sources/tradecardsonline.json";
-import tvtokyo from "./curated/sources/tvtokyo-goods.json";
-import vintage from "./curated/sources/vintage-naruto-ccg.json";
 import { DRIVE_HUB_POPULATED_MIN_FILES, driveStagingHubFileCount, driveStagingHubPopulated, NARUTO_STAGING_DRIVE, officialFilesByJan } from "./harvest";
 import { VINTAGE_NARUTO_SET_SLUGS, driveHubHarvestRoots } from "./parse/catalogues";
 import { volumeNumber, volumeOfficialProducts } from "./sealed";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
+
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
+const comicplanet = readNarutoCarddassSyncedSource("comicplanet-de.json");
+const gamexfood = readNarutoCarddassSyncedSource("gamexfood.json");
+const liveinternet = readNarutoCarddassSyncedSource("liveinternet.json");
+const retrotcg = readNarutoCarddassSyncedSource("retrotcg.json");
+const suruga = readNarutoCarddassSyncedSource("suruga-ya-kaitori-packshots.json");
+const tradecardsonline = readNarutoCarddassSyncedSource("tradecardsonline.json");
+const tvtokyo = readNarutoCarddassSyncedSource("tvtokyo-goods.json");
+const vintage = readNarutoCarddassSyncedSource("vintage-naruto-ccg.json");
+const official = readNarutoCarddassSyncedSource("carddass-official-products.json");
+
 
 // —— harvestIndexes ——
 {

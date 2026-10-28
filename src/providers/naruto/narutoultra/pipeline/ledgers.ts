@@ -16,7 +16,7 @@ import path from "node:path";
 
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "../pack";
+import { narutoUltraSyncedSourcePath, NARUTO_ULTRA_PACK_ID } from "../pack";
 import { NARUTO_ULTRA_SET_CODE, ultraChallengePrintKey } from "../printKey";
 
 export type UltraChecklistCard = {
@@ -38,7 +38,7 @@ const CHECKLIST_FILE = "laststicker-checklist.json";
 export const ULTRA_TITLE_LANG = "fr";
 
 export function ultraChecklistPath(): string {
-  return path.join(narutoUltraCuratedDir(), "sources", CHECKLIST_FILE);
+  return narutoUltraSyncedSourcePath(CHECKLIST_FILE);
 }
 
 export function readUltraChecklist(): Checklist {

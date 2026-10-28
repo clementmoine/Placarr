@@ -8,7 +8,8 @@ import { DatabaseSync } from "node:sqlite";
 
 import { packCatalogDb } from "@/lib/packPaths";
 
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "./pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "./pack";
 
 let cache: Map<string, string> | null = null;
 
@@ -42,11 +43,7 @@ function loadFromSqlite(packId: string): Map<string, string> | null {
 }
 
 function loadFromCurated(): Map<string, string> | null {
-  const file = path.join(
-    dbsJccCuratedDir(),
-    "sources",
-    "print-key-aliases.json",
-  );
+  const file = dbsJccSyncedSourcePath("print-key-aliases.json");
   if (!existsSync(file)) return null;
   try {
     const payload = JSON.parse(readFileSync(file, "utf8")) as {

@@ -17,6 +17,7 @@ import {
   NARUTO_CARDGAME_PACK_ID,
   narutoCardgameCuratedDir,
 } from "./pack";
+import { narutoCardgameSyncedSourcePath } from "./syncedSources";
 
 export type NarutoCardgameSealedSku = {
   slug: string;
@@ -45,11 +46,7 @@ export type NarutoCardgameSealedLedger = {
 };
 
 export function narutoCardgameSealedLedgerPath(): string {
-  return path.join(
-    narutoCardgameCuratedDir(),
-    "sources",
-    "naruto-cardgame-sealed.json",
-  );
+  return narutoCardgameSyncedSourcePath("naruto-cardgame-sealed.json");
 }
 
 export function readNarutoCardgameSealedLedger(): NarutoCardgameSealedLedger | null {

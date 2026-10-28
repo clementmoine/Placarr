@@ -5,19 +5,16 @@
  *   https://cdn.suruga-ya.jp/database/pics/game/{id.toLowerCase()}.jpg
  */
 import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
+import { narutoShippudenSyncedSourcePath } from "../assets";
 import { diskIdFromPrintedReference } from "../search";
 import { shippudenPrintKey } from "../pipeline/ledgers";
 
 export const SURUGA_SHIPPUDEN_ORIGIN = "https://www.suruga-ya.jp";
 export const SURUGA_SHIPPUDEN_CDN = "https://cdn.suruga-ya.jp/database/pics/game";
 
-const LISTINGS_TSV = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../curated/sources/suruga-ya-shippuden-listings.tsv",
-);
+const LISTINGS_TSV = narutoShippudenSyncedSourcePath(
+  "suruga-ya-shippuden-listings.tsv");
 
 const ITEM_RE =
   /item_id:\s*(?:common\.htmlDecode\(\s*)?['"]([A-Za-z0-9]+)['"]\s*\)?\s*,\s*item_name:\s*(?:common\.htmlDecode\(\s*)?['"]([^'"]+)['"]/gi;

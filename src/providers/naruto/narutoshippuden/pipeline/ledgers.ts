@@ -7,6 +7,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { narutoShippudenSourcePath } from "../assets";
 import {
   openNarutoShippudenDbForWrite,
   resetNarutoShippudenIndexCache,
@@ -41,23 +42,13 @@ const LEDGER_FILES = [
 const CHECKLIST_FILE = "cardcheckbox-shippuden.json";
 
 export function narutoShippudenSourcesDir(): string {
-  return path.join(
-    process.cwd(),
-    "src",
-    "providers",
-    "naruto",
-    "narutoshippuden",
-    "curated",
-    "sources",
-  );
+  return path.dirname(narutoShippudenSourcePath(CHECKLIST_FILE));
 }
 
 export function readShippudenLedgers(): Ledger[] {
   return LEDGER_FILES.map(
     (file) =>
-      JSON.parse(
-        readFileSync(path.join(narutoShippudenSourcesDir(), file), "utf8"),
-      ) as Ledger,
+      JSON.parse(readFileSync(narutoShippudenSourcePath(file), "utf8")) as Ledger,
   );
 }
 
@@ -88,10 +79,7 @@ export function readShippudenChecklist(): {
   releases: ChecklistRelease[];
 } {
   return JSON.parse(
-    readFileSync(
-      path.join(narutoShippudenSourcesDir(), CHECKLIST_FILE),
-      "utf8",
-    ),
+    readFileSync(narutoShippudenSourcePath(CHECKLIST_FILE), "utf8"),
   ) as { url: string; observed: string; releases: ChecklistRelease[] };
 }
 

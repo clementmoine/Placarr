@@ -3,14 +3,16 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { catalogueCollectorKey } from "@/lib/admin/catalogueCards";
 import { ggCardName, ggCardsMissingFrom, ggSetLabel, parseGgCardIndex, splitCompoundGgId } from "@/providers/naruto/shared/gg/parseNarutoCardGameGg";
-import ledger from "../curated/sources/nikita-nrt.json";
 import tcdbEnCcg from "../curated/sources/tcdb-en-ccg.json";
-import vintage from "../curated/sources/vintage-naruto-ccg.json";
 import { narutoDiskCardId } from "../identity";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { goatEnCcgSetsToScrape } from "../scrape/catalogues";
 import { pickTitleForNumber, titlesForPrints } from "../sources/titles";
 import { goatLastPage, parseGoatCataloguePage, parseGoatProductName, mergeGoatEnCcgCardsIntoIndex, parseGoatEnCcgListing, decodeHinokunianHtml, hinokunianPageUrl, parseHinokunianAlts, parseHinokunianPage, parseHinokunianTable, toHalfWidth, cardgameclubItCuratedCards, mergeCardgameclubItCardsIntoIndex, parseCardgameclubItListing, parseCardgameclubItListingFaces, parseCardgameclubItTitle, parsePrimegameExpansions, parsePrimegameSinglesAjax, parsePrimegameSinglesResultCount, primegameExpansionSetCode, parseNikitaCardlist, nikitaNrtFaceUrl, nikitaNrtFileToDiskId, nikitaNrtVolumeSetCode, parseNikitaNrtImgList, mergeNarutoCardsCaIntoIndex, narutoCardsCaHintBelongsOnDisk, narutoCardsCaMayMintPrint, narutoCardsCaSetsToScrape, parseNarutoCardsCaLabel, parseNarutoCardsCaSetHtml, mergeNarutoCardsNetIntoIndex, parseNarutoCardsNetCardUrl, parseNarutoCardsNetSitemap, printedRefFromNarutoCardsNetSuffix, slugToNarutoCardsNetName, assignVintageNarutoDiskIds, normalizeVintageNarutoName, parseVintageNarutoCcgBundle, vintageNarutoCcgFaceUrl, cleanCollectorsCometProductName, collectorsCometEditionSetCode, mergeCollectorsCometIntoIndex, parseCollectorsCometProduct, fansetEnTitleCards, mergeFansetEnTitlesIntoIndex, htmlToChecklistText, mangaNewsDeckImageUrl, normalizeCardNumber, parseMangaNewsChecklistText, uniqueNumbers, parseTcdbNarutoRef, parseTcdbSidFromUrl, tcdbAcronymToSeries, tcdbNarutoSidIngestPolicy, tcdbNarutoSidKind, driveFaceAppearanceSet, driveFaceDiskId, driveFolderSetCode, driveHubHarvestRoots, driveOfficialSetCodeInPath, drivePathIsFanset, driveStagingSegment, parseDriveEmbeddedFolderHtml, parseDriveNarutoFaceFilename, pickDriveFaceWinner } from "./catalogues";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const vintage = readNarutoCarddassSyncedSource("vintage-naruto-ccg.json");
+const ledger = readNarutoCarddassSyncedSource("nikita-nrt.json");
 
 // —— parseGoatCatalogue ——
 {

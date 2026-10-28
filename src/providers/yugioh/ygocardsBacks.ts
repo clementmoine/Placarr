@@ -4,16 +4,13 @@
  * ygocards.fr ships a single classic Konami sleeve at
  * `cards/original/back.webp` (same family as opecards / lorcards).
  */
-import path from "node:path";
-
 import { packCardsDir } from "@/lib/packPaths";
 import { harvestTcgCardsDistinctBacks } from "@/providers/shared/tcgcards/harvestCommonBacks";
 
-import { YUGIOH_PACK_ID, yugiohCuratedDir } from "./pack";
+import { YUGIOH_PACK_ID } from "./pack";
 
 export async function harvestYgocardsDistinctBacks(opts?: {
   force?: boolean;
-  curatedCardsDir?: string;
   dataCardsDir?: string;
 }): Promise<{
   probed: number;
@@ -25,8 +22,6 @@ export async function harvestYgocardsDistinctBacks(opts?: {
 }> {
   const result = await harvestTcgCardsDistinctBacks("ygocards", {
     force: opts?.force,
-    curatedCardsDir:
-      opts?.curatedCardsDir ?? path.join(yugiohCuratedDir(), "cards"),
     dataCardsDir: opts?.dataCardsDir ?? packCardsDir(YUGIOH_PACK_ID),
   });
   return {

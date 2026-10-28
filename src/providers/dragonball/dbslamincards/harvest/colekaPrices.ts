@@ -4,19 +4,15 @@
  * Hub `_r4591` mixes series — never harvest it. Only leaves we can map 1:1
  * onto a catalogue `setCode` (argento / oro / platino / fr2008 / fror).
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
   type ColekaDealsRubriqueTarget,
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
+import { packColekaPricesPath } from "@/lib/packPaths";
 
-import {
-  DBS_LAMINCARDS_PACK_ID,
-  dbsLamincardsCuratedDir,
-} from "../pack";
+import { DBS_LAMINCARDS_PACK_ID } from "../pack";
 import { lamincardsPrintKey } from "../printKey";
 
 export type ColekaLamincardsDealsLeaf = {
@@ -62,7 +58,7 @@ export const COLEKA_LAMINCARDS_DEALS_LEAVES: readonly ColekaLamincardsDealsLeaf[
   ];
 
 export function colekaLamincardsPriceLedgerPath(): string {
-  return path.join(dbsLamincardsCuratedDir(), "sources", "coleka-prices.json");
+  return packColekaPricesPath(DBS_LAMINCARDS_PACK_ID);
 }
 
 /**

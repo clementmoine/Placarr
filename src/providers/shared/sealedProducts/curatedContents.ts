@@ -14,6 +14,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
@@ -160,6 +161,24 @@ export function installProviderProductsContents(
   copyFileSync(sourceFile, primary);
   copyFileSync(sourceFile, curatedSealedContentsPath(packId));
   return true;
+}
+
+/**
+ * Persiste un ledger de contenus sous `data/<pack>/curated/` only.
+ * Sync / rebuilds must not write `src/providers/.../curated/products-contents.json`
+ * (ADR-006 — dates `updatedAt` / `verifiedAt` dirty git).
+ */
+export function writeInstalledProductsContents(
+  packId: string,
+  doc: CuratedSealedContentsFile,
+): string {
+  const destDir = path.join(packDataDir(packId), "curated");
+  mkdirSync(destDir, { recursive: true });
+  const primary = curatedProductsContentsPath(packId);
+  const json = `${JSON.stringify(doc, null, 2)}\n`;
+  writeFileSync(primary, json, "utf8");
+  writeFileSync(curatedSealedContentsPath(packId), json, "utf8");
+  return primary;
 }
 
 export function readCuratedSealedContents(

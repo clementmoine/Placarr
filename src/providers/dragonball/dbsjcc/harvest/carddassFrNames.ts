@@ -7,7 +7,10 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import {
   parseCarddassFrCardPageName,
   printedFromCarddassFrCardPath,
@@ -31,7 +34,7 @@ const SCOUT_CDX = path.join(
 );
 
 export function dbsJccCarddassFrNamesLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "carddass-fr-dbz-names.json");
+  return dbsJccSyncedSourcePath("carddass-fr-dbz-names.json");
 }
 
 function sleep(ms: number): Promise<void> {

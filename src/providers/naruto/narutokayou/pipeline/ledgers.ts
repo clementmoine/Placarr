@@ -15,7 +15,7 @@ import {
 import {
   KAYOU_TITLE_LANG,
   NARUTO_KAYOU_PACK_ID,
-  narutoKayouCuratedDir,
+  narutoKayouSyncedSourcePath,
 } from "../pack";
 
 export { KAYOU_TITLE_LANG };
@@ -40,11 +40,7 @@ export type { KayouChecklistCard, KayouChecklistSet } from "../identity";
 const NARUTOCARDS_CHECKLIST_FILE = "narutocards-kayou-checklist.json";
 
 export function narutocardsKayouChecklistPath(): string {
-  return path.join(
-    narutoKayouCuratedDir(),
-    "sources",
-    NARUTOCARDS_CHECKLIST_FILE,
-  );
+  return narutoKayouSyncedSourcePath(NARUTOCARDS_CHECKLIST_FILE);
 }
 
 /** @deprecated use readNarutocardsKayouChecklist */

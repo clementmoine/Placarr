@@ -4,11 +4,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { packSealedProductsDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
+import {
+  NARUTO_MYTHOS_PACK_ID,
+  narutoMythosSyncedSourcePath,
+} from "./pack";
 
 const LEDGER_FILE = "lorenzone-products.json";
 
@@ -38,7 +42,7 @@ export type LorenzoneProductsLedger = {
 };
 
 export function lorenzoneProductsPath(): string {
-  return path.join(narutoMythosCuratedDir(), "sources", LEDGER_FILE);
+  return narutoMythosSyncedSourcePath(LEDGER_FILE);
 }
 
 export function readLorenzoneProductsLedger(): LorenzoneProductsLedger {
@@ -48,9 +52,9 @@ export function readLorenzoneProductsLedger(): LorenzoneProductsLedger {
 }
 
 function artPath(slug: string, lang: string): string {
+  // LorenZone CDN packshots are URL-recoverable → data/products (ADR-006).
   return path.join(
-    narutoMythosCuratedDir(),
-    "products",
+    packSealedProductsDir(NARUTO_MYTHOS_PACK_ID),
     slug,
     lang?.trim().toLowerCase(),
     "art.lorenzone.png",

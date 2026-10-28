@@ -1,10 +1,13 @@
 /**
- * Pack → curated Coleka deals price ledger path(s).
+ * Pack → synced Coleka deals price ledger under `data/<pack>/`.
  * Used by Catalogue browse as fallback when no *cards.fr pricer hits.
  *
  * Paths only — no `@/providers/<franchise>` imports (shared stays sibling-blind).
  */
-import path from "node:path";
+import {
+  packColekaMcdoPricesPath,
+  packColekaPricesPath,
+} from "@/lib/packPaths";
 
 import {
   colekaPriceCentsByPrintKey,
@@ -15,48 +18,26 @@ export type ColekaCataloguePriceQuote = {
   priceCents: number;
 };
 
-function curatedSources(...parts: string[]): string {
-  return path.join(process.cwd(), "src/providers", ...parts, "curated/sources");
-}
-
-/** Absolute ledger paths per catalogue pack id. */
+/** Absolute ledger paths per catalogue pack id (synced under `data/`). */
 export function colekaPriceLedgerPathsForPack(packId: string): string[] {
   switch (packId) {
     case "bleach/scb":
-      return [path.join(curatedSources("bleach/bleachscb"), "coleka-prices.json")];
+      return [packColekaPricesPath("bleach/scb")];
     case "naruto/carddass":
     case "naruto/en-ccg":
-      return [
-        path.join(
-          curatedSources("naruto/narutocarddass"),
-          "coleka-prices.json",
-        ),
-      ];
+      return [packColekaPricesPath("naruto/carddass")];
     case "naruto/ultra-challenge":
-      return [
-        path.join(curatedSources("naruto/narutoultra"), "coleka-prices.json"),
-      ];
+      return [packColekaPricesPath("naruto/ultra-challenge")];
     case "naruto/ninja-ranks":
-      return [
-        path.join(curatedSources("naruto/narutoranks"), "coleka-prices.json"),
-      ];
+      return [packColekaPricesPath("naruto/ninja-ranks")];
     case "dragonball/lamincards":
-      return [
-        path.join(
-          curatedSources("dragonball/dbslamincards"),
-          "coleka-prices.json",
-        ),
-      ];
+      return [packColekaPricesPath("dragonball/lamincards")];
     case "pokemon":
-      return [
-        path.join(
-          curatedSources("pokemon/tcgdex"),
-          "coleka-mcdo-prices.json",
-        ),
-      ];
+      return [packColekaMcdoPricesPath()];
     default:
       if (packId.startsWith("leclerc/")) {
-        return [path.join(curatedSources("leclerc"), "coleka-prices.json")];
+        // One family-wide deals dump for all E.Leclerc ops lines.
+        return [packColekaPricesPath("leclerc")];
       }
       return [];
   }

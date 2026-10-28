@@ -2,7 +2,6 @@
  * Naruto Carddass marketplace parsers.
  */
 
-import universe from "../curated/sources/cardcheckbox-jp.json";
 import { mintNarutoPrintKey, narutoDiskCardId } from "../identity";
 import {
   parseSurugaUsedPriceYen,
@@ -11,6 +10,10 @@ import {
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const universe = readNarutoCarddassSyncedSource("cardcheckbox-jp.json");
+
 
 export {
   parseSurugaYenAmount,

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { catalogueCollectorKey } from "@/lib/admin/catalogueCards";
-import colekaS24 from "../curated/sources/coleka-s24.json";
-import colekaS28 from "../curated/sources/coleka-s28.json";
-import colekaS6It from "../curated/sources/coleka-s6-it.json";
-import colekaUsPromos from "../curated/sources/coleka-us-promos.json";
-import coleka from "../curated/sources/coleka.json";
 import { COLEKA_CARDDASS_FR_SERIES, colekaCarddassFrListingPageUrls, colekaCarddassFrParentUrl, parseColekaCarddassFrListing, colekaCarddassPrefixToCollector, colekaS6ItListingPageUrls, colekaS6ItNameIsPlaceholder, colekaS6ItPrintedRef, parseColekaS6ItListing, colekaEuPrefixToCollector, COLEKA_SAGES_LEGACY_SET_COVER_URL, COLEKA_STORM3_SET_COVER_URL, colekaRampagePrefixToCollector, colekaFullFaceUrl, colekaHtmlIsVerifyWall, colekaSagesLegacyListingPageUrls, colekaStorm3ListingPageUrls, parseColekaStorm3Listing, parseColekaRampageTornadoListing, colekaUsPromoCanonicalRef, colekaUsPromoListingPageUrls, colekaUsPromoRefToCollector, parseColekaUsPromoListing } from "./coleka";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const colekaS24 = readNarutoCarddassSyncedSource("coleka-s24.json");
+const colekaS28 = readNarutoCarddassSyncedSource("coleka-s28.json");
+const colekaS6It = readNarutoCarddassSyncedSource("coleka-s6-it.json");
+const colekaUsPromos = readNarutoCarddassSyncedSource("coleka-us-promos.json");
+const coleka = readNarutoCarddassSyncedSource("coleka.json");
 
 // —— parseColekaCarddassFr ——
 {

@@ -2,11 +2,17 @@ import { describe, expect, it, afterEach, vi } from "vitest";
 import { readFileSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import coleka from "../curated/sources/coleka.json";
 import { narutoDiskCardId } from "../identity";
 import { planTvTokyoFaceSources } from "../install/faces";
 import { mercariIngestFaces, mercariLedger, yahooAuctionLedger, yahooIngestFaces, slabzFaceLedger, slabzFaceUrl, slabzIngestFaces, tvTokyoFaceSourceFromFile, bandaiFrSerie1DetailleeHoloCount, bandaiFrSerie1DetailleeLedger, bandaiFrSerie1DetailleePrintKeys, attestedNarutoCarddassFinishes } from "./faces";
 import { rakutenFaceLedger, rakutenIngestFaces, rakutenIngestPackshots, bandaiFrUsDriveIngestPackshots, bandaiFrUsDriveLedger, bandaiFrUsDriveNewEnDisplays, colekaCarddassFrBranchCoverUrl, colekaEnCcgCoverLedger, colekaEnCcgNewDisplays, colekaThumbToFull } from "./packshots";
+import {
+  narutoCarddassSyncedSourcePath,
+  readNarutoCarddassSyncedSource,
+} from "../syncedSources";
+
+const coleka = readNarutoCarddassSyncedSource("coleka.json");
+
 
 vi.mock("@/lib/http/scrapeFetch", () => ({
   fetchTextWithFlareFallback: vi.fn(),
@@ -425,10 +431,8 @@ vi.mock("@/lib/http/scrapeFetch", () => ({
       const keys = bandaiFrSerie1DetailleePrintKeys();
       expect(keys).toHaveLength(184);
 
-      const checklistPath = path.join(
-        process.cwd(),
-        "src/providers/naruto/narutocarddass/curated/sources/carddass-fr-checklist.json",
-      );
+      const checklistPath = narutoCarddassSyncedSourcePath(
+        "carddass-fr-checklist.json");
       const checklist = JSON.parse(readFileSync(checklistPath, "utf8")) as {
         sets: { s1: { ids: string[] } };
       };

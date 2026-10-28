@@ -4,7 +4,7 @@ import { nikitaCardBackUrl } from "@/providers/shared/nikita/cardlist";
 
 import {
   NIKITA_DBC_BACK_URL,
-  dbsJccNikitaBackCuratedPaths,
+  dbsJccNikitaBackDataPaths,
 } from "./nikitaBack";
 
 describe("dbsjcc nikita pack back", () => {
@@ -15,9 +15,10 @@ describe("dbsjcc nikita pack back", () => {
     expect(nikitaCardBackUrl("dbc")).toBe(NIKITA_DBC_BACK_URL);
   });
 
-  it("installs EN and JA as language-qualified curated backs", () => {
-    const paths = dbsJccNikitaBackCuratedPaths();
-    expect(paths.ja.endsWith("cards/back.ja.jpg")).toBe(true);
-    expect(paths.en.endsWith("cards/back.en.jpg")).toBe(true);
+  it("installs EN and JA under data cards as language-qualified webp", () => {
+    const paths = dbsJccNikitaBackDataPaths();
+    expect(paths.ja).toMatch(/[/\\]data[/\\]dragonball[/\\]jcc[/\\]cards[/\\]back\.ja\.webp$/);
+    expect(paths.en).toMatch(/[/\\]data[/\\]dragonball[/\\]jcc[/\\]cards[/\\]back\.en\.webp$/);
+    expect(paths.ja).not.toMatch(/curated/);
   });
 });

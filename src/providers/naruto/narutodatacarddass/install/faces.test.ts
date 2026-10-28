@@ -226,6 +226,11 @@ import { parseDataCarddassPrinted } from "../printKey";
   });
 
   describe("dataCarddassChitoroshopIngestFaces", () => {
+    beforeEach(() => {
+      // Synced ledger lives under cwd data/ — clear any stubbed data root.
+      delete process.env.PLACARR_DATA_DIR;
+    });
+
     it("liste des faces ingestibles avec printKey DCD valide", () => {
       const faces = dataCarddassChitoroshopIngestFaces();
       expect(faces.length).toBeGreaterThanOrEqual(100);

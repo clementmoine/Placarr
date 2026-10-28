@@ -1,14 +1,13 @@
 /**
  * Coleka deals prices for Naruto Carddass FR + EN CCG leaf rubriques.
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
   type ColekaDealsRubriqueTarget,
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
+import { packColekaPricesPath } from "@/lib/packPaths";
 
 import { mintNarutoPrintKey } from "../identity";
 import {
@@ -19,20 +18,15 @@ import {
   colekaUsPromoRefToCollector,
 } from "../parse/coleka";
 import { NARUTO_PACK_ID } from "../packs";
-import colekaS6It from "../curated/sources/coleka-s6-it.json";
-import colekaS24 from "../curated/sources/coleka-s24.json";
-import colekaS28 from "../curated/sources/coleka-s28.json";
-import colekaUsPromos from "../curated/sources/coleka-us-promos.json";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
-function curatedSourcesDir(): string {
-  return path.join(
-    process.cwd(),
-    "src/providers/naruto/narutocarddass/curated/sources",
-  );
-}
+const colekaS6It = readNarutoCarddassSyncedSource("coleka-s6-it.json");
+const colekaS24 = readNarutoCarddassSyncedSource("coleka-s24.json");
+const colekaS28 = readNarutoCarddassSyncedSource("coleka-s28.json");
+const colekaUsPromos = readNarutoCarddassSyncedSource("coleka-us-promos.json");
 
 export function colekaCarddassPriceLedgerPath(): string {
-  return path.join(curatedSourcesDir(), "coleka-prices.json");
+  return packColekaPricesPath(NARUTO_PACK_ID);
 }
 
 function rubriqueIdFromUrl(url: string): string | null {

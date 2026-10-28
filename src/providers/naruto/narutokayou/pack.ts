@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { packSyncedSourcePath } from "@/lib/packPaths";
+
 export const NARUTO_KAYOU_PACK_ID = "naruto/kayou";
 export const NARUTO_KAYOU_EFFECT_PACK_ID = "naruto-kayou";
 export const NARUTO_KAYOU_PROVIDER_ID = "narutokayou";
@@ -17,4 +19,9 @@ export function narutoKayouCuratedDir(): string {
     NARUTO_KAYOU_PROVIDER_ID,
     "curated",
   );
+}
+
+/** Synced crawl ledgers — `data/naruto/kayou/sources/<file>`. */
+export function narutoKayouSyncedSourcePath(fileName: string): string {
+  return packSyncedSourcePath(NARUTO_KAYOU_PACK_ID, fileName);
 }

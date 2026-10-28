@@ -10,7 +10,10 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import { parseDbsjccNumber } from "../printKey";
 
 const COLLECTION =
@@ -320,7 +323,7 @@ export function buildChitoroshopLedger(
 }
 
 export function dbsJccChitoroshopLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "chitoroshop.json");
+  return dbsJccSyncedSourcePath("chitoroshop.json");
 }
 
 export function writeChitoroshopLedger(

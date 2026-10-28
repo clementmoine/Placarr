@@ -26,7 +26,7 @@ import {
   inkworksSealedSpecs,
   inkworksStagingDir,
 } from "./sources/faces";
-import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
+import { narutoRanksSyncedSourcePath, NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "./pack";
 
 const LEDGER_FILE = "panini-eu-products.json";
 
@@ -51,7 +51,7 @@ export type PaniniEuProductsLedger = {
 };
 
 export function paniniEuProductsPath(): string {
-  return path.join(narutoRanksCuratedDir(), "sources", LEDGER_FILE);
+  return narutoRanksSyncedSourcePath(LEDGER_FILE);
 }
 
 export function readPaniniEuProductsLedger(): PaniniEuProductsLedger {

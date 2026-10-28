@@ -8,7 +8,8 @@ import path from "node:path";
 import { fetchDbzcText } from "@/providers/dragonball/shared/dbzcollection/site";
 import { packStagingDir } from "@/lib/packPaths";
 
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 import {
   dbzcCardInfoUrl,
   dbzcSetListingUrl,
@@ -30,10 +31,10 @@ type DbzcLedger = {
   sets?: Array<{ ids: string; setCode: string; label?: string }>;
 };
 
-const LEDGER_SETS = path.join(dbsJccCuratedDir(), "sources", "dbzcollection.json");
+const LEDGER_SETS = dbsJccSyncedSourcePath("dbzcollection.json");
 
 export function dbsJccDbzcollectionNamesLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "dbzcollection-names.json");
+  return dbsJccSyncedSourcePath("dbzcollection-names.json");
 }
 
 function sleep(ms: number): Promise<void> {

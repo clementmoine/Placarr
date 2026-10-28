@@ -21,7 +21,7 @@ import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import { leclercFixeezLookupForSet } from "./buildFromLedgers";
-import { leclercCuratedDir } from "./curatedPaths";
+import { leclercSourcePath } from "./curatedPaths";
 import { leclercOpForSetCode } from "./pack";
 import { leclercPrintKey } from "./printKey";
 import {
@@ -83,11 +83,11 @@ export type ColekaCdnFacesLedger = {
 };
 
 export function colekaLeclercFacesLedgerPath(): string {
-  return path.join(leclercCuratedDir(), "sources", "coleka-leclerc-faces.json");
+  return leclercSourcePath("coleka-leclerc-faces.json");
 }
 
 export function colekaCdnFacesLedgerPath(): string {
-  return path.join(leclercCuratedDir(), "sources", "coleka-cdn-faces.json");
+  return leclercSourcePath("coleka-cdn-faces.json");
 }
 
 export function readColekaLeclercFacesLedger(): ColekaLeclercFacesLedger {

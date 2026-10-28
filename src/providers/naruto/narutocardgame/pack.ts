@@ -1,6 +1,11 @@
 import path from "node:path";
 
-/** Bandai Card Games — Naruto Card Game (mondial, été 2027). */
+/**
+ * Bandai Card Games — Naruto Card Game (mondial, été 2027).
+ * Constants + curated dir only — synced ledger paths live in
+ * `syncedSources.ts` so the effects client graph can import pack ids
+ * without pulling `node:fs` via `@/lib/packPaths`.
+ */
 export const NARUTO_CARDGAME_PACK_ID = "naruto/cardgame";
 export const NARUTO_CARDGAME_EFFECT_PACK_ID = "naruto-cardgame";
 export const NARUTO_CARDGAME_PROVIDER_ID = "narutocardgame";

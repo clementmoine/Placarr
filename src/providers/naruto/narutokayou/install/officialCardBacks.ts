@@ -19,7 +19,9 @@ import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
 import { sha256Hex } from "@/providers/shared/cardCatalogue/discoverDistinctBacks";
 
 import { kayouOfficialIdToPrint } from "../identity";
-import { narutoKayouCuratedDir } from "../pack";
+import { packCardsDir } from "@/lib/packPaths";
+
+import { NARUTO_KAYOU_PACK_ID } from "../pack";
 import { KAYOU_TITLE_LANG } from "../pipeline/ledgers";
 import {
   buildKayouOfficialCardBackManifest,
@@ -181,7 +183,7 @@ export async function installKayouOfficialCardBacks(opts: {
   onProgress?: (message: string) => void;
 }): Promise<InstallKayouOfficialCardBacksResult> {
   const officialSrc = path.join(
-    opts.curatedCardsDir ?? path.join(narutoKayouCuratedDir(), "cards"),
+    opts.curatedCardsDir ?? packCardsDir(NARUTO_KAYOU_PACK_ID),
     "official",
   );
   const empty: InstallKayouOfficialCardBacksResult = {
@@ -210,11 +212,11 @@ export async function installKayouOfficialCardBacks(opts: {
   });
 
   /*
-    Classify against curated PNG sleeves (`back.png` / `back.ur.png`), not data
-    WebP — same CDN bytes as `official/*.png`. WebP re-encode would never match.
+    Classify against pack PNG sleeves (`back.png` / `back.ur.png`) under data/,
+    not WebP — same CDN bytes as `official/*.png`. WebP re-encode would never match.
   */
   const classifyDir =
-    opts.curatedCardsDir ?? path.join(narutoKayouCuratedDir(), "cards");
+    opts.curatedCardsDir ?? packCardsDir(NARUTO_KAYOU_PACK_ID);
   const plans = planInternal(sources, {
     defaultHash: readPackDefaultBackHash(classifyDir),
     tierByHash: readPackTierBackHashes(classifyDir),

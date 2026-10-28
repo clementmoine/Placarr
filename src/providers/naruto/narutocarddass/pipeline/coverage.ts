@@ -17,7 +17,6 @@ import path from "node:path";
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
-import universe from "../curated/sources/cardcheckbox-jp.json";
 import { NARUTO_PACK_ID, apacheIndexPath } from "../identity";
 import { loadNarutoCardsIndexFromSqlite } from "../indexStore";
 import { loadNarutoJaFacts } from "../scrape/catalogues";
@@ -31,6 +30,10 @@ import {
   type MangaNewsChecklistLine,
   type MangaNewsDeckMeta,
 } from "../parse/catalogues";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const universe = readNarutoCarddassSyncedSource("cardcheckbox-jp.json");
+
 
 export { apacheIndexPath };
 

@@ -1,5 +1,10 @@
 import path from "node:path";
 
+import {
+  packSyncedSourcePath,
+  resolvePackSyncedSourcePath,
+} from "@/lib/packPaths";
+
 /** Disk / admin pack. */
 export const BLEACH_SCB_PACK_ID = "bleach/scb";
 export const BLEACH_SCB_EFFECT_PACK_ID = "bleach-scb";
@@ -16,3 +21,12 @@ export function bleachScbCuratedDir(): string {
     "curated",
   );
 }
+
+export function bleachScbSyncedSourcePath(fileName: string): string {
+  return packSyncedSourcePath(BLEACH_SCB_PACK_ID, fileName);
+}
+
+export function bleachScbSourcePath(fileName: string): string {
+  return resolvePackSyncedSourcePath(BLEACH_SCB_PACK_ID, fileName);
+}
+

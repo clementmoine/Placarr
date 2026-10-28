@@ -143,13 +143,15 @@ export async function runNarutoKayouPackPipeline(
     if (!skipBacks) {
       const backs = await harvestKayouOfficialTierBacks({
         force,
-        curatedCardsDir: path.join(narutoKayouCuratedDir(), "cards"),
+        // CDN tier sleeves → data/cards (URL-recoverable, not curated).
+        curatedCardsDir: packCardsDir(NARUTO_KAYOU_PACK_ID),
         catalog: skipOfficial ? null : readKayouOfficialCatalog(),
       });
       console.log(
         `── kayouofficial backs — distinct [${backs.deduped.installed.join(", ") || "—"}], =défaut [${backs.deduped.skippedDefault.join(", ") || "—"}], conflits URL ${backs.conflicts}, CDN miss ${backs.fail} · per-card ${backs.perCardInstalled} new / ${backs.perCardSkipped} skip / ${backs.perCard} (${backs.cards} cartes / ${backs.series} séries)`,
       );
       const official = await installKayouOfficialCardBacks({
+        curatedCardsDir: packCardsDir(NARUTO_KAYOU_PACK_ID),
         destCardsDir: packCardsDir(NARUTO_KAYOU_PACK_ID),
         force,
         onProgress: (m) => console.log(`   kayou backs — ${m}`),
@@ -161,12 +163,14 @@ export async function runNarutoKayouPackPipeline(
         try {
           const ndbBacks = await harvestNarutodbMissingCardBacks({
             force,
+            curatedCardsDir: packCardsDir(NARUTO_KAYOU_PACK_ID),
             onProgress: (m) => console.log(`   narutodb backs — ${m}`),
           });
           console.log(
             `── narutodb.com backs — ${ndbBacks.installed} new / ${ndbBacks.skipped} skip / ${ndbBacks.fail} miss (${ndbBacks.probed} sondé(s))`,
           );
           const afterNdb = await installKayouOfficialCardBacks({
+            curatedCardsDir: packCardsDir(NARUTO_KAYOU_PACK_ID),
             destCardsDir: packCardsDir(NARUTO_KAYOU_PACK_ID),
             force,
             onProgress: (m) => console.log(`   kayou backs — ${m}`),

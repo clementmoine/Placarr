@@ -22,9 +22,7 @@ import { isNarutoS6FrPrintedNumber } from "../sources/titles";
 import { narutoCuratedSourcesDir } from "../install/curated";
 import { isColekaPlaceholderName } from "./index";
 import enCcgSeries from "../curated/sources/en-ccg-series.json";
-import itArchiveRarities from "../curated/sources/cardgameclub-it-archive-rarities.json";
 import titleCorrections from "../curated/sources/title-corrections.json";
-import coleka from "../curated/sources/coleka.json";
 import slabZ from "../curated/sources/slab-z-2002-carddass.json";
 import physical from "../curated/sources/user-physical-ccg.json";
 import type {
@@ -61,6 +59,14 @@ import {
   mergeColekaS6ItIntoIndex,
 } from "../scrape/coleka";
 import { mergeTvTokyoJaNamesIntoIndex } from "../sources/faces";
+import {
+  narutoCarddassSourcePath,
+  readNarutoCarddassSyncedSource,
+} from "../syncedSources";
+
+const itArchiveRarities = readNarutoCarddassSyncedSource("cardgameclub-it-archive-rarities.json");
+const coleka = readNarutoCarddassSyncedSource("coleka.json");
+
 
 
 // --- from mergeAttestedLedgers.ts ---
@@ -264,7 +270,7 @@ type ChecklistFile = {
 };
 
 export function loadChecklistFrNames(
-  filePath = path.join(narutoCuratedSourcesDir(), "carddass-fr-checklist.json"),
+  filePath = narutoCarddassSourcePath("carddass-fr-checklist.json"),
 ): Map<string, string> {
   const out = new Map<string, string>();
   if (!existsSync(filePath)) return out;

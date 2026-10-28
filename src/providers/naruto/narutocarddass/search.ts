@@ -21,7 +21,6 @@ import {
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
 import type { PrintCandidate } from "@/types/providerModule";
 import ledgerLandscape from "./curated/sources/landscape-prints.json";
-import ledgerDoubleIllustrations from "./curated/sources/carddas-jp-double-illustrations.json";
 import {
   canonicalizeNarutoPrintKey,
   canonicalNarutoDiskPrefix,
@@ -66,6 +65,10 @@ import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import { listJapaneseReleases } from "./sources/sealed";
 import { loadSealedProductEntries } from "@/lib/collect/sealedProductsLoad";
 import { isNarutoS6FrPrintedNumber } from "./sources/titles";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
+
+const ledgerDoubleIllustrations = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.json");
+
 
 // Brief `prerelease` catalogue set folds into Série 1 — ownership aliases both keys.
 registerPrereleaseHomeSet("naruto", "s1");

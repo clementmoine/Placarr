@@ -10,7 +10,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { parseNarutopiaChecklistHtml } from "@/providers/naruto/shared/narutopia/parseChecklistPage";
 
 import type { KayouChecklist } from "../identity";
-import { narutoKayouCuratedDir } from "../pack";
+import { narutoKayouSyncedSourcePath } from "../pack";
 import {
   ALERTEHIT_NARUTODEX_JS,
   buildAlertehitImageIndex,
@@ -70,7 +70,7 @@ export type KayouOfficialCrawlReport = {
 };
 
 export function kayouOfficialCatalogPath(): string {
-  return path.join(narutoKayouCuratedDir(), "sources", KAYOU_OFFICIAL_CATALOG_FILE);
+  return narutoKayouSyncedSourcePath(KAYOU_OFFICIAL_CATALOG_FILE);
 }
 
 export function readKayouOfficialCatalog(): KayouOfficialCatalog | null {
@@ -210,7 +210,7 @@ export async function runKayouOfficialCatalogCrawl(
 export const NARUTODB_CHECKLIST_FILE = "narutodb-kayou-checklist.json";
 
 export function narutodbChecklistPath(): string {
-  return path.join(narutoKayouCuratedDir(), "sources", NARUTODB_CHECKLIST_FILE);
+  return narutoKayouSyncedSourcePath(NARUTODB_CHECKLIST_FILE);
 }
 
 export function readNarutodbChecklist(): KayouChecklist | null {
@@ -281,11 +281,7 @@ export async function crawlNarutodbKayouChecklist(opts?: {
 export const NARUTOPIA_KAYOU_INDEX_FILE = "narutopia-kayou-images.json";
 
 export function narutopiaKayouImageIndexPath(): string {
-  return path.join(
-    narutoKayouCuratedDir(),
-    "sources",
-    NARUTOPIA_KAYOU_INDEX_FILE,
-  );
+  return narutoKayouSyncedSourcePath(NARUTOPIA_KAYOU_INDEX_FILE);
 }
 
 export function readNarutopiaKayouImageIndex(): NarutopiaKayouImageIndex | null {
@@ -350,19 +346,11 @@ export const CAPSULECORPGEAR_CHECKLIST_FILE = "capsulecorpgear-kayou-checklist.j
 export const ALERTEHIT_IMAGE_INDEX_FILE = "alertehit-narutodex-images.json";
 
 export function capsulecorpgearChecklistPath(): string {
-  return path.join(
-    narutoKayouCuratedDir(),
-    "sources",
-    CAPSULECORPGEAR_CHECKLIST_FILE,
-  );
+  return narutoKayouSyncedSourcePath(CAPSULECORPGEAR_CHECKLIST_FILE);
 }
 
 export function alertehitImageIndexPath(): string {
-  return path.join(
-    narutoKayouCuratedDir(),
-    "sources",
-    ALERTEHIT_IMAGE_INDEX_FILE,
-  );
+  return narutoKayouSyncedSourcePath(ALERTEHIT_IMAGE_INDEX_FILE);
 }
 
 export function readCapsulecorpgearChecklist(): KayouChecklist | null {

@@ -382,7 +382,7 @@ import {
         kind: "coffret",
         name: "Naruto Ultra Challenge collector's album",
         image:
-          "/assets/naruto/ultra-challenge/products/collector-album/fr/art.coleka.webp",
+          "/assets/naruto/ultra-challenge/products/collector-album/fr/face",
       });
       expect(existsSync(packCardsDir(NARUTO_ULTRA_PACK_ID))).toBe(false);
     });

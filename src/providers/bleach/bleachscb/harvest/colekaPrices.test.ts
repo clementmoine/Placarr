@@ -7,8 +7,10 @@ import { bleachScbPrintKey, parseBleachScbPrinted } from "../printKey";
 import { normalizeColekaRefItem } from "@/providers/shared/coleka/deals";
 
 describe("harvestColekaBleachS1Prices helpers", () => {
-  it("ledger path ends with coleka-prices.json", () => {
-    expect(colekaBleachPriceLedgerPath()).toMatch(/coleka-prices\.json$/);
+  it("ledger path is under data/bleach/scb", () => {
+    expect(colekaBleachPriceLedgerPath()).toMatch(
+      /data[/\\]bleach[/\\]scb[/\\]coleka-prices\.json$/,
+    );
   });
 
   it("resolves Coleka ref to bleach printKey", () => {

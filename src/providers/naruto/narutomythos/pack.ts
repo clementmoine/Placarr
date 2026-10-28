@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { packSyncedSourcePath } from "@/lib/packPaths";
+
 export const NARUTO_MYTHOS_PACK_ID = "naruto/mythos";
 export const NARUTO_MYTHOS_EFFECT_PACK_ID = "naruto-mythos";
 export const NARUTO_MYTHOS_PROVIDER_ID = "narutomythos";
@@ -15,4 +17,8 @@ export function narutoMythosCuratedDir(): string {
     NARUTO_MYTHOS_PROVIDER_ID,
     "curated",
   );
+}
+
+export function narutoMythosSyncedSourcePath(fileName: string): string {
+  return packSyncedSourcePath(NARUTO_MYTHOS_PACK_ID, fileName);
 }

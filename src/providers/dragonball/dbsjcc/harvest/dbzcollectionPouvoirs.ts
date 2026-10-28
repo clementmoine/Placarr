@@ -13,7 +13,8 @@ import {
 } from "@/providers/dragonball/shared/dbzcollection/site";
 
 import { parseDbzcCardDetail } from "../parse/dbzcollection";
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 import { normalizeGrouping, parseDbsjccNumber } from "../printKey";
 import { powerToGroupingSlug } from "../scrape/dbzcollection";
 
@@ -37,11 +38,7 @@ const PARTS_WITH_SCOUTER = new Set([
 ]);
 
 export function dbsJccDbzcollectionPouvoirsPath(): string {
-  return path.join(
-    dbsJccCuratedDir(),
-    "sources",
-    "dbzcollection-pouvoirs.json",
-  );
+  return dbsJccSyncedSourcePath("dbzcollection-pouvoirs.json");
 }
 
 function sleep(ms: number): Promise<void> {
@@ -54,7 +51,7 @@ function loadNames(): Array<{
   printed: string;
   number: string;
 }> {
-  const p = path.join(dbsJccCuratedDir(), "sources", "dbzcollection-names.json");
+  const p = dbsJccSyncedSourcePath("dbzcollection-names.json");
   if (!existsSync(p)) return [];
   const raw = JSON.parse(readFileSync(p, "utf8")) as {
     names?: Array<{

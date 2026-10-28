@@ -1,26 +1,21 @@
 /**
  * Coleka deals prices for Pokémon McDo FR leaves (`_r35163`, `_r42012`).
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
   type ColekaDealsRubriqueTarget,
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
+import { packColekaMcdoPricesPath } from "@/lib/packPaths";
 import { printKeyFromTcgdexIds } from "../../fetch";
 import { colekaMcdoLocalId } from "./parseColekaPokemon";
-import colekaMcdoFr from "../../curated/sources/coleka-mcdo-fr.json";
+import { readColekaMcdoFrLedger } from "./scrapeColekaPokemonFaces";
 
 const POKEMON_PACK_ID = "pokemon";
 
 export function colekaMcdoPriceLedgerPath(): string {
-  return path.join(
-    process.cwd(),
-    "src/providers/pokemon/tcgdex/curated/sources",
-    "coleka-mcdo-prices.json",
-  );
+  return packColekaMcdoPricesPath();
 }
 
 type McdoBranch = {
@@ -38,7 +33,7 @@ function rubriqueIdFromUrl(url: string): string | null {
 }
 
 export function colekaMcdoDealsTargets(): ColekaDealsRubriqueTarget[] {
-  const branches = (colekaMcdoFr.branches ?? []) as McdoBranch[];
+  const branches = (readColekaMcdoFrLedger().branches ?? []) as McdoBranch[];
   return branches
     .filter((b) => b.scrape !== false)
     .map((branch) => {

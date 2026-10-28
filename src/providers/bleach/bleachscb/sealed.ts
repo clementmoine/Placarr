@@ -1,14 +1,9 @@
 /**
  * Bleach SCB sealed SKUs — starters Compagnons / Rivaux + booster S1 + display.
  * Decklists: carddass.fr catalogue S1 (Wayback HTML under curated/sources/wayback).
- * Packshots: curated/products + provenance `curated/sources/press-packshots.json`.
+ * Packshots: curated/products + provenance `data/bleach/scb/sources/press-packshots.json`.
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { packStagingDir } from "@/lib/packPaths";
@@ -23,17 +18,29 @@ import {
   writeLocalSealedProducts,
   type LocalSealedWrite,
 } from "@/providers/shared/sealedProducts/localWrite";
-import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
-import type { CuratedSealedContentsFile } from "@/providers/shared/sealedProducts/curatedContents";
+import {
+  writeInstalledProductsContents,
+  type CuratedSealedContentsFile,
+} from "@/providers/shared/sealedProducts/curatedContents";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import pressPackshotsLedgerJson from "./curated/sources/press-packshots.json";
-import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "./pack";
+import {
+  BLEACH_SCB_PACK_ID,
+  bleachScbCuratedDir,
+  bleachScbSyncedSourcePath,
+  bleachScbSourcePath,
+} from "./pack";
 import { bleachScbPrintKey } from "./printKey";
 import {
   bleachPrintedToPrintKey,
   parseBleachS1StarterDecks,
 } from "./parse/starterDecks";
+
+const pressPackshotsLedgerJson = JSON.parse(
+  readFileSync(bleachScbSourcePath("press-packshots.json"), "utf8"),
+) as {
+  products: Array<{ ingest?: boolean; host?: string; [key: string]: unknown }>;
+};
 
 const SOURCE =
   "http://www.carddass.fr/bleach/catalogue_S1_Bleach.html (Wayback staging bleach-s1.html)";
@@ -123,11 +130,7 @@ export function bleachScbSealedContentHash(): string {
  * non-promo FR printKeys — exact starter-only vs booster split not keyed yet.
  */
 export function bleachFrS1BoosterPoolPrintKeys(): string[] {
-  const ledgerPath = path.join(
-    bleachScbCuratedDir(),
-    "sources",
-    "carddass-fr-bleach.json",
-  );
+  const ledgerPath = bleachScbSyncedSourcePath("carddass-fr-bleach.json");
   if (!existsSync(ledgerPath)) return [];
   try {
     const raw = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
@@ -150,7 +153,10 @@ export function bleachFrS1BoosterPoolPrintKeys(): string[] {
   }
 }
 
-/** Build + write `products-contents.json` from S1 HTML decklists. */
+/**
+ * Build S1 decklists → `data/<pack>/curated/products-contents.json`.
+ * Does not rewrite the git seed under `providers/.../curated/`.
+ */
 export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
   const html = stagingS1Html() ?? "";
   const decks = parseBleachS1StarterDecks(html);
@@ -248,9 +254,7 @@ export function buildBleachScbProductsContents(): CuratedSealedContentsFile {
     skus,
   };
 
-  const outPath = path.join(bleachScbCuratedDir(), "products-contents.json");
-  mkdirSync(path.dirname(outPath), { recursive: true });
-  writeFileSync(outPath, `${JSON.stringify(file, null, 2)}\n`);
+  writeInstalledProductsContents(BLEACH_SCB_PACK_ID, file);
   return file;
 }
 
@@ -263,10 +267,6 @@ export function ingestBleachScbSealedProducts(
   file: string;
 } {
   const contents = buildBleachScbProductsContents();
-  installProviderProductsContents(
-    BLEACH_SCB_PACK_ID,
-    path.join(bleachScbCuratedDir(), "products-contents.json"),
-  );
 
   const contentHash = bleachScbSealedContentHash();
   const stagingPath = bleachSealedStagingDir();

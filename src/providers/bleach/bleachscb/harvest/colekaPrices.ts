@@ -1,8 +1,6 @@
 /**
  * Coleka deals prices for Bleach Serie 1 (`_r37171`).
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
@@ -10,9 +8,10 @@ import {
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
 import { normalizeColekaRefItem } from "@/providers/shared/coleka/deals";
+import { packColekaPricesPath } from "@/lib/packPaths";
 
 import { readColekaBleachLedger } from "./coleka";
-import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "../pack";
+import { BLEACH_SCB_PACK_ID } from "../pack";
 import {
   bleachScbPrintKey,
   parseBleachScbPrinted,
@@ -21,7 +20,7 @@ import {
 const RUBRIQUE_ID = "37171";
 
 export function colekaBleachPriceLedgerPath(): string {
-  return path.join(bleachScbCuratedDir(), "sources", "coleka-prices.json");
+  return packColekaPricesPath(BLEACH_SCB_PACK_ID);
 }
 
 function bleachTargets(): ColekaDealsRubriqueTarget[] {

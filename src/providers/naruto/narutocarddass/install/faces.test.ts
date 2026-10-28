@@ -2,14 +2,17 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import ledger from "../curated/sources/carddas-jp-double-illustrations.json";
-import driveLedger from "../curated/sources/naruto-ccg-drive.json";
 import { NARUTO_FACE_DECISION_FILE } from "../disk";
 import { NARUTO_STAGING_DRIVE } from "../harvest";
 import { narutoDiskCardId } from "../identity";
 import { driveEnhancedFolders } from "../parse/catalogues";
 import { installMercariFaces, installTvTokyoFaces, installYahooAuctionFaces, installNarutoCcgDriveFansetFallbacks, carddasDoubleGifBasename, goatLocalePromoFaceLedger, goatLocalePromoIngestFaces, leboncoinFaceLedger, leboncoinIngestFaces, leboncoinListingImageFull } from "./faces";
 import sharp from "sharp";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
+
+const ledger = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.json");
 
 // —— installMercariFaces ——
 {

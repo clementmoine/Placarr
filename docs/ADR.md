@@ -79,18 +79,21 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
 
 ## ADR-006 : `data/` non commité et re-dérivable ; `curated/` commité
 
-- **Date** : 2026-08 (rétro-documenté le 2026-08-23)
+- **Date** : 2026-08 (rétro-documenté le 2026-08-23 ; syncables précisés 2026-10)
 - **Statut** : Accepté, en production
 - **Contexte** : ~120 Go de données crawlées/dumpées ; certaines données
   n'existent plus en ligne (visuels Naruto, reconstructions).
-- **Décision** : tout ce qui est re-récupérable par un script vit dans
-  `data/<pack>/` (gitignored ; extract crée les artefacts manquants, ex.
-  `full_foil_mask.webp`) ; ce qui
-  est assemblé à la main vit dans `src/providers/<id>/curated/` (commité,
-  trois sous-rôles : `cards/` et `products/` installés vers data,
-  `sources/` = ledgers d'attestation).
+- **Décision** : tout ce qu'un **Sync / harvest** peut reconstruire vit sous
+  `data/<pack>/` (gitignored) — ledgers crawlés (`sources/`,
+  `packSyncedSourcePath`), cotes marketplace, faces/backs/packshots
+  récupérables par URL (`cards/`, `products/`, `staging/`). Ce qui est
+  **assemblé à la main et non rejouable** vit dans
+  `src/providers/<id>/curated/` (commité) : digs, reconstructions,
+  maps d'ids attestés, Wayback durable. Un Sync normal ne dirty pas
+  `src/providers/` sauf changement d'identifiants attestés.
 - **Conséquences** : un clone frais démarre vide mais fonctionnel ; la
-  valeur irremplaçable est versionnée.
+  valeur irremplaçable est versionnée ; `git status` après Sync ne montre
+  pas de M sous `curated/sources` pour les ledgers migrés.
 - **Alternatives écartées** : archive contributive en base (tako) — inutile
   en mono-instance ; le local curé couvre le même besoin.
 

@@ -17,16 +17,19 @@ import { goatCdnOriginal } from "../sources/packshots";
 import { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { cardTypeFromCollectorNumber, parseEnCcgPrintedRef, carddasJpVolumeSetCode } from "./bandai";
 import { colekaCarddassPrefixToCollector } from "./coleka";
-import curated from "../curated/sources/cardgameclub-it-cardlist.json";
-import ledger from "../curated/sources/narutocards-ca.json";
 import { decodeNarutoHtmlEntities } from "../pipeline";
-import vintageNarutoCcg from "../curated/sources/vintage-naruto-ccg.json";
 import fansetEnTitles from "../curated/sources/fanset-en-titles.json";
 import tcdbLedger from "../curated/sources/tcdb-en-ccg.json";
 import path from "node:path";
-import driveLedger from "../curated/sources/naruto-ccg-drive.json";
-export const NARUTO_STAGING_DRIVE = path.join("staging", "naruto-ccg-drive");
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
+const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
+
+const ledger = readNarutoCarddassSyncedSource("narutocards-ca.json");
+const vintageNarutoCcg = readNarutoCarddassSyncedSource("vintage-naruto-ccg.json");
+const curated = readNarutoCarddassSyncedSource("cardgameclub-it-cardlist.json");
+
+export const NARUTO_STAGING_DRIVE = path.join("staging", "naruto-ccg-drive");
 
 // ─── shared helpers ─────────────────────────────────────────────────────
 

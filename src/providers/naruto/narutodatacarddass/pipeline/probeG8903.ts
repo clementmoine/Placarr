@@ -1,6 +1,9 @@
 import http from "node:http";
 import https from "node:https";
 import fs from "node:fs";
+import path from "node:path";
+
+import { narutoDataCarddassSyncedSourcePath } from "../pack";
 
 async function getFlareSession(): Promise<{ cookies: string; ua: string }> {
   return new Promise((resolve, reject) => {
@@ -182,13 +185,12 @@ async function main() {
     }
   }
 
-  // Save detailed scan to JSON
-  fs.writeFileSync(
-    "src/providers/naruto/narutodatacarddass/curated/sources/suruga-scan-g8903745-g8904010.json",
-    JSON.stringify(results, null, 2),
-    "utf8",
+  const out = narutoDataCarddassSyncedSourcePath(
+    "suruga-scan-g8903745-g8904010.json",
   );
-  console.log("\nSaved full scan to src/providers/naruto/narutodatacarddass/curated/sources/suruga-scan-g8903745-g8904010.json");
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  fs.writeFileSync(out, JSON.stringify(results, null, 2), "utf8");
+  console.log(`\nSaved full scan to ${out}`);
 }
 
 main().catch(console.error);

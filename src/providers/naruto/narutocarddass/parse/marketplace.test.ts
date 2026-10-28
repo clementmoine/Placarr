@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import ledger from "../curated/sources/avalon-shop-jp.json";
-import ledger_parseSurugaCarddass from "../curated/sources/suruga-ya-carddass.json";
 import { narutoDiskCardId } from "../identity";
 import { avalonFullImageUrl, avalonListingUrl, cleanAvalonTitle, decodeAvalonHtml, parseAvalonNarutoListing, chitoroVolumeSetCode, chitoroPsDiskOverride, japaneseFamilyOf, normalizeShopName, parseChitoroTitle, resolveChitoroIdentity, resolveChitoroNameFamily, frilFamilyClash, frilLargeImage, frilRefFromTitle, frilRefWithinPublishedRange, frilSearchUrl, parseFrilSearch, parseStorm3Listing, parseStorm3ProductFaceUrl, storm3PrintKey, foldSurugaCarddassListings, loadSurugaCarddassCuratedListings, mergeSurugaCarddassListings, parseSurugaCarddassPrinted, parseSurugaCarddassSearchHtml, parseSurugaProductDetailHtml, parseSurugaCarddassCharacterName, parseSurugaUsedPriceYen, parseSurugaYenAmount, surugaCarddassFaceUrl, surugaPrintedToDiskId } from "./marketplace";
+import { readNarutoCarddassSyncedSource } from "../syncedSources";
+
+const ledger = readNarutoCarddassSyncedSource("avalon-shop-jp.json");
+const ledger_parseSurugaCarddass = readNarutoCarddassSyncedSource("suruga-ya-carddass.json");
 
 // —— parseAvalonShop ——
 {

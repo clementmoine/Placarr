@@ -12,7 +12,11 @@ import path from "node:path";
 
 import { packCardDir } from "@/lib/packPaths";
 
-import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "../pack";
+import {
+  BLEACH_SCB_PACK_ID,
+  bleachScbCuratedDir,
+  bleachScbSyncedSourcePath,
+} from "../pack";
 import { parseBleachScbPrinted } from "../printKey";
 
 function filesIdentical(a: string, b: string): boolean {
@@ -64,9 +68,7 @@ const PROMOS_DIR = path.join(
   "wayback",
   "promos",
 );
-const PROMOS_LEDGER = path.join(
-  bleachScbCuratedDir(),
-  "sources",
+const PROMOS_LEDGER = bleachScbSyncedSourcePath(
   "carddass-fr-bleach-promos.json",
 );
 
@@ -334,11 +336,7 @@ export function buildBleachFrLedger(): {
   outPath: string;
   promos: ReturnType<typeof materializeBleachCarddassFrPromos>;
 } {
-  const outPath = path.join(
-    bleachScbCuratedDir(),
-    "sources",
-    "carddass-fr-bleach.json",
-  );
+  const outPath = bleachScbSyncedSourcePath("carddass-fr-bleach.json");
   mkdirSync(path.dirname(outPath), { recursive: true });
 
   const byPrinted = new Map<string, BleachScbCard>();

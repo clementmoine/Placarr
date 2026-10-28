@@ -1,19 +1,39 @@
 /**
  * Shippuden face ledgers — thin JSON wrappers.
- * Sources of truth: `curated/sources/mercari.json`, `curated/sources/fril.json`,
- * `curated/sources/ebay-*.json`.
+ * Synced under `data/naruto/shippuden/sources/` (mercari / fril / ebay-*).
  * Ingest rows use live CDN `url`; optional `curated` is offline fallback.
  */
-import ebayCardjpstoreLedger from "../curated/sources/ebay-cardjpstore.json";
-import ebayHmzkhytLedger from "../curated/sources/ebay-hmzkhyt.json";
-import frilLedger from "../curated/sources/fril.json";
-import mercariLedger from "../curated/sources/mercari.json";
+import { readNarutoShippudenSyncedSource } from "../assets";
 
-export type ShippudenMercariFace = (typeof mercariLedger.faces)[number] & {
+type FaceRow = {
+  ingest?: boolean;
+  url?: string;
+  curated?: string;
+  printedRef?: string;
+  diskId?: string;
+  listingUrl?: string;
+  title?: string;
+  note?: string;
+  imageId?: string;
+  [key: string]: unknown;
+};
+
+type FacesLedger = { faces: FaceRow[] };
+
+const mercariLedger = readNarutoShippudenSyncedSource<FacesLedger>("mercari.json");
+const frilLedger = readNarutoShippudenSyncedSource<FacesLedger>("fril.json");
+const ebayCardjpstoreLedger = readNarutoShippudenSyncedSource<FacesLedger>(
+  "ebay-cardjpstore.json",
+);
+const ebayHmzkhytLedger = readNarutoShippudenSyncedSource<FacesLedger>(
+  "ebay-hmzkhyt.json",
+);
+
+export type ShippudenMercariFace = FaceRow & {
   ingest: true;
 };
 
-export type ShippudenFrilFace = (typeof frilLedger.faces)[number] & {
+export type ShippudenFrilFace = FaceRow & {
   ingest: true;
 };
 
@@ -32,7 +52,7 @@ export function shippudenMercariIngestFaces(): ShippudenMercariFace[] {
   return mercariLedger.faces.filter((row): row is ShippudenMercariFace => {
     if (row.ingest !== true) return false;
     const hasCurated =
-      "curated" in row && typeof (row as { curated?: unknown }).curated === "string";
+      "curated" in row && typeof row.curated === "string";
     const hasUrl = typeof row.url === "string" && row.url.length > 0;
     return hasCurated || hasUrl;
   });
@@ -50,8 +70,13 @@ export function shippudenEbayIngestFaces(): ShippudenEbayFace[] {
     ...ebayCardjpstoreLedger.faces,
     ...ebayHmzkhytLedger.faces,
   ];
-  return rows.filter((row): row is typeof row & { ingest: true } => {
+  return rows.filter((row): row is FaceRow & { ingest: true; printedRef: string; listingUrl: string; url: string } => {
     if (row.ingest !== true) return false;
-    return typeof row.url === "string" && row.url.length > 0;
+    return (
+      typeof row.url === "string" &&
+      row.url.length > 0 &&
+      typeof row.printedRef === "string" &&
+      typeof row.listingUrl === "string"
+    );
   }) as ShippudenEbayFace[];
 }

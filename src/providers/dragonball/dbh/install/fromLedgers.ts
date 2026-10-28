@@ -2,7 +2,6 @@
  * Install DBH ledger into local prints index + optional face download.
  */
 import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 
 import { packCardDir } from "@/lib/packPaths";
 import { installCardFace } from "@/providers/shared/cardCatalogue/faceInstall";
@@ -12,12 +11,12 @@ import type {
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { DBH_PACK_ID, dbhCuratedDir } from "../pack";
+import { DBH_PACK_ID, dbhSyncedSourcePath } from "../pack";
 import { dbhPrintKey } from "../printKey";
 import type { DbhCard } from "../scrape/cardlist";
 
 function loadLedger(): DbhCard[] {
-  const p = path.join(dbhCuratedDir(), "sources", "carddass-dbh.json");
+  const p = dbhSyncedSourcePath("carddass-dbh.json");
   if (!existsSync(p)) return [];
   const raw = JSON.parse(readFileSync(p, "utf8")) as { cards?: DbhCard[] };
   return raw.cards ?? [];

@@ -15,7 +15,7 @@ import {
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import { ninjaRanksPrintKey } from "../printKey";
-import { NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "../pack";
+import { narutoRanksSyncedSourcePath, NARUTO_RANKS_PACK_ID } from "../pack";
 
 /** Locales EU hors EN : noms partagés = titre Inkworks, sauf attestation. */
 export const NINJA_RANKS_SHARED_TITLE_LANGS = ["fr", "it"] as const;
@@ -50,11 +50,11 @@ const LANGUAGE_SPECIFIC_FILE = "language-specific-cards.json";
 const SET_CODE = "nr";
 
 export function frenchTitlesLedgerPath(): string {
-  return path.join(narutoRanksCuratedDir(), "sources", LEDGER_FILE);
+  return narutoRanksSyncedSourcePath(LEDGER_FILE);
 }
 
 export function languageSpecificCardsPath(): string {
-  return path.join(narutoRanksCuratedDir(), "sources", LANGUAGE_SPECIFIC_FILE);
+  return narutoRanksSyncedSourcePath(LANGUAGE_SPECIFIC_FILE);
 }
 
 export function readFrenchTitlesLedger(): FrenchTitlesLedger {
@@ -149,7 +149,7 @@ export function buildFrenchNinjaRanksTitles(
       setCode: card.setCode,
       number: card.number,
       cardType: card.setCode,
-      sourceUrl: `curated/sources/${LANGUAGE_SPECIFIC_FILE}`,
+      sourceUrl: `data/naruto/ninja-ranks/sources/${LANGUAGE_SPECIFIC_FILE}`,
       titles: [{ lang: card.lang, fullName: card.name, rarity: null }],
     });
   }

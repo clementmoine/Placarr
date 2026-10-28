@@ -29,7 +29,7 @@ import {
 
 import {
   DBS_LAMINCARDS_PACK_ID,
-  dbsLamincardsCuratedDir,
+  dbsLamincardsSyncedSourcePath,
 } from "../pack";
 import { dbcCardFolderName } from "../parse/dragonballCenter";
 import {
@@ -92,7 +92,7 @@ function setLang(set: DbzcSetSpec, ledger: DbzcLedger): string {
 }
 
 export function dbzcollectionLedgerPath(): string {
-  return path.join(dbsLamincardsCuratedDir(), "sources", LEDGER_FILE);
+  return dbsLamincardsSyncedSourcePath(LEDGER_FILE);
 }
 
 export function readDbzcollectionLedger(): DbzcLedger {

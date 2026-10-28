@@ -29,7 +29,11 @@ import {
   applyBleachExclusivePromoFacesFromCurated,
   buildBleachFrLedger,
 } from "../parse/carddassFr";
-import { bleachScbCuratedDir, BLEACH_SCB_PACK_ID } from "../pack";
+import {
+  BLEACH_SCB_PACK_ID,
+  bleachScbCuratedDir,
+  bleachScbSyncedSourcePath,
+} from "../pack";
 import {
   bleachScbPrintKey,
   formatBleachScbReference,
@@ -37,7 +41,7 @@ import {
 } from "../printKey";
 
 function loadCards(rel: string): BleachScbCard[] {
-  const p = path.join(bleachScbCuratedDir(), "sources", rel);
+  const p = bleachScbSyncedSourcePath(rel);
   if (!existsSync(p)) return [];
   const raw = JSON.parse(readFileSync(p, "utf8")) as { cards?: BleachScbCard[] };
   return raw.cards ?? [];

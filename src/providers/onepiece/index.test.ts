@@ -1,11 +1,13 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { onepieceEffectPack } from "@/effects/onepiece";
+import { packCardsDir } from "@/lib/packPaths";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
 
 import { onepieceModule } from "./index";
-import { onepieceCuratedDir } from "./pack";
+import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
 
 describe("onepiece provider hooks", () => {
   it("declares an empty local catalogue surface", () => {
@@ -43,13 +45,16 @@ describe("onepiece provider hooks", () => {
   });
 });
 
-describe("onepiece curated back", () => {
-  it("ships attested category backs from opecards.fr", () => {
+describe("onepiece pack backs", () => {
+  it("ships attested category backs under data/ (CDN-recoverable, not curated)", () => {
+    const dir = packCardsDir(ONEPIECE_PACK_ID);
+    for (const name of ["back.don.webp", "back.leader.webp", "back.webp"]) {
+      expect(existsSync(path.join(dir, name)), path.join(dir, name)).toBe(true);
+    }
+    // Curated no longer mirrors URL-recoverable sleeves (ADR-006).
     expect(
-      listCuratedBackSources(path.join(onepieceCuratedDir(), "cards")).map(
-        (row) => row.destRel,
-      ),
-    ).toEqual(["back.don.webp", "back.leader.webp", "back.webp"]);
+      listCuratedBackSources(path.join(onepieceCuratedDir(), "cards")),
+    ).toEqual([]);
   });
 
   it("registers a catalogue-only effect pack", () => {

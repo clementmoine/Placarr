@@ -1,26 +1,45 @@
 /**
  * Data Carddass face ledgers — thin JSON wrappers + host helpers.
- * One file for install / tests; curated JSON paths unchanged.
+ * Digs stay curated; crawl ledgers live under `data/naruto/data-carddass/sources/`.
  */
 
-import chitoroshopLedger from "../curated/sources/chitoroshop.json";
-import ebayLedger from "../curated/sources/ebay.json";
-import frilLedger from "../curated/sources/fril.json";
-import mercariLedger from "../curated/sources/mercari.json";
-import tvTokyoLedger from "../curated/sources/tvtokyo.json";
+import { existsSync, readFileSync } from "node:fs";
 
-// ─── Chitoroshop ───────────────────────────────────────────────────────────
+import { narutoDataCarddassSourcePath } from "../pack";
 
-export type DataCarddassChitoroshopFace =
-  (typeof chitoroshopLedger.faces)[number];
+type FaceRow = {
+  ingest?: boolean;
+  url?: string;
+  curated?: string;
+  [key: string]: unknown;
+};
+
+type FacesLedger = { faces: FaceRow[] };
+
+function loadSyncedFacesLedger(fileName: string): FacesLedger {
+  const p = narutoDataCarddassSourcePath(fileName);
+  if (!existsSync(p)) return { faces: [] };
+  return JSON.parse(readFileSync(p, "utf8")) as FacesLedger;
+}
+
+const ebayLedger = loadSyncedFacesLedger("ebay.json");
+const frilLedger = loadSyncedFacesLedger("fril.json");
+const mercariLedger = loadSyncedFacesLedger("mercari.json");
+const tvTokyoLedger = loadSyncedFacesLedger("tvtokyo.json");
+
+// ─── Chitoroshop (synced) ──────────────────────────────────────────────────
+
+export type DataCarddassChitoroshopFace = FaceRow;
 
 export function dataCarddassChitoroshopIngestFaces(): DataCarddassChitoroshopFace[] {
-  return chitoroshopLedger.faces.filter((row) => row.ingest !== false);
+  return loadSyncedFacesLedger("chitoroshop.json").faces.filter(
+    (row) => row.ingest !== false,
+  );
 }
 
 // ─── Fril / ラクマ ──────────────────────────────────────────────────────────
 
-export type DataCarddassFrilFace = (typeof frilLedger.faces)[number];
+export type DataCarddassFrilFace = FaceRow;
 
 export function dataCarddassFrilIngestFaces(): DataCarddassFrilFace[] {
   return frilLedger.faces.filter((row) => row.ingest !== false);
@@ -28,7 +47,7 @@ export function dataCarddassFrilIngestFaces(): DataCarddassFrilFace[] {
 
 // ─── TV Tokyo ──────────────────────────────────────────────────────────────
 
-export type DataCarddassTvTokyoFace = (typeof tvTokyoLedger.faces)[number];
+export type DataCarddassTvTokyoFace = FaceRow;
 
 export function dataCarddassTvTokyoIngestFaces(): DataCarddassTvTokyoFace[] {
   return tvTokyoLedger.faces.filter((row) => row.ingest !== false);
@@ -36,7 +55,7 @@ export function dataCarddassTvTokyoIngestFaces(): DataCarddassTvTokyoFace[] {
 
 // ─── eBay ──────────────────────────────────────────────────────────────────
 
-export type DataCarddassEbayFace = (typeof ebayLedger.faces)[number];
+export type DataCarddassEbayFace = FaceRow;
 
 export function dataCarddassEbayListingImageFull(url: string): string {
   return url.replace(/\/s-l\d+\.(webp|jpe?g)$/i, "/s-l1600.$1");
@@ -48,13 +67,13 @@ export function dataCarddassEbayIngestFaces(): DataCarddassEbayFace[] {
 
 // ─── Mercari ───────────────────────────────────────────────────────────────
 
-export type DataCarddassMercariFace = (typeof mercariLedger.faces)[number];
+export type DataCarddassMercariFace = FaceRow;
 
 export function dataCarddassMercariIngestFaces(): DataCarddassMercariFace[] {
   return mercariLedger.faces.filter((row) => {
     if (!row.ingest) return false;
     const hasCurated =
-      "curated" in row && typeof (row as { curated?: unknown }).curated === "string";
+      "curated" in row && typeof row.curated === "string";
     const hasUrl = typeof row.url === "string" && row.url.length > 0;
     return hasCurated || hasUrl;
   });

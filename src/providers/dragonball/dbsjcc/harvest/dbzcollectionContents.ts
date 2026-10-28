@@ -8,7 +8,8 @@ import path from "node:path";
 import { packDataDir } from "@/lib/packPaths";
 import { fetchDbzcText } from "@/providers/dragonball/shared/dbzcollection/site";
 
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 import {
   dbzcCardInfoUrl,
   dbzcSetListingUrl,
@@ -46,7 +47,7 @@ export type DbzcContentsLedger = {
 };
 
 export function dbsJccDbzcollectionContentsPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "dbzcollection-contents.json");
+  return dbsJccSyncedSourcePath("dbzcollection-contents.json");
 }
 
 export function dbsJccDbzcollectionContentsStagingDir(): string {

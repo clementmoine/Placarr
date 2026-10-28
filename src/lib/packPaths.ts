@@ -193,6 +193,62 @@ export function packProductsIndexPath(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "products-index.json");
 }
 
+/**
+ * Synced source ledgers — `data/<pack>/sources/`.
+ * Crawl dumps + `observed` stamps (rejouables). Attested manual digs stay
+ * under provider `curated/sources/`.
+ */
+export function packSyncedSourcesDir(pack: string): string {
+  return path.join(packDataDir(pack), "sources");
+}
+
+export function packSyncedSourcePath(pack: string, fileName: string): string {
+  return path.join(packSyncedSourcesDir(pack), fileName);
+}
+
+/**
+ * Read path for a synced ledger: prefer `dataRoot()` (incl. `PLACARR_DATA_DIR`
+ * stubs), fall back to the repo `cwd/data/<pack>/sources/` copy when the
+ * override is an empty temp tree (tests stub writes but still need fixtures).
+ */
+export function resolvePackSyncedSourcePath(
+  pack: string,
+  fileName: string,
+): string {
+  const primary = packSyncedSourcePath(pack, fileName);
+  if (existsSync(primary)) return primary;
+  const repo = path.join(
+    process.cwd(),
+    "data",
+    canonicalDataPack(pack),
+    "sources",
+    fileName,
+  );
+  if (repo !== primary && existsSync(repo)) return repo;
+  return primary;
+}
+
+/**
+ * Synced Coleka deals quotes — `data/<pack>/coleka-prices.json`.
+ * Attested rubrique / printKey mappings stay under provider `curated/sources/`.
+ */
+export function packColekaPricesPath(pack: string): string {
+  return path.join(packDataDir(pack), "coleka-prices.json");
+}
+
+/** Pokémon McDo Coleka deals — `data/pokemon/coleka-mcdo-prices.json`. */
+export function packColekaMcdoPricesPath(): string {
+  return path.join(packDataDir("pokemon"), "coleka-mcdo-prices.json");
+}
+
+/**
+ * Synced Suruga-ya yen quotes — `data/<pack>/suruga-prices.json`.
+ * Attested listing URLs stay under provider `curated/sources/`.
+ */
+export function packSurugaPricesPath(pack: string): string {
+  return path.join(packDataDir(pack), "suruga-prices.json");
+}
+
 /** Local packshots — `data/<pack>/products/{slug}/{lang}/art.<source>.<ext>`. */
 export function packSealedProductsDir(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "products");

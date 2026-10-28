@@ -1,11 +1,23 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { buildMythosFromLedgers, MYTHOS_TITLE_LANG, pruneMythosComingSoonPlaceholders, pruneMythosUnattestedPrints, readAllMythosChecklists, readMythosChecklist } from "./ledgers";
 import { formatMythosReference, mythosPrintKey, NARUTO_MYTHOS_KS1_SET_CODE, normalizeMythosSearchQuery } from "../printKey";
 import { NARUTO_MYTHOS_PACK_ID } from "../pack";
+
+/** Seed synced Mythos ledgers into a temp data root (PLACARR_DATA_DIR). */
+function seedMythosSyncedSources(tmpDataRoot: string): void {
+  const src = path.join(process.cwd(), "data", "naruto", "mythos", "sources");
+  const dest = path.join(tmpDataRoot, "naruto", "mythos", "sources");
+  mkdirSync(dest, { recursive: true });
+  if (!existsSync(src)) return;
+  for (const name of readdirSync(src)) {
+    if (!name.endsWith(".json")) continue;
+    copyFileSync(path.join(src, name), path.join(dest, name));
+  }
+}
 
 // —— buildFromLedgers ——
 {
@@ -113,6 +125,7 @@ import { NARUTO_MYTHOS_PACK_ID } from "../pack";
     it("retire les fantômes ScanFlip CFA/CH hors checklist", () => {
       const previous = process.env.PLACARR_DATA_DIR;
       const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-mythos-ghost-"));
+      seedMythosSyncedSources(tmp);
       process.env.PLACARR_DATA_DIR = tmp;
       try {
         const index = createLocalPrintsIndex(NARUTO_MYTHOS_PACK_ID);

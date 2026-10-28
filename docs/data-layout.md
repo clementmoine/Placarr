@@ -169,10 +169,12 @@ Voir [provider_supply_modes.md](provider_supply_modes.md) :
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + Catalogue Sync Pokémon                                                                                    |
 | `data/<pack>/products-index.json`     | Écriture via `persistSealedProductsIndex` (merge `curated/products-contents.json`). TCG Cards : ingest Sync. Carddass / Mythos / Ranks / … : writers dédiés. Lecture Catalogue : `loadSealedProductsIndex`. |
-| `data/<pack>/curated/products-contents.json` | Copie runtime de la graine git provider — ne pas éditer comme original |
+| `data/<pack>/curated/products-contents.json` | Overlay runtime (graine git ± rebuild Sync). Sync ne réécrit pas `providers/.../curated/products-contents.json`. |
 | `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                                           |
 | `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = Catalogue Extract (admin / worker)                                                                                      |
-| Naruto `curated/sources/*.json`       | Ledgers manuels (checklist, names, sets, coleka…). **`apache-index`** → `data/naruto/carddass/logs/` (étape sources)                                                  |
+| Naruto `curated/sources/*.json`       | Digs / maps d’ids / Wayback durable. **Pas** ledgers crawlés ni cotes. **`apache-index`** → `data/naruto/carddass/logs/` |
+| `data/<pack>/sources/*.json`          | Ledgers syncés (checklists, `observed`, harvests). |
+| `data/<pack>/coleka-prices.json` / `suruga-prices.json` | Cotes marketplace syncées (rejouables). Ancrage printKey via curated. |
 
 Certains corpus **ne grandissent plus** (TCG Bandai arrêté, etc.) : base locale
 terminée sous `data/<pack>/`. Candidat : Naruto CACG FR

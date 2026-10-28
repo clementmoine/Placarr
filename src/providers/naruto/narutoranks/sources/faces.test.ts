@@ -198,7 +198,7 @@ import {
 
       const ledgerPath = path.join(
         process.cwd(),
-        "src/providers/naruto/narutoranks/curated/sources/coleka-ninja-ranks.json",
+        "data/naruto/ninja-ranks/sources/coleka-ninja-ranks.json",
       );
       const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8")) as {
         rejectedFaces?: { setCode?: string; number: string; reason?: string }[];

@@ -5,7 +5,10 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import { parseDbsjccNumber } from "../printKey";
 import {
   matchChitoroshopToDbsjccPrint,
@@ -111,15 +114,11 @@ const SCOUT_CDX = path.join(
 );
 
 export function dbsJccCarddassFrLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "carddass-fr-dbz-faces.json");
+  return dbsJccSyncedSourcePath("carddass-fr-dbz-faces.json");
 }
 
 export function dbsJccCarddassFrPouvoirMarkersPath(): string {
-  return path.join(
-    dbsJccCuratedDir(),
-    "sources",
-    "carddass-fr-dbz-pouvoir-markers.json",
-  );
+  return dbsJccSyncedSourcePath("carddass-fr-dbz-pouvoir-markers.json");
 }
 
 /**

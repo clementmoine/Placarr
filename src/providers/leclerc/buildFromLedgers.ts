@@ -7,7 +7,7 @@ import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import { leclercOpForSetCode } from "./pack";
-import { leclercCuratedDir } from "./curatedPaths";
+import { leclercSyncedSourcesDir } from "./curatedPaths";
 import {
   buildLeclercFixeezLookup,
   colekaLeclercListingForSet,
@@ -37,7 +37,7 @@ export type LeclercChecklist = {
 const TITLE_LANG = "fr";
 
 export function leclercChecklistPaths(): string[] {
-  const dir = path.join(leclercCuratedDir(), "sources");
+  const dir = leclercSyncedSourcesDir();
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((name) => /^leclerc-.+-checklist\.json$/i.test(name))

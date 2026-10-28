@@ -93,9 +93,8 @@ export async function harvestTcgCardsDistinctBacks(
   siteOrId: TcgCardsSite | TcgCardsSiteId,
   opts?: {
     force?: boolean;
-    curatedCardsDir?: string;
     dataCardsDir?: string;
-    /** When set, write pack default here even if curated already has back.webp. */
+    /** When set, write pack default even if data already has back.webp. */
     writeDefault?: boolean;
   },
 ): Promise<HarvestTcgCardsBacksResult> {
@@ -171,18 +170,11 @@ export async function harvestTcgCardsDistinctBacks(
         ? localBackSlugFromCdnSegment(defaultObs.segment)
         : null;
 
-  const curatedDir = opts?.curatedCardsDir;
+  // URL-recoverable CDN backs belong under data/ only (ADR-006) — never curated.
   const dataDir =
     opts?.dataCardsDir ??
     (site.packId ? packCardsDir(site.packId) : null);
 
-  if (defaultBytes && curatedDir) {
-    mkdirSync(curatedDir, { recursive: true });
-    const dest = path.join(curatedDir, "back.webp");
-    if (opts?.force || opts?.writeDefault || !existsSync(dest)) {
-      writeFileSync(dest, defaultBytes);
-    }
-  }
   if (defaultBytes && dataDir) {
     mkdirSync(dataDir, { recursive: true });
     const dest = path.join(dataDir, "back.webp");
@@ -214,18 +206,15 @@ export async function harvestTcgCardsDistinctBacks(
 
   const packDefaultBytes =
     defaultBytes ??
-    (curatedDir && existsSync(path.join(curatedDir, "back.webp"))
-      ? readFileSync(path.join(curatedDir, "back.webp"))
-      : dataDir && existsSync(path.join(dataDir, "back.webp"))
-        ? readFileSync(path.join(dataDir, "back.webp"))
-        : null);
+    (dataDir && existsSync(path.join(dataDir, "back.webp"))
+      ? readFileSync(path.join(dataDir, "back.webp"))
+      : null);
 
   const installed: string[] = [];
   const skippedDefault: string[] = [];
-  for (const dir of [curatedDir, dataDir]) {
-    if (!dir) continue;
+  if (dataDir) {
     const result = installDistinctBacks(candidates, {
-      cardsDir: dir,
+      cardsDir: dataDir,
       defaultBytes: packDefaultBytes,
       ext: "webp",
       force: opts?.force,

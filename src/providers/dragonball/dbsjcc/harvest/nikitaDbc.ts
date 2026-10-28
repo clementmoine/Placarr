@@ -5,14 +5,17 @@ import path from "node:path";
 
 import { harvestNikitaCardlist } from "@/providers/shared/nikita/harvest";
 
-import { dbsJccCuratedDir } from "../pack";
+import {
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import {
   parseNikitaDbcCardlist,
   type NikitaDbcCard,
 } from "../parse/nikitaDbc";
 
 export function dbsJccJaLedgerPath(): string {
-  return path.join(dbsJccCuratedDir(), "sources", "nikita-dbc-ja.json");
+  return dbsJccSyncedSourcePath("nikita-dbc-ja.json");
 }
 
 export async function harvestDbsJccJaFromNikita(): Promise<{

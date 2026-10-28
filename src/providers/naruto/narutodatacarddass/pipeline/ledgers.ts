@@ -8,7 +8,7 @@ import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPr
 
 import {
   NARUTO_DATA_CARDDASS_PACK_ID,
-  narutoDataCarddassCuratedDir,
+  narutoDataCarddassSyncedSourcePath,
 } from "../pack";
 import {
   dataCarddassPrintKey,
@@ -39,7 +39,7 @@ const CHECKLIST_FILE = "data-carddass-checklist.json";
 export const DATA_CARDDASS_TITLE_LANG = "ja";
 
 export function dataCarddassChecklistPath(): string {
-  return path.join(narutoDataCarddassCuratedDir(), "sources", CHECKLIST_FILE);
+  return narutoDataCarddassSyncedSourcePath(CHECKLIST_FILE);
 }
 
 export function readDataCarddassChecklist(): Checklist {

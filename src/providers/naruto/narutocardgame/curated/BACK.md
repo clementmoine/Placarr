@@ -9,18 +9,12 @@
 
 ## Source
 
-Composites officiels Card Types sur [naruto-cardgame.com/en/welcome/](https://www.naruto-cardgame.com/en/welcome/) :
+Scans plats sleeve (2026-10-27) — Character / Leader / Chakra / Summon.
+Remplacent les crops perspective des composites Card Types welcome
+(`type_img0{1–5}_en.webp` sur [naruto-cardgame.com/en/welcome/](https://www.naruto-cardgame.com/en/welcome/)).
 
-- `type_img01_en.webp` → Leader + dos rouge
-- `type_img02_en.webp` → Character + dos blanc
-- `type_img03_en.webp` → EX Character + dos blanc (identique au Character)
-- `type_img04_en.webp` → Chakra + dos orange
-- `type_img05_en.webp` → Summon + dos noir
-
-Bandai ne publie pas de sleeve plat isolé : les « logo sides » sont extraits
-(perspective + nivellement) depuis ces composites SAMPLE. Le logo NARUTO est
-volontairement penché (italique) ; les bords de carte sont redressés. Remplacer
-quand un asset plat officiel sortira.
+Le logo NARUTO reste volontairement penché (italique) ; les bords de carte
+sont droits.
 
 ## Règle Sync
 

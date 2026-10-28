@@ -11,11 +11,20 @@ source officielle rejouable — vit sous `src/providers/<id>/curated/` et est
 **commité**. Le curated est installé ou lu au refresh du pack ; `data/` ne
 contient jamais d'original à la main.
 
-**Garder toutes les sources.** Faces et packshots : chaque hôte attesté
-s'installe en `art.<source>.*` (cartes) ou `art.<source>.*` (produits). On ne
-skippe que si *cette* source est déjà sur disque — jamais « on a déjà mieux
-ailleurs ». `faceChoice` / `productChoice` choisissent l'affichage. Resume ≠
-suppression d'un dump concurrent.
+**Sync normal = `data/` only.** Un Catalogue Sync / harvest ne doit pas dirty
+`src/providers/` sauf changement d’**identifiants attestés**. Ledgers crawlés
+(avec `observed`), cotes marketplace, faces/backs/packshots récupérables par
+URL → `data/<pack>/sources/`, `data/<pack>/coleka-prices.json`,
+`data/<pack>/cards|products/`. Curated = digs, reconstructions, maps d’ids,
+Wayback durable non rejouable.
+
+**Garder toutes les sources (sous `data/`).** Faces et packshots : chaque hôte
+attesté s'installe en `art.<source>.*` (cartes) ou `art.<source>.*` (produits).
+On ne skippe que si *cette* source est déjà sur disque — jamais « on a déjà
+mieux ailleurs ». `faceChoice` / `productChoice` choisissent l'affichage.
+Resume ≠ suppression d'un dump concurrent. **Pas** de miroir CDN dans
+`curated/cards` — seulement l’irremplaçable (`art.reconstructed.*`, verso
+découpé à la main, packshot sans URL stable).
 
 Trois sous-rôles constatés, un provider ne prend que ceux dont il a besoin :
 
@@ -35,8 +44,14 @@ Trois sous-rôles constatés, un provider ne prend que ceux dont il a besoin :
 
 ## `curated/cards/` — versos de cartes
 
+**Pas un cache Sync.** Les bytes récupérables par URL (CDN Kayou, TCG Cards
+common backs, Nikita DBC, LorenZone packshots, …) vivent sous
+`data/<pack>/cards|products/` uniquement — **pas** de miroir git sous
+`curated/cards` / `curated/products`. Curated = irremplaçable (verso découpé à
+la main, `art.reconstructed.*`, packshot sans URL stable).
+
 Installeur partagé : `src/providers/shared/curatedCardsInstall.ts`
-(`installCuratedCardBacks`). **L'arbre est le contrat** :
+(`installCuratedCardBacks`) — miroir curated → data. **L'arbre est le contrat** :
 
 - **Verso de pack** : `curated/cards/back.*` → `data/<pack>/cards/back.webp`.
 - **Verso de set (lang-first)** : `curated/cards/{lang}/{set}/back.{lang}.*` →
@@ -83,13 +98,16 @@ Ledger **commité** des listes garanties (starters, promos fixes, math blister).
 Schéma : `version: 1`, `skus[slug].guaranteedPrints[]` (`printKey`, `qty?`,
 `finish?`) ou legacy `guaranteedPrintKeys`.
 
-Au refresh / ingest sealed : `installProviderProductsContents` copie vers
-`data/<pack>/curated/products-contents.json` (+ miroir legacy
-`sealed-contents.json`) ; **`persistSealedProductsIndex`** (writers) et
-**`loadSealedProductsIndex`** (Catalogue / filet lecture) appellent
-`mergeCuratedSealedContents`. **Ne jamais** écrire `products-index.json` à la
-main sans passer par `persistSealedProductsIndex` — et **ne jamais** éditer
-uniquement sous `data/` : la graine git est la source de vérité.
+Au refresh / ingest sealed : `installProviderProductsContents` copie la graine
+vers `data/<pack>/curated/products-contents.json` (+ miroir legacy
+`sealed-contents.json`). Les **rebuilds Sync** (JCC depuis dbzcollection,
+Bleach depuis Wayback HTML, …) écrivent uniquement sous `data/` via
+`writeInstalledProductsContents` — ils ne dirty pas la graine git
+(`updatedAt` / `verifiedAt`). **`persistSealedProductsIndex`** (writers) et
+**`loadSealedProductsIndex`** appellent `mergeCuratedSealedContents`. **Ne
+jamais** écrire `products-index.json` à la main sans
+`persistSealedProductsIndex`. Éditer la graine git seulement pour une
+attestation manuelle nouvelle ; l'overlay Sync vit sous `data/`.
 
 Exemple Carddass : `src/providers/naruto/narutocarddass/curated/products-contents.json`
 (posters S1–S4 + catalogues qty). Lorcana :
@@ -97,11 +115,18 @@ Exemple Carddass : `src/providers/naruto/narutocarddass/curated/products-content
 
 ## `curated/sources/` — ledgers d'attestation
 
-Relevés JSON faits à la main (checklists, names, sets, coleka, mercari,
-yahoo-auctions…) attestant ce qu'un dump ne prouve plus. Importés au build du
+Relevés JSON faits à la main (digs, maps d’ids, rubriques Coleka figées,
+Wayback durable…) attestant ce qu'un dump ne prouve plus. Importés au build du
 pack : `narutocarddass` (`mergeAttestedLedgers.ts`), `narutoshippuden`
-(`buildFromLedgers.ts`), `narutoranks`, `narutoultra`. Certains exports vont
-ensuite vers `data/` (ex. `apache-index` → `data/naruto/carddass/logs/`).
+(`buildFromLedgers.ts`), `narutoranks`, `narutoultra`.
+
+**Syncables ≠ curated.** Checklists / ledgers crawlés + `observed` (y compris
+dumps historiques plus jamais réécrits) → `data/<pack>/sources/`
+(`packSyncedSourcePath` / `resolvePackSyncedSourcePath`). Cotes marketplace →
+`data/<pack>/coleka-prices.json`, `suruga-prices.json`, `pkmcards-fr.json`, etc.
+Curated ne garde que digs / maps d’ids / Wayback durable / reconstructions.
+Ledgers Carddass / Shippuden / Ranks / Ultra / Cardgame / Pokémon McDo /
+Leclerc lus au runtime depuis `data/` (pas d’import TS statique des syncables).
 
 ## Markdown
 

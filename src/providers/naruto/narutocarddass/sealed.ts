@@ -3,7 +3,6 @@
  * Merged from: volumeOfficialProducts.ts, tinBoxPromos.ts, sealedProducts.ts
  */
 
-import official from "./curated/sources/carddass-official-products.json";
 import fs from "node:fs";
 import path from "node:path";
 import { dataRoot } from "@/lib/runtimeData";
@@ -85,6 +84,10 @@ import {
   type NarutoProductStoredFace,
 } from "./productChoice";
 import starterBoxAccessoriesJson from "./curated/sources/starter-box-accessories.json";
+import { readNarutoCarddassSyncedSource } from "./syncedSources";
+
+const official = readNarutoCarddassSyncedSource("carddass-official-products.json");
+
 
 
 // --- from volumeOfficialProducts.ts ---

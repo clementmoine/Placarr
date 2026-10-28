@@ -21,7 +21,8 @@ import { migrateProductsSchema } from "@/providers/shared/sealedProducts/product
 
 import type { DbzcollectionPouvoirRow } from "../harvest/dbzcollectionPouvoirs";
 import { dbsJccDbzcollectionPouvoirsPath } from "../harvest/dbzcollectionPouvoirs";
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "../pack";
+import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
+  dbsJccSyncedSourcePath} from "../pack";
 import { dbsjccPrintKey, splitDbsjccNumber } from "../printKey";
 import { cardFolderName } from "../scrape/dbzcollection";
 
@@ -151,11 +152,7 @@ async function remapPrismaItems(
 }
 
 function appendAliases(remaps: ReadonlyArray<{ from: string; to: string }>): number {
-  const aliasPath = path.join(
-    dbsJccCuratedDir(),
-    "sources",
-    "print-key-aliases.json",
-  );
+  const aliasPath = dbsJccSyncedSourcePath("print-key-aliases.json");
   let aliases: Record<string, string> = {};
   if (existsSync(aliasPath)) {
     try {

@@ -1,14 +1,13 @@
 /**
  * Coleka deals prices for Naruto Ninja Ranks (`_r25928`).
  */
-import path from "node:path";
-
 import {
   harvestColekaDealsForPack,
   writeColekaPriceLedger,
   type ColekaDealsRubriqueTarget,
   type ColekaPriceLedger,
 } from "@/providers/shared/coleka/dealsHarvest";
+import { packColekaPricesPath } from "@/lib/packPaths";
 
 import { parseColekaPrintedRef } from "../parse/catalogues";
 import { NARUTO_RANKS_PACK_ID } from "../pack";
@@ -17,11 +16,7 @@ import { ninjaRanksPrintKey } from "../printKey";
 const RUBRIQUE_ID = "25928";
 
 export function colekaRanksPriceLedgerPath(): string {
-  return path.join(
-    process.cwd(),
-    "src/providers/naruto/narutoranks/curated/sources",
-    "coleka-prices.json",
-  );
+  return packColekaPricesPath(NARUTO_RANKS_PACK_ID);
 }
 
 function ranksTargets(): ColekaDealsRubriqueTarget[] {

@@ -1,5 +1,6 @@
 /**
- * Suruga-ya used yen → curated ledger (diskId-anchored) + JPY price offers.
+ * Suruga-ya used yen → synced ledger under `data/<pack>/` (diskId-anchored)
+ * + JPY price offers.
  *
  * Shared by Naruto Carddass / Data Carddass / 疾風伝. Each line supplies its
  * listings, printed→diskId mapper, packId, and ledger path.
@@ -12,9 +13,10 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import type { PriceOfferInput } from "@/core/enrich/evidence";
+import { packSurugaPricesPath } from "@/lib/packPaths";
+import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 
 export const SURUGA_YEN_PRICE_SOURCE = "Suruga-ya";
@@ -282,7 +284,7 @@ export async function refreshSurugaYenPriceOffersFromLedger(
   ]);
 }
 
-/** Curated sources dir under a Naruto provider folder. */
+/** Curated sources dir under a Naruto provider folder (attested maps only). */
 export function narutoProviderCuratedSourcesDir(providerFolder: string): string {
   return path.join(
     process.cwd(),
@@ -292,11 +294,20 @@ export function narutoProviderCuratedSourcesDir(providerFolder: string): string 
   );
 }
 
+/** Provider module folder → catalogue / data pack id. */
+const SURUGA_PROVIDER_DATA_PACK: Readonly<Record<string, string>> = {
+  narutocarddass: "naruto/carddass",
+  narutodatacarddass: "naruto/data-carddass",
+  narutoshippuden: "naruto/shippuden",
+};
+
+/** Synced yen quotes — `data/<pack>/suruga-prices.json`. */
 export function surugaPriceLedgerPathForProvider(
   providerFolder: string,
 ): string {
-  return path.join(
-    narutoProviderCuratedSourcesDir(providerFolder),
-    "suruga-prices.json",
-  );
+  const pack = SURUGA_PROVIDER_DATA_PACK[providerFolder];
+  if (!pack) {
+    throw new Error(`No Suruga data pack for provider folder ${providerFolder}`);
+  }
+  return packSurugaPricesPath(pack);
 }

@@ -31,9 +31,25 @@ import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
 
-import act1Ledger from "./curated/sources/carddas-jp-act1.json";
-import official from "./curated/sources/carddass-official-products.json";
+import { readNarutoShippudenSyncedSource } from "./assets";
 import { NARUTO_SHIPPUDEN_PACK_ID } from "./indexStore";
+
+type Act1Ledger = {
+  products: Array<{ slug: string; title: string; file: string }>;
+};
+type OfficialLedger = {
+  products: Array<{
+    title: string;
+    jan: string | null;
+    released: string | null;
+  }>;
+};
+
+const act1Ledger =
+  readNarutoShippudenSyncedSource<Act1Ledger>("carddas-jp-act1.json");
+const official = readNarutoShippudenSyncedSource<OfficialLedger>(
+  "carddass-official-products.json",
+);
 
 export type ShippudenFormat = "booster" | "vending" | "starter" | "coin";
 

@@ -5,9 +5,8 @@
  * `installSurugaFaces` downloads.
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
+import { narutoDataCarddassSyncedSourcePath } from "../pack";
 import {
   formatSurugaDataCarddassListingsTsv,
   mergeSurugaDataCarddassListings,
@@ -16,11 +15,9 @@ import {
   parseSurugaDataCarddassListingsTsv,
 } from "../parse/catalogues";
 
-const LISTINGS_TSV = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../curated/sources/suruga-ya-data-carddass-listings.tsv",
+const LISTINGS_TSV = narutoDataCarddassSyncedSourcePath(
+  "suruga-ya-data-carddass-listings.tsv",
 );
-
 export function mergeSurugaHtmlIntoListingsTsv(
   html: string,
   tsvPath = LISTINGS_TSV,

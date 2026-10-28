@@ -5,13 +5,8 @@ import { narutoCardgameEffectPack } from "@/effects/narutocardgame";
 import { listCuratedBackSources } from "@/providers/shared/curatedCardsInstall";
 
 import { narutocardgameModule } from "./index";
-import {
-  NARUTO_CARDGAME_EFFECT_PACK_ID,
-  NARUTO_CARDGAME_PACK_ID,
-  NARUTO_CARDGAME_PRINT_GAME,
-  NARUTO_CARDGAME_PROVIDER_ID,
-  narutoCardgameCuratedDir,
-} from "./pack";
+import { NARUTO_CARDGAME_EFFECT_PACK_ID, NARUTO_CARDGAME_PACK_ID, NARUTO_CARDGAME_PRINT_GAME, NARUTO_CARDGAME_PROVIDER_ID } from "./pack";
+import { narutoCardgameCuratedDir } from "./curatedPaths";
 import { narutoCardgamePrintKey } from "./printKey";
 
 describe("narutocardgame module", () => {

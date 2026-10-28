@@ -22,8 +22,8 @@ export {
   NARUTO_CARDGAME_PACK_ID,
   NARUTO_CARDGAME_PRINT_GAME,
   NARUTO_CARDGAME_PROVIDER_ID,
-  narutoCardgameCuratedDir,
 } from "./pack";
+export { narutoCardgameCuratedDir } from "./curatedPaths";
 
 const built = createEmptyLocalTcgProvider({
   lineSpec: {

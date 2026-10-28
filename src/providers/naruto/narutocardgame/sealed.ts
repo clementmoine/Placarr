@@ -13,10 +13,8 @@ import {
   NARUTO_CARDGAME_LAUNCH_SET,
   narutoCardgameSetLabel,
 } from "./printKey";
-import {
-  NARUTO_CARDGAME_PACK_ID,
-  narutoCardgameCuratedDir,
-} from "./pack";
+import { NARUTO_CARDGAME_PACK_ID } from "./pack";
+import { narutoCardgameCuratedDir } from "./curatedPaths";
 import { narutoCardgameSourcePath } from "./syncedSources";
 
 export type NarutoCardgameSealedSku = {

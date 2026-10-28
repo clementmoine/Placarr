@@ -5,10 +5,8 @@ import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { packCardDir } from "@/lib/packPaths";
 
-import {
-  NARUTO_CARDGAME_PACK_ID,
-  narutoCardgameCuratedDir,
-} from "../pack";
+import { NARUTO_CARDGAME_PACK_ID } from "../pack";
+import { narutoCardgameCuratedDir } from "../curatedPaths";
 import { narutoCardgameSourcePath } from "../syncedSources";
 import { installNarutoCardgameWelcomeGallery } from "./fromWelcomeGallery";
 

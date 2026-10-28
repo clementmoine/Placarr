@@ -12,10 +12,8 @@ import type {
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import {
-  NARUTO_CARDGAME_PACK_ID,
-  narutoCardgameCuratedDir,
-} from "../pack";
+import { NARUTO_CARDGAME_PACK_ID } from "../pack";
+import { narutoCardgameCuratedDir } from "../curatedPaths";
 import { narutoCardgameSourcePath } from "../syncedSources";
 import { narutoCardgamePrintKey } from "../printKey";
 

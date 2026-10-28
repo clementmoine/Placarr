@@ -13,7 +13,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { resolvePackSyncedSourcePath } from "@/lib/packPaths";
+import { pokemonSourcePath } from "@/providers/pokemon/syncedSources";
 
 import {
   pokemonFaceFilename,
@@ -57,7 +57,7 @@ export type PokecardexMcdoFillReport = {
 };
 
 function ledgerPath(): string {
-  return resolvePackSyncedSourcePath("pokemon", "pokecardex-mcdo.json");
+  return pokemonSourcePath("pokecardex-mcdo.json");
 }
 
 export function loadPokecardexMcdoLedger(

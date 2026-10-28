@@ -11,7 +11,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
-import { packStagingDir, resolvePackSyncedSourcePath } from "@/lib/packPaths";
+import { packStagingDir } from "@/lib/packPaths";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import {
   catalogArtefactIsFresh,
@@ -19,6 +19,7 @@ import {
   readCatalogIngestLedger,
   recordCatalogPromoteAndPurgeStaging,
 } from "@/providers/shared/catalogIngestLedger";
+import { pokemonSourcePath } from "@/providers/pokemon/syncedSources";
 
 import {
   refreshPokemonFaceDecision,
@@ -56,19 +57,15 @@ export type ColekaMcdoLedger = {
   branches: ColekaMcdoBranch[];
 };
 
-function pokemonSyncedSourcePath(fileName: string): string {
-  return resolvePackSyncedSourcePath("pokemon", fileName);
-}
-
 export function readColekaMcdoFrLedger(): ColekaMcdoLedger {
   return JSON.parse(
-    readFileSync(pokemonSyncedSourcePath("coleka-mcdo-fr.json"), "utf8"),
+    readFileSync(pokemonSourcePath("coleka-mcdo-fr.json"), "utf8"),
   ) as ColekaMcdoLedger;
 }
 
 export function readColekaMcdoEnLedger(): ColekaMcdoLedger {
   return JSON.parse(
-    readFileSync(pokemonSyncedSourcePath("coleka-mcdo-en.json"), "utf8"),
+    readFileSync(pokemonSourcePath("coleka-mcdo-en.json"), "utf8"),
   ) as ColekaMcdoLedger;
 }
 

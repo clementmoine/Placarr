@@ -6,7 +6,8 @@ import { selectCatalogueSteps } from "@/providers/shared/cardCatalogue/catalogue
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
 
 import { installNarutoCardgameWelcomeGallery } from "./install/fromWelcomeGallery";
-import { NARUTO_CARDGAME_PACK_ID, narutoCardgameCuratedDir } from "./pack";
+import { NARUTO_CARDGAME_PACK_ID } from "./pack";
+import { narutoCardgameCuratedDir } from "./curatedPaths";
 import { ingestNarutoCardgameSealedProducts } from "./sealed";
 import {
   ensureBandaiFestPremiumPackshot,

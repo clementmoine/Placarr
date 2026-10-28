@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 
-import { narutoCardgameCuratedDir } from "./pack";
+import { narutoCardgameCuratedDir } from "./curatedPaths";
 import {
   ingestNarutoCardgameSealedProducts,
   readNarutoCardgameSealedLedger,

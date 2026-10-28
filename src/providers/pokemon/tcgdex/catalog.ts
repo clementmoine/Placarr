@@ -85,6 +85,43 @@ export async function refreshTcgdexCatalog(
       ? TCGDEX_DETAIL_ENRICH_AUTO_LIMIT
       : TCGDEX_DETAIL_ENRICH_FORCE_LIMIT,
   });
+
+  // Fullset.fr FR set titles — HTML index only (`/api` disallowed).
+  let fullsetTitles: {
+    matched: number;
+    updated: number;
+    unmatched: number;
+  } | null = null;
+  try {
+    const { harvestFullsetPokemonSets } = await import(
+      "./scrape/fullset/harvestFullsetSets"
+    );
+    const { applyFullsetPokemonSetTitles } = await import(
+      "./scrape/fullset/applyFullsetSetTitles"
+    );
+    await harvestFullsetPokemonSets();
+    const applied = applyFullsetPokemonSetTitles();
+    fullsetTitles = {
+      matched: applied.matched,
+      updated: applied.updated,
+      unmatched: applied.unmatched,
+    };
+  } catch {
+    try {
+      const { applyFullsetPokemonSetTitles } = await import(
+        "./scrape/fullset/applyFullsetSetTitles"
+      );
+      const applied = applyFullsetPokemonSetTitles();
+      fullsetTitles = {
+        matched: applied.matched,
+        updated: applied.updated,
+        unmatched: applied.unmatched,
+      };
+    } catch {
+      /* overlay is optional — TCGdex identity still stands */
+    }
+  }
+
   const logs = packLogsDir("pokemon");
   mkdirSync(logs, { recursive: true });
   writeFileSync(
@@ -96,6 +133,7 @@ export async function refreshTcgdexCatalog(
       prints: harvest.prints,
       titles: harvest.titles,
       detailsPatched: details.patched,
+      fullsetTitles,
     })}\n`,
   );
 }

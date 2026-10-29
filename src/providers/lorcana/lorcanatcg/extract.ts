@@ -160,16 +160,46 @@ async function runLorcardsProducts(
   };
 }
 
+function isTransientNetworkError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+      ? (error as { code: string }).code
+      : "";
+  return (
+    /ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENETUNREACH|socket hang up|network/i.test(
+      `${code} ${msg}`,
+    )
+  );
+}
+
 async function runCardsScrape(
   repo: string,
   force: boolean,
 ): Promise<Record<string, unknown>> {
-  const result = await scrapeLorcanaCards({
-    force,
-    root: repo,
-  });
-  const { ok: synced, ...counts } = result;
-  return { provider: "lorcanacards", ok: true, synced, ...counts };
+  try {
+    const result = await scrapeLorcanaCards({
+      force,
+      root: repo,
+    });
+    const { ok: synced, ...counts } = result;
+    return { provider: "lorcanacards", ok: true, synced, ...counts };
+  } catch (error) {
+    if (!isTransientNetworkError(error)) throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `── cards — skip (network unreachable, local corpus kept): ${message}`,
+    );
+    return {
+      provider: "lorcanacards",
+      ok: false,
+      skipped: true,
+      reason: message,
+    };
+  }
 }
 
 function unityInputsAvailable(

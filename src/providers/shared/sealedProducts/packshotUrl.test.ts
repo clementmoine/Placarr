@@ -61,6 +61,22 @@ describe("resolveSealedPackshotUrl", () => {
     ).toBeNull();
   });
 
+  it("keeps remote CDN fallbacks when no local dump exists", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "packshot-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const remote =
+      "https://static.pkmcards.fr/products/fr/boosters/booster-sv8.webp";
+    expect(
+      resolveSealedPackshotUrl({
+        packId: "pokemon",
+        slug: "booster-sv8",
+        lang: "fr",
+        fallback: remote,
+      }),
+    ).toBe(remote);
+  });
+
   it("emits /face when an art.* dump exists (no basename in URL)", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-"));
     roots.push(root);

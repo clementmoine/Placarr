@@ -2,11 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import {
   catalogueFaceSlotScore,
+  catalogueFaceSourceRank,
   pickBestCatalogueFaceSlot,
   resolveCatalogueFace,
 } from "./catalogueFacePick";
 
 describe("catalogueFacePick", () => {
+  it("ranks carddass-fr with official carddass dumps", () => {
+    expect(catalogueFaceSourceRank("art.carddass-fr.gif")).toBe(
+      catalogueFaceSourceRank("art.carddass.jpg"),
+    );
+    expect(catalogueFaceSourceRank("art.carddass-fr.gif")).toBeGreaterThan(
+      catalogueFaceSourceRank("art.adilsons.jpg"),
+    );
+  });
+
   it("prefère la plus grande face pour un tirage neutre", () => {
     const entry = {
       set: "nr",

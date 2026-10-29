@@ -168,4 +168,23 @@ describe("pickLorcanaPlayroomSamples", () => {
       "lorcana:6-13-p3",
     ]);
   });
+
+  it("demos Unity VarnishFoil leaf on a FreeForm2 print (no catalogue varnishType)", () => {
+    const withFf2 = [
+      ...catalog,
+      card({
+        printKey: "lorcana:1-1-d23",
+        fullName: "Mickey Mouse - Brave Little Tailor",
+        language: "en",
+        foilTypes: ["FreeForm2"],
+        varnishType: null,
+        foilMaskUrl: "https://example.com/ff2-mask.png",
+      }),
+    ];
+    const [sample] = pickLorcanaPlayroomSamples(withFf2, [
+      { finish: "FreeForm2", varnish: "VarnishFoil" },
+    ]);
+    expect(sample?.printKey).toBe("lorcana:1-1-d23");
+    expect(sample?.foilMaskUrl).toContain("ff2-mask");
+  });
 });

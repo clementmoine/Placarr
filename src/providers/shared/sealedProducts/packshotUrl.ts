@@ -91,14 +91,18 @@ export function resolveSealedPackshotUrl(input: {
     return assetsSealedProductRoleUrl(input.packId, slug, lang, "face");
   }
 
-  // No dump on disk — keep a still-valid legacy fallback URL if any.
-  const fallback = input.fallback?.trim()
-    ? rewriteAssetPackUrl(input.fallback)
-    : null;
-  if (
-    fallback &&
-    sealedProductAssetExists(input.packId, fallback, productsDir)
-  ) {
+  // No dump on disk — keep a still-valid fallback when possible.
+  const rawFallback = input.fallback?.trim() || null;
+  if (!rawFallback) return null;
+  const fallback = rewriteAssetPackUrl(rawFallback);
+
+  // Publisher / CDN URLs (pkmcards, ygocards, …) — keep. Only drop phantom
+  // local `/assets/…` paths that no longer resolve on disk.
+  if (!fallback.startsWith(`${ASSETS_URL_PREFIX}/`)) {
+    return fallback;
+  }
+
+  if (sealedProductAssetExists(input.packId, fallback, productsDir)) {
     // Legacy filename URL that still exists → promote to role URL when art.* present
     if (hasArtDump(dir)) {
       return assetsSealedProductRoleUrl(input.packId, slug, lang, "face");

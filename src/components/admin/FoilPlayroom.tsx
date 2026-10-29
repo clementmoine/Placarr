@@ -28,6 +28,7 @@ import {
   sealedBagOuterAspect,
 } from "@/core/render/sealedBag";
 import { listEffectPacks } from "@/effects";
+import { isUnityOnlyVarnish } from "@/effects/lorcana/resolveMaterial";
 import { SegmentedControl } from "@/components/admin/SegmentedControl";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
 import {
@@ -378,13 +379,16 @@ function useAdaptedPrint(
 
       let score = 1;
       if (wantedVarnish) {
-        if (
-          (info?.varnishType ?? sample.varnishType)?.toLowerCase() !==
-          wantedVarnish.toLowerCase()
-        ) {
-          continue;
+        const sampleVarnish = (
+          info?.varnishType ?? sample.varnishType
+        )?.toLowerCase();
+        if (sampleVarnish !== wantedVarnish.toLowerCase()) {
+          // Unity `VarnishFoil` ≠ catalogue varnishType — keep finish match.
+          if (!isUnityOnlyVarnish(wantedVarnish)) continue;
+          score = 2;
+        } else {
+          score = 3;
         }
-        score = 3;
       } else if (!(info?.varnishType ?? sample.varnishType)) {
         score = 2;
       }

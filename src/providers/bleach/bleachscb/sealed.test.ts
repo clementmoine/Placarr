@@ -26,12 +26,12 @@ describe("bleachscb sealed press packshots", () => {
 
   it("maps curated faces to retail hosts without dropping carddass dumps", () => {
     expect(BLEACH_SCB_CURATED_ART["starter-compagnons"]).toMatchObject({
-      primary: "compagnons_adilsons.jpg",
-      source: "adilsons",
+      primary: "compagnons_catalogue.gif",
+      source: "carddass-fr",
     });
     expect(BLEACH_SCB_CURATED_ART["starter-compagnons"]?.extras).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: "carddass-fr" }),
+        expect.objectContaining({ source: "adilsons" }),
         expect.objectContaining({ source: "ultrajeux" }),
       ]),
     );

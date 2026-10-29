@@ -14,6 +14,14 @@ const VARNISH_SUFFIXES = [
   "VarnishFoil",
 ] as const;
 
+/**
+ * Unity leaf suffix that is not a LorcanaJSON `varnishType`. Playroom sample
+ * pickers and adapted-print matching must soft-accept these.
+ */
+export function isUnityOnlyVarnish(varnish: string): boolean {
+  return /^varnishfoil$/i.test(varnish.trim());
+}
+
 function normalizeFinish(finish: string | null): string | null {
   if (!finish) return null;
   if (finish === "VertWave") return "VerticalWave";

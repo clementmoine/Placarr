@@ -22,9 +22,12 @@
  * and stopping at French would hide it. Deduping is by `providerId` so the
  * preferred language's title wins when the same card exists in several files.
  */
-import { httpGet } from "@/lib/http/httpClient";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 import { buildPrintKey, comparePrintSetCodes } from "@/core/identify/printKey";
+import { httpGet } from "@/lib/http/httpClient";
+import { dataRoot } from "@/lib/runtimeData";
 
 /** Game slug used in every print key this provider emits. */
 export const LORCANA_GAME = "lorcana";
@@ -351,33 +354,58 @@ function allCardsUrl(language: LorcanaLanguage): string {
   return `${BASE_URL}/${language}/allCards.json`;
 }
 
-async function fetchIndexMd5(
+/** Synced ledger — `data/lorcana/sources/lorcanajson-{lang}-allCards.json`. */
+function allCardsLedgerPath(language: LorcanaLanguage): string {
+  return path.join(
+    dataRoot(),
+    "lorcana",
+    "sources",
+    `lorcanajson-${language}-allCards.json`,
+  );
+}
+
+type AllCardsDiskLedger = {
+  source: string;
+  observed: string;
+  md5: string;
+  payload: RawAllCards;
+};
+
+function readAllCardsLedger(
   language: LorcanaLanguage,
-  signal?: AbortSignal,
-): Promise<string | null> {
+): AllCardsDiskLedger | null {
+  const file = allCardsLedgerPath(language);
+  if (!existsSync(file)) return null;
   try {
-    const response = await httpGet<string>(`${allCardsUrl(language)}.md5`, {
-      responseType: "text",
-      signal,
-    });
-    return text(response.data);
+    const raw = JSON.parse(readFileSync(file, "utf8")) as AllCardsDiskLedger;
+    if (!raw?.payload || !Array.isArray(raw.payload.cards)) return null;
+    return raw;
   } catch {
-    // A missing checksum must not block a lookup; fall through to a rebuild.
     return null;
   }
 }
 
-async function buildIndex(
+function writeAllCardsLedger(
   language: LorcanaLanguage,
   md5: string | null,
-  signal?: AbortSignal,
-): Promise<LorcanaIndex> {
-  const response = await httpGet<RawAllCards>(allCardsUrl(language), {
-    timeout: INDEX_TIMEOUT_MS,
-    signal,
-  });
-  const payload = response.data;
+  payload: RawAllCards,
+): void {
+  const file = allCardsLedgerPath(language);
+  mkdirSync(path.dirname(file), { recursive: true });
+  const ledger: AllCardsDiskLedger = {
+    source: allCardsUrl(language),
+    observed: new Date().toISOString(),
+    md5: md5 ?? "",
+    payload,
+  };
+  writeFileSync(file, `${JSON.stringify(ledger)}\n`, "utf8");
+}
 
+function indexFromPayload(
+  language: LorcanaLanguage,
+  md5: string | null,
+  payload: RawAllCards,
+): LorcanaIndex {
   const setNames = new Map<string, string>();
   for (const [code, set] of Object.entries(payload?.sets ?? {})) {
     const name = text(set?.name);
@@ -408,9 +436,70 @@ async function buildIndex(
   };
 }
 
+async function fetchIndexMd5(
+  language: LorcanaLanguage,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  try {
+    const response = await httpGet<string>(`${allCardsUrl(language)}.md5`, {
+      responseType: "text",
+      signal,
+    });
+    return text(response.data);
+  } catch {
+    // A missing checksum must not block a lookup; fall through to a rebuild.
+    return null;
+  }
+}
+
+async function buildIndex(
+  language: LorcanaLanguage,
+  md5: string | null,
+  signal?: AbortSignal,
+): Promise<LorcanaIndex> {
+  const response = await httpGet<RawAllCards>(allCardsUrl(language), {
+    timeout: INDEX_TIMEOUT_MS,
+    signal,
+  });
+  const payload = response.data;
+  try {
+    writeAllCardsLedger(language, md5, payload);
+  } catch {
+    /* ledger is best-effort — don't fail the Sync on disk */
+  }
+  return indexFromPayload(language, md5, payload);
+}
+
+function fallbackIndex(
+  language: LorcanaLanguage,
+  reason: unknown,
+): LorcanaIndex | null {
+  const stale = indexCache.get(language);
+  if (stale) {
+    console.warn(
+      `[lorcanajson] ${language}: using in-memory index (${stale.index.cards.length} cards) after ${reason instanceof Error ? reason.message : reason}`,
+    );
+    indexCache.set(language, {
+      index: stale.index,
+      checkedAt: Date.now(),
+    });
+    return stale.index;
+  }
+  const disk = readAllCardsLedger(language);
+  if (!disk) return null;
+  const index = indexFromPayload(language, disk.md5 || null, disk.payload);
+  console.warn(
+    `[lorcanajson] ${language}: using disk ledger (${index.cards.length} cards) after ${reason instanceof Error ? reason.message : reason}`,
+  );
+  indexCache.set(language, { index, checkedAt: Date.now() });
+  return index;
+}
+
 /**
  * The language index, rebuilt only when the published checksum moved. Callers
  * must treat the result as read-only — it is shared between every request.
+ * Network failures fall back to a stale in-memory index or the synced disk
+ * ledger under `data/lorcana/sources/`.
  */
 export async function loadLorcanaIndex(
   language: LorcanaLanguage = LORCANA_DEFAULT_LANGUAGE,
@@ -426,17 +515,26 @@ export async function loadLorcanaIndex(
   if (pending) return pending;
 
   const build = (async () => {
-    const md5 = await fetchIndexMd5(language, options.signal);
-    const current = indexCache.get(language);
-    if (current && md5 && current.index.md5 === md5) {
-      // Unchanged upstream: keep the parsed index, just push the check forward.
-      indexCache.set(language, { index: current.index, checkedAt: Date.now() });
-      return current.index;
-    }
+    try {
+      const md5 = await fetchIndexMd5(language, options.signal);
+      const current = indexCache.get(language);
+      if (current && md5 && current.index.md5 === md5) {
+        // Unchanged upstream: keep the parsed index, just push the check forward.
+        indexCache.set(language, {
+          index: current.index,
+          checkedAt: Date.now(),
+        });
+        return current.index;
+      }
 
-    const index = await buildIndex(language, md5, options.signal);
-    indexCache.set(language, { index, checkedAt: Date.now() });
-    return index;
+      const index = await buildIndex(language, md5, options.signal);
+      indexCache.set(language, { index, checkedAt: Date.now() });
+      return index;
+    } catch (error) {
+      const recovered = fallbackIndex(language, error);
+      if (recovered) return recovered;
+      throw error;
+    }
   })().finally(() => {
     indexBuilds.delete(language);
   });

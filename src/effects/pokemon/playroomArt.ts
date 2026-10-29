@@ -92,7 +92,8 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
   SunPillar: {
     // Rampardos ex / Charkos-ex (ME05) — owned CastAndCure SunPillar hero.
     // Miaouss-ex (me3_fr_062) stays in liveOwned for the multi-face bench.
-    imageBase: "https://assets.tcgdex.net/fr/me/me5/045",
+    // TCGdex set id is `me05` (not Live `me5`); local faces still pending harvest.
+    imageBase: "https://assets.tcgdex.net/fr/me/me05/045",
     label: "Charkos-ex",
     bundleId: "me5_fr_045",
   },
@@ -188,14 +189,22 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
     bundleId: "sv5_fr_141",
   },
   PikachuFoil: {
-    imageBase: "https://assets.tcgdex.net/fr/me/me5.5/23",
+    // Live stem `me5-5` ↔ TCGdex `30th` (faces not harvested under data/pokemon/cards yet).
+    imageBase: "https://assets.tcgdex.net/fr/me/30th/023",
     label: "Pikachu",
-    bundleId: "me5-5_fr_023",
+    bundleId: "me5-5_en_023",
   },
   ClassicFoil: {
-    imageBase: "https://assets.tcgdex.net/fr/me/me5.5c/23",
+    // Classic 30th (`30th-c`) has no CDN art yet — borrow the matching 30th Pikachu face.
+    imageBase: "https://assets.tcgdex.net/fr/me/30th/023",
     label: "Pikachu",
-    bundleId: "me5-5c_fr_023",
+    bundleId: "me5-5c_en_014",
+  },
+  RGBFoil: {
+    // Live `me5-5m` metal mini — no local harvest / TCGdex set yet; use 30th demo face.
+    imageBase: "https://assets.tcgdex.net/fr/me/30th/026",
+    label: "Pikachu",
+    bundleId: "me5-5m_en_001",
   },
   Celebrations: {
     imageBase: "https://assets.tcgdex.net/fr/swsh/cel25/1",
@@ -275,6 +284,15 @@ function highPng(imageBase: string): string {
 function liveArtUrl(pick: BundlePick | null): string | null {
   if (!pick?.cardTex) return null;
   return pokemonCardTextureUrl(pick.bundleId, pick.cardTex);
+}
+
+/**
+ * Live ME05 / 30th celebration stems whose faces are not under
+ * `data/pokemon/cards/` yet. A constructed `/assets/…` URL would 404 and
+ * shadow the TCGdex seed — playroom would show an empty card.
+ */
+function liveStemLacksLocalFaces(bundleId: string): boolean {
+  return /^(me5|me5-5|me5-5c|me5-5m)_/i.test(bundleId);
 }
 
 /**
@@ -475,11 +493,22 @@ function artFromDump(
   const liveOwned = Boolean(
     dumped?.bundleId && ownedBundlesForShader(shader).includes(dumped.bundleId),
   );
+  const useSeedArt =
+    !dumped?.bundleId || liveStemLacksLocalFaces(dumped.bundleId);
   return {
-    imageUrl: liveArtUrl(dumped) ?? highPng(seed.imageBase),
-    maskUrl: textureUrlFor(dumped, dumped?.maskTex),
-    varnishMaskUrl: textureUrlFor(dumped, dumped?.etchTex),
-    secondVarnishMaskUrl: textureUrlFor(dumped, dumped?.coldFoilTex),
+    imageUrl: useSeedArt
+      ? highPng(seed.imageBase)
+      : (liveArtUrl(dumped) ?? highPng(seed.imageBase)),
+    // Skip broken /assets mask URLs for unharvested stems (black plate kills WebGL foil).
+    maskUrl: useSeedArt
+      ? null
+      : textureUrlFor(dumped, dumped?.maskTex),
+    varnishMaskUrl: useSeedArt
+      ? null
+      : textureUrlFor(dumped, dumped?.etchTex),
+    secondVarnishMaskUrl: useSeedArt
+      ? null
+      : textureUrlFor(dumped, dumped?.coldFoilTex),
     foilMask:
       liveFoilMaskForBundle(dumped?.bundleId, {
         variant: dumped?.variant,

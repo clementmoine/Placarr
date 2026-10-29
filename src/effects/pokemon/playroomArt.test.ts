@@ -89,8 +89,11 @@ describe("playroomArtForMaterial", () => {
     const dumped = pickDumpedBundleForShader("SunPillar");
     expect(dumped?.bundleId).toBe("me5_fr_045");
     const art = playroomArtForMaterial("SunPillar");
-    expect(art?.imageUrl).toBe("/assets/pokemon/cards/fr/me5/045/art.webp");
-    expect(art?.maskUrl).toBe("/assets/pokemon/cards/fr/me5/045/mask.webp");
+    // me5 faces not harvested yet — TCGdex `me05` seed, not a 404 /assets URL.
+    expect(art?.imageUrl).toBe(
+      "https://assets.tcgdex.net/fr/me/me05/045/high.png",
+    );
+    expect(art?.maskUrl).toBeNull();
     expect(art?.label).toMatch(/Charkos-ex/);
     expect(art?.label).toMatch(/Nuit Noire/);
     expect(art?.foilMask).toBe("CastAndCure");

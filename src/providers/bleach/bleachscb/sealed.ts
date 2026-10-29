@@ -56,10 +56,11 @@ type CuratedArtSpec = {
 /** Face catalogue + dumps secondaires (carddass basse rés., mangaluxe…). */
 export const BLEACH_SCB_CURATED_ART: Record<string, CuratedArtSpec> = {
   "starter-compagnons": {
-    primary: "compagnons_adilsons.jpg",
-    source: "adilsons",
+    // Flat catalogue packshot — not the Adilsons desk photo of the hang-tab box.
+    primary: "compagnons_catalogue.gif",
+    source: "carddass-fr",
     extras: [
-      { file: "compagnons_catalogue.gif", source: "carddass-fr" },
+      { file: "compagnons_adilsons.jpg", source: "adilsons" },
       { file: "compagnons_ultrajeux.jpg", source: "ultrajeux" },
     ],
   },

@@ -15,7 +15,6 @@ import {
   mkdirSync,
 } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import "@/lib/foilMetaLoad.server";
 import {
@@ -27,17 +26,13 @@ import {
   cardDiskIdFromBundleStem,
   pokemonFaceFileFromTex,
 } from "@/lib/packAssetUrls";
+import { dataRoot } from "@/lib/runtimeData";
 
-const ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../..",
-);
-const PACK_ROOT = path.join(ROOT, "data", "pokemon", "foil");
-const CARDS_ROOT = path.join(ROOT, "data", "pokemon", "cards");
-const CARDS_PATH = path.join(ROOT, "data", "pokemon", "cards.json");
+const PACK_ROOT = path.join(dataRoot(), "pokemon", "foil");
+const CARDS_ROOT = path.join(dataRoot(), "pokemon", "cards");
+const CARDS_PATH = path.join(dataRoot(), "pokemon", "cards.json");
 const REPORT_PATH = path.join(
-  ROOT,
-  "data",
+  dataRoot(),
   "pokemon",
   "logs",
   "store-coverage.json",
@@ -246,7 +241,7 @@ function main() {
       console.log(`    ${row.bundle} → ${row.maskTex}`);
     }
   }
-  console.log(`Report: ${path.relative(ROOT, REPORT_PATH)}`);
+  console.log(`Report: ${path.relative(process.cwd(), REPORT_PATH)}`);
 
   const hardFail =
     missingFrags.length > 0 ||

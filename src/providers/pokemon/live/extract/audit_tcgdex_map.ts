@@ -13,9 +13,9 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { dataRoot } from "@/lib/runtimeData";
 
 import {
   liveSetCandidatesFromTcgdexSet,
@@ -29,16 +29,14 @@ import {
   TCGDEX_TO_LIVE_SETS,
 } from "@/effects/pokemon/setAliases";
 
-const ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../..",
-);
-const CARDS_PATH = path.join(ROOT, "data/pokemon/cards.json");
+const CARDS_PATH = path.join(dataRoot(), "pokemon", "cards.json");
 const REPORT_PATH = path.join(
-  ROOT,
-  "data/pokemon/logs/tcgdex-live-set-map.json",
+  dataRoot(),
+  "pokemon",
+  "logs",
+  "tcgdex-live-set-map.json",
 );
-const REPRINT_META_PATH = path.join(ROOT, "data/pokemon/reprintMeta.json");
+const REPRINT_META_PATH = path.join(dataRoot(), "pokemon", "reprintMeta.json");
 
 const MALIE_INDEX_URL =
   "https://cdn.malie.io/file/malie-io/tcgl/export/index.json";
@@ -485,11 +483,11 @@ async function main() {
 
   if (writeReprintMeta) {
     console.log(
-      `Reprint meta: ${reprintMetaCount} *sv fallback(s) → ${path.relative(ROOT, REPRINT_META_PATH)}`,
+      `Reprint meta: ${reprintMetaCount} *sv fallback(s) → ${path.relative(process.cwd(), REPRINT_META_PATH)}`,
     );
   }
 
-  console.log(`Report: ${path.relative(ROOT, REPORT_PATH)}`);
+  console.log(`Report: ${path.relative(process.cwd(), REPORT_PATH)}`);
 
   let exit = 0;
   if (unmapped > 0) exit = 2;

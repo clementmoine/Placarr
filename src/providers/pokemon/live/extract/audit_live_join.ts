@@ -11,7 +11,6 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
 import {
@@ -29,20 +28,18 @@ import {
 } from "@/effects/pokemon/resolveEffect";
 import { remapCollectorNumberForLive } from "@/effects/pokemon/liveJoin";
 import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
+import { dataRoot } from "@/lib/runtimeData";
 
 // Server-side: installs the SQLite lookups over the client-safe stubs.
 // Without it the pack answers empty and every audit reports zero.
 import "@/effects/pokemon/cardFoilIndex";
 
-const ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../..",
-);
 const REPORT_PATH = path.join(
-  ROOT,
-  "data/pokemon/logs/tcgdex-live-card-join.json",
+  dataRoot(),
+  "pokemon",
+  "logs",
+  "tcgdex-live-card-join.json",
 );
-
 /**
  * Spot-checks that exercise the real product path (`resolveEffectForPrintKey`),
  * not a naive « card #1 exists on candidate stem » probe.

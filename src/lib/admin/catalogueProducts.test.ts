@@ -247,6 +247,7 @@ describe("catalogue sealed rows", () => {
         productKey: "lorcana::woody",
         kind: "booster",
         lang: "fr",
+        image: "https://example.test/woody.webp",
         contentsKnown: false,
         structureAttested: false,
         printCount: 1,

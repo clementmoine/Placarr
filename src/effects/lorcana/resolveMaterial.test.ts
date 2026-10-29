@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { parseMaterialName, resolveMaterialName } from "./resolveMaterial";
+import {
+  isUnityOnlyVarnish,
+  parseMaterialName,
+  resolveMaterialName,
+} from "./resolveMaterial";
+
+describe("isUnityOnlyVarnish", () => {
+  it.each([
+    ["VarnishFoil", true],
+    ["varnishfoil", true],
+    ["HighGloss", false],
+    ["RainbowHotFoil", false],
+  ] as const)("%s → %s", (token, expected) => {
+    expect(isUnityOnlyVarnish(token)).toBe(expected);
+  });
+});
 
 describe("parseMaterialName", () => {
   it.each([

@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const httpGet = vi.fn();
 
@@ -20,6 +24,8 @@ import {
   searchLorcanaCards,
   setCardCountFromFullIdentifier,
 } from "./fetch";
+
+let dataDir = "";
 
 /**
  * Shapes copied from the real French payload, keeping the traps: a variant
@@ -213,6 +219,14 @@ function allCardsCallCount(): number {
 beforeEach(() => {
   httpGet.mockReset();
   resetLorcanaIndexCache();
+  dataDir = mkdtempSync(path.join(os.tmpdir(), "placarr-lorcanajson-"));
+  vi.stubEnv("PLACARR_DATA_DIR", dataDir);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+  dataDir = "";
 });
 
 describe("print keys", () => {
@@ -388,6 +402,23 @@ describe("index caching", () => {
     expect(allCardsCallCount()).toBe(1);
     expect(first).toBe(second);
     expect(second).toBe(third);
+  });
+
+  it("falls back to the synced disk ledger when the host is unreachable", async () => {
+    mockDataset(payload(), "checksum-disk");
+    const warm = await loadLorcanaIndex("fr");
+    expect(warm.cards.length).toBeGreaterThan(0);
+
+    resetLorcanaIndexCache();
+    httpGet.mockRejectedValue(
+      Object.assign(new Error("getaddrinfo ENOTFOUND lorcanajson.org"), {
+        code: "ENOTFOUND",
+      }),
+    );
+
+    const recovered = await loadLorcanaIndex("fr");
+    expect(recovered.cards.length).toBe(warm.cards.length);
+    expect(recovered.md5).toBe("checksum-disk");
   });
 
   it("keeps languages apart", async () => {

@@ -8,6 +8,7 @@ import type {
   FoilPlayroomNeed,
 } from "@/types/providerModule";
 import { withPackCardUrls } from "@/effects/lorcana/packAssets";
+import { isUnityOnlyVarnish } from "@/effects/lorcana/resolveMaterial";
 
 import {
   LORCANA_DEFAULT_LANGUAGE,
@@ -43,6 +44,11 @@ function scoreCard(card: LorcanaCard, need: FoilPlayroomNeed): number {
   }
 
   if (need.varnish) {
+    if (isUnityOnlyVarnish(need.varnish)) {
+      // Prefer a print that already carries a varnish plate; else finish-only.
+      if (card.varnishMaskUrl) return 2;
+      return 1;
+    }
     if ((card.varnishType ?? "").toLowerCase() !== need.varnish.toLowerCase()) {
       return -1;
     }

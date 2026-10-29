@@ -91,7 +91,7 @@ import { installProviderProductsContents } from "@/providers/shared/sealedProduc
 
 const POKEMON_PRODUCTS_CONTENTS = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
-  "../tcgdex/curated/products-contents.json",
+  "../../tcgdex/curated/products-contents.json",
 );
 
 /**

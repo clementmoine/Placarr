@@ -1169,10 +1169,12 @@ export function FoilPlayroom({
       </div>
       <SegmentedControl<CatalogueBrowseScope>
         value={
-          browseScope === "sealed"
+          browseScope === "sealed" && catalogueInfo.hasSealedProducts !== false
             ? "sealed"
             : catalogueInfo.hasFoilEffects
-              ? browseScope
+              ? browseScope === "sealed"
+                ? "all"
+                : browseScope
               : "all"
         }
         onChange={selectScope}
@@ -1181,10 +1183,14 @@ export function FoilPlayroom({
             value: "all",
             label: fr ? "Cartes" : "Cards",
           },
-          {
-            value: "sealed",
-            label: fr ? "Scellés" : "Sealed",
-          },
+          ...(catalogueInfo.hasSealedProducts !== false
+            ? [
+                {
+                  value: "sealed" as const,
+                  label: fr ? "Scellés" : "Sealed",
+                },
+              ]
+            : []),
           /*
             Last: foils, sachets, and later box/disc renders — not only TCG
             foil dumps. URL scope stays `foils` for bookmarks.

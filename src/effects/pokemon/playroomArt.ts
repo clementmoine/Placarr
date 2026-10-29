@@ -75,7 +75,8 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
     bundleId: "bw10_fr_001",
   },
   FlatSilver: {
-    imageBase: "https://assets.tcgdex.net/fr/ec/ec/36",
+    // TCGdex serie `ecard` / set `ecard1` (not Live stem `ec`).
+    imageBase: "https://assets.tcgdex.net/fr/ecard/ecard1/36",
     label: "Énergie Plante",
     bundleId: "ec_fr_036",
   },
@@ -109,17 +110,18 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
     bundleId: "sm10_fr_001",
   },
   SvHolo: {
-    imageBase: "https://assets.tcgdex.net/fr/me/me1/10",
+    // TCGdex set id is `me01` with zero-padded locals (Live stem stays `me1`).
+    imageBase: "https://assets.tcgdex.net/fr/me/me01/010",
     label: "Méganium",
     bundleId: "me1_fr_010",
   },
   SvUltra: {
-    imageBase: "https://assets.tcgdex.net/fr/me/me1/3",
+    imageBase: "https://assets.tcgdex.net/fr/me/me01/003",
     label: "Méga-Florizarre-ex",
     bundleId: "me1_fr_003",
   },
   SvUltraGoldRainbow: {
-    imageBase: "https://assets.tcgdex.net/fr/me/me1/187",
+    imageBase: "https://assets.tcgdex.net/fr/me/me01/187",
     label: "Méga-Gardevoir-ex",
     bundleId: "me1_fr_187",
   },
@@ -129,12 +131,13 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
     bundleId: "sv4-5_fr_240",
   },
   SwHolo: {
-    imageBase: "https://assets.tcgdex.net/fr/swsh/swsh10.5/3",
+    // Pokémon GO (`swsh10.5`) locals are zero-padded on the CDN.
+    imageBase: "https://assets.tcgdex.net/fr/swsh/swsh10.5/003",
     label: "Florizarre",
     bundleId: "swsh10-5_fr_003",
   },
   SwSecret: {
-    imageBase: "https://assets.tcgdex.net/fr/swsh/swsh10.5/79",
+    imageBase: "https://assets.tcgdex.net/fr/swsh/swsh10.5/079",
     label: "Mewtwo VSTAR",
     bundleId: "swsh10-5_fr_079",
   },
@@ -150,7 +153,7 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
   },
   RadiantHolo: {
     // Same face as poke-holo.simey.me radiant demo + Live Pokémon GO #11.
-    imageBase: "https://assets.tcgdex.net/fr/swsh/swsh10.5/11",
+    imageBase: "https://assets.tcgdex.net/fr/swsh/swsh10.5/011",
     label: "Dracaufeu Radieux",
     bundleId: "swsh10-5_fr_011",
     /** Simey `.card.fire` — Charizard spotlight colour. */
@@ -179,7 +182,8 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
     faceQuarterTurns: 1,
   },
   Stamped: {
-    imageBase: "https://assets.tcgdex.net/fr/me/mebsp/28",
+    // Live stem `mebsp` ↔ TCGdex ME Black Star Promos `mep`.
+    imageBase: "https://assets.tcgdex.net/fr/me/mep/028",
     label: "Fanfare festive",
     bundleId: "mebsp_fr_028",
   },
@@ -620,4 +624,12 @@ export function playroomArtForMaterial(name: string): PlayroomArt | null {
 /** Foiled leaves for playroom / inventory seeds (excludes NonFoil). */
 export function playroomSeedFoilNames(): PokemonPaperFoilName[] {
   return listPokemonEffectFoilNames();
+}
+
+/**
+ * TCGdex `…/high.png` used when Live dump art is unavailable (browser seed
+ * path before `/api/admin/foil-playroom-samples` lands, or unharvested stems).
+ */
+export function playroomSeedHighPng(shader: string): string {
+  return highPng(seedFor(shader).imageBase);
 }

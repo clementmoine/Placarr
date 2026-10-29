@@ -10,6 +10,7 @@ import {
   pickDumpedBundleForShader,
   playroomArtForMaterial,
   playroomSeedFoilNames,
+  playroomSeedHighPng,
   PLAYROOM_FACES_PER_MATERIAL,
 } from "./playroomArt";
 
@@ -131,6 +132,33 @@ describe("playroomArtForMaterial", () => {
       "smalt_fr_001",
     );
     expect(playroomArtForMaterial("AngledPillars")?.liveOwned).toBe(true);
+  });
+
+  it("CDN seed paths match TCGdex ids (padded me01 / swsh10.5, ecard1, mep)", () => {
+    expect(playroomSeedHighPng("RadiantHolo")).toBe(
+      "https://assets.tcgdex.net/fr/swsh/swsh10.5/011/high.png",
+    );
+    expect(playroomSeedHighPng("SwSecret")).toBe(
+      "https://assets.tcgdex.net/fr/swsh/swsh10.5/079/high.png",
+    );
+    expect(playroomSeedHighPng("SwHolo")).toBe(
+      "https://assets.tcgdex.net/fr/swsh/swsh10.5/003/high.png",
+    );
+    expect(playroomSeedHighPng("SvUltraGoldRainbow")).toBe(
+      "https://assets.tcgdex.net/fr/me/me01/187/high.png",
+    );
+    expect(playroomSeedHighPng("SvHolo")).toBe(
+      "https://assets.tcgdex.net/fr/me/me01/010/high.png",
+    );
+    expect(playroomSeedHighPng("SvUltra")).toBe(
+      "https://assets.tcgdex.net/fr/me/me01/003/high.png",
+    );
+    expect(playroomSeedHighPng("FlatSilver")).toBe(
+      "https://assets.tcgdex.net/fr/ecard/ecard1/36/high.png",
+    );
+    expect(playroomSeedHighPng("Stamped")).toBe(
+      "https://assets.tcgdex.net/fr/me/mep/028/high.png",
+    );
   });
 });
 

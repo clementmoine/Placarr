@@ -487,6 +487,17 @@ describe("cataloguePacks", () => {
     expect(sealedToPokemon.get("scope")).toBe("sealed");
   });
 
+  it("drops sealed scope on arcade lines with no retail SKUs", () => {
+    const dataCarddass = cataloguePackInfo("naruto/data-carddass")!;
+    expect(dataCarddass.hasSealedProducts).toBe(false);
+    expect(resolveCatalogueScope("sealed", dataCarddass)).toBe("all");
+
+    const params = new URLSearchParams("pack=pokemon&scope=sealed");
+    applyCataloguePackParams(params, "naruto/data-carddass");
+    expect(params.get("pack")).toBe("naruto/data-carddass");
+    expect(params.get("scope")).toBe("all");
+  });
+
   it("deep-links Catalogue jobs onto the pack / extract line", () => {
     expect(adminCatalogueHref("dragonball/cg")).toBe(
       "/admin?tab=catalogue&pack=dragonball%2Fcg&scope=all",

@@ -1349,6 +1349,10 @@ export function resolveCatalogueScope(
     raw === "scellés" ||
     raw === "products"
   ) {
+    // Arcade / sticker lines (Data Carddass, …) have no retail sealed SKUs.
+    if (pack.hasSealedProducts === false) {
+      return pack.hasFoilEffects ? pack.defaultScope : "all";
+    }
     return "sealed";
   }
   if (!pack.hasFoilEffects) return "all";
@@ -1384,7 +1388,10 @@ export function applyCataloguePackParams(
   params.delete("material");
   const next = cataloguePackInfo(packId);
   const scope = params.get("scope");
-  if (next && !next.hasFoilEffects) {
+  if (next?.hasSealedProducts === false && scope === "sealed") {
+    params.set("scope", next.hasFoilEffects ? next.defaultScope : "all");
+    if (params.get("scope") === "foils") params.delete("scope");
+  } else if (next && !next.hasFoilEffects) {
     if (scope !== "sealed") params.set("scope", "all");
   } else if (next?.defaultScope === "foils") {
     if (scope !== "sealed" && scope !== "all") {

@@ -1,0 +1,224 @@
+# Data layout
+
+Runtime data lives under **`data/`** (bind-mounted in Docker). Next streams it — no `public/` symlinks for uploads or pack assets.
+
+## Local-first pack / catalogue media
+
+**Scrape = bytes as published** (JPEG masks, CDN textures, art). No bake / resize
+at scrape time. Runtime may transform for display (e.g. Safari alpha from a
+greyscale JPEG — same idea as `cards.disneylorcana.com`).
+
+Once a file is under `data/<pack>/foil/` or `data/<pack>/cards/`, product URLs are
+**`/assets/<pack>/…`**. External CDNs (Ravensburger, TCGdex, Live) are scrape
+sources + cold-start fallback only. **`data/uploads/`** = user media (custom
+covers, crops) — not catalogue masks. Layout stays **flat** (`hash.ext` +
+`hash_crop.ext`).
+
+```
+data/
+  uploads/
+  lorcana/ | pokemon/
+    catalog.sqlite | cards-index.json | products-index.json | cards/ | foil/ | staging/ | logs/
+    # lorcana/staging/lorcards-products/  — Sync admin (famille TCG Cards)
+    # lorcana/staging/set-logos.json      — wordmarks de chapitre (viewer)
+    # lorcana/products/sets/{set12}/logo.png
+    # pokemon/staging/pkmcards-products/  — Sync admin (même famille)
+    # pokemon pack_documents.tcgdex-set-logos — wordmarks d'extension (API)
+  # prévu, pas encore sur disque : onepiece/staging/opecards-products/,
+  # yugioh/staging/ygocards-products/, mtg/staging/mtgcards-products/
+  # (CLI famille ; pas encore de pack Catalogue ; mtg = rayon scellé mince)
+  naruto/                          # franchise ombrelle
+    carddass/                      # un pack (Carddass FR/JA/IT + Bandai USA CCG)
+      catalog.sqlite
+      cards/
+        back.fr.webp | back.en.webp | …   # sleeve pack par langue (racine cards/)
+        {fr|en|it|ja}/{s1|s6|promo|…}/{ni0001|n0001|nus0097}/
+          art.<source>.<ext>   # un dump par hôte (carddass, nikita, suruga, …)
+          art.jpg              # legacy, non renommé
+          art.reconstructed.* | art.corrected.*
+          face.json            # fichier affiché (raw éditeur FR > photo Coleka ; sinon pixels)
+      products/
+        {slug}/{fr|en|it|ja}/
+          art.<source>.<ext>   # packshots, tous les hôtes
+          logo.<source>.<ext>  # wordmark de série, recopié dans chaque SKU
+          face.json
+      staging/  carddass-fr/ | carddas-jp/ | bandaicg-en/ | goat-en-ccg/ | cardgameclub-it/ | coleka-s6-it/ | stop2shop-uns3/ …
+      logs/
+    # `naruto/en-ccg` n'est plus un pack : alias URL → carddass ; dossier data/ legacy à migrer puis supprimer
+    shippuden/                     # 「疾風伝 カードゲーム」 — autre jeu, autre pack
+    ninja-ranks/                   # Panini / Inkworks Ninja Ranks (titres EN ; packshots en produits, éditions US Inkworks + EU Panini ; 2 faces échantillon)
+      locale-specific-faces.json | prints.sqlite
+    ultra-challenge/               # Panini Ultra Challenge (lamincards, 2007)
+  dragonball/                      # franchise Dragon Ball (Masters, FW, JCC, Heroes, Lamincards)
+    cg/                            # Masters (provider dbscg)
+      catalog.sqlite | cards-index.json | products-index.json
+      facts.json | dbscards-fr.json | dbscards-en.json | scrape-summary.json
+      backup/
+      cards/back.webp              → /assets/dragonball/cg/cards/back.webp
+      cards/{lang}/{set}/{card}/art.webp   # contrat universel (FR Bandai, EN Arena, …)
+      staging/dragon-ball-masters-arena/  # git clone, gitignored
+      staging/dbscards-products/          # Sync admin Masters
+      foil/full_foil_mask.webp
+      logs/
+    fw/                            # Fusion World (provider dbsfw)
+      catalog.sqlite | cards-index.json | products-index.json
+      cards/back.webp              → /assets/dragonball/fw/cards/back.webp
+      staging/dbscards-products/          # Sync admin Fusion World
+      foil/full_foil_mask.webp
+      logs/
+  launchbox|icollect/
+  # nointro/ prévu — provider + index SQLite existent, rien de synchronisé sur disque
+  indexes/title-idf/               # vide tant que `pnpm title-idf:update` n'a pas tourné
+  logs/                            # artefacts d'audit foil (writer : src/providers/pokemon/live/liveCard.ts)
+```
+
+`naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs.
+
+**Contrat disque universel** (tous les TCG) : `cards/{lang}/{set}/{card}/`.
+Carddass : `card` = id collector (`ni0001`, `nus0097`) ; `set` = série / canal
+(`s1`, `s6`, `promo`, …). NI et N sont **voisins**, pas la même carte.
+
+**URLs de rôle (pas de filename en URL)** :
+
+| Rôle | Forme |
+|------|--------|
+| Face / thumb / illust. B | `/assets/<pack>/prints/{set}-{id}-{lang}/face\|thumb\|face-b` (stem étagère sans finish). **Émis** aujourd’hui par Naruto Carddass ; résolveur HTTP pack-agnostique (emprunt = Carddass seulement). |
+| Scellé face / thumb / dos / logo | `/assets/<pack>/products/{slug}/{lang}/face\|thumb\|back\|logo` — basename sur disque (`art.*` / `back.*` / `logo.*` + `face.json`), jamais dans l’URL. |
+| Dos pack | `/assets/<pack>/backs/{lang}` |
+| Dos set | `/assets/<pack>/backs/{lang}/sets/{set}` |
+
+Le résolveur HTTP choisit le meilleur fichier sur disque (`face.json` +
+classement dump pour les faces ; `back.{lang}.*` / `back.*` pour les dos) et
+expose `X-Placarr-Art-Source` / `X-Placarr-Art-Disk`. SQLite / index : présence
+éventuelle, **jamais** le basename dans l’URL publique. Layout disque inchangé
+(lang-first, `art.<source>.*`).
+
+**Héritage art** :
+
+| Couche | Opt-in | Portée |
+|--------|--------|--------|
+| `artBorrowFrom` | chaîne set→set sur le pack | **même locale**. S2–S5 soft-borrow **peers bidirectionnels** puis **S1 en affichage seulement** (deck reprints). Promo / prerelease / S6 / maki empruntent aussi S1. |
+| Sync materialize | `materializePeerRetailFaces` | Copie disque S2↔S5 (peers only, **jamais S1**) pour officialiser les rectos partagés → `owned`. Cibles = checklist FR **+** deck guarantees (ex. Temari NI-114 S2→S4 ; S5→S3 OK). |
+| `localeArt.bestFaceAcrossLocales` | pack / série ; denylist carte via `locale-specific-faces.json` | cross-lang seulement si faces neutres (pas de texte / art identique) |
+
+Soft-borrow S1 ≠ materialize : la tuile S2 peut afficher le scan S1
+(`artFallbackFrom`) sans créer `fr/s2/{id}/`. S6 emprunte S5→S1 tant que
+`fr/s6/{id}/` n’a pas sa propre face — dès qu’elle arrive, `owned`. Les 巻ノ
+(`maki*`) empruntent `s1…s6` : la checklist JA ne montre que `maki*`, alors
+que beaucoup de scans vivent sous `ja/sN/`. Versos restent sur la locale de
+la tuile. Filtre admin « Art emprunté » = `artFallbackFrom` / `artLocaleFrom`.
+
+`printed=false` (S6 FR) : visible au catalogue, absent du picker ; le
+recto peut quand même s’afficher via emprunt S5→S1.
+Migration : `pnpm cards:migrate:lang-first`.
+Faces : **jamais ignorer un hôte** parce qu’une autre illustration est déjà là.
+Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
+(pixels, tie-break par locale). Même contrat pour tous les TCG / packs — pas
+seulement Carddass. `art.jpg` non sourcé restant = `legacy`
+(thumbs EN bizarres, photos collectionneur) — le reste a été reclasse.
+Produits scellés : même contrat sous `products/{slug}/{lang}/` (`art` +
+`logo`) — tous les hôtes archivés, `productChoice` décide. Le wordmark de
+série est recopié dans chaque SKU (Pokémon / Lorcana déjà un logo par produit ;
+Naruto S1–S5 partagent un GIF — on duplique).
+Titres attestés sans face (BGG EN S1, Coleka FR, Slab-Z JA) : print +
+`langs.*.name` dans `cards-index.json`, pas de dossier vide.
+PR-096 a désormais une face FR (`art.leboncoin`) et EN (`art.drive` + `art.coleka`).
+Les 101 promos US Coleka `_r38199` (`PR-001`–`100` + `005R`–`009R`) vivent sous
+`cards/promo/pr0nnn/en/` — pas l’ombrelle `_r4102`, pas les tins FR.
+Provider : `src/providers/naruto/narutocarddass/`. Sync : Catalogue Extract (admin /
+worker) — voir [naruto_carddass_tcg.md](naruto_carddass_tcg.md).
+Dos = langue : `cards/back.{fr|en|it|ja}.webp` depuis
+`curated/cards/back.{lang}.png`. Pas de `back.webp` sans langue sur Naruto.
+Reconstruct : `curated/cards/{lang}/{set}/{id}/art.reconstructed.png`
+(+ `source.jpg`) — même contrat lang-first que `data/`. Dos set curated :
+`cards/{lang}/{set}/back.{lang}.*`. Ledgers JSON : `curated/sources/`
+(dont `landscape-prints.json`). Le markdown **est autorisé** dans `curated/`
+comme documentation locale (`BACK.md` chez dbscg, dbsfw, narutoshippuden,
+narutoranks, narutoultra) — jamais installé vers `data/`
+(`curatedCardsInstall` ne copie pas le markdown).
+
+`dbs` = franchise ; **`dragonball/cg`** = Masters (`dbscg:bt1-001`) ; **`dragonball/fw`** =
+Fusion World (`dbsfw:st01-001`, parallels `_P1`) ; **`dragonball/lamincards`** =
+Edibas Lamincards PVC (`dbslamincards:nero-0001`, …). Faces = Dragon Ball Center
+(`art.dbc.jpg`) ; versos pack `back.it` / `back.fr` ; journal
+`providers/dragonball/dbslamincards/curated/sources/source-hunt.json`. Identité Masters = cardlists
+Bandai **FR** (`/europe-fr/cartes/`) et **EN** (`/us-en/cardlist/`), fusionnées
+sur printKey ; `cards-index.json` porte `langs.fr.name` et `langs.en.name`.
+Faces Masters FR = dbscards / Bandai au sync HTTP. Faces Masters EN = clone
+[TCG Arena](https://github.com/vitorjcorreia/Dragon-Ball-Masters-Arena) rangé
+sous `cards/{set}/en/`. Faces FW = URLs Bandai SAMPLE (pas de dump). Dos
+sleeve : curated dbscards (FW = même octet placeholder). Sync : Catalogue
+Extract Masters / Fusion World (admin / worker).
+
+## Catalogues locaux / supply modes
+
+Voir [provider_supply_modes.md](provider_supply_modes.md) :
+
+- **Provider catalogue** = `ProviderModule` avec `supplyMode` + hook `catalog`
+  (refresh / status / `dataPack`) — core provider-blind.
+- **Récupérable** → `data/<pack>/` (jamais commit). **Manuel non rejouable** →
+  `src/providers/<id>/curated/` (git), installé vers `data/` au refresh —
+  contrat complet : [curated_data.md](curated_data.md).
+- **`src/effects/`** = moteur foil (pas les octets).
+- Admin **Catalogue** : refresh all / unitaire / auto (Plex-like). Distinct de
+  l’onglet Refresh metadata.
+
+**Trous correctibles (régénération incomplète, pas curated) :**
+
+| Artefact                              | Gap                                                                                                                                                                   |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + Catalogue Sync Pokémon                                                                                    |
+| `data/<pack>/products-index.json`     | Écriture via `persistSealedProductsIndex` (merge `curated/products-contents.json`). TCG Cards : ingest Sync. Carddass / Mythos / Ranks / … : writers dédiés. Lecture Catalogue : `loadSealedProductsIndex`. |
+| `data/<pack>/curated/products-contents.json` | Overlay runtime (graine git ± rebuild Sync). Sync ne réécrit pas `providers/.../curated/products-contents.json`. |
+| `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                                           |
+| `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = Catalogue Extract (admin / worker)                                                                                      |
+| Naruto `curated/sources/*.json`       | Digs / maps d’ids / Wayback durable. **Pas** ledgers crawlés ni cotes. **`apache-index`** → `data/naruto/carddass/logs/` |
+| `data/<pack>/sources/*.json`          | Ledgers syncés (checklists, `observed`, harvests). |
+| `data/<pack>/coleka-prices.json` / `suruga-prices.json` | Cotes marketplace syncées (rejouables). Ancrage printKey via curated. |
+
+Certains corpus **ne grandissent plus** (TCG Bandai arrêté, etc.) : base locale
+terminée sous `data/<pack>/`. Candidat : Naruto CACG FR
+([naruto_carddass_tcg.md](naruto_carddass_tcg.md)) — provider `narutocarddass`.
+
+## Foil packs
+
+Contrat runtime + sources de vérité (CSS vs WebGL) : [foil_effects.md](foil_effects.md).
+
+| Pack id   | Label   | CSS                       | WebGL            | Sync produit                          |
+| --------- | ------- | ------------------------- | ---------------- | ------------------------------------- |
+| `lorcana` | Lorcana | Site Lorcana (`foil/web`) | App TCG Unity    | Catalogue Extract (admin / worker)    |
+| `pokemon` | Pokémon | Simey → `HoloShader`      | TCG Live CDN/APK | Catalogue Extract (admin / worker)    |
+
+URLs are **`/assets/<pack>/…`**; disk render kit is `data/<pack>/foil/…`, catalogue
+faces are `data/<pack>/cards/…`. Unity dumps write **lossless WebP**.
+
+Generated TS JSON (gitignored) is written by Catalogue Extract when missing
+(empty loaders use in-code fallbacks). `full_foil_mask.webp` is created by
+`installFullFoilMask` during pack extract if absent.
+
+## Admin
+
+`/admin?tab=catalogue` — playroom + APK upload + extract on host.
+`foilExtract` runs on the **interactive** worker (serialized, long timeout).
+
+`next.config.js` ignores `data/` in webpack watch so foil/CDN dumps do not thrash `next dev`.
+
+## Scripts — repo-wide only
+
+Provider ingest lives under `src/providers/<id>/` (see
+[provider_supply_modes.md](provider_supply_modes.md)).
+
+| Path                                     | Role             | pnpm                         |
+| ---------------------------------------- | ---------------- | ---------------------------- |
+| `scripts/backgroundWorker.ts`            | Background jobs  | `worker` · `worker:icollect` |
+| `scripts/providerMappingAudit.ts`        | Mapping audit    | `providers:audit:mapping`    |
+| `scripts/record-all-barcode-fixtures.ts` | Barcode fixtures | `test:record:all`            |
+| `scripts/buildTitleIdfIndex.ts`          | Title IDF corpus | `title-idf:update`           |
+
+Pack extracts: in-process via `catalogueExtractRunner` (admin Catalogue Sync /
+worker). Audits locaux optionnels : `tsx src/providers/pokemon/live/audit*.ts`.
+Foil gaps: admin `/api/admin/foil-status` → `computeFoilGaps()` (`src/lib/admin/foilGaps.ts`).
+Unity extract: Node in-process via Catalogue Sync / worker (ADR-021 A–E). Voir
+[unity_without_python.md](unity_without_python.md).
+
+Historical Live handoff notes: [archive/tcglive_effects.md](archive/tcglive_effects.md).

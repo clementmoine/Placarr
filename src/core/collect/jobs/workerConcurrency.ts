@@ -2,7 +2,9 @@
  * Interactive worker concurrency: I/O-bound enrich vs single FlareSolverr browser.
  */
 export function resolveInteractiveWorkerConcurrency(
-  env: NodeJS.ProcessEnv = process.env,
+  // Plain record, not `NodeJS.ProcessEnv`: Next declares NODE_ENV required
+  // there, which would force every caller to fake it.
+  env: Record<string, string | undefined> = process.env,
 ): { concurrency: number; cappedForFlare: boolean } {
   const raw = Number.parseInt(
     env.WORKER_CONCURRENCY ||
@@ -12,9 +14,7 @@ export function resolveInteractiveWorkerConcurrency(
     10,
   );
   const flareConfigured = Boolean(env.FLARESOLVERR_URL?.trim());
-  const forceHighConcurrency = Boolean(
-    env.WORKER_CONCURRENCY_FORCE?.trim(),
-  );
+  const forceHighConcurrency = Boolean(env.WORKER_CONCURRENCY_FORCE?.trim());
   // Default 6 drains manga/game backlogs when scrapes are direct. With Flare
   // configured, default 2 — the remote browser is serial (AsyncQueue 1).
   const requested =

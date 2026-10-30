@@ -11,7 +11,8 @@ import {
 import { pricedOffers } from "@/core/catalog/priceOffers";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
 import { listingLooksLikeConsoleSystemProduct } from "@/core/identify/listingMerch";
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
@@ -24,6 +25,7 @@ import {
   type ICollectMetadata,
 } from "./fetch";
 import { icollectAttachmentRole } from "./imageLabels";
+import { icollectCatalog } from "./pipeline";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
 
 export {
@@ -244,7 +246,7 @@ function icollectScanOffers(metadata: ICollectMetadata) {
   ]);
 }
 
-export const icollectModule: ProviderModule = {
+export const icollectModule = defineProvider({
   info: {
     id: "icollect",
     label: "iCollect Everything",
@@ -261,6 +263,7 @@ export const icollectModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "none" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "en",
     isSecondary: true,
@@ -281,6 +284,7 @@ export const icollectModule: ProviderModule = {
     notes:
       "Catalogue jeux + consoles (SKU console/system) + photos de boîtes + estimation. Résolution metadata par barcode via index SQLite local (.cache/icollect) — auth.none pour ne pas être sauté quand le pass scrape est fermé. Fallback HTTP (Flare) seulement si le barcode n'est pas encore en cache.",
   },
+  catalog: icollectCatalog,
   evidence: {
     label: "iCollect Everything",
     sourceWeight: 0.42,
@@ -360,7 +364,9 @@ export const icollectModule: ProviderModule = {
     );
   },
   buildBarcodeSources(payload: BarcodeLookupPayload) {
-    const metadata = payload.ice;
+    // Lookup keeps the `ice` slice structural (title + platform); the provider
+    // owns the richer shape it wrote there.
+    const metadata = payload.ice as ICollectMetadata | null;
     if (!metadata?.title) return [];
     const platformKey = icollectPlatformKey(metadata.platform);
     const product = {
@@ -401,12 +407,10 @@ export const icollectModule: ProviderModule = {
     ];
   },
   extractScanPriceOffers(payload, shelfType) {
-    if (
-      (shelfType !== "games" && shelfType !== "hardware") ||
-      !payload.ice
-    ) {
+    const metadata = payload.ice as ICollectMetadata | null;
+    if ((shelfType !== "games" && shelfType !== "hardware") || !metadata) {
       return [];
     }
-    return icollectScanOffers(payload.ice);
+    return icollectScanOffers(metadata);
   },
-};
+});

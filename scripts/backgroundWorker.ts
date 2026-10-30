@@ -6,31 +6,28 @@
  * them (SKIP LOCKED) and runs work off the request event loop.
  *
  * Pools (set `WORKER_KINDS`):
- *   interactive (default) → metadataRefresh + priceRefresh
+ *   interactive (default) → metadataRefresh + priceRefresh + foilExtract
  *   catalog               → icollectCatalogSync only
  *   all / *               → every kind (legacy / debug)
  *
  *   pnpm worker
  *   pnpm worker:icollect
- *   docker compose -f compose.dev.yml up worker worker-icollect
+ *   pnpm worker:dev          # superviseDevWorker (restart-on-exit)
+ *   docker compose --profile dev up worker worker-icollect
  */
 
-export {};
-
-try {
-  process.loadEnvFile(".env");
-} catch {
-  // Docker / production often injects env without a local .env file.
-}
+import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
 
 import {
   claimNextBackgroundWorkJob,
   completeBackgroundWorkJob,
+  DEFAULT_STALE_RUNNING_MS,
   failBackgroundWorkJob,
   isBackgroundWorkJobCancelled,
   recoverStaleRunningBackgroundWorkJobs,
+  releaseRunningJobsForWorker,
   resolveWorkerKinds,
   INTERACTIVE_WORKER_KINDS,
   type BackgroundWorkKind,
@@ -44,8 +41,17 @@ import { resolveInteractiveWorkerConcurrency } from "../src/core/collect/jobs/wo
 
 const WORKER_ID = process.env.WORKER_ID || `worker-${randomUUID().slice(0, 8)}`;
 const POLL_IDLE_MS = Number.parseInt(process.env.WORKER_POLL_MS || "1000", 10);
+/**
+ * Non-foil stale window. Foil uses a shorter heartbeat window inside
+ * `recoverStaleRunningBackgroundWorkJobs` (see FOIL_STALE_RUNNING_MS).
+ */
 const STALE_RECOVER_MS = Number.parseInt(
-  process.env.WORKER_STALE_RECOVER_MS || String(15 * 60 * 1000),
+  process.env.WORKER_STALE_RECOVER_MS || String(DEFAULT_STALE_RUNNING_MS),
+  10,
+);
+/** How often to sweep zombie running locks (foil orphans especially). */
+const STALE_SWEEP_MS = Number.parseInt(
+  process.env.WORKER_STALE_SWEEP_MS || String(60 * 1000),
   10,
 );
 
@@ -93,7 +99,10 @@ async function processOneJob(): Promise<boolean> {
       return true;
     }
     console.error(`[Worker ${WORKER_ID}] failed ${job.id}:`, error);
-    await failBackgroundWorkJob(job.id, error);
+    await failBackgroundWorkJob(job.id, error, {
+      // Foil CDN scrape is expensive — do not auto-retry three times.
+      maxAttempts: job.kind === "foilExtract" ? job.attempts : undefined,
+    });
   }
   return true;
 }
@@ -110,6 +119,67 @@ async function runSlot(slot: number): Promise<void> {
   }
 }
 
+function isDbUnavailableError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = "code" in error ? String((error as { code?: unknown }).code) : "";
+  if (code === "ECONNREFUSED" || code === "P1001" || code === "P1017") {
+    return true;
+  }
+  const message =
+    error instanceof Error ? error.message : String(error ?? "");
+  return /ECONNREFUSED|Can't reach database|Connection refused/i.test(message);
+}
+
+async function sweepStaleLocks(): Promise<void> {
+  try {
+    const { requeued, abandoned } =
+      await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);
+    if (requeued > 0 || abandoned > 0) {
+      console.warn(
+        `[Worker ${WORKER_ID}] stale recovery: requeued=${requeued} abandoned=${abandoned}`,
+      );
+    }
+  } catch (error) {
+    if (isDbUnavailableError(error)) {
+      console.warn(
+        `[Worker ${WORKER_ID}] stale recovery skipped — database unreachable`,
+      );
+      return;
+    }
+    throw error;
+  }
+}
+
+/** Wait until Prisma can reach Postgres (hybrid Mac: compose db + host workers). */
+async function waitForDatabase(opts?: {
+  attempts?: number;
+  delayMs?: number;
+}): Promise<void> {
+  const attempts = opts?.attempts ?? 30;
+  const delayMs = opts?.delayMs ?? 2000;
+  const { prisma } = await import("../src/lib/db/prisma");
+  let last: unknown;
+  for (let i = 1; i <= attempts; i += 1) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      if (i > 1) {
+        console.info(`[Worker ${WORKER_ID}] database ready (attempt ${i})`);
+      }
+      return;
+    } catch (error) {
+      last = error;
+      if (!isDbUnavailableError(error)) throw error;
+      console.warn(
+        `[Worker ${WORKER_ID}] waiting for database (${i}/${attempts})…`,
+      );
+      await sleep(delayMs);
+    }
+  }
+  throw last instanceof Error
+    ? last
+    : new Error("database unreachable after wait");
+}
+
 async function main(): Promise<void> {
   if (claimKinds && claimKinds.length === 0) {
     console.error(
@@ -118,8 +188,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const { concurrency, cappedForFlare } =
-    resolveInteractiveWorkerConcurrency();
+  const { concurrency, cappedForFlare } = resolveInteractiveWorkerConcurrency();
   const kindsLabel = claimKinds?.join(",") ?? "all";
   console.info(
     `[Worker ${WORKER_ID}] starting (concurrency=${concurrency}, poll=${POLL_IDLE_MS}ms, kinds=${kindsLabel})`,
@@ -130,29 +199,47 @@ async function main(): Promise<void> {
     );
   }
 
+  await waitForDatabase();
+
   const recoverTimer = setInterval(() => {
-    void recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS).then(
-      (count) => {
-        if (count > 0) {
-          console.warn(
-            `[Worker ${WORKER_ID}] recovered ${count} stale running job(s)`,
-          );
-        }
-      },
-    );
-  }, Math.min(STALE_RECOVER_MS, 5 * 60 * 1000));
+    void sweepStaleLocks();
+  }, STALE_SWEEP_MS);
   if (typeof recoverTimer.unref === "function") recoverTimer.unref();
 
-  await recoverStaleRunningBackgroundWorkJobs(STALE_RECOVER_MS);
+  await sweepStaleLocks();
 
-  const onStop = (signal: string) => {
-    if (stopping) return;
+  const { ICOLLECT_WORKER_KINDS } =
+    await import("../src/core/collect/jobs/workQueue");
+  const runsCatalogueAutoSync =
+    !claimKinds ||
+    claimKinds.some((kind) =>
+      (ICOLLECT_WORKER_KINDS as readonly string[]).includes(kind),
+    );
+  if (runsCatalogueAutoSync) {
+    const { startCatalogueAutoSyncLoop } =
+      await import("../src/lib/admin/catalogueAutoSync");
+    startCatalogueAutoSyncLoop();
+  }
+
+  let shuttingDown: Promise<void> | null = null;
+  const shutdown = async (signal: string) => {
+    if (stopping) return shuttingDown ?? Promise.resolve();
     stopping = true;
     console.info(`[Worker ${WORKER_ID}] shutting down on ${signal}`);
     clearInterval(recoverTimer);
+    const count = await releaseRunningJobsForWorker(WORKER_ID);
+    if (count > 0) {
+      console.info(
+        `[Worker ${WORKER_ID}] released ${count} running job(s) back to pending`,
+      );
+    }
   };
-  process.on("SIGINT", () => onStop("SIGINT"));
-  process.on("SIGTERM", () => onStop("SIGTERM"));
+  process.on("SIGINT", () => {
+    shuttingDown = shutdown("SIGINT").finally(() => process.exit(0));
+  });
+  process.on("SIGTERM", () => {
+    shuttingDown = shutdown("SIGTERM").finally(() => process.exit(0));
+  });
 
   await Promise.all(
     Array.from({ length: concurrency }, (_, slot) => runSlot(slot)),

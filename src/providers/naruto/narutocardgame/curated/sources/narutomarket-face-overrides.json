@@ -1,0 +1,16 @@
+{
+  "sourceId": "naruto-official-cms",
+  "note": "Faces officielles / blocages. Yankee CP-001 = CMS naruto-official. Gen Con CP-001 = mock IA fan — skipFace.",
+  "faces": {
+    "chakra-card-cp-001-new-york-yankees-2026": {
+      "url": "https://cmsapi-frontend.naruto-official.com/site/api/naruto/Image/get?path=/naruto/jp/news/2026/08/21/UQ2B5MmiJ96DkH2q/HKLZSbZKqL6SBNeFVgIUKhfHo1b0wpq2.jpeg",
+      "artName": "art.official.webp",
+      "referer": "https://www.naruto-official.com/",
+      "webpQuality": 90
+    },
+    "chakra-card-cp-001-gen-con-2026": {
+      "skipFace": true,
+      "note": "Mock IA (Naruto/Sasuke) — pas de scan officiel Gen Con attesté."
+    }
+  }
+}

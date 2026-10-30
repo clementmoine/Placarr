@@ -1,0 +1,176 @@
+{
+  "source": "s5-starter-contents-hunt",
+  "observed": "2026-08-26",
+  "kind": "research-dig",
+  "ingest": "none — contentsKnown reste false",
+  "goal": "Listes exactes (40 copies / printKeys) pour starter-la-quete et starter-un-nouveau-depart",
+  "baseline": {
+    "liste_cartes_s5": {
+      "path": "data/naruto/carddass/staging/carddass-fr/pages/naruto__liste_cartes_s5.htm",
+      "legend": "* = présent dans La quête ; ** = Un nouveau départ",
+      "markedUnique": { "quete": 27, "nouveauDepart": 23 },
+      "gap": "Pas de quantités ; communes partagées non marquées possibles (modèle S1 TricTrac : exclusives + communes boosters)."
+    },
+    "catalogue_s5": {
+      "waybackCdx": "[] pour carddass.fr/naruto/catalogue_s5.htm et variantes",
+      "verdict": "Jamais capturé — page probablement jamais publiée ou hors crawl."
+    }
+  },
+  "clarificationS4": {
+    "skus": ["starter-invocation", "starter-esprit-du-sable"],
+    "contentsKnown": true,
+    "source": "carddass.fr catalogue_s4.htm (liste_cartes_s4 = placeholder S3 copy)",
+    "secondary": "cartes-naruto.com manga-news-65 (2007-06-09) — 40+40 noms FR + qty, packshots carddass.fr ; ledger cartes-naruto-com-s4-decks.json",
+    "note": "Ne pas confondre avec le trou S5. S4 a déjà les lots quantitatifs."
+  },
+  "sourcesTried": [
+    {
+      "id": "ultrajeux-product-pages",
+      "urls": [
+        "https://www.ultrajeux.com/produit-1044-naruto-serie-5-la-quete-.html",
+        "https://www.ultrajeux.com/produit-1045-naruto-serie-5-un-nouveau-depart-.html"
+      ],
+      "finding": "Boîte = 40 cartes + livret + tapis/jetons. Texte identique sur les deux : « 25 cartes exclusives » hors boosters. Pas de liste NI/TE/TA. Écart vs * /** (27/23) — marketing ou parse HTML stars.",
+      "usefulFor": "declaredCardCount=40 + plafond exclusives ~25 (non mappable sans noms)"
+    },
+    {
+      "id": "forum-cartes-naruto",
+      "url": "https://forum-cartes-naruto.forumpro.fr/t3-topic",
+      "title": "Série 5 pour le 12 Novembre !",
+      "observed": "2007-10 → 2007-11",
+      "finding": "Spoilers JP/FR (boosters 92 exclusives / 8 cartes), scans starter (Jiraya visible), lien Parence lot 2 starters. Aucune liste 40.",
+      "parence": {
+        "url": "http://www.parence.com/catalog/naruto-serie-5-lot-des-2-starters-p-26471.html",
+        "live": "dead (~114 B)",
+        "cdx": "timeout / vide — à retenter"
+      }
+    },
+    {
+      "id": "forum-cartes-naruto-decks",
+      "url": "https://forum-cartes-naruto.forumpro.fr/f4-decks",
+      "finding": "Decks construits joueurs / CDF 2007 — pas de contenu usine starter S5."
+    },
+    {
+      "id": "wonaruto",
+      "url": "http://forum.wonaruto.com/sujet/12344/Naruto-Carte-a-jouer-et-a-colletionner/",
+      "finding": "Mentions Mangas Kids Parade (starters S2–S4 cités : Détruire / Apprentissage / Puissances / Invocation) — pas S5 listes."
+    },
+    {
+      "id": "manga-news-deck-serie-5",
+      "url": "https://www.manga-news.com/index.php/goodie/Naruto-Deck-Serie-5",
+      "finding": "Packshot booster + checklist série, pas starter contents (déjà noté manga-news-packshots.json)."
+    },
+    {
+      "id": "trictrac",
+      "finding": "Pages S1–S4 seulement dans trictrac.json ; pas de fiche S5 community counts."
+    },
+    {
+      "id": "sheets-naruto-cards-complete",
+      "url": "https://docs.google.com/spreadsheets/d/1dvwy66urXUUFMMht3JyIlUf1AU39xS-pGK3eWQUqx4E",
+      "finding": "EN CCG chase inventory — zéro Carddass FR."
+    },
+    {
+      "id": "reddit-narutocarddass",
+      "finding": "Threads sealed EN/FR déjà indexés ; rien sur listes Quête / Nouveau départ."
+    },
+    {
+      "id": "joueur-ch",
+      "url": "https://joueur.ch/trading-cards/naruto-la-quete-serie-5/",
+      "finding": "SKU sealed à la vente ; description vide."
+    },
+    {
+      "id": "ebay-fr-leboncoin",
+      "finding": "Requêtes noyées Kayou / Mythos 2026 ; pas de listing ouvert avec photo livret / spread 40."
+    },
+    {
+      "id": "animecollection-forum",
+      "finding": "Topic Naruto = MBC / EN CCG / Shippuden FR — pas Carddass S5 starters."
+    },
+    {
+      "id": "cartes-naruto-manga-news-s4",
+      "urls": [
+        "https://web.archive.org/web/20070913085039/http://www.cartes-naruto.com/manga-news-65-liste-des-cartes-des-decks-serie-4.html",
+        "https://web.archive.org/web/20070909064930/http://www.cartes-naruto.com/manga-news-66-liste-carte-serie-4.html"
+      ],
+      "finding": "News #65 = listes complètes Invocation + Esprit du sable (40 cartes, qty, noms). #66 = lien UltraJeux VF-4. Pattern S6 = manga-news-134 « voici-decks-serie-6 » — **aucune** news `*decks*serie-5*` dans CDX Wayback.",
+      "usefulFor": "Attestation S4 secondaire ; modèle de ce qu’on cherche pour S5."
+    },
+    {
+      "id": "cartes-naruto-manga-news-78-s5",
+      "url": "https://web.archive.org/web/20080101232801/http://www.cartes-naruto.com/manga-news-78-sortie-serie-5-naruto.html",
+      "date": "2007-11-14",
+      "finding": "Annonce sortie FR S5 + packshots UltraJeux 1044/1045 + lien shop VF-5. Zéro liste qty — contraste #65 (S4) / #134 (S6).",
+      "staging": "staging/cartes-naruto-com/pages/manga-news-78-sortie-serie-5-naruto.html + news-78-media/"
+    },
+    {
+      "id": "cartes-naruto-forum-harvest",
+      "ledger": "cartes-naruto-com-forum-hunt.json",
+      "finding": "t1057 (S4) staged 7 pages — renvoie carddass, pas de paste qty. t1827 = légende * /**. t1285 = preview 27/10 seulement (1 page CDX). Batch 663 fils → aucun « Composition starters S5 »."
+    },
+    {
+      "id": "ultrajeux-vf-shop-pages",
+      "urls": [
+        "https://web.archive.org/web/20071118065006/http://www.ultrajeux.com/naruto-cartes-edition-vf-5-serie-5.html"
+      ],
+      "finding": "151 codes NI/TE/TA/CL (shop à l’unité, copie carddass). VF-1–4 idem. Pas de contenu starter — seulement fiches produit + prix.",
+      "staging": "staging/ultrajeux/pages/naruto-cartes-edition-vf-5-serie-5-20071118.html"
+    },
+    {
+      "id": "market-ncf-pass-2026-08-27",
+      "finding": "Passe marché + narutocarddassfrance : pas de listes qty. Détail ci-dessous.",
+      "joueurCh": {
+        "urls": [
+          "https://joueur.ch/trading-cards/naruto-la-quete-serie-5/",
+          "https://joueur.ch/jeux-video/naruto-le-nouveau-depart-serie-5/"
+        ],
+        "price": "CHF 69.95 sealed chacune",
+        "packshots": "staging/market-s5/joueur.ch/Naruto-jcc-serie-5-starter-{quete,nouveau-depart}.jpg — face avant Ref. 05124, pas verso/livret",
+        "usefulFor": "Achat physique / demander photos livret au vendeur"
+      },
+      "ebayFr": "Recherche « la quete serie 5 » noyée Kayou ; « carddass deck démarrage » = 0 résultat FR (1 EN CCG Dream Legacy). Ventes terminées → login wall.",
+      "vinted": "Session-refresh wall — scrape impossible cette passe.",
+      "leboncoin": "HTML vide/bloqué (~774 B).",
+      "narutocarddassfrance": {
+        "t981": "Info sortie S5 (suseki) — logistique 12 nov / tin hobby ; staging market-s5/ncf/t981 — zéro composition",
+        "searchStarter": "Seuls fils « Starter » = série 2 ; pas de Composition S5",
+        "exchangeLists": "t19 / t430 = inventaires joueurs post-sortie, pas usine qty"
+      },
+      "carddassChecklistPdf": {
+        "url": "http://www.carddass.fr/naruto/images/packshots/checklists_N/checklist naruto S5.pdf",
+        "staging": "staging/market-s5/carddass-fr/checklist-naruto-S5.pdf (+ pages png/txt)",
+        "finding": "Checklist collectionneur série entière (NI/TE/TA/CL) — étoiles décoratives, pas * /** starter, pas qty"
+      }
+    },
+    {
+      "id": "parence-lot-2-starters-s5",
+      "url": "http://www.parence.com/catalog/naruto-serie-5-lot-des-2-starters-p-26471.html",
+      "finding": "CDX retenté 2026-08-26 — toujours vide."
+    },
+    {
+      "id": "manga-sanctuary-7397-packshots",
+      "url": "https://www.manga-sanctuary.com/news/7397/naruto-jcc.html",
+      "observed": "2026-08-29",
+      "finding": "Presse 28/01/2008 : packshots JPG Quête / Nouveau départ / booster S5 (plus grands que GIFs carddass.fr). Texte S6 Le Duel / Quartet — pas d'image starter S6. Ledger manga-sanctuary-packshots.json ; staging/manga-sanctuary/. Zéro composition 40.",
+      "usefulFor": "art.manga-sanctuary sur SKU S5 — pas contentsKnown"
+    }
+  ],
+  "stillNeeded": [
+    "P0 — Checklist papier S5 (recto decks + qty) comme S1–S3 validés 2026-08-29 — si l’utilisateur l’a",
+    "P0 — Photo / scan livret de jeu ou verso boîte listant les 40 (noms + qty)",
+    "P1 — Demande photo livret à vendeur sealed (joueur.ch Quête / Nouveau départ CHF 69.95, ou LBC/Vinted)",
+    "P1 — Ouverture attestée d’un sealed (inventaire complet + quantités)",
+    "P2 — catalogue_s5.htm (copie privée / CDX tardif — jamais vu)",
+    "P2 — Parence Wayback lot 2 starters (CDX encore vide 2026-08-29)",
+    "P3 — IT Carddass S5 mazzi qty (non trouvé public)",
+    "P3 — Discord / collectionneur FR"
+  ],
+  "pass2026-08-29": {
+    "note": "CDX cartes-naruto/Parence/cardgameclub S5 → []. Digital qty épuisé. Pattern gagnant = papier (S1–S3) ou catalogue+manga-news (S4).",
+    "digitalVerdict": "ne pas relancer les mêmes URLs sans artefact nouveau"
+  },
+  "doNot": [
+    "Inventer les communes / quantités pour atteindre 40",
+    "Passer contentsKnown=true sur * /** seuls",
+    "Traiter le « 25 exclusives » UltraJeux comme 25 printKeys sans noms"
+  ]
+}

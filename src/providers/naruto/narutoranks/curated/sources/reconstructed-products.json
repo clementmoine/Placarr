@@ -1,0 +1,32 @@
+{
+  "source": "Packshots fournis par le propriétaire du catalogue",
+  "observed": "2026-08-22",
+  "ingest": "art.reconstructed en affichage ; le packshot Inkworks reste à côté",
+  "sourceId": "reconstructed",
+  "lang": "en",
+  "note": "Trois packshots détourés, fond transparent, très au-dessus des vignettes marketing récupérées sur le Wayback d'Inkworks (nnrwrapmed 253×360, nnrboxsmed2, nnralbumssm). Ils deviennent le visuel affiché ; l'original éditeur est conservé comme dump, jamais écrasé.",
+  "corroborates": "Le booster imprime « 9 CARDS PER PACK » et le display « 9 CARDS PER PACK — 24 PACKS PER BOX ». Les deux confirment ce que le registre Inkworks tenait déjà de la sell sheet : neuf cartes par pochette, vingt-quatre pochettes par display.",
+  "products": [
+    {
+      "slug": "booster",
+      "art": "art.reconstructed.png",
+      "why": "Pochette Panini Ninja Ranks, 1597×2599, fond transparent."
+    },
+    {
+      "slug": "display",
+      "art": "art.reconstructed.png",
+      "why": "Boîte de 24 pochettes, 1953×1870, vue trois-quarts ouverte."
+    },
+    {
+      "slug": "collector-album",
+      "art": "art.reconstructed.png",
+      "why": "Album à spirale, 2307×2721."
+    }
+  ],
+  "notIngested": [
+    {
+      "what": "Le nombre de cartes par display",
+      "reason": "216 se déduit de 24×9, mais aucun des deux objets ne l'imprime. Le registre Inkworks le laisse à null en connaissance de cause ; on ne le remplit pas par arithmétique."
+    }
+  ]
+}

@@ -23,6 +23,7 @@ export const IMAGE_ROLE_TIER: Record<ImageObservation["role"], number> = {
   cover_front: 3,
   product_packshot: 2,
   cover_back: 2,
+  cover_spine: 2,
   background: 1,
   screenshot: 1,
   logo: 1,

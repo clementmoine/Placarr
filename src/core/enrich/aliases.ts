@@ -1,4 +1,8 @@
 import { repairCatalogColonSubstitute } from "@/core/enrich/titles/normalize";
+import {
+  formatAttachmentLanguageLabel,
+  isAttachmentFaceLabelTitle,
+} from "@/core/enrich/media/attachmentDisplayLabels";
 import { cleanTitleForDisplay } from "@/core/identify/titleUtils";
 import { hasUnrequestedSeriesSuffixToken } from "@/core/enrich/titleMatching";
 
@@ -39,6 +43,8 @@ export function isNoiseDisplayAlias(
   const trimmed = normalizeAliasValue(alias);
   if (!trimmed || trimmed.length < 2) return true;
   if (PLACEHOLDER_ALIAS.test(trimmed)) return true;
+  // Gallery face labels (LaunchBox / PriceCharting / HDJV) are not alternate names.
+  if (isAttachmentFaceLabelTitle(trimmed)) return true;
   // Entirely bracketed titles are usually wrong-game / unreleased stubs.
   if (/^\[[^\]]+\]$/.test(trimmed)) return true;
 
@@ -191,11 +197,19 @@ export function collectMergedSearchAliases(
  * Names shown under "Aussi connu sous": stored aliases plus the catalog
  * `metadata.title` when it differs from the collector's display name.
  * (Short ScreenScraper noms like "Wrc 4" often land only on metadata.title.)
+ *
+ * Cover titles tagged with a language role (fr/en/de/…) are also included —
+ * TCG prints store one jaquette per language with the regional full name.
  */
 export function displayAliasesForItem(input: {
   name?: string | null;
   metadataTitle?: string | null;
   aliases?: unknown;
+  attachments?: Array<{
+    type?: string | null;
+    role?: string | null;
+    title?: string | null;
+  }> | null;
 }): string[] {
   const displayName = input.name?.trim() || "";
   const exclude = new Set(
@@ -207,6 +221,7 @@ export function displayAliasesForItem(input: {
   for (const candidate of [
     ...(metadataAliases(input.aliases) ?? []),
     input.metadataTitle,
+    ...regionalCoverAliasTitles(input.attachments),
   ]) {
     if (typeof candidate !== "string") continue;
     const trimmed = normalizeAliasValue(candidate);
@@ -223,3 +238,34 @@ export function displayAliasesForItem(input: {
   return aliases;
 }
 
+/**
+ * Cover titles whose `role` is a print language (Lorcana FR/EN/DE/IT jaquettes).
+ * Region roles (`eu` / `us` / `jp` / `wor`) and gallery face labels
+ * ("Box - Front", "Main Image") are excluded — those are box art tags, not AKAs.
+ */
+export function regionalCoverAliasTitles(
+  attachments:
+    | Array<{
+        type?: string | null;
+        role?: string | null;
+        title?: string | null;
+      }>
+    | null
+    | undefined,
+): string[] {
+  if (!attachments?.length) return [];
+  const titles: string[] = [];
+  const seen = new Set<string>();
+  for (const attachment of attachments) {
+    if (attachment.type !== "cover") continue;
+    // ISO print languages only — not LaunchBox/PriceCharting region codes.
+    if (!formatAttachmentLanguageLabel(attachment.role)) continue;
+    const title = attachment.title?.trim();
+    if (!title || isAttachmentFaceLabelTitle(title)) continue;
+    const key = normalizeTitleKey(normalizeAliasValue(title));
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    titles.push(normalizeAliasValue(title));
+  }
+  return titles;
+}

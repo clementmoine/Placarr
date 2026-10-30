@@ -2,19 +2,22 @@ import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import {
   fetchFromLaunchBox,
   fetchFromLaunchBoxWithLookupQueries,
 } from "./resolver";
+import { launchboxCatalog } from "./pipeline";
 
-export const launchboxModule: ProviderModule = {
+export const launchboxModule = defineProvider({
   info: {
     id: "launchbox",
     label: "LaunchBox",
+    // Local SQLite FTS: parallel reads help, but not unbounded.
+    maxConcurrentRequests: 2,
     types: ["games"],
     requiresTitleAlignment: true,
     capabilities: [
@@ -27,13 +30,15 @@ export const launchboxModule: ProviderModule = {
       "screenshots",
     ],
     auth: { kind: "none" },
+    supplyMode: "local_catalog",
     canonical: true,
     defaultLanguage: "en",
     isRealBoxCover: true,
     websiteUrl: "https://gamesdb.launchbox-app.com/",
     notes:
-      "Base communautaire LaunchBox (Metadata.zip). Index SQLite local prébuild (`pnpm launchbox:build-index`) — pas de download au scan. Jeux, joueurs max, titres régionaux, images. Enrichissement par titre — pas de barcode GTIN. Tourne en pass API pour ne pas être sauté quand ScreenScraper/IGDB ont déjà titre+cover.",
+      "Base communautaire LaunchBox (Metadata.zip). Index SQLite local (admin Local indexes / worker catalog) — pas de download au scan. Jeux, joueurs max, titres régionaux, images. Enrichissement par titre — pas de barcode GTIN. Tourne en pass API pour ne pas être sauté quand ScreenScraper/IGDB ont déjà titre+cover.",
   },
+  catalog: launchboxCatalog,
   createMetadataAdapter: () => ({
     id: "launchbox",
     async resolve({ name, platform, lookupQueries }) {
@@ -44,13 +49,7 @@ export const launchboxModule: ProviderModule = {
       )) as MetadataResult | null;
     },
   }),
-  testHandlers: {
-    "launchbox-metadata": {
-      label: "LaunchBox - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromLaunchBox(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromLaunchBox(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -84,6 +83,6 @@ export const launchboxModule: ProviderModule = {
     );
     return collectObjectMappingSignals(metadata);
   },
-};
+});
 
 export { fetchFromLaunchBox } from "./resolver";

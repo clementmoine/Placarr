@@ -27,12 +27,15 @@ import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 
 import { BaseModal } from "@/components/modals/BaseModal";
 import { getMetadataPreview } from "@/lib/api/metadata";
-import { runWithConcurrency } from "@/lib/async/runWithConcurrency";
+import { runWithConcurrency } from "@/lib/async";
 import { getShelves } from "@/lib/api/shelves";
 import { getCoverImage } from "@/core/collect/media";
 import { RemoteImage } from "@/components/RemoteImage";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
-import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
+import {
+  guessShelfFromBarcodeLookup,
+  shelfSearchHintsFromBarcodePayload,
+} from "@/core/identify/query";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import { saveItem } from "@/lib/api/items";
 import { syncItemQueries } from "@/core/collect/queryCache";

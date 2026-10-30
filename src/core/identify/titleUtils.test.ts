@@ -193,9 +193,9 @@ describe("cleanTitleForDisplay — bruit de listing → nom propre", () => {
   it("peels pack / jeu+platform / seller chrome without word lists", () => {
     expect(cleanTitleForDisplay("Pack jeu Mario Kart Wii")).toBe("Mario Kart");
     expect(cleanTitleForDisplay("Jeu Xbox Halo 3")).toBe("Halo 3");
-    expect(
-      cleanTitleForDisplay("Sonic Adventure envoi rapide et suivi"),
-    ).toBe("Sonic Adventure");
+    expect(cleanTitleForDisplay("Sonic Adventure envoi rapide et suivi")).toBe(
+      "Sonic Adventure",
+    );
     expect(cleanTitleForDisplay("Resident Evil 4 code vip")).toBe(
       "Resident Evil 4",
     );
@@ -264,9 +264,9 @@ describe("areLikelySameProduct", () => {
     expect(
       listingIsDistinctProductSpinoff("Nintendo 64", "Nintendo 64 System"),
     ).toBe(false);
-    expect(
-      aliasBelongsInPriceLookup("Nintendo 64", "Nintendo 64 System"),
-    ).toBe(true);
+    expect(aliasBelongsInPriceLookup("Nintendo 64", "Nintendo 64 System")).toBe(
+      true,
+    );
     expect(
       priceListingMatchesAnyItemName(["Nintendo 64"], "Nintendo 64 System", {
         shelfType: "hardware",
@@ -276,10 +276,7 @@ describe("areLikelySameProduct", () => {
 
   it("folds FR console capacity units for PriceCharting EN listings (60Go ≡ 60GB)", () => {
     expect(
-      areLikelySameProduct(
-        "PlayStation 3 60Go",
-        "Playstation 3 60GB Console",
-      ),
+      areLikelySameProduct("PlayStation 3 60Go", "Playstation 3 60GB Console"),
     ).toBe(true);
     expect(
       priceListingMatchesAnyItemName(
@@ -447,10 +444,7 @@ describe("priceListingMatchesAnyItemName", () => {
 
   it("rejects FIFA World Cup / Bond franchise siblings", () => {
     expect(
-      priceListingMatchesAnyItemName(
-        ["FIFA 2002"],
-        "2002 FIFA World Cup (PC)",
-      ),
+      priceListingMatchesAnyItemName(["FIFA 2002"], "2002 FIFA World Cup (PC)"),
     ).toBe(false);
     expect(
       priceListingMatchesAnyItemName(
@@ -489,16 +483,10 @@ describe("priceListingMatchesAnyItemName", () => {
       ),
     ).toBe(true);
     expect(
-      aliasBelongsInPriceLookup(
-        "James Bond 007 Nightfire",
-        "James Bond 007",
-      ),
+      aliasBelongsInPriceLookup("James Bond 007 Nightfire", "James Bond 007"),
     ).toBe(false);
     expect(
-      aliasBelongsInPriceLookup(
-        "James Bond 007 Nightfire",
-        "007: Nightfire",
-      ),
+      aliasBelongsInPriceLookup("James Bond 007 Nightfire", "007: Nightfire"),
     ).toBe(true);
     expect(
       aliasBelongsInPriceLookup(
@@ -532,10 +520,7 @@ describe("priceListingMatchesAnyItemName", () => {
     ).toBe(false);
     expect(
       priceListingMatchesAnyItemName(
-        [
-          "Spider-Man 2 : La Revanche d'Electro",
-          "Spider-Man 2: Enter Electro",
-        ],
+        ["Spider-Man 2 : La Revanche d'Electro", "Spider-Man 2: Enter Electro"],
         "Spiderman 2 Enter Electro Playstation",
       ),
     ).toBe(true);
@@ -706,11 +691,9 @@ describe("priceListingMatchesAnyItemName", () => {
       ),
     ).toBe(false);
     expect(
-      priceListingMatchesAnyItemName(
-        ["Nintendo Switch"],
-        "Nintendo Switch 2",
-        { shelfType: "hardware" },
-      ),
+      priceListingMatchesAnyItemName(["Nintendo Switch"], "Nintendo Switch 2", {
+        shelfType: "hardware",
+      }),
     ).toBe(false);
     expect(
       priceListingMatchesAnyItemName(

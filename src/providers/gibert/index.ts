@@ -6,7 +6,7 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { throwIfAborted } from "@/lib/http/abort";
@@ -19,8 +19,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   collectGibertMappingRawKeys,
@@ -150,6 +150,7 @@ export function mapGibertMetadata(
         ? ["structured_data", "barcode_match"]
         : ["structured_data"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -203,7 +204,7 @@ async function refreshGibertOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const gibertModule: ProviderModule = {
+export const gibertModule = defineProvider({
   info: {
     id: "gibert",
     label: "Gibert",
@@ -218,6 +219,7 @@ export const gibertModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",
@@ -247,7 +249,7 @@ export const gibertModule: ProviderModule = {
         return mapGibertMetadata(
           await resolveGibertMetadata({
             name: String(name || "").trim() || undefined,
-            barcode,
+            barcode: barcode ?? undefined,
             lookupQueries,
             signal,
           }),
@@ -287,8 +289,11 @@ export const gibertModule: ProviderModule = {
       ),
     ),
   collectMappingRawKeys: async (context) => {
-    const ctx = probeContextOrDefault(context, { barcode: SAMPLE_BARCODE });
+    const ctx = probeContextOrDefault(context, {
+      name: "",
+      barcode: SAMPLE_BARCODE,
+    });
     return collectGibertMappingRawKeys(ctx.barcode || ctx.name);
   },
   refreshBarcodePriceOffers: refreshGibertOffers,
-};
+});

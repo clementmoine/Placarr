@@ -1,0 +1,50 @@
+{
+  "source": "physical FR Série 3 shelf (complete set)",
+  "observed": "2026-10-19",
+  "line": "carddass-fr",
+  "note": "carddass.fr « liste des cartes » S3 marks many holos on the next collector (TE/TA often +1). Physical cardboard: foil-only IDs below; NI-127 also exists as Normale. Every other S3 checklist print is Normale only.",
+  "siteListeOffByOne": {
+    "why": "Site holo markers for TE/TA sit one number above the physical foil (te110←te109, ta116←ta115, …). NI list overlaps partially (ni086/087/129/153) but invents ni079/088/102/130/157.",
+    "siteHoloNotPhysical": [
+      "ni079",
+      "ni088",
+      "ni102",
+      "ni130",
+      "ni157",
+      "te110",
+      "te112",
+      "te115",
+      "te124",
+      "ta116",
+      "ta120",
+      "ta126",
+      "ta139",
+      "ta143"
+    ]
+  },
+  "holoOnly": [
+    "ni063",
+    "ni085",
+    "ni086",
+    "ni087",
+    "ni101",
+    "ni115",
+    "ni117",
+    "ni128",
+    "ni129",
+    "ni152",
+    "ni153",
+    "te109",
+    "te111",
+    "te114",
+    "te123",
+    "te144",
+    "ta115",
+    "ta119",
+    "ta125",
+    "ta138",
+    "ta142",
+    "ta153"
+  ],
+  "dualNormalAndHolo": ["ni127"]
+}

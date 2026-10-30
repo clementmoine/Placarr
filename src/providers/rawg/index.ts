@@ -1,14 +1,14 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { formatScore } from "@/core/enrich/searchUtils";
-import { resolveWithLookupQueries } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
+import { resolveWithLookupQueries } from "@/core/enrich/search/searchUtils";
 import { fetchCoverFromCoverProject } from "@/providers/coverproject/resolver";
 import { createRawgResolver } from "./resolver";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import { isRawgQuotaBlocked } from "./quota";
 
 const fetchFromRawg = createRawgResolver({
@@ -16,10 +16,11 @@ const fetchFromRawg = createRawgResolver({
   fetchCoverFromCoverProject,
 });
 
-export const rawgModule: ProviderModule = {
+export const rawgModule = defineProvider({
   info: {
     id: "rawg",
     label: "RAWG",
+    minRequestIntervalMs: 250,
     // Screenshot-style art (not a real box cover), so its covers rank lowest.
     coverUrlHost: "rawg.io",
     types: ["games"],
@@ -34,6 +35,7 @@ export const rawgModule: ProviderModule = {
       "duration",
     ],
     auth: { kind: "key", env: ["RAWG_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     websiteUrl: "https://rawg.io/",
@@ -62,13 +64,7 @@ export const rawgModule: ProviderModule = {
     ["RAWG_API_KEY"],
     (key) => `https://api.rawg.io/api/platforms?key=${key}`,
   ),
-  testHandlers: {
-    "rawg-metadata": {
-      label: "RAWG - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromRawg(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromRawg(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -85,15 +81,18 @@ export const rawgModule: ProviderModule = {
     const key = process.env.RAWG_API_KEY;
     if (!key) return [];
     try {
-      const res = await axios.get("https://api.rawg.io/api/games", {
-        params: { search: "Hades", key },
-        timeout: 8000,
-      });
+      const res = await httpGet<{ results?: JsonObject[] }>(
+        "https://api.rawg.io/api/games",
+        {
+          params: { search: "Hades", key },
+          timeout: 8000,
+        },
+      );
       return Object.keys(res.data?.results?.[0] || {});
     } catch {
       return [];
     }
   },
-};
+});
 
 export { createRawgResolver } from "./resolver";

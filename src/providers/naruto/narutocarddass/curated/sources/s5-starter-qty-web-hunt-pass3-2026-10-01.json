@@ -1,0 +1,64 @@
+{
+  "source": "s5-starter-qty-web-hunt-pass3",
+  "observed": "2026-10-01",
+  "kind": "research-dig",
+  "parent": "s5-starter-qty-web-hunt-2026-10-01.json",
+  "ingest": "none — no FR qty / shared commons; Parence SKU map only",
+  "angles": [
+    "Parence Wayback deep (category + tin-box + S5 booster SKUs)",
+    "IT Emporio / cardgame-club sealed text",
+    "ES Dracotienda S3 formula (trap)",
+    "NCF AP sealed-open anecdotes",
+    "YouTube / Delcampe / 2ememain / FB Mythos noise",
+    "joueur.ch recheck"
+  ],
+  "newSourcesEvaluated": [
+    {
+      "id": "parence-sku-map-s5",
+      "urls": [
+        "https://web.archive.org/web/20080129142230id_/http://www.parence.com:80/catalog/tin-box-naruto-edition-collector-p-26472.html",
+        "https://web.archive.org/web/20080512145201id_/http://www.parence.com:80/catalog/booster-naruto-serie-5-francais-p-26469.html"
+      ],
+      "finding": "Recovered product ID cluster from tin-box/top-sellers marquee + manufacturers dropdown. 26469=booster S5 (archived), 26470=display 24 (archived), 26471=lot 2 starters (forum link; Wayback available=false / CDX []), 26472=tin hobby (archived). Manufacturers: 308=Starter Un Nouveau…, 309=Starter La Quete, 305=Naruto Série 5. Pattern S4: 25905=lot, 25906=Esprit, 25907=Invocation (all archived except some available-API flakiness). Guessed S5 individual starter slugs around 26473–26476 → no snapshots.",
+      "doNot": "Expect Parence product descriptions to list 40 printKeys — S4 Esprit archived page = UltraJeux boilerplate only (40 exclusives claim, no NI list)."
+    },
+    {
+      "id": "it-emporio-93176",
+      "urls": [
+        "https://www.emporiodimilo.it/prodotti/.../naruto-card-game-serie-5-lealta-...",
+        "https://www.emporiodimilo.it/prodotti/.../naruto-card-game-serie-5-tradimento-..."
+      ],
+      "finding": "IT Lealtà/Tradimento sealed: 40 + regolamento + plancia + segnaturni + 5 monete. Ref 93176 / EAN 9771828100050 (ISSN-style noise). No decklist. cardgame-club = singles catalogue only."
+    },
+    {
+      "id": "es-dracotienda-s3-formula",
+      "url": "https://dracotienda.com/juegos-de-cartas/4903-naruto-mazo-de-inicio-serie-3-fuerzas-ocultas.html",
+      "finding": "ES S3 shop text: 40 = 34 exclusivas + 6 comunes. Different series/local formula — do not project onto FR S5 (25 exclusives marketing).",
+      "doNot": "Import 34+6 math into Quête / Nouveau départ"
+    },
+    {
+      "id": "ncf-ap-tarbes-sealed",
+      "url": "https://narutoccgfrance.1fr1.net/t1015-topic",
+      "finding": "AP paquet scellé S5 used factory starters (« starter sasuke ») — confirms sealed distribution, zero inventory dump."
+    },
+    {
+      "id": "joueur-ch-2026-10-recheck",
+      "urls": [
+        "https://joueur.ch/trading-cards/naruto-la-quete-serie-5/",
+        "https://joueur.ch/jeux-video/naruto-le-nouveau-depart-serie-5/"
+      ],
+      "finding": "Still CHF 69.95 sealed each; description empty; no livret photos."
+    },
+    {
+      "id": "youtube-delcampe-fb",
+      "finding": "YT/FB/Delcampe/2ememain queries → Mythos/Kayou/manga noise. No Carddass S5 unboxing with livret inventory."
+    }
+  ],
+  "verdict": "New archival lead = Parence SKU cluster, but starter product pages for S5 were never crawled. Digital qty still empty. Physical livret / sealed open remains P0.",
+  "stillNeeded": [
+    "P0 — Photo livret / verso 40 + qty",
+    "P0 — Sealed open inventaire attesté",
+    "P1 — Demande photo à joueur.ch (Quête + Nouveau départ encore listés)",
+    "P2 — If a private Parence dump / WARC appears for p-26471 or manufacturers_id=308|309"
+  ]
+}

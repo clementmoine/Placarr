@@ -1,0 +1,172 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+import { afterEach, describe, expect, it } from "vitest";
+
+import { emptyProductsIndex, type SealedProductEntry } from "./indexFormat";
+import {
+  loadProductsIndexFromSqlite,
+  readPackDocument,
+  writePackDocument,
+  writeProductsIndexToSqlite,
+} from "./productsSqlite";
+
+describe("productsSqlite", () => {
+  let dir = "";
+
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("round-trips products and content printKeys", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-sqlite-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const index = emptyProductsIndex("demo");
+    const entry: SealedProductEntry = {
+      slug: "booster-s1",
+      path: "products/booster-s1",
+      kind: "booster",
+      behavior: "random_pack",
+      category: "booster",
+      name: "Booster S1",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: "s1",
+      lang: "fr",
+      releaseDate: null,
+      priceCents: 450,
+      cardsPerPack: 5,
+      packsContained: 1,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: true,
+      containsPrintsIsPreview: false,
+      prints: [
+        {
+          name: "Naruto",
+          slug: "ni-0001",
+          ref: "NI-001",
+          printKey: "naruto:ni-0001",
+          qty: 1,
+        },
+      ],
+    };
+    index.products["demo::booster-s1"] = entry;
+
+    const written = writeProductsIndexToSqlite("demo", index, { dbPath });
+    expect(written.products).toBe(1);
+    expect(written.contents).toBe(1);
+
+    const loaded = loadProductsIndexFromSqlite("demo", { dbPath });
+    expect(loaded).not.toBeNull();
+    expect(loaded!.products["demo::booster-s1"]?.prints[0]?.printKey).toBe(
+      "naruto:ni-0001",
+    );
+    expect(loaded!.products["demo::booster-s1"]?.priceCents).toBe(450);
+  });
+
+  it("writes pack_documents under busy_timeout / WAL", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-pack-doc-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    writePackDocument(
+      "demo",
+      "appearances",
+      { version: 1, appearances: { ni0001: { fr: "s1" } } },
+      { dbPath },
+    );
+    expect(readPackDocument("demo", "appearances", { dbPath })).toEqual({
+      version: 1,
+      appearances: { ni0001: { fr: "s1" } },
+    });
+  });
+
+  it("returns null on a corrupt catalog instead of throwing", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-corrupt-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    // Valid header prefix then zeros → open may succeed, queries fail corrupt.
+    const header = Buffer.from("SQLite format 3\0");
+    writeFileSync(dbPath, Buffer.concat([header, Buffer.alloc(4096, 0)]));
+    expect(loadProductsIndexFromSqlite("demo", { dbPath })).toBeNull();
+  });
+
+  it("salvages a corrupt catalog then rewrites products", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-salvage-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const seed = new DatabaseSync(dbPath);
+    seed.exec(`
+      CREATE TABLE prints (
+        print_key TEXT PRIMARY KEY,
+        set_code TEXT NOT NULL,
+        number TEXT NOT NULL
+      );
+      CREATE TABLE products (
+        product_key TEXT PRIMARY KEY,
+        slug TEXT NOT NULL,
+        lang TEXT,
+        set_code TEXT,
+        kind TEXT,
+        name TEXT,
+        image TEXT,
+        price_cents INTEGER,
+        entry_json TEXT NOT NULL
+      );
+      CREATE TABLE product_contents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_key TEXT NOT NULL,
+        print_key TEXT,
+        name TEXT,
+        slug TEXT,
+        ref TEXT,
+        qty INTEGER,
+        finish TEXT,
+        image TEXT
+      );
+      INSERT INTO prints VALUES ('demo:s1-001', 's1', '001');
+    `);
+    seed.close();
+
+    // Truncate after a valid header so DELETE/migrate hits SQLITE_CORRUPT.
+    const buf = readFileSync(dbPath);
+    writeFileSync(dbPath, buf.subarray(0, Math.min(buf.length, 1024)));
+
+    const index = emptyProductsIndex("demo");
+    index.products["demo::booster"] = {
+      slug: "booster",
+      path: "products/booster",
+      kind: "booster",
+      behavior: "random_pack",
+      category: "booster",
+      name: "Booster",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: "s1",
+      lang: "fr",
+      releaseDate: null,
+      priceCents: 100,
+      cardsPerPack: 5,
+      packsContained: 1,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: false,
+      containsPrintsIsPreview: false,
+      prints: [],
+    };
+
+    const written = writeProductsIndexToSqlite("demo", index, { dbPath });
+    expect(written.products).toBe(1);
+    expect(
+      loadProductsIndexFromSqlite("demo", { dbPath })?.products["demo::booster"]
+        ?.name,
+    ).toBe("Booster");
+  });
+});

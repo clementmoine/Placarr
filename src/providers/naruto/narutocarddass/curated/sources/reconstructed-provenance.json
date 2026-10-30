@@ -1,0 +1,896 @@
+{
+ "generatedAt": "2026-10-30T11:08:00.088Z",
+ "method": "AI restoration of an authenticated collector photo, then Figma retouching",
+ "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{lang}/{set}/{id}/ (Mercari restorations: the mercdn ingest row in sources/mercari.json)",
+ "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
+ "installs": [
+  {
+   "cardId": "ki0001",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s1/ki0001/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0001/art.reconstructed.webp",
+   "from": {
+    "width": 951,
+    "height": 1371
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0002",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s1/ki0002/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0002/art.reconstructed.webp",
+   "from": {
+    "width": 988,
+    "height": 1420
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0003",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s1/ki0003/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0003/art.reconstructed.webp",
+   "from": {
+    "width": 941,
+    "height": 1369
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0004",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s1/ki0004/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0004/art.reconstructed.webp",
+   "from": {
+    "width": 944,
+    "height": 1374
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0005",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s1/ki0005/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0005/art.reconstructed.webp",
+   "from": {
+    "width": 946,
+    "height": 1372
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0006",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s1/ki0006/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0006/art.reconstructed.webp",
+   "from": {
+    "width": 942,
+    "height": 1367
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0007",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/maki13/ki0007/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0007/art.reconstructed.webp",
+   "from": {
+    "width": 941,
+    "height": 1375
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ki0008",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/maki13/ki0008/art.reconstructed.png",
+   "dest": "cards/ja/s1/ki0008/art.reconstructed.webp",
+   "from": {
+    "width": 942,
+    "height": 1374
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0001-ps",
+   "set": "promo",
+   "lang": "ja",
+   "source": "cards/ja/promo/ni0001-ps/art.reconstructed.png",
+   "dest": "cards/ja/promo/ni0001-ps/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0002-ps",
+   "set": "promo",
+   "lang": "ja",
+   "source": "cards/ja/promo/ni0002-ps/art.reconstructed.png",
+   "dest": "cards/ja/promo/ni0002-ps/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0003-ps",
+   "set": "promo",
+   "lang": "ja",
+   "source": "cards/ja/promo/ni0003-ps/art.reconstructed.png",
+   "dest": "cards/ja/promo/ni0003-ps/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0008",
+   "set": "s2",
+   "lang": "fr",
+   "source": "cards/fr/s2/ni0008/art.reconstructed.png",
+   "dest": "cards/fr/s2/ni0008/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0011-ps",
+   "set": "promo",
+   "lang": "ja",
+   "source": "cards/ja/promo/ni0011-ps/art.reconstructed.png",
+   "dest": "cards/ja/promo/ni0011-ps/art.reconstructed.webp",
+   "from": {
+    "width": 1059,
+    "height": 1485
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0034-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0034-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0034-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0063-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0063-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0063-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0065-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0065-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0065-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0092-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0092-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0092-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0095-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0095-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0095-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0101-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0101-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0101-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0103",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0103/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0103/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0104",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0104/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0104/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0105",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0105/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0105/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0114",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0114/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0114/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0117-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0117-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0117-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0194",
+   "set": "s4",
+   "lang": "fr",
+   "source": "cards/fr/s4/ni0194/art.reconstructed.png",
+   "dest": "cards/fr/s4/ni0194/art.reconstructed.webp",
+   "from": {
+    "width": 1051,
+    "height": 1497
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0195",
+   "set": "s4",
+   "lang": "fr",
+   "source": "cards/fr/s4/ni0195/art.reconstructed.png",
+   "dest": "cards/fr/s4/ni0195/art.reconstructed.webp",
+   "from": {
+    "width": 865,
+    "height": 1238
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0206",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0206/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0206/art.reconstructed.webp",
+   "from": {
+    "width": 844,
+    "height": 1206
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0232",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0232/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0232/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1236
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0236",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0236/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0236/art.reconstructed.webp",
+   "from": {
+    "width": 865,
+    "height": 1236
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0239",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0239/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0239/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0240",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0240/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0240/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0241",
+   "set": "s5",
+   "lang": "fr",
+   "source": "cards/fr/s5/ni0241/art.reconstructed.png",
+   "dest": "cards/fr/s5/ni0241/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1237
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0242",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0242/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0242/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0243",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0243/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0243/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0244",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0244/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0244/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0245",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0245/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0245/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0246",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0246/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0246/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0250",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0250/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0250/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0251",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0251/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0251/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0252",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0252/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0252/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1088
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0253",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ni0253/art.reconstructed.png",
+   "dest": "cards/fr/s6/ni0253/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1225
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ni0280",
+   "set": "s1",
+   "lang": "ja",
+   "source": "cards/ja/s6/ni0280/art.reconstructed.png",
+   "dest": "cards/ja/s1/ni0280/art.reconstructed.webp",
+   "from": {
+    "width": 631,
+    "height": 920
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0281",
+   "set": "maki12",
+   "lang": "ja",
+   "source": "cards/ja/maki12/ni0281/art.reconstructed.png",
+   "dest": "cards/ja/maki12/ni0281/art.reconstructed.webp",
+   "from": {
+    "width": 633,
+    "height": 910
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0282",
+   "set": "maki12",
+   "lang": "ja",
+   "source": "cards/ja/maki12/ni0282/art.reconstructed.png",
+   "dest": "cards/ja/maki12/ni0282/art.reconstructed.webp",
+   "from": {
+    "width": 644,
+    "height": 940
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0283",
+   "set": "maki12",
+   "lang": "ja",
+   "source": "cards/ja/maki12/ni0283/art.reconstructed.png",
+   "dest": "cards/ja/maki12/ni0283/art.reconstructed.webp",
+   "from": {
+    "width": 669,
+    "height": 965
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0309",
+   "set": "jp-release-23",
+   "lang": "ja",
+   "source": "cards/ja/jp-release-23/ni0309/art.reconstructed.png",
+   "dest": "cards/ja/jp-release-23/ni0309/art.reconstructed.webp",
+   "from": {
+    "width": 557,
+    "height": 810
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "ni0369",
+   "set": "maki16",
+   "lang": "ja",
+   "source": "cards/ja/maki16/ni0369/art.reconstructed.png",
+   "dest": "cards/ja/maki16/ni0369/art.reconstructed.webp",
+   "from": {
+    "width": 696,
+    "height": 931
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "pr0093",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/pr0093/art.reconstructed.png",
+   "dest": "cards/fr/promo/pr0093/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1210
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "pr0095",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/pr0095/art.reconstructed.png",
+   "dest": "cards/fr/promo/pr0095/art.reconstructed.webp",
+   "from": {
+    "width": 649,
+    "height": 911
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "pr0096",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/pr0096/art.reconstructed.png",
+   "dest": "cards/fr/promo/pr0096/art.reconstructed.webp",
+   "from": {
+    "width": 656,
+    "height": 911
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "pr0100",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/pr0100/art.reconstructed.png",
+   "dest": "cards/fr/promo/pr0100/art.reconstructed.webp",
+   "from": {
+    "width": 864,
+    "height": 1210
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0005-prerelease",
+   "set": "s1",
+   "lang": "fr",
+   "source": "cards/fr/s1/ta0005-prerelease/art.reconstructed.png",
+   "dest": "cards/fr/s1/ta0005-prerelease/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0063-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ta0063-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ta0063-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0067-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ta0067-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ta0067-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0074-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ta0074-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ta0074-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0081-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ta0081-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ta0081-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0214",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0214/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0214/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0219",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0219/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0219/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0221",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0221/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0221/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1076
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0226",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0226/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0226/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1076
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0227",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0227/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0227/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0232",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0232/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0232/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0234",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/ta0234/art.reconstructed.png",
+   "dest": "cards/fr/s6/ta0234/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "ta0330",
+   "set": "maki17",
+   "lang": "ja",
+   "source": "cards/ja/maki17/ta0330/art.reconstructed.png",
+   "dest": "cards/ja/maki17/ta0330/art.reconstructed.webp",
+   "from": {
+    "width": 572,
+    "height": 833
+   },
+   "cropped": true
+  },
+  {
+   "cardId": "te0034-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0034-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0034-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0073-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0073-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0073-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0085-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0085-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0085-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0109-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0109-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0109-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0114-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0114-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0114-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0139-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/te0139-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/te0139-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0192",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/te0192/art.reconstructed.png",
+   "dest": "cards/fr/s6/te0192/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0205",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/te0205/art.reconstructed.png",
+   "dest": "cards/fr/s6/te0205/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0207",
+   "set": "s6",
+   "lang": "fr",
+   "source": "cards/fr/s6/te0207/art.reconstructed.png",
+   "dest": "cards/fr/s6/te0207/art.reconstructed.webp",
+   "from": {
+    "width": 843,
+    "height": 1206
+   },
+   "cropped": false
+  },
+  {
+   "cardId": "te0212",
+   "set": "s5",
+   "lang": "fr",
+   "source": "cards/fr/s5/te0212/art.reconstructed.png",
+   "dest": "cards/fr/s5/te0212/art.reconstructed.webp",
+   "from": {
+    "width": 761,
+    "height": 1077
+   },
+   "cropped": false
+  }
+ ]
+}

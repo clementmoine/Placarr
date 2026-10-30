@@ -66,6 +66,24 @@ describe("fetchFromMusicBrainz", () => {
         data: {
           aliases: [{ name: "KH Orchestra World of Tres" }],
         },
+      } as never)
+      .mockResolvedValueOnce({
+        status: 200,
+        data: {
+          images: [
+            {
+              front: true,
+              types: ["Front"],
+              image:
+                "http://coverartarchive.org/release/mbid-1/front.jpg",
+            },
+            {
+              types: ["Spine"],
+              image:
+                "http://coverartarchive.org/release/mbid-1/spine.jpg",
+            },
+          ],
+        },
       } as never);
 
     const r = await fetchFromMusicBrainz("4988601467124");
@@ -74,7 +92,13 @@ describe("fetchFromMusicBrainz", () => {
     expect(r?.releaseTitle).toBe("Kingdom Hearts Orchestra -World Of Tres");
     expect(r?.aliases).toContain("KH Orchestra World of Tres");
     expect(r?.mbid).toBe("mbid-1");
-    expect(r?.imageUrl).toBeNull();
+    expect(r?.imageUrl).toContain("coverartarchive.org");
+    expect(r?.attachments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ role: "front" }),
+        expect.objectContaining({ role: "spine" }),
+      ]),
+    );
   });
 
   it("renvoie null quand aucune édition ne correspond (je ne sais pas)", async () => {

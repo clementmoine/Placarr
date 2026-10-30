@@ -7,4 +7,4 @@ export {
   needsLegacyPriceOfferNormalization,
   normalizeLegacyPriceOffer,
   type NormalizablePriceOffer,
-} from "@/core/catalog/legacyPriceOffer";
+} from "@/core/catalog/priceOffers";

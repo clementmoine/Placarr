@@ -161,9 +161,7 @@ describe("canalbd", () => {
     expect(hits).toHaveLength(1);
     expect(promoteCanalbdSearchEvidence).toHaveBeenCalledWith(
       expect.stringContaining("/recherche/?q="),
-      expect.arrayContaining([
-        expect.objectContaining({ id: "1269046" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: "1269046" })]),
     );
   });
 });

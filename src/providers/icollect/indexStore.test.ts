@@ -195,6 +195,7 @@ describe("rememberICollectItemCatalog", () => {
       itemUrl: "https://www.icollecteverything.com/db/item/videogame/892033/",
       title: "Mario Kart Wii",
       catalogSource: "page",
+      images: [],
     });
 
     const staleAt = Date.now() - DEFAULT_PAGE_CATALOG_REFRESH_MS - 60_000;
@@ -225,6 +226,7 @@ describe("rememberICollectItemCatalog", () => {
       itemUrl: "https://www.icollecteverything.com/db/item/videogame/892033/",
       title: "Mario Kart Wii",
       catalogSource: "sitemap",
+      images: [],
     });
 
     expect(shouldRefreshICollectItemPage(db, "892033")).toBe(true);

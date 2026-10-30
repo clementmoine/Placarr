@@ -3,7 +3,7 @@
  * Bridges Next scan and worker refresh (unlike in-job ALS FetchStores).
  * Callers pass registry provider ids; core never hardcodes them.
  */
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
 
@@ -67,7 +67,9 @@ const EVIDENCE_SEARCH_IDENTITY_PARAMS = [
 function shouldDropSearchParam(key: string): boolean {
   const lower = key.toLowerCase();
   if (EVIDENCE_DROP_PARAMS.has(lower)) return true;
-  return EVIDENCE_DROP_PARAM_PREFIXES.some((prefix) => lower.startsWith(prefix));
+  return EVIDENCE_DROP_PARAM_PREFIXES.some((prefix) =>
+    lower.startsWith(prefix),
+  );
 }
 
 /**

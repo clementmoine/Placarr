@@ -240,9 +240,7 @@ describe("bdfugue fetch", () => {
     expect(
       metadata?.facts?.some((f) => f.kind === "tag" && f.label === "Tome"),
     ).toBe(true);
-    expect(metadata?.facts?.some((f) => f.kind === "external-link")).toBe(
-      true,
-    );
+    expect(metadata?.facts?.some((f) => f.kind === "external-link")).toBe(true);
     expect(metadata?.observations?.length).toBeGreaterThan(0);
     expect(metadata?.externalIds?.bdfugue).toBe(SAMPLE_EAN);
   });

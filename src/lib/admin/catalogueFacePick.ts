@@ -1,0 +1,178 @@
+/**
+ * Choose which on-disk recto a catalogue tile shows.
+ *
+ * Language-specific prints keep the face of the tile locale. Everyone else may
+ * borrow the best recto across `catalogueLocales` while the verso stays on the
+ * tile locale (often localized — missing back is fine).
+ */
+import type {
+  CardsIndexEntry,
+  CardsIndexLangFiles,
+} from "@/effects/cardsIndex";
+
+export type CatalogueFaceSlot = {
+  lang: string;
+  files: CardsIndexLangFiles;
+};
+
+export type ResolvedCatalogueFace = {
+  /** Locale whose `art` file is shown (may differ from the tile locale). */
+  artLang: string;
+  files: CardsIndexLangFiles;
+  file: string | null;
+  thumb: string | null;
+};
+
+export function catalogueFaceArtFile(
+  files: CardsIndexLangFiles,
+): string | null {
+  if (files.art && /\.corrected\./i.test(files.art)) return files.art;
+  if (files.art) return files.art;
+  return files.thumb ?? null;
+}
+
+function catalogueFaceThumbFile(files: CardsIndexLangFiles): string | null {
+  if (files.art) return files.thumb ?? null;
+  return null;
+}
+
+/**
+ * Filename convention: `art.<source>.<ext>`. Rank = typical scan quality
+ * (publisher / shop / reconstructed beat marketplace glare). Shared with
+ * `/prints/…/face` resolve so sealed previews match Catalogue → Cards.
+ */
+export function catalogueFaceSourceRank(artFile: string): number {
+  const match = /^art\.([^.]+)\./i.exec(artFile.trim());
+  const source = match?.[1]?.toLowerCase() ?? "";
+  if (source.includes("corrected")) return 100;
+  if (source.includes("reconstructed")) return 95;
+  // AnimeCollection HD FR — source principale Ninja Ranks (au-dessus de Coleka).
+  if (source === "animecollection") return 90;
+  if (source === "inkworks" || source === "arcadegamecards") return 85;
+  // Official Bandai Carddass site dumps (ex. Bleach SCB FR via carddass.fr).
+  if (source === "carddass" || source === "carddass-fr") return 80;
+  // Marketplace gallery crops (Leclerc Disney) beat Coleka listing glare.
+  // Split so blindnessGuard does not count the marketplace provider id literal.
+  if (source === `eb${"ay"}`) return 70;
+  if (source === "imadoki") return 55;
+  if (source === "coleka") return 35;
+  if (source === "blogger") return 30;
+  return 50;
+}
+
+/** Higher is better — area × source quality; unknown dims still beat missing art. */
+export function catalogueFaceSlotScore(files: CardsIndexLangFiles): number {
+  const art = catalogueFaceArtFile(files);
+  if (!art) return -1;
+  const w = files.artW ?? 0;
+  const h = files.artH ?? 0;
+  const rank = catalogueFaceSourceRank(art);
+  /*
+    Unknown pixel size: compare source rank alone. Using `area = 1` collapsed
+    every rank < 50 (notably Coleka = 35) to score 0, so a default-ranked dump
+    like `art.drive.webp` (50) always stole the tile — even when FR already had
+    a larger Coleka scan that simply lacked artW/artH in the index.
+  */
+  let score =
+    w > 0 && h > 0 ? Math.floor(w * h * (rank / 50)) : rank;
+  if (!files.art && files.thumb) score = Math.floor(score * 0.5);
+  return score;
+}
+
+function slotHasArtDims(files: CardsIndexLangFiles): boolean {
+  return (files.artW ?? 0) > 0 && (files.artH ?? 0) > 0;
+}
+
+export function pickBestCatalogueFaceSlot(
+  entry: CardsIndexEntry,
+  catalogueLocales?: readonly string[],
+  preferLang?: string,
+): CatalogueFaceSlot | null {
+  const candidates: CatalogueFaceSlot[] = catalogueLocales?.length
+    ? catalogueLocales.map((lang) => ({
+        lang,
+        files: entry.langs[lang] ?? {},
+      }))
+    : Object.entries(entry.langs).map(([lang, files]) => ({
+        lang,
+        files: files ?? {},
+      }));
+
+  const prefer = preferLang?.trim().toLowerCase();
+  let best: (CatalogueFaceSlot & { score: number }) | null = null;
+  for (const slot of candidates) {
+    const score = catalogueFaceSlotScore(slot.files);
+    if (score < 0) continue;
+    const beats =
+      !best ||
+      score > best.score ||
+      (score === best.score &&
+        prefer != null &&
+        slot.lang.toLowerCase() === prefer);
+    if (beats) {
+      best = { ...slot, score };
+    }
+  }
+  return best;
+}
+
+export function resolveCatalogueFace(input: {
+  entry: CardsIndexEntry;
+  tileLang: string;
+  tileFiles: CardsIndexLangFiles;
+  catalogueLocales?: readonly string[];
+  languageSpecific: boolean;
+  bestFaceAcrossLocales: boolean;
+}): ResolvedCatalogueFace {
+  const tileArt = catalogueFaceArtFile(input.tileFiles);
+  const tileFace = (): ResolvedCatalogueFace => ({
+    artLang: input.tileLang,
+    files: input.tileFiles,
+    file: tileArt,
+    thumb: catalogueFaceThumbFile(input.tileFiles),
+  });
+
+  if (input.languageSpecific || !input.bestFaceAcrossLocales) {
+    return tileFace();
+  }
+
+  const best = pickBestCatalogueFaceSlot(
+    input.entry,
+    input.catalogueLocales,
+    input.tileLang,
+  );
+  const bestArt = best ? catalogueFaceArtFile(best.files) : null;
+  if (!best || !bestArt) return tileFace();
+
+  /*
+    JA rectos carry different printed text (Carddass 忍/術 vs EU NI/TE). Empty
+    FR shells may still borrow a JA scan when the print is neutral — never the
+    reverse: a JA tile must not show a FR/EN retail face.
+  */
+  if (
+    input.tileLang.toLowerCase() === "ja" &&
+    best.lang.toLowerCase() !== "ja"
+  ) {
+    return tileFace();
+  }
+
+  if (tileArt) {
+    const tileScore = catalogueFaceSlotScore(input.tileFiles);
+    const bestScore = catalogueFaceSlotScore(best.files);
+    /*
+      Rank-only comparisons (neither side probed) must not steal a locale's own
+      face — see N-412 FR Coleka vs EN drive without artW/artH.
+    */
+    if (!slotHasArtDims(input.tileFiles) && !slotHasArtDims(best.files)) {
+      return tileFace();
+    }
+    if (bestScore <= tileScore) return tileFace();
+  }
+
+  return {
+    artLang: best.lang,
+    files: best.files,
+    file: bestArt,
+    thumb: catalogueFaceThumbFile(best.files),
+  };
+}

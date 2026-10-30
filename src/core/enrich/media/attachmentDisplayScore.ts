@@ -30,6 +30,7 @@ export {
 export {
   MARKETPLACE_COVER_LOCALE_PENALTY,
   isMarketplaceCoverRole,
+  isWeakDisplayCoverPin,
   coverLocaleRank,
   coverLocaleRankForAttachment,
   rankCoversForDisplay,

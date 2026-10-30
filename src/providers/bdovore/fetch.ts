@@ -259,7 +259,11 @@ export async function searchBdovoreSeries(
     return fromEvidence;
   }
 
-  const rows = await fetchBdovoreJson({ data: "Serie", mode: "2", term: trimmed });
+  const rows = await fetchBdovoreJson({
+    data: "Serie",
+    mode: "2",
+    term: trimmed,
+  });
   const hits = rows.flatMap((row) => {
     const id = cleanBdovoreText(row.ID_SERIE);
     const label = cleanBdovoreText(row.NOM_SERIE);
@@ -315,9 +319,8 @@ function buildBdovoreSeriesQueries(query: string): string[] {
   // French catalogs shelve suffixed interim issues ("n°100bis") and
   // hors-série issues as sibling series ("<série> bis", "<série> hors
   // série") — query those first, they are the most specific.
-  const issueSuffix = volumeNumberFromTitle(trimmed)?.match(
-    /(bis|ter|quater)$/,
-  )?.[1];
+  const issueSuffix =
+    volumeNumberFromTitle(trimmed)?.match(/(bis|ter|quater)$/)?.[1];
   if (base && issueSuffix) queries.push(`${base} ${issueSuffix}`);
 
   const horsSerie = hasHorsSerieMarker(trimmed);
@@ -359,7 +362,9 @@ export function rankBdovoreSeriesCandidates(
     .map((entry) => entry.candidate);
 }
 
-function isBdovoreDedicatedHorsSerieSeries(seriesName?: string | null): boolean {
+function isBdovoreDedicatedHorsSerieSeries(
+  seriesName?: string | null,
+): boolean {
   return seriesName ? hasHorsSerieMarker(seriesName) : false;
 }
 

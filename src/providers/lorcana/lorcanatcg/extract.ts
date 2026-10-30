@@ -25,12 +25,14 @@ export const LORCANA_STEPS = [
   "products",
   "official",
   "mobile",
+  "index",
 ] as const;
 export type LorcanaStep = (typeof LORCANA_STEPS)[number];
 
 /**
  * Steps that need the network (skipped under `--offline`).
  * `products` can reuse on-disk lorcards staging like dbscg/dbsfw.
+ * `index` rebuilds the FR dHash camera index from faces already on disk.
  */
 const LORCANA_ONLINE = new Set<LorcanaStep>([
   "web",
@@ -52,7 +54,8 @@ const PROVIDER_TO_STEP: Record<string, LorcanaStep> = {
  *
  * `--providers` (legacy) wins when present; otherwise `--only` / `--skip` /
  * `--offline` filter {@link LORCANA_STEPS}. Default = web + cards + products
- * + mobile (SKUs / scellés / packshots via lorcards + site officiel).
+ * + mobile + index (SKUs / scellés / packshots via lorcards + site officiel ;
+ * camera dHash after faces land).
  */
 export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
   const providersIdx = argv.indexOf("--providers");
@@ -71,8 +74,35 @@ export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
 
   return selectCatalogueSteps(argv, LORCANA_STEPS, {
     online: LORCANA_ONLINE,
-    defaults: ["web", "cards", "products", "mobile"],
+    defaults: ["web", "cards", "products", "mobile", "index"],
   });
+}
+
+async function runCardVisualIndex(): Promise<Record<string, unknown>> {
+  try {
+    const { runDataPackCardVisualIndex } = await import(
+      "@/providers/shared/cardCatalogue/visualIndexStep"
+    );
+    const visual = await runDataPackCardVisualIndex("lorcana");
+    console.log(
+      `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
+    );
+    return {
+      provider: "lorcanaindex",
+      ok: true,
+      entries: visual.entries.length,
+      lang: visual.lang,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`── card visual index — skip : ${message}`);
+    return {
+      provider: "lorcanaindex",
+      ok: false,
+      skipped: true,
+      reason: message,
+    };
+  }
 }
 
 async function runOfficialSiteOnly(
@@ -316,6 +346,8 @@ export async function runLorcanaFoilExtract(
         continue;
       }
       results.push(await runUnity(repo, args.apk, args.data));
+    } else if (step === "index") {
+      results.push(await runCardVisualIndex());
     }
   }
   writeLastRun(repo, "lorcana", { domain: "lorcana", results });

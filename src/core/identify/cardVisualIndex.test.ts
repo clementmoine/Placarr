@@ -56,4 +56,35 @@ describe("matchCardVisualHash", () => {
       }),
     ).toEqual([]);
   });
+
+  it("marks ambiguous when top-2 are within minMargin", () => {
+    const tight: CardVisualIndexFile = {
+      ...index,
+      entries: [
+        {
+          printKey: "naruto:s1-ni0001",
+          lang: "fr",
+          set: "s1",
+          card: "ni0001",
+          artRel: "cards/fr/s1/ni0001/art.webp",
+          hash: "0".repeat(64),
+        },
+        {
+          printKey: "naruto:s1-ni0002",
+          lang: "fr",
+          set: "s1",
+          card: "ni0002",
+          artRel: "cards/fr/s1/ni0002/art.webp",
+          // distance 1 from all-zero
+          hash: "1" + "0".repeat(63),
+        },
+      ],
+    };
+    const hits = matchCardVisualHash("0".repeat(64), tight, {
+      maxDistance: 10,
+      minMargin: 2,
+    });
+    expect(hits[0]?.ambiguous).toBe(true);
+    expect(hits[1]?.ambiguous).toBe(true);
+  });
 });

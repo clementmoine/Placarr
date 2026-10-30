@@ -98,12 +98,60 @@ export function dedupeByPerceptualHash<
 
 const perceptualHashCache = new Map<string, Promise<string | null>>();
 
+/**
+ * Crop the illustrated art window of a card face (skip name / text box /
+ * borders). Production scanners (CLIP pipelines) embed this region — hashing
+ * the full frame including shared borders causes cross-game false positives.
+ *
+ * Fractions match common TCG layout: top inset, mid-card art, side margins.
+ */
+export async function extractCardArtBand(
+  buffer: Buffer,
+): Promise<Buffer | null> {
+  try {
+    const meta = await sharp(buffer).metadata();
+    const width = meta.width ?? 0;
+    const height = meta.height ?? 0;
+    if (width < 32 || height < 32) return null;
+    const left = Math.floor(width * 0.08);
+    const top = Math.floor(height * 0.12);
+    const cropW = Math.max(16, Math.floor(width * 0.84));
+    const cropH = Math.max(16, Math.floor(height * 0.48));
+    return sharp(buffer)
+      .extract({
+        left,
+        top,
+        width: Math.min(cropW, width - left),
+        height: Math.min(cropH, height - top),
+      })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+  } catch {
+    return null;
+  }
+}
+
+export type DHashOptions = {
+  /**
+   * Hash only the art band (recommended for cardboard ID). Must be used for
+   * both index build and query or distances are meaningless.
+   */
+  artBand?: boolean;
+};
+
 /** dHash 64 bits (chaîne binaire) depuis un buffer image — 9×8 gris, voisin de droite. */
 export async function dHashFromBuffer(
   buffer: Buffer,
+  opts?: DHashOptions,
 ): Promise<string | null> {
   try {
-    const { data, info } = await sharp(buffer)
+    let input = buffer;
+    if (opts?.artBand) {
+      const band = await extractCardArtBand(buffer);
+      if (!band) return null;
+      input = band;
+    }
+    const { data, info } = await sharp(input)
       .greyscale()
       .resize(9, 8, { fit: "fill" })
       .raw()

@@ -10,10 +10,33 @@ import {
   loadCardVisualIndex,
   matchCardVisualHash,
   matchCardVisualHashAcrossPacks,
+  type CardVisualMatch,
 } from "@/core/identify/cardVisualIndex";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { isCataloguePackId } from "@/lib/admin/cataloguePacks";
+import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+
+/** Live camera: art-band dHash ≤10; 14 flooded FP across games. */
+const LIVE_MAX_DISTANCE = 10;
+const LIVE_LIMIT = 8;
+const LIVE_MIN_MARGIN = 2;
+
+function withFaceUrl(match: CardVisualMatch): CardVisualMatch & {
+  faceUrl: string | null;
+} {
+  const packId = match.packId?.trim();
+  const rel = match.artRel?.trim();
+  if (!packId || !rel) {
+    return { ...match, faceUrl: null };
+  }
+  const parts = rel.split(/[/\\]/).filter(Boolean);
+  if (!parts.length) return { ...match, faceUrl: null };
+  return {
+    ...match,
+    faceUrl: assetsPackFileUrl(packId, ...parts),
+  };
+}
 
 function sanitizePackId(raw: string): string | null {
   const packId = raw.trim();
@@ -32,13 +55,15 @@ export async function POST(req: NextRequest) {
   const auth = await requireGuestOrHigher(req);
   if (auth instanceof NextResponse) return auth;
 
+  // Live camera ~1 sample/s while hunting; slower once a suggestion is stable.
+  // ~10 min of continuous hunt at 1/s, or a long confirm session.
   const throttle = consumeRateLimit(`card-image:${auth.user.id}`, {
-    limit: 60,
-    windowMs: 60 * 60 * 1000,
+    limit: 600,
+    windowMs: 10 * 60 * 1000,
   });
   if (!throttle.allowed) {
     return NextResponse.json(
-      { error: "Too many card lookups" },
+      { error: "card_lookup_rate_limited" },
       {
         status: 429,
         headers: { "Retry-After": String(throttle.retryAfterSeconds) },
@@ -65,7 +90,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "bad image size" }, { status: 400 });
     }
 
-    const hash = await dHashFromBuffer(buffer);
+    // Art-band dHash — same crop as index build (must stay in sync).
+    const hash = await dHashFromBuffer(buffer, { artBand: true });
     if (!hash) {
       return NextResponse.json({ error: "unreadable image" }, { status: 422 });
     }
@@ -83,14 +109,16 @@ export async function POST(req: NextRequest) {
         );
       }
       const matches = matchCardVisualHash(hash, index, {
-        limit: 5,
-        maxDistance: 14,
-      });
+        limit: LIVE_LIMIT,
+        maxDistance: LIVE_MAX_DISTANCE,
+        minMargin: LIVE_MIN_MARGIN,
+      }).map(withFaceUrl);
       return NextResponse.json({
         packId,
         lang: index.lang,
         matches,
         requireConfirm: true,
+        ambiguous: matches.some((m) => m.ambiguous),
       });
     }
 
@@ -108,13 +136,15 @@ export async function POST(req: NextRequest) {
 
     const matches = matchCardVisualHashAcrossPacks(hash, {
       packIds,
-      limit: 5,
-      maxDistance: 14,
-    });
+      limit: LIVE_LIMIT,
+      maxDistance: LIVE_MAX_DISTANCE,
+      minMargin: LIVE_MIN_MARGIN,
+    }).map(withFaceUrl);
     return NextResponse.json({
       packIds,
       matches,
       requireConfirm: true,
+      ambiguous: matches.some((m) => m.ambiguous),
     });
   } catch (error) {
     console.error("[POST /api/identify/card-image]", error);

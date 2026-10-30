@@ -3,12 +3,13 @@ import { describe, expect, it } from "vitest";
 import { selectLorcanaSteps } from "./extract";
 
 describe("selectLorcanaSteps", () => {
-  it("defaults to web + cards + products + mobile", () => {
+  it("defaults to web + cards + products + mobile + index", () => {
     expect(selectLorcanaSteps([])).toEqual([
       "web",
       "cards",
       "products",
       "mobile",
+      "index",
     ]);
   });
 
@@ -18,19 +19,24 @@ describe("selectLorcanaSteps", () => {
       "products",
       "official",
     ]);
+    expect(selectLorcanaSteps(["--only", "index"])).toEqual(["index"]);
     expect(selectLorcanaSteps(["--skip", "mobile"])).toEqual([
       "web",
       "cards",
       "products",
+      "index",
     ]);
   });
 
-  it("keeps products under --offline, drops the rest", () => {
-    // `products` can reuse on-disk lorcards staging; other defaults need net.
-    expect(selectLorcanaSteps(["--offline"])).toEqual(["products"]);
+  it("keeps products + index under --offline, drops online steps", () => {
+    // `products` reuses on-disk lorcards staging; `index` hashes local faces.
+    expect(selectLorcanaSteps(["--offline"])).toEqual(["products", "index"]);
     expect(selectLorcanaSteps(["--only", "cards", "--offline"])).toEqual([]);
     expect(selectLorcanaSteps(["--only", "products", "--offline"])).toEqual([
       "products",
+    ]);
+    expect(selectLorcanaSteps(["--only", "index", "--offline"])).toEqual([
+      "index",
     ]);
   });
 

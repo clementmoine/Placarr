@@ -599,12 +599,29 @@ export async function runCatalogueExtractCommand(
         });
     });
 
-    const postExtract =
-      cataloguePackForExtractTarget(target)?.extract.postExtract;
+    const pack = cataloguePackForExtractTarget(target);
+    const postExtract = pack?.extract.postExtract;
     if (postExtract === "invalidatePokemonFoilNamesCache") {
       const { invalidatePokemonFoilNamesCache } =
         await import("@/effects/pokemon/foilNames");
       invalidatePokemonFoilNamesCache();
+    }
+    // Every TCG extract refreshes the camera dHash index for its dataPack.
+    // Catalogue-first (print_assets); soft-fail so extract success is preserved.
+    if (pack?.id) {
+      try {
+        const { runDataPackCardVisualIndex } = await import(
+          "@/providers/shared/cardCatalogue/visualIndexStep"
+        );
+        const visual = await runDataPackCardVisualIndex(pack.id);
+        onLog(
+          `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
+        );
+      } catch (err) {
+        onLog(
+          `── card visual index — skip : ${err instanceof Error ? err.message : err}`,
+        );
+      }
     }
     onLog("── done");
   } catch (error) {

@@ -495,16 +495,12 @@ export async function runNarutoPackPipeline(
       case "index": {
         await scrapeNarutoCards({ indexOnly: true });
         try {
-          const { buildCardVisualIndex } = await import(
-            "@/core/identify/cardVisualIndex"
+          const { runDataPackCardVisualIndex } = await import(
+            "@/providers/shared/cardCatalogue/visualIndexStep"
           );
-          const visual = await buildCardVisualIndex({
-            packId: "naruto/carddass",
-            lang: "fr",
-            printGame: "naruto",
-          });
+          const visual = await runDataPackCardVisualIndex("naruto/carddass");
           console.log(
-            `── card visual index FR — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
+            `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
           );
         } catch (err) {
           console.warn(

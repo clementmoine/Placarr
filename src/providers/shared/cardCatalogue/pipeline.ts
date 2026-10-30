@@ -181,6 +181,26 @@ export function cardCatalogueHooks(
         ...growth,
       })}\n`,
     );
+
+    // Camera / photo → printKey index from catalogue faces (disk-only).
+    // Failures stay soft — Sync must not die because a face file is unreadable.
+    try {
+      const { runDataPackCardVisualIndex } = await import(
+        "@/providers/shared/cardCatalogue/visualIndexStep"
+      );
+      const visual = await runDataPackCardVisualIndex(input.packId, {
+        langs: opts?.langs,
+      });
+      if (visual.entries.length) {
+        console.log(
+          `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `── card visual index — skip : ${err instanceof Error ? err.message : err}`,
+      );
+    }
   };
 
   return {

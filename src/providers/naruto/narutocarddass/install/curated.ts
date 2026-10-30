@@ -106,7 +106,10 @@ export type CuratedReconstructedFace = {
   source: string;
   cardId: string;
   lang: string;
+  /** Collector family (`ninja` / `technique` / …) when parseable from the id. */
   family: string;
+  /** Curated folder set (`s2`, `promo`, …) — authoritative install target. */
+  set: string;
 };
 
 export { curatedDestStale };
@@ -177,6 +180,7 @@ export function listCuratedReconstructedFaces(
         cardId: hit.diskId,
         lang: hit.lang,
         family: hit.family,
+        set: hit.set,
       });
     }
   }
@@ -395,8 +399,11 @@ function mergeProvenanceInstalls(
 }
 
 /**
- * Lang-first set for a curated reconstruct: S6 FR MIJ ledger, then
- * appearances, `prints.set_code`, existing disk folder, then promo/`s1`.
+ * Lang-first set for a curated reconstruct.
+ *
+ * The curated path `cards/{lang}/{set}/{id}/` is authoritative — an S2 scan of
+ * a shared NI number must not land on S1 just because appearances list S1 first.
+ * S6 FR MIJ inserts still force `s6` even if the folder was mislabeled.
  */
 export function reconstructedInstallSet(
   face: CuratedReconstructedFace,
@@ -407,6 +414,9 @@ export function reconstructedInstallSet(
   if (face.lang === "fr" && isNarutoS6FrPrintedNumber(face.cardId)) {
     return "s6";
   }
+
+  const curatedSet = face.set?.trim().toLowerCase();
+  if (curatedSet) return curatedSet;
 
   const apps = loadNarutoAppearancesFile(packRoot())?.appearances ?? {};
   const fromApp = appearanceSetsOf(apps[face.cardId]?.[face.lang]);

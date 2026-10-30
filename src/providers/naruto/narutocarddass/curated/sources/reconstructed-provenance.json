@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-22T07:51:15.246Z",
+ "generatedAt": "2026-10-30T11:08:00.088Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{lang}/{set}/{id}/ (Mercari restorations: the mercdn ingest row in sources/mercari.json)",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
@@ -137,6 +137,18 @@
    "cropped": false
   },
   {
+   "cardId": "ni0008",
+   "set": "s2",
+   "lang": "fr",
+   "source": "cards/fr/s2/ni0008/art.reconstructed.png",
+   "dest": "cards/fr/s2/ni0008/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": false
+  },
+  {
    "cardId": "ni0011-ps",
    "set": "promo",
    "lang": "ja",
@@ -147,6 +159,18 @@
     "height": 1485
    },
    "cropped": false
+  },
+  {
+   "cardId": "ni0034-promo",
+   "set": "promo",
+   "lang": "fr",
+   "source": "cards/fr/promo/ni0034-promo/art.reconstructed.png",
+   "dest": "cards/fr/promo/ni0034-promo/art.reconstructed.webp",
+   "from": {
+    "width": 350,
+    "height": 495
+   },
+   "cropped": true
   },
   {
    "cardId": "ni0063-promo",

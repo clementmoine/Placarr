@@ -16,7 +16,13 @@ import {
 } from "../identity";
 import { parseTcdbNarutoRef } from "../parse/catalogues";
 import { mercariIngestFaces } from "../sources/faces";
-import { curatedDestStale, listCuratedReconstructedFaces, opaqueBounds, narutoCuratedDir } from "./curated";
+import {
+  curatedDestStale,
+  listCuratedReconstructedFaces,
+  opaqueBounds,
+  narutoCuratedDir,
+  reconstructedInstallSet,
+} from "./curated";
 import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
 const mangaNewsPackshots = readNarutoCarddassSyncedSource("manga-news-packshots.json");
@@ -154,6 +160,19 @@ const surugaDataCarddass = readNarutoCarddassSyncedSource("suruga-ya-data-cardda
           .map((f) => `${f.cardId}/${f.lang}`)
           .sort(),
       ).toEqual(["pr0011/fr", "pr0096/fr"]);
+    });
+
+    it("keeps curated set folder for shared NI numbers (S2 ≠ S1)", () => {
+      const root = mkdtempSync(path.join(tmpdir(), "naruto-curated-s2-"));
+      const cards = path.join(root, "cards");
+      mkdirSync(path.join(cards, "fr", "s2", "ni0008"), { recursive: true });
+      writeFileSync(
+        path.join(cards, "fr", "s2", "ni0008", "art.reconstructed.png"),
+        "s2",
+      );
+      const [face] = listCuratedReconstructedFaces(cards);
+      expect(face?.set).toBe("s2");
+      expect(reconstructedInstallSet(face!, cards)).toBe("s2");
     });
   });
 

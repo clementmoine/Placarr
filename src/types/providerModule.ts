@@ -5,6 +5,7 @@ import type { MetadataResult } from "@/types/metadataProvider";
 import type { ProviderInfo } from "@/types/providerRegistry";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
 import type { PriceOfferInput } from "@/core/enrich/evidence";
+import type { PrintFaceHit, PrintFaceRole } from "@/lib/media/resolvePrintFace";
 
 export type InferredImageAttachmentSemantics = {
   type: AttachmentType;
@@ -740,6 +741,23 @@ export interface ProviderModule {
     slug?: string | null;
     name?: string | null;
   }) => string | null;
+  /**
+   * Match a `prints/...` asset REST path to a printKey/lang/role. Absent =
+   * the generic `prints/{key}/{role}` shape. Ne pas hardcoder le pack dans
+   * `lib/media` — déclarer le hook ici.
+   */
+  matchPrintsAssetRest?: (
+    rest: readonly string[],
+  ) => { printKey: string; lang: string; role: PrintFaceRole } | null;
+  /**
+   * Resolve a print-role image URL onto disk (owned folder or borrow chain).
+   * Absent = owned-folder only. Ne pas hardcoder le pack dans `lib/media`.
+   */
+  resolvePrintFace?: (opts: {
+    printKey: string;
+    lang: string;
+    role?: PrintFaceRole;
+  }) => PrintFaceHit | null;
   /**
    * Les langues dans lesquelles ce catalogue a été imprimé.
    *

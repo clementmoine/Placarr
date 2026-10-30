@@ -14,12 +14,12 @@ import { catalogueCorpusPack } from "@/lib/admin/cataloguePacks";
 import { canonicalAssetPack } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
 import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
-import { providerModulesForPack } from "@/providers/shared/packOwner";
 import {
-  matchNarutoPrintsAssetRest,
-  resolveNarutoPrintFace,
-  type NarutoPrintFaceHit,
-} from "@/providers/naruto/narutocarddass/printFaceResolve";
+  providerModuleProviding,
+  providerModulesForPack,
+} from "@/providers/shared/packOwner";
+// (Naruto-specific resolution is now provided via the `resolvePrintFace` /
+// `matchPrintsAssetRest` hooks on the narutocarddass module — see packOwner.)
 
 export type PrintFaceRole = "face" | "thumb" | "face-b";
 
@@ -72,11 +72,12 @@ export function matchPrintsAssetRest(
   pack: string,
   rest: readonly string[],
 ): { printKey: string; lang: string; role: PrintFaceRole } | null {
-  const game = printKeyGameForPack(pack);
-  if (game === "naruto") {
-    return matchNarutoPrintsAssetRest(rest);
+  const hookMod = providerModuleProviding(canonicalAssetPack(pack), "matchPrintsAssetRest");
+  if (hookMod?.matchPrintsAssetRest) {
+    return hookMod.matchPrintsAssetRest(rest);
   }
 
+  const game = printKeyGameForPack(pack);
   if (rest[0] !== "prints") return null;
 
   if (rest.length === 3) {
@@ -235,19 +236,10 @@ function resolveOwnedPrintFace(opts: {
   return null;
 }
 
-function fromNarutoHit(hit: NarutoPrintFaceHit): PrintFaceHit {
-  return {
-    filePath: hit.filePath,
-    artFile: hit.artFile,
-    source: hit.source,
-    ...(hit.donorPrintKey ? { donorPrintKey: hit.donorPrintKey } : {}),
-    disk: hit.disk,
-  };
-}
-
 /**
- * Resolve print-role URL onto disk. Naruto Carddass uses borrow chains;
- * every other pack is owned-folder only.
+ * Resolve print-role URL onto disk. Delegates to the pack's provider when it
+ * declares `resolvePrintFace` (e.g. Naruto Carddass borrow chains); otherwise
+ * owned-folder only.
  */
 export function resolvePrintFace(opts: {
   pack: string;
@@ -257,14 +249,16 @@ export function resolvePrintFace(opts: {
 }): PrintFaceHit | null {
   const pack = canonicalAssetPack(opts.pack);
   const role = opts.role ?? "face";
-  // Carddass: owned + artBorrowFrom. Other lines: owned folder only.
-  if (pack === "naruto/carddass") {
-    const hit = resolveNarutoPrintFace({
+  // Delegate to the pack's provider when it declares a custom resolver
+  // (e.g. Naruto Carddass borrow chains). Otherwise owned-folder only.
+  const hookMod = providerModuleProviding(pack, "resolvePrintFace");
+  if (hookMod?.resolvePrintFace) {
+    const hit = hookMod.resolvePrintFace({
       printKey: opts.printKey,
       lang: opts.lang,
       role,
     });
-    return hit ? fromNarutoHit(hit) : null;
+    return hit ?? null;
   }
   return resolveOwnedPrintFace({
     pack,

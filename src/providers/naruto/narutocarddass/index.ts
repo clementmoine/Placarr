@@ -36,6 +36,10 @@ import {
   NARUTO_CATALOGUE_LANGUAGES,
   searchNarutoPrints,
 } from "./search";
+import {
+  matchNarutoPrintsAssetRest,
+  resolveNarutoPrintFace,
+} from "./printFaceResolve";
 import { narutoPrintFacts } from "./identity";
 import {
   narutoAssetsCardUrl,
@@ -243,6 +247,22 @@ export const narutocarddassModule = defineProvider({
     et les deux ne se superposent pas — le 巻ノ十 recoupe les séries 4 et 5.
   */
   printGames: ["naruto"],
+  matchPrintsAssetRest: (rest) => matchNarutoPrintsAssetRest(rest),
+  resolvePrintFace: ({ printKey, lang, role }) => {
+    const hit = resolveNarutoPrintFace({
+      printKey,
+      lang,
+      role: (role ?? "face") as "face" | "thumb" | "face-b",
+    });
+    if (!hit) return null;
+    return {
+      filePath: hit.filePath,
+      artFile: hit.artFile,
+      source: hit.source,
+      ...(hit.donorPrintKey ? { donorPrintKey: hit.donorPrintKey } : {}),
+      disk: hit.disk,
+    };
+  },
   loadBoosterComposition: () => {
     const raw = narutoBoosterComposition as BoosterCompositionFile;
     return raw?.version === 1 ? raw : null;

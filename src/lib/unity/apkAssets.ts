@@ -18,7 +18,14 @@ const SERIALIZED_PREFIXES = [
 ] as const;
 
 const SPLIT_TAIL_RE = /\.split[1-9]\d*$/i;
-const UNITY_REVISION = "2022.3.21f1";
+const UNITY_REVISION_FALLBACK = "6000.3.5f2";
+
+function unityRevisionFromBytes(bytes: Buffer | Uint8Array): string {
+  const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
+  const text = buf.toString("latin1");
+  const m = /(\d{4}\.\d+\.\d+f\d+)/.exec(text);
+  return m?.[1] ?? UNITY_REVISION_FALLBACK;
+}
 
 function sortSplitNames(names: string[]): string[] {
   return [...names].sort((a, b) => {
@@ -61,7 +68,7 @@ export async function loadSerializedAssets(
   bytes: Buffer | Uint8Array,
 ): Promise<AssetManager> {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
-  return load(buf, { enableTypeTree: true, unityRevision: UNITY_REVISION });
+  return load(buf, { enableTypeTree: true, unityRevision: unityRevisionFromBytes(buf) });
 }
 
 export type ExtractedApkData = {

@@ -188,19 +188,30 @@ export function resolveLorcanaUnityDataDir(opts: {
     return mergeApksToUnityData(inputs, persist);
   }
 
-  if (existsSync(persist) && statSync(persist).isDirectory()) {
-    return persist;
+  const defaultApks = path.join(opts.repo, "data/lorcana/staging/apks");
+  const hasDefaultApks = existsSync(defaultApks);
+  const inputs = hasDefaultApks ? listUnityApks(defaultApks) : [];
+  if (inputs.length === 1) {
+    console.warn(
+      "  ⚠ only base.apk found — split_UnityDataAssetPack.apk missing; Unity data (shaders/textures/back) may be incomplete. Pull it from the device or re-download.",
+    );
   }
 
-  const defaultApks = path.join(opts.repo, "data/lorcana/staging/apks");
-  if (existsSync(defaultApks)) {
-    const inputs = listUnityApks(defaultApks);
-    if (existsSync(persist) && persistNewerThanApks(persist, inputs)) {
+  if (existsSync(persist) && statSync(persist).isDirectory()) {
+    if (!inputs.length || persistNewerThanApks(persist, inputs)) {
       console.log("  reuse staging/unity-data (newer than APKs)");
       return persist;
     }
+    console.log("  staging/unity-data older than APKs — re-merging");
+  }
+
+  if (inputs.length) {
     return mergeApksToUnityData(inputs, persist);
   }
+
+  throw new Error(
+    "lorcanamobile requires --apk, --data, or APKs under data/lorcana/staging/apks/",
+  );
 
   throw new Error(
     "lorcanamobile requires --apk, --data, or APKs under data/lorcana/staging/apks/",

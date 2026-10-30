@@ -67,6 +67,10 @@ function flatNumbers(seq: unknown): number[] {
 }
 
 function isCardEffect(name: string): boolean {
+  // Keep the known finish keywords; a brand-new finish whose shader name does
+  // not contain one of these is surfaced via the foil gap audit instead of
+  // being silently extracted under an unknown classification. Broadening this
+  // filter also changes the golden frag count (see LORCANA_SHADER_FRAG_COUNT).
   return CARD_EFFECT_KEYS.some((k) => name.includes(k));
 }
 

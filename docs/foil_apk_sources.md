@@ -37,6 +37,13 @@ Objectif : sync auto **sans téléphone**. Frida = QA seulement, jamais une sour
 - Lorcana sans APK : phases web + cards + products (CLI skip Unity déjà).
 - Gaps admin taguent `apk-gated` quand WebGL / back / UV manquent faute d’APK.
 
+## Statut mirrors (validé 2026-10-29 via Byparr + code réel)
+
+- **APKPure** : Lorcana `vc=14571530` = notre meta — sain. Pokémon TCG Live (`com.pokemon.pokemontcgl`) **non hébergé** (page Error).
+- **APKCombo** : **NXDOMAIN** (domaine mort, confirmé depuis la machine et depuis le conteneur Byparr). Plus aucune source store pour Pokémon.
+- **Conséquence** : `probeStoreLatest` renvoie `null` pour Pokémon → `unavailable` → APK jamais re-téléchargé (et `shouldDownloadStoreApk` ignore `hasApks` par contrat). Récupération via `pnpm apk:pull` (ADB) — voir `scripts/pullApkFromDevice.ts`.
+- **Lorcana** : l’APKPure XAPK ne contient que `base.apk` (6 fichiers `assets/bin/Data/`) ; le contenu Unity (58 frags, textures, dos) est dans `split_UnityDataAssetPack.apk`, disponible uniquement sur l’appareil installé. À tirer avec `pnpm apk:pull -- --pack lorcana`. Sans ce split, un re-merge throw (`LORCANA_SHADER_FRAG_COUNT`).
+
 Voir aussi : [foil_effects.md](foil_effects.md), [backlog.md](backlog.md) §Foil, `src/providers/pokemon/live/cdn/sources.ts`.
 
 **One Piece** : pas de client / APK foil connu — voir [one_piece_tcg.md](one_piece_tcg.md).

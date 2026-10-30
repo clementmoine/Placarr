@@ -3,7 +3,7 @@
  */
 
 import { execFile } from "node:child_process";
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -33,30 +33,113 @@ function unityRevisionFromBytes(bytes: Buffer): string {
   return m?.[1] ?? "6000.3.5f2";
 }
 
-async function loadCardBackBytesFromApk(apkPath: string): Promise<Buffer | null> {
-  const started = Date.now();
-  console.log(`  card back: unzip ${CARD_BACK_ASSET_HASH} from APK…`);
+function isUnityAssetHashName(name: string): boolean {
+  return /^[0-9a-f]{32}$/i.test(name);
+}
+
+async function unzipEntry(apkPath: string, entry: string): Promise<Buffer | null> {
   try {
     const { stdout } = await execFileAsync(
       "unzip",
-      ["-p", apkPath, `assets/bin/Data/${CARD_BACK_ASSET_HASH}`],
+      ["-p", apkPath, entry],
       { encoding: "buffer", maxBuffer: 256 * 1024 * 1024 },
     );
     const bytes = stdout as Buffer;
-    console.log(
-      `  card back: unzip ok (${bytes.length} B, ${elapsedSec(started)})`,
-    );
     return bytes.length ? bytes : null;
   } catch {
-    console.log(`  card back: unzip miss (${elapsedSec(started)})`);
     return null;
   }
 }
 
-function loadCardBackBytesFromDataDir(dataDir: string): Buffer | null {
+async function listApkDataEntries(apkPath: string): Promise<string[]> {
+  try {
+    const { stdout } = await execFileAsync(
+      "unzip",
+      ["-Z1", apkPath],
+      { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+    );
+    return String(stdout)
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter((s) => /^assets\/bin\/Data\/[0-9a-f]{32}$/i.test(s));
+  } catch {
+    return [];
+  }
+}
+
+async function loadCardBackBytesFromApk(apkPath: string): Promise<Buffer | null> {
+  const started = Date.now();
+  console.log(`  card back: unzip ${CARD_BACK_ASSET_HASH} from APK…`);
+  const direct = await unzipEntry(apkPath, `assets/bin/Data/${CARD_BACK_ASSET_HASH}`);
+  if (direct?.length) {
+    console.log(`  card back: unzip ok (${direct.length} B, ${elapsedSec(started)})`);
+    return direct;
+  }
+  console.log(`  card back: unzip miss — scanning APK Data/ entries…`);
+  const scanStarted = Date.now();
+  for (const entry of await listApkDataEntries(apkPath)) {
+    const bytes = await unzipEntry(apkPath, entry);
+    if (!bytes?.length || !bytes.includes(Buffer.from("cardBack"))) continue;
+    try {
+      const am = await resolveAssetManager(bytes, {
+        unityRevision: unityRevisionFromBytes(bytes),
+        enableTypeTree: false,
+      });
+      const info = am.getObjectInfoByName("cardBack");
+      if (info?.object) {
+        console.log(
+          `  card back: scan hit ${entry.split("/").pop()} (${bytes.length} B, ${elapsedSec(scanStarted)})`,
+        );
+        return bytes;
+      }
+    } catch {
+      /* try next */
+    }
+  }
+  console.log(`  card back: scan miss (${elapsedSec(scanStarted)})`);
+  return null;
+}
+
+async function loadCardBackBytesFromDataDir(dataDir: string): Promise<Buffer | null> {
   const file = path.join(dataDir, CARD_BACK_ASSET_HASH);
-  if (!existsSync(file)) return null;
-  return readFileSync(file);
+  if (existsSync(file)) return readFileSync(file);
+
+  console.log(`  card back: hash file missing — scanning ${dataDir}…`);
+  const scanStarted = Date.now();
+  let entries: string[] = [];
+  try {
+    entries = readdirSync(dataDir);
+  } catch {
+    return null;
+  }
+  for (const name of entries) {
+    if (!isUnityAssetHashName(name)) continue;
+    const full = path.join(dataDir, name);
+    try {
+      if (!statSync(full).isFile()) continue;
+    } catch {
+      continue;
+    }
+    const bytes = readFileSync(full);
+    if (!bytes.length || !bytes.includes(Buffer.from("cardBack"))) continue;
+    try {
+      const am = await resolveAssetManager(bytes, {
+        unityRevision: unityRevisionFromBytes(bytes),
+        enableTypeTree: false,
+      });
+      const info = am.getObjectInfoByName("cardBack");
+      if (info?.object) {
+        console.log(
+          `  card back: scan hit ${name} (${bytes.length} B, ${elapsedSec(scanStarted)})`,
+        );
+        return bytes;
+      }
+    } catch {
+      /* try next */
+    }
+  }
+  console.log(`  card back: scan miss (${elapsedSec(scanStarted)})`);
+  return null;
 }
 
 async function cardBackRgbaFromBytes(
@@ -117,9 +200,9 @@ export async function cardBackRgbaFromDataDir(
   dataDir: string,
   cropRect: UvRect | null,
 ): Promise<{ rgba: Buffer; width: number; height: number } | null> {
-  const bytes = loadCardBackBytesFromDataDir(dataDir);
+  const bytes = await loadCardBackBytesFromDataDir(dataDir);
   if (!bytes?.length) {
-    console.log("  card back: hash file missing in extracted Data/");
+    console.log("  card back: no cardBack asset found in extracted Data/");
     return null;
   }
   console.log(`  card back: read extracted ${CARD_BACK_ASSET_HASH} (${bytes.length} B)`);

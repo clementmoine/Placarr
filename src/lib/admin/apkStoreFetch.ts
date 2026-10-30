@@ -36,6 +36,10 @@ import axios from "axios";
 
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { flareSolverrCookiesFor } from "@/lib/http/flareSolverr";
+import {
+  apkSignerCertSha256,
+  verifyApkSignature,
+} from "@/lib/admin/apkSignature";
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { packApksDir, packLogsDir } from "@/lib/packPaths";
 
@@ -46,6 +50,16 @@ const APKPURE_HOST = "https://apkpure.com";
 const APKPURE_CDN_HOST = "https://d.cdnpure.com";
 const APKPURE_DOWNLOAD_HOST = "https://d.apkpure.com";
 const APKCOMBO_HOST = "https://apkcombo.com";
+
+/**
+ * Pinned SHA-256 of the primary signer certificate for each pack's APK.
+ * Sourced from a trusted install (ADB pull from Play Store). A downloaded
+ * artifact whose signer does not match is rejected before promotion.
+ */
+export const APK_SIGNER_CERT_SHA256: Record<string, string> = {
+  pokemon: "5cc331190198aebcd21f2c738dbcbd2006ab83650a650c11f1a322eae1bcca22",
+  lorcana: "d205b25b0262c55adc51b05e5640b79c9e6305bab515574f9af7240bf82e6c7b",
+};
 /** Anti-runaway cap — Live/Lorcana artifacts are hundreds of MB, not GBs. */
 const MAX_ARTIFACT_BYTES = 2 * 1024 * 1024 * 1024;
 const DOWNLOAD_TIMEOUT_MS = 20 * 60 * 1000;
@@ -633,6 +647,27 @@ export async function fetchStoreApksForPack(
     }
 
     const files = await installApkArtifact(pack, artifact, packageId);
+    const expectedCert = APK_SIGNER_CERT_SHA256[pack] ?? null;
+    for (const name of files) {
+      const installedPath = path.join(packApksDir(pack), name);
+      const sig = verifyApkSignature(installedPath, expectedCert);
+      if (!sig.ok) {
+        log(`signature check FAILED for ${name}: ${sig.reason}`);
+        // Remove the untrusted artifact.
+        for (const n of files) {
+          try {
+            await unlink(path.join(packApksDir(pack), n));
+          } catch {
+            /* keep */
+          }
+        }
+        return {
+          status: "unavailable",
+          reason: `signature verification failed — ${sig.reason}`,
+        };
+      }
+      log(`signature ok for ${name} (${sig.actual?.slice(0, 12)}…)`);
+    }
     await writeApkStoreMeta(pack, {
       packageId,
       source: latest.source,

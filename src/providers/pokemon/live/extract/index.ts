@@ -641,6 +641,7 @@ export async function runUpdate(
   const summary: Record<string, unknown> = {
     ok:
       extractErrors === 0 &&
+      (extractReport?.cardBackOk !== false) &&
       (apkAuditRc == null || apkAuditRc === 0) &&
       (storeAuditRc == null || storeAuditRc === 0),
     cdn: (sources as { cdn?: unknown }).cdn,

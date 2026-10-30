@@ -41,6 +41,7 @@ export type ExtractAllNodeReport = {
   packDir: string;
   runtimeCards: string | null;
   cardQuad: unknown;
+  cardBackOk: boolean;
   nodeExtract: true;
 };
 
@@ -60,12 +61,14 @@ export async function extractAllNode(
   }
 
   let cardQuad: unknown = null;
+  let cardBackOk = false;
   console.log("── extract card UV rect + back (Node, ADR-021 D)");
   const apkResult = await dumpPokemonCardApk({ repo: opts.repo });
   console.log(
     `  cardQuad ok=${Boolean(apkResult.ok)} back=${Boolean(apkResult.cardBackOk)} → ${apkResult.uvRectPath ?? "?"}`,
   );
   cardQuad = apkResult.cardQuad;
+  cardBackOk = Boolean(apkResult.cardBackOk);
 
   const shadersBundle = path.join(opts.bundlesDir, "shadersbundle");
   let shaderReport: Record<string, unknown> = {};
@@ -136,6 +139,7 @@ export async function extractAllNode(
     packDir,
     runtimeCards,
     cardQuad,
+    cardBackOk,
     nodeExtract: true,
   };
 

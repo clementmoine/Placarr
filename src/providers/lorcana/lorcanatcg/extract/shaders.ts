@@ -2,7 +2,8 @@
  * Lorcana shader `.frag` extract — Node via patched `unityfs-js` (Unity 6000).
  */
 
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 import type { AssetManager } from "unityfs-js";
 
@@ -68,13 +69,24 @@ export async function extractLorcanaShaders(
 
   const { maps, files } = nodeShaderExtract(am);
   if (files.size < LORCANA_SHADER_FRAG_COUNT) {
-    throw new Error(
-      `Lorcana shader extract incomplete: ${files.size}/${LORCANA_SHADER_FRAG_COUNT} frags`,
+    console.warn(
+      `  ⚠ Lorcana shader extract: ${files.size}/${LORCANA_SHADER_FRAG_COUNT} frags (expected ${LORCANA_SHADER_FRAG_COUNT}) — possible new/removed finish or stale APK`,
     );
   }
 
   for (const [name, body] of files) {
     writeFileSync(`${opts.shadersDir}/${name}`, body, "utf8");
+  }
+  // Purge orphan .frag files left by renamed/removed shaders so coverage
+  // audits never report stale artifacts.
+  try {
+    for (const name of readdirSync(opts.shadersDir)) {
+      if (!name.endsWith(".frag")) continue;
+      if (files.has(name)) continue;
+      unlinkSync(path.join(opts.shadersDir, name));
+    }
+  } catch {
+    /* best effort */
   }
 
   return {

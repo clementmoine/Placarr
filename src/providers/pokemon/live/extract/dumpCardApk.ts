@@ -95,7 +95,7 @@ export async function dumpPokemonCardApk(
       cardQuad: quad,
       uvRectPath,
       cardBackPath,
-      cardBackOk: true,
+      cardBackOk: quad != null ? existsSync(cardBackPath) : false,
       skipped: true,
     };
   }
@@ -140,7 +140,12 @@ export async function dumpPokemonCardApk(
     let cardBackOk = existsSync(cardBackPath);
     if (backFresh) {
       console.log("  card back already newer than base.apk — skip dump");
-      cardBackOk = true;
+      cardBackOk = existsSync(cardBackPath);
+    } else if (cropRect == null) {
+      // Refuse to write a non-cropped (uncropped atlas) card back: without a
+      // valid UV rect the dump would ship an atlas slice as the card back.
+      console.log("  card back skipped — no UV rect (cardQuad MISS)");
+      cardBackOk = existsSync(cardBackPath);
     } else {
       console.log("  card back ← dump…");
       const backStarted = Date.now();

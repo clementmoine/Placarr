@@ -187,6 +187,15 @@ function apkGatedItems(): FoilGapItem[] {
       apkGated: true,
     });
   }
+  const lorcanaBack = path.join(packCardsDir("lorcana"), "back.webp");
+  if (!existsSync(lorcanaBack)) {
+    items.push({
+      id: "lorcana-back",
+      section: "apk-gated",
+      detail: "data/lorcana/cards/back.webp missing — Unity APK dump",
+      apkGated: true,
+    });
+  }
   const lorcanaManifest = path.join(foilPackDir("lorcana"), "manifest.json");
   const lorcanaShaders = packShadersDir("lorcana");
   const hasLorcanaWebgl =

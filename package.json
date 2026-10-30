@@ -35,7 +35,9 @@
     "providers:audit:mapping": "tsx scripts/providerMappingAudit.ts",
     "title-idf:update": "tsx scripts/buildTitleIdfIndex.ts",
     "cards:migrate:lang-first": "tsx scripts/migrateCardsLangFirst.ts",
-    "sealed:prices:refresh": "tsx scripts/refreshSealedPrices.ts"
+    "sealed:prices:refresh": "tsx scripts/refreshSealedPrices.ts",
+    "apk:pull": "tsx scripts/pullApkFromDevice.ts",
+    "apk:verify": "tsx scripts/verifyApkSignature.ts"
   },
   "dependencies": {
     "@arkntools/unity-js": "5.1.0",

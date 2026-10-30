@@ -6,7 +6,9 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   statSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -100,6 +102,16 @@ export async function extractShadersBundle(
       written.push(destName);
     }
     console.log(`  shaders .frag → ${written.length}`);
+    const writtenSet = new Set(written);
+    for (const name of readdirSync(shadersDir)) {
+      if (!name.endsWith(".frag")) continue;
+      if (writtenSet.has(name)) continue;
+      try {
+        unlinkSync(path.join(shadersDir, name));
+      } catch {
+        /* best effort */
+      }
+    }
   }
 
   const loaded = loadUnityFs(bytes);

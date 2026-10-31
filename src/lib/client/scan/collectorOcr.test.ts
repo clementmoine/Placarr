@@ -25,13 +25,21 @@ describe("collectorBandRectInRegion", () => {
   });
 
   it("clamps to the frame and abstains on degenerate regions", () => {
+    // Card half out of the right edge → band clipped, still usable.
     const r = collectorBandRectInRegion(
-      { left: 900, top: 1700, width: 480, height: 680 },
+      { left: 900, top: 600, width: 480, height: 680 },
       { width: 1080, height: 1920 },
     );
     expect(r).not.toBeNull();
     expect(r!.sx + r!.sw).toBeLessThanOrEqual(1080);
     expect(r!.sy + r!.sh).toBeLessThanOrEqual(1920);
+    // Footer entirely below the frame → nothing to read.
+    expect(
+      collectorBandRectInRegion(
+        { left: 300, top: 1700, width: 480, height: 680 },
+        { width: 1080, height: 1920 },
+      ),
+    ).toBeNull();
     expect(
       collectorBandRectInRegion(
         { left: 0, top: 0, width: 20, height: 20 },

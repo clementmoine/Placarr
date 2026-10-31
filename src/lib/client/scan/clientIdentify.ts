@@ -128,15 +128,53 @@ function withFaceUrl(hit: ClientEmbedHit): ClientIdentifyMatch {
   };
 }
 
-/** Warm OCR + MobileCLIP + pack shards (camera start). */
+let packIdsPromise: Promise<string[]> | null = null;
+
+/**
+ * Packs with published shards — asked once per session, soft-fail to none
+ * (identify then falls back to the server route, never to a guess).
+ */
+export function resolveClientIdentifyPackIds(): Promise<string[]> {
+  if (!packIdsPromise) {
+    packIdsPromise = (async () => {
+      try {
+        const res = await fetch("/api/identify/packs", { cache: "no-store" });
+        if (!res.ok) return [];
+        const body = (await res.json()) as { packs?: unknown };
+        return Array.isArray(body.packs)
+          ? body.packs.filter((p): p is string => typeof p === "string")
+          : [];
+      } catch {
+        return [];
+      }
+    })();
+    // Let a later camera session retry after a transient failure.
+    void packIdsPromise.then((ids) => {
+      if (!ids.length) packIdsPromise = null;
+    });
+  }
+  return packIdsPromise;
+}
+
+/** Tests: forget the cached pack list. */
+export function resetClientIdentifyPackIds(): void {
+  packIdsPromise = null;
+}
+
+/** Warm OCR + DINOv2 + pack shards (camera start). */
 export async function prefetchClientIdentify(
   packIds: readonly string[] = [],
 ): Promise<void> {
   const jobs: Promise<unknown>[] = [
     prefetchPaddleCollectorOcrClient(),
     prefetchCardEmbedClient(),
+    (async () => {
+      const ids = packIds.length
+        ? packIds
+        : await resolveClientIdentifyPackIds();
+      if (ids.length) await prefetchClientEmbeddingPacks(ids);
+    })(),
   ];
-  if (packIds.length) jobs.push(prefetchClientEmbeddingPacks(packIds));
   await Promise.all(jobs);
 }
 
@@ -156,7 +194,9 @@ export async function identifyCardBlobClient(
   const ocr = opts?.ocr ?? (await recognizeCollectorBandClient(blob));
   const ocrText = ocr.text;
 
-  const packIds = opts?.packIds?.length ? opts.packIds : [];
+  const packIds = opts?.packIds?.length
+    ? opts.packIds
+    : await resolveClientIdentifyPackIds();
   const packs: ClientLoadedPack[] = [];
   for (const id of packIds) {
     const pack = await loadClientEmbeddingPack(id);
@@ -169,7 +209,7 @@ export async function identifyCardBlobClient(
 
   const rawHits = matchClientEmbeddings(query, packs, {
     limit: 8,
-    maxDistance: 320,
+    maxDistance: 450,
     ocrText,
   });
   const hint = parseCollectorNumberHint(ocrText);

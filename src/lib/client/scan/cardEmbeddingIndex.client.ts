@@ -3,6 +3,11 @@
  *
  * Packs served under `/assets/<pack>/card-embedding-index.f16` + `.json`.
  * Same topK / centroid logic as server `cardEmbeddingSearch`.
+ *
+ * Freshness: an IndexedDB hit is served immediately, then revalidated once
+ * per session with a conditional GET on the meta (`If-None-Match`). A 304
+ * costs a few hundred bytes; a 200 means Sync published new vectors and the
+ * shard is swapped in place.
  */
 import { cosineToDistance } from "@/core/identify/embedMath";
 import {
@@ -17,7 +22,7 @@ import {
   type CollectorNumberHint,
 } from "@/core/identify/collectorNumberHint";
 import { decodeFloat16Matrix } from "@/lib/shared/float16";
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { assetsPackFileUrl, CARD_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import {
   clientEmbedDim,
   clientEmbedModelId,
@@ -51,6 +56,8 @@ type IdbRecord = {
   builtAt: string;
   metaJson: string;
   matrixF16: ArrayBuffer;
+  /** ETag of the meta JSON when fetched — validator for revalidation. */
+  etag?: string;
 };
 
 function openDb(): Promise<IDBDatabase> {
@@ -101,46 +108,131 @@ function materialize(
   return { meta, matrix, centroid };
 }
 
+function metaUrlFor(packId: string): string {
+  return assetsPackFileUrl(packId, CARD_EMBED_SHARD_FILES.meta);
+}
+
+/** Parse + store a freshly fetched meta/bin pair. Null when unusable. */
+async function installShard(
+  packId: string,
+  metaRes: Response,
+  fetchBin: () => Promise<Response>,
+): Promise<ClientLoadedPack | null> {
+  const meta = (await metaRes.json()) as ClientEmbeddingMeta;
+  if (!meta?.entries?.length || !meta.dim) return null;
+  const expectedModel = clientEmbedModelId();
+  // Shards built with another model/dim are unusable → skip pack (honest).
+  if (meta.model && meta.model !== expectedModel) {
+    console.warn(
+      `[embed-index.client] model mismatch pack=${packId} index=${meta.model} client=${expectedModel}`,
+    );
+    return null;
+  }
+  const binRes = await fetchBin();
+  if (!binRes.ok) return null;
+  const buf = await binRes.arrayBuffer();
+  const matrix = decodeFloat16Matrix(buf, meta.entries.length * meta.dim);
+  const packed = materialize(meta, matrix);
+  const etag = metaRes.headers.get("etag") ?? undefined;
+  await idbPut({
+    packId,
+    model: meta.model,
+    dim: meta.dim,
+    builtAt: meta.builtAt,
+    metaJson: JSON.stringify(meta),
+    matrixF16: buf.slice(0),
+    ...(etag ? { etag } : {}),
+  });
+  return packed;
+}
+
 async function fetchPackShard(
   packId: string,
 ): Promise<ClientLoadedPack | null> {
-  const metaUrl = assetsPackFileUrl(packId, "card-embedding-index.json");
-  const binUrl = assetsPackFileUrl(packId, "card-embedding-index.f16");
+  const binUrl = assetsPackFileUrl(packId, CARD_EMBED_SHARD_FILES.f16);
   try {
-    const [metaRes, binRes] = await Promise.all([
-      fetch(metaUrl, { cache: "force-cache" }),
-      fetch(binUrl, { cache: "force-cache" }),
-    ]);
-    if (!metaRes.ok || !binRes.ok) return null;
-    const meta = (await metaRes.json()) as ClientEmbeddingMeta;
-    if (!meta?.entries?.length || !meta.dim) return null;
-    const expectedModel = clientEmbedModelId();
-    // Soft: allow legacy CLIP shards only when model matches what's loaded.
-    if (meta.model && meta.model !== expectedModel) {
-      console.warn(
-        `[embed-index.client] model mismatch pack=${packId} index=${meta.model} client=${expectedModel}`,
-      );
-      return null;
-    }
-    const buf = await binRes.arrayBuffer();
-    const matrix = decodeFloat16Matrix(buf, meta.entries.length * meta.dim);
-    const packed = materialize(meta, matrix);
-    await idbPut({
-      packId,
-      model: meta.model,
-      dim: meta.dim,
-      builtAt: meta.builtAt,
-      metaJson: JSON.stringify(meta),
-      matrixF16: buf.slice(0),
-    });
-    return packed;
+    const metaRes = await fetch(metaUrlFor(packId), { cache: "no-cache" });
+    if (!metaRes.ok) return null;
+    return await installShard(packId, metaRes, () =>
+      fetch(binUrl, { cache: "no-cache" }),
+    );
   } catch (err) {
     console.warn("[embed-index.client] fetch failed", packId, err);
     return null;
   }
 }
 
-async function loadFromIdb(packId: string): Promise<ClientLoadedPack | null> {
+/** Packs already revalidated against the server this session. */
+const revalidated = new Set<string>();
+
+/**
+ * Pure decision behind {@link revalidatePackShard}: 304 (or an unchanged
+ * `builtAt` when no validator was stored) keeps the IDB copy; a 2xx with a
+ * different `builtAt` refreshes; anything else leaves the shard alone.
+ */
+export function shardRevalidationDecision(input: {
+  status: number;
+  storedEtag?: string;
+  storedBuiltAt: string;
+  serverBuiltAt?: string;
+}): "keep" | "refresh" {
+  if (input.status === 304) return "keep";
+  if (input.status < 200 || input.status >= 300) return "keep";
+  if (input.storedEtag) return "refresh";
+  return input.serverBuiltAt && input.serverBuiltAt !== input.storedBuiltAt
+    ? "refresh"
+    : "keep";
+}
+
+/**
+ * Conditional GET on the meta: 304 → shard is current; 200 → Sync published
+ * a new index, download + swap. Soft-fail (offline keeps the IDB copy).
+ */
+async function revalidatePackShard(
+  packId: string,
+  rec: Pick<IdbRecord, "etag" | "builtAt">,
+): Promise<void> {
+  if (revalidated.has(packId)) return;
+  revalidated.add(packId);
+  try {
+    const headers: Record<string, string> = rec.etag
+      ? { "If-None-Match": rec.etag }
+      : {};
+    const metaRes = await fetch(metaUrlFor(packId), {
+      cache: "no-store",
+      headers,
+    });
+    let serverBuiltAt: string | undefined;
+    if (metaRes.ok && !rec.etag) {
+      // Legacy record without validator: peek builtAt before paying for
+      // the matrix.
+      const head = (await metaRes.clone().json()) as Pick<
+        ClientEmbeddingMeta,
+        "builtAt"
+      >;
+      serverBuiltAt = head?.builtAt;
+    }
+    const decision = shardRevalidationDecision({
+      status: metaRes.status,
+      storedEtag: rec.etag,
+      storedBuiltAt: rec.builtAt,
+      serverBuiltAt,
+    });
+    if (decision === "keep") return;
+    const packed = await installShard(packId, metaRes, () =>
+      fetch(assetsPackFileUrl(packId, CARD_EMBED_SHARD_FILES.f16), {
+        cache: "no-store",
+      }),
+    );
+    if (packed) memory.set(packId, packed);
+  } catch {
+    // offline / transient — keep what we have
+  }
+}
+
+async function loadFromIdb(
+  packId: string,
+): Promise<{ pack: ClientLoadedPack; rec: IdbRecord } | null> {
   try {
     const rec = await idbGet(packId);
     if (!rec) return null;
@@ -150,13 +242,13 @@ async function loadFromIdb(packId: string): Promise<ClientLoadedPack | null> {
       rec.matrixF16,
       meta.entries.length * meta.dim,
     );
-    return materialize(meta, matrix);
+    return { pack: materialize(meta, matrix), rec };
   } catch {
     return null;
   }
 }
 
-/** Load one pack (memory → IDB → network). */
+/** Load one pack (memory → IDB → network); IDB hits revalidate in background. */
 export async function loadClientEmbeddingPack(
   packId: string,
 ): Promise<ClientLoadedPack | null> {
@@ -164,11 +256,15 @@ export async function loadClientEmbeddingPack(
   if (hit) return hit;
   const fromIdb = await loadFromIdb(packId);
   if (fromIdb) {
-    memory.set(packId, fromIdb);
-    return fromIdb;
+    memory.set(packId, fromIdb.pack);
+    void revalidatePackShard(packId, fromIdb.rec);
+    return fromIdb.pack;
   }
   const fetched = await fetchPackShard(packId);
-  if (fetched) memory.set(packId, fetched);
+  if (fetched) {
+    memory.set(packId, fetched);
+    revalidated.add(packId);
+  }
   return fetched;
 }
 
@@ -240,7 +336,7 @@ export function matchClientEmbeddings(
     }));
     const short = shortlistPacksByCentroid(query, centroids, {
       minPacks: Math.min(4, packs.length),
-      margin: 140,
+      margin: 200,
     });
     if (short.length) {
       const allow = new Set(short.map((s) => s.packId));
@@ -332,4 +428,5 @@ function dedupePrintKey(hits: ClientEmbedHit[]): ClientEmbedHit[] {
 /** Clear memory cache (tests). */
 export function resetClientEmbeddingMemory(): void {
   memory.clear();
+  revalidated.clear();
 }

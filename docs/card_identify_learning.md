@@ -3,6 +3,14 @@
 Doc produit / MLOps pour la reconnaissance visuelle TCG.
 **Décision formelle** : [ADR-023](ADR.md#adr-023--croissance-catalogue--ré-embed-pas-retrain).
 
+> **Modèle courant (2026-10-31)** : `Xenova/dinov2-small` (CLS 384‑d, bande
+> art) — `core/identify/embedMath.ts`, même checkpoint serveur (Sync) et
+> client (WebGPU fp32 / WASM q8). Bench Lorcana FR 3 462 arts × 150 photos
+> dégradées : 4 vraies erreurs (le reste des « échecs » = art réimprimé,
+> indécidable sans OCR), marge #1/#2 p10 = 52 milli (CLIP ViT‑B/32 : ≈ 0).
+> « CLIP » ci-dessous désigne la famille « encodeur image figé » ; la
+> stratégie (ré-embed, pas retrain) est inchangée.
+
 ## TL;DR (une phrase)
 
 Nouvelles cartes = **ré-encoder les faces avec le même modèle** et mettre à
@@ -38,14 +46,21 @@ Drift-Adapter EMNLP 2025 (migration modèle ≠ ajout de docs).
 Pipeline Sync catalogue (`identifyIndexesStep`) :
 
 1. **Visual index** (dHash / signaux) — `visualIndexStep`
-2. **Embedding index** (CLIP) — `embeddingIndexStep`
+2. **Embedding index** (DINOv2) — `embeddingIndexStep`
 
-Fraîcheur embeddings (`embeddingLooksFresh`) :
+Les deux sont **incrémentaux sur l’empreinte du fichier face** (`fp` =
+`taille-mtime`, portée par chaque entrée) :
 
-- même nombre d’entrées que le visual index ;
-- mtime embedding ≥ mtime visual → skip ;
-- sinon rebuild **incrémental** (réutilise les vecteurs dont
-  `printKey+artRel` n’a pas bougé ; n’encode que le delta).
+- face inchangée → signaux et vecteur **copiés**, jamais relue ;
+- face réécrite en place sous le même nom → re-hashée **et** ré-encodée ;
+- résultat identique au fichier d’index existant → **pas de réécriture**
+  (`builtAt`, mtime et ETag stables → les shards IndexedDB du téléphone
+  répondent 304 à leur revalidation).
+
+Fraîcheur embeddings (`embeddingLooksFresh`) : même nombre d’entrées que le
+visual index et mtime embedding ≥ mtime visual → skip ; sinon rebuild
+incrémental (delta seulement). Un Sync sans nouvelle carte ne décode donc
+aucune image et n’écrit aucun index (mesuré : Yu‑Gi‑Oh 73 k faces → 1–3 s).
 
 Rattrapage / force rebuild : admin Catalogue → **Indexes caméra**
 (pack) ou **CLIP manquant (N)** (tous les packs stale) — `only: ["identify"]`,
@@ -54,6 +69,33 @@ force — **pas de CLI**. Le statut corpora affiche `vis / CLIP`.
 Query path (caméra Auto) : multi-signaux + hybride dHash/CLIP + soft abstain
 cross-game + (scaffold) OCR collector# — principe produit inchangé :
 **vide honnête OK, faux positif confiant interdit**.
+
+### Sujet caméra : quad → redressement (pas d'AABB)
+
+Ce que l'embed voit est **la carte redressée**, jamais un rectangle englobant :
+une carte inclinée à 30° parmi d'autres donne, en AABB, un losange de table +
+voisines (distances 250–340, miss) ; redressée par homographie
+(`perspectiveWarp`, même code que le crop serveur) elle retombe à 100–120.
+
+Chaîne live (`useScanPipeline.tickSubject`) :
+
+1. **Classique haute précision** (`cardQuadClassical`, `precision: "high"`) :
+   masque Sobel fermé + trous bouchés, ouverture morphologique (sépare les
+   voisines collées), enveloppe convexe → 4 sommets → ajustement des côtés par
+   droites. Gates : remplissage ≥ 0.8, support des côtés ≥ 0.8, bbox qui ne
+   couvre pas > 90 % du cadre dans les deux sens (`MAX_SUBJECT_FRAME_SPAN` —
+   sinon c'est la table / le poster, pas la carte).
+2. **DocAligner** (ONNX, fond chargé / pochette / foil) : post-process
+   officiel (plus gros blob par canal à 0.3) ; si le quad n'est pas une carte
+   et qu'**un seul** coin est muet ou aberrant, on le complète par le
+   parallélogramme des trois autres **uniquement** si un blob faible du même
+   canal le confirme à < 8 % de la diagonale (`heatmapCardCorners`). Deux coins
+   muets → miss honnête.
+3. **Classique basse précision** (remplissage scanline) — ROI seulement.
+
+Le quad n'est redressé pour identify / OCR que s'il « ressemble à une carte »
+(`quadSafeForIdentifyCrop` : côtés opposés ≥ 0.65, ratio 0.55–0.9 une fois
+droit, 6–85 % du cadre, convexe) ; sinon retour AABB / plein cadre.
 
 ## Croissance régulière des sets (cas Placarr)
 

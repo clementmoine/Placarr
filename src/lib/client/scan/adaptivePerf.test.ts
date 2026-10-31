@@ -3,34 +3,22 @@ import { describe, expect, it } from "vitest";
 import { AdaptivePerf } from "@/lib/client/scan/adaptivePerf";
 
 describe("AdaptivePerf", () => {
-  it("stays continuous until slow threshold", () => {
-    const p = new AdaptivePerf({ slowThresholdMs: 1000, benchWindow: 4 });
+  it("keeps a rolling mean of identify cost", () => {
+    const p = new AdaptivePerf({ benchWindow: 2 });
     p.recordIdentifyMs(200);
-    p.recordIdentifyMs(250);
-    expect(p.profile().tapToScan).toBe(false);
-  });
-
-  it("switches to tap-to-scan when mean is slow", () => {
-    const p = new AdaptivePerf({ slowThresholdMs: 500, benchWindow: 2 });
+    p.recordIdentifyMs(400);
+    expect(p.profile().meanIdentifyMs).toBe(300);
     p.recordIdentifyMs(600);
-    p.recordIdentifyMs(700);
-    expect(p.profile().tapToScan).toBe(true);
+    expect(p.profile().meanIdentifyMs).toBe(500);
   });
 
-  it("recovers to continuous when mean cools below recover threshold", () => {
-    const p = new AdaptivePerf({
-      slowThresholdMs: 1000,
-      recoverThresholdMs: 400,
-      benchWindow: 4,
-    });
-    p.recordIdentifyMs(1200);
-    p.recordIdentifyMs(1200);
-    expect(p.profile().tapToScan).toBe(true);
-    p.recordIdentifyMs(200);
-    p.recordIdentifyMs(200);
-    p.recordIdentifyMs(200);
-    p.recordIdentifyMs(200);
-    expect(p.profile().tapToScan).toBe(false);
+  it("never exposes a tap-to-scan mode, however slow identify gets", () => {
+    // A phone running on-device OCR + DINOv2 routinely sits at 2–4 s per
+    // sample; the camera must keep hunting by itself.
+    const p = new AdaptivePerf({ benchWindow: 4 });
+    for (let i = 0; i < 8; i++) p.recordIdentifyMs(4000);
+    expect(p.profile()).toEqual({ idleBackoffMs: 0, meanIdentifyMs: 4000 });
+    expect("tapToScan" in p.profile()).toBe(false);
   });
 
   it("applies idle backoff after aimless frames", () => {

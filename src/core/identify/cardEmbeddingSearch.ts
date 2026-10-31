@@ -1,5 +1,5 @@
 /**
- * Fast exact CLIP gallery search — contiguous Float32 matrix, no native ANN.
+ * Fast exact embedding gallery search — contiguous Float32 matrix, no native ANN.
  *
  * At ~166k×512 vectors, a tight JS scan + pack-centroid shortlist beats
  * adding hnsw/faiss (native deps) while keeping identical recall when the
@@ -69,7 +69,7 @@ export function topKMilliDistances(
   },
 ): EmbeddingHit[] {
   const limit = Math.max(1, opts?.limit ?? 5);
-  const maxDistance = opts?.maxDistance ?? 250;
+  const maxDistance = opts?.maxDistance ?? 450;
   const dim = opts?.dim ?? CARD_EMBED_DIM;
   if (rows <= 0 || query.length < dim) return [];
 

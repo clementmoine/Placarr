@@ -11,6 +11,11 @@ import {
   planCardIdentifyRects,
 } from "./cardIdentifyViews";
 
+/** Shortlist row as the hybrid / finalize helpers see it. */
+type M = { printKey: string; distance: number; ambiguous?: boolean };
+const m = (printKey: string, distance: number, ambiguous?: boolean): M =>
+  ambiguous ? { printKey, distance, ambiguous } : { printKey, distance };
+
 describe("cardAspectRect", () => {
   it("inscribes a 63/88 window in a landscape frame", () => {
     const rect = cardAspectRect(1280, 720, { cover: 1, id: "max" });
@@ -69,16 +74,10 @@ describe("mergeCardIdentifyMatches", () => {
   });
 
   it("marks ambiguous when top-2 are within minMargin", () => {
-    const merged = mergeCardIdentifyMatches(
-      [
-        [
-          { printKey: "a", distance: 10 },
-          { printKey: "b", distance: 15 },
-        ],
-      ],
-      { minMargin: 20 },
-    );
-    expect(merged.every((m) => m.ambiguous)).toBe(true);
+    const merged = mergeCardIdentifyMatches([[m("a", 10), m("b", 15)]], {
+      minMargin: 20,
+    });
+    expect(merged.every((row) => row.ambiguous)).toBe(true);
   });
 });
 
@@ -101,28 +100,27 @@ describe("buildCardIdentifyViews abstain", () => {
 });
 
 describe("pickHybridIdentifyMatches", () => {
-  it("marks hybrid doubt when CLIP and dHash both sharp but disagree", () => {
+  // Distances: dHash = Hamming bits; embed = DINOv2 milli-cosine (see
+  // identifyConfidence.ts header for the Lorcana FR calibration).
+  it("marks hybrid doubt when embed and dHash both sharp but disagree", () => {
     const picked = pickHybridIdentifyMatches(
-      [{ printKey: "lorcana:1-1", distance: 40 }],
-      [{ printKey: "lorcana:1-9", distance: 3 }],
+      [m("lorcana:1-1", 150)],
+      [m("lorcana:1-9", 3)],
     );
     expect(picked.method).toBe("hybrid");
-    expect(picked.matches.every((m) => m.ambiguous)).toBe(true);
-    expect(picked.matches.map((m) => m.printKey).sort()).toEqual([
+    expect(picked.matches.every((row) => row.ambiguous)).toBe(true);
+    expect(picked.matches.map((row) => row.printKey).sort()).toEqual([
       "lorcana:1-1",
       "lorcana:1-9",
     ]);
   });
 
-  it("abstains when CLIP and dHash disagree across games", () => {
+  it("abstains when embed and sharp dHash disagree across games", () => {
     // Live Pendard / Shikamaru: mixing Lorcana+YGO or Naruto+DBS in one
     // carousel is worse than an honest miss.
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "lorcana:3-126", distance: 160 },
-        { printKey: "lorcana:3-100", distance: 170 },
-      ],
-      [{ printKey: "yugioh:mzmu-fr004", distance: 5 }],
+      [m("lorcana:3-126", 200), m("lorcana:3-100", 260)],
+      [m("yugioh:mzmu-fr004", 5)],
     );
     expect(picked.method).toBe("hybrid");
     expect(picked.matches).toEqual([]);
@@ -130,87 +128,89 @@ describe("pickHybridIdentifyMatches", () => {
 
   it("abstains on Naruto photo ranked as soft DBS neighbors", () => {
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "dbscg:bt20-129", distance: 150 },
-        { printKey: "dbscg:ex03-16", distance: 160 },
-      ],
-      [{ printKey: "dbslamincards:1-10", distance: 11 }],
-      { embedSoftDistance: 200, dhashSharpDistance: 6 },
+      [m("dbscg:bt20-129", 250), m("dbscg:ex03-16", 260)],
+      [m("dbslamincards:1-10", 11)],
+      { embedSoftDistance: 240, dhashSharpDistance: 6 },
     );
-    // Clear CLIP + soft dHash, different printGame → cross-game miss.
+    // Soft embed + soft dHash, different printKey → no clear signal → miss.
     expect(picked.matches).toEqual([]);
   });
 
-  it("keeps a soft-but-real Lorcana hit around milli 200", () => {
+  it("does not let a soft dHash veto a clear embed (Eudora 2-7 live)", () => {
+    // Screenshot case: embed #1 = correct card @213, dHash 19 bits on a
+    // different card. The soft dHash is noise, not a counter-signal.
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "lorcana:2-66", distance: 200 },
-        { printKey: "lorcana:11-95", distance: 313 },
-      ],
-      [{ printKey: "lorcana:2-66", distance: 9 }],
-      { embedSoftDistance: 200, dhashSharpDistance: 6 },
+      [m("lorcana:2-7", 213), m("lorcana:11-36", 329)],
+      [m("lorcana:1-77", 19)],
+    );
+    expect(picked.method).toBe("embed");
+    expect(picked.matches[0]?.printKey).toBe("lorcana:2-7");
+    expect(picked.matches.some((row) => row.ambiguous)).toBe(false);
+  });
+
+  it("soft dHash from another game still cannot veto a clear embed", () => {
+    const picked = pickHybridIdentifyMatches(
+      [m("lorcana:2-7", 213)],
+      [m("dbsjcc:part1-d0001", 14)],
+    );
+    expect(picked.method).toBe("embed");
+    expect(picked.matches[0]?.printKey).toBe("lorcana:2-7");
+  });
+
+  it("keeps a soft-but-real Lorcana hit when sharp dHash agrees", () => {
+    const picked = pickHybridIdentifyMatches(
+      [m("lorcana:2-66", 300), m("lorcana:11-95", 390)],
+      [m("lorcana:2-66", 9)],
+      { embedSoftDistance: 240, dhashSharpDistance: 6 },
     );
     expect(picked.matches[0]?.printKey).toBe("lorcana:2-66");
   });
 
-  it("still trusts sharp dHash when soft CLIP agrees on the same printKey", () => {
+  it("still trusts sharp dHash when soft embed agrees on the same printKey", () => {
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "lorcana:1-51", distance: 300 },
-        { printKey: "lorcana:1-50", distance: 320 },
-      ],
-      [{ printKey: "lorcana:1-51", distance: 5 }],
+      [m("lorcana:1-51", 420), m("lorcana:1-50", 440)],
+      [m("lorcana:1-51", 5)],
     );
     expect(picked.method).toBe("dhash");
     expect(picked.matches[0]?.printKey).toBe("lorcana:1-51");
   });
 
-  it("abstains on soft embed-only (no dHash) — cross-game CLIP neighbors", () => {
+  it("abstains on soft embed-only (no dHash) — cross-game neighbors", () => {
     // DBS live frame while only Lorcana has embeddings: soft nearest
     // neighbors must not become a "plusieurs possibilités" carousel.
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "lorcana:1-10", distance: 300 },
-        { printKey: "lorcana:2-20", distance: 310 },
-        { printKey: "lorcana:3-30", distance: 320 },
-      ],
+      [m("lorcana:1-10", 400), m("lorcana:2-20", 410), m("lorcana:3-30", 420)],
       null,
     );
     expect(picked.matches).toEqual([]);
     expect(picked.method).toBe("embed");
   });
 
-  it("keeps a clear embed-only shortlist when CLIP is sharp enough", () => {
+  it("keeps a clear embed-only shortlist", () => {
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "lorcana:1-177", distance: 120 },
-        { printKey: "lorcana:1-178", distance: 160 },
-      ],
+      [m("lorcana:1-177", 150), m("lorcana:1-178", 240)],
       null,
     );
     expect(picked.method).toBe("embed");
-    expect(picked.matches.map((m) => m.printKey)).toEqual([
+    expect(picked.matches.map((row) => row.printKey)).toEqual([
       "lorcana:1-177",
       "lorcana:1-178",
     ]);
   });
 
-  it("keeps soft-but-real live Lorcana hits around milli 250 (Jafar-class)", () => {
+  it("keeps p90-class live hits (~300) as embed shortlist, not miss", () => {
     const picked = pickHybridIdentifyMatches(
-      [
-        { printKey: "lorcana:2-184", distance: 250 },
-        { printKey: "lorcana:2-185", distance: 290 },
-      ],
+      [m("lorcana:2-184", 301), m("lorcana:2-185", 360)],
       null,
     );
     expect(picked.method).toBe("embed");
     expect(picked.matches[0]?.printKey).toBe("lorcana:2-184");
   });
 
-  it("abstains when soft CLIP and soft dHash disagree (no clear signal)", () => {
+  it("abstains when soft embed and soft dHash disagree (no clear signal)", () => {
     const picked = pickHybridIdentifyMatches(
-      [{ printKey: "lorcana:1-10", distance: 250 }],
-      [{ printKey: "dbsjcc:part1-d0001", distance: 12 }],
+      [m("lorcana:1-10", 400)],
+      [m("dbsjcc:part1-d0001", 12)],
     );
     expect(picked.matches).toEqual([]);
   });
@@ -219,10 +219,7 @@ describe("pickHybridIdentifyMatches", () => {
 describe("finalizeIdentifyConfidence", () => {
   it("returns a single sure card when distance and margin are clear", () => {
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "lorcana:1-1", distance: 2 },
-        { printKey: "lorcana:1-2", distance: 8 },
-      ],
+      [m("lorcana:1-1", 2), m("lorcana:1-2", 8)],
       "dhash",
     );
     expect(out.confidence).toBe("sure");
@@ -231,30 +228,66 @@ describe("finalizeIdentifyConfidence", () => {
   });
 
   it("keeps a doubt carousel when the margin is thin", () => {
-    const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "a", distance: 3 },
-        { printKey: "b", distance: 4 },
-      ],
-      "dhash",
-    );
+    const out = finalizeIdentifyConfidence([m("a", 3), m("b", 4)], "dhash");
     expect(out.confidence).toBe("doubt");
     expect(out.matches).toHaveLength(2);
-    expect(out.matches.every((m) => m.ambiguous)).toBe(true);
+    expect(out.matches.every((row) => row.ambiguous)).toBe(true);
+  });
+
+  it("sure on a median live embed hit with a clear margin", () => {
+    // Bench: correct p50 = 178, margin p50 = 124.
+    const out = finalizeIdentifyConfidence(
+      [m("lorcana:2-7", 178), m("lorcana:11-36", 302)],
+      "embed",
+    );
+    expect(out.confidence).toBe("sure");
+    expect(out.matches).toHaveLength(1);
+    expect(out.matches[0]?.printKey).toBe("lorcana:2-7");
+  });
+
+  it("never sure on the benchmark's true errors (wrong #1 ≥ 279, lead ≤ 52)", () => {
+    const fails: Array<[M, M]> = [
+      [m("lorcana:9-170", 470), m("lorcana:11-68", 501)],
+      [m("lorcana:q3-8", 279), m("lorcana:4-118", 331)],
+      [m("lorcana:11-171", 310), m("lorcana:8-118", 317)],
+      [m("lorcana:1-62", 332), m("lorcana:6-14", 362)],
+    ];
+    for (const rows of fails) {
+      const out = finalizeIdentifyConfidence(rows, "embed");
+      expect(out.confidence).not.toBe("sure");
+      if (out.confidence === "doubt") {
+        // The correct card must survive in the carousel.
+        expect(out.matches.map((row) => row.printKey)).toContain(
+          rows[1].printKey,
+        );
+      }
+    }
+  });
+
+  it("reprint twins (thin margin) stay a doubt carousel, both kept", () => {
+    const out = finalizeIdentifyConfidence(
+      [m("lorcana:1-10", 160), m("lorcana:5-10", 178)],
+      "embed",
+    );
+    expect(out.confidence).toBe("doubt");
+    expect(out.matches.map((row) => row.printKey)).toEqual([
+      "lorcana:1-10",
+      "lorcana:5-10",
+    ]);
   });
 
   it("drops far FP neighbors from a doubt carousel", () => {
     // Shikamaru twins close; Tenten far — trim, don't ask the user about Tenten.
     const out = finalizeIdentifyConfidence(
       [
-        { printKey: "naruto:uc-0022", distance: 40, ambiguous: true },
-        { printKey: "naruto:uc-0021", distance: 55, ambiguous: true },
-        { printKey: "naruto:uc-0082", distance: 180, ambiguous: true },
+        m("naruto:uc-0022", 240, true),
+        m("naruto:uc-0021", 280, true),
+        m("naruto:uc-0082", 370, true),
       ],
       "embed",
     );
     expect(out.confidence).toBe("doubt");
-    expect(out.matches.map((m) => m.printKey)).toEqual([
+    expect(out.matches.map((row) => row.printKey)).toEqual([
       "naruto:uc-0022",
       "naruto:uc-0021",
     ]);
@@ -262,10 +295,7 @@ describe("finalizeIdentifyConfidence", () => {
 
   it("can still sure when a prior ambiguous flag had a wide margin", () => {
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "naruto:uc-0022", distance: 30, ambiguous: true },
-        { printKey: "naruto:uc-0082", distance: 120, ambiguous: true },
-      ],
+      [m("naruto:uc-0022", 150, true), m("naruto:uc-0082", 300, true)],
       "embed",
     );
     expect(out.confidence).toBe("sure");
@@ -275,34 +305,27 @@ describe("finalizeIdentifyConfidence", () => {
 
   it("misses soft embed-only shortlists instead of cross-game doubt", () => {
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "lorcana:1-10", distance: 300 },
-        { printKey: "lorcana:2-20", distance: 310 },
-      ],
+      [m("lorcana:1-10", 400), m("lorcana:2-20", 410)],
       "embed",
     );
     expect(out.confidence).toBe("miss");
     expect(out.matches).toEqual([]);
   });
 
-  it("keeps soft live Lorcana (~250) as doubt, not miss", () => {
+  it("keeps p90-class live hits (~300) as doubt, not miss", () => {
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "lorcana:2-184", distance: 250 },
-        { printKey: "lorcana:2-185", distance: 290 },
-      ],
+      [m("lorcana:2-184", 301), m("lorcana:2-185", 360)],
       "embed",
     );
     expect(out.confidence).toBe("doubt");
     expect(out.matches[0]?.printKey).toBe("lorcana:2-184");
   });
 
-  it("OCR-reinforced sure allows live milli distances under 160", () => {
+  it("OCR-reinforced sure waives the margin for reprint twins", () => {
+    // Same art reprinted in two sets: embed margin ≈ 0 by construction; the
+    // OCR footer (set/number) is the disambiguator.
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "lorcana:2-107", distance: 120 },
-        { printKey: "lorcana:2-108", distance: 200 },
-      ],
+      [m("lorcana:2-107", 250), m("lorcana:6-107", 262)],
       "embed",
       { ocrReinforced: true },
     );
@@ -311,12 +334,18 @@ describe("finalizeIdentifyConfidence", () => {
     expect(out.matches[0]?.printKey).toBe("lorcana:2-107");
   });
 
-  it("without OCR reinforce, milli 120 stays doubt", () => {
+  it("OCR reinforce still cannot sure a shortlist-max-class hit", () => {
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "lorcana:2-107", distance: 120 },
-        { printKey: "lorcana:2-108", distance: 200 },
-      ],
+      [m("lorcana:2-107", 370), m("lorcana:2-108", 380)],
+      "embed",
+      { ocrReinforced: true },
+    );
+    expect(out.confidence).toBe("doubt");
+  });
+
+  it("without OCR reinforce, a thin-margin 250 stays doubt", () => {
+    const out = finalizeIdentifyConfidence(
+      [m("lorcana:2-107", 250), m("lorcana:6-107", 262)],
       "embed",
     );
     expect(out.confidence).toBe("doubt");
@@ -324,10 +353,7 @@ describe("finalizeIdentifyConfidence", () => {
 
   it("misses when a foreign game sits close to #1", () => {
     const out = finalizeIdentifyConfidence(
-      [
-        { printKey: "dbscg:bt20-129", distance: 100 },
-        { printKey: "naruto:uc-0022", distance: 110 },
-      ],
+      [m("dbscg:bt20-129", 200), m("naruto:uc-0022", 230)],
       "embed",
     );
     expect(out.confidence).toBe("miss");

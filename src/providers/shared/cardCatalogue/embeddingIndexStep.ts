@@ -1,9 +1,11 @@
 /**
- * Rebuild CLIP embedding index for a catalogue dataPack during Sync.
+ * Rebuild the DINOv2 embedding index for a catalogue dataPack during Sync.
  *
  * Runs after the dHash visual index. Skips when already as fresh as
- * `card-visual-index.json` (same entry count + newer mtime). Soft-fail at
- * the caller — Sync must not die if ONNX/model download fails.
+ * `card-visual-index.json` (same entry count + newer mtime — the visual step
+ * only rewrites its file when a face changed). Otherwise incremental on face
+ * fingerprints; untouched index files keep their mtime. Soft-fail at the
+ * caller — Sync must not die if ONNX/model download fails.
  */
 import { existsSync, statSync } from "node:fs";
 
@@ -70,13 +72,14 @@ export async function runDataPackCardEmbeddingIndex(
       : visual.entries.length;
   const reuseExisting = !opts?.force;
   log(
-    `── card embedding index — building up to ${total} vectors (CLIP` +
+    `── card embedding index — building up to ${total} vectors (DINOv2` +
       (reuseExisting ? ", incremental" : ", full") +
       ")…",
   );
 
   let lastPct = -1;
   const started = Date.now();
+  const prior = reuseExisting ? loadCardEmbeddingIndex(packId) : null;
   const meta = await buildCardEmbeddingIndex({
     packId,
     entries: visual.entries,
@@ -91,8 +94,11 @@ export async function runDataPackCardEmbeddingIndex(
     },
   });
 
+  const unchanged = prior != null && meta.builtAt === prior.meta.builtAt;
   log(
-    `── card embedding index — ${meta.entries.length} vectors → card-embedding-index.{json,f32,f16} (${Math.round((Date.now() - started) / 1000)}s)`,
+    unchanged
+      ? `── card embedding index — ${meta.entries.length} vectors unchanged, not rewritten (${Math.round((Date.now() - started) / 1000)}s)`
+      : `── card embedding index — ${meta.entries.length} vectors → card-embedding-index.{json,f32,f16} (${Math.round((Date.now() - started) / 1000)}s)`,
   );
   return meta;
 }

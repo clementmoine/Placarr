@@ -9,7 +9,10 @@ import sharp from "sharp";
 
 import { assessIdentifyFrame } from "@/core/identify/cardFrameGate";
 import { dewarpCardFace } from "@/core/identify/cardQuadDetect";
-import { printGameFromPrintKey } from "@/core/identify/identifyConfidence";
+import {
+  IDENTIFY_EMBED_SHORTLIST_MAX,
+  printGameFromPrintKey,
+} from "@/core/identify/identifyConfidence";
 
 export { printGameFromPrintKey };
 
@@ -300,11 +303,11 @@ export function mergeCardIdentifyMatches<
 }
 
 /**
- * CLIP is soft on small/loose crops; art-band dHash on a detected card
- * window often stays sharp. Prefer a clear dHash hit when CLIP is weak.
+ * Embedding is soft on small/loose crops; art-band dHash on a detected card
+ * window often stays sharp. Prefer a clear dHash hit when the embed is weak.
  * When both are sharp but disagree → merge as doubt candidates.
  *
- * Soft CLIP alone (no dHash) must not become a shortlist: only Lorcana has
+ * Soft embed alone (no dHash) must not become a shortlist: only Lorcana has
  * embeddings today, so a DBS/foil live frame otherwise paints Lorcana FPs.
  */
 export function pickHybridIdentifyMatches<
@@ -313,16 +316,14 @@ export function pickHybridIdentifyMatches<
   embed: readonly T[] | null | undefined,
   dhash: readonly T[] | null | undefined,
   opts?: {
-    /** CLIP distance above this is "soft" (milli-dissimilarity). */
+    /** Embed distance above this is "soft" (milli-dissimilarity). */
     embedSoftDistance?: number;
     /** dHash Hamming at or below this is "sharp". */
     dhashSharpDistance?: number;
   },
 ): { matches: T[]; method: "embed" | "dhash" | "hybrid" } {
-  // Phone live frames often land ~150–280 milli-cosine; 90 was so tight that
-  // every real photo looked "soft" and lost to cross-game dHash noise.
-  // 200 still silent-missed clear Lorcana (Jafar 2-184) on slightly soft crops.
-  const embedSoft = opts?.embedSoftDistance ?? 280;
+  // DINOv2 scale (identifyConfidence.ts): correct live hits p90 ≈ 300 milli.
+  const embedSoft = opts?.embedSoftDistance ?? IDENTIFY_EMBED_SHORTLIST_MAX;
   const dhashSharp = opts?.dhashSharpDistance ?? 8;
   const embedList = embed?.length ? [...embed] : null;
   const dhashList = dhash?.length ? [...dhash] : null;
@@ -346,9 +347,15 @@ export function pickHybridIdentifyMatches<
   const embedIsSoft = !embedClear;
   const agree = embedBest.printKey === dhashBest.printKey;
 
-  // Soft CLIP + sharp dHash that *agree* → trust dHash (small live crops).
+  // Soft embed + sharp dHash that *agree* → trust dHash (small live crops).
   if (dhashClear && embedIsSoft && agree) {
     return { matches: dhashList, method: "dhash" };
+  }
+
+  // Clear embed vs *non-sharp* dHash: a soft live dHash (sleeve, foil, loose
+  // crop) is a tie-breaker, never a veto of a clear instance embedding.
+  if (!agree && embedClear && !dhashClear) {
+    return { matches: embedList, method: "embed" };
   }
 
   // Disagree with at least one clear signal.
@@ -374,7 +381,7 @@ export function pickHybridIdentifyMatches<
     return { matches: embedList, method: "embed" };
   }
 
-  // Soft CLIP + non-sharp dHash: keep only when they agree.
+  // Soft embed + non-sharp dHash: keep only when they agree.
   if (agree) {
     return { matches: dhashList, method: "dhash" };
   }

@@ -1,15 +1,15 @@
 /**
- * Main-thread bridge to the scan worker + budget clock.
- * Prefetch models once; never re-download on IDB / HTTP cache hit.
+ * Scan runtime: budget clock + one-shot model prefetch at camera start.
+ *
+ * All on-device inference (DocAligner, PP-OCR, DINOv2) runs through its own
+ * engine (onnxruntime-web / transformers.js) which picks WebGPU and falls
+ * back to WASM internally — no custom worker to keep in sync.
+ * Prefetch once; never re-download on IDB / HTTP cache hit.
  */
 import {
   createScanBudgetClock,
   type ScanBudgetClock,
 } from "@/lib/client/scan/scanBudget";
-import type {
-  ScanWorkerRequest,
-  ScanWorkerResponse,
-} from "@/lib/client/scan/scan.worker";
 import { prefetchDocAligner } from "@/lib/client/scan/cardQuadOnnx";
 import { prefetchClientIdentify } from "@/lib/client/scan/clientIdentify";
 
@@ -20,61 +20,17 @@ export type ScanRuntime = {
 };
 
 let runtime: ScanRuntime | null = null;
-let worker: Worker | null = null;
-let nextId = 1;
-const pending = new Map<
-  number,
-  { resolve: (v: ScanWorkerResponse) => void; reject: (e: unknown) => void }
->();
 
-function ensureWorker(): Worker | null {
-  if (typeof window === "undefined") return null;
-  if (worker) return worker;
+/** Best-effort backend label for the HUD (engines decide for real). */
+async function detectBackend(): Promise<ScanRuntime["backend"]> {
+  if (typeof navigator === "undefined") return "unknown";
   try {
-    worker = new Worker(
-      new URL("./scan.worker.ts", import.meta.url),
-      { type: "module" },
-    );
-    worker.onmessage = (event: MessageEvent<ScanWorkerResponse>) => {
-      const msg = event.data;
-      const wait = pending.get(msg.id);
-      if (!wait) return;
-      pending.delete(msg.id);
-      wait.resolve(msg);
-    };
-    worker.onerror = (err) => {
-      console.warn("[scanRuntime] worker error", err);
-    };
-    return worker;
-  } catch (err) {
-    console.warn("[scanRuntime] worker unavailable", err);
-    return null;
+    const gpu = (navigator as Navigator & { gpu?: GPU }).gpu;
+    if (gpu && (await gpu.requestAdapter())) return "webgpu";
+  } catch {
+    // fall through
   }
-}
-
-function postWorker(
-  req: Omit<ScanWorkerRequest, "id">,
-): Promise<ScanWorkerResponse | null> {
-  const w = ensureWorker();
-  if (!w) return Promise.resolve(null);
-  const id = nextId++;
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      pending.delete(id);
-      resolve(null);
-    }, 4000);
-    pending.set(id, {
-      resolve: (v) => {
-        clearTimeout(timer);
-        resolve(v);
-      },
-      reject: () => {
-        clearTimeout(timer);
-        resolve(null);
-      },
-    });
-    w.postMessage({ ...req, id } as ScanWorkerRequest);
-  });
+  return "wasm";
 }
 
 export function getScanRuntime(): ScanRuntime {
@@ -88,30 +44,21 @@ export function getScanRuntime(): ScanRuntime {
   return runtime;
 }
 
-/** Camera start: worker ping + DocAligner + optional OCR/CLIP prefetch. */
+/** Camera start: backend probe + DocAligner + optional OCR/DINOv2 prefetch. */
 export async function bootScanRuntime(
   packIds: readonly string[] = [],
 ): Promise<ScanRuntime> {
   const rt = getScanRuntime();
-  ensureWorker();
-  const pong = await postWorker({ type: "ping" });
-  if (pong && pong.type === "pong") {
-    rt.backend = pong.backend;
-  }
-  await Promise.all([
+  const [backend] = await Promise.all([
+    detectBackend(),
     prefetchDocAligner(),
     prefetchClientIdentify(packIds),
   ]);
+  rt.backend = backend;
   rt.ready = true;
   return rt;
 }
 
 export function resetScanRuntimeForTests(): void {
   runtime = null;
-  if (worker) {
-    worker.terminate();
-    worker = null;
-  }
-  pending.clear();
-  nextId = 1;
 }

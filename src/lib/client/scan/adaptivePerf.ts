@@ -1,13 +1,14 @@
 /**
- * Device-adaptive scan pacing (OpenRift-inspired).
- * Self-bench → tap-to-scan when frames are too slow; idle backoff when aimless.
- * Recovers to continuous when the rolling mean cools down (vision overlays
- * temporarily inflate identify cost — don't latch forever).
+ * Device-adaptive scan pacing.
+ *
+ * Identify samples are serialised (one in flight), so a slow device simply
+ * samples less often — there is deliberately **no** tap-to-scan mode: the
+ * camera must keep working by itself whatever the phone. What adapts is the
+ * idle backoff when nothing is framed, plus a rolling mean of the identify
+ * cost for the HUD.
  */
 
 export type AdaptivePerfProfile = {
-  /** Prefer manual tap instead of continuous identify. */
-  tapToScan: boolean;
   /** Extra pause between identify ticks when nothing is framed. */
   idleBackoffMs: number;
   /** Measured mean identify cost in ms (0 until bench). */
@@ -15,13 +16,6 @@ export type AdaptivePerfProfile = {
 };
 
 export type AdaptivePerfOptions = {
-  /** Above this mean identify ms → tap-to-scan (default 2800). */
-  slowThresholdMs?: number;
-  /**
-   * Mean must fall below this to leave tap-to-scan (default 60% of slow).
-   * Hysteresis avoids flapping.
-   */
-  recoverThresholdMs?: number;
   /** Idle frames without a quality pass before backoff (default 5). */
   idleFramesBeforeBackoff?: number;
   idleBackoffMs?: number;
@@ -30,30 +24,18 @@ export type AdaptivePerfOptions = {
 };
 
 const DEFAULTS = {
-  // Phone + live vision (edge detect / OCR) often lands 1.5–2.5s; 1800 was
-  // latching tap mode after a few samples and never recovering.
-  slowThresholdMs: 2800,
-  recoverThresholdMs: 0, // computed from slow if unset
   idleFramesBeforeBackoff: 5,
   idleBackoffMs: 300,
   benchWindow: 8,
 };
 
 export class AdaptivePerf {
-  private readonly opts: typeof DEFAULTS & { recoverThresholdMs: number };
+  private readonly opts: typeof DEFAULTS;
   private costs: number[] = [];
   private idleFailStreak = 0;
-  private tapToScan = false;
 
   constructor(options: AdaptivePerfOptions = {}) {
-    const slow = options.slowThresholdMs ?? DEFAULTS.slowThresholdMs;
-    this.opts = {
-      ...DEFAULTS,
-      ...options,
-      slowThresholdMs: slow,
-      recoverThresholdMs:
-        options.recoverThresholdMs ?? Math.round(slow * 0.6),
-    };
+    this.opts = { ...DEFAULTS, ...options };
   }
 
   /** Record one identify round-trip duration. */
@@ -62,16 +44,6 @@ export class AdaptivePerf {
     this.costs.push(ms);
     if (this.costs.length > this.opts.benchWindow) {
       this.costs.shift();
-    }
-    const mean = this.meanIdentifyMs();
-    if (mean >= this.opts.slowThresholdMs) {
-      this.tapToScan = true;
-    } else if (
-      this.tapToScan &&
-      this.costs.length >= Math.min(4, this.opts.benchWindow) &&
-      mean <= this.opts.recoverThresholdMs
-    ) {
-      this.tapToScan = false;
     }
   }
 
@@ -90,23 +62,15 @@ export class AdaptivePerf {
   }
 
   profile(): AdaptivePerfProfile {
-    const idle =
-      this.idleFailStreak >= this.opts.idleFramesBeforeBackoff;
+    const idle = this.idleFailStreak >= this.opts.idleFramesBeforeBackoff;
     return {
-      tapToScan: this.tapToScan,
       idleBackoffMs: idle ? this.opts.idleBackoffMs : 0,
       meanIdentifyMs: this.meanIdentifyMs(),
     };
   }
 
-  /** Force tap mode (tests / UI). */
-  setTapToScan(on: boolean): void {
-    this.tapToScan = on;
-  }
-
   reset(): void {
     this.costs = [];
     this.idleFailStreak = 0;
-    this.tapToScan = false;
   }
 }

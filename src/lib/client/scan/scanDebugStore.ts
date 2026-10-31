@@ -23,7 +23,10 @@ export type ScanDebugSnapshot = {
   method: string;
   confidence: string;
   quadSource: "none" | "aabb" | "classical" | "onnx";
-  tapToScan: boolean;
+  /** What identify actually saw: perspective-rectified quad or an AABB crop. */
+  faceCrop: "none" | "rectified" | "aabb";
+  /** Rolling mean identify round-trip (ms) — pacing info, never a mode. */
+  meanIdentifyMs: number;
   idleBackoff: boolean;
   /** Last client OCR snippet (joined). */
   ocrPreview: string;
@@ -50,7 +53,8 @@ const EMPTY: ScanDebugSnapshot = {
   method: "",
   confidence: "",
   quadSource: "none",
-  tapToScan: false,
+  faceCrop: "none",
+  meanIdentifyMs: 0,
   idleBackoff: false,
   ocrPreview: "",
   overlays: [],

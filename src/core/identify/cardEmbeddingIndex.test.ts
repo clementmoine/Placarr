@@ -7,6 +7,7 @@ import {
   l2Normalize,
 } from "./cardEmbed";
 import {
+  embeddingEntriesEqual,
   listCardEmbeddingIndexPackIds,
   matchCardEmbedding,
   materializeEmbeddingIndex,
@@ -176,11 +177,15 @@ describe("matchCardEmbedding", () => {
         ],
       },
     };
-    const without = matchCardEmbedding(query, materializeEmbeddingIndex(index), {
-      limit: 2,
-      maxDistance: 500,
-      minMargin: 50,
-    });
+    const without = matchCardEmbedding(
+      query,
+      materializeEmbeddingIndex(index),
+      {
+        limit: 2,
+        maxDistance: 500,
+        minMargin: 50,
+      },
+    );
     expect(without[0]?.lang).toBe("en");
     const withFr = matchCardEmbedding(query, materializeEmbeddingIndex(index), {
       limit: 2,
@@ -236,10 +241,103 @@ describe("matchCardEmbedding", () => {
         hash: "1".repeat(16),
       },
     ];
-    const { reuse, todo } = partitionEmbeddingWork(source, materializeEmbeddingIndex(existing), true);
+    const { reuse, todo } = partitionEmbeddingWork(
+      source,
+      materializeEmbeddingIndex(existing),
+      true,
+    );
     expect(reuse).toHaveLength(1);
     expect(reuse[0]?.row.printKey).toBe("demo:1-1");
     expect(todo.map((r) => r.printKey)).toEqual(["demo:1-2"]);
+  });
+
+  it("partitionEmbeddingWork re-encodes a face rewritten in place (fingerprint moved)", () => {
+    const matrix = new Float32Array(CARD_EMBED_DIM * 2);
+    const existing = materializeEmbeddingIndex({
+      mtimeMs: 0,
+      matrix,
+      meta: {
+        version: 1 as const,
+        packId: "demo",
+        model: CARD_EMBED_MODEL,
+        dim: CARD_EMBED_DIM,
+        builtAt: "2026-10-30T00:00:00.000Z",
+        entries: [
+          {
+            printKey: "demo:1-1",
+            lang: "en",
+            set: "1",
+            card: "1",
+            artRel: "a.webp",
+            row: 0,
+            fp: "100-aaa",
+          },
+          // Legacy row without fingerprint — still trusted.
+          {
+            printKey: "demo:1-2",
+            lang: "en",
+            set: "1",
+            card: "2",
+            artRel: "b.webp",
+            row: 1,
+          },
+        ],
+      },
+    });
+    const base = { lang: "en", set: "1", hash: "0".repeat(16) };
+    const source = [
+      {
+        ...base,
+        printKey: "demo:1-1",
+        card: "1",
+        artRel: "a.webp",
+        fp: "120-bbb",
+      },
+      {
+        ...base,
+        printKey: "demo:1-2",
+        card: "2",
+        artRel: "b.webp",
+        fp: "200-ccc",
+      },
+    ];
+    const { reuse, todo } = partitionEmbeddingWork(source, existing, true);
+    expect(todo.map((r) => r.printKey)).toEqual(["demo:1-1"]);
+    expect(reuse.map((r) => r.row.printKey)).toEqual(["demo:1-2"]);
+  });
+
+  it("embeddingEntriesEqual ignores builtAt but sees fingerprint / order changes", () => {
+    const a = [
+      {
+        printKey: "demo:1-1",
+        lang: "en",
+        set: "1",
+        card: "1",
+        artRel: "a.webp",
+        row: 0,
+        fp: "1-1",
+      },
+      {
+        printKey: "demo:1-2",
+        lang: "en",
+        set: "1",
+        card: "2",
+        artRel: "b.webp",
+        row: 1,
+        fp: "2-2",
+      },
+    ];
+    expect(
+      embeddingEntriesEqual(
+        a,
+        a.map((e) => ({ ...e })),
+      ),
+    ).toBe(true);
+    expect(embeddingEntriesEqual(a, [a[1]!, a[0]!])).toBe(false);
+    expect(embeddingEntriesEqual(a, [a[0]!, { ...a[1]!, fp: "2-3" }])).toBe(
+      false,
+    );
+    expect(embeddingEntriesEqual(a, a.slice(0, 1))).toBe(false);
   });
 
   it("partitionEmbeddingWork ignores prior when reuse disabled", () => {
@@ -275,7 +373,11 @@ describe("matchCardEmbedding", () => {
         hash: "0".repeat(16),
       },
     ];
-    const { reuse, todo } = partitionEmbeddingWork(source, materializeEmbeddingIndex(existing), false);
+    const { reuse, todo } = partitionEmbeddingWork(
+      source,
+      materializeEmbeddingIndex(existing),
+      false,
+    );
     expect(reuse).toHaveLength(0);
     expect(todo).toHaveLength(1);
   });
@@ -307,7 +409,9 @@ describe("matchCardEmbedding", () => {
       },
     };
     expect(
-      matchCardEmbedding(a, materializeEmbeddingIndex(index), { maxDistance: 50 }),
+      matchCardEmbedding(a, materializeEmbeddingIndex(index), {
+        maxDistance: 50,
+      }),
     ).toEqual([]);
   });
 });

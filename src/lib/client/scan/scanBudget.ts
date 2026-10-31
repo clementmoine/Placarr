@@ -13,7 +13,7 @@ export const SCAN_BUDGET = {
   identifyHz: 1,
   /** Native / ZXing barcode loop. */
   barcodeHz: 8,
-  /** At most one ONNX/transformers infer across the scan worker. */
+  /** At most one ONNX/transformers infer in flight across the scan stack. */
   maxInferInFlight: 1,
 } as const;
 
@@ -47,9 +47,7 @@ export function createScanBudgetClock(): ScanBudgetClock {
   };
 }
 
-export function minIntervalMs(
-  kind: keyof typeof MIN_INTERVAL_MS,
-): number {
+export function minIntervalMs(kind: keyof typeof MIN_INTERVAL_MS): number {
   return MIN_INTERVAL_MS[kind];
 }
 

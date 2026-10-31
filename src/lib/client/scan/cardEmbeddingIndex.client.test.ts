@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { l2Normalize } from "@/core/identify/embedMath";
+import { CARD_EMBED_MODEL, l2Normalize } from "@/core/identify/embedMath";
 import {
   matchClientEmbeddings,
   resetClientEmbeddingMemory,
+  shardRevalidationDecision,
   type ClientLoadedPack,
 } from "@/lib/client/scan/cardEmbeddingIndex.client";
 import { encodeFloat16Matrix, decodeFloat16Matrix } from "@/lib/shared/float16";
@@ -22,7 +23,7 @@ function packFixture(): ClientLoadedPack {
     meta: {
       version: 1,
       packId: "test/pack",
-      model: "Xenova/mobileclip_s0",
+      model: CARD_EMBED_MODEL,
       dim,
       builtAt: "2026-01-01T00:00:00.000Z",
       entries: [
@@ -81,5 +82,40 @@ describe("matchClientEmbeddings (f16 matrix)", () => {
       ocrText: "#3",
     });
     expect(hits.some((h) => h.printKey === "game:c-3")).toBe(true);
+  });
+});
+
+describe("shardRevalidationDecision", () => {
+  const stored = { storedEtag: '"abc"', storedBuiltAt: "2026-01-01T00:00:00Z" };
+
+  it("keeps the IDB shard on 304 (validator matched)", () => {
+    expect(shardRevalidationDecision({ status: 304, ...stored })).toBe("keep");
+  });
+
+  it("refreshes when the server has a new index (200 with validator)", () => {
+    expect(shardRevalidationDecision({ status: 200, ...stored })).toBe(
+      "refresh",
+    );
+  });
+
+  it("legacy record without ETag: compares builtAt instead", () => {
+    const legacy = { status: 200, storedBuiltAt: stored.storedBuiltAt };
+    expect(
+      shardRevalidationDecision({
+        ...legacy,
+        serverBuiltAt: stored.storedBuiltAt,
+      }),
+    ).toBe("keep");
+    expect(
+      shardRevalidationDecision({
+        ...legacy,
+        serverBuiltAt: "2026-02-01T00:00:00Z",
+      }),
+    ).toBe("refresh");
+  });
+
+  it("never drops a working shard on server errors / offline", () => {
+    expect(shardRevalidationDecision({ status: 500, ...stored })).toBe("keep");
+    expect(shardRevalidationDecision({ status: 404, ...stored })).toBe("keep");
   });
 });

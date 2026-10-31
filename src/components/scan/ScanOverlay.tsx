@@ -29,7 +29,6 @@ export type ScanOverlayProps = {
   /** Normalized detected card quad TL→TR→BR→BL; null = no edge hit yet. */
   quadNorm?: Array<{ x: number; y: number }> | null;
   sampling?: boolean;
-  tapToScan?: boolean;
   onTap?: () => void;
   className?: string;
 };
@@ -62,7 +61,6 @@ export function ScanOverlay({
   hint,
   quadNorm,
   sampling,
-  tapToScan,
   onTap,
   className,
 }: ScanOverlayProps) {
@@ -81,17 +79,17 @@ export function ScanOverlay({
   return (
     <div
       className={cn("absolute inset-0 z-10", className)}
-      onClick={tapToScan ? onTap : undefined}
-      role={tapToScan ? "button" : undefined}
-      tabIndex={tapToScan ? 0 : undefined}
+      onClick={onTap}
+      role={onTap ? "button" : undefined}
+      tabIndex={onTap ? 0 : undefined}
       onKeyDown={
-        tapToScan
+        onTap
           ? (e) => {
-              if (e.key === "Enter" || e.key === " ") onTap?.();
+              if (e.key === "Enter" || e.key === " ") onTap();
             }
           : undefined
       }
-      aria-label={tapToScan ? hint : undefined}
+      aria-label={onTap ? hint : undefined}
     >
       {/* Soft framing aid — only when no real edge detection yet */}
       {showCardGuide && !hasQuad ? (
@@ -163,7 +161,8 @@ export function ScanOverlay({
       ) : null}
 
       {/* Barcode-only guide */}
-      {mode === "barcode" && !vision.overlays.some((o) => o.tone === "barcode") ? (
+      {mode === "barcode" &&
+      !vision.overlays.some((o) => o.tone === "barcode") ? (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
           <div
             className={cn(
@@ -191,11 +190,6 @@ export function ScanOverlay({
         >
           {sampling && phase !== "delivering" ? "…" : hint}
         </p>
-        {tapToScan ? (
-          <p className="mt-1 text-center text-[10px] text-white/60">
-            tap
-          </p>
-        ) : null}
       </div>
 
       {debug ? (
@@ -204,9 +198,9 @@ export function ScanOverlay({
             {`phase=${debug.phase} fps=${debug.fps.toFixed(1)} gate=${debug.gateHint}
 blur=${debug.blurVariance.toFixed(0)} lum=${debug.meanLuminance.toFixed(0)} glare=${(debug.glareFraction * 100).toFixed(1)}%
 margin=${debug.margin.toFixed(3)} weight=${debug.runWeight.toFixed(2)} aim=${debug.aimToLockMs ?? "—"}ms
-method=${debug.method} conf=${debug.confidence} quad=${debug.quadSource}
+method=${debug.method} conf=${debug.confidence} quad=${debug.quadSource} crop=${debug.faceCrop}
 embed=${debug.bestEmbedDistance ?? "—"} dhash=${debug.bestDhashDistance ?? "—"} ${debug.bestEmbedKey || ""}
-tap=${debug.tapToScan ? 1 : 0} idle=${debug.idleBackoff ? 1 : 0} ocr=${debug.ocrPreview || "—"}
+ident=${debug.meanIdentifyMs || "—"}ms idle=${debug.idleBackoff ? 1 : 0} ocr=${debug.ocrPreview || "—"}
 texts=${debug.texts.length}`}
           </pre>
         </div>
@@ -270,7 +264,11 @@ function VisionSvgText({ item }: { item: ScanVisionText }) {
         fill="#fde68a"
         fontSize={fontSize}
         fontFamily="ui-monospace, monospace"
-        style={{ paintOrder: "stroke", stroke: "rgba(0,0,0,0.75)", strokeWidth: 0.006 }}
+        style={{
+          paintOrder: "stroke",
+          stroke: "rgba(0,0,0,0.75)",
+          strokeWidth: 0.006,
+        }}
       >
         {item.text}
       </text>

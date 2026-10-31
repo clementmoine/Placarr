@@ -1,5 +1,5 @@
 /**
- * On-disk CLIP embedding index for a catalogue dataPack.
+ * On-disk DINOv2 embedding index for a catalogue dataPack.
  *
  * Sidecar JSON + Float32 LE matrix (`card-embedding-index.{json,f32}`).
  * Prefer this over dHash when present; caller still requires user confirm.
@@ -27,9 +27,7 @@ import {
   shortlistPacksByCentroid,
   topKMilliDistances,
 } from "@/core/identify/cardEmbeddingSearch";
-import type {
-  CollectorNumberHint,
-} from "@/core/identify/collectorNumberHint";
+import type { CollectorNumberHint } from "@/core/identify/collectorNumberHint";
 import { printKeyMatchesCollectorHint } from "@/core/identify/collectorNumberHint";
 import type {
   CardVisualIndexEntry,
@@ -39,6 +37,7 @@ import {
   listCardVisualIndexPackIds,
   loadCardVisualIndex,
 } from "@/core/identify/cardVisualIndex";
+import { CARD_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import { packDataDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { encodeFloat16Matrix } from "@/lib/shared/float16";
@@ -51,6 +50,8 @@ export type CardEmbeddingIndexEntry = {
   artRel: string;
   /** Row index into the Float32 matrix. */
   row: number;
+  /** Face file fingerprint the vector was computed from (see visual index). */
+  fp?: string;
 };
 
 export type CardEmbeddingIndexMeta = {
@@ -64,12 +65,12 @@ export type CardEmbeddingIndexMeta = {
   centroid?: number[];
 };
 
-const META_NAME = "card-embedding-index.json";
+const META_NAME = CARD_EMBED_SHARD_FILES.meta;
 const BIN_NAME = "card-embedding-index.f32";
 /** Half-precision matrix for on-device IndexedDB shards (same vectors as f32). */
-const BIN_F16_NAME = "card-embedding-index.f16";
+const BIN_F16_NAME = CARD_EMBED_SHARD_FILES.f16;
 
-/** CLIP ONNX already multi-threads; keep workers low to avoid RAM spikes. */
+/** The ONNX encoder already multi-threads; keep workers low to avoid RAM spikes. */
 const EMBED_CONCURRENCY = 3;
 
 export type LoadedIndex = {
@@ -114,9 +115,7 @@ export function cardEmbeddingIndexF16Path(packId: string): string {
   return path.join(packDataDir(packId), BIN_F16_NAME);
 }
 
-export function loadCardEmbeddingIndex(
-  packId: string,
-): LoadedIndex | null {
+export function loadCardEmbeddingIndex(packId: string): LoadedIndex | null {
   const metaPath = cardEmbeddingIndexMetaPath(packId);
   const binPath = cardEmbeddingIndexBinPath(packId);
   if (!existsSync(metaPath) || !existsSync(binPath)) {
@@ -187,16 +186,13 @@ export function listCardEmbeddingIndexPackIds(): string[] {
   return found.sort();
 }
 
-function rowVector(
-  matrix: Float32Array,
-  row: number,
-): Float32Array {
+function rowVector(matrix: Float32Array, row: number): Float32Array {
   const start = row * CARD_EMBED_DIM;
   return matrix.subarray(start, start + CARD_EMBED_DIM);
 }
 
 /**
- * Prefer UI/catalog locale when CLIP distances are within this milli-epsilon
+ * Prefer UI/catalog locale when embed distances are within this milli-epsilon
  * (FR scan → FR face, not the EN twin of the same printKey).
  */
 export const EMBED_LANG_TIE_EPS = 25;
@@ -215,7 +211,7 @@ export function dedupeByPrintKey(
       continue;
     }
     if (row.distance < prev.distance) {
-      // Preferred lang may win a small CLIP reverse (text-heavy faces).
+      // Preferred lang may win a small embed reverse (text-heavy faces).
       if (
         prefer &&
         prev.lang === prefer &&
@@ -272,27 +268,29 @@ export function matchCardEmbedding(
   },
 ): CardVisualMatch[] {
   const limit = opts?.limit ?? 5;
-  const maxDistance = opts?.maxDistance ?? 250;
+  const maxDistance = opts?.maxDistance ?? 450;
   const minMargin = opts?.minMargin ?? 20;
   // Over-fetch before lang dedupe so preferLang can still win.
-  const hits = topKMilliDistances(query, index.matrix, index.meta.entries.length, {
-    limit: Math.max(limit * 4, 16),
-    maxDistance,
-    dim: index.meta.dim || CARD_EMBED_DIM,
-  });
+  const hits = topKMilliDistances(
+    query,
+    index.matrix,
+    index.meta.entries.length,
+    {
+      limit: Math.max(limit * 4, 16),
+      maxDistance,
+      dim: index.meta.dim || CARD_EMBED_DIM,
+    },
+  );
   const scored = hitsToMatches(index, hits);
   const top = dedupeByPrintKey(scored, opts?.preferLang).slice(0, limit);
-  if (
-    top.length >= 2 &&
-    top[1]!.distance - top[0]!.distance < minMargin
-  ) {
+  if (top.length >= 2 && top[1]!.distance - top[0]!.distance < minMargin) {
     return top.map((row) => ({ ...row, ambiguous: true }));
   }
   return top;
 }
 
 /**
- * Multi-pack CLIP: pack-centroid shortlist → exact scan survivors.
+ * Multi-pack embed: pack-centroid shortlist → exact scan survivors.
  * Fail-opens to remaining packs when the shortlist yields nothing under
  * `maxDistance` (honest recall > premature miss).
  */
@@ -308,7 +306,7 @@ export function matchCardEmbeddingAcrossPacks(
 ): CardVisualMatch[] {
   const packIds = opts?.packIds ?? listCardEmbeddingIndexPackIds();
   const limit = opts?.limit ?? 5;
-  const maxDistance = opts?.maxDistance ?? 250;
+  const maxDistance = opts?.maxDistance ?? 450;
   const loaded: LoadedIndex[] = [];
   for (const packId of packIds) {
     const index = loadCardEmbeddingIndex(packId);
@@ -336,7 +334,7 @@ export function matchCardEmbeddingAcrossPacks(
       preferLang: opts?.preferLang,
     });
 
-  let scored: CardVisualMatch[] = [];
+  const scored: CardVisualMatch[] = [];
   for (const row of shortlisted) {
     scored.push(...scanPack(row.index));
   }
@@ -351,10 +349,7 @@ export function matchCardEmbeddingAcrossPacks(
 
   const top = dedupeByPrintKey(scored, opts?.preferLang).slice(0, limit);
   const minMargin = opts?.minMargin ?? 20;
-  if (
-    top.length >= 2 &&
-    top[1]!.distance - top[0]!.distance < minMargin
-  ) {
+  if (top.length >= 2 && top[1]!.distance - top[0]!.distance < minMargin) {
     return top.map((row) => ({ ...row, ambiguous: true }));
   }
   return top.map(({ ambiguous: _a, ...row }) => row);
@@ -362,7 +357,7 @@ export function matchCardEmbeddingAcrossPacks(
 
 /**
  * Score only catalogue rows that match an OCR collector hint.
- * Break-glass when global CLIP nearest is the wrong game (soft live crops).
+ * Break-glass when global embed nearest is the wrong game (soft live crops).
  * When the hint carries a set (`107/204 • FR • 2`), require set+number so
  * bare card-number collisions across games do not flood the shortlist.
  */
@@ -427,16 +422,25 @@ async function mapPool<T, R>(
   return out;
 }
 
-/** Stable key: same print + same art file → reusable CLIP vector. */
-export function embeddingReuseKey(
-  printKey: string,
-  artRel: string,
-): string {
+/** Stable key: same print + same art file → reusable embed vector. */
+export function embeddingReuseKey(printKey: string, artRel: string): string {
   return `${printKey}\0${artRel}`;
 }
 
 /**
- * Partition visual rows into reusable vectors vs rows that need CLIP.
+ * Vector still valid for this face: same print + art file, and the file
+ * fingerprint has not moved. A missing fingerprint on either side (legacy
+ * index, unreadable stat) does not invalidate — only a *different* one does.
+ */
+export function embeddingVectorReusable(
+  prev: Pick<CardEmbeddingIndexEntry, "fp">,
+  row: Pick<CardVisualIndexEntry, "fp">,
+): boolean {
+  return !prev.fp || !row.fp || prev.fp === row.fp;
+}
+
+/**
+ * Partition visual rows into reusable vectors vs rows that need encoding.
  * Pure — unit-tested without ONNX.
  */
 export function partitionEmbeddingWork(
@@ -464,7 +468,7 @@ export function partitionEmbeddingWork(
   const todo: CardVisualIndexEntry[] = [];
   for (const row of source) {
     const prev = byKey.get(embeddingReuseKey(row.printKey, row.artRel));
-    if (!prev) {
+    if (!prev || !embeddingVectorReusable(prev, row)) {
       todo.push(row);
       continue;
     }
@@ -486,8 +490,9 @@ export function partitionEmbeddingWork(
  * Build embedding matrix from an existing visual index (same artRel paths).
  * Invoked by Catalogue Sync via {@link runDataPackCardEmbeddingIndex}.
  *
- * With `reuseExisting` (default true), keeps CLIP vectors whose printKey+artRel
- * still match — only new / moved faces are re-encoded.
+ * With `reuseExisting` (default true), keeps vectors whose printKey+artRel
+ * and face fingerprint still match — only new / moved / rewritten faces are
+ * re-encoded, and nothing is written when the result equals the prior index.
  */
 export async function buildCardEmbeddingIndex(opts: {
   packId: string;
@@ -509,11 +514,7 @@ export async function buildCardEmbeddingIndex(opts: {
 
   const reuseExisting = opts.reuseExisting !== false;
   const prior = reuseExisting ? loadCardEmbeddingIndex(opts.packId) : null;
-  const { reuse, todo } = partitionEmbeddingWork(
-    source,
-    prior,
-    reuseExisting,
-  );
+  const { reuse, todo } = partitionEmbeddingWork(source, prior, reuseExisting);
 
   const packRoot = packDataDir(opts.packId);
   const vectors: Float32Array[] = [];
@@ -531,6 +532,7 @@ export async function buildCardEmbeddingIndex(opts: {
       card: hit.row.card,
       artRel: hit.row.artRel,
       row: rowIndex,
+      ...(hit.row.fp ? { fp: hit.row.fp } : {}),
     });
     vectors.push(hit.vec);
     attempted += 1;
@@ -566,6 +568,7 @@ export async function buildCardEmbeddingIndex(opts: {
       card: hit.row.card,
       artRel: hit.row.artRel,
       row: rowIndex,
+      ...(hit.row.fp ? { fp: hit.row.fp } : {}),
     });
     vectors.push(hit.vec);
   }
@@ -580,6 +583,16 @@ export async function buildCardEmbeddingIndex(opts: {
     throw new Error(
       `buildCardEmbeddingIndex: zero embeddings for ${opts.packId}`,
     );
+  }
+
+  // Nothing encoded and the row list is identical → the files on disk are
+  // already this index. Leave them (and their mtimes / ETags) alone.
+  if (
+    prior &&
+    embedded.every((hit) => hit == null) &&
+    embeddingEntriesEqual(prior.meta.entries, entries)
+  ) {
+    return prior.meta;
   }
 
   const matrix = new Float32Array(entries.length * CARD_EMBED_DIM);
@@ -606,12 +619,31 @@ export async function buildCardEmbeddingIndex(opts: {
   );
   // On-device shard (~½ RAM) — same vectors; served via /assets/<pack>/…
   const f16 = encodeFloat16Matrix(matrix);
-  writeFileSync(
-    cardEmbeddingIndexF16Path(opts.packId),
-    Buffer.from(f16),
-  );
+  writeFileSync(cardEmbeddingIndexF16Path(opts.packId), Buffer.from(f16));
   indexCache.delete(opts.packId);
   return meta;
+}
+
+/** Same rows in the same order (printKey, lang, artRel, fp) — ignores `builtAt`. */
+export function embeddingEntriesEqual(
+  a: readonly CardEmbeddingIndexEntry[],
+  b: readonly CardEmbeddingIndexEntry[],
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    if (
+      x.printKey !== y.printKey ||
+      x.lang !== y.lang ||
+      x.artRel !== y.artRel ||
+      x.row !== y.row ||
+      x.fp !== y.fp
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /** True when at least one pack in scope has a usable embedding index. */

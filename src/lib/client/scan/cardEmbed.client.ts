@@ -1,36 +1,27 @@
 /**
- * MobileCLIP-S0 vision embeddings on-device (transformers.js + ort-web).
+ * On-device card embeddings — same model, crop and descriptor contract as
+ * the server index (`@/core/identify/embedMath`): DINOv2-small CLS on the
+ * art band. Shards built by Sync are therefore directly comparable here.
  *
- * Incompatible with server Xenova CLIP ViT-B/32 — Sync must rebuild shards
- * with the same model id before client NN is useful; until then identify
- * soft-falls back to the server automatically.
+ * transformers.js + ONNX Runtime Web, WebGPU → WASM. Weights are cached by
+ * the browser after first load (~88 MB fp32 / ~24 MB q8).
  */
-import { l2Normalize } from "@/core/identify/embedMath";
-
-export const MOBILECLIP_S0 = "Xenova/mobileclip_s0";
-/** MobileCLIP-S0 image projection dim. */
-export const MOBILECLIP_DIM = 512;
+import {
+  CARD_EMBED_DIM,
+  CARD_EMBED_MODEL,
+  cardArtBandRect,
+  descriptorFromFeatures,
+} from "@/core/identify/embedMath";
 
 export function resolveClientEmbedModel(): string {
-  return MOBILECLIP_S0;
+  return CARD_EMBED_MODEL;
 }
 
-type VisionBundle = {
-  processor: {
-    (image: unknown): Promise<Record<string, unknown>>;
-  };
-  vision: (inputs: Record<string, unknown>) => Promise<{
-    image_embeds?: {
-      data?: Float32Array | number[];
-      normalize?: () => {
-        data: Float32Array | number[];
-        tolist?: () => number[][];
-      };
-    };
-  }>;
-};
+type FeatureExtractor = (
+  input: unknown,
+) => Promise<{ data: Float32Array | number[]; dims?: number[] }>;
 
-let bundlePromise: Promise<VisionBundle | null> | null = null;
+let extractorPromise: Promise<FeatureExtractor | null> | null = null;
 let loadedModelId: string | null = null;
 
 async function pickDevice(): Promise<"webgpu" | "wasm"> {
@@ -49,33 +40,26 @@ async function pickDevice(): Promise<"webgpu" | "wasm"> {
   return "wasm";
 }
 
-async function loadBundle(): Promise<VisionBundle | null> {
+async function loadExtractor(): Promise<FeatureExtractor | null> {
   if (typeof window === "undefined") return null;
   const modelId = resolveClientEmbedModel();
-  if (bundlePromise && loadedModelId === modelId) return bundlePromise;
+  if (extractorPromise && loadedModelId === modelId) return extractorPromise;
 
   loadedModelId = modelId;
-  bundlePromise = (async () => {
+  extractorPromise = (async () => {
     try {
-      const { AutoProcessor, CLIPVisionModelWithProjection, env } =
-        await import("@huggingface/transformers");
-      env.allowLocalModels = true;
+      const { pipeline, env } = await import("@huggingface/transformers");
+      // Weights come from the hub (browser Cache API afterwards); skipping
+      // the `/models/<id>` probe avoids a 404 round-trip per file.
+      env.allowLocalModels = false;
       const device = await pickDevice();
-      const processor = await AutoProcessor.from_pretrained(modelId);
-      const vision = await CLIPVisionModelWithProjection.from_pretrained(
-        modelId,
-        {
-          device,
-          // Vision branch is quantization-sensitive (Xenova notes).
-          dtype: "fp32",
-        } as Parameters<
-          typeof CLIPVisionModelWithProjection.from_pretrained
-        >[1],
-      );
-      return {
-        processor: processor as VisionBundle["processor"],
-        vision: vision as VisionBundle["vision"],
-      };
+      // fp32 on GPU (exact server parity); q8 on CPU/WASM keeps phones
+      // responsive — quality delta measured below noise on Lorcana FR.
+      const pipe = await pipeline("image-feature-extraction", modelId, {
+        device,
+        dtype: device === "webgpu" ? "fp32" : "q8",
+      });
+      return pipe as unknown as FeatureExtractor;
     } catch (err) {
       console.warn("[cardEmbed.client] load failed", err);
       loadedModelId = null;
@@ -85,20 +69,20 @@ async function loadBundle(): Promise<VisionBundle | null> {
     loadedModelId = null;
     return null;
   });
-  return bundlePromise;
+  return extractorPromise;
 }
 
-/** Prefetch MobileCLIP at camera start. Soft-fail. */
+/** Prefetch the embed model at camera start. Soft-fail. */
 export async function prefetchCardEmbedClient(): Promise<void> {
   try {
-    await loadBundle();
+    await loadExtractor();
   } catch {
     /* soft */
   }
 }
 
 export function resetCardEmbedClient(): void {
-  bundlePromise = null;
+  extractorPromise = null;
   loadedModelId = null;
 }
 
@@ -107,37 +91,53 @@ export function clientEmbedModelId(): string {
 }
 
 export function clientEmbedDim(): number {
-  return MOBILECLIP_DIM;
+  return CARD_EMBED_DIM;
 }
 
-/**
- * Embed a card-face JPEG/PNG blob (caller should pass art-band crop when possible).
- */
+/** Same crop as the server's `extractCardArtBand` (sharp) — canvas edition. */
+async function cropArtBand(blob: Blob): Promise<Blob | null> {
+  const bitmap = await createImageBitmap(blob).catch(() => null);
+  if (!bitmap) return null;
+  try {
+    const rect = cardArtBandRect(bitmap.width, bitmap.height);
+    if (!rect) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(
+      bitmap,
+      rect.left,
+      rect.top,
+      rect.width,
+      rect.height,
+      0,
+      0,
+      rect.width,
+      rect.height,
+    );
+    return new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9),
+    );
+  } finally {
+    bitmap.close();
+  }
+}
+
+/** Embed a full card-face blob: art-band crop → DINOv2 CLS → unit vector. */
 export async function embedCardFaceBlobClient(
   blob: Blob,
 ): Promise<Float32Array | null> {
   try {
-    const bundle = await loadBundle();
-    if (!bundle) return null;
+    const extractor = await loadExtractor();
+    if (!extractor) return null;
+    const band = await cropArtBand(blob);
+    if (!band) return null;
     const { RawImage } = await import("@huggingface/transformers");
-    const image = await RawImage.read(blob);
-    const inputs = await bundle.processor(image);
-    const out = await bundle.vision(inputs);
-    const embeds = out?.image_embeds;
-    if (!embeds) return null;
-
-    let data: Float32Array | number[] | undefined;
-    if (typeof embeds.normalize === "function") {
-      const normed = embeds.normalize();
-      data = normed.data;
-    } else {
-      data = embeds.data;
-    }
-    if (!data || data.length < 8) return null;
-    const vec = Float32Array.from(data);
-    const dim = MOBILECLIP_DIM;
-    const start = Math.max(0, vec.length - dim);
-    return l2Normalize(vec.subarray(start, start + dim));
+    const image = await RawImage.read(band);
+    const out = await extractor(image);
+    return descriptorFromFeatures(out?.data ?? [], CARD_EMBED_DIM);
   } catch (err) {
     console.warn("[cardEmbed.client] embed failed", err);
     return null;

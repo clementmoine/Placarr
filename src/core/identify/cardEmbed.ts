@@ -1,14 +1,16 @@
 /**
- * CLIP vision embeddings for cardboard ID (art-band → vector).
+ * DINOv2 vision embeddings for cardboard ID (art-band → CLS vector).
  *
  * Apache-2.0 stack via `@huggingface/transformers` + Xenova ONNX weights —
  * not CollectorVision (AGPL). Lazy-loaded; first call downloads the model.
+ * Model / pooling / crop contract lives in `embedMath.ts` (shared with the
+ * browser path so server shards and on-device queries share one space).
  */
 import { extractCardArtBand } from "@/core/enrich/media/imageAssets";
 import {
   CARD_EMBED_DIM,
   CARD_EMBED_MODEL,
-  l2Normalize,
+  descriptorFromFeatures,
 } from "@/core/identify/embedMath";
 
 export {
@@ -21,7 +23,6 @@ export {
 
 type FeatureExtractor = (
   input: unknown,
-  options?: { pooling?: string; normalize?: boolean },
 ) => Promise<{ data: Float32Array | number[]; dims?: number[] }>;
 
 let extractorPromise: Promise<FeatureExtractor> | null = null;
@@ -38,7 +39,7 @@ async function loadExtractor(): Promise<FeatureExtractor> {
       const pipe = await pipeline(
         "image-feature-extraction",
         CARD_EMBED_MODEL,
-        { dtype: "q8" },
+        { dtype: "fp32" },
       );
       return pipe as unknown as FeatureExtractor;
     })().catch((err) => {
@@ -49,7 +50,7 @@ async function loadExtractor(): Promise<FeatureExtractor> {
   return extractorPromise;
 }
 
-/** Warm CLIP ONNX (route boot) — soft-fails like paddle prefetch. */
+/** Warm the embed ONNX session (route boot) — soft-fails like paddle prefetch. */
 export async function prefetchCardEmbed(): Promise<void> {
   try {
     await loadExtractor();
@@ -64,13 +65,9 @@ async function embedJpegBytes(jpeg: Buffer): Promise<Float32Array | null> {
     const extractor = await loadExtractor();
     // Transformers.js RawImage.read accepts Blob / path / URL — not Uint8Array.
     const image = await RawImage.read(new Blob([new Uint8Array(jpeg)]));
-    const out = await extractor(image, { pooling: "mean", normalize: true });
-    const data = out?.data;
-    if (!data || data.length < 8) return null;
-    const vec = Float32Array.from(data);
-    // Mean-pool may yield [1, dim]; take the trailing CARD_EMBED_DIM.
-    const start = Math.max(0, vec.length - CARD_EMBED_DIM);
-    return l2Normalize(vec.subarray(start, start + CARD_EMBED_DIM));
+    // No `pool` (ONNX export has no pooler head): CLS token, see embedMath.
+    const out = await extractor(image);
+    return descriptorFromFeatures(out?.data ?? [], CARD_EMBED_DIM);
   } catch {
     return null;
   }

@@ -47,8 +47,12 @@ import {
   type CollectorBandGrab,
 } from "@/lib/client/scan/grabCollectorBand";
 import { hapticLong, hapticShort } from "@/lib/client/scan/haptics";
+import { grabRectifiedSample } from "@/lib/client/scan/rectifyCardFace";
 import { bootScanRuntime } from "@/lib/client/scan/scanRuntime";
-import { useScanPipeline } from "@/lib/client/scan/useScanPipeline";
+import {
+  useScanPipeline,
+  type LiveSubjectHit,
+} from "@/lib/client/scan/useScanPipeline";
 import {
   nextZoomFromPinch,
   nextZoomFromWheel,
@@ -125,8 +129,8 @@ const BARCODE_TICK_MS = 125; // ~8 Hz
 const VISION_TICK_MS = 200; // ≤5 Hz Sobel budget
 const ROI_SIZE = 96;
 
-/** Live CLIP hits land ~80–320 milli-dissimilarity (not 0..0.55 cosine). */
-const EMBED_SCORE_CEILING = 400;
+/** Live DINOv2 hits land ~120–380 milli-dissimilarity (not cosine). */
+const EMBED_SCORE_CEILING = 500;
 
 function distanceToScore(distance: number, method?: string): number {
   if (method === "embed") {
@@ -235,7 +239,7 @@ function aabbSafeForIdentifyCrop(
 
 /**
  * Grab a JPEG for identify. Crop to live AABB only when it is card-shaped;
- * a bad classical blob (common on purple/dark arts) poisons CLIP — prefer
+ * a bad classical blob (common on purple/dark arts) poisons the embed — prefer
  * full-frame + server dewarp/card_live in that case.
  */
 async function grabFinderBlob(
@@ -335,7 +339,6 @@ export function UnifiedScanCapture({
   onBatchDone: (locks: SessionLock[]) => void;
   cameraClassName?: string;
 }) {
-  const mode = "auto" as const;
   const { t, locale } = useLocale();
   const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -359,6 +362,8 @@ export function UnifiedScanCapture({
   const barcodeOverlayRef = useRef<ScanVisionRect | null>(null);
   const barcodeSeenAtRef = useRef(0);
   const lastCardAabbRef = useRef<VideoRegion | null>(null);
+  /** Raw video-pixel corners of the live card — identify rectifies these. */
+  const lastCardCornersRef = useRef<LiveSubjectHit["cornersVideo"]>(null);
   const onnxGenRef = useRef(0);
 
   const { tickSubject, noteIdentify, noteOcr, noteBarcode, allowIdentifyTick } =
@@ -384,7 +389,6 @@ export function UnifiedScanCapture({
     focusMode: false,
   });
   const [barcodePaused, setBarcodePaused] = useState(false);
-  const [tapProfile, setTapProfile] = useState(false);
   /** Lens layout: camera-first vs results sheet (scan keeps running either way). */
   const [panel, setPanel] = useState<"camera" | "results">("camera");
   const [quadNorm, setQuadNorm] = useState<Array<{
@@ -622,7 +626,6 @@ export function UnifiedScanCapture({
         const client = await identifyCardBlobClient(blob, { ocr });
         if (client && generation === genRef.current) {
           adaptiveRef.current.recordIdentifyMs(performance.now() - started);
-          setTapProfile(adaptiveRef.current.profile().tapToScan);
           noteOcr({
             text: client.ocrText,
             engine: client.ocrEngine,
@@ -695,7 +698,6 @@ export function UnifiedScanCapture({
         body,
       });
       adaptiveRef.current.recordIdentifyMs(performance.now() - started);
-      setTapProfile(adaptiveRef.current.profile().tapToScan);
       if (generation !== genRef.current) return;
       const data = (await response.json()) as {
         matches?: CardLiveMatch[];
@@ -805,12 +807,14 @@ export function UnifiedScanCapture({
     if (barcodeOverlayRef.current || barcodeFresh) {
       setQuadNorm(null);
       lastCardAabbRef.current = null;
+      lastCardCornersRef.current = null;
       return;
     }
 
     const hit = tickSubject(video);
     if (hit?.usable && hit.aabb.width > 0) {
       lastCardAabbRef.current = hit.aabb;
+      lastCardCornersRef.current = hit.cornersVideo;
       setQuadNorm(hit.cornersNorm);
       patchScanDebug({
         quadSource:
@@ -828,6 +832,7 @@ export function UnifiedScanCapture({
     }
     if (!hit) {
       lastCardAabbRef.current = null;
+      lastCardCornersRef.current = null;
       setQuadNorm(null);
       if (!barcodeOverlayRef.current) {
         clearCardVisionOverlays(null);
@@ -836,98 +841,117 @@ export function UnifiedScanCapture({
     }
   }, [tickSubject]);
 
-  const runCardSample = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video || inFlightRef.current) return;
-    if (Date.now() < backoffUntilRef.current) return;
-    if (!allowIdentifyTick()) return;
+  /**
+   * One identify sample. `force` is the user's tap: an explicit "now" that
+   * skips the energy throttle and server backoff (never the in-flight guard).
+   */
+  const runCardSample = useCallback(
+    async (opts?: { force?: boolean }) => {
+      const video = videoRef.current;
+      if (!video || inFlightRef.current) return;
+      if (!opts?.force) {
+        if (Date.now() < backoffUntilRef.current) return;
+        if (!allowIdentifyTick()) return;
+      }
 
-    const detectedRegion = lastCardAabbRef.current;
-    const roi = sampleCardRoi(video, detectedRegion);
-    if (!roi) return;
+      const detectedRegion = lastCardAabbRef.current;
+      const detectedCorners = lastCardCornersRef.current;
+      const roi = sampleCardRoi(video, detectedRegion);
+      if (!roi) return;
 
-    if (looksLikeCardBack(roi)) {
-      setGateHint("card_back");
-      adaptiveRef.current.noteAim(false);
+      if (looksLikeCardBack(roi)) {
+        setGateHint("card_back");
+        adaptiveRef.current.noteAim(false);
+        patchScanDebug({
+          gateHint: "card_back",
+          blurVariance: 0,
+          phase: "looking",
+        });
+        return;
+      }
+
+      const quality = evaluateQualityGates(roi);
+      // Strong live edge hit → don't refuse identify on soft blur/glare gates;
+      // the AABB crop is what the embed sees, and waiting for a perfect center-guide
+      // pass was the "green box / no match" stall.
+      const hardFail =
+        quality.hint === "too_dark" ||
+        quality.hint === "empty" ||
+        quality.hint === "too_far" ||
+        quality.hint === "too_small";
+      const allowIdentify =
+        quality.ok || (Boolean(detectedRegion) && !hardFail);
+
+      setGateHint(allowIdentify ? "ok" : quality.hint);
       patchScanDebug({
-        gateHint: "card_back",
-        blurVariance: 0,
-        phase: "looking",
+        gateHint: allowIdentify ? "ok" : quality.hint,
+        blurVariance: quality.blurVariance,
+        meanLuminance: quality.meanLuminance,
+        glareFraction: quality.glareFraction,
       });
-      return;
-    }
+      adaptiveRef.current.noteAim(allowIdentify);
+      const profile = adaptiveRef.current.profile();
+      patchScanDebug({
+        meanIdentifyMs: Math.round(profile.meanIdentifyMs),
+        idleBackoff: profile.idleBackoffMs > 0,
+      });
 
-    const quality = evaluateQualityGates(roi);
-    // Strong live edge hit → don't refuse identify on soft blur/glare gates;
-    // the AABB crop is what CLIP sees, and waiting for a perfect center-guide
-    // pass was the "green box / no match" stall.
-    const hardFail =
-      quality.hint === "too_dark" ||
-      quality.hint === "empty" ||
-      quality.hint === "too_far" ||
-      quality.hint === "too_small";
-    const allowIdentify = quality.ok || (Boolean(detectedRegion) && !hardFail);
+      if (!allowIdentify) {
+        setIdentifyMiss(false);
+        setPhase("looking");
+        return;
+      }
 
-    setGateHint(allowIdentify ? "ok" : quality.hint);
-    patchScanDebug({
-      gateHint: allowIdentify ? "ok" : quality.hint,
-      blurVariance: quality.blurVariance,
-      meanLuminance: quality.meanLuminance,
-      glareFraction: quality.glareFraction,
-    });
-    adaptiveRef.current.noteAim(allowIdentify);
-    const profile = adaptiveRef.current.profile();
-    patchScanDebug({
-      tapToScan: profile.tapToScan,
-      idleBackoff: profile.idleBackoffMs > 0,
-    });
-
-    if (!allowIdentify) {
+      if (aimStartedRef.current == null) aimStartedRef.current = Date.now();
       setIdentifyMiss(false);
-      setPhase("looking");
-      return;
-    }
+      setPhase((p) => (p === "delivering" ? p : "understanding"));
 
-    if (aimStartedRef.current == null) aimStartedRef.current = Date.now();
-    setIdentifyMiss(false);
-    setPhase((p) => (p === "delivering" ? p : "understanding"));
+      // Optional ONNX corners override classical when DocAligner is enabled.
+      void detectQuadOnnx(roi.data, roi.width, roi.height).then((q) => {
+        if (!q) return;
+        patchScanDebug({ quadSource: "onnx" });
+        const mapped = mapRoiCornersToObjectCover(video, q.corners, roi.width);
+        if (mapped) setQuadNorm(mapped);
+      });
 
-    // Optional ONNX corners override classical when DocAligner is enabled.
-    void detectQuadOnnx(roi.data, roi.width, roi.height).then((q) => {
-      if (!q) return;
-      patchScanDebug({ quadSource: "onnx" });
-      const mapped = mapRoiCornersToObjectCover(video, q.corners, roi.width);
-      if (mapped) setQuadNorm(mapped);
-    });
+      inFlightRef.current = true;
+      setSampling(true);
+      const generation = ++genRef.current;
+      const frame = ++frameRef.current;
+      try {
+        // Rectify the live quad when it looks like one card (any tilt); the
+        // AABB crop is only the fallback for a missing / implausible quad.
+        const rectified = detectedCorners
+          ? await grabRectifiedSample(video, detectedCorners)
+          : null;
+        const [blob, band] = rectified
+          ? [rectified.face.blob, rectified.band]
+          : await Promise.all([
+              grabFinderBlob(video, detectedRegion),
+              grabCollectorBandBlob(video, detectedRegion),
+            ]);
+        patchScanDebug({ faceCrop: rectified ? "rectified" : "aabb" });
+        if (!blob || generation !== genRef.current) return;
 
-    inFlightRef.current = true;
-    setSampling(true);
-    const generation = ++genRef.current;
-    const frame = ++frameRef.current;
-    try {
-      const [blob, band] = await Promise.all([
-        grabFinderBlob(video, detectedRegion),
-        grabCollectorBandBlob(video, detectedRegion),
-      ]);
-      if (!blob || generation !== genRef.current) return;
+        burstRef.current.open();
+        const maybe = burstRef.current.push(
+          { face: blob, band },
+          quality.blurVariance,
+        );
+        const chosen = maybe ?? burstRef.current.close();
+        if (!chosen || generation !== genRef.current) return;
+        await identifyBlob(chosen.payload, generation, frame);
+      } catch {
+        /* soft */
+      } finally {
+        inFlightRef.current = false;
+        if (generation === genRef.current) setSampling(false);
+      }
+    },
+    [allowIdentifyTick, identifyBlob],
+  );
 
-      burstRef.current.open();
-      const maybe = burstRef.current.push(
-        { face: blob, band },
-        quality.blurVariance,
-      );
-      const chosen = maybe ?? burstRef.current.close();
-      if (!chosen || generation !== genRef.current) return;
-      await identifyBlob(chosen.payload, generation, frame);
-    } catch {
-      /* soft */
-    } finally {
-      inFlightRef.current = false;
-      if (generation === genRef.current) setSampling(false);
-    }
-  }, [allowIdentifyTick, identifyBlob]);
-
-  // Warm DocAligner + optional client OCR/CLIP while the camera is up.
+  // Warm DocAligner + optional client OCR/DINOv2 while the camera is up.
   useEffect(() => {
     if (!active || !live) return;
     void bootScanRuntime([]);
@@ -1062,16 +1086,15 @@ export function UnifiedScanCapture({
         return;
       }
 
-      if (adaptiveRef.current.profile().tapToScan) {
-        schedule(SAMPLE_HUNT_MS);
-        return;
-      }
-
+      // Continuous, whatever the device: the next sample starts as soon as
+      // this one is done, paced from its *start* so a fast phone tops out at
+      // the identify budget and a slow one runs back-to-back (no tap mode).
+      const startedAt = Date.now();
       await runCardSample();
 
       const idle = adaptiveRef.current.profile().idleBackoffMs;
-      const delay = stable ? SAMPLE_STABLE_MS : SAMPLE_HUNT_MS + idle;
-      schedule(delay);
+      const target = stable ? SAMPLE_STABLE_MS : SAMPLE_HUNT_MS + idle;
+      schedule(Math.max(0, target - (Date.now() - startedAt)));
     };
 
     void tick();
@@ -1323,8 +1346,7 @@ export function UnifiedScanCapture({
               hint={overlayHint}
               quadNorm={quadNorm}
               sampling={sampling}
-              tapToScan={tapProfile}
-              onTap={() => void runCardSample()}
+              onTap={() => void runCardSample({ force: true })}
             />
           ) : (
             <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/55 via-transparent to-transparent flex items-end justify-center pb-2.5">

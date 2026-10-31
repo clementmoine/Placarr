@@ -26,6 +26,7 @@ import {
   dHashFromBuffer,
   hammingDistance,
 } from "@/core/enrich/media/imageAssets";
+import { extractCardVisualSignals } from "@/core/identify/cardVisualSignals";
 import { packDataDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 
@@ -36,16 +37,30 @@ export type CardVisualIndexEntry = {
   card: string;
   /** Relative path under the pack data dir. */
   artRel: string;
+  /** Art-band dHash (64-bit binary string). */
   hash: string;
+  /** Art-band aHash (64-bit) — optional on legacy v1 indexes. */
+  aHash?: string;
+  /** Art-band 6×6 RGB grid (hex) — optional on legacy v1 indexes. */
+  color?: string;
+  /**
+   * Face file fingerprint (`size-mtime`, see {@link faceFingerprint}). Lets
+   * Sync reuse signals/vectors for unchanged faces and re-encode a face that
+   * was rewritten in place under the same name.
+   */
+  fp?: string;
 };
 
 export type CardVisualIndexFile = {
-  version: 1;
+  /** v2 adds aHash + color grid on entries. */
+  version: 1 | 2;
   packId: string;
   lang: string;
   builtAt: string;
   entries: CardVisualIndexEntry[];
 };
+
+export const CARD_VISUAL_INDEX_VERSION = 2 as const;
 
 const INDEX_NAME = "card-visual-index.json";
 const LANG_SEGMENT = /^[a-z]{2}([a-z]{2})?$/i;
@@ -73,6 +88,67 @@ function isFaceLang(name: string): boolean {
 
 export { dHashFromBuffer };
 
+/**
+ * Cheap identity of a face file on disk — same shape as the HTTP ETag the
+ * assets route derives (`size-mtime` hex). Null when the file is missing.
+ */
+export function faceFingerprint(absPath: string): string | null {
+  try {
+    const stat = statSync(absPath);
+    return `${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Reuse key for a face row: one entry per print + locale. */
+export function visualEntryKey(printKey: string, lang: string): string {
+  return `${printKey}\0${lang}`;
+}
+
+/**
+ * Prior entry still describes this face — same file, same bytes (fingerprint)
+ * and already carrying the v2 multi-signal fields.
+ */
+export function canReuseVisualEntry(
+  prior: CardVisualIndexEntry | undefined,
+  artRel: string,
+  fp: string | null,
+): prior is CardVisualIndexEntry {
+  return Boolean(
+    prior &&
+    prior.artRel === artRel &&
+    fp &&
+    prior.fp === fp &&
+    prior.aHash &&
+    prior.color,
+  );
+}
+
+/** Same faces, same signals — order-sensitive, ignores `builtAt`. */
+export function visualIndexEntriesEqual(
+  a: readonly CardVisualIndexEntry[],
+  b: readonly CardVisualIndexEntry[],
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    if (
+      x.printKey !== y.printKey ||
+      x.lang !== y.lang ||
+      x.artRel !== y.artRel ||
+      x.hash !== y.hash ||
+      x.aHash !== y.aHash ||
+      x.color !== y.color ||
+      x.fp !== y.fp
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function cardVisualIndexPath(packId: string): string {
   return path.join(packDataDir(packId), INDEX_NAME);
 }
@@ -98,13 +174,38 @@ export function loadCardVisualIndex(
     const parsed = JSON.parse(
       readFileSync(filePath, "utf8"),
     ) as CardVisualIndexFile;
-    if (parsed?.version !== 1 || !Array.isArray(parsed.entries)) return null;
+    if (
+      (parsed?.version !== 1 && parsed?.version !== 2) ||
+      !Array.isArray(parsed.entries)
+    ) {
+      return null;
+    }
     indexCache.set(packId, { mtimeMs, file: parsed });
     return parsed;
   } catch {
     indexCache.delete(packId);
     return null;
   }
+}
+
+/**
+ * Persist an index unless it is byte-for-byte the same faces/signals as
+ * `prior`: a no-op Sync must not bump mtimes (that is what tells the
+ * embedding step and the client shards whether anything changed).
+ */
+export function writeCardVisualIndexIfChanged(
+  file: CardVisualIndexFile,
+  prior: CardVisualIndexFile | null,
+): { file: CardVisualIndexFile; written: boolean } {
+  if (
+    prior &&
+    prior.version === file.version &&
+    prior.lang === file.lang &&
+    visualIndexEntriesEqual(prior.entries, file.entries)
+  ) {
+    return { file: prior, written: false };
+  }
+  return { file: writeCardVisualIndex(file), written: true };
 }
 
 /** Persist an already-built index file. */
@@ -158,10 +259,19 @@ export function listCardVisualIndexPackIds(): string[] {
   return found.sort();
 }
 
-async function dHashFromFile(filePath: string): Promise<string | null> {
+async function signalsFromFile(
+  filePath: string,
+): Promise<{ hash: string; aHash: string; color: string } | null> {
   if (!existsSync(filePath)) return null;
-  // Art-band hash — same region as live camera identify (see extractCardArtBand).
-  return dHashFromBuffer(readFileSync(filePath), { artBand: true });
+  const signals = await extractCardVisualSignals(readFileSync(filePath), {
+    artBand: true,
+  });
+  if (!signals) return null;
+  return {
+    hash: signals.dHash,
+    aHash: signals.aHash,
+    color: signals.color,
+  };
 }
 
 function listArtFiles(dir: string): string[] {
@@ -203,22 +313,38 @@ async function pushCardDir(opts: {
   relParts: string[];
   entries: CardVisualIndexEntry[];
   seen: Set<string>;
+  prior: ReadonlyMap<string, CardVisualIndexEntry> | null;
+  exclude?: ReadonlySet<string>;
 }): Promise<void> {
+  const printKey = `${opts.printGame}:${opts.set}-${opts.card}`;
+  const dedupe = visualEntryKey(printKey, opts.lang);
+  // Already indexed (this walk or a previous layout pass) → no readdir, no decode.
+  if (opts.seen.has(dedupe) || opts.exclude?.has(dedupe)) return;
   const arts = listArtFiles(opts.cardDir);
   const artName = pickArtName(arts);
   if (!artName) return;
-  const dedupe = `${opts.printGame}:${opts.set}-${opts.card}\0${opts.lang}`;
-  if (opts.seen.has(dedupe)) return;
-  const hash = await dHashFromFile(path.join(opts.cardDir, artName));
-  if (!hash) return;
+  const abs = path.join(opts.cardDir, artName);
+  const artRel = [...opts.relParts, artName].join("/");
+  const fp = faceFingerprint(abs);
+  const prev = opts.prior?.get(dedupe);
+  if (canReuseVisualEntry(prev, artRel, fp)) {
+    opts.seen.add(dedupe);
+    opts.entries.push({ ...prev, set: opts.set, card: opts.card });
+    return;
+  }
+  const signals = await signalsFromFile(abs);
+  if (!signals) return;
   opts.seen.add(dedupe);
   opts.entries.push({
-    printKey: `${opts.printGame}:${opts.set}-${opts.card}`,
+    printKey,
     lang: opts.lang,
     set: opts.set,
     card: opts.card,
-    artRel: [...opts.relParts, artName].join("/"),
-    hash,
+    artRel,
+    hash: signals.hash,
+    aHash: signals.aHash,
+    color: signals.color,
+    ...(fp ? { fp } : {}),
   });
 }
 
@@ -237,6 +363,16 @@ export async function buildCardVisualIndex(opts: {
   setLangCardOnly?: boolean;
   /** When false, do not write the JSON (caller merges / writes). Default true. */
   write?: boolean;
+  /**
+   * Previous index entries — faces whose file fingerprint is unchanged are
+   * copied instead of decoded again. Default: the on-disk index of the pack.
+   */
+  prior?: readonly CardVisualIndexEntry[] | null;
+  /**
+   * `visualEntryKey`s the caller already holds (multi-layout merge) — those
+   * faces are skipped before any disk work instead of decoded then dropped.
+   */
+  exclude?: ReadonlySet<string>;
 }): Promise<CardVisualIndexFile> {
   const lang = (opts.lang ?? "fr").toLowerCase();
   const printGame = opts.printGame.trim();
@@ -247,6 +383,11 @@ export async function buildCardVisualIndex(opts: {
   const cardsRoot = path.join(packRoot, "cards");
   const entries: CardVisualIndexEntry[] = [];
   const seen = new Set<string>();
+  // `prior: null` = force (decode everything, always rewrite).
+  const onDisk = opts.prior === null ? null : loadCardVisualIndex(opts.packId);
+  const prior = indexEntriesByKey(
+    opts.prior === undefined ? onDisk?.entries : opts.prior,
+  );
   const atLimit = () => opts.limit != null && entries.length >= opts.limit;
 
   if (!opts.setLangCardOnly) {
@@ -268,6 +409,8 @@ export async function buildCardVisualIndex(opts: {
           relParts: ["cards", lang, set, card],
           entries,
           seen,
+          prior,
+          exclude: opts.exclude,
         });
       }
     }
@@ -295,6 +438,8 @@ export async function buildCardVisualIndex(opts: {
             relParts: ["cards", set, locale.toLowerCase(), card],
             entries,
             seen,
+            prior,
+            exclude: opts.exclude,
           });
         }
       }
@@ -302,14 +447,26 @@ export async function buildCardVisualIndex(opts: {
   }
 
   const file: CardVisualIndexFile = {
-    version: 1,
+    version: CARD_VISUAL_INDEX_VERSION,
     packId: opts.packId,
     lang,
     builtAt: new Date().toISOString(),
     entries,
   };
   if (opts.write === false) return file;
-  return writeCardVisualIndex(file);
+  return writeCardVisualIndexIfChanged(file, onDisk).file;
+}
+
+/** `printKey\0lang` → entry, for incremental rebuilds. */
+export function indexEntriesByKey(
+  entries: readonly CardVisualIndexEntry[] | null | undefined,
+): Map<string, CardVisualIndexEntry> | null {
+  if (!entries?.length) return null;
+  const map = new Map<string, CardVisualIndexEntry>();
+  for (const entry of entries) {
+    map.set(visualEntryKey(entry.printKey, entry.lang), entry);
+  }
+  return map;
 }
 
 export type CardVisualMatch = {
@@ -323,6 +480,8 @@ export type CardVisualMatch = {
    * (relative margin, cf. OpenRift / pokemon-tcg-scanner notes).
    */
   ambiguous?: boolean;
+  /** How many independent visual channels voted for this key (dHash/aHash/color). */
+  votes?: number;
 };
 
 /** Top‑k nearest dHash neighbours. Caller must confirm — never auto-accept. */
@@ -350,10 +509,7 @@ export function matchCardVisualHash(
     (a, b) => a.distance - b.distance || a.printKey.localeCompare(b.printKey),
   );
   const top = scored.slice(0, limit);
-  if (
-    top.length >= 2 &&
-    top[1]!.distance - top[0]!.distance < minMargin
-  ) {
+  if (top.length >= 2 && top[1]!.distance - top[0]!.distance < minMargin) {
     return top.map((row) => ({ ...row, ambiguous: true }));
   }
   return top;
@@ -391,10 +547,7 @@ export function matchCardVisualHashAcrossPacks(
   );
   const top = scored.slice(0, limit);
   const minMargin = opts?.minMargin ?? 2;
-  if (
-    top.length >= 2 &&
-    top[1]!.distance - top[0]!.distance < minMargin
-  ) {
+  if (top.length >= 2 && top[1]!.distance - top[0]!.distance < minMargin) {
     return top.map((row) => ({ ...row, ambiguous: true }));
   }
   return top.map(({ ambiguous: _a, ...row }) => row);

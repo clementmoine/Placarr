@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { packLogsDir } from "@/lib/packPaths";
 
-import { cardCatalogueHooks } from "./pipeline";
+import { cardCatalogueHooks, isIdentifyOnlyRefresh } from "./pipeline";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -188,6 +188,33 @@ describe("cardCatalogueHooks", () => {
     Le cœur : une date de dernier passage qui ment est pire que pas de date du
     tout — on croirait le catalogue frais alors que la moisson a échoué.
   */
+  it("isIdentifyOnlyRefresh reconnaît identify / embed", () => {
+    expect(isIdentifyOnlyRefresh(["identify"])).toBe(true);
+    expect(isIdentifyOnlyRefresh(["embeddings"])).toBe(true);
+    expect(isIdentifyOnlyRefresh(["faces"])).toBe(false);
+    expect(isIdentifyOnlyRefresh(["identify", "faces"])).toBe(false);
+    expect(isIdentifyOnlyRefresh(undefined)).toBe(false);
+  });
+
+  it("only=identify rebuild les indexes sans lancer la moisson", async () => {
+    tmpDataRoot();
+    const runPipeline = vi.fn().mockResolvedValue(undefined);
+    const hooks = cardCatalogueHooks({
+      packId: "test/pack",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline,
+    });
+
+    // Soft-fail identify (pas de faces) — l'important : pas de moisson.
+    await hooks.refresh({ only: ["identify"] });
+    expect(runPipeline).not.toHaveBeenCalled();
+    const trace = path.join(
+      packLogsDir("test/pack"),
+      "last-identify-indexes.json",
+    );
+    expect(fs.existsSync(trace)).toBe(true);
+  });
+
   it("n'écrit la trace que si la moisson a abouti", async () => {
     tmpDataRoot();
     const hooks = cardCatalogueHooks({

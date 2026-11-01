@@ -11,10 +11,12 @@ import {
   discoverCatalogProviderModules,
   getCatalogProviderModule,
 } from "@/core/catalog/catalog";
+import { cardIdentifyIndexStatus } from "@/core/identify/cardIdentifyIndexStatus";
 import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
 } from "@/core/collect/jobs/workQueue";
+import { isIdentifyOnlyRefresh } from "@/providers/shared/cardCatalogue/pipeline";
 import type { Prisma } from "@/generated/prisma/client";
 
 export const maxDuration = 30;
@@ -43,6 +45,7 @@ export async function GET() {
         supplyMode: mdl.info.supplyMode ?? "api_live",
         status,
         pipelineSteps: pipelineStepsForDataPack(dataPack) ?? null,
+        identifyIndexes: cardIdentifyIndexStatus(dataPack),
       };
     }),
   );
@@ -71,8 +74,10 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json()) as Record<string, unknown>;
   const refreshOpts = catalogRefreshOptsFromPayload(body);
+  const identifyOnly = isIdentifyOnlyRefresh(refreshOpts.only);
+  const missingEmbeddingsOnly = Boolean(body.missingEmbeddingsOnly);
 
-  const targets = body.all
+  let targets = body.all
     ? discoverCatalogProviderModules()
     : (() => {
         const id = String(body.providerId || "").trim();
@@ -87,15 +92,32 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Granularity is for a single pack debug pass — not a bulk "refresh all".
+  // Bulk identify rebuild is allowed (camera indexes). Other granularity
+  // stays single-provider so a debug --only faces pass does not fan out.
   if (
     body.all &&
-    (refreshOpts.only || refreshOpts.skip || refreshOpts.langs || refreshOpts.limit)
+    (refreshOpts.only || refreshOpts.skip || refreshOpts.langs || refreshOpts.limit) &&
+    !identifyOnly
   ) {
     return NextResponse.json(
       { error: "only/skip/langs/limit require a single providerId" },
       { status: 400 },
     );
+  }
+
+  if (body.all && identifyOnly && missingEmbeddingsOnly) {
+    targets = targets.filter((mdl) => {
+      const dataPack = mdl.catalog?.dataPack;
+      if (!dataPack) return false;
+      return cardIdentifyIndexStatus(dataPack).embeddingsStale;
+    });
+    if (targets.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        jobs: [],
+        hint: "all camera embedding indexes are fresh",
+      });
+    }
   }
 
   const jobs: { providerId: string; jobId: string; label: string }[] = [];

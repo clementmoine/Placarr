@@ -1,10 +1,13 @@
 /**
  * Verify the publisher signature of on-disk APKs against the pinned cert.
- * Usage: pnpm apk:verify [--pack pokemon|lorcana]
+ * Usage: tsx scripts/verifyApkSignature.ts [--pack <id>]
+ * (no package.json alias — product ops stay in admin)
  */
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
+import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
+import { POKEMON_EFFECT_PACK_ID } from "@/effects/pokemon";
 import { packApksDir } from "@/lib/packPaths";
 import {
   APK_SIGNER_CERT_SHA256 as PINS,
@@ -15,7 +18,7 @@ function main() {
   const args = process.argv.slice(2);
   const packs = args.includes("--pack")
     ? [args[args.indexOf("--pack") + 1]]
-    : ["pokemon", "lorcana"];
+    : [POKEMON_EFFECT_PACK_ID, LORCANA_EFFECT_PACK_ID];
   for (const pack of packs) {
     const dir = packApksDir(pack);
     if (!existsSync(dir)) {

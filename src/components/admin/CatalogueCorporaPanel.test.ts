@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   corpusStatusLabel,
   formatCorpusLastGrowth,
+  formatIdentifyIndexes,
 } from "./CatalogueCorporaPanel";
 import type { CatalogueCorpusRow } from "@/lib/client/catalogueCorpora";
 
@@ -50,6 +51,38 @@ describe("formatCorpusLastGrowth", () => {
   });
 });
 
+describe("formatIdentifyIndexes", () => {
+  it("omits packs without visual faces", () => {
+    expect(
+      formatIdentifyIndexes(
+        {
+          visualEntries: 0,
+          embeddingEntries: 0,
+          embeddingModel: null,
+          embeddingsStale: false,
+          hasVisual: false,
+        },
+        true,
+      ),
+    ).toBe("");
+  });
+
+  it("flags stale CLIP coverage", () => {
+    expect(
+      formatIdentifyIndexes(
+        {
+          visualEntries: 1200,
+          embeddingEntries: 0,
+          embeddingModel: null,
+          embeddingsStale: true,
+          hasVisual: true,
+        },
+        true,
+      ),
+    ).toContain("à reconstruire");
+  });
+});
+
 describe("corpusStatusLabel", () => {
   it("appends lastGrowth after sync timestamp", () => {
     const label = corpusStatusLabel(
@@ -65,5 +98,27 @@ describe("corpusStatusLabel", () => {
     expect(label).toContain("à jour");
     expect(label).toContain("100 cartes");
     expect(label).toContain("2 scellés");
+  });
+
+  it("appends identify index counts when present", () => {
+    const base = row({
+      empty: false,
+      stale: false,
+      lastSyncAt: null,
+    });
+    const label = corpusStatusLabel(
+      {
+        ...base,
+        identifyIndexes: {
+          visualEntries: 10,
+          embeddingEntries: 10,
+          embeddingModel: "Xenova/clip-vit-base-patch32",
+          embeddingsStale: false,
+          hasVisual: true,
+        },
+      },
+      false,
+    );
+    expect(label).toContain("camera 10 vis · 10 CLIP");
   });
 });

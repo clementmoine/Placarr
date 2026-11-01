@@ -634,16 +634,16 @@ export type ProviderCatalogRefreshOpts = {
   auto?: boolean;
   signal?: AbortSignal;
   /**
-   * Run only these pipeline steps (`--only a,b`). Pack CLIs that do not
-   * understand `--only` ignore unknown argv or no-op — callers should stick to
-   * steps declared on the pack (`extract.pipelineSteps`).
+   * Run only these pipeline steps. Prefer steps declared on the pack
+   * (`extract.pipelineSteps`). Special: `["identify"]` rebuilds camera
+   * indexes (dHash + CLIP) in-process without re-harvesting — admin only.
    */
   only?: readonly string[];
-  /** Extra steps to skip (`--skip a,b`) — resume / rare pack hooks, not product opt-out. */
+  /** Extra steps to skip — resume / rare pack hooks, not product opt-out. */
   skip?: readonly string[];
-  /** Locale filter (`--langs fr,en`). */
+  /** Locale filter for harvest / identify. */
   langs?: readonly string[];
-  /** Cap for series / faces / listings (`--limit N`). */
+  /** Cap for series / faces / listings / identify vectors. */
   limit?: number;
 };
 

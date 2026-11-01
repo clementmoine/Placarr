@@ -4,6 +4,12 @@ import { resolve } from "path";
 // Foil meta fs reader + shader stem scan — test backend (no axios preload).
 import "./foilMetaTestBackend";
 
+// Catalogue Sync post-hook rebuilds dHash+CLIP; keep unit tests off that path
+// (model download / full-pack hash walks blow past testTimeout).
+if (process.env.PLACARR_SKIP_CARD_IDENTIFY_INDEX === undefined) {
+  process.env.PLACARR_SKIP_CARD_IDENTIFY_INDEX = "1";
+}
+
 // Charge .env dans process.env (Vitest ne le fait pas tout seul).
 // Indispensable en mode RECORD pour que les providers utilisent les clés d'API,
 // et pour que la redaction des secrets (httpReplay) connaisse les valeurs à

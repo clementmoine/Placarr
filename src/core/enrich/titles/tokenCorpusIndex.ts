@@ -116,7 +116,7 @@ export async function loadTokenCorpusIndex(
 
 /**
  * Lazy open of the prebuilt index. Reloads when the file mtime changes so a
- * background `title-idf:update` is visible without process restart.
+ * background title-IDF rebuild is visible without process restart.
  * Missing / corrupt file ⇒ null (safe: unknown tokens stay as signal).
  */
 export function getGlobalCorpusTokenStats(): CorpusTokenStats | null {

@@ -3,8 +3,9 @@
  * Prebuild title-token DF index from RawName (+ optional Item / BarcodeCache names).
  * Resolve path never scans Prisma — run this offline / on a cron.
  *
- *   pnpm title-idf:update
- *   TOKEN_CORPUS_INDEX_PATH=/path/to/token-df.json pnpm title-idf:update
+ *   tsx scripts/buildTitleIdfIndex.ts
+ *   TOKEN_CORPUS_INDEX_PATH=/path/to/token-df.json tsx scripts/buildTitleIdfIndex.ts
+ * (no package.json alias — prefer admin when wired)
  */
 import { disconnectPrisma, prisma } from "@/lib/db/prisma";
 import {

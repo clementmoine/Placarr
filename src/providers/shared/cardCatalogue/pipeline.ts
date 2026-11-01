@@ -103,9 +103,28 @@ export function catalogGrowthFromPipelineResult(
   return out;
 }
 
+/** Tokens that mean « camera identify indexes only » (admin Rebuild indexes). */
+export function isIdentifyOnlyRefresh(
+  only: readonly string[] | undefined,
+): boolean {
+  if (!only?.length) return false;
+  return only.every((token) => {
+    const t = String(token || "")
+      .trim()
+      .toLowerCase();
+    return (
+      t === "identify" ||
+      t === "indexes" ||
+      t === "embed" ||
+      t === "embeddings"
+    );
+  });
+}
+
 /**
- * Build CLI argv for a card-pack refresh. Pure — unit-tested.
+ * Build pack-pipeline argv for a card-pack refresh. Pure — unit-tested.
  * Manual opts (`only` / `skip` / `langs` / `limit`) compose with auto defaults.
+ * Identify-only refreshes never reach the pack pipeline (see refresh).
  */
 export function catalogueRefreshArgv(
   opts: ProviderCatalogRefreshOpts | undefined,
@@ -151,6 +170,39 @@ export function cardCatalogueHooks(
     (() => measureCatalogDbCorpus(input.dbPath()));
 
   const refresh = async (opts?: ProviderCatalogRefreshOpts): Promise<void> => {
+    // Admin « Indexes caméra » — rebuild dHash + CLIP without re-harvesting.
+    if (isIdentifyOnlyRefresh(opts?.only)) {
+      const { runDataPackCardIdentifyIndexes } = await import(
+        "@/providers/shared/cardCatalogue/identifyIndexesStep"
+      );
+      // Incremental CLIP by default (reuse unchanged printKey+artRel).
+      // Full wipe only when caller passes skip:["identify-cache"] — rare.
+      const forceEmbed = (opts?.skip ?? []).some(
+        (token) =>
+          String(token || "")
+            .trim()
+            .toLowerCase() === "identify-cache",
+      );
+      await runDataPackCardIdentifyIndexes(input.packId, {
+        langs: opts?.langs,
+        force: forceEmbed,
+        limit: opts?.limit,
+        onLog: (line) => console.log(line),
+      });
+      const logs = packLogsDir(input.packId);
+      mkdirSync(logs, { recursive: true });
+      writeFileSync(
+        path.join(logs, "last-identify-indexes.json"),
+        `${JSON.stringify({
+          finishedAt: new Date().toISOString(),
+          only: opts?.only ?? null,
+          langs: opts?.langs ?? null,
+          limit: opts?.limit ?? null,
+        })}\n`,
+      );
+      return;
+    }
+
     const argv = catalogueRefreshArgv(opts, input);
     const before = measure();
     const pipelineResult = await input.runPipeline(argv);
@@ -182,24 +234,27 @@ export function cardCatalogueHooks(
       })}\n`,
     );
 
-    // Camera / photo → printKey index from catalogue faces (disk-only).
-    // Failures stay soft — Sync must not die because a face file is unreadable.
-    try {
-      const { runDataPackCardVisualIndex } = await import(
-        "@/providers/shared/cardCatalogue/visualIndexStep"
+    // Camera / photo → printKey indexes (dHash + CLIP). Soft-fail — Sync
+    // must not die because a face is unreadable or the embed model is cold.
+    // Skip with skip:["identify"] (or env) so unit tests / dry Sync stay fast.
+    const skipIdentify =
+      process.env.PLACARR_SKIP_CARD_IDENTIFY_INDEX === "1" ||
+      [...(opts?.skip ?? []), ...(opts?.auto ? input.autoSkip ?? [] : [])].some(
+        (token) => {
+          const t = String(token || "")
+            .trim()
+            .toLowerCase();
+          return t === "identify" || t === "indexes" || t === "embed";
+        },
       );
-      const visual = await runDataPackCardVisualIndex(input.packId, {
+    if (!skipIdentify) {
+      const { runDataPackCardIdentifyIndexes } = await import(
+        "@/providers/shared/cardCatalogue/identifyIndexesStep"
+      );
+      await runDataPackCardIdentifyIndexes(input.packId, {
         langs: opts?.langs,
+        onLog: (line) => console.log(line),
       });
-      if (visual.entries.length) {
-        console.log(
-          `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
-        );
-      }
-    } catch (err) {
-      console.warn(
-        `── card visual index — skip : ${err instanceof Error ? err.message : err}`,
-      );
     }
   };
 

@@ -17,6 +17,7 @@ import {
 } from "@/core/enrich/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 import { measureCoverExposureFromBuffer } from "@/core/enrich/media/coverExposure.server";
+import { cardArtBandRect } from "@/core/identify/embedMath";
 import { regionRank } from "@/core/locale/preference";
 import { localMediaFilePath } from "@/lib/media/localMediaPath";
 
@@ -100,7 +101,7 @@ const perceptualHashCache = new Map<string, Promise<string | null>>();
 
 /**
  * Crop the illustrated art window of a card face (skip name / text box /
- * borders). Production scanners (CLIP pipelines) embed this region — hashing
+ * borders). Production scanners (embedding pipelines) embed this region — hashing
  * the full frame including shared borders causes cross-game false positives.
  *
  * Fractions match common TCG layout: top inset, mid-card art, side margins.
@@ -110,22 +111,9 @@ export async function extractCardArtBand(
 ): Promise<Buffer | null> {
   try {
     const meta = await sharp(buffer).metadata();
-    const width = meta.width ?? 0;
-    const height = meta.height ?? 0;
-    if (width < 32 || height < 32) return null;
-    const left = Math.floor(width * 0.08);
-    const top = Math.floor(height * 0.12);
-    const cropW = Math.max(16, Math.floor(width * 0.84));
-    const cropH = Math.max(16, Math.floor(height * 0.48));
-    return sharp(buffer)
-      .extract({
-        left,
-        top,
-        width: Math.min(cropW, width - left),
-        height: Math.min(cropH, height - top),
-      })
-      .jpeg({ quality: 90 })
-      .toBuffer();
+    const rect = cardArtBandRect(meta.width ?? 0, meta.height ?? 0);
+    if (!rect) return null;
+    return sharp(buffer).extract(rect).jpeg({ quality: 90 }).toBuffer();
   } catch {
     return null;
   }

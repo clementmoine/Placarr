@@ -10,6 +10,7 @@ import {
 } from "@/components/admin/FoilPlayroom";
 import {
   CorpusPanel,
+  RebuildMissingCameraIndexesButton,
   RefreshAllCorporaButton,
   useCatalogueCorpora,
 } from "@/components/admin/CatalogueCorporaPanel";
@@ -240,6 +241,14 @@ export function TcgEffectsPanel({ locale }: { locale: string }) {
       <RefreshAllCorporaButton
         busy={busy}
         disabled={corporaLoading || corpora.length === 0}
+        onRefresh={refresh}
+      />
+      <RebuildMissingCameraIndexesButton
+        busy={busy}
+        disabled={corporaLoading || corpora.length === 0}
+        staleCount={
+          corpora.filter((c) => c.identifyIndexes?.embeddingsStale).length
+        }
         onRefresh={refresh}
       />
     </div>

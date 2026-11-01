@@ -299,7 +299,7 @@ function IncludedInRow({
       </h3>
       <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
         {sources.slice(0, 12).map((source) => (
-          <Link
+          <a
             key={source.slug}
             href={`${checklistHref}?product=${encodeURIComponent(source.slug)}`}
             className="group w-28 sm:w-32 shrink-0 flex flex-col gap-2"
@@ -322,7 +322,7 @@ function IncludedInRow({
             <span className="line-clamp-2 text-center text-[11px] font-medium leading-snug text-foreground/90 group-hover:text-primary">
               {source.name}
             </span>
-          </Link>
+          </a>
         ))}
       </div>
     </div>
@@ -3439,6 +3439,7 @@ export default function ItemDetailsPage() {
                          it; this keeps only the light on its own surface. */
                       tilt={false}
                       trackPointer
+                      disableCompass
                       /* The mirrored masks were cut for the hero's framing. They
                        only fit here if this is the same file — zooming the
                        uncropped original of a cropped cover is not. */

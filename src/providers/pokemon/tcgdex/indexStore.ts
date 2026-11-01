@@ -1261,6 +1261,30 @@ export function tcgdexSetDisplayLabel(opts: {
   // « Set de Base » sous Base, « Base Set » EN, etc.
   if (isBlockEponymousSet(foldedName, foldedSerie)) return serie;
 
+  // « Énergies Écarlate et Violet » / « Promos Noir & Blanc » under that
+  // serie → short kind label (… — Énergie / … — Promo).
+  const kindStem = setName.match(
+    /^(energies?|énergies?|promos?)\b/i,
+  )?.[1];
+  if (
+    kindStem ||
+    tcgdexWithinBlockKind(opts.setId) === "energy" ||
+    tcgdexWithinBlockKind(opts.setId) === "promo"
+  ) {
+    const withoutSerie = setName
+      .replace(new RegExp(`${escapeRegExpLiteral(serie)}\\s*$`, "i"), "")
+      .trim();
+    if (/^(energies?|énergies?)$/i.test(withoutSerie) || (!withoutSerie && tcgdexWithinBlockKind(opts.setId) === "energy")) {
+      return `${serie} — Énergie`;
+    }
+    if (/^promos?$/i.test(withoutSerie) || (!withoutSerie && tcgdexWithinBlockKind(opts.setId) === "promo")) {
+      return `${serie} — Promo`;
+    }
+    if (kindStem && /^(energies?|énergies?|promos?)$/i.test(withoutSerie)) {
+      return `${serie} — ${/promo/i.test(kindStem) ? "Promo" : "Énergie"}`;
+    }
+  }
+
   if (
     foldedName.startsWith(foldedSerie) &&
     (foldedName.length === foldedSerie.length ||
@@ -1268,12 +1292,16 @@ export function tcgdexSetDisplayLabel(opts: {
   ) {
     const rest = setName
       .slice(leadingPrefixLength(setName, serie))
-      .replace(/^[\s—–-]+/, "")
+      .replace(/^[\s.:：—–-]+/, "")
       .trim();
     if (!rest) return serie;
     return `${serie} — ${rest}`;
   }
   return `${serie} — ${setName}`;
+}
+
+function escapeRegExpLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /** Longueur du préfixe `serie` dans `name` (casse / accents ignorés). */
@@ -1297,11 +1325,22 @@ function leadingPrefixLength(name: string, serie: string): number {
 /** Nom qui ne fait que redire le bloc (« Set de Base », « Base Set »). */
 function isBlockEponymousSet(foldedName: string, foldedSerie: string): boolean {
   if (!foldedSerie) return false;
-  return (
+  if (
     foldedName === `set de ${foldedSerie}` ||
     foldedName === `${foldedSerie} set` ||
     foldedName === `set ${foldedSerie}`
-  );
+  ) {
+    return true;
+  }
+  // EN leak / WotC shadowless reprint named under the Base block.
+  if (foldedSerie === "base") {
+    return (
+      foldedName === "base set" ||
+      foldedName === "base set shadowless" ||
+      foldedName === "set de base"
+    );
+  }
+  return false;
 }
 
 /**
@@ -1337,7 +1376,13 @@ export function polishTcgdexSetName(
     }
     const kit = out.match(new RegExp(`^${token}\\s+(.+)$`, "i"));
     if (kit?.[1]) {
-      out = kit[1].trim();
+      // « EX : Rubis & Saphir » → strip era token then leftover punctuation.
+      let rest = kit[1].trim().replace(/^[:：.\-–—]+\s*/, "");
+      // « POP 1 » after stripping the era token → « Série 1 » (FR POP sets).
+      if (/^\d+$/.test(rest) && token === "pop") {
+        rest = `Série ${rest}`;
+      }
+      out = rest;
       break;
     }
   }
@@ -1355,7 +1400,18 @@ export function polishTcgdexSetName(
 
   out = out
     .replace(/\bKit\s+dresseur\b/gi, "Kit du Dresseur")
-    .replace(/\bKit\s+du\s+dresseur\b/gi, "Kit du Dresseur");
+    .replace(/\bKit\s+du\s+dresseur\b/gi, "Kit du Dresseur")
+    // TCGdex FR sometimes parenthesises the TG suffix; shelf wants it flat.
+    .replace(/\s*\(Galerie des? Dresseurs?\)\s*/gi, " Galerie de Dresseurs ")
+    .replace(/\bGalerie des Dresseurs\b/gi, "Galerie de Dresseurs");
+
+  // « Kit du Dresseur BW (Zoroark) » — era code already carried by the bloc.
+  for (const token of tokens) {
+    out = out.replace(
+      new RegExp(`(Kit du Dresseur)\\s+${token}\\b`, "i"),
+      "$1",
+    );
+  }
 
   return out.replace(/\s+/g, " ").trim();
 }

@@ -177,7 +177,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
       shelfType={shelf?.type}
       shelfName={shelf?.name}
       cardFormat={shelf?.cardFormat}
-      priority={index < 4}
+      priority={index < 16}
     />
   );
 
@@ -1040,13 +1040,13 @@ function ShelfComponent() {
                 {t(itemsCountNounKey(shelf?.type, visibleItemCount || 0))}
               </h2>
               {hasPrintItems && (
-                <Link
+                <a
                   href={`/shelves/${encodeURIComponent(shelfId)}/checklist`}
                   className="inline-flex w-fit items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t("items.checklistOpen")}
                   <ChevronRight className="size-3.5 opacity-70" />
-                </Link>
+                </a>
               )}
             </div>
 

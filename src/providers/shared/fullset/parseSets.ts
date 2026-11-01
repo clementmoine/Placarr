@@ -3,7 +3,12 @@
  * Public grids expose `data-set-*` — `/api` is robots-Disallow.
  */
 
-export type FullsetGameSlug = "pokemon" | "yugioh" | "magic";
+/**
+ * Fullset.fr path segment under `/{game}/sets`.
+ * Call sites live in the owning provider module (not named here — shared stays
+ * provider-blind).
+ */
+export type FullsetGameSlug = string;
 
 export type FullsetSetRow = {
   fullsetId: string;

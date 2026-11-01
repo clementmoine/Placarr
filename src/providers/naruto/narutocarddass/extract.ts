@@ -494,19 +494,10 @@ export async function runNarutoPackPipeline(
         break;
       case "index": {
         await scrapeNarutoCards({ indexOnly: true });
-        try {
-          const { runDataPackCardVisualIndex } = await import(
-            "@/providers/shared/cardCatalogue/visualIndexStep"
-          );
-          const visual = await runDataPackCardVisualIndex("naruto/carddass");
-          console.log(
-            `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
-          );
-        } catch (err) {
-          console.warn(
-            `── card visual index — skip : ${err instanceof Error ? err.message : err}`,
-          );
-        }
+        const { runDataPackCardIdentifyIndexes } = await import(
+          "@/providers/shared/cardCatalogue/identifyIndexesStep"
+        );
+        await runDataPackCardIdentifyIndexes("naruto/carddass");
         break;
       }
       case "products": {

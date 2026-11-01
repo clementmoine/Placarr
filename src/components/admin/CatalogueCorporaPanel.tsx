@@ -63,6 +63,24 @@ export function useCatalogueCorpora() {
   return { corpora, isLoading, busy, refresh };
 }
 
+/** Camera index snippet — empty when the pack has no visual faces yet. */
+export function formatIdentifyIndexes(
+  identify: CatalogueCorpusRow["identifyIndexes"],
+  fr: boolean,
+): string {
+  if (!identify?.hasVisual) return "";
+  const vis = identify.visualEntries;
+  const emb = identify.embeddingEntries;
+  if (identify.embeddingsStale) {
+    return fr
+      ? ` · caméra ${vis} vis / ${emb} CLIP (à reconstruire)`
+      : ` · camera ${vis} vis / ${emb} CLIP (rebuild)`;
+  }
+  return fr
+    ? ` · caméra ${vis} vis · ${emb} CLIP`
+    : ` · camera ${vis} vis · ${emb} CLIP`;
+}
+
 export function corpusStatusLabel(
   corpus: CatalogueCorpusRow,
   fr: boolean,
@@ -82,7 +100,8 @@ export function corpusStatusLabel(
     ? ` · ${new Date(corpus.status.lastSyncAt).toLocaleString()}`
     : "";
   const growth = formatCorpusLastGrowth(corpus.status.lastGrowth, fr);
-  return `${corpus.dataPack} · ${corpus.supplyMode} · ${state}${synced}${growth}`;
+  const identify = formatIdentifyIndexes(corpus.identifyIndexes, fr);
+  return `${corpus.dataPack} · ${corpus.supplyMode} · ${state}${synced}${growth}${identify}`;
 }
 
 function formatGrowthPart(
@@ -150,7 +169,7 @@ export function RefreshAllCorporaButton({
 }: {
   busy: string | null;
   disabled?: boolean;
-  onRefresh: (opts: { all: true }) => void | Promise<void>;
+  onRefresh: (opts: CatalogueRefreshRequest) => void | Promise<void>;
 }) {
   const { locale } = useLocale();
   const fr = locale === "fr";
@@ -167,6 +186,51 @@ export function RefreshAllCorporaButton({
         className={`h-3.5 w-3.5 ${busy === ALL ? "animate-spin" : ""}`}
       />
       {fr ? "Tout rafraîchir" : "Refresh all"}
+    </Button>
+  );
+}
+
+/** Enqueue identify-index rebuild for every pack with stale CLIP sidecars. */
+export function RebuildMissingCameraIndexesButton({
+  busy,
+  disabled,
+  staleCount,
+  onRefresh,
+}: {
+  busy: string | null;
+  disabled?: boolean;
+  staleCount: number;
+  onRefresh: (opts: CatalogueRefreshRequest) => void | Promise<void>;
+}) {
+  const { locale } = useLocale();
+  const fr = locale === "fr";
+  if (staleCount <= 0) return null;
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="secondary"
+      className="h-7 gap-1 px-2 text-xs"
+      disabled={busy !== null || disabled}
+      title={
+        fr
+          ? "Rebuild dHash + CLIP pour les packs dont l’index CLIP manque"
+          : "Rebuild dHash + CLIP for packs with missing CLIP indexes"
+      }
+      onClick={() =>
+        void onRefresh({
+          all: true,
+          only: ["identify"],
+          missingEmbeddingsOnly: true,
+        })
+      }
+    >
+      <RefreshCw
+        className={`h-3.5 w-3.5 ${busy === ALL ? "animate-spin" : ""}`}
+      />
+      {fr
+        ? `CLIP manquant (${staleCount})`
+        : `Missing CLIP (${staleCount})`}
     </Button>
   );
 }
@@ -200,36 +264,65 @@ export function CorpusPanel({
             {corpusStatusLabel(corpus, fr)}
           </p>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1 px-2 text-xs"
-          disabled={busy !== null}
-          onClick={() => {
-            const limitN = Number(limit);
-            void onRefresh({
-              providerId: corpus.providerId,
-              ...(only.trim() ? { only: only.trim() } : {}),
-              ...(langs.trim() ? { langs: langs.trim() } : {}),
-              ...(Number.isFinite(limitN) && limitN > 0
-                ? { limit: Math.floor(limitN) }
-                : {}),
-            });
-          }}
-        >
-          <RefreshCw
-            className={`h-3.5 w-3.5 ${
-              busy === corpus.providerId ? "animate-spin" : ""
-            }`}
-          />
-          {fr ? "Rafraîchir" : "Refresh"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 px-2 text-xs"
+            disabled={busy !== null}
+            onClick={() => {
+              const limitN = Number(limit);
+              void onRefresh({
+                providerId: corpus.providerId,
+                ...(only.trim() ? { only: only.trim() } : {}),
+                ...(langs.trim() ? { langs: langs.trim() } : {}),
+                ...(Number.isFinite(limitN) && limitN > 0
+                  ? { limit: Math.floor(limitN) }
+                  : {}),
+              });
+            }}
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${
+                busy === corpus.providerId ? "animate-spin" : ""
+              }`}
+            />
+            {fr ? "Rafraîchir" : "Refresh"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={
+              corpus.identifyIndexes?.embeddingsStale ? "secondary" : "ghost"
+            }
+            className="h-7 gap-1 px-2 text-xs"
+            disabled={busy !== null}
+            title={
+              fr
+                ? "Rebuild dHash + CLIP sans re-moissonner"
+                : "Rebuild dHash + CLIP without re-harvesting"
+            }
+            onClick={() => {
+              const limitN = Number(limit);
+              void onRefresh({
+                providerId: corpus.providerId,
+                only: ["identify"],
+                ...(langs.trim() ? { langs: langs.trim() } : {}),
+                ...(Number.isFinite(limitN) && limitN > 0
+                  ? { limit: Math.floor(limitN) }
+                  : {}),
+              });
+            }}
+          >
+            {fr ? "Indexes caméra" : "Camera indexes"}
+          </Button>
+        </div>
       </div>
       {steps.length > 0 ? (
         <div className="grid gap-2 sm:grid-cols-3">
           <label className="grid gap-1 text-[11px] text-muted-foreground">
-            {fr ? "Étapes (--only)" : "Steps (--only)"}
+            {fr ? "Étapes" : "Steps"}
             <Input
               value={only}
               onChange={(event) => setOnly(event.target.value)}
@@ -239,7 +332,7 @@ export function CorpusPanel({
             />
           </label>
           <label className="grid gap-1 text-[11px] text-muted-foreground">
-            {fr ? "Langues (--langs)" : "Langs (--langs)"}
+            {fr ? "Langues" : "Langs"}
             <Input
               value={langs}
               onChange={(event) => setLangs(event.target.value)}

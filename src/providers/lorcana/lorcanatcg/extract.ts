@@ -79,30 +79,25 @@ export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
 }
 
 async function runCardVisualIndex(): Promise<Record<string, unknown>> {
-  try {
-    const { runDataPackCardVisualIndex } = await import(
-      "@/providers/shared/cardCatalogue/visualIndexStep"
-    );
-    const visual = await runDataPackCardVisualIndex("lorcana");
-    console.log(
-      `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
-    );
-    return {
-      provider: "lorcanaindex",
-      ok: true,
-      entries: visual.entries.length,
-      lang: visual.lang,
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.warn(`── card visual index — skip : ${message}`);
+  const { runDataPackCardIdentifyIndexes } = await import(
+    "@/providers/shared/cardCatalogue/identifyIndexesStep"
+  );
+  const { visual, embedding } = await runDataPackCardIdentifyIndexes("lorcana");
+  if (!visual) {
     return {
       provider: "lorcanaindex",
       ok: false,
       skipped: true,
-      reason: message,
+      reason: "visual index failed",
     };
   }
+  return {
+    provider: "lorcanaindex",
+    ok: true,
+    entries: visual.entries.length,
+    lang: visual.lang,
+    embeddingEntries: embedding?.entries.length ?? 0,
+  };
 }
 
 async function runOfficialSiteOnly(

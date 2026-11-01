@@ -606,22 +606,13 @@ export async function runCatalogueExtractCommand(
         await import("@/effects/pokemon/foilNames");
       invalidatePokemonFoilNamesCache();
     }
-    // Every TCG extract refreshes the camera dHash index for its dataPack.
-    // Catalogue-first (print_assets); soft-fail so extract success is preserved.
+    // Every TCG extract refreshes camera identify indexes (dHash + CLIP).
+    // Soft-fail so extract success is preserved if embeddings can't load.
     if (pack?.id) {
-      try {
-        const { runDataPackCardVisualIndex } = await import(
-          "@/providers/shared/cardCatalogue/visualIndexStep"
-        );
-        const visual = await runDataPackCardVisualIndex(pack.id);
-        onLog(
-          `── card visual index — ${visual.entries.length} face${visual.entries.length === 1 ? "" : "s"} → card-visual-index.json`,
-        );
-      } catch (err) {
-        onLog(
-          `── card visual index — skip : ${err instanceof Error ? err.message : err}`,
-        );
-      }
+      const { runDataPackCardIdentifyIndexes } = await import(
+        "@/providers/shared/cardCatalogue/identifyIndexesStep"
+      );
+      await runDataPackCardIdentifyIndexes(pack.id, { onLog });
     }
     onLog("── done");
   } catch (error) {

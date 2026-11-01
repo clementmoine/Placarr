@@ -68,7 +68,7 @@ data/
       logs/
   launchbox|icollect/
   # nointro/ prévu — provider + index SQLite existent, rien de synchronisé sur disque
-  indexes/title-idf/               # vide tant que `pnpm title-idf:update` n'a pas tourné
+  indexes/title-idf/               # vide tant que le rebuild title-IDF n'a pas tourné (scripts/buildTitleIdfIndex.ts — pas d'alias npm)
   logs/                            # artefacts d'audit foil (writer : src/providers/pokemon/live/liveCard.ts)
 ```
 
@@ -110,7 +110,7 @@ la tuile. Filtre admin « Art emprunté » = `artFallbackFrom` / `artLocaleFrom`
 
 `printed=false` (S6 FR) : visible au catalogue, absent du picker ; le
 recto peut quand même s’afficher via emprunt S5→S1.
-Migration : `pnpm cards:migrate:lang-first`.
+Migration one-shot : `tsx scripts/migrateCardsLangFirst.ts` (pas d'alias npm).
 Faces : **jamais ignorer un hôte** parce qu’une autre illustration est déjà là.
 Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
 (pixels, tie-break par locale). Même contrat pour tous les TCG / packs — pas
@@ -208,12 +208,12 @@ Generated TS JSON (gitignored) is written by Catalogue Extract when missing
 Provider ingest lives under `src/providers/<id>/` (see
 [provider_supply_modes.md](provider_supply_modes.md)).
 
-| Path                                     | Role             | pnpm                         |
-| ---------------------------------------- | ---------------- | ---------------------------- |
-| `scripts/backgroundWorker.ts`            | Background jobs  | `worker` · `worker:icollect` |
-| `scripts/providerMappingAudit.ts`        | Mapping audit    | `providers:audit:mapping`    |
-| `scripts/record-all-barcode-fixtures.ts` | Barcode fixtures | `test:record:all`            |
-| `scripts/buildTitleIdfIndex.ts`          | Title IDF corpus | `title-idf:update`           |
+| Path                                     | Role             | Entrypoint                         |
+| ---------------------------------------- | ---------------- | ---------------------------------- |
+| `scripts/backgroundWorker.ts`            | Background jobs  | `pnpm worker` · `worker:icollect`  |
+| `scripts/providerMappingAudit.ts`        | Mapping audit    | `pnpm providers:audit:mapping`     |
+| `scripts/record-all-barcode-fixtures.ts` | Barcode fixtures | `pnpm test:record:all`             |
+| `scripts/buildTitleIdfIndex.ts`          | Title IDF corpus | `tsx scripts/…` (pas d'alias npm)  |
 
 Pack extracts: in-process via `catalogueExtractRunner` (admin Catalogue Sync /
 worker). Audits locaux optionnels : `tsx src/providers/pokemon/live/audit*.ts`.

@@ -12,7 +12,6 @@
  * d'achat portent l'état — pas un découpage « en cours / terminés / pas
  * commencés ».
  */
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   useCallback,
@@ -670,13 +669,13 @@ export default function ChecklistPage() {
       <main className={styles.page}>
         <header className={styles.header}>
           <div className={styles.topBar}>
-            <Link
+            <a
               href={`/shelves/${encodeURIComponent(shelfId)}`}
               className={styles.back}
             >
               <ArrowLeft className="size-4" aria-hidden />
               {data?.shelf.name ?? ""}
-            </Link>
+            </a>
 
             <div className={styles.topActions}>
               <button

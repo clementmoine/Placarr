@@ -1180,8 +1180,13 @@ describe("Naruto catalogue lines", () => {
       const s2 = fr.find((row) => row.printKey === "naruto:s2-ni0008");
       expect(s1?.artFallbackFrom).toBeUndefined();
       expect(s1?.artUrl).toBeTruthy();
-      if (s2 && !s2.artUrl?.includes("/fr/s2/")) {
+      expect(s2).toBeTruthy();
+      // Role URLs are printKey-scoped (no `/fr/s2/` path). Soft-borrow is
+      // signalled only via `artFallbackFrom` when the resolver used a donor.
+      if (s2?.artFallbackFrom) {
         expect(s2.artFallbackFrom).toMatch(/s1-ni0*8/);
+      } else {
+        expect(s2?.artUrl).toBeTruthy();
       }
     },
     120_000,

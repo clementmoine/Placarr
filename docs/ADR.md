@@ -392,6 +392,24 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   `faces.ts` / dossiers d'action live ; Nest commerce / Naruto en phases
   suivantes.
 
+## ADR-023 — Croissance catalogue : ré-embed, pas retrain
+
+- **Contexte** : les sets TCG arrivent régulièrement. CLIP est déjà dans le
+  Sync (`embeddingIndexStep`). Question naïve : faut-il **fine-tuner** le
+  modèle à chaque vague de cartes ?
+- **Décision** :
+  1. **Nouvelles cartes / faces** → encoder avec le **même** modèle et mettre
+     à jour l’index (Catalogue Sync / admin **Indexes caméra**). C’est le
+     chemin produit par défaut — **pas de CLI** `package.json`.
+  2. **Fine-tune CLIP** = chantier **offline rare**, seulement si eval photo
+     réelle plafonne *après* index complet + OCR + gates, avec dataset
+     versionné et rebuild total post-FT (`modelId`).
+  3. Changer de checkpoint = invalider + re-encoder **tout** le corpus ; ne
+     jamais mélanger des vecteurs de deux modèles dans un même index.
+- **Conséquences** : voir [card_identify_learning.md](card_identify_learning.md).
+  Priorité ops = fraîcheur embeddings multi-pack ; pas de pipeline auto-FT
+  dans Sync.
+
 ---
 
 _Les ADR suivants documentent les décisions au fil de l'exécution (réorga

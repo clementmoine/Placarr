@@ -15,6 +15,7 @@ import {
   assetsPackFileUrl,
   assetsPackTierBackRoleUrl,
   assetsSetBackRoleUrl,
+  isCardEmbedShardFile,
 } from "./packAssetUrls";
 
 export {
@@ -321,8 +322,7 @@ export function resolveSetBackPath(
   return null;
 }
 
-const PACK_TIER_BACK_FILE =
-  /^back\.([a-z0-9][a-z0-9-]*)\.(webp|png|jpe?g)$/i;
+const PACK_TIER_BACK_FILE = /^back\.([a-z0-9][a-z0-9-]*)\.(webp|png|jpe?g)$/i;
 
 /**
  * Pack sleeve role URL when a back exists on disk.
@@ -505,7 +505,8 @@ export function splitAssetsPackPath(
 
 /**
  * Resolve a `/assets/<pack>/…` path segments (after pack) to an absolute file
- * under cards/, products/, or foil/ (staging is never served).
+ * under cards/, products/, foil/, or the identify shards at the pack root
+ * (staging is never served).
  */
 export function resolveAssetsDiskRoot(
   pack: string,
@@ -513,6 +514,9 @@ export function resolveAssetsDiskRoot(
 ): { root: string; relative: string[] } | null {
   if (rest.length === 0) return null;
   const disk = canonicalDataPack(pack);
+  if (rest.length === 1 && isCardEmbedShardFile(rest[0])) {
+    return { root: packDataDir(disk), relative: rest };
+  }
   if (rest[0] === "cards") {
     return { root: packCardsDir(disk), relative: rest.slice(1) };
   }

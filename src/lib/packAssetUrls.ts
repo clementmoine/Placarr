@@ -9,6 +9,22 @@ import { printKeyItemSlug } from "@/lib/routing/slugs";
 export const ASSETS_URL_PREFIX = "/assets";
 
 /**
+ * Camera-identify embedding shards published by Sync at the pack root
+ * (`data/<pack>/…`) and fetched by the phone as `/assets/<pack>/<file>`.
+ * One place for the names: writer (core/identify), assets route, client.
+ */
+export const CARD_EMBED_SHARD_FILES = {
+  meta: "card-embedding-index.json",
+  f16: "card-embedding-index.f16",
+} as const;
+
+export function isCardEmbedShardFile(name: string | undefined): boolean {
+  return (
+    name === CARD_EMBED_SHARD_FILES.meta || name === CARD_EMBED_SHARD_FILES.f16
+  );
+}
+
+/**
  * Legacy pack ids still present in stored `/assets/…` URLs (sealed index,
  * older harvests). Disk + new URLs use the canonical id on the right.
  * Keep in sync with {@link ../packPaths} `PACK_DISK_ALIASES`.
@@ -196,11 +212,7 @@ export function rewriteAssetUrlForPrintKeyChange(
   const from = cardDiskIdFromPrintKey(fromKey, lang);
   const to = cardDiskIdFromPrintKey(toKey, lang);
   if (!from || !to) return url;
-  if (
-    from.set === to.set &&
-    from.lang === to.lang &&
-    from.card === to.card
-  ) {
+  if (from.set === to.set && from.lang === to.lang && from.card === to.card) {
     return url;
   }
   const needle = `/cards/${from.lang}/${from.set}/${from.card}/`;

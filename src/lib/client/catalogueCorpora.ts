@@ -21,14 +21,24 @@ export type CatalogueCorpusStatus = {
   lastGrowth?: CatalogueCorpusLastGrowth | null;
 };
 
+export type CatalogueIdentifyIndexStatus = {
+  visualEntries: number;
+  embeddingEntries: number;
+  embeddingModel: string | null;
+  embeddingsStale: boolean;
+  hasVisual: boolean;
+};
+
 export type CatalogueCorpusRow = {
   providerId: string;
   label: string;
   dataPack: string;
   supplyMode: string;
   status: CatalogueCorpusStatus;
-  /** Declared CLI steps when the pack supports `--only` / `--skip`. */
+  /** Declared harvest steps when the pack supports targeted refresh. */
   pipelineSteps?: string[] | null;
+  /** Camera identify indexes on disk (dHash + CLIP) — null if never probed. */
+  identifyIndexes?: CatalogueIdentifyIndexStatus | null;
 };
 
 export type CatalogueRefreshRequest = {
@@ -39,6 +49,11 @@ export type CatalogueRefreshRequest = {
   skip?: string[] | string;
   langs?: string[] | string;
   limit?: number;
+  /**
+   * With `all` + `only: identify` — enqueue only packs whose CLIP index is
+   * missing / behind the visual index.
+   */
+  missingEmbeddingsOnly?: boolean;
 };
 
 export async function fetchCatalogueCorpora(): Promise<CatalogueCorpusRow[]> {

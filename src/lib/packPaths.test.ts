@@ -135,6 +135,26 @@ describe("packPaths", () => {
     expect(products.relative).toEqual(["booster-s1.gif"]);
   });
 
+  it("serves the identify embedding shards from the pack root, not foil/", async () => {
+    const { splitAssetsPackPath, resolveAssetsDiskRoot } =
+      await import("./packPaths");
+    const { CARD_EMBED_SHARD_FILES } = await import("./packAssetUrls");
+    for (const file of Object.values(CARD_EMBED_SHARD_FILES)) {
+      const split = splitAssetsPackPath(["lorcana", file])!;
+      const mapped = resolveAssetsDiskRoot(split.pack, split.rest)!;
+      expect(mapped.root.endsWith("/lorcana")).toBe(true);
+      expect(mapped.relative).toEqual([file]);
+      const nested = resolveAssetsDiskRoot("naruto/carddass", [file])!;
+      expect(nested.root.endsWith("/naruto/carddass")).toBe(true);
+    }
+    // Other pack-level files keep landing in the render kit.
+    expect(
+      resolveAssetsDiskRoot("lorcana", ["back.webp"])!.root.endsWith(
+        "/lorcana/foil",
+      ),
+    ).toBe(true);
+  });
+
   it("still refuses a segment that names neither a pack root nor a nest", async () => {
     const { splitAssetsPackPath } = await import("./packPaths");
     expect(splitAssetsPackPath(["lorcana", "etc", "passwd"])).toBeNull();

@@ -4,15 +4,18 @@
  * the device is always the source of truth for the bytes we already ship.
  *
  * Usage:
- *   pnpm apk:pull -- --pack pokemon
- *   pnpm apk:pull -- --pack lorcana --pack pokemon
- *   pnpm apk:pull -- --pack lorcana --device <serial>
+ *   tsx scripts/pullApkFromDevice.ts -- --pack pokemon
+ *   tsx scripts/pullApkFromDevice.ts -- --pack lorcana --pack pokemon
+ *   tsx scripts/pullApkFromDevice.ts -- --pack lorcana --device <serial>
+ * (no package.json alias — foil Sync stays in admin)
  */
 import { execFileSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
+import { POKEMON_EFFECT_PACK_ID } from "@/effects/pokemon";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { packApksDir } from "@/lib/packPaths";
 
@@ -117,7 +120,9 @@ function parseArgs(argv: string[]): { packs: string[]; device?: string } {
       device = a.slice("--device=".length);
     }
   }
-  if (packs.length === 0) packs.push("pokemon", "lorcana");
+  if (packs.length === 0) {
+    packs.push(POKEMON_EFFECT_PACK_ID, LORCANA_EFFECT_PACK_ID);
+  }
   return { packs, device };
 }
 

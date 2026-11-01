@@ -9,6 +9,10 @@ vi.mock("@/lib/http/httpClient", async (importOriginal) => {
   return { ...actual, httpGet: vi.fn() };
 });
 
+vi.mock("@/providers/shared/fullset/setLabels", () => ({
+  fullsetSetLabel: () => null,
+}));
+
 afterEach(() => {
   vi.mocked(httpGet).mockReset();
 });

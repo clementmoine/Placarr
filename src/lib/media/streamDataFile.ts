@@ -30,6 +30,9 @@ const MIME: Record<string, string> = {
   ".glsl": "text/plain; charset=utf-8",
   ".astc": "application/octet-stream",
   ".bin": "application/octet-stream",
+  ".f16": "application/octet-stream",
+  ".f32": "application/octet-stream",
+  ".onnx": "application/octet-stream",
 };
 
 /** Magic-byte sniff — harvests often save PNG/JPEG under a `.webp` name. */

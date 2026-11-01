@@ -3,6 +3,10 @@
  *
  * Catalogue-first (`print_assets` → disk art), then disk walk fallback.
  * No pack-id allowlist — callers pass the pack they own / just synced.
+ *
+ * Incremental: a face whose file fingerprint (`size-mtime`) matches the prior
+ * index entry is copied, not decoded; the index file is rewritten only when
+ * something actually changed, so a no-op Sync leaves mtimes alone.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -10,20 +14,21 @@ import { DatabaseSync } from "node:sqlite";
 
 import {
   buildCardVisualIndex,
+  canReuseVisualEntry,
+  CARD_VISUAL_INDEX_VERSION,
   cardVisualIndexPath,
-  dHashFromBuffer,
+  faceFingerprint,
+  indexEntriesByKey,
   loadCardVisualIndex,
-  writeCardVisualIndex,
+  visualEntryKey,
+  writeCardVisualIndexIfChanged,
   type CardVisualIndexEntry,
   type CardVisualIndexFile,
 } from "@/core/identify/cardVisualIndex";
+import { extractCardVisualSignals } from "@/core/identify/cardVisualSignals";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { printKeyGameForPack } from "@/lib/media/resolvePrintFace";
-import {
-  packCardsDir,
-  packCatalogDb,
-  packDataDir,
-} from "@/lib/packPaths";
+import { packCardsDir, packCatalogDb, packDataDir } from "@/lib/packPaths";
 
 const HASH_CONCURRENCY = 8;
 
@@ -79,7 +84,9 @@ function listPrintAssets(packId: string): AssetRow[] {
     )
       .map((row) => ({
         printKey: String(row.printKey ?? "").trim(),
-        lang: String(row.lang ?? "").trim().toLowerCase(),
+        lang: String(row.lang ?? "")
+          .trim()
+          .toLowerCase(),
         art: String(row.art ?? "").trim(),
       }))
       .filter((row) => row.printKey && row.lang && row.art);
@@ -151,26 +158,39 @@ async function mapPool<T, R>(
   return out;
 }
 
+export type VisualIndexBuildStats = {
+  /** Faces copied from the prior index (fingerprint unchanged). */
+  reused: number;
+  /** Faces decoded + hashed this run. */
+  hashed: number;
+};
+
 async function buildFromCatalogue(opts: {
   packId: string;
   langs?: readonly string[];
   limit?: number;
+  prior: CardVisualIndexFile | null;
+  stats: VisualIndexBuildStats;
 }): Promise<CardVisualIndexEntry[]> {
   const langFilter = opts.langs?.length
     ? new Set(opts.langs.map((l) => l.trim().toLowerCase()).filter(Boolean))
     : null;
   const seen = new Set<string>();
-  const resolvedRows: Array<{
+  const priorByKey = indexEntriesByKey(opts.prior?.entries);
+  type Pending = {
     printKey: string;
     lang: string;
     set: string;
     card: string;
     artRel: string;
     abs: string;
-  }> = [];
+    fp: string | null;
+  };
+  // Keep catalogue order: slot = reused entry or a pending decode.
+  const slots: Array<CardVisualIndexEntry | Pending> = [];
 
   for (const row of listPrintAssets(opts.packId)) {
-    if (opts.limit != null && resolvedRows.length >= opts.limit) break;
+    if (opts.limit != null && slots.length >= opts.limit) break;
     if (!FACE_LANGS.has(row.lang)) continue;
     if (langFilter && !langFilter.has(row.lang)) continue;
     const resolved = resolveCatalogueArtPath(
@@ -180,31 +200,44 @@ async function buildFromCatalogue(opts: {
       row.art,
     );
     if (!resolved) continue;
-    const dedupe = `${row.printKey}\0${row.lang}`;
+    const dedupe = visualEntryKey(row.printKey, row.lang);
     if (seen.has(dedupe)) continue;
     seen.add(dedupe);
-    resolvedRows.push({
+    const fp = faceFingerprint(resolved.abs);
+    const prev = priorByKey?.get(dedupe);
+    if (canReuseVisualEntry(prev, resolved.artRel, fp)) {
+      opts.stats.reused += 1;
+      slots.push({ ...prev, set: resolved.set, card: resolved.card });
+      continue;
+    }
+    slots.push({
       printKey: row.printKey,
       lang: row.lang,
       set: resolved.set,
       card: resolved.card,
       artRel: resolved.artRel,
       abs: resolved.abs,
+      fp,
     });
   }
 
-  const hashed = await mapPool(resolvedRows, HASH_CONCURRENCY, async (row) => {
-    const hash = await dHashFromBuffer(readFileSync(row.abs), {
+  const hashed = await mapPool(slots, HASH_CONCURRENCY, async (slot) => {
+    if (!("abs" in slot)) return slot;
+    const signals = await extractCardVisualSignals(readFileSync(slot.abs), {
       artBand: true,
     });
-    if (!hash) return null;
+    if (!signals) return null;
+    opts.stats.hashed += 1;
     return {
-      printKey: row.printKey,
-      lang: row.lang,
-      set: row.set,
-      card: row.card,
-      artRel: row.artRel,
-      hash,
+      printKey: slot.printKey,
+      lang: slot.lang,
+      set: slot.set,
+      card: slot.card,
+      artRel: slot.artRel,
+      hash: signals.dHash,
+      aHash: signals.aHash,
+      color: signals.color,
+      ...(slot.fp ? { fp: slot.fp } : {}),
     } satisfies CardVisualIndexEntry;
   });
   return hashed.filter((row): row is CardVisualIndexEntry => row != null);
@@ -258,6 +291,13 @@ function listLangDirs(cardsRoot: string): string[] {
 function indexLooksFresh(packId: string): CardVisualIndexFile | null {
   const existing = loadCardVisualIndex(packId);
   if (!existing?.entries.length) return null;
+  // Force rebuild when missing aHash/color (v2 multi-signal).
+  if (
+    existing.version < CARD_VISUAL_INDEX_VERSION ||
+    !existing.entries.some((e) => e.aHash && e.color)
+  ) {
+    return null;
+  }
   const indexPath = cardVisualIndexPath(packId);
   const dbPath = packCatalogDb(packId);
   try {
@@ -281,8 +321,12 @@ export async function runDataPackCardVisualIndex(
     limit?: number;
     /** Force disk walk even when the catalogue has rows. */
     diskOnly?: boolean;
-    /** Rebuild even when the on-disk index is newer than the catalogue. */
+    /**
+     * Ignore the prior index entirely: every face is decoded again and the
+     * file is rewritten. Default is incremental on face fingerprints.
+     */
     force?: boolean;
+    onLog?: (line: string) => void;
   },
 ): Promise<CardVisualIndexFile> {
   if (!opts?.force && !opts?.diskOnly && opts?.limit == null) {
@@ -290,21 +334,33 @@ export async function runDataPackCardVisualIndex(
     if (fresh) return fresh;
   }
 
+  const prior = opts?.force ? null : loadCardVisualIndex(packId);
+  const stats: VisualIndexBuildStats = { reused: 0, hashed: 0 };
   const printGame = printKeyGameForPack(packId);
   if (!opts?.diskOnly) {
     const fromCat = await buildFromCatalogue({
       packId,
       langs: opts?.langs,
       limit: opts?.limit,
+      prior,
+      stats,
     });
     if (fromCat.length > 0) {
-      return writeCardVisualIndex({
-        version: 1,
-        packId,
-        lang: primaryLangLabel(fromCat, opts?.langs),
-        builtAt: new Date().toISOString(),
-        entries: fromCat,
-      });
+      const { file, written } = writeCardVisualIndexIfChanged(
+        {
+          version: CARD_VISUAL_INDEX_VERSION,
+          packId,
+          lang: primaryLangLabel(fromCat, opts?.langs),
+          builtAt: new Date().toISOString(),
+          entries: fromCat,
+        },
+        prior,
+      );
+      opts?.onLog?.(
+        `── card visual index — ${stats.reused} reused, ${stats.hashed} hashed` +
+          (written ? "" : " — unchanged, not rewritten"),
+      );
+      return file;
     }
   }
 
@@ -329,6 +385,8 @@ export async function runDataPackCardVisualIndex(
             : undefined,
         alsoSetLangCard: false,
         write: false,
+        prior: prior?.entries ?? null,
+        exclude: seen,
       });
       for (const entry of partial.entries) {
         const key = `${entry.printKey}\0${entry.lang}`;
@@ -348,6 +406,10 @@ export async function runDataPackCardVisualIndex(
       alsoSetLangCard: true,
       setLangCardOnly: true,
       write: false,
+      prior: prior?.entries ?? null,
+      // Faces already indexed from the lang-first layout are not decoded
+      // again just to be dropped by the merge (Pokémon: ~4.7k faces/Sync).
+      exclude: seen,
     });
     for (const entry of setLayout.entries) {
       const key = `${entry.printKey}\0${entry.lang}`;
@@ -355,13 +417,16 @@ export async function runDataPackCardVisualIndex(
       seen.add(key);
       merged.push(entry);
     }
-    return writeCardVisualIndex({
-      version: 1,
-      packId,
-      lang: primaryLangLabel(merged, opts?.langs ?? langDirs),
-      builtAt: new Date().toISOString(),
-      entries: merged,
-    });
+    return writeCardVisualIndexIfChanged(
+      {
+        version: CARD_VISUAL_INDEX_VERSION,
+        packId,
+        lang: primaryLangLabel(merged, opts?.langs ?? langDirs),
+        builtAt: new Date().toISOString(),
+        entries: merged,
+      },
+      prior,
+    ).file;
   }
 
   return buildCardVisualIndex({
@@ -371,5 +436,6 @@ export async function runDataPackCardVisualIndex(
     limit: opts?.limit,
     alsoSetLangCard: true,
     setLangCardOnly: true,
+    prior: prior?.entries ?? null,
   });
 }

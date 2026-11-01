@@ -24,9 +24,27 @@ vi.mock("@/lib/client/scan/cardEmbed.client", () => ({
   clientEmbedModelId: () => CARD_EMBED_MODEL,
 }));
 
+const ocrState = vi.hoisted(() => ({
+  /** Blob → text the engine reads off that band. */
+  byBlob: new Map<Blob, string>(),
+  reads: [] as string[],
+}));
+
 vi.mock("@/lib/client/scan/paddleCollectorOcr.client", () => ({
   prefetchPaddleCollectorOcrClient: vi.fn(async () => {}),
-  recognizeCollectorOcrClient: vi.fn(async () => null),
+  recognizeCollectorOcrClient: vi.fn(async (image: Blob) => {
+    const text = ocrState.byBlob.get(image);
+    ocrState.reads.push(text ?? "<inconnu>");
+    if (text === undefined) return null;
+    return {
+      text,
+      words: [],
+      band: { sx: 0, sy: 0, sw: 10, sh: 2 },
+      sourceWidth: 10,
+      sourceHeight: 14,
+      engine: "ppocr-client" as const,
+    };
+  }),
 }));
 
 import {
@@ -37,10 +55,12 @@ import {
 import { encodeFloat16Matrix } from "@/lib/shared/float16";
 import {
   identifyCardBlobClient,
+  recognizeCollectorBandClient,
   resetClientIdentifyPackIds,
   shortlistManifest,
   type ClientPackManifest,
 } from "@/lib/client/scan/clientIdentify";
+import type { CollectorBandGrab } from "@/lib/client/scan/grabCollectorBand";
 
 const dim = 4;
 const unit = (v: number[]) => l2Normalize(Float32Array.from(v));
@@ -173,5 +193,90 @@ describe("shortlistManifest", () => {
     const m = [manifest("near", [1, 0.1, 0, 0]), manifest("far", [0, 0, 0, 1])];
     const short = shortlistManifest(query, m);
     expect(short[0]?.packId).toBe("near");
+  });
+});
+
+/** A band grab whose blob the fake engine reads as `text`. */
+function bandReading(text: string): CollectorBandGrab {
+  const blob = new Blob([text]);
+  ocrState.byBlob.set(blob, text);
+  return {
+    blob,
+    band: { sx: 0, sy: 0, sw: 10, sh: 2 },
+    sourceWidth: 10,
+    sourceHeight: 14,
+  };
+}
+
+describe("recognizeCollectorBandClient — which end carries the footer", () => {
+  beforeEach(() => {
+    ocrState.byBlob = new Map();
+    ocrState.reads = [];
+  });
+
+  it("stops at the first band when it yields a collector number", async () => {
+    const res = await recognizeCollectorBandClient(
+      new Blob(),
+      bandReading("66/204 · FR · 3"),
+      bandReading("Disney Lorcana ©Disney"),
+    );
+    expect(res.text).toContain("66/204");
+    expect(res.halfTurn).toBe(false);
+    expect(ocrState.reads).toHaveLength(1);
+  });
+
+  it("reads the other end when the first yields no number", async () => {
+    const res = await recognizeCollectorBandClient(
+      new Blob(),
+      bandReading("cYanmaG ntaYel"),
+      bandReading("66/204 · FR · 3"),
+    );
+    expect(res.text).toContain("66/204");
+    expect(res.halfTurn).toBe(true);
+    expect(ocrState.reads).toHaveLength(2);
+  });
+
+  it("keeps the first read when neither end yields a number", async () => {
+    const res = await recognizeCollectorBandClient(
+      new Blob(),
+      bandReading("Disney Lorcana"),
+      bandReading("cYanmaG ntaYel"),
+    );
+    expect(res.text).toBe("Disney Lorcana");
+    expect(res.halfTurn).toBe(false);
+    expect(ocrState.reads).toHaveLength(2);
+  });
+});
+
+describe("identifyCardBlobClient — the footer tells which way up the card is", () => {
+  beforeEach(() => {
+    resetClientEmbeddingMemory();
+    resetClientIdentifyPackIds();
+    embedState.ready = true;
+    embedState.query = unit([0, 0, 1, 0]);
+    embedState.upsideDown = unit([1, 0, 0, 0]);
+    embedState.reads = [];
+    stubManifest([manifest("x", [1, 0, 0, 0]), manifest("y", [0, 1, 0, 0])]);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("embeds the face the way the collector number was found, first try", async () => {
+    await admitPack("x", [1, 0, 0, 0]);
+    await admitPack("y", [0, 1, 0, 0]);
+    const res = await identifyCardBlobClient(new Blob(), {
+      ocr: {
+        text: "66/204 · FR · 3",
+        status: "ok",
+        engine: "ppocr-client",
+        words: [],
+        sourceWidth: 10,
+        sourceHeight: 14,
+        halfTurn: true,
+      },
+    });
+    expect(res?.bestEmbedKey).toBe("x:a-1");
+    expect(embedState.reads).toEqual([true]);
   });
 });

@@ -36,6 +36,12 @@ export type ClientOcrOutcome = {
   words: ClientIdentifyResult["ocrWords"];
   sourceWidth: number | null;
   sourceHeight: number | null;
+  /**
+   * The collector line was found at the *other* end of the card: it is lying
+   * on its side the other way, or pushed under the lens upside down. The
+   * embed then starts from the face turned the same way round.
+   */
+  halfTurn: boolean;
 };
 
 const NO_OCR: ClientOcrOutcome = {
@@ -45,15 +51,13 @@ const NO_OCR: ClientOcrOutcome = {
   words: [],
   sourceWidth: null,
   sourceHeight: null,
+  halfTurn: false,
 };
 
-/**
- * OCR the collector footer. Prefers the native-resolution band cut from the
- * camera (`band`); falls back to cropping the identify thumbnail.
- */
-export async function recognizeCollectorBandClient(
+async function readBand(
   face: Blob,
-  band?: CollectorBandGrab | null,
+  band: CollectorBandGrab | null | undefined,
+  halfTurn: boolean,
 ): Promise<ClientOcrOutcome> {
   const ocr = band
     ? await recognizeCollectorOcrClient(band.blob, {
@@ -78,7 +82,30 @@ export async function recognizeCollectorBandClient(
     })),
     sourceWidth: ocr.sourceWidth,
     sourceHeight: ocr.sourceHeight,
+    halfTurn,
   };
+}
+
+/**
+ * OCR the collector footer. Prefers the native-resolution band cut from the
+ * camera (`band`); falls back to cropping the identify thumbnail.
+ *
+ * `bandHalfTurn` is the same footer taken from the other end of the card.
+ * The engine reads one way up only — no orientation model — and a card lying
+ * on its side or pushed under the lens upside down puts its collector line at
+ * the other end. Read there too when the first band yields no number, and
+ * keep the read that produced one: the number itself arbitrates, nothing is
+ * assumed about how the card was laid down.
+ */
+export async function recognizeCollectorBandClient(
+  face: Blob,
+  band?: CollectorBandGrab | null,
+  bandHalfTurn?: CollectorBandGrab | null,
+): Promise<ClientOcrOutcome> {
+  const first = await readBand(face, band, false);
+  if (!bandHalfTurn || parseCollectorNumberHint(first.text)) return first;
+  const second = await readBand(face, bandHalfTurn, true);
+  return parseCollectorNumberHint(second.text) ? second : first;
 }
 
 export type ClientIdentifyMatch = {
@@ -301,7 +328,10 @@ export async function identifyCardBlobClient(
   const ocr = opts?.ocr ?? (await recognizeCollectorBandClient(blob));
   const ocrText = ocr.text;
 
-  const query = await embedCardFaceBlobClient(blob);
+  // The collector line was found at the far end: the card is upside down, so
+  // read the art band the same way round rather than guessing twice.
+  const upsideDown = ocr.halfTurn;
+  const query = await embedCardFaceBlobClient(blob, { upsideDown });
   if (!query) return null;
 
   let attempt = await matchQuery(query, scope, ocrText);
@@ -311,7 +341,9 @@ export async function identifyCardBlobClient(
     // locations, split cards) shows the user no "up", so the face may be
     // rectified half a turn from the catalogue scan — read it once more
     // upside down before giving up. Same gate, so still no lucky guess.
-    const flipped = await embedCardFaceBlobClient(blob, { upsideDown: true });
+    const flipped = await embedCardFaceBlobClient(blob, {
+      upsideDown: !upsideDown,
+    });
     const alt = flipped ? await matchQuery(flipped, scope, ocrText) : null;
     if (alt && alt.finalized.confidence !== "miss") attempt = alt;
   }

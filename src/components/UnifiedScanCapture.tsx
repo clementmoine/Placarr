@@ -90,8 +90,16 @@ import { cn } from "@/lib/shared/utils";
 /** @deprecated Always Auto — kept for call-site typing during migration. */
 export type ScanMode = "auto" | "barcode" | "card";
 
-/** One identify sample: 640 px face thumbnail + native-res collector band. */
-type IdentifySample = { face: Blob; band: CollectorBandGrab | null };
+/**
+ * One identify sample: 640 px face thumbnail + native-res collector band,
+ * plus the same band taken from the other end of the card (which end carries
+ * the collector line is settled by reading them, not assumed).
+ */
+type IdentifySample = {
+  face: Blob;
+  band: CollectorBandGrab | null;
+  bandHalfTurn: CollectorBandGrab | null;
+};
 
 export type CardLiveMatch = {
   printKey: string;
@@ -611,11 +619,11 @@ export function UnifiedScanCapture({
   const identifyBlob = useCallback(
     async (sample: IdentifySample, generation: number, frame: number) => {
       const started = performance.now();
-      const { face: blob, band } = sample;
+      const { face: blob, band, bandHalfTurn } = sample;
 
       // OCR stage: native-res collector band (same frame as the face). Its
       // text feeds client identify *and* the server fallback.
-      const ocr = await recognizeCollectorBandClient(blob, band);
+      const ocr = await recognizeCollectorBandClient(blob, band, bandHalfTurn);
       const ocrDone = performance.now();
       if (generation !== genRef.current) return;
 
@@ -926,18 +934,21 @@ export function UnifiedScanCapture({
         const rectified = detectedCorners
           ? await grabRectifiedSample(video, detectedCorners)
           : null;
-        const [blob, band] = rectified
-          ? [rectified.face.blob, rectified.band]
-          : await Promise.all([
-              grabFinderBlob(video, detectedRegion),
-              grabCollectorBandBlob(video, detectedRegion),
-            ]);
+        const [blob, band, bandHalfTurn] = rectified
+          ? [rectified.face.blob, rectified.band, rectified.bandHalfTurn]
+          : [
+              ...(await Promise.all([
+                grabFinderBlob(video, detectedRegion),
+                grabCollectorBandBlob(video, detectedRegion),
+              ])),
+              null,
+            ];
         patchScanDebug({ faceCrop: rectified ? "rectified" : "aabb" });
         if (!blob || generation !== genRef.current) return;
 
         burstRef.current.open();
         const maybe = burstRef.current.push(
-          { face: blob, band },
+          { face: blob, band, bandHalfTurn },
           quality.blurVariance,
         );
         const chosen = maybe ?? burstRef.current.close();

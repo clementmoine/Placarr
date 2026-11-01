@@ -69,6 +69,13 @@ describe("collectorBandRect", () => {
     expect(r.sy).toBe(1400 - 168);
   });
 
+  it("takes the full width when the crop is the card itself", () => {
+    const r = collectorBandRect(1000, 1400, 0);
+    expect(r.sx).toBe(0);
+    expect(r.sw).toBe(1000);
+    expect(r.sh).toBe(168);
+  });
+
   it("never returns empty geometry", () => {
     const r = collectorBandRect(1, 1);
     expect(r.sw).toBeGreaterThanOrEqual(1);

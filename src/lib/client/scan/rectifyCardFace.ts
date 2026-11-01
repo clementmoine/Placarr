@@ -26,6 +26,13 @@ export const RECTIFIED_FACE_MAX_EDGE = 640;
 export const RECTIFIED_BAND_MAX_WIDTH = 1600;
 /** Source padding around the quad AABB so bilinear taps never hit the edge. */
 const SOURCE_PAD_FRAC = 0.03;
+/**
+ * The footer sits in the very last rows of the card, and the detected quad
+ * lands just inside the border (the scanline fallback insets by 3 %). Read
+ * the band off a slightly grown card so the collector line is whole rather
+ * than shaved in half — half-glyphs are what OCR turns into noise.
+ */
+const BAND_QUAD_GROW_FRAC = 0.04;
 
 export type RectifiedFace = {
   blob: Blob;
@@ -160,6 +167,16 @@ function toJpeg(
   );
 }
 
+/** Push the corners outward from the centroid by `frac` of their radius. */
+export function growQuadFraction(quad: WarpQuad, frac: number): WarpQuad {
+  const cx = (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4;
+  const cy = (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4;
+  return quad.map((p) => ({
+    x: cx + (p.x - cx) * (1 + frac),
+    y: cy + (p.y - cy) * (1 + frac),
+  })) as unknown as WarpQuad;
+}
+
 /** Output size for the identify face: natural aspect, long edge ≤ 640. */
 export function rectifiedFaceSize(quad: WarpQuad): {
   width: number;
@@ -189,7 +206,9 @@ export function rectifiedBandGeometry(quad: WarpQuad): {
   return {
     faceWidth,
     faceHeight,
-    band: collectorBandRect(faceWidth, faceHeight),
+    // No side inset: these are the card's own corners, and the collector
+    // number is printed flush with its left edge.
+    band: collectorBandRect(faceWidth, faceHeight, 0),
   };
 }
 
@@ -197,7 +216,39 @@ export type RectifiedSample = {
   face: RectifiedFace;
   /** Native-resolution footer, in rectified-face pixel space. */
   band: CollectorBandGrab;
+  /**
+   * The same footer read from the other end of the card. A rectangle carries
+   * no "up": a card pushed under the lens upside down looks exactly like one
+   * the right way up, and a card lying on its side can lie either way. Which
+   * end carries the collector line is settled by reading both, never assumed.
+   */
+  bandHalfTurn: CollectorBandGrab;
 };
+
+/** Same rectangle entered from the opposite corner — the card upside down. */
+export function halfTurnQuad(quad: WarpQuad): WarpQuad {
+  return [quad[2], quad[3], quad[0], quad[1]];
+}
+
+/**
+ * The quad as the camera framed it, undoing the quarter turn that
+ * {@link uprightPortraitQuad} applies to a card lying on its side.
+ *
+ * The identify face must be portrait (that is how catalogue scans store a
+ * landscape card), but its footer then runs down a *side* of that face and
+ * no horizontal band can catch it. Read the band off the card the way it
+ * lies instead: the collector line is printed along the bottom edge, and a
+ * card lying flat still shows that edge horizontally to the camera.
+ */
+export function cameraOrientedQuad(
+  corners: WarpQuad,
+  upright: WarpQuad,
+): WarpQuad {
+  const [tl, tr, , bl] = corners;
+  const lyingDown = sideLen(tl, tr) > sideLen(tl, bl);
+  // uprightPortraitQuad turned it by [tr, br, bl, tl]; step back by one.
+  return lyingDown ? [upright[3], upright[0], upright[1], upright[2]] : upright;
+}
 
 /**
  * One native-resolution read of the video, two warps: the identify face
@@ -223,21 +274,36 @@ export async function grabRectifiedSample(
     outWidth: size.width,
     outHeight: size.height,
   });
-  const { faceWidth, faceHeight, band } = rectifiedBandGeometry(quad);
-  const bandWarp = warpQuadToRect(src, patch.quad, {
+  // Footer: off the card as it lies in front of the lens, both ends.
+  const bandQuad = growQuadFraction(
+    cameraOrientedQuad(corners, patch.quad),
+    BAND_QUAD_GROW_FRAC,
+  );
+  const { faceWidth, faceHeight, band } = rectifiedBandGeometry(bandQuad);
+  const bandRows = { start: band.sy, end: band.sy + band.sh };
+  const bandWarp = warpQuadToRect(src, bandQuad, {
     outWidth: faceWidth,
     outHeight: faceHeight,
-    rows: { start: band.sy, end: band.sy + band.sh },
+    rows: bandRows,
+  });
+  const halfTurnWarp = warpQuadToRect(src, halfTurnQuad(bandQuad), {
+    outWidth: faceWidth,
+    outHeight: faceHeight,
+    rows: bandRows,
   });
 
-  const [faceBlob, bandBlob] = await Promise.all([
+  const [faceBlob, bandBlob, halfTurnBlob] = await Promise.all([
     toJpeg(faceWarp.data, faceWarp.width, faceWarp.height),
     toJpeg(bandWarp.data, bandWarp.width, bandWarp.height, {
       start: band.sx,
       width: band.sw,
     }),
+    toJpeg(halfTurnWarp.data, halfTurnWarp.width, halfTurnWarp.height, {
+      start: band.sx,
+      width: band.sw,
+    }),
   ]);
-  if (!faceBlob || !bandBlob) return null;
+  if (!faceBlob || !bandBlob || !halfTurnBlob) return null;
   return {
     face: {
       blob: faceBlob,
@@ -248,6 +314,12 @@ export async function grabRectifiedSample(
     band: {
       blob: bandBlob,
       band: { ...band, sh: bandWarp.height },
+      sourceWidth: faceWidth,
+      sourceHeight: faceHeight,
+    },
+    bandHalfTurn: {
+      blob: halfTurnBlob,
+      band: { ...band, sh: halfTurnWarp.height },
       sourceWidth: faceWidth,
       sourceHeight: faceHeight,
     },

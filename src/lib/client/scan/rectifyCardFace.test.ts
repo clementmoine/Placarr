@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cameraOrientedQuad,
+  growQuadFraction,
+  halfTurnQuad,
   quadSafeForIdentifyCrop,
   rectifiedBandGeometry,
   rectifiedFaceSize,
@@ -108,5 +111,60 @@ describe("rectifiedFaceSize / rectifiedBandGeometry", () => {
     const q = rotatedQuad(2000, 2000, 2600, 3600, 0);
     const geo = rectifiedBandGeometry(q);
     expect(geo.faceWidth).toBe(RECTIFIED_BAND_MAX_WIDTH);
+  });
+
+  it("cuts the band edge to edge — the collector number starts there", () => {
+    const geo = rectifiedBandGeometry(rotatedQuad(540, 960, 900, 1257, 0));
+    expect(geo.band.sx).toBe(0);
+    expect(geo.band.sw).toBe(geo.faceWidth);
+  });
+});
+
+describe("cameraOrientedQuad", () => {
+  const corners = (w: number, h: number) => rotatedQuad(500, 700, w, h, 0);
+
+  it("leaves an upright card alone", () => {
+    const q = corners(630, 880);
+    const upright = quadSafeForIdentifyCrop(q, 1080, 1920)!;
+    expect(cameraOrientedQuad(q, upright)).toEqual(upright);
+  });
+
+  it("puts a card lying on its side back the way the camera saw it", () => {
+    const lying = corners(880, 630);
+    const upright = quadSafeForIdentifyCrop(lying, 1080, 1920)!;
+    // The identify face is portrait (catalogue scans store it that way)…
+    const [utl, utr, , ubl] = upright;
+    expect(Math.hypot(utr.x - utl.x, utr.y - utl.y)).toBeLessThan(
+      Math.hypot(ubl.x - utl.x, ubl.y - utl.y),
+    );
+    // …while the band is read off the card as it lies: wide again, and with
+    // the same bottom edge the camera sees, so the footer is in the strip.
+    const band = cameraOrientedQuad(lying, upright);
+    const [btl, btr, bbr, bbl] = band;
+    expect(Math.hypot(btr.x - btl.x, btr.y - btl.y)).toBeGreaterThan(
+      Math.hypot(bbl.x - btl.x, bbl.y - btl.y),
+    );
+    expect([btl, btr, bbr, bbl].map((p) => [p.x, p.y])).toEqual(
+      lying.map((p) => [p.x, p.y]),
+    );
+  });
+});
+
+describe("halfTurnQuad / growQuadFraction", () => {
+  it("half a turn swaps the ends and is its own inverse", () => {
+    const q = rotatedQuad(500, 700, 630, 880, 12);
+    expect(halfTurnQuad(q)[0]).toEqual(q[2]);
+    expect(halfTurnQuad(halfTurnQuad(q))).toEqual(q);
+  });
+
+  it("growing keeps the centre and the aspect, and widens the card", () => {
+    const q = rotatedQuad(500, 700, 630, 880, 0);
+    const grown = growQuadFraction(q, 0.04);
+    const width = grown[1].x - grown[0].x;
+    const height = grown[3].y - grown[0].y;
+    expect(width).toBeCloseTo(630 * 1.04, 5);
+    expect(height).toBeCloseTo(880 * 1.04, 5);
+    expect((grown[0].x + grown[2].x) / 2).toBeCloseTo(500, 5);
+    expect((grown[0].y + grown[2].y) / 2).toBeCloseTo(700, 5);
   });
 });

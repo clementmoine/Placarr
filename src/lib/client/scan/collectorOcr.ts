@@ -42,15 +42,22 @@ export const COLLECTOR_OCR_LANGS = ["eng", "fra"] as const;
  * Keep this tight — 22% used to swallow Lorcana flavor text and poison OCR.
  */
 export const OCR_BAND_HEIGHT_FRAC = 0.12;
+/**
+ * Side inset for a loose crop (the live AABB), where the card's own edge and
+ * whatever lies beside it sit in the strip. A rectified band is cut on the
+ * card's own corners and needs none: the collector number starts flush with
+ * the left edge, and 4 % of the width eats its first digits.
+ */
 export const OCR_BAND_INSET_X_FRAC = 0.04;
 
 export function collectorBandRect(
   width: number,
   height: number,
+  insetXFrac: number = OCR_BAND_INSET_X_FRAC,
 ): CollectorBandRect {
   const w = Math.max(1, Math.floor(width));
   const h = Math.max(1, Math.floor(height));
-  const insetX = Math.floor(w * OCR_BAND_INSET_X_FRAC);
+  const insetX = Math.floor(w * Math.max(0, insetXFrac));
   const sh = Math.max(8, Math.floor(h * OCR_BAND_HEIGHT_FRAC));
   const sy = Math.max(0, h - sh);
   const sw = Math.max(1, w - insetX * 2);

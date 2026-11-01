@@ -39,6 +39,37 @@ export function cardArtBandRect(
   };
 }
 
+/**
+ * Image-processor geometry of the model (`preprocessor_config.json`:
+ * `size.shortest_edge` / `crop_size`). Locked by `embedMath.test.ts` against
+ * the self-hosted config so the two cannot drift apart.
+ */
+export const CARD_EMBED_PREPROCESS = {
+  shortestEdge: 256,
+  cropSize: 224,
+} as const;
+
+/**
+ * Size the processor resizes an art band to before its centre crop — same
+ * arithmetic as transformers.js `get_resize_output_image_size` for a
+ * `shortest_edge` size (scale so the short side hits 256; `toFixed(2)` then
+ * floor on each side). A band drawn at exactly this size makes the
+ * processor's own resize a no-op, so the client can crop + scale the camera
+ * face in one canvas pass instead of encoding a JPEG for it to decode.
+ */
+export function cardEmbedResizeTarget(
+  width: number,
+  height: number,
+): { width: number; height: number } | null {
+  if (!(width > 0) || !(height > 0)) return null;
+  const edge = CARD_EMBED_PREPROCESS.shortestEdge;
+  const factor = Math.max(edge / width, edge / height);
+  return {
+    width: Math.floor(Number((width * factor).toFixed(2))),
+    height: Math.floor(Number((height * factor).toFixed(2))),
+  };
+}
+
 /** L2-normalize in place (defensive — pipeline may already normalize). */
 export function l2Normalize(vec: Float32Array): Float32Array {
   let sum = 0;

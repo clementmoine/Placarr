@@ -11,8 +11,10 @@ import {
   CARD_EMBED_DIM,
   CARD_EMBED_MODEL,
   cardArtBandRect,
+  cardEmbedResizeTarget,
   descriptorFromFeatures,
 } from "@/core/identify/embedMath";
+import { configureOrt, runOrtExclusive } from "@/lib/client/scan/ortRuntime";
 
 export function resolveClientEmbedModel(): string {
   return CARD_EMBED_MODEL;
@@ -36,12 +38,13 @@ export function isCardEmbedClientReady(): boolean {
 
 const LOCAL_MODEL_PATH = "/models/";
 
-let devicePromise: Promise<"webgpu" | "wasm"> | null = null;
-
-/** Execution device transformers.js will be given (memoized). */
-export function resolveClientEmbedDevice(): Promise<"webgpu" | "wasm"> {
-  if (!devicePromise) devicePromise = pickDevice();
-  return devicePromise;
+/**
+ * Execution device transformers.js will be given — the flavour of the
+ * shared ONNX runtime (see `ortRuntime.ts`; "webgpu" only where the browser
+ * can actually run ORT on the GPU).
+ */
+export async function resolveClientEmbedDevice(): Promise<"webgpu" | "wasm"> {
+  return (await configureOrt()).flavour;
 }
 
 /**
@@ -58,22 +61,6 @@ export async function clientEmbedModelFiles(): Promise<string[]> {
   ];
 }
 
-async function pickDevice(): Promise<"webgpu" | "wasm"> {
-  if (typeof navigator !== "undefined" && "gpu" in navigator) {
-    try {
-      const adapter = await (
-        navigator as Navigator & {
-          gpu?: { requestAdapter: () => Promise<unknown> };
-        }
-      ).gpu?.requestAdapter();
-      if (adapter) return "webgpu";
-    } catch {
-      /* fall through */
-    }
-  }
-  return "wasm";
-}
-
 async function loadExtractor(): Promise<FeatureExtractor | null> {
   if (typeof window === "undefined") return null;
   const modelId = resolveClientEmbedModel();
@@ -82,6 +69,9 @@ async function loadExtractor(): Promise<FeatureExtractor | null> {
   loadedModelId = modelId;
   extractorPromise = (async () => {
     try {
+      // Shared ORT env must be configured before transformers.js evaluates
+      // (it only fills in its CDN default when wasmPaths is still unset).
+      await configureOrt();
       const { pipeline, env } = await import("@huggingface/transformers");
       // Weights are self-hosted under `/models/<id>/` (immutable, browser
       // Cache API afterwards) — the first open never depends on the hub.
@@ -91,10 +81,12 @@ async function loadExtractor(): Promise<FeatureExtractor | null> {
       const device = await resolveClientEmbedDevice();
       // fp32 on GPU (exact server parity); q8 on CPU/WASM keeps phones
       // responsive — quality delta measured below noise on Lorcana FR.
-      const pipe = await pipeline("image-feature-extraction", modelId, {
-        device,
-        dtype: device === "webgpu" ? "fp32" : "q8",
-      });
+      const pipe = await runOrtExclusive("dinov2:load", () =>
+        pipeline("image-feature-extraction", modelId, {
+          device,
+          dtype: device === "webgpu" ? "fp32" : "q8",
+        }),
+      );
       extractorReady = true;
       return pipe as unknown as FeatureExtractor;
     } catch (err) {
@@ -119,7 +111,6 @@ export async function prefetchCardEmbedClient(): Promise<void> {
 }
 
 export function resetCardEmbedClient(): void {
-  devicePromise = null;
   extractorPromise = null;
   loadedModelId = null;
   extractorReady = false;
@@ -133,27 +124,41 @@ export function clientEmbedDim(): number {
   return CARD_EMBED_DIM;
 }
 
+/** Art band pixels, already at the size the image processor resizes to. */
+export type ArtBandPixels = {
+  data: Uint8ClampedArray;
+  width: number;
+  height: number;
+};
+
 /**
- * Same crop as the server's `extractCardArtBand` (sharp) — canvas edition.
+ * Same crop as the server's `extractCardArtBand` (sharp) — canvas edition,
+ * in one pass: the band is drawn straight from the face bitmap at the
+ * processor's resize target (`cardEmbedResizeTarget`), so there is no JPEG
+ * to encode then decode and no full-resolution copy to resize afterwards.
+ * The scaler is the same canvas `drawImage` transformers.js would have used.
+ *
  * `upsideDown` reads the face rotated half a turn, for the card presented the
  * other way up (a card lying on its side has no "up" the user can see).
  */
 async function cropArtBand(
   blob: Blob,
   upsideDown = false,
-): Promise<Blob | null> {
+): Promise<ArtBandPixels | null> {
   const bitmap = await createImageBitmap(blob).catch(() => null);
   if (!bitmap) return null;
   try {
     const rect = cardArtBandRect(bitmap.width, bitmap.height);
     if (!rect) return null;
+    const target = cardEmbedResizeTarget(rect.width, rect.height);
+    if (!target) return null;
     const canvas = document.createElement("canvas");
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    const ctx = canvas.getContext("2d");
+    canvas.width = target.width;
+    canvas.height = target.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     if (upsideDown) {
-      ctx.translate(rect.width, rect.height);
+      ctx.translate(target.width, target.height);
       ctx.rotate(Math.PI);
     }
     ctx.drawImage(
@@ -164,12 +169,11 @@ async function cropArtBand(
       rect.height,
       0,
       0,
-      rect.width,
-      rect.height,
+      target.width,
+      target.height,
     );
-    return new Promise((resolve) =>
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9),
-    );
+    const { data } = ctx.getImageData(0, 0, target.width, target.height);
+    return { data, width: target.width, height: target.height };
   } finally {
     bitmap.close();
   }
@@ -186,8 +190,8 @@ export async function embedCardFaceBlobClient(
     const band = await cropArtBand(blob, opts?.upsideDown === true);
     if (!band) return null;
     const { RawImage } = await import("@huggingface/transformers");
-    const image = await RawImage.read(band);
-    const out = await extractor(image);
+    const image = new RawImage(band.data, band.width, band.height, 4);
+    const out = await runOrtExclusive("dinov2:run", () => extractor(image));
     return descriptorFromFeatures(out?.data ?? [], CARD_EMBED_DIM);
   } catch (err) {
     console.warn("[cardEmbed.client] embed failed", err);

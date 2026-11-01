@@ -1,4 +1,6 @@
 // @ts-check
+import { fileURLToPath } from "node:url";
+
 import { NEXT_IMAGE_CONFIG_REMOTE_PATTERNS } from "./src/core/enrich/media/nextImageRemoteHosts.ts";
 
 /**
@@ -20,10 +22,30 @@ const NFT_TRACE_IGNORES = [
   "**/coverage/**",
 ];
 
+/**
+ * One ONNX Runtime Web module in the browser bundle.
+ *
+ * transformers.js imports `onnxruntime-web/webgpu`; ppu-paddle-ocr and our
+ * DocAligner import `onnxruntime-web`. Those are two different bundles of
+ * the same runtime, each with its own `env` and its own WebAssembly
+ * instance: twice the memory on a phone, and the configuration in
+ * `src/lib/client/scan/ortRuntime.ts` (self-hosted WASM, flavour by
+ * capability) only reached one of them. Both specifiers resolve to the same
+ * file here, browser side only — the server never bundles `onnxruntime-web`.
+ */
+const ORT_WEB_BUNDLE =
+  "./node_modules/onnxruntime-web/dist/ort.webgpu.bundle.min.mjs";
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  turbopack: {
+    resolveAlias: {
+      "onnxruntime-web": { browser: ORT_WEB_BUNDLE },
+      "onnxruntime-web/webgpu": { browser: ORT_WEB_BUNDLE },
+    },
+  },
   // Next 16 writes AGENTS.md / CLAUDE.md on `next dev`. We already have
   // project rules under `.cursor/`; don't dump extra files into the tree.
   agentRules: false,
@@ -145,10 +167,20 @@ const nextConfig = {
  * `webpack` key makes a Turbopack `next build` fail. The key exists only when
  * `TURBOPACK` is unset (`next dev --webpack` / `pnpm build`).
  *
- * @param {{ watchOptions?: Record<string, unknown>, plugins?: { constructor?: { name?: string }, traceIgnores?: string[] }[] }} config
+ * @param {{ watchOptions?: Record<string, unknown>, resolve?: { alias?: Record<string, string | false | string[]> }, plugins?: { constructor?: { name?: string }, traceIgnores?: string[] }[] }} config
  * @param {{ dev?: boolean, isServer?: boolean, nextRuntime?: string }} options
  */
 const applyWebpack = (config, { dev, isServer, nextRuntime }) => {
+  if (!isServer) {
+    // Same single-runtime rule as `turbopack.resolveAlias` above.
+    const abs = fileURLToPath(new URL(ORT_WEB_BUNDLE, import.meta.url));
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "onnxruntime-web$": abs,
+      "onnxruntime-web/webgpu$": abs,
+    };
+  }
   if (dev) {
     const ignored = [
       "**/node_modules/**",

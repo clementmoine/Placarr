@@ -1,10 +1,10 @@
 /**
  * Scan runtime: budget clock + one-shot model prefetch at camera start.
  *
- * All on-device inference (DocAligner, PP-OCR, DINOv2) runs through its own
- * engine (onnxruntime-web / transformers.js) which picks WebGPU and falls
- * back to WASM internally — no custom worker to keep in sync.
- * Prefetch once; never re-download on IDB / HTTP cache hit.
+ * All on-device inference (DocAligner, PP-OCR, DINOv2) runs on one shared
+ * ONNX Runtime Web instance configured in `ortRuntime.ts` (self-hosted
+ * WASM, WebGPU only where the browser can run it) — no custom worker to
+ * keep in sync. Prefetch once; never re-download on IDB / HTTP cache hit.
  */
 import {
   createScanBudgetClock,
@@ -16,6 +16,7 @@ import {
 } from "@/lib/client/scan/cardQuadOnnx";
 import { clientEmbedModelFiles } from "@/lib/client/scan/cardEmbed.client";
 import { prefetchClientIdentify } from "@/lib/client/scan/clientIdentify";
+import { configureOrt, ortRuntimeFiles } from "@/lib/client/scan/ortRuntime";
 import { PPOCR_CLIENT_MODELS } from "@/lib/client/scan/paddleCollectorOcr.client";
 
 export type ScanRuntime = {
@@ -26,16 +27,14 @@ export type ScanRuntime = {
 
 let runtime: ScanRuntime | null = null;
 
-/** Best-effort backend label for the HUD (engines decide for real). */
+/** Backend label for the HUD — the flavour every engine actually runs on. */
 async function detectBackend(): Promise<ScanRuntime["backend"]> {
   if (typeof navigator === "undefined") return "unknown";
   try {
-    const gpu = (navigator as Navigator & { gpu?: GPU }).gpu;
-    if (gpu && (await gpu.requestAdapter())) return "webgpu";
+    return (await configureOrt()).flavour;
   } catch {
-    // fall through
+    return "unknown";
   }
-  return "wasm";
 }
 
 export function getScanRuntime(): ScanRuntime {
@@ -111,6 +110,7 @@ export function warmScanAssetsWhenIdle(): void {
   assetsWarmed = true;
   const run = async () => {
     const urls = [
+      ...(await ortRuntimeFiles()),
       DEFAULT_DOCALIGNER_URL,
       ...Object.values(PPOCR_CLIENT_MODELS),
       ...(await clientEmbedModelFiles()),

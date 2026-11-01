@@ -15,6 +15,11 @@ import {
   type CollectorBandRect,
   type CollectorOcrResult,
 } from "@/lib/client/scan/collectorOcr";
+import {
+  configureOrt,
+  ORT_LIBRARY_SESSION_PROVIDERS,
+  runOrtExclusive,
+} from "@/lib/client/scan/ortRuntime";
 import { interpretPaddleRaw } from "@/lib/client/scan/paddleOcrInterpret";
 
 type PaddleOcrInstance = InstanceType<typeof PaddleOcrServiceClass>;
@@ -39,11 +44,17 @@ async function loadService(): Promise<PaddleOcrInstance | null> {
   if (!servicePromise) {
     servicePromise = (async () => {
       try {
+        // Shared ORT env first: the web entry sets a CDN default on import
+        // when wasmPaths is unset, and probes WebGPU on its own otherwise.
+        await configureOrt();
         const { PaddleOcrService } = await import("ppu-paddle-ocr/web");
         const service = new PaddleOcrService({
           model: { ...PPOCR_CLIENT_MODELS },
+          // Never WebGPU here: initialize() creates det+rec concurrently, see
+          // ORT_LIBRARY_SESSION_PROVIDERS.
+          session: { executionProviders: [...ORT_LIBRARY_SESSION_PROVIDERS] },
         });
-        await service.initialize();
+        await runOrtExclusive("ppocr:init", () => service.initialize());
         serviceReady = true;
         return service;
       } catch (err) {
@@ -206,7 +217,9 @@ export async function recognizeCollectorOcrClient(
     const prepared = await prepareBand(image, opts?.preCropped);
     if (!prepared) return null;
 
-    const raw = await service.recognize(prepared.canvas, { flatten: true });
+    const raw = await runOrtExclusive("ppocr:recognize", () =>
+      service.recognize(prepared.canvas, { flatten: true }),
+    );
     const inv = 1 / prepared.scale;
     const { text, words } = interpretPaddleRaw(
       raw,

@@ -9,6 +9,7 @@
  * / Cornelius (AGPL).
  */
 
+import { configureOrt, runOrtExclusive } from "@/lib/client/scan/ortRuntime";
 import { isDocAlignerEnabled } from "@/lib/client/scan/scanDebugStore";
 
 /** Official DocAligner 1.1.1 LCNet-100 heatmap (matches GitHub release name). */
@@ -40,7 +41,6 @@ type OrtModule = {
     ) => Promise<OrtSession>;
   };
   Tensor: new (type: string, data: Float32Array, dims: number[]) => unknown;
-  env?: { wasm?: { wasmPaths?: string; numThreads?: number } };
 };
 
 const IDB_NAME = "placarr-scan-models";
@@ -109,13 +109,11 @@ async function idbSet(key: string, buf: ArrayBuffer): Promise<void> {
 async function loadOrt(): Promise<OrtModule | null> {
   if (ortModule) return ortModule;
   try {
+    // Shared runtime (self-hosted WASM, flavour by capability, thread count
+    // left to ORT) — `env` is global to every model on the page, so nothing
+    // model-specific is set here.
+    await configureOrt();
     const mod = (await import("onnxruntime-web")) as unknown as OrtModule;
-    // Host WASM from the package CDN so Next does not need copied .wasm files.
-    if (mod.env?.wasm) {
-      mod.env.wasm.wasmPaths =
-        "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/";
-      mod.env.wasm.numThreads = 1;
-    }
     ortModule = mod;
     return mod;
   } catch {
@@ -146,9 +144,11 @@ async function getSession(): Promise<OrtSession | null> {
       const bytes = await fetchModelBytes(modelUrl());
       if (!bytes) return null;
       try {
-        return await ort.InferenceSession.create(bytes, {
-          executionProviders: ["wasm"],
-        });
+        return await runOrtExclusive("docaligner:create", () =>
+          ort.InferenceSession.create(bytes, {
+            executionProviders: ["wasm"],
+          }),
+        );
       } catch {
         return null;
       }
@@ -433,7 +433,9 @@ async function runOnRgba(
       INPUT_SIZE,
       INPUT_SIZE,
     ]);
-    const out = await session.run({ [inputName]: tensor });
+    const out = await runOrtExclusive("docaligner:run", () =>
+      session.run({ [inputName]: tensor }),
+    );
     const firstKey = session.outputNames[0];
     if (!firstKey) return null;
     const tensorOut = out[firstKey];

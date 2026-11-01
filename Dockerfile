@@ -18,7 +18,8 @@ WORKDIR /app
 # The schema and its config come along: `postinstall` runs `prisma generate`,
 # which fails with "Could not find Prisma Schema" without them. A host install
 # never noticed — the files are simply there.
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* pnpm-workspace.yaml* .npmrc* ./
+COPY patches ./patches
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 # Config load only, no connection — the real URL arrives at runtime.

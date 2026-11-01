@@ -79,6 +79,9 @@ prisma/*.sql.dump
 # Caches providers locaux (SQLite) et dumps DB éventuels
 # (indexes live under data/<domaine>/)
 
+# ONNX Runtime Web binaries, copied from node_modules by scripts/copy-ort-wasm.mjs
+/public/models/ort/
+
 # Legacy paths — must never return
 /public/uploads/**
 /public/foil

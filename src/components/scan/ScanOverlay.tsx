@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Lens-style overlay: soft framing guide + live vision (detected card edges,
- * barcode bbox, OCR words drawn on the object).
+ * Lens-style overlay: one animated frame (guide → card → guide), one line of
+ * text. Technical vision rects (ROI, OCR words) only in debug.
  */
 import { useSyncExternalStore } from "react";
 
@@ -19,6 +19,8 @@ import {
   type ScanVisionText,
 } from "@/lib/client/scan/scanVisionOverlay";
 import { cn } from "@/lib/shared/utils";
+
+import { SubjectFrame } from "./SubjectFrame";
 
 export type ScanPhase = "looking" | "understanding" | "delivering";
 
@@ -66,15 +68,19 @@ export function ScanOverlay({
 }: ScanOverlayProps) {
   const debug = useDebugSnapshot();
   const vision = useVisionSnapshot();
-  const showBarcodeGuide = mode === "barcode" || mode === "auto";
-  const showCardGuide = mode === "card" || mode === "auto";
   const locked = phase === "delivering";
-  const hasQuad = Boolean(quadNorm && quadNorm.length === 4);
-  const bracketClass = locked
-    ? "border-emerald-400"
-    : phase === "understanding"
-      ? "border-amber-300"
-      : "border-white/80";
+  // One frame for the card; a barcode hit borrows it (rect → quad) so the
+  // same outline glides onto whatever the camera is reading.
+  const barcode = vision.overlays.find((o) => o.tone === "barcode");
+  const frameQuad =
+    quadNorm && quadNorm.length === 4
+      ? quadNorm
+      : barcode
+        ? rectToQuad(barcode)
+        : null;
+  // Technical rects (ROI, OCR band, words) are debug-only: the product UI is
+  // the frame and one line of text.
+  const showVisionDetails = Boolean(debug);
 
   return (
     <div
@@ -91,104 +97,50 @@ export function ScanOverlay({
       }
       aria-label={onTap ? hint : undefined}
     >
-      {/* Soft framing aid — only when no real edge detection yet */}
-      {showCardGuide && !hasQuad ? (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div
-            className={cn(
-              "w-[78%] max-w-[280px] aspect-[63/88] relative overflow-hidden rounded-xl border transition-colors",
-              locked ? "border-emerald-400/80" : "border-white/20",
-              "shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]",
-            )}
-          >
-            <Corner bracketClass={bracketClass} pos="tl" />
-            <Corner bracketClass={bracketClass} pos="tr" />
-            <Corner bracketClass={bracketClass} pos="bl" />
-            <Corner bracketClass={bracketClass} pos="br" />
-            {showBarcodeGuide && mode === "auto" ? (
-              <div className="absolute left-[12%] right-[12%] top-1/2 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent motion-safe:animate-pulse" />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <SubjectFrame
+        quadNorm={frameQuad}
+        locked={locked}
+        guideAspect={mode === "barcode" ? 16 / 10 : 63 / 88}
+      />
 
-      {/* Detected card edges (classical / ONNX) */}
-      {hasQuad ? (
+      {showVisionDetails &&
+      (vision.overlays.length > 0 || vision.texts.length > 0) ? (
         <svg
           className="absolute inset-0 size-full pointer-events-none"
           viewBox="0 0 1 1"
           preserveAspectRatio="none"
         >
-          <polygon
-            points={quadNorm!.map((p) => `${p.x},${p.y}`).join(" ")}
-            fill="rgba(16,185,129,0.1)"
-            stroke={locked ? "#34d399" : "#38bdf8"}
-            strokeWidth={0.007}
-            vectorEffect="non-scaling-stroke"
-          />
-          <text
-            x={quadNorm![0]!.x}
-            y={Math.max(0.02, quadNorm![0]!.y - 0.02)}
-            fill="#7dd3fc"
-            fontSize={0.026}
-            fontFamily="ui-monospace, monospace"
-          >
-            card
-          </text>
-          {/* Dim outside detected card */}
-          <path
-            d={outsideQuadPath(quadNorm!)}
-            fill="rgba(0,0,0,0.4)"
-            fillRule="evenodd"
-          />
-        </svg>
-      ) : null}
-
-      {/* Dynamic rects (barcode, OCR band) + word texts on the object */}
-      {vision.overlays.length > 0 || vision.texts.length > 0 ? (
-        <svg
-          className="absolute inset-0 size-full pointer-events-none"
-          viewBox="0 0 1 1"
-          preserveAspectRatio="none"
-        >
-          {vision.overlays.map((o) => (
-            <VisionSvgRect key={o.id} overlay={o} />
-          ))}
+          {vision.overlays
+            .filter((o) => o.tone !== "barcode")
+            .map((o) => (
+              <VisionSvgRect key={o.id} overlay={o} />
+            ))}
           {vision.texts.map((t) => (
             <VisionSvgText key={t.id} item={t} />
           ))}
         </svg>
       ) : null}
 
-      {/* Barcode-only guide */}
-      {mode === "barcode" &&
-      !vision.overlays.some((o) => o.tone === "barcode") ? (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div
-            className={cn(
-              "w-[72%] max-w-[320px] aspect-[16/10] relative rounded-lg border",
-              locked ? "border-emerald-400" : "border-white/25",
-              "shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]",
-            )}
-          >
-            <Corner bracketClass={bracketClass} pos="tl" />
-            <Corner bracketClass={bracketClass} pos="tr" />
-            <Corner bracketClass={bracketClass} pos="bl" />
-            <Corner bracketClass={bracketClass} pos="br" />
-            {!locked ? (
-              <div className="absolute inset-x-3 top-1/2 h-0.5 bg-primary/70 motion-safe:animate-pulse" />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="absolute inset-x-0 bottom-0 z-20 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none">
+      <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center p-4 pointer-events-none">
         <p
-          className="text-center text-xs text-white/90"
+          className={cn(
+            "max-w-[86%] rounded-full px-3.5 py-1.5 text-center text-[12px] leading-snug tracking-[0.01em] text-white/95",
+            "bg-black/35 backdrop-blur-md ring-1 ring-white/10 shadow-[0_2px_12px_rgba(0,0,0,0.25)]",
+            "transition-colors duration-300",
+            locked && "bg-emerald-500/25 ring-emerald-300/30",
+          )}
           aria-live="polite"
           data-phase={phase}
         >
-          {sampling && phase !== "delivering" ? "…" : hint}
+          {sampling && phase !== "delivering" ? (
+            <span className="inline-flex items-center gap-1 align-middle">
+              <Dot delay="0ms" />
+              <Dot delay="140ms" />
+              <Dot delay="280ms" />
+            </span>
+          ) : (
+            hint
+          )}
         </p>
       </div>
 
@@ -209,10 +161,22 @@ texts=${debug.texts.length}`}
   );
 }
 
-/** Even-odd path: full frame minus the detected quad (vignette). */
-function outsideQuadPath(quad: Array<{ x: number; y: number }>): string {
-  const hole = quad.map((p) => `${p.x},${p.y}`).join(" ");
-  return `M0,0 H1 V1 H0 Z M ${hole} Z`;
+function Dot({ delay }: { delay: string }) {
+  return (
+    <span
+      className="size-1 rounded-full bg-white/90 motion-safe:animate-pulse"
+      style={{ animationDelay: delay }}
+    />
+  );
+}
+
+function rectToQuad(r: ScanVisionRect): Array<{ x: number; y: number }> {
+  return [
+    { x: r.x, y: r.y },
+    { x: r.x + r.w, y: r.y },
+    { x: r.x + r.w, y: r.y + r.h },
+    { x: r.x, y: r.y + r.h },
+  ];
 }
 
 function VisionSvgRect({ overlay }: { overlay: ScanVisionRect }) {
@@ -274,21 +238,4 @@ function VisionSvgText({ item }: { item: ScanVisionText }) {
       </text>
     </g>
   );
-}
-
-function Corner({
-  bracketClass,
-  pos,
-}: {
-  bracketClass: string;
-  pos: "tl" | "tr" | "bl" | "br";
-}) {
-  const base = "absolute size-4 border-2 rounded-sm";
-  const map = {
-    tl: "top-0 left-0 border-r-0 border-b-0 rounded-tl-lg",
-    tr: "top-0 right-0 border-l-0 border-b-0 rounded-tr-lg",
-    bl: "bottom-0 left-0 border-r-0 border-t-0 rounded-bl-lg",
-    br: "bottom-0 right-0 border-l-0 border-t-0 rounded-br-lg",
-  } as const;
-  return <div className={cn(base, bracketClass, map[pos])} />;
 }

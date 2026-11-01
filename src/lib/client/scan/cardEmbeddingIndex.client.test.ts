@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { CARD_EMBED_MODEL, l2Normalize } from "@/core/identify/embedMath";
 import {
+  admitResidentPackForTests,
+  getResidentPack,
   matchClientEmbeddings,
+  RESIDENT_BUDGET_BYTES,
+  residentPackIds,
   resetClientEmbeddingMemory,
   shardRevalidationDecision,
   type ClientLoadedPack,
@@ -82,6 +86,36 @@ describe("matchClientEmbeddings (f16 matrix)", () => {
       ocrText: "#3",
     });
     expect(hits.some((h) => h.printKey === "game:c-3")).toBe(true);
+  });
+});
+
+describe("resident packs (bounded LRU)", () => {
+  function bigPack(packId: string, bytes: number): ClientLoadedPack {
+    const base = packFixture();
+    return {
+      ...base,
+      meta: { ...base.meta, packId },
+      matrix: new Float32Array(Math.ceil(bytes / 4)),
+    };
+  }
+
+  it("evicts the least recently used pack once over budget", () => {
+    resetClientEmbeddingMemory();
+    const half = RESIDENT_BUDGET_BYTES / 2;
+    admitResidentPackForTests(bigPack("a", half * 0.6));
+    admitResidentPackForTests(bigPack("b", half * 0.6));
+    // Touch "a" so "b" becomes the LRU victim.
+    expect(getResidentPack("a")).not.toBeNull();
+    admitResidentPackForTests(bigPack("c", half * 0.9));
+    expect(residentPackIds().sort()).toEqual(["a", "c"]);
+    expect(getResidentPack("b")).toBeNull();
+  });
+
+  it("still admits a single pack larger than the budget (alone)", () => {
+    resetClientEmbeddingMemory();
+    admitResidentPackForTests(bigPack("small", 1024));
+    admitResidentPackForTests(bigPack("huge", RESIDENT_BUDGET_BYTES * 1.2));
+    expect(residentPackIds()).toEqual(["huge"]);
   });
 });
 

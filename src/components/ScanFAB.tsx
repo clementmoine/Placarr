@@ -1,27 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Prisma } from "@/generated/prisma/browser";
 import { usePathname, useRouter } from "next/navigation";
 import { Scan, Barcode } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { saveItem } from "@/lib/api/items";
 import { itemPath } from "@/lib/routing/slugs";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
-import { BarcodeScanCapture } from "@/components/BarcodeScanCapture";
-import { CardScanCapture } from "@/components/CardScanCapture";
+import { UnifiedScanCapture } from "@/components/UnifiedScanCapture";
+import { warmScanEnginesWhenIdle } from "@/lib/client/scan/scanRuntime";
+import type { SessionLock } from "@/lib/client/scan/scanSession";
 import dynamic from "next/dynamic";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -36,10 +31,11 @@ const QuickScanModal = dynamic(
 
 export function ScanFAB() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scanMode, setScanMode] = useState<"barcode" | "card">("barcode");
+  const [batch, setBatch] = useState<SessionLock[]>([]);
+  const [batchOpen, setBatchOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string>("");
-  const [quickScanOpen, setQuickScanOpen] = useState<boolean>(false);
-  const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
+  const [quickScanOpen, setQuickScanOpen] = useState(false);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [prefilledItemValues, setPrefilledItemValues] = useState<
     | {
         name: string;
@@ -57,14 +53,14 @@ export function ScanFAB() {
   const queryClient = useQueryClient();
   const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
 
+  // Models land in the browser cache while the user browses, so the first
+  // tap on the button opens a scanner that already works.
+  useEffect(() => {
+    if (!isCameraUnavailable && !isCheckingCamera) warmScanEnginesWhenIdle();
+  }, [isCameraUnavailable, isCheckingCamera]);
+
   const shelfMatch = pathname.match(/^\/shelves\/([^\/]+)/);
   const shelfId = shelfMatch ? shelfMatch[1] : undefined;
-
-  const openQuickScan = (barcode: string) => {
-    setIsScannerOpen(false);
-    setScannedBarcode(barcode);
-    setQuickScanOpen(true);
-  };
 
   const handleScanButtonClick = () => {
     if (isCameraUnavailable || isCheckingCamera) {
@@ -72,20 +68,37 @@ export function ScanFAB() {
       setQuickScanOpen(true);
       return;
     }
-    setScanMode("barcode");
     setIsScannerOpen(true);
   };
 
-  const confirmCardMatch = (printKey: string) => {
+  const handleBatchDone = useCallback((locks: SessionLock[]) => {
     setIsScannerOpen(false);
+    setBatch(locks);
+    setBatchOpen(true);
+  }, []);
+
+  const popBatchHead = useCallback(() => {
+    setBatch((prev) => prev.slice(1));
+  }, []);
+
+  const addBatchHead = useCallback(() => {
+    const head = batch[0];
+    if (!head) return;
+    if (head.kind === "barcode") {
+      setScannedBarcode(head.key);
+      setQuickScanOpen(true);
+      popBatchHead();
+      return;
+    }
     setPrefilledItemValues({
-      name: printKey,
-      imageUrl: null,
+      name: head.key,
+      imageUrl: head.faceUrl ?? null,
       barcode: "",
       shelfId,
     });
     setIsItemModalOpen(true);
-  };
+    popBatchHead();
+  }, [batch, popBatchHead, shelfId]);
 
   const shouldUseManualScan = isCameraUnavailable || isCheckingCamera;
   const scanButtonLabel = shouldUseManualScan
@@ -118,7 +131,11 @@ export function ScanFAB() {
       });
 
       toast.success(t("common.success"));
-      router.push(itemPath(newItem.shelf || { id: newItem.shelfId }, newItem));
+      if (!batchOpen && !isScannerOpen) {
+        router.push(
+          itemPath(newItem.shelf || { id: newItem.shelfId }, newItem),
+        );
+      }
     } catch (error) {
       console.error("Failed to save scanned item:", error);
       toast.error(t("items.saveFailed"));
@@ -149,59 +166,89 @@ export function ScanFAB() {
       </div>
 
       <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-        <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh] w-[95vw] sm:max-w-md rounded-2xl border border-border dark:border-zinc-800 shadow-2xl">
-          <DialogHeader className="p-5 border-b shrink-0 flex flex-col gap-1">
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-              <Scan className="size-5 text-primary" />
-              {t("scanner.title") || "Item scan"}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-              {scanMode === "card"
-                ? t("scanner.cardDescription")
-                : t("scanner.description") ||
-                  "Hold the barcode inside the frame to scan the item."}
-            </DialogDescription>
-            <div className="mt-2 inline-flex rounded-xl border border-border overflow-hidden self-start">
-              <button
-                type="button"
-                onClick={() => setScanMode("barcode")}
-                className={`h-9 px-3 text-xs font-bold cursor-pointer ${
-                  scanMode === "barcode"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card hover:bg-accent"
-                }`}
-              >
-                {t("scanner.modeBarcode")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setScanMode("card")}
-                className={`h-9 px-3 text-xs font-bold cursor-pointer ${
-                  scanMode === "card"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card hover:bg-accent"
-                }`}
-              >
-                {t("scanner.modeCard")}
-              </button>
-            </div>
-          </DialogHeader>
+        <DialogContent
+          showClose
+          className="flex flex-col p-0 overflow-hidden gap-0 border-0 bg-black text-white shadow-2xl w-[100vw] max-w-none h-[100dvh] max-h-[100dvh] rounded-none top-0 left-0 translate-x-0 translate-y-0 sm:w-[min(100vw,28rem)] sm:h-[min(96dvh,52rem)] sm:max-h-[96dvh] sm:rounded-2xl sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:border sm:border-zinc-800 [&>button]:text-white/70 [&>button]:hover:text-white [&>button]:opacity-100 [&>button]:z-50"
+        >
+          <DialogTitle className="sr-only">
+            {t("scanner.title") || "Item scan"}
+          </DialogTitle>
+          <div className="flex-1 min-h-0 flex flex-col pt-10">
+            <UnifiedScanCapture
+              active={isScannerOpen}
+              onBatchDone={handleBatchDone}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
-          <div className="border-t border-border/60 p-4">
-            {scanMode === "barcode" ? (
-              <BarcodeScanCapture
-                active={isScannerOpen && scanMode === "barcode"}
-                onBarcode={openQuickScan}
-                cameraClassName="aspect-square rounded-xl border-0 max-h-none"
-              />
+      <Dialog
+        open={batchOpen}
+        onOpenChange={(open) => {
+          setBatchOpen(open);
+          if (!open) setBatch([]);
+        }}
+      >
+        <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden">
+          <div className="p-5 border-b border-border space-y-1">
+            <DialogTitle className="text-base font-bold">
+              {t("scanner.sessionReviewTitle")}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              {t("scanner.sessionReviewHint")}
+            </p>
+          </div>
+          <div className="max-h-[50vh] overflow-y-auto divide-y divide-border">
+            {batch.length === 0 ? (
+              <p className="p-5 text-sm text-muted-foreground">
+                {t("scanner.sessionEmpty")}
+              </p>
             ) : (
-              <CardScanCapture
-                active={isScannerOpen && scanMode === "card"}
-                onConfirm={confirmCardMatch}
-                cameraClassName="aspect-[3/4] rounded-xl border-0 max-h-[min(42vh,360px)]"
-              />
+              batch.map((lock) => (
+                <div
+                  key={lock.id}
+                  className="flex items-center gap-3 px-4 py-3"
+                >
+                  {lock.faceUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={lock.faceUrl}
+                      alt=""
+                      className="size-12 rounded-lg object-cover bg-muted"
+                    />
+                  ) : (
+                    <div className="size-12 rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
+                      {lock.kind === "barcode" ? "▦" : "▣"}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{lock.label}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">
+                      {lock.kind}
+                    </p>
+                  </div>
+                </div>
+              ))
             )}
           </div>
+          {batch.length > 0 ? (
+            <div className="p-4 flex gap-2 border-t border-border">
+              <button
+                type="button"
+                onClick={popBatchHead}
+                className="flex-1 h-11 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+              >
+                {t("scanner.sessionSkip")}
+              </button>
+              <button
+                type="button"
+                onClick={addBatchHead}
+                className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold cursor-pointer"
+              >
+                {t("scanner.sessionAdd")}
+              </button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 

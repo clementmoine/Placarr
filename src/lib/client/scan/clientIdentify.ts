@@ -3,17 +3,20 @@
  * Falls back to null so the caller can POST fallback=1 to the server — the
  * OCR stage result is kept separately so its text still reaches the server.
  */
+import { shortlistPacksByCentroid } from "@/core/identify/cardEmbeddingSearch";
 import { finalizeIdentifyConfidence } from "@/core/identify/identifyConfidence";
 import { parseCollectorNumberHint } from "@/core/identify/collectorNumberHint";
 import { assetsPackFileUrl } from "@/lib/packAssetUrls";
 import {
   embedCardFaceBlobClient,
+  isCardEmbedClientReady,
   prefetchCardEmbedClient,
 } from "@/lib/client/scan/cardEmbed.client";
 import {
-  loadClientEmbeddingPack,
+  getResidentPack,
   matchClientEmbeddings,
   prefetchClientEmbeddingPacks,
+  prioritizePack,
   type ClientEmbedHit,
   type ClientLoadedPack,
 } from "@/lib/client/scan/cardEmbeddingIndex.client";
@@ -128,59 +131,108 @@ function withFaceUrl(hit: ClientEmbedHit): ClientIdentifyMatch {
   };
 }
 
-let packIdsPromise: Promise<string[]> | null = null;
+export type ClientPackManifest = {
+  packId: string;
+  entries: number;
+  dim: number;
+  builtAt: string;
+  bytesF16: number;
+  centroid: Float32Array;
+};
+
+let manifestPromise: Promise<ClientPackManifest[]> | null = null;
+
+function parseManifest(body: unknown): ClientPackManifest[] {
+  const raw = (body as { packs?: unknown })?.packs;
+  if (!Array.isArray(raw)) return [];
+  const out: ClientPackManifest[] = [];
+  for (const p of raw) {
+    if (!p || typeof p !== "object") continue;
+    const m = p as Partial<Record<keyof ClientPackManifest, unknown>>;
+    if (typeof m.packId !== "string" || !Array.isArray(m.centroid)) continue;
+    out.push({
+      packId: m.packId,
+      entries: typeof m.entries === "number" ? m.entries : 0,
+      dim: typeof m.dim === "number" ? m.dim : m.centroid.length,
+      builtAt: typeof m.builtAt === "string" ? m.builtAt : "",
+      bytesF16: typeof m.bytesF16 === "number" ? m.bytesF16 : 0,
+      centroid: Float32Array.from(m.centroid as number[]),
+    });
+  }
+  return out;
+}
 
 /**
- * Packs with published shards — asked once per session, soft-fail to none
- * (identify then falls back to the server route, never to a guess).
+ * Pack manifest (size + centroid per pack, cheapest first) — asked once per
+ * session, soft-fail to none (identify then falls back to the server route,
+ * never to a guess).
  */
-export function resolveClientIdentifyPackIds(): Promise<string[]> {
-  if (!packIdsPromise) {
-    packIdsPromise = (async () => {
+export function resolveClientIdentifyPacks(): Promise<ClientPackManifest[]> {
+  if (!manifestPromise) {
+    manifestPromise = (async () => {
       try {
         const res = await fetch("/api/identify/packs", { cache: "no-store" });
         if (!res.ok) return [];
-        const body = (await res.json()) as { packs?: unknown };
-        return Array.isArray(body.packs)
-          ? body.packs.filter((p): p is string => typeof p === "string")
-          : [];
+        return parseManifest(await res.json());
       } catch {
         return [];
       }
     })();
     // Let a later camera session retry after a transient failure.
-    void packIdsPromise.then((ids) => {
-      if (!ids.length) packIdsPromise = null;
+    void manifestPromise.then((packs) => {
+      if (!packs.length) manifestPromise = null;
     });
   }
-  return packIdsPromise;
+  return manifestPromise;
 }
 
-/** Tests: forget the cached pack list. */
+/** Pack ids with shards (manifest order). */
+export async function resolveClientIdentifyPackIds(): Promise<string[]> {
+  return (await resolveClientIdentifyPacks()).map((p) => p.packId);
+}
+
+/** Tests: forget the cached manifest. */
 export function resetClientIdentifyPackIds(): void {
-  packIdsPromise = null;
-}
-
-/** Warm OCR + DINOv2 + pack shards (camera start). */
-export async function prefetchClientIdentify(
-  packIds: readonly string[] = [],
-): Promise<void> {
-  const jobs: Promise<unknown>[] = [
-    prefetchPaddleCollectorOcrClient(),
-    prefetchCardEmbedClient(),
-    (async () => {
-      const ids = packIds.length
-        ? packIds
-        : await resolveClientIdentifyPackIds();
-      if (ids.length) await prefetchClientEmbeddingPacks(ids);
-    })(),
-  ];
-  await Promise.all(jobs);
+  manifestPromise = null;
 }
 
 /**
- * Run on-device identify. Returns null when client stack can't complete
- * (missing models / shards) — caller should server-fallback automatically.
+ * Warm the engines (camera start). Resolves when OCR + DINOv2 are built;
+ * shards then stream in the background, cheapest first, and the centroid
+ * shortlist pulls any pack a query needs ahead of the queue.
+ */
+export async function prefetchClientIdentify(
+  packIds: readonly string[] = [],
+): Promise<void> {
+  const shards = (async () => {
+    const ids = packIds.length
+      ? [...packIds]
+      : await resolveClientIdentifyPackIds();
+    if (ids.length) void prefetchClientEmbeddingPacks(ids);
+  })();
+  await Promise.all([
+    prefetchPaddleCollectorOcrClient(),
+    prefetchCardEmbedClient(),
+    shards,
+  ]);
+}
+
+/** Centroid shortlist over the manifest: which packs this query needs. */
+export function shortlistManifest(
+  query: Float32Array,
+  manifest: readonly ClientPackManifest[],
+): ClientPackManifest[] {
+  return shortlistPacksByCentroid(query, manifest, {
+    minPacks: Math.min(4, manifest.length),
+    margin: 200,
+  });
+}
+
+/**
+ * Run on-device identify. Returns null whenever the client stack cannot
+ * answer *right now* — model still loading, a shortlisted shard not yet
+ * resident — so the caller falls back to the server for this sample instead
+ * of waiting. Never a partial-coverage guess.
  */
 export async function identifyCardBlobClient(
   blob: Blob,
@@ -191,21 +243,34 @@ export async function identifyCardBlobClient(
     ocr?: ClientOcrOutcome | null;
   },
 ): Promise<ClientIdentifyResult | null> {
+  if (!isCardEmbedClientReady()) {
+    void prefetchCardEmbedClient();
+    return null;
+  }
+  const manifest = await resolveClientIdentifyPacks();
+  const scope = opts?.packIds?.length
+    ? manifest.filter((m) => opts.packIds!.includes(m.packId))
+    : manifest;
+  if (!scope.length) return null;
+
   const ocr = opts?.ocr ?? (await recognizeCollectorBandClient(blob));
   const ocrText = ocr.text;
 
-  const packIds = opts?.packIds?.length
-    ? opts.packIds
-    : await resolveClientIdentifyPackIds();
-  const packs: ClientLoadedPack[] = [];
-  for (const id of packIds) {
-    const pack = await loadClientEmbeddingPack(id);
-    if (pack) packs.push(pack);
-  }
-  if (!packs.length) return null;
-
   const query = await embedCardFaceBlobClient(blob);
   if (!query) return null;
+
+  const wanted = shortlistManifest(query, scope);
+  const packs: ClientLoadedPack[] = [];
+  let missing = 0;
+  for (const m of wanted) {
+    const resident = getResidentPack(m.packId);
+    if (resident) packs.push(resident);
+    else {
+      missing += 1;
+      prioritizePack(m.packId);
+    }
+  }
+  if (missing || !packs.length) return null;
 
   const rawHits = matchClientEmbeddings(query, packs, {
     limit: 8,

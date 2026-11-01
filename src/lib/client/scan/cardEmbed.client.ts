@@ -23,6 +23,15 @@ type FeatureExtractor = (
 
 let extractorPromise: Promise<FeatureExtractor | null> | null = null;
 let loadedModelId: string | null = null;
+let extractorReady = false;
+
+/**
+ * True once the pipeline is built. Identify must not wait for an 88 MB
+ * download on first open — it answers from the server until this flips.
+ */
+export function isCardEmbedClientReady(): boolean {
+  return extractorReady;
+}
 
 async function pickDevice(): Promise<"webgpu" | "wasm"> {
   if (typeof navigator !== "undefined" && "gpu" in navigator) {
@@ -59,6 +68,7 @@ async function loadExtractor(): Promise<FeatureExtractor | null> {
         device,
         dtype: device === "webgpu" ? "fp32" : "q8",
       });
+      extractorReady = true;
       return pipe as unknown as FeatureExtractor;
     } catch (err) {
       console.warn("[cardEmbed.client] load failed", err);
@@ -84,6 +94,7 @@ export async function prefetchCardEmbedClient(): Promise<void> {
 export function resetCardEmbedClient(): void {
   extractorPromise = null;
   loadedModelId = null;
+  extractorReady = false;
 }
 
 export function clientEmbedModelId(): string {

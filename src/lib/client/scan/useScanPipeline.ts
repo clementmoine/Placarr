@@ -49,7 +49,9 @@ const ONNX_FRESH_MS = 900;
 
 export function useScanPipeline(opts?: UseScanPipelineOptions) {
   const obsRef = useRef<ScanObservations>(emptyScanObservations());
-  const emaRef = useRef<SubjectQuadEma>(createSubjectQuadEma(0.35));
+  // Light EMA only (outlier damping): the drawn frame has its own spring, so
+  // a heavier blend here would just add lag on top of lag.
+  const emaRef = useRef<SubjectQuadEma>(createSubjectQuadEma(0.6));
   const budgetRef = useRef<ScanBudgetClock>(getScanRuntime().budget);
   const onnxInFlightRef = useRef(false);
   const lastAabbRef = useRef<LiveSubjectHit["aabb"] | null>(null);

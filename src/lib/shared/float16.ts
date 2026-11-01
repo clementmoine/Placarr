@@ -11,7 +11,7 @@ export function float32ToFloat16Bits(value: number): number {
   const x = u32[0]!;
 
   const sign = (x >>> 16) & 0x8000;
-  let exp = ((x >>> 23) & 0xff) - 127 + 15;
+  const exp = ((x >>> 23) & 0xff) - 127 + 15;
   let mant = x & 0x7fffff;
 
   if (exp <= 0) {
@@ -65,17 +65,28 @@ export function encodeFloat16Matrix(src: Float32Array): ArrayBuffer {
   for (let i = 0; i < src.length; i++) {
     out[i] = float32ToFloat16Bits(src[i]!);
   }
-  return out.buffer.slice(
-    out.byteOffset,
-    out.byteOffset + out.byteLength,
-  );
+  return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
 }
 
-/** Decode a little-endian float16 buffer into Float32Array. */
-export function decodeFloat16Matrix(
+/**
+ * All 65 536 half values decoded once (256 KB). Decoding a 56 MB shard
+ * through the scalar path allocated two typed arrays per element and froze
+ * the camera for seconds; the table makes it a plain gather.
+ */
+let halfTable: Float32Array | null = null;
+function float16Table(): Float32Array {
+  if (!halfTable) {
+    const t = new Float32Array(65536);
+    for (let h = 0; h < 65536; h++) t[h] = float16BitsToFloat32(h);
+    halfTable = t;
+  }
+  return halfTable;
+}
+
+function halfView(
   buffer: ArrayBuffer | ArrayBufferView,
   expectedLength?: number,
-): Float32Array {
+): Uint16Array {
   const bytes =
     buffer instanceof ArrayBuffer
       ? new Uint8Array(buffer)
@@ -89,10 +100,46 @@ export function decodeFloat16Matrix(
       `float16 length mismatch: got ${n}, expected ${expectedLength}`,
     );
   }
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const out = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    out[i] = float16BitsToFloat32(view.getUint16(i * 2, true));
+  if (bytes.byteOffset % 2 === 0) {
+    return new Uint16Array(bytes.buffer, bytes.byteOffset, n);
+  }
+  // Unaligned view (rare: sliced buffers) — copy to an aligned one.
+  const aligned = new Uint16Array(n);
+  new Uint8Array(aligned.buffer).set(bytes);
+  return aligned;
+}
+
+/** Decode a little-endian float16 buffer into Float32Array. */
+export function decodeFloat16Matrix(
+  buffer: ArrayBuffer | ArrayBufferView,
+  expectedLength?: number,
+): Float32Array {
+  const halves = halfView(buffer, expectedLength);
+  const table = float16Table();
+  const out = new Float32Array(halves.length);
+  for (let i = 0; i < halves.length; i++) out[i] = table[halves[i]!]!;
+  return out;
+}
+
+/**
+ * Same decode, but yielding to the event loop every `chunk` elements so a
+ * large shard never blocks the camera loop (≈ 4 M halves per slice ≈ 10 ms).
+ */
+export async function decodeFloat16MatrixChunked(
+  buffer: ArrayBuffer | ArrayBufferView,
+  expectedLength?: number,
+  opts?: { chunk?: number; yieldFn?: () => Promise<void> },
+): Promise<Float32Array> {
+  const halves = halfView(buffer, expectedLength);
+  const table = float16Table();
+  const out = new Float32Array(halves.length);
+  const chunk = Math.max(1, opts?.chunk ?? 4_000_000);
+  const yieldFn =
+    opts?.yieldFn ?? (() => new Promise<void>((r) => setTimeout(r, 0)));
+  for (let start = 0; start < halves.length; start += chunk) {
+    const end = Math.min(halves.length, start + chunk);
+    for (let i = start; i < end; i++) out[i] = table[halves[i]!]!;
+    if (end < halves.length) await yieldFn();
   }
   return out;
 }

@@ -27,6 +27,12 @@ export const PPOCR_CLIENT_MODELS = {
 } as const;
 
 let servicePromise: Promise<PaddleOcrInstance | null> | null = null;
+let serviceReady = false;
+
+/** True once det/rec sessions exist — before that, OCR is simply skipped. */
+export function isPaddleOcrClientReady(): boolean {
+  return serviceReady;
+}
 
 async function loadService(): Promise<PaddleOcrInstance | null> {
   if (typeof window === "undefined") return null;
@@ -38,6 +44,7 @@ async function loadService(): Promise<PaddleOcrInstance | null> {
           model: { ...PPOCR_CLIENT_MODELS },
         });
         await service.initialize();
+        serviceReady = true;
         return service;
       } catch (err) {
         console.warn("[paddleCollectorOcr.client] init failed", err);
@@ -60,6 +67,7 @@ export async function prefetchPaddleCollectorOcrClient(): Promise<void> {
 export async function resetPaddleCollectorOcrClient(): Promise<void> {
   const pending = servicePromise;
   servicePromise = null;
+  serviceReady = false;
   const service = pending ? await pending : null;
   try {
     await service?.destroy();
@@ -184,6 +192,12 @@ export async function recognizeCollectorOcrClient(
   opts?: { timeoutMs?: number; preCropped?: PreCroppedBand },
 ): Promise<(CollectorOcrResult & { engine: "ppocr-client" }) | null> {
   const timeoutMs = opts?.timeoutMs ?? 1500;
+  // Still warming up (first open): don't hold the sample for the download —
+  // keep loading in the background, let the server read the band this time.
+  if (!serviceReady) {
+    void loadService();
+    return null;
+  }
   const run = async (): Promise<
     (CollectorOcrResult & { engine: "ppocr-client" }) | null
   > => {

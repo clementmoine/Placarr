@@ -34,10 +34,7 @@ import {
   summarizeCameraCapabilities,
   type CameraCapabilitiesSummary,
 } from "@/lib/client/scan/cameraControls";
-import {
-  detectQuadOnnx,
-  prefetchDocAligner,
-} from "@/lib/client/scan/cardQuadOnnx";
+import { detectQuadOnnx } from "@/lib/client/scan/cardQuadOnnx";
 import {
   identifyCardBlobClient,
   recognizeCollectorBandClient,
@@ -951,12 +948,13 @@ export function UnifiedScanCapture({
     [allowIdentifyTick, identifyBlob],
   );
 
-  // Warm DocAligner + optional client OCR/DINOv2 while the camera is up.
+  // Warm the on-device stack as soon as the scanner opens — not after the
+  // camera permission round-trip — so the frame and identify are ready by
+  // the time the first frame arrives.
   useEffect(() => {
-    if (!active || !live) return;
+    if (!active) return;
     void bootScanRuntime([]);
-    void prefetchDocAligner();
-  }, [active, live]);
+  }, [active]);
 
   // Vision overlay (Sobel ≤5 Hz + DocAligner ≤2 Hz + EMA). Yields during identify.
   useEffect(() => {

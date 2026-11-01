@@ -4,6 +4,13 @@
  * Packs served under `/assets/<pack>/card-embedding-index.f16` + `.json`.
  * Same topK / centroid logic as server `cardEmbeddingSearch`.
  *
+ * Residency: decoded f32 matrices live in a bounded LRU (`RESIDENT_BUDGET`);
+ * the f16 copy stays in IndexedDB. A pack becomes resident when the
+ * background queue reaches it (cheapest first) or when a query's centroid
+ * shortlist asks for it (`prioritizePack`). Nothing here ever blocks the
+ * camera: decoding yields, downloads are sequential and low priority, and
+ * identify only reads what is already resident (`getResidentPack`).
+ *
  * Freshness: an IndexedDB hit is served immediately, then revalidated once
  * per session with a conditional GET on the meta (`If-None-Match`). A 304
  * costs a few hundred bytes; a 200 means Sync published new vectors and the
@@ -21,7 +28,7 @@ import {
   printKeyMatchesCollectorHint,
   type CollectorNumberHint,
 } from "@/core/identify/collectorNumberHint";
-import { decodeFloat16Matrix } from "@/lib/shared/float16";
+import { decodeFloat16MatrixChunked } from "@/lib/shared/float16";
 import { assetsPackFileUrl, CARD_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import {
   clientEmbedDim,
@@ -94,7 +101,56 @@ async function idbPut(rec: IdbRecord): Promise<void> {
   });
 }
 
-const memory = new Map<string, ClientLoadedPack>();
+/**
+ * Decoded (f32) matrices kept in RAM. 160 MB holds the largest shard
+ * (Yu-Gi-Oh ≈ 112 MB) plus a few mid-size packs; beyond that the least
+ * recently used pack is dropped (its f16 copy stays in IndexedDB).
+ */
+export const RESIDENT_BUDGET_BYTES = 160 * 1024 * 1024;
+
+type Resident = { pack: ClientLoadedPack; bytes: number; lastUsed: number };
+const memory = new Map<string, Resident>();
+let clock = 0;
+
+function packBytes(pack: ClientLoadedPack): number {
+  return pack.matrix.byteLength;
+}
+
+function admit(pack: ClientLoadedPack): void {
+  const packId = pack.meta.packId;
+  const bytes = packBytes(pack);
+  memory.delete(packId);
+  let used = 0;
+  for (const r of memory.values()) used += r.bytes;
+  // Evict LRU until the newcomer fits (a single over-budget pack still
+  // gets admitted alone — better one big pack than none).
+  while (memory.size && used + bytes > RESIDENT_BUDGET_BYTES) {
+    let victim: string | null = null;
+    let oldest = Infinity;
+    for (const [id, r] of memory) {
+      if (r.lastUsed < oldest) {
+        oldest = r.lastUsed;
+        victim = id;
+      }
+    }
+    if (!victim) break;
+    used -= memory.get(victim)!.bytes;
+    memory.delete(victim);
+  }
+  memory.set(packId, { pack, bytes, lastUsed: ++clock });
+}
+
+/** Resident pack (sync) — the only read path identify is allowed to use. */
+export function getResidentPack(packId: string): ClientLoadedPack | null {
+  const r = memory.get(packId);
+  if (!r) return null;
+  r.lastUsed = ++clock;
+  return r.pack;
+}
+
+export function residentPackIds(): string[] {
+  return [...memory.keys()];
+}
 
 function materialize(
   meta: ClientEmbeddingMeta,
@@ -131,7 +187,10 @@ async function installShard(
   const binRes = await fetchBin();
   if (!binRes.ok) return null;
   const buf = await binRes.arrayBuffer();
-  const matrix = decodeFloat16Matrix(buf, meta.entries.length * meta.dim);
+  const matrix = await decodeFloat16MatrixChunked(
+    buf,
+    meta.entries.length * meta.dim,
+  );
   const packed = materialize(meta, matrix);
   const etag = metaRes.headers.get("etag") ?? undefined;
   await idbPut({
@@ -146,15 +205,21 @@ async function installShard(
   return packed;
 }
 
+/** Background shard traffic must not starve the camera's own requests. */
+const LOW_PRIORITY = { priority: "low" } as RequestInit;
+
 async function fetchPackShard(
   packId: string,
 ): Promise<ClientLoadedPack | null> {
   const binUrl = assetsPackFileUrl(packId, CARD_EMBED_SHARD_FILES.f16);
   try {
-    const metaRes = await fetch(metaUrlFor(packId), { cache: "no-cache" });
+    const metaRes = await fetch(metaUrlFor(packId), {
+      cache: "no-cache",
+      ...LOW_PRIORITY,
+    });
     if (!metaRes.ok) return null;
     return await installShard(packId, metaRes, () =>
-      fetch(binUrl, { cache: "no-cache" }),
+      fetch(binUrl, { cache: "no-cache", ...LOW_PRIORITY }),
     );
   } catch (err) {
     console.warn("[embed-index.client] fetch failed", packId, err);
@@ -224,7 +289,7 @@ async function revalidatePackShard(
         cache: "no-store",
       }),
     );
-    if (packed) memory.set(packId, packed);
+    if (packed && memory.has(packId)) admit(packed);
   } catch {
     // offline / transient — keep what we have
   }
@@ -238,7 +303,7 @@ async function loadFromIdb(
     if (!rec) return null;
     if (rec.model !== clientEmbedModelId()) return null;
     const meta = JSON.parse(rec.metaJson) as ClientEmbeddingMeta;
-    const matrix = decodeFloat16Matrix(
+    const matrix = await decodeFloat16MatrixChunked(
       rec.matrixF16,
       meta.entries.length * meta.dim,
     );
@@ -248,31 +313,87 @@ async function loadFromIdb(
   }
 }
 
-/** Load one pack (memory → IDB → network); IDB hits revalidate in background. */
-export async function loadClientEmbeddingPack(
+const inflight = new Map<string, Promise<ClientLoadedPack | null>>();
+
+/**
+ * Make one pack resident (memory → IDB → network). Deduplicated per pack;
+ * never throws. IDB hits revalidate in the background.
+ */
+export function ensurePackResident(
   packId: string,
 ): Promise<ClientLoadedPack | null> {
-  const hit = memory.get(packId);
-  if (hit) return hit;
-  const fromIdb = await loadFromIdb(packId);
-  if (fromIdb) {
-    memory.set(packId, fromIdb.pack);
-    void revalidatePackShard(packId, fromIdb.rec);
-    return fromIdb.pack;
-  }
-  const fetched = await fetchPackShard(packId);
-  if (fetched) {
-    memory.set(packId, fetched);
-    revalidated.add(packId);
-  }
-  return fetched;
+  const hit = getResidentPack(packId);
+  if (hit) return Promise.resolve(hit);
+  const pending = inflight.get(packId);
+  if (pending) return pending;
+  const job = (async () => {
+    try {
+      const fromIdb = await loadFromIdb(packId);
+      if (fromIdb) {
+        admit(fromIdb.pack);
+        void revalidatePackShard(packId, fromIdb.rec);
+        return fromIdb.pack;
+      }
+      const fetched = await fetchPackShard(packId);
+      if (fetched) {
+        admit(fetched);
+        revalidated.add(packId);
+      }
+      return fetched;
+    } catch {
+      return null;
+    } finally {
+      inflight.delete(packId);
+    }
+  })();
+  inflight.set(packId, job);
+  return job;
 }
 
-/** Prefetch enabled packs (camera start). Soft-fail per pack. */
-export async function prefetchClientEmbeddingPacks(
+/** @deprecated alias kept for callers that still think in "load". */
+export const loadClientEmbeddingPack = ensurePackResident;
+
+/** Pending background order; head is next. */
+const queue: string[] = [];
+let pumping = false;
+
+async function pump(): Promise<void> {
+  if (pumping) return;
+  pumping = true;
+  try {
+    while (queue.length) {
+      const next = queue.shift()!;
+      if (getResidentPack(next)) continue;
+      await ensurePackResident(next);
+    }
+  } finally {
+    pumping = false;
+  }
+}
+
+/**
+ * Queue packs for background residency in the given order (manifest order
+ * = cheapest first). One at a time: a phone on 4G must still get the small
+ * packs quickly instead of 29 parallel downloads all finishing late.
+ */
+export function prefetchClientEmbeddingPacks(
   packIds: readonly string[],
 ): Promise<void> {
-  await Promise.all(packIds.map((id) => loadClientEmbeddingPack(id)));
+  for (const id of packIds) {
+    if (!queue.includes(id) && !getResidentPack(id)) queue.push(id);
+  }
+  return pump();
+}
+
+/**
+ * A query's shortlist wants this pack now: move it to the head of the queue
+ * and start it immediately (the sequential pump keeps going behind it).
+ */
+export function prioritizePack(packId: string): void {
+  const at = queue.indexOf(packId);
+  if (at >= 0) queue.splice(at, 1);
+  if (getResidentPack(packId) || inflight.has(packId)) return;
+  void ensurePackResident(packId);
 }
 
 export type ClientEmbedHit = {
@@ -429,4 +550,11 @@ function dedupePrintKey(hits: ClientEmbedHit[]): ClientEmbedHit[] {
 export function resetClientEmbeddingMemory(): void {
   memory.clear();
   revalidated.clear();
+  inflight.clear();
+  queue.length = 0;
+}
+
+/** Tests: admit a pack directly into residency. */
+export function admitResidentPackForTests(pack: ClientLoadedPack): void {
+  admit(pack);
 }

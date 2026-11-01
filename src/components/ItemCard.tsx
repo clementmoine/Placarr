@@ -205,6 +205,13 @@ function ItemCardInner(props: ItemCardProps) {
     variantView.secondVarnishMaskUrl,
   );
   const [imageFit, setImageFit] = useState<"cover" | "contain">("contain");
+  // Sur mobile, les effets foil (masques CSS, filtres) sont trop coûteux :
+  // on affiche l'illustration brute pour garder la liste fluide.
+  const [isMobile] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(pointer: coarse)").matches === true,
+  );
   const [plainArtReady, setPlainArtReady] = useState(false);
   const artFrameRef = useRef<HTMLDivElement | null>(null);
   const isEnriching = isItemMetadataBusy(props);
@@ -326,7 +333,7 @@ function ItemCardInner(props: ItemCardProps) {
 
   return (
     <div
-      className="cv-card-item group relative flex flex-col w-full select-none overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
+      className="cv-card-item group relative flex flex-col w-full select-none overflow-hidden rounded-2xl shadow-md bg-card/45 dark:bg-zinc-950/30 md:backdrop-blur-md border border-border dark:border-zinc-800/65 cursor-pointer hover:-translate-y-1 transition-all duration-300 ease-out"
       style={{
         aspectRatio,
       }}
@@ -376,7 +383,7 @@ function ItemCardInner(props: ItemCardProps) {
 
       {/* Enriching overlay — centered spinner; badges & title remain on top */}
       {isEnriching && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/45 backdrop-blur-[1px] pointer-events-none">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/45 md:backdrop-blur-[1px] pointer-events-none">
           <Loader2 className="size-7 animate-spin text-white/90" />
           <span className="text-[9px] font-black uppercase tracking-wider text-white/80">
             {t("items.fetching")}
@@ -421,7 +428,7 @@ function ItemCardInner(props: ItemCardProps) {
             orientedAspect={aspectRatio}
           >
             {/* Main Cover Image */}
-            {foilMaskUrl ? (
+            {!isMobile && foilMaskUrl ? (
               <FoilCardImage
                 effectPack={variantView.effectPackId}
                 printKey={props.printKey}
@@ -503,7 +510,7 @@ function ItemCardInner(props: ItemCardProps) {
       )}
 
       {/* Glassmorphic bottom panel — title (stays above the enriching overlay) */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-2.5 py-2 bg-zinc-950/75 backdrop-blur-md border-t border-white/10">
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-2.5 py-2 bg-zinc-950/75 md:backdrop-blur-md border-t border-white/10">
         <span className="text-[10px] font-extrabold line-clamp-2 text-white leading-tight">
           {titledName.trim().length > 0 ? titledName : t("common.noName")}
         </span>

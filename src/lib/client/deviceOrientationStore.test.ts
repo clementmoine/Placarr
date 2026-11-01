@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getOrientationSnapshot,
+  isOrientationMotionEnabled,
   orientationPermissionPending,
   pushOrientationReading,
   requestOrientationPermission,
   resetDeviceOrientationStore,
   subscribeToDeviceOrientation,
+  toggleOrientationMotion,
 } from "@/lib/client/deviceOrientationStore";
 
 describe("deviceOrientationStore", () => {
@@ -156,6 +158,7 @@ describe("deviceOrientationStore", () => {
       await vi.waitFor(() => expect(otherCard).toHaveBeenCalled());
 
       expect(orientationPermissionPending()).toBe(false);
+      expect(isOrientationMotionEnabled()).toBe(true);
     });
 
     it("stays pending when the tap is refused", async () => {
@@ -167,6 +170,7 @@ describe("deviceOrientationStore", () => {
       await Promise.resolve();
 
       expect(orientationPermissionPending()).toBe(true);
+      expect(isOrientationMotionEnabled()).toBe(false);
     });
 
     it("does not call for permission on a platform that does not gate it", () => {
@@ -176,6 +180,75 @@ describe("deviceOrientationStore", () => {
 
       expect(requestPermission).toBeUndefined();
       expect(orientationPermissionPending()).toBe(false);
+    });
+  });
+
+  describe("motion switch", () => {
+    function stubPhone(response?: string) {
+      const requestPermission =
+        response === undefined ? undefined : vi.fn(async () => response);
+      const eventClass = requestPermission
+        ? Object.assign(function () {}, { requestPermission })
+        : function () {};
+      vi.stubGlobal("window", {
+        DeviceOrientationEvent: eventClass,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      });
+      vi.stubGlobal("navigator", { maxTouchPoints: 5 });
+      return { requestPermission };
+    }
+
+    it("starts off, and a tap on a phone turns it on", () => {
+      stubPhone();
+      expect(isOrientationMotionEnabled()).toBe(false);
+
+      toggleOrientationMotion();
+
+      expect(isOrientationMotionEnabled()).toBe(true);
+    });
+
+    it("turns back off on the next tap", () => {
+      stubPhone();
+      toggleOrientationMotion();
+      toggleOrientationMotion();
+
+      expect(isOrientationMotionEnabled()).toBe(false);
+    });
+
+    it("asks iOS on the first tap and only switches on once granted", async () => {
+      const { requestPermission } = stubPhone("granted");
+
+      toggleOrientationMotion();
+
+      expect(requestPermission).toHaveBeenCalledOnce();
+      expect(isOrientationMotionEnabled()).toBe(false);
+
+      await vi.waitFor(() => expect(isOrientationMotionEnabled()).toBe(true));
+    });
+
+    it("stays off when iOS refuses", async () => {
+      stubPhone("denied");
+
+      toggleOrientationMotion();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(isOrientationMotionEnabled()).toBe(false);
+    });
+
+    it("does nothing on a desktop", () => {
+      vi.stubGlobal("window", {
+        DeviceOrientationEvent: function () {},
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        matchMedia: () => ({ matches: false }),
+      });
+      vi.stubGlobal("navigator", { maxTouchPoints: 0 });
+
+      toggleOrientationMotion();
+
+      expect(isOrientationMotionEnabled()).toBe(false);
     });
   });
 });

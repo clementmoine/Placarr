@@ -46,6 +46,11 @@ let smoothed: GravityVector | null = null;
 let baseline: GravityVector | null = null;
 let alpha: number | null = null;
 let granted = false;
+/**
+ * Opt-in. A phone can tilt, but the card stays on its idle sheen until the
+ * viewer turns motion on — and can turn it back off.
+ */
+let motionEnabled = false;
 const listeners = new Set<() => void>();
 let detach: (() => void) | null = null;
 
@@ -58,7 +63,17 @@ function handleReading(reading: OrientationReading) {
   if (!gravity) return;
 
   smoothed = smoothGravity(smoothed, gravity, SMOOTHING);
-  baseline ??= smoothed;
+  if (baseline) {
+    const dx = smoothed.x - baseline.x;
+    const dy = smoothed.y - baseline.y;
+    const dz = smoothed.z - baseline.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    // Un vrai saut d'axes (changement d'orientation) donne une distance
+    // proche de 2 ; un simple tilt maximal reste sous ~1.5.
+    if (dist > 1.8) baseline = smoothed;
+  } else {
+    baseline = smoothed;
+  }
   if (reading.alpha != null && Number.isFinite(reading.alpha)) {
     // Same light smoothing as gravity — raw compass jumps make varnish bevels twitch.
     alpha =
@@ -99,8 +114,51 @@ export function subscribeToDeviceOrientation(listener: () => void): () => void {
   };
 }
 
+export function resetOrientationBaseline(): void {
+  if (!smoothed) return;
+  baseline = smoothed;
+  if (snapshot) {
+    snapshot = { ...snapshot, baseline };
+    announce();
+  }
+}
+
 export function getOrientationSnapshot(): OrientationSnapshot | null {
   return snapshot;
+}
+
+/** Whether this device can drive a tilt at all (phone / tablet, not a desktop). */
+export function orientationTiltAvailable(): boolean {
+  return deviceCanProvideOrientationTilt();
+}
+
+/** Whether the viewer has asked the card to follow the handset. */
+export function isOrientationMotionEnabled(): boolean {
+  return motionEnabled;
+}
+
+/**
+ * Turn motion on or off.
+ *
+ * The first enable on iOS is the permission gesture: the sensor is only
+ * granted from a tap, so that tap both asks and switches motion on. Later
+ * taps only flip the switch. Turning it on also recaptures "flat" from
+ * however the phone is held right now.
+ */
+export function toggleOrientationMotion(): void {
+  if (typeof window === "undefined") return;
+  if (!deviceCanProvideOrientationTilt()) return;
+
+  const needsAsk =
+    !granted && orientationNeedsPermission(window.DeviceOrientationEvent);
+  if (!motionEnabled && needsAsk) {
+    requestOrientationPermission();
+    return;
+  }
+
+  motionEnabled = !motionEnabled;
+  if (motionEnabled) resetOrientationBaseline();
+  announce();
 }
 
 /**
@@ -123,6 +181,8 @@ export function requestOrientationPermission(): void {
     .then((response) => {
       if (response !== "granted") return;
       granted = true;
+      motionEnabled = true;
+      resetOrientationBaseline();
       // Readings only start now, and every card that was waiting on the tap has
       // to hear about it — not just the one whose prompt was tapped.
       announce();
@@ -139,6 +199,7 @@ export function resetDeviceOrientationStore(): void {
   baseline = null;
   alpha = null;
   granted = false;
+  motionEnabled = false;
   listeners.clear();
   detach?.();
   detach = null;

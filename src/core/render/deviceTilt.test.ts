@@ -105,14 +105,14 @@ describe("leanFromGravity", () => {
 
   it("leans away from the raised edge, as a held card does", () => {
     const lean = leanFromGravity({ x: 0.5, y: 0, z: -0.8 }, FLAT, 18);
-    expect(lean.tiltY).toBeCloseTo(9, 6);
-    expect(lean.lightX).toBeCloseTo(75, 6);
+    expect(lean.tiltY).toBeCloseTo(13.5, 6);
+    expect(lean.lightX).toBeCloseTo(87.5, 6);
   });
 
   it("pairs forward tilt with the opposite rotation, like the pointer does", () => {
     const lean = leanFromGravity({ x: 0, y: 0.5, z: -0.8 }, FLAT, 18);
-    expect(lean.tiltX).toBeCloseTo(-9, 6);
-    expect(lean.lightY).toBeCloseTo(75, 6);
+    expect(lean.tiltX).toBeCloseTo(-13.5, 6);
+    expect(lean.lightY).toBeCloseTo(87.5, 6);
   });
 
   it("never leans further than the maximum, however far the phone turns", () => {

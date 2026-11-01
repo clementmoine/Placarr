@@ -38,8 +38,18 @@ export function useArtFaceOrientation(
   useEffect(() => {
     const url = imageUrl?.trim();
     if (!url) return;
+    // Sur mobile (iOS Safari), créer une Image par carte pour raffiner
+    // l'orientation plante la mémoire / le décodage : on se contente des
+    // indications serveur.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(pointer: coarse)").matches
+    ) {
+      return;
+    }
     const img = new Image();
     img.decoding = "async";
+    img.loading = "lazy";
     img.onload = () => {
       if (img.naturalWidth > 0 && img.naturalHeight > 0) {
         setPixels({ width: img.naturalWidth, height: img.naturalHeight });

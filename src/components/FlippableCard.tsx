@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Smartphone } from "lucide-react";
 
 import {
   cardFaceClipPath,
@@ -8,8 +9,10 @@ import {
   OrientedMediaRotator,
 } from "@/components/OrientedMediaFrame";
 import { SealedBagOverlay } from "@/components/SealedBagOverlay";
+import { Button } from "@/components/ui/button";
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import { useDeviceTilt } from "@/lib/client/hooks/useDeviceTilt";
+import { resetOrientationBaseline } from "@/lib/client/deviceOrientationStore";
 import { useFoilIdleLean } from "@/lib/client/hooks/useFoilIdleLean";
 import { cn } from "@/lib/shared/utils";
 
@@ -27,7 +30,10 @@ type FlippableCardProps = {
   sealedBag?: boolean | null;
   /** Announced on the control, so this component stays free of locale plumbing. */
   flipLabel: string;
-  /** Label for the control that asks iOS for the motion sensor. Same reason. */
+  /**
+   * Accessible name of the motion switch. Shown to assistive tech; the control
+   * itself is an icon, centred under the object.
+   */
   tiltPromptLabel: string;
   /**
    * Quarter-turns the *face* is displayed at (Location / BREAK). The back turns
@@ -174,7 +180,15 @@ export function FlippableCard({
   }, []);
 
   const deviceTilt = useDeviceTilt(MAX_TILT);
-  const deviceLean = deviceTilt.lean;
+  const deviceLean = deviceTilt.active ? deviceTilt.lean : null;
+  useEffect(() => {
+    resetOrientationBaseline();
+    const onOrientationChange = () => resetOrientationBaseline();
+    window.addEventListener("orientationchange", onOrientationChange);
+    return () => {
+      window.removeEventListener("orientationchange", onOrientationChange);
+    };
+  }, []);
   /**
    * Whether the pointer currently owns the lean. Kept as a ref too so the
    * device-tilt effect can skip without waiting for a re-render mid-gesture.
@@ -215,10 +229,10 @@ export function FlippableCard({
   const rest = useCallback(() => {
     pointerOwnsLean.current = false;
     setPointerActive(false);
-    // Device pose, if any, is applied by the effect below; otherwise the idle
-    // hook eases from the last noted lean into the shared sweep.
+    // Device pose, if motion is on, is applied by the effect below; otherwise
+    // the idle hook eases from the last noted lean into the shared sweep.
     if (deviceLean) {
-      noteLean(deviceLean);
+      noteLean(deviceLean, 0.4);
       applyLean(deviceLean);
     }
   }, [applyLean, deviceLean, noteLean]);
@@ -404,28 +418,35 @@ export function FlippableCard({
           </div>
         </div>
 
-        {/*
-        iOS hands the sensor over only after a tap, and only from a real user
-        gesture, so the tilt cannot start on its own there. It lives on the card
-        rather than on its face because a plain card tilts too — and because one
-        tap has to serve every card on screen, which is what the shared store is
-        for.
-      */}
-        {deviceTilt.needsPermission && (
-          <button
-            type="button"
-            onClick={(event) => {
-              // The card's own click turns it over; asking for the sensor is not
-              // a request to flip.
-              event.stopPropagation();
-              deviceTilt.requestPermission();
-            }}
-            className="absolute bottom-2 right-2 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm"
-          >
-            {tiltPromptLabel}
-          </button>
-        )}
       </div>
+      {/*
+        Under the object, not on it. Motion is opt-in: the first tap on iOS is
+        also the permission gesture, and every later tap is a plain on/off.
+        Sibling of the tilting frame so a press neither flips the card nor
+        leans it.
+      */}
+      {deviceTilt.available && (
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          aria-pressed={deviceTilt.active}
+          aria-label={tiltPromptLabel}
+          title={tiltPromptLabel}
+          onClick={(event) => {
+            event.stopPropagation();
+            deviceTilt.toggleMotion();
+          }}
+          className={cn(
+            "absolute top-full left-1/2 z-20 mt-3 size-11 -translate-x-1/2 rounded-full shadow-lg ring-2",
+            deviceTilt.active
+              ? "bg-zinc-950 text-white ring-white hover:bg-zinc-900"
+              : "bg-white text-zinc-900 ring-white hover:bg-white",
+          )}
+        >
+          <Smartphone className="size-5" />
+        </Button>
+      )}
     </div>
   );
 }

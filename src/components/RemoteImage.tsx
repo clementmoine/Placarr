@@ -60,6 +60,7 @@ export function RemoteImage({
   fetchPriority,
   onLoad,
   onError,
+  decoding = "async",
 }: {
   src: string;
   alt: string;
@@ -75,6 +76,7 @@ export function RemoteImage({
   fetchPriority?: "high" | "low" | "auto";
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   onError?: (event: SyntheticEvent<HTMLImageElement>) => void;
+  decoding?: "async" | "sync" | "auto";
 }) {
   const chain = useMemo(() => tcgdexDisplayCandidates(src), [src]);
   const [activeSrc, setActiveSrc] = useState(chain[0] ?? src);
@@ -115,6 +117,7 @@ export function RemoteImage({
         style={style}
         loading={resolvedLoading}
         fetchPriority={resolvedFetchPriority}
+        decoding={decoding}
         onLoad={onLoad}
         onError={handleError}
         draggable={false}
@@ -136,6 +139,7 @@ export function RemoteImage({
         unoptimized={unoptimized}
         className={className}
         style={style}
+        decoding={decoding}
         onLoad={onLoad}
         onError={handleError}
         draggable={false}

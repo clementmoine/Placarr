@@ -98,10 +98,14 @@ export function leanFromGravity(
   maxTilt: number,
 ): Lean {
   const clamp = (value: number) => Math.min(1, Math.max(-1, value));
+  // Un téléphone se tient presque vertical : la gravité varie peu pour un
+  // petit mouvement du poignet. On amplifie donc l'écart avant le clamp pour
+  // que le tilt suive le geste sans exiger une grande amplitude.
+  const SENSITIVITY = 1.5;
   // Sideways gravity turns the card around its vertical axis, and vice versa —
   // the same pairing the pointer uses, so both inputs feel like one gesture.
-  const sideways = clamp(gravity.x - baseline.x);
-  const forward = clamp(gravity.y - baseline.y);
+  const sideways = clamp((gravity.x - baseline.x) * SENSITIVITY);
+  const forward = clamp((gravity.y - baseline.y) * SENSITIVITY);
 
   return {
     tiltY: sideways * maxTilt,

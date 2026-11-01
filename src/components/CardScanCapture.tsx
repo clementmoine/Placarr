@@ -24,11 +24,10 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   },
 };
 
-const SAMPLE_HUNT_MS = 1200;
-const SAMPLE_STABLE_MS = 2800;
+const SAMPLE_HUNT_MS = 1100;
+const SAMPLE_STABLE_MS = 2400;
+/** Sure hits still need a short streak so a single lucky frame can't lock. */
 const STABLE_HITS = 2;
-/** Must stay ≤ API LIVE_MAX_DISTANCE (10). */
-const LIVE_MAX_DISTANCE = 10;
 
 export type CardLiveMatch = {
   printKey: string;
@@ -38,8 +37,14 @@ export type CardLiveMatch = {
   packId?: string;
   artRel?: string;
   ambiguous?: boolean;
+  method?: "embed" | "dhash";
+  confidence?: "sure" | "doubt" | "miss";
 };
 
+/**
+ * Near-full frame (not a tight 63/88 crop). Server multi-window identify
+ * finds the card when it's small / off-center in the finder.
+ */
 async function grabFinderBlob(
   video: HTMLVideoElement,
 ): Promise<Blob | null> {
@@ -47,31 +52,17 @@ async function grabFinderBlob(
   const height = video.videoHeight;
   if (!width || !height) return null;
 
-  const targetRatio = 63 / 88;
-  let sx = 0;
-  let sy = 0;
-  let sw = width;
-  let sh = height;
-  const videoRatio = width / height;
-  if (videoRatio > targetRatio) {
-    sw = Math.round(height * targetRatio);
-    sx = Math.round((width - sw) / 2);
-  } else {
-    sh = Math.round(width / targetRatio);
-    sy = Math.round((height - sh) / 2);
-  }
-
-  const maxEdge = 480;
-  const scale = Math.min(1, maxEdge / Math.max(sw, sh));
-  const dw = Math.max(1, Math.round(sw * scale));
-  const dh = Math.max(1, Math.round(sh * scale));
+  const maxEdge = 640;
+  const scale = Math.min(1, maxEdge / Math.max(width, height));
+  const dw = Math.max(1, Math.round(width * scale));
+  const dh = Math.max(1, Math.round(height * scale));
 
   const canvas = document.createElement("canvas");
   canvas.width = dw;
   canvas.height = dh;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, dw, dh);
+  ctx.drawImage(video, 0, 0, width, height, 0, 0, dw, dh);
 
   return new Promise((resolve) =>
     canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.85),
@@ -89,7 +80,7 @@ export function CardScanCapture({
   onConfirm: (printKey: string) => void;
   cameraClassName?: string;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -167,37 +158,38 @@ export function CardScanCapture({
     };
   }, [active, isCameraUnavailable, isCheckingCamera, stopStream, t]);
 
-  const applyMatches = useCallback((next: CardLiveMatch[]) => {
-    setMatches(next);
-    onLiveMatchesRef.current?.(next);
+  const applyMatches = useCallback(
+    (
+      next: CardLiveMatch[],
+      confidence: "sure" | "doubt" | "miss" = "doubt",
+    ) => {
+      setMatches(next);
+      onLiveMatchesRef.current?.(next);
 
-    const top = next[0] ?? null;
-    // Ambiguous margin (#1≈#2) → show carousel only, never lock a "best".
-    if (
-      top &&
-      !top.ambiguous &&
-      top.distance <= LIVE_MAX_DISTANCE &&
-      top.printKey
-    ) {
-      if (lastKeyRef.current === top.printKey) {
-        streakRef.current += 1;
+      const top = next[0] ?? null;
+      // Only lock a "best" when the API is sure — doubts stay a carousel.
+      if (confidence === "sure" && top?.printKey && !top.ambiguous) {
+        if (lastKeyRef.current === top.printKey) {
+          streakRef.current += 1;
+        } else {
+          lastKeyRef.current = top.printKey;
+          streakRef.current = 1;
+          stableRef.current = null;
+          setStable(null);
+        }
+        if (streakRef.current >= STABLE_HITS) {
+          stableRef.current = top;
+          setStable(top);
+        }
       } else {
-        lastKeyRef.current = top.printKey;
-        streakRef.current = 1;
+        lastKeyRef.current = null;
+        streakRef.current = 0;
         stableRef.current = null;
         setStable(null);
       }
-      if (streakRef.current >= STABLE_HITS) {
-        stableRef.current = top;
-        setStable(top);
-      }
-    } else {
-      lastKeyRef.current = null;
-      streakRef.current = 0;
-      stableRef.current = null;
-      setStable(null);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const identifyBlob = useCallback(
     async (blob: Blob, generation: number) => {
@@ -208,6 +200,7 @@ export function CardScanCapture({
           type: "image/jpeg",
         }),
       );
+      body.set("lang", locale);
       const response = await fetch("/api/identify/card-image", {
         method: "POST",
         body,
@@ -215,6 +208,7 @@ export function CardScanCapture({
       if (generation !== genRef.current) return;
       const data = (await response.json()) as {
         matches?: CardLiveMatch[];
+        confidence?: "sure" | "doubt" | "miss";
         error?: string;
       };
       if (!response.ok) {
@@ -229,9 +223,9 @@ export function CardScanCapture({
         return;
       }
       backoffUntilRef.current = 0;
-      applyMatches(data.matches ?? []);
+      applyMatches(data.matches ?? [], data.confidence ?? "doubt");
     },
-    [applyMatches, t],
+    [applyMatches, locale, t],
   );
 
   useEffect(() => {
@@ -294,6 +288,10 @@ export function CardScanCapture({
       try {
         const body = new FormData();
         body.set("image", file);
+        // Already-cropped gallery faces often fill the frame; allow AABB
+        // fallbacks when quad-detect abstains. Live camera never sets this.
+        body.set("source", "gallery");
+        body.set("lang", locale);
         const response = await fetch("/api/identify/card-image", {
           method: "POST",
           body,
@@ -301,6 +299,7 @@ export function CardScanCapture({
         if (generation !== genRef.current) return;
         const data = (await response.json()) as {
           matches?: CardLiveMatch[];
+          confidence?: "sure" | "doubt" | "miss";
           error?: string;
         };
         if (!response.ok) {
@@ -312,13 +311,14 @@ export function CardScanCapture({
           return;
         }
         const next = data.matches ?? [];
-        applyMatches(next);
-        if (next[0]) {
+        const confidence = data.confidence ?? "doubt";
+        applyMatches(next, confidence);
+        if (confidence === "sure" && next[0]) {
           lastKeyRef.current = next[0].printKey;
           streakRef.current = STABLE_HITS;
           stableRef.current = next[0];
           setStable(next[0]);
-        } else {
+        } else if (!next.length) {
           toast.message(t("scanner.cardNoMatches"));
         }
       } catch {
@@ -327,7 +327,7 @@ export function CardScanCapture({
         if (generation === genRef.current) setSampling(false);
       }
     },
-    [applyMatches, t],
+    [applyMatches, locale, t],
   );
 
   const showCamera = active && !isCameraUnavailable && !isCheckingCamera;
@@ -354,7 +354,7 @@ export function CardScanCapture({
             </div>
           )}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            <div className="w-[72%] max-w-[260px] aspect-[63/88] relative overflow-hidden rounded-xl border border-white/15 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
+            <div className="w-[84%] max-w-[300px] aspect-[63/88] relative overflow-hidden rounded-xl border border-white/15 shadow-[0_0_0_9999px_rgba(0,0,0,0.42)]">
               <div className="absolute top-0 left-0 size-4 border-t-2 border-l-2 border-primary rounded-tl-lg" />
               <div className="absolute top-0 right-0 size-4 border-t-2 border-r-2 border-primary rounded-tr-lg" />
               <div className="absolute bottom-0 left-0 size-4 border-b-2 border-l-2 border-primary rounded-bl-lg" />
@@ -379,7 +379,9 @@ export function CardScanCapture({
           <p className="text-xs text-muted-foreground">
             {stable
               ? t("scanner.cardConfirmHint")
-              : t("scanner.cardSearching")}
+              : matches.some((m) => m.ambiguous)
+                ? t("scanner.cardDoubtHint")
+                : t("scanner.cardSearching")}
           </p>
           <div
             className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

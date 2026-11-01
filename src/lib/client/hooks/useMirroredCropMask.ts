@@ -52,6 +52,12 @@ export function useMirroredCropMask(
 
   useEffect(() => {
     if (!maskNeedsMirroring(artworkUrl, maskUrl)) return;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(pointer: coarse)").matches
+    ) {
+      return;
+    }
 
     const controller = new AbortController();
     const query = new URLSearchParams({

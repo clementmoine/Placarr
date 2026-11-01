@@ -119,6 +119,11 @@ type HoloCardImageProps = {
    */
   lightFromParent?: boolean;
   /**
+   * Whether the sheen keeps drifting while nothing is pointing at the card.
+   * Grids turn `tilt` off so the tiles do not tip; they leave this on.
+   */
+  idle?: boolean;
+  /**
    * Simey `--card-glow` (Radiant spotlight colour). Written once on the frame
    * so pointerCss does not overwrite with the generic cyan default.
    */
@@ -175,6 +180,7 @@ export function HoloCardImage({
   tilt = true,
   trackPointer = tilt,
   lightFromParent = false,
+  idle = true,
   cardGlow = null,
   onLoad,
   lenticularGrid = null,
@@ -419,6 +425,7 @@ export function HoloCardImage({
   );
 
   const idleEnabled =
+    idle &&
     !lightFromParent &&
     holoCssIdleEnabled({
       hasFinish: Boolean(shader || varnishShader),

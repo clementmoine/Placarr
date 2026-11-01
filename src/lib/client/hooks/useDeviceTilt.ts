@@ -5,23 +5,32 @@ import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { leanFromGravity, type Lean } from "@/core/render/deviceTilt";
 import {
   getOrientationSnapshot,
+  isOrientationMotionEnabled,
   orientationPermissionPending,
+  orientationTiltAvailable,
   requestOrientationPermission,
   subscribeToDeviceOrientation,
+  toggleOrientationMotion,
 } from "@/lib/client/deviceOrientationStore";
 
 export type DeviceTilt = {
-  /** Latest lean, or `null` while there is no sensor and no permission. */
+  /** Latest lean, or `null` while motion is off or the sensor has nothing yet. */
   lean: Lean | null;
   /**
    * Compass heading in degrees for `_DeviceRotationDegrees`, or `null` when
    * the sensor has not reported one yet.
    */
   alpha: number | null;
+  /** This handset can tilt a card. Desktop stays false. */
+  available: boolean;
+  /** The viewer has motion switched on. */
+  active: boolean;
   /** True when the platform will only hand the sensor over after a tap. */
   needsPermission: boolean;
   /** Ask for it. Must be called from a real user gesture, or iOS refuses. */
   requestPermission: () => void;
+  /** On/off. The first enable on iOS is also the permission gesture. */
+  toggleMotion: () => void;
 };
 
 const NO_SUBSCRIPTION = () => () => {};
@@ -63,19 +72,32 @@ export function useDeviceTilt(maxTilt: number, enabled = true): DeviceTilt {
     orientationPermissionPending,
     () => false,
   );
+  const available = useSyncExternalStore(
+    subscribe,
+    orientationTiltAvailable,
+    () => false,
+  );
+  const active = useSyncExternalStore(
+    subscribe,
+    isOrientationMotionEnabled,
+    () => false,
+  );
 
   const lean = useMemo(
     () =>
-      enabled && snapshot
+      enabled && active && snapshot
         ? leanFromGravity(snapshot.gravity, snapshot.baseline, maxTilt)
         : null,
-    [enabled, snapshot, maxTilt],
+    [enabled, active, snapshot, maxTilt],
   );
 
   return {
     lean,
-    alpha: enabled ? (snapshot?.alpha ?? null) : null,
+    alpha: enabled && active ? (snapshot?.alpha ?? null) : null,
+    available: enabled && available,
+    active: enabled && active,
     needsPermission: enabled && gated,
     requestPermission: requestOrientationPermission,
+    toggleMotion: toggleOrientationMotion,
   };
 }

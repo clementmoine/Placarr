@@ -29,6 +29,7 @@ describe("effect pack card-back contract", () => {
       .sort();
     expect(naruto).toEqual([
       "naruto-carddass",
+      "naruto-cardgame",
       "naruto-data-carddass",
       "naruto-kayou",
       "naruto-mythos",

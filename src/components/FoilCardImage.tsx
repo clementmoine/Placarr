@@ -171,6 +171,10 @@ type FoilCardImageProps = {
   tuning?: HoloTuning;
   tilt?: boolean;
   trackPointer?: boolean;
+  /** Sheen drift at rest. Leave on in grids; `tilt` only controls the 3D lean. */
+  idle?: boolean;
+  /** Ignore compass heading (alpha) to avoid spins on tilt. */
+  disableCompass?: boolean;
   /** Simey `--card-glow` (Radiant type colour). */
   cardGlow?: string | null;
   /** Playroom override. Product leaves `auto`. */
@@ -240,6 +244,7 @@ function CssFoilFace({
   tilt,
   trackPointer,
   lightFromParent,
+  idle,
   onLoad,
   className,
   children,
@@ -263,6 +268,7 @@ function CssFoilFace({
   tilt?: boolean;
   trackPointer?: boolean;
   lightFromParent?: boolean;
+  idle?: boolean;
   onLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
   className?: string;
   children?: React.ReactNode;
@@ -288,6 +294,7 @@ function CssFoilFace({
       tilt={tilt}
       trackPointer={trackPointer}
       lightFromParent={lightFromParent}
+      idle={idle}
       cardGlow={cardGlow}
       onLoad={onLoad}
       className={className}
@@ -345,6 +352,8 @@ export function FoilCardImage({
   tilt = true,
   trackPointer = tilt,
   backend: preference = "auto",
+  idle = true,
+  disableCompass = false,
   cardGlow = null,
   onLoad,
   className,
@@ -745,10 +754,11 @@ export function FoilCardImage({
   }, [useWebgl, rendererReady, isDriven, hasTimeSibling]);
 
   useEffect(() => {
+    if (disableCompass) return;
     if (!useWebgl || !rendererReady) return;
     if (deviceTilt.alpha == null) return;
     rendererRef.current?.setDeviceRotationDegrees(deviceTilt.alpha);
-  }, [useWebgl, rendererReady, deviceTilt.alpha]);
+  }, [disableCompass, useWebgl, rendererReady, deviceTilt.alpha]);
 
   const cssFace = (
     <CssFoilFace
@@ -771,6 +781,7 @@ export function FoilCardImage({
       tilt={bagged ? false : tilt}
       trackPointer={bagged ? false : trackPointer}
       lightFromParent={bagged && !packagingOnly}
+      idle={idle}
       cardGlow={cardGlow}
       onLoad={onLoad}
       className={eligible || bagged ? undefined : className}

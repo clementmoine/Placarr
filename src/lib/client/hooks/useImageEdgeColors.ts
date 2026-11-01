@@ -151,6 +151,13 @@ export function useImageEdgeColors(): {
       const boxWidth = box?.width || image.clientWidth || image.width;
       const boxHeight = box?.height || image.clientHeight || image.height;
       if (!boxWidth || !boxHeight) return;
+      // Sur mobile, le canvas par image coûte trop cher pour un effet cosmétique.
+      if (
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(pointer: coarse)").matches
+      ) {
+        return;
+      }
 
       try {
         const axis = edgeAxisFor(

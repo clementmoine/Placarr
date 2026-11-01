@@ -131,13 +131,19 @@
    keyword makes the browser remember each card's real size once painted, so the
    trailing length is only a first-guess used for cards never yet revealed. */
 @utility cv-card-item {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 200px;
+  /* content-visibility:auto provoquait des repeints/pop-in au défilement
+     (desktop et mobile). On garde les cartes rendues en permanence. */
+  content-visibility: visible;
+}
+
+@media (pointer: coarse) {
+  .cv-card-item img {
+    transition: none !important;
+  }
 }
 
 @utility cv-card-shelf {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 150px;
+  content-visibility: visible;
 }
 
 /* Custom properties the foil recipes lean on. Registered so they interpolate

@@ -551,13 +551,25 @@ function sideLen(a: Point2, b: Point2): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function aspectOk(points: readonly [Point2, Point2, Point2, Point2]): boolean {
+/**
+ * A landscape card is 88/63 ≈ 1.40 wide; past {@link MAX_FILLED_ASPECT} a
+ * scanline blob is a row of cards stitched by the horizontal fill, since that
+ * fill can only ever merge sideways.
+ */
+const MAX_FILLED_ASPECT = 1.6;
+
+function aspectOk(
+  points: readonly [Point2, Point2, Point2, Point2],
+  maxLandscape = 2.2,
+): boolean {
   const [tl, tr, br, bl] = points;
   const w = (sideLen(tl, tr) + sideLen(bl, br)) / 2;
   const h = (sideLen(tl, bl) + sideLen(tr, br)) / 2;
   if (w < 12 || h < 12) return false;
   const ratio = w / h;
-  return (ratio >= 0.45 && ratio <= 0.95) || (ratio >= 1.05 && ratio <= 2.2);
+  return (
+    (ratio >= 0.45 && ratio <= 0.95) || (ratio >= 1.05 && ratio <= maxLandscape)
+  );
 }
 
 function scaleQuad(
@@ -629,7 +641,14 @@ export function detectCardQuadFromGray(
     edge[i] = mag[i]! >= thr ? 1 : 0;
   }
   const closed = dilate3(dilate3(edge, dw, dh), dw, dh);
-  const ctx: DetectContext = { dw, dh, fullW, fullH, frameArea: dw * dh };
+  const ctx: DetectContext = {
+    dw,
+    dh,
+    fullW,
+    fullH,
+    frameArea: dw * dh,
+    closed,
+  };
 
   // Pass 1 — hole-filled edge blobs. A card fully in frame is a closed edge
   // loop whatever its tilt → one solid blob; cards cut by the frame, the table
@@ -639,13 +658,15 @@ export function detectCardQuadFromGray(
   // and the solid card survives, shrunk by the erosion radius, which the
   // corners get back. Corners come from the convex hull, so a card at 30°
   // still yields its true 4 corners (extreme points only work upright).
-  let solid = enclosedMask(closed, dw, dh);
-  for (let i = 0; i < ENCLOSED_ERODE_PX; i++) solid = erode3(solid, dw, dh);
-  const enclosed = bestCandidate(
-    largestBlobs(solid, dw, dh, 4),
-    ctx,
-    "enclosed",
-  );
+  //
+  // Lightly dilated edges first: one dilation keeps the gap between cards
+  // lying a finger apart open, so a spread yields the single card the user
+  // aims at. Two dilations are needed when glare breaks a border, but they
+  // also weld neighbours into one (rectangular-looking) blob — only fall back
+  // to them when the strict pass found nothing.
+  const strict = enclosedCandidate(dilate3(edge, dw, dh), ctx);
+  if (strict) return strict;
+  const enclosed = enclosedCandidate(closed, ctx);
   if (enclosed) return enclosed;
 
   // Pass 2 — scanline fill. Tolerates a border broken by glare and cards that
@@ -673,7 +694,70 @@ type DetectContext = {
   fullW: number;
   fullH: number;
   frameArea: number;
+  /** Closed edge mask (detect space) — what a candidate's sides must sit on. */
+  closed: Uint8Array;
 };
+
+/**
+ * Share of a quad's perimeter that lies on closed edges or on the frame
+ * border (a card cut by the frame has no edge there). A card outline is
+ * fully supported; a scanline blob stitched from table texture is not.
+ */
+export function quadEdgeSupport(
+  quad: readonly [Point2, Point2, Point2, Point2],
+  closed: Uint8Array,
+  dw: number,
+  dh: number,
+  tolerancePx = 2,
+): number {
+  let hit = 0;
+  let total = 0;
+  for (let i = 0; i < 4; i++) {
+    const a = quad[i]!;
+    const b = quad[(i + 1) % 4]!;
+    const steps = Math.max(2, Math.round(Math.hypot(b.x - a.x, b.y - a.y)));
+    for (let k = 0; k <= steps; k++) {
+      const t = k / steps;
+      const x = Math.round(a.x + (b.x - a.x) * t);
+      const y = Math.round(a.y + (b.y - a.y) * t);
+      total += 1;
+      if (
+        x <= tolerancePx ||
+        y <= tolerancePx ||
+        x >= dw - 1 - tolerancePx ||
+        y >= dh - 1 - tolerancePx
+      ) {
+        hit += 1;
+        continue;
+      }
+      let on = false;
+      for (let dy = -tolerancePx; dy <= tolerancePx && !on; dy++) {
+        for (let dx = -tolerancePx; dx <= tolerancePx; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= dw || yy >= dh) continue;
+          if (closed[yy * dw + xx]) {
+            on = true;
+            break;
+          }
+        }
+      }
+      if (on) hit += 1;
+    }
+  }
+  return total ? hit / total : 0;
+}
+
+/** Hole-fill the closed edges, open the result, keep the best card blob. */
+function enclosedCandidate(
+  closed: Uint8Array,
+  ctx: DetectContext,
+): ClassicalCardQuad | null {
+  const { dw, dh } = ctx;
+  let solid = enclosedMask(closed, dw, dh);
+  for (let i = 0; i < ENCLOSED_ERODE_PX; i++) solid = erode3(solid, dw, dh);
+  return bestCandidate(largestBlobs(solid, dw, dh, 4), ctx, "enclosed");
+}
 
 /** Enclosed blobs must be convex and rectangular; filled blobs are looser. */
 const ENCLOSED_MIN_FILL = 0.8;
@@ -692,6 +776,19 @@ const ENCLOSED_ERODE_PX = 4;
  * aimed card — it is what turned a busy table into a "card" crop.
  */
 export const MAX_SUBJECT_FRAME_SPAN = 0.9;
+/**
+ * The scanline fill merges whatever lies side by side; when its blob spans
+ * most of the frame both ways it is several cards (or the table) welded
+ * together, not one card — a portrait card can never fill a phone frame in
+ * both directions. Answer nothing rather than frame the whole spread.
+ */
+export const MAX_FILLED_FRAME_SPAN = 0.8;
+/**
+ * A filled blob is only trusted when its outline actually runs along edges:
+ * a card welded to its neighbours by a textured table has long sides that
+ * cross nothing (measured 0.40–0.64) while a real card sits at ≥ 0.79.
+ */
+export const MIN_FILLED_EDGE_SUPPORT = 0.7;
 
 /** Push each corner away from the centroid by `px` along its diagonal. */
 function growQuad(
@@ -728,15 +825,20 @@ function bestCandidate(
     // Spanning (almost) the whole frame both ways is the table / mat / poster
     // behind the card, not the card: the subject leaves frame around it in at
     // least one direction (a close-up card still shows table left and right).
-    if (bw > dw * MAX_SUBJECT_FRAME_SPAN && bh > dh * MAX_SUBJECT_FRAME_SPAN) {
-      continue;
-    }
+    const maxSpan =
+      mode === "filled" ? MAX_FILLED_FRAME_SPAN : MAX_SUBJECT_FRAME_SPAN;
+    if (bw > dw * maxSpan && bh > dh * maxSpan) continue;
 
     let local =
       mode === "enclosed"
         ? hullToQuad(convexHull(blob.boundary))
         : extremePointQuad(blob.pixels, dw);
-    if (!local || !aspectOk(local)) continue;
+    if (
+      !local ||
+      !aspectOk(local, mode === "filled" ? MAX_FILLED_ASPECT : undefined)
+    ) {
+      continue;
+    }
 
     if (mode === "enclosed") {
       // Fill ratio against the eroded blob's own hull, then snap the sides to
@@ -752,6 +854,12 @@ function bestCandidate(
     }
     const area = quadArea(local);
     if (area / frameArea < 0.05) continue;
+    if (
+      mode === "filled" &&
+      quadEdgeSupport(local, ctx.closed, dw, dh) < MIN_FILLED_EDGE_SUPPORT
+    ) {
+      continue;
+    }
 
     const coverageScore = 1 - Math.abs(coverage - 0.4);
     // Centre prior: the card the user aims at sits mid-frame; a same-size

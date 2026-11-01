@@ -4,10 +4,12 @@ import {
   convexHull,
   detectCardQuadFromGray,
   MAX_SUBJECT_FRAME_SPAN,
+  MIN_FILLED_EDGE_SUPPORT,
   extremePointQuad,
   hullToQuad,
   insetQuad,
   orderQuadCorners,
+  quadEdgeSupport,
   rgbaToGray,
   type Point2,
 } from "./cardQuadClassical";
@@ -312,6 +314,117 @@ describe("detectCardQuadFromGray — scenes that are not 'one card on white'", (
     const found = detectCardQuadFromGray(gray, dw, dh, dw, dh);
     expect(found).not.toBeNull();
     expect(found!.aabb.width).toBeLessThan(dw * MAX_SUBJECT_FRAME_SPAN);
+  });
+});
+
+describe("detectCardQuadFromGray — several cards in the frame", () => {
+  const card = { w: 76, h: 106, angleDeg: 0 };
+
+  it.each([
+    {
+      name: "two cards side by side, a 6 px gap",
+      dw: 270,
+      dh: 360,
+      cards: [
+        { ...card, cx: 94, cy: 180 },
+        { ...card, cx: 176, cy: 180 },
+      ],
+    },
+    {
+      name: "2×2 grid, 6 px gaps",
+      dw: 270,
+      dh: 400,
+      cards: [
+        { ...card, cx: 94, cy: 144 },
+        { ...card, cx: 176, cy: 144 },
+        { ...card, cx: 94, cy: 256 },
+        { ...card, cx: 176, cy: 256 },
+      ],
+    },
+    {
+      name: "row of three, 6 px gaps",
+      dw: 300,
+      dh: 360,
+      cards: [
+        { ...card, cx: 68, cy: 180 },
+        { ...card, cx: 150, cy: 180 },
+        { ...card, cx: 232, cy: 180 },
+      ],
+    },
+  ])("returns exactly one card for $name", ({ dw, dh, cards }) => {
+    const found = detectCardQuadFromGray(
+      paintScene(dw, dh, cards),
+      dw,
+      dh,
+      dw,
+      dh,
+    );
+    expect(found).not.toBeNull();
+    // One card's box (± the dilation margin), never two cards plus the gap.
+    expect(found!.aabb.width).toBeGreaterThan(card.w - 8);
+    expect(found!.aabb.width).toBeLessThan(card.w + 14);
+    expect(found!.aabb.height).toBeGreaterThan(card.h - 8);
+    expect(found!.aabb.height).toBeLessThan(card.h + 14);
+    expect(found!.precision).toBe("high");
+    // And its centre coincides with one of the painted cards.
+    const cx = found!.aabb.left + found!.aabb.width / 2;
+    const cy = found!.aabb.top + found!.aabb.height / 2;
+    expect(
+      Math.min(...cards.map((c) => Math.hypot(c.cx - cx, c.cy - cy))),
+    ).toBeLessThan(6);
+  });
+
+  it("answers nothing when a textured table welds the cards into one blob", () => {
+    const dw = 270;
+    const dh = 360;
+    const gray = paintScene(dw, dh, [
+      { ...card, cx: 94, cy: 180 },
+      { ...card, cx: 176, cy: 180 },
+    ]);
+    // Noisy table: dense texture edges everywhere between / around the cards
+    // (the real "busy mat" case) — the closed loops break and the scanline
+    // fill produces one frame-wide blob whose sides rest on nothing.
+    let seed = 7;
+    for (let i = 0; i < gray.length; i++) {
+      if (gray[i] !== 215) continue;
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      gray[i] = 120 + (seed % 120);
+    }
+    const found = detectCardQuadFromGray(gray, dw, dh, dw, dh);
+    if (found) {
+      // Whatever survives must be a single card, never the merged pair.
+      expect(found.aabb.width).toBeLessThan(card.w + 12);
+    }
+  });
+
+  it("quadEdgeSupport: 1 on a drawn outline, low on a quad crossing blank space", () => {
+    const dw = 100;
+    const dh = 100;
+    const closed = new Uint8Array(dw * dh);
+    for (let x = 20; x <= 60; x++) {
+      closed[20 * dw + x] = 1;
+      closed[80 * dw + x] = 1;
+    }
+    for (let y = 20; y <= 80; y++) {
+      closed[y * dw + 20] = 1;
+      closed[y * dw + 60] = 1;
+    }
+    const onOutline: [Point2, Point2, Point2, Point2] = [
+      { x: 20, y: 20 },
+      { x: 60, y: 20 },
+      { x: 60, y: 80 },
+      { x: 20, y: 80 },
+    ];
+    expect(quadEdgeSupport(onOutline, closed, dw, dh)).toBeGreaterThan(0.95);
+    const merged: [Point2, Point2, Point2, Point2] = [
+      { x: 20, y: 20 },
+      { x: 95, y: 20 },
+      { x: 95, y: 80 },
+      { x: 20, y: 80 },
+    ];
+    const sup = quadEdgeSupport(merged, closed, dw, dh);
+    expect(sup).toBeLessThan(MIN_FILLED_EDGE_SUPPORT);
+    expect(sup).toBeGreaterThan(0.3);
   });
 });
 

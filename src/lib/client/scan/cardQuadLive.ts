@@ -7,7 +7,11 @@ import {
   type ClassicalCardQuad,
 } from "@/lib/shared/vision/cardQuadClassical";
 
-const DETECT_MAX_EDGE = 320;
+/**
+ * 480 on the long side: at 320 the gap between two cards lying a finger
+ * apart shrinks to ~7 px and the edge dilation welds them into one blob.
+ */
+const DETECT_MAX_EDGE = 480;
 
 export type LiveCardDetection = ClassicalCardQuad & {
   /** Video intrinsic size used for the detection. */
@@ -46,11 +50,7 @@ export function detectCardQuadFromVideo(
   return { ...found, videoWidth: fullW, videoHeight: fullH };
 }
 
-function boxBlur3(
-  gray: Uint8Array,
-  width: number,
-  height: number,
-): Uint8Array {
+function boxBlur3(gray: Uint8Array, width: number, height: number): Uint8Array {
   const out = new Uint8Array(gray.length);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {

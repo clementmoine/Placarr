@@ -15,7 +15,7 @@ import { itemPath } from "@/lib/routing/slugs";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
 import { UnifiedScanCapture } from "@/components/UnifiedScanCapture";
-import { warmScanEnginesWhenIdle } from "@/lib/client/scan/scanRuntime";
+import { warmScanAssetsWhenIdle } from "@/lib/client/scan/scanRuntime";
 import type { SessionLock } from "@/lib/client/scan/scanSession";
 import dynamic from "next/dynamic";
 import type { MetadataResult } from "@/types/metadataProvider";
@@ -53,10 +53,11 @@ export function ScanFAB() {
   const queryClient = useQueryClient();
   const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
 
-  // Models land in the browser cache while the user browses, so the first
-  // tap on the button opens a scanner that already works.
+  // Model files land in the browser cache while the user browses (no
+  // session is created — browsing costs no RAM), so the first tap on the
+  // button opens a scanner whose models are already local.
   useEffect(() => {
-    if (!isCameraUnavailable && !isCheckingCamera) warmScanEnginesWhenIdle();
+    if (!isCameraUnavailable && !isCheckingCamera) warmScanAssetsWhenIdle();
   }, [isCameraUnavailable, isCheckingCamera]);
 
   const shelfMatch = pathname.match(/^\/shelves\/([^\/]+)/);

@@ -5,9 +5,12 @@ import {
   admitShardForTests,
   getResidentPack,
   HOT_F32_BUDGET_BYTES,
+  HOT_F32_BUDGET_CONSTRAINED_BYTES,
+  hotBudgetForDevice,
   isPackHot,
   matchClientEmbeddings,
   promotePackHot,
+  promotePacksHot,
   residentPackIds,
   resetClientEmbeddingMemory,
   setHotF32BudgetForTests,
@@ -114,6 +117,17 @@ describe("matchClientEmbeddings reads the resident f16 view directly", () => {
   });
 });
 
+describe("hotBudgetForDevice", () => {
+  it("gives desktop-class memory the full budget and everything else the phone one", () => {
+    expect(hotBudgetForDevice(8)).toBe(HOT_F32_BUDGET_BYTES);
+    expect(hotBudgetForDevice(4)).toBe(HOT_F32_BUDGET_CONSTRAINED_BYTES);
+    // Safari / Firefox never report it — every iPhone lands here.
+    expect(hotBudgetForDevice(undefined)).toBe(
+      HOT_F32_BUDGET_CONSTRAINED_BYTES,
+    );
+  });
+});
+
 describe("resident packs: f16 always, hot f32 bounded", () => {
   const dim = 4;
   function shard(packId: string, rows: number) {
@@ -172,6 +186,43 @@ describe("resident packs: f16 always, hot f32 bounded", () => {
     expect(b.matrix).toBeInstanceOf(Float16Array);
     // Demotion never drops residency — identify still reads "b".
     expect(residentPackIds().sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("a burst of promotions never exceeds the budget and never demotes a sibling of the same query", async () => {
+    resetClientEmbeddingMemory();
+    setHotF32BudgetForTests(f32Bytes(25));
+    const ids = ["a", "b", "c", "d", "e"];
+    const packs = await Promise.all(ids.map((id) => shard(id, 10)));
+    // Fire-and-forget like identify does; wait for the sequential pump.
+    promotePacksHot(ids);
+    await new Promise((r) => setTimeout(r, 50));
+    const hot = ids.filter((id) => isPackHot(id));
+    // Nearest first, stop when full: a and b fit (20 rows), c would not.
+    expect(hot).toEqual(["a", "b"]);
+    let hotBytes = 0;
+    for (const p of packs)
+      if (p.matrix instanceof Float32Array) hotBytes += p.matrix.byteLength;
+    expect(hotBytes).toBeLessThanOrEqual(f32Bytes(25));
+    // Same query again: nothing to do, nothing demoted.
+    promotePacksHot(ids);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(ids.filter((id) => isPackHot(id))).toEqual(["a", "b"]);
+  });
+
+  it("a later query evicts hot packs the new shortlist does not need", async () => {
+    resetClientEmbeddingMemory();
+    setHotF32BudgetForTests(f32Bytes(25));
+    await shard("old", 10);
+    await shard("new", 10);
+    await shard("new2", 10);
+    promotePacksHot(["old"]);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(isPackHot("old")).toBe(true);
+    promotePacksHot(["new", "new2"]);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(isPackHot("new")).toBe(true);
+    expect(isPackHot("new2")).toBe(true);
+    expect(isPackHot("old")).toBe(false);
   });
 
   it("a pack larger than the whole hot budget stays f16 and still matches", async () => {

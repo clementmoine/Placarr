@@ -34,6 +34,30 @@ export function isCardEmbedClientReady(): boolean {
   return extractorReady;
 }
 
+const LOCAL_MODEL_PATH = "/models/";
+
+let devicePromise: Promise<"webgpu" | "wasm"> | null = null;
+
+/** Execution device transformers.js will be given (memoized). */
+export function resolveClientEmbedDevice(): Promise<"webgpu" | "wasm"> {
+  if (!devicePromise) devicePromise = pickDevice();
+  return devicePromise;
+}
+
+/**
+ * Static files the pipeline will request for the current device — lets the
+ * host page pull them into the HTTP cache without instantiating anything.
+ */
+export async function clientEmbedModelFiles(): Promise<string[]> {
+  const base = `${LOCAL_MODEL_PATH}${resolveClientEmbedModel()}`;
+  const device = await resolveClientEmbedDevice();
+  return [
+    `${base}/config.json`,
+    `${base}/preprocessor_config.json`,
+    `${base}/onnx/${device === "webgpu" ? "model.onnx" : "model_quantized.onnx"}`,
+  ];
+}
+
 async function pickDevice(): Promise<"webgpu" | "wasm"> {
   if (typeof navigator !== "undefined" && "gpu" in navigator) {
     try {
@@ -63,8 +87,8 @@ async function loadExtractor(): Promise<FeatureExtractor | null> {
       // Cache API afterwards) — the first open never depends on the hub.
       env.allowLocalModels = true;
       env.allowRemoteModels = false;
-      env.localModelPath = "/models/";
-      const device = await pickDevice();
+      env.localModelPath = LOCAL_MODEL_PATH;
+      const device = await resolveClientEmbedDevice();
       // fp32 on GPU (exact server parity); q8 on CPU/WASM keeps phones
       // responsive — quality delta measured below noise on Lorcana FR.
       const pipe = await pipeline("image-feature-extraction", modelId, {
@@ -95,6 +119,7 @@ export async function prefetchCardEmbedClient(): Promise<void> {
 }
 
 export function resetCardEmbedClient(): void {
+  devicePromise = null;
   extractorPromise = null;
   loadedModelId = null;
   extractorReady = false;

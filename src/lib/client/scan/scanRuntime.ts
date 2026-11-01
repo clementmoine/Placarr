@@ -10,10 +10,13 @@ import {
   createScanBudgetClock,
   type ScanBudgetClock,
 } from "@/lib/client/scan/scanBudget";
-import { prefetchDocAligner } from "@/lib/client/scan/cardQuadOnnx";
-import { prefetchCardEmbedClient } from "@/lib/client/scan/cardEmbed.client";
+import {
+  DEFAULT_DOCALIGNER_URL,
+  prefetchDocAligner,
+} from "@/lib/client/scan/cardQuadOnnx";
+import { clientEmbedModelFiles } from "@/lib/client/scan/cardEmbed.client";
 import { prefetchClientIdentify } from "@/lib/client/scan/clientIdentify";
-import { prefetchPaddleCollectorOcrClient } from "@/lib/client/scan/paddleCollectorOcr.client";
+import { PPOCR_CLIENT_MODELS } from "@/lib/client/scan/paddleCollectorOcr.client";
 
 export type ScanRuntime = {
   budget: ScanBudgetClock;
@@ -74,37 +77,57 @@ export function bootScanRuntime(
   return bootPromise;
 }
 
-let enginesWarmed = false;
+let assetsWarmed = false;
+
+/** Pull one immutable asset into the HTTP cache, streaming the body away. */
+async function warmUrl(url: string): Promise<void> {
+  try {
+    const res = await fetch(url, { priority: "low" } as RequestInit);
+    const reader = res.body?.getReader();
+    if (!reader) return;
+    // Consume without retaining: an 88 MB model must not sit in the JS heap
+    // of a page that is only browsing shelves.
+    while (!(await reader.read()).done) {
+      /* discard */
+    }
+  } catch {
+    /* offline / aborted — the scanner fetches it itself later */
+  }
+}
 
 /**
- * Idle pre-warm from the page that hosts the scan button: engines only
- * (DocAligner, PP-OCR, DINOv2 — a one-time download, then browser cache),
- * never the pack shards. Skipped on data-saver connections. By the time
- * the user taps the button the models are already on disk.
+ * Idle pre-warm from the page that hosts the scan button: downloads the
+ * model files (DocAligner, PP-OCR, DINOv2) into the browser cache, one at a
+ * time, without creating any inference session — so browsing costs no RAM
+ * and the first tap on the button opens a scanner whose models are local.
+ * Skipped on data-saver connections. Pack shards are never pre-warmed.
  */
-export function warmScanEnginesWhenIdle(): void {
-  if (enginesWarmed || typeof window === "undefined") return;
+export function warmScanAssetsWhenIdle(): void {
+  if (assetsWarmed || typeof window === "undefined") return;
   const conn = (
     navigator as Navigator & { connection?: { saveData?: boolean } }
   ).connection;
   if (conn?.saveData) return;
-  enginesWarmed = true;
-  const run = () => {
-    void prefetchDocAligner();
-    void prefetchPaddleCollectorOcrClient();
-    void prefetchCardEmbedClient();
+  assetsWarmed = true;
+  const run = async () => {
+    const urls = [
+      DEFAULT_DOCALIGNER_URL,
+      ...Object.values(PPOCR_CLIENT_MODELS),
+      ...(await clientEmbedModelFiles()),
+    ];
+    for (const url of urls) await warmUrl(url);
   };
   const idle = (
     window as Window & {
       requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
     }
   ).requestIdleCallback;
-  if (idle) idle(run, { timeout: 4000 });
-  else setTimeout(run, 1500);
+  if (idle) idle(() => void run(), { timeout: 4000 });
+  else setTimeout(() => void run(), 1500);
 }
 
 export function resetScanRuntimeForTests(): void {
-  enginesWarmed = false;
+  assetsWarmed = false;
   runtime = null;
   bootPromise = null;
 }

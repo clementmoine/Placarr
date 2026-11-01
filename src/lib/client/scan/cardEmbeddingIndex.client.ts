@@ -108,14 +108,42 @@ async function idbPut(rec: IdbRecord): Promise<void> {
 }
 
 /**
- * Hot f32 copies kept beside the f16 residents. 128 MB holds the largest
- * shard (Yu-Gi-Oh ≈ 112 MB f32) or several mid-size packs; the least
- * recently used hot pack is demoted back to its f16 view when a newcomer
- * needs room. A pack whose f32 copy alone exceeds the budget is simply
- * scanned as f16 — slower, never missing.
+ * Hot f32 copies kept beside the f16 residents. On a desktop-class device
+ * 128 MB holds the largest shard (Yu-Gi-Oh ≈ 112 MB f32) or several
+ * mid-size packs; the least recently used hot pack is demoted back to its
+ * f16 view when a newcomer needs room. A pack whose f32 copy alone exceeds
+ * the budget is simply scanned as f16 — slower, never missing.
  */
 export const HOT_F32_BUDGET_BYTES = 128 * 1024 * 1024;
-let hotBudget = HOT_F32_BUDGET_BYTES;
+/**
+ * Phones: iOS Safari evicts a tab well under 1 GB (lower still for a
+ * home-screen app), and the f16 residents already take ~130 MB. 48 MB keeps
+ * every mid-size pack fast and leaves the two giants on f16.
+ */
+export const HOT_F32_BUDGET_CONSTRAINED_BYTES = 48 * 1024 * 1024;
+
+/**
+ * Chrome exposes `navigator.deviceMemory` (GiB, capped at 8). Browsers that
+ * keep it private (Safari, Firefox) are treated as constrained — that is
+ * where every iPhone lands.
+ */
+export function hotBudgetForDevice(
+  deviceMemoryGiB: number | undefined,
+): number {
+  return deviceMemoryGiB !== undefined && deviceMemoryGiB >= 8
+    ? HOT_F32_BUDGET_BYTES
+    : HOT_F32_BUDGET_CONSTRAINED_BYTES;
+}
+
+function deviceHotBudget(): number {
+  const mem =
+    typeof navigator === "undefined"
+      ? undefined
+      : (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  return hotBudgetForDevice(mem);
+}
+
+let hotBudget = deviceHotBudget();
 
 type Resident = {
   pack: ClientLoadedPack;
@@ -167,30 +195,33 @@ function demote(r: Resident): void {
   r.hotBytes = 0;
 }
 
-const promoting = new Set<string>();
-
 /**
- * Decode a resident pack to f32 (yielding) so its next scan is fast,
- * evicting least recently used hot packs to stay under budget. Called after
- * a query scanned the pack — never on the identify critical path.
+ * Decode one resident pack to f32 (yielding) so its next scan is fast.
+ * Room is made by demoting least recently used hot packs that are not in
+ * `protect` (the current query's shortlist); if the pack still does not
+ * fit, it simply stays f16 — never thrash siblings of the same query.
+ * Callers serialise through {@link promotePacksHot}; direct calls are for
+ * tests and are awaited.
  */
-export async function promotePackHot(packId: string): Promise<void> {
+export async function promotePackHot(
+  packId: string,
+  protect: ReadonlySet<string> = new Set(),
+): Promise<void> {
   const r = memory.get(packId);
-  if (!r || !r.half || r.hotBytes > 0 || promoting.has(packId)) return;
+  if (!r || !r.half || r.hotBytes > 0) return;
   const bytes = r.half.length * 4;
   if (bytes > hotBudget) return;
-  promoting.add(packId);
-  try {
-    while (hotBytesUsed() + bytes > hotBudget) {
-      let victim: Resident | null = null;
-      for (const cand of memory.values()) {
-        if (cand.hotBytes > 0 && cand.half && cand !== r) {
-          if (!victim || cand.lastUsed < victim.lastUsed) victim = cand;
-        }
+  while (hotBytesUsed() + bytes > hotBudget) {
+    let victim: Resident | null = null;
+    for (const [id, cand] of memory) {
+      if (cand.hotBytes > 0 && cand.half && cand !== r && !protect.has(id)) {
+        if (!victim || cand.lastUsed < victim.lastUsed) victim = cand;
       }
-      if (!victim) break;
-      demote(victim);
     }
+    if (!victim) return;
+    demote(victim);
+  }
+  try {
     const f32 = await decodeFloat16MatrixChunked(r.half, r.half.length);
     // The pack may have been swapped (revalidation) while decoding.
     if (memory.get(packId) !== r) return;
@@ -198,14 +229,39 @@ export async function promotePackHot(packId: string): Promise<void> {
     r.hotBytes = bytes;
   } catch {
     /* stay on f16 */
-  } finally {
-    promoting.delete(packId);
   }
 }
 
-/** Fire-and-forget promotion for the packs a query just scanned. */
+/** Packs the latest query wants hot, nearest centroid first. */
+let promoteWanted: string[] = [];
+/** Every pack of the latest query — hot ones included — is safe from demotion. */
+let promoteProtect: ReadonlySet<string> = new Set();
+let promotePumping = false;
+
+async function pumpPromotions(): Promise<void> {
+  if (promotePumping) return;
+  promotePumping = true;
+  try {
+    // One decode in flight at a time: a parallel burst of 25 promotions
+    // allocated ~140 MB at once and got the tab killed on iOS.
+    while (promoteWanted.length) {
+      const next = promoteWanted.shift()!;
+      await promotePackHot(next, promoteProtect);
+    }
+  } finally {
+    promotePumping = false;
+  }
+}
+
+/**
+ * Fire-and-forget: make the packs a query just scanned hot, in the order
+ * given (nearest first), sequentially, within budget. A newer query
+ * replaces the pending list — the latest card is what matters.
+ */
 export function promotePacksHot(packIds: readonly string[]): void {
-  for (const id of packIds) void promotePackHot(id);
+  promoteProtect = new Set(packIds);
+  promoteWanted = packIds.filter((id) => memory.has(id) && !isPackHot(id));
+  void pumpPromotions();
 }
 
 /**
@@ -265,7 +321,8 @@ async function installShard(
     dim: meta.dim,
     builtAt: meta.builtAt,
     metaJson: JSON.stringify(meta),
-    matrixF16: buf.slice(0),
+    // IndexedDB structured-clones the buffer itself — no extra copy here.
+    matrixF16: buf,
     ...(etag ? { etag } : {}),
   });
   return materialize(meta, buf);
@@ -611,9 +668,10 @@ export function resetClientEmbeddingMemory(): void {
   memory.clear();
   revalidated.clear();
   inflight.clear();
-  promoting.clear();
+  promoteWanted = [];
+  promoteProtect = new Set();
   queue.length = 0;
-  hotBudget = HOT_F32_BUDGET_BYTES;
+  hotBudget = deviceHotBudget();
 }
 
 /** Tests: shrink the hot budget so eviction is exercised with tiny shards. */

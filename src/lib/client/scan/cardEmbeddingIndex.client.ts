@@ -4,16 +4,16 @@
  * Packs served under `/assets/<pack>/card-embedding-index.f16` + `.json`.
  * Same topK / centroid logic as server `cardEmbeddingSearch`.
  *
- * Residency: every pack stays in RAM as its f16 shard (zero-copy native
- * `Float16Array` view — ~half the catalogue's f32 size, nothing to decode
- * at load). Packs a query actually scans are then promoted to a bounded
- * LRU of hot f32 copies (`HOT_F32_BUDGET_BYTES`), which read ~6× faster;
- * matching works on either, so identify never waits for memory. A pack
- * becomes resident when the background queue reaches it (cheapest first)
- * or when a query's centroid shortlist asks for it (`prioritizePack`).
- * Nothing here blocks the camera: promotion decodes in yielding chunks,
- * downloads are sequential and low priority, and identify only reads what
- * is already resident (`getResidentPack`).
+ * Residency: packs stay in RAM as f16 shards (zero-copy native
+ * `Float16Array` when available) under a device budget
+ * (`RESIDENT_BUDGET_*`). Safari/iOS has no `deviceMemory` and is treated
+ * as constrained — the full catalogue (~120 MB f16) plus ORT/OCR heaps
+ * has Jetsam-killed WebContent at ~1–2 GB lifetime max on this phone.
+ * LRU residents outside the current shortlist are dropped (still on IDB);
+ * `prioritizePack` pulls them back. Packs a query scans are promoted to a
+ * bounded LRU of hot f32 copies (`HOT_F32_BUDGET_*`), ~6× faster; matching
+ * works on either. Nothing blocks the camera: promotion yields, downloads
+ * are sequential, identify only reads `getResidentPack`.
  *
  * Freshness: an IndexedDB hit is served immediately, then revalidated once
  * per session with a conditional GET on the meta (`If-None-Match`). A 304
@@ -27,7 +27,11 @@ import {
   topKMilliDistances,
   type EmbeddingMatrix,
 } from "@/core/identify/cardEmbeddingSearch";
-import type { CardEmbeddingIndexEntry } from "@/core/identify/cardEmbeddingIndex";
+import {
+  expandEmbeddingEntries,
+  type CardEmbeddingIndexEntry,
+  type CardEmbeddingIndexEntryWire,
+} from "@/core/identify/cardEmbeddingEntry";
 import {
   parseCollectorNumberHint,
   printKeyMatchesCollectorHint,
@@ -50,6 +54,25 @@ export type ClientEmbeddingMeta = {
   /** Optional L2 centroid (f32 JSON) for shortlist without decoding full matrix. */
   centroid?: number[];
 };
+
+function parseClientMeta(raw: unknown): ClientEmbeddingMeta | null {
+  if (!raw || typeof raw !== "object") return null;
+  const m = raw as Partial<ClientEmbeddingMeta> & {
+    entries?: (CardEmbeddingIndexEntry | CardEmbeddingIndexEntryWire)[];
+  };
+  if (!m.entries?.length || !m.dim) return null;
+  const entries = expandEmbeddingEntries(m.entries);
+  if (entries.length !== m.entries.length) return null;
+  return {
+    version: 1,
+    packId: typeof m.packId === "string" ? m.packId : "",
+    model: typeof m.model === "string" ? m.model : "",
+    dim: m.dim,
+    builtAt: typeof m.builtAt === "string" ? m.builtAt : "",
+    entries,
+    ...(Array.isArray(m.centroid) ? { centroid: m.centroid } : {}),
+  };
+}
 
 export type ClientLoadedPack = {
   meta: ClientEmbeddingMeta;
@@ -117,33 +140,65 @@ async function idbPut(rec: IdbRecord): Promise<void> {
 export const HOT_F32_BUDGET_BYTES = 128 * 1024 * 1024;
 /**
  * Phones: iOS Safari evicts a tab well under 1 GB (lower still for a
- * home-screen app), and the f16 residents already take ~130 MB. 48 MB keeps
- * every mid-size pack fast and leaves the two giants on f16.
+ * home-screen app). 48 MB keeps mid-size packs fast and leaves giants on f16.
  */
 export const HOT_F32_BUDGET_CONSTRAINED_BYTES = 48 * 1024 * 1024;
+
+/**
+ * Total resident matrix bytes (f16 view + any hot f32 copy). Desktop can
+ * hold the whole catalogue; phones cannot — see Jetsam WebContent
+ * lifetimeMax ≈ 2 GB with unbounded residency.
+ */
+export const RESIDENT_BUDGET_BYTES = 256 * 1024 * 1024;
+/**
+ * ~80 MB: several mid packs + one large, leaves ORT/OCR/camera headroom on
+ * Safari where `navigator.deviceMemory` is hidden.
+ */
+export const RESIDENT_BUDGET_CONSTRAINED_BYTES = 80 * 1024 * 1024;
 
 /**
  * Chrome exposes `navigator.deviceMemory` (GiB, capped at 8). Browsers that
  * keep it private (Safari, Firefox) are treated as constrained — that is
  * where every iPhone lands.
  */
+export function isMemoryConstrainedDevice(
+  deviceMemoryGiB: number | undefined,
+): boolean {
+  return !(deviceMemoryGiB !== undefined && deviceMemoryGiB >= 8);
+}
+
 export function hotBudgetForDevice(
   deviceMemoryGiB: number | undefined,
 ): number {
-  return deviceMemoryGiB !== undefined && deviceMemoryGiB >= 8
-    ? HOT_F32_BUDGET_BYTES
-    : HOT_F32_BUDGET_CONSTRAINED_BYTES;
+  return isMemoryConstrainedDevice(deviceMemoryGiB)
+    ? HOT_F32_BUDGET_CONSTRAINED_BYTES
+    : HOT_F32_BUDGET_BYTES;
+}
+
+export function residentBudgetForDevice(
+  deviceMemoryGiB: number | undefined,
+): number {
+  return isMemoryConstrainedDevice(deviceMemoryGiB)
+    ? RESIDENT_BUDGET_CONSTRAINED_BYTES
+    : RESIDENT_BUDGET_BYTES;
+}
+
+function deviceMemoryGiB(): number | undefined {
+  return typeof navigator === "undefined"
+    ? undefined
+    : (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
 }
 
 function deviceHotBudget(): number {
-  const mem =
-    typeof navigator === "undefined"
-      ? undefined
-      : (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-  return hotBudgetForDevice(mem);
+  return hotBudgetForDevice(deviceMemoryGiB());
+}
+
+function deviceResidentBudget(): number {
+  return residentBudgetForDevice(deviceMemoryGiB());
 }
 
 let hotBudget = deviceHotBudget();
+let residentBudget = deviceResidentBudget();
 
 type Resident = {
   pack: ClientLoadedPack;
@@ -155,14 +210,54 @@ type Resident = {
 };
 const memory = new Map<string, Resident>();
 let clock = 0;
+/** Packs the latest query shortlisted — safe from resident eviction + hot demotion. */
+let promoteProtect: ReadonlySet<string> = new Set();
+
+/** Bytes this resident holds in JS heaps (f16 + optional hot f32). */
+function residentCost(r: Resident): number {
+  const halfBytes = r.half?.byteLength ?? 0;
+  if (halfBytes > 0) return halfBytes + r.hotBytes;
+  return r.pack.matrix.byteLength;
+}
+
+function residentBytesUsed(): number {
+  let used = 0;
+  for (const r of memory.values()) used += residentCost(r);
+  return used;
+}
+
+/**
+ * Drop LRU residents until under budget. Never evict `protect` (current
+ * shortlist) or `keep` (pack just admitted). IDB still has the shard.
+ */
+function evictResidentsUntilFit(
+  protect: ReadonlySet<string>,
+  keep: string,
+): void {
+  while (residentBytesUsed() > residentBudget && memory.size > 1) {
+    let victimId: string | null = null;
+    let victim: Resident | null = null;
+    for (const [id, cand] of memory) {
+      if (id === keep || protect.has(id)) continue;
+      if (!victim || cand.lastUsed < victim.lastUsed) {
+        victimId = id;
+        victim = cand;
+      }
+    }
+    if (!victimId) break;
+    memory.delete(victimId);
+  }
+}
 
 function admit(pack: ClientLoadedPack, half: Float16Array | null): void {
-  memory.set(pack.meta.packId, {
+  const id = pack.meta.packId;
+  memory.set(id, {
     pack,
     half,
     hotBytes: half ? 0 : pack.matrix.byteLength,
     lastUsed: ++clock,
   });
+  evictResidentsUntilFit(promoteProtect, id);
 }
 
 /** Resident pack (sync) — the only read path identify is allowed to use. */
@@ -234,8 +329,6 @@ export async function promotePackHot(
 
 /** Packs the latest query wants hot, nearest centroid first. */
 let promoteWanted: string[] = [];
-/** Every pack of the latest query — hot ones included — is safe from demotion. */
-let promoteProtect: ReadonlySet<string> = new Set();
 let promotePumping = false;
 
 async function pumpPromotions(): Promise<void> {
@@ -301,8 +394,8 @@ async function installShard(
   metaRes: Response,
   fetchBin: () => Promise<Response>,
 ): Promise<Materialized | null> {
-  const meta = (await metaRes.json()) as ClientEmbeddingMeta;
-  if (!meta?.entries?.length || !meta.dim) return null;
+  const meta = parseClientMeta(await metaRes.json());
+  if (!meta) return null;
   const expectedModel = clientEmbedModelId();
   // Shards built with another model/dim are unusable → skip pack (honest).
   if (meta.model && meta.model !== expectedModel) {
@@ -320,6 +413,7 @@ async function installShard(
     model: meta.model,
     dim: meta.dim,
     builtAt: meta.builtAt,
+    // Store expanded meta so older clients / IDB hits stay consistent.
     metaJson: JSON.stringify(meta),
     // IndexedDB structured-clones the buffer itself — no extra copy here.
     matrixF16: buf,
@@ -425,7 +519,8 @@ async function loadFromIdb(
     const rec = await idbGet(packId);
     if (!rec) return null;
     if (rec.model !== clientEmbedModelId()) return null;
-    const meta = JSON.parse(rec.metaJson) as ClientEmbeddingMeta;
+    const meta = parseClientMeta(JSON.parse(rec.metaJson));
+    if (!meta) return null;
     return { m: await materialize(meta, rec.matrixF16), rec };
   } catch {
     return null;
@@ -479,6 +574,15 @@ async function pump(): Promise<void> {
   pumping = true;
   try {
     while (queue.length) {
+      // Phones: stop background warm once RAM is full — shortlist
+      // `prioritizePack` still pulls what a query needs from IDB/network.
+      if (
+        isMemoryConstrainedDevice(deviceMemoryGiB()) &&
+        residentBytesUsed() >= residentBudget
+      ) {
+        queue.length = 0;
+        break;
+      }
       const next = queue.shift()!;
       if (getResidentPack(next)) continue;
       await ensurePackResident(next);
@@ -672,11 +776,22 @@ export function resetClientEmbeddingMemory(): void {
   promoteProtect = new Set();
   queue.length = 0;
   hotBudget = deviceHotBudget();
+  residentBudget = deviceResidentBudget();
 }
 
 /** Tests: shrink the hot budget so eviction is exercised with tiny shards. */
 export function setHotF32BudgetForTests(bytes: number): void {
   hotBudget = bytes;
+}
+
+/** Tests: shrink total residency so f16 eviction is exercised. */
+export function setResidentBudgetForTests(bytes: number): void {
+  residentBudget = bytes;
+}
+
+/** Tests / diagnostics: bytes of resident matrices currently held. */
+export function residentBytesUsedForTests(): number {
+  return residentBytesUsed();
 }
 
 /** Tests: make a raw f16 shard resident exactly like a loaded one. */

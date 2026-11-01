@@ -244,7 +244,20 @@ describe("recognizeCollectorBandClient — which end carries the footer", () => 
     );
     expect(res.text).toBe("Disney Lorcana");
     expect(res.halfTurn).toBe(false);
-    expect(ocrState.reads).toHaveLength(2);
+    // Footer both ways, then the nameplate on the face.
+    expect(ocrState.reads).toHaveLength(3);
+  });
+
+  it("keeps the nameplate when neither footer has a number", async () => {
+    const face = new Blob(["face"]);
+    ocrState.byBlob.set(face, "Ariel Chanteuse Exceptionnelle");
+    const res = await recognizeCollectorBandClient(
+      face,
+      bandReading("©Disney"),
+      bandReading("cYanmaG ntaYel"),
+    );
+    expect(res.text).toContain("Ariel");
+    expect(res.status).toBe("ok");
   });
 });
 

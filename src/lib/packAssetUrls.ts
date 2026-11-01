@@ -104,6 +104,18 @@ export function printKeyAssetStem(
  * `/assets/<pack>/prints/{set}-{id}-{lang}/face` (ex. `…/prints/s1-cl0001-fr/thumb`).
  * Never embeds `art.carddass.jpg` — ranking lives on disk (`face.json`).
  */
+/**
+ * Scan carousel / lock tray URL — prefer the print `thumb` role (falls back
+ * to full art on disk when no thumb exists). Identify math never reads this.
+ */
+export function identifyMatchDisplayUrl(
+  pack: string,
+  printKey: string,
+  lang: string,
+): string {
+  return assetsPrintFaceUrl(pack, printKey, lang, "thumb");
+}
+
 export function assetsPrintFaceUrl(
   pack: string,
   printKey: string,

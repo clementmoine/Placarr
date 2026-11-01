@@ -37,22 +37,21 @@ import {
   listCardVisualIndexPackIds,
   loadCardVisualIndex,
 } from "@/core/identify/cardVisualIndex";
+import {
+  compactEmbeddingEntry,
+  expandEmbeddingEntries,
+  type CardEmbeddingIndexEntry,
+  type CardEmbeddingIndexEntryWire,
+} from "@/core/identify/cardEmbeddingEntry";
 import { CARD_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import { packDataDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { encodeFloat16Matrix } from "@/lib/shared/float16";
 
-export type CardEmbeddingIndexEntry = {
-  printKey: string;
-  lang: string;
-  set: string;
-  card: string;
-  artRel: string;
-  /** Row index into the Float32 matrix. */
-  row: number;
-  /** Face file fingerprint the vector was computed from (see visual index). */
-  fp?: string;
-};
+export type {
+  CardEmbeddingIndexEntry,
+  CardEmbeddingIndexEntryWire,
+} from "@/core/identify/cardEmbeddingEntry";
 
 export type CardEmbeddingIndexMeta = {
   version: 1;
@@ -130,17 +129,23 @@ export function loadCardEmbeddingIndex(packId: string): LoadedIndex | null {
     const cached = indexCache.get(packId);
     if (cached && cached.mtimeMs === mtimeMs) return cached;
 
-    const meta = JSON.parse(
-      readFileSync(metaPath, "utf8"),
-    ) as CardEmbeddingIndexMeta;
+    const raw = JSON.parse(readFileSync(metaPath, "utf8")) as Omit<
+      CardEmbeddingIndexMeta,
+      "entries"
+    > & {
+      entries: (CardEmbeddingIndexEntry | CardEmbeddingIndexEntryWire)[];
+    };
     if (
-      meta?.version !== 1 ||
-      meta.model !== CARD_EMBED_MODEL ||
-      meta.dim !== CARD_EMBED_DIM ||
-      !Array.isArray(meta.entries)
+      raw?.version !== 1 ||
+      raw.model !== CARD_EMBED_MODEL ||
+      raw.dim !== CARD_EMBED_DIM ||
+      !Array.isArray(raw.entries)
     ) {
       return null;
     }
+    const entries = expandEmbeddingEntries(raw.entries);
+    if (entries.length !== raw.entries.length) return null;
+    const meta: CardEmbeddingIndexMeta = { ...raw, entries };
     const buf = readFileSync(binPath);
     const expected = meta.entries.length * CARD_EMBED_DIM * 4;
     if (buf.byteLength < expected) return null;
@@ -612,7 +617,14 @@ export async function buildCardEmbeddingIndex(opts: {
   };
 
   mkdirSync(packRoot, { recursive: true });
-  writeFileSync(cardEmbeddingIndexMetaPath(opts.packId), JSON.stringify(meta));
+  // Compact on disk: `art` basename instead of full `cards/…/artRel` path.
+  writeFileSync(
+    cardEmbeddingIndexMetaPath(opts.packId),
+    JSON.stringify({
+      ...meta,
+      entries: entries.map(compactEmbeddingEntry),
+    }),
+  );
   writeFileSync(
     cardEmbeddingIndexBinPath(opts.packId),
     Buffer.from(matrix.buffer, matrix.byteOffset, matrix.byteLength),

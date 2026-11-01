@@ -4,6 +4,7 @@ import {
   collectorBandRect,
   collectorBandRectInRegion,
   collectorBandUpscale,
+  titleBandRect,
   isPlausibleCollectorWord,
   looksLikeCollectorToken,
   OCR_BAND_MAX_UPSCALE,
@@ -80,6 +81,16 @@ describe("collectorBandRect", () => {
     const r = collectorBandRect(1, 1);
     expect(r.sw).toBeGreaterThanOrEqual(1);
     expect(r.sh).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("titleBandRect", () => {
+  it("takes the top nameplate, not the footer", () => {
+    const r = titleBandRect(1000, 1400, 0);
+    expect(r.sy).toBe(0);
+    expect(r.sh).toBe(Math.floor(1400 * 0.18));
+    expect(r.sx).toBe(0);
+    expect(r.sw).toBe(1000);
   });
 });
 

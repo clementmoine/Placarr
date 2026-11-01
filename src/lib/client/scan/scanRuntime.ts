@@ -48,6 +48,11 @@ export function getScanRuntime(): ScanRuntime {
   return runtime;
 }
 
+/** True once DocAligner + OCR + DINOv2 have finished their first boot. */
+export function isScanRuntimeReady(): boolean {
+  return getScanRuntime().ready;
+}
+
 let bootPromise: Promise<ScanRuntime> | null = null;
 
 /**

@@ -93,15 +93,45 @@ describe("roundedQuadPath", () => {
     expect(d.match(/Q/g)?.length).toBe(4);
     expect(d.startsWith("M0.00,12.00")).toBe(true);
     expect(d.endsWith("Z")).toBe(true);
-    // Radius larger than the short edge is clamped (45 % of 20 = 9).
+    // Radius larger than the short edge is clamped (50 % of 20 = 10).
     const tiny = roundedQuadPath(rect(0, 0, 20, 150), 50);
-    expect(tiny.startsWith("M0.00,9.00")).toBe(true);
+    expect(tiny.startsWith("M0.00,10.00")).toBe(true);
   });
 
   it("degrades to a plain polygon at radius 0", () => {
     expect(roundedQuadPath(rect(0, 0, 10, 10), 0)).toBe(
       "M0.00,0.00L10.00,0.00L10.00,10.00L0.00,10.00Z",
     );
+  });
+});
+
+describe("morphingFrameRadius", () => {
+  it("is a full half-side on a square (circle guide)", async () => {
+    const { morphingFrameRadius } = await import("./quadMotion");
+    expect(morphingFrameRadius(rect(0, 0, 100, 100), 18)).toBeCloseTo(50);
+  });
+
+  it("stays near the card radius on a portrait card", async () => {
+    const { morphingFrameRadius } = await import("./quadMotion");
+    // 63/88 ≈ 0.72 — just into the lerp band; still far from a circle (~31.5).
+    const r = morphingFrameRadius(rect(0, 0, 63, 88), 18);
+    expect(r).toBeGreaterThanOrEqual(18);
+    expect(r).toBeLessThan(22);
+  });
+});
+
+describe("frameOutlinePath", () => {
+  it("draws a true circle for the 32px guide square", async () => {
+    const { frameOutlinePath } = await import("./quadMotion");
+    const d = frameOutlinePath(rect(100, 200, 32, 32), 18);
+    expect(d).toContain("A16.00,16.00");
+    expect(d).not.toContain("Q");
+  });
+
+  it("falls back to rounded quad on a card-shaped detection", async () => {
+    const { frameOutlinePath } = await import("./quadMotion");
+    const d = frameOutlinePath(rect(0, 0, 63, 88), 18);
+    expect(d.match(/Q/g)?.length).toBe(4);
   });
 });
 

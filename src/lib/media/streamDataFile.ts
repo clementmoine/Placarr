@@ -1,6 +1,10 @@
 /**
  * Stream a file under a data root for ``/uploads`` and ``/foil``.
  * Never buffers the whole body (WebGL packs are multi‑GB).
+ *
+ * When the caller sends `Accept-Encoding: gzip` / `br`, compressible
+ * payloads (JSON, f16 shards, ONNX, wasm, …) are compressed on the fly.
+ * Images are left alone — already entropy-coded.
  */
 import {
   createReadStream,
@@ -13,6 +17,11 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
+import {
+  createBrotliCompress,
+  createGzip,
+  constants as zlibConstants,
+} from "node:zlib";
 import { NextResponse } from "next/server";
 
 const MIME: Record<string, string> = {
@@ -33,7 +42,24 @@ const MIME: Record<string, string> = {
   ".f16": "application/octet-stream",
   ".f32": "application/octet-stream",
   ".onnx": "application/octet-stream",
+  ".wasm": "application/wasm",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8",
 };
+
+/** Already entropy-coded — gzip/br would only burn CPU. */
+const SKIP_COMPRESS_EXT = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".avif",
+  ".gif",
+  ".astc",
+]);
+
+export type TransferEncoding = "br" | "gzip";
 
 /** Magic-byte sniff — harvests often save PNG/JPEG under a `.webp` name. */
 export function sniffImageContentType(filePath: string): string | null {
@@ -135,6 +161,40 @@ function isStillFresh(
   return Number.isFinite(since) && Math.floor(mtimeMs / 1000) * 1000 <= since;
 }
 
+/**
+ * Prefer brotli, then gzip, from `Accept-Encoding`. Ignores q=0 and
+ * identity-only clients.
+ */
+export function negotiateTransferEncoding(
+  acceptEncoding: string | null | undefined,
+): TransferEncoding | null {
+  if (!acceptEncoding) return null;
+  const lower = acceptEncoding.toLowerCase();
+  // Crude but enough: browsers send `gzip, deflate, br` / `br;q=1.0, gzip;q=0.8`.
+  const wants = (token: string): boolean => {
+    const re = new RegExp(
+      `(?:^|,)\\s*${token}\\s*(?:;\\s*q\\s*=\\s*([0-9.]+))?`,
+      "i",
+    );
+    const m = re.exec(lower);
+    if (!m) return false;
+    if (m[1] !== undefined && Number(m[1]) === 0) return false;
+    return true;
+  };
+  if (wants("br")) return "br";
+  if (wants("gzip")) return "gzip";
+  return null;
+}
+
+export function shouldCompressFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  if (SKIP_COMPRESS_EXT.has(ext)) return false;
+  // Sniffed images under a wrong extension (harvest `.webp` that is JPEG).
+  const sniffed = sniffImageContentType(filePath);
+  if (sniffed) return false;
+  return true;
+}
+
 export function streamFileResponse(
   filePath: string,
   options: {
@@ -142,10 +202,28 @@ export function streamFileResponse(
     cache?: FileCachePolicy;
     /** Extra response headers (e.g. print-face owned/borrowed). */
     headers?: Record<string, string>;
+    /**
+     * Force / forbid on-the-fly compression. Default: negotiate from the
+     * request when the file type is compressible.
+     */
+    compress?: boolean;
   } = {},
 ): NextResponse {
   const stat = statSync(filePath);
-  const etag = entityTag(stat);
+  const baseEtag = entityTag(stat);
+  const encoding =
+    options.compress === false
+      ? null
+      : options.compress === true ||
+          (options.compress !== false &&
+            options.request &&
+            shouldCompressFile(filePath))
+        ? negotiateTransferEncoding(
+            options.request?.headers.get("accept-encoding"),
+          )
+        : null;
+  const etag = encoding ? baseEtag.replace(/"$/, `-${encoding}"`) : baseEtag;
+
   const headers: Record<string, string> = {
     "Content-Type": contentType(filePath),
     "Cache-Control": CACHE_CONTROL[options.cache ?? "immutable"],
@@ -153,17 +231,48 @@ export function streamFileResponse(
     "Last-Modified": new Date(stat.mtimeMs).toUTCString(),
     ...(options.headers ?? {}),
   };
+  if (shouldCompressFile(filePath)) {
+    headers.Vary = mergeVary(headers.Vary, "Accept-Encoding");
+  }
 
   // A revalidating caller pays one conditional request and gets an empty 304
   // back; without the validators above it would re-download the whole file.
-  if (isStillFresh(options.request, etag, stat.mtimeMs)) {
+  // Accept either the encoded or identity ETag so old caches still 304.
+  if (
+    isStillFresh(options.request, etag, stat.mtimeMs) ||
+    (encoding && isStillFresh(options.request, baseEtag, stat.mtimeMs))
+  ) {
     return new NextResponse(null, { status: 304, headers });
   }
 
-  const stream = createReadStream(filePath);
-  const body = Readable.toWeb(stream) as ReadableStream;
-  return new NextResponse(body, {
-    status: 200,
-    headers: { ...headers, "Content-Length": String(stat.size) },
-  });
+  const fileStream = createReadStream(filePath);
+  if (!encoding) {
+    const body = Readable.toWeb(fileStream) as ReadableStream;
+    return new NextResponse(body, {
+      status: 200,
+      headers: { ...headers, "Content-Length": String(stat.size) },
+    });
+  }
+
+  const compressed =
+    encoding === "br"
+      ? fileStream.pipe(
+          createBrotliCompress({
+            params: {
+              [zlibConstants.BROTLI_PARAM_QUALITY]: 5,
+            },
+          }),
+        )
+      : fileStream.pipe(createGzip({ level: 6 }));
+  headers["Content-Encoding"] = encoding;
+  // Chunked — compressed length is unknown up front.
+  const body = Readable.toWeb(compressed) as ReadableStream;
+  return new NextResponse(body, { status: 200, headers });
+}
+
+function mergeVary(existing: string | undefined, token: string): string {
+  if (!existing?.trim()) return token;
+  const parts = existing.split(",").map((p) => p.trim().toLowerCase());
+  if (parts.includes(token.toLowerCase())) return existing;
+  return `${existing}, ${token}`;
 }

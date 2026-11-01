@@ -159,10 +159,59 @@ export function scaleQuadAboutCentre(
 }
 
 /**
+ * Corner radius that reads soft on a detected card. Near-square quads
+ * should use {@link closedCirclePath} instead — quadratic rounds never
+ * make a true circle.
+ */
+export function morphingFrameRadius(
+  q: MotionQuad,
+  cardRadius = 18,
+): number {
+  const w = Math.hypot(q[1]!.x - q[0]!.x, q[1]!.y - q[0]!.y);
+  const h = Math.hypot(q[2]!.x - q[1]!.x, q[2]!.y - q[1]!.y);
+  const short = Math.min(w, h);
+  const long = Math.max(w, h);
+  if (short < 1) return cardRadius;
+  const squareness = short / long;
+  // Card portrait ≈ 0.72; circle guide = 1. Blend in that band.
+  const t = Math.max(0, Math.min(1, (squareness - 0.7) / 0.3));
+  return cardRadius + t * (short / 2 - cardRadius);
+}
+
+/** True SVG circle (two arcs), not a rounded square. */
+export function closedCirclePath(
+  cx: number,
+  cy: number,
+  radius: number,
+): string {
+  const r = Math.max(0, radius);
+  if (r <= 0) return "";
+  // Two half-arcs — deterministic, no relative-move quirks across SVG hosts.
+  return `M${fmt(cx - r)},${fmt(cy)}A${fmt(r)},${fmt(r)} 0 1,0 ${fmt(cx + r)},${fmt(cy)}A${fmt(r)},${fmt(r)} 0 1,0 ${fmt(cx - r)},${fmt(cy)}Z`;
+}
+
+/** Prefer a true circle while the springing quad is still nearly square. */
+export function frameOutlinePath(
+  q: MotionQuad,
+  cardRadius = 18,
+): string {
+  const w = Math.hypot(q[1]!.x - q[0]!.x, q[1]!.y - q[0]!.y);
+  const h = Math.hypot(q[2]!.x - q[1]!.x, q[2]!.y - q[1]!.y);
+  const short = Math.min(w, h);
+  const long = Math.max(w, h);
+  if (short > 1 && short / long >= 0.92) {
+    const cx = (q[0]!.x + q[1]!.x + q[2]!.x + q[3]!.x) / 4;
+    const cy = (q[0]!.y + q[1]!.y + q[2]!.y + q[3]!.y) / 4;
+    return closedCirclePath(cx, cy, short / 2);
+  }
+  return roundedQuadPath(q, morphingFrameRadius(q, cardRadius));
+}
+
+/**
  * SVG path of a convex quad with rounded corners. Each corner is cut at
- * `radius` along both edges (clamped to 45 % of the shorter one) and bridged
- * with a quadratic curve through the vertex — the circular-looking rounding
- * of a UI rectangle, valid for any tilt or mild perspective.
+ * `radius` along both edges (clamped to 50 % of the shorter edge — enough
+ * for a square guide to read as a circle) and bridged with a quadratic
+ * curve through the vertex, valid for any tilt or mild perspective.
  */
 export function roundedQuadPath(q: MotionQuad, radius: number): string {
   if (radius <= 0) {
@@ -175,7 +224,7 @@ export function roundedQuadPath(q: MotionQuad, radius: number): string {
     const next = q[(i + 1) % 4]!;
     const lenIn = Math.hypot(cur.x - prev.x, cur.y - prev.y);
     const lenOut = Math.hypot(next.x - cur.x, next.y - cur.y);
-    const r = Math.min(radius, 0.45 * Math.min(lenIn, lenOut));
+    const r = Math.min(radius, 0.5 * Math.min(lenIn, lenOut));
     const inPt =
       lenIn > 0
         ? {

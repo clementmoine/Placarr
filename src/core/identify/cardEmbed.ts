@@ -12,6 +12,7 @@ import {
   CARD_EMBED_MODEL,
   descriptorFromFeatures,
 } from "@/core/identify/embedMath";
+import { runServerOrtExclusive } from "@/lib/server/ortExclusive";
 
 export {
   CARD_EMBED_DIM,
@@ -61,13 +62,16 @@ export async function prefetchCardEmbed(): Promise<void> {
 
 async function embedJpegBytes(jpeg: Buffer): Promise<Float32Array | null> {
   try {
-    const { RawImage } = await import("@huggingface/transformers");
-    const extractor = await loadExtractor();
-    // Transformers.js RawImage.read accepts Blob / path / URL — not Uint8Array.
-    const image = await RawImage.read(new Blob([new Uint8Array(jpeg)]));
-    // No `pool` (ONNX export has no pooler head): CLS token, see embedMath.
-    const out = await extractor(image);
-    return descriptorFromFeatures(out?.data ?? [], CARD_EMBED_DIM);
+    // Same native ORT as PP-OCR — never overlap a run (see ortExclusive.ts).
+    return await runServerOrtExclusive(async () => {
+      const { RawImage } = await import("@huggingface/transformers");
+      const extractor = await loadExtractor();
+      // Transformers.js RawImage.read accepts Blob / path / URL — not Uint8Array.
+      const image = await RawImage.read(new Blob([new Uint8Array(jpeg)]));
+      // No `pool` (ONNX export has no pooler head): CLS token, see embedMath.
+      const out = await extractor(image);
+      return descriptorFromFeatures(out?.data ?? [], CARD_EMBED_DIM);
+    });
   } catch {
     return null;
   }

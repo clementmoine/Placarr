@@ -175,4 +175,25 @@ describe("runDataPackCardVisualIndex (incremental)", () => {
     ]);
     expect(decodeSpy).toHaveBeenCalledTimes(2);
   });
+
+  it("indexes an attested verso beside the recto (unique back → same printKey)", async () => {
+    const dir = path.join(root, PACK, "cards", "fr", "s1", "1");
+    writeFileSync(path.join(dir, "back.jpg"), await face(11));
+    decodeSpy.mockClear();
+    const built = await buildCardVisualIndex({
+      packId: PACK,
+      printGame: "demo",
+      lang: "fr",
+      write: false,
+      prior: null,
+    });
+    const faces = built.entries.filter((e) => e.printKey === "demo:s1-1");
+    expect(faces.map((e) => e.artRel.split("/").pop()).sort()).toEqual([
+      "art.jpg",
+      "back.jpg",
+    ]);
+    expect(new Set(faces.map((e) => e.printKey))).toEqual(
+      new Set(["demo:s1-1"]),
+    );
+  });
 });

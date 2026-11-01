@@ -44,7 +44,9 @@ export class ScanSession {
 
   /**
    * Record a lock. Returns the entry, or null if still cooling down
-   * (same key within cooldown — TCGplayer "no consecutive duplicate").
+   * (same key within cooldown — guards auto re-locks of the same frame).
+   * Pass `force` for an explicit user confirm: always appends another copy
+   * (ManaBox-style quantity) and refreshes the auto cooldown.
    */
   tryLock(
     kind: SessionLockKind,
@@ -52,8 +54,9 @@ export class ScanSession {
     label: string,
     faceUrl?: string | null,
     now = Date.now(),
+    opts?: { force?: boolean },
   ): SessionLock | null {
-    if (this.isCoolingDown(kind, key, now)) return null;
+    if (!opts?.force && this.isCoolingDown(kind, key, now)) return null;
     const entry: SessionLock = {
       id: `${kind}:${key}:${now}`,
       kind,

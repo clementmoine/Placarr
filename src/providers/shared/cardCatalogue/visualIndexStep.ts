@@ -54,6 +54,7 @@ type AssetRow = {
   printKey: string;
   lang: string;
   art: string;
+  back: string | null;
 };
 
 function listPrintAssets(packId: string): AssetRow[] {
@@ -73,12 +74,21 @@ function listPrintAssets(packId: string): AssetRow[] {
       )
       .get() as { ok?: number } | undefined;
     if (!has?.ok) return [];
+    const cols = (
+      db.prepare(`PRAGMA table_info(print_assets)`).all() as { name: string }[]
+    ).map((c) => c.name);
+    const hasBack = cols.includes("back");
     return (
       db
         .prepare(
-          `SELECT print_key AS printKey, lang, art
-             FROM print_assets
-            WHERE art IS NOT NULL AND TRIM(art) != ''`,
+          hasBack
+            ? `SELECT print_key AS printKey, lang, art, back
+                 FROM print_assets
+                WHERE (art IS NOT NULL AND TRIM(art) != '')
+                   OR (back IS NOT NULL AND TRIM(back) != '')`
+            : `SELECT print_key AS printKey, lang, art, NULL AS back
+                 FROM print_assets
+                WHERE art IS NOT NULL AND TRIM(art) != ''`,
         )
         .all() as AssetRow[]
     )
@@ -88,8 +98,9 @@ function listPrintAssets(packId: string): AssetRow[] {
           .trim()
           .toLowerCase(),
         art: String(row.art ?? "").trim(),
+        back: String(row.back ?? "").trim() || null,
       }))
-      .filter((row) => row.printKey && row.lang && row.art);
+      .filter((row) => row.printKey && row.lang && (row.art || row.back));
   } catch {
     return [];
   } finally {
@@ -189,36 +200,51 @@ async function buildFromCatalogue(opts: {
   // Keep catalogue order: slot = reused entry or a pending decode.
   const slots: Array<CardVisualIndexEntry | Pending> = [];
 
-  for (const row of listPrintAssets(opts.packId)) {
-    if (opts.limit != null && slots.length >= opts.limit) break;
-    if (!FACE_LANGS.has(row.lang)) continue;
-    if (langFilter && !langFilter.has(row.lang)) continue;
+  const enqueue = (
+    printKey: string,
+    lang: string,
+    basename: string | null,
+  ): void => {
+    if (!basename) return;
+    if (opts.limit != null && slots.length >= opts.limit) return;
     const resolved = resolveCatalogueArtPath(
       opts.packId,
-      row.printKey,
-      row.lang,
-      row.art,
+      printKey,
+      lang,
+      basename,
     );
-    if (!resolved) continue;
-    const dedupe = visualEntryKey(row.printKey, row.lang);
-    if (seen.has(dedupe)) continue;
-    seen.add(dedupe);
+    if (!resolved) return;
+    const faceKey = visualEntryKey(printKey, lang, resolved.artRel);
+    if (seen.has(faceKey)) return;
+    seen.add(faceKey);
     const fp = faceFingerprint(resolved.abs);
-    const prev = priorByKey?.get(dedupe);
+    const prev =
+      priorByKey?.get(faceKey) ??
+      (basename.toLowerCase().startsWith("art")
+        ? priorByKey?.get(visualEntryKey(printKey, lang))
+        : undefined);
     if (canReuseVisualEntry(prev, resolved.artRel, fp)) {
       opts.stats.reused += 1;
       slots.push({ ...prev, set: resolved.set, card: resolved.card });
-      continue;
+      return;
     }
     slots.push({
-      printKey: row.printKey,
-      lang: row.lang,
+      printKey,
+      lang,
       set: resolved.set,
       card: resolved.card,
       artRel: resolved.artRel,
       abs: resolved.abs,
       fp,
     });
+  };
+
+  for (const row of listPrintAssets(opts.packId)) {
+    if (opts.limit != null && slots.length >= opts.limit) break;
+    if (!FACE_LANGS.has(row.lang)) continue;
+    if (langFilter && !langFilter.has(row.lang)) continue;
+    enqueue(row.printKey, row.lang, row.art || null);
+    enqueue(row.printKey, row.lang, row.back);
   }
 
   const hashed = await mapPool(slots, HASH_CONCURRENCY, async (slot) => {
@@ -389,9 +415,10 @@ export async function runDataPackCardVisualIndex(
         exclude: seen,
       });
       for (const entry of partial.entries) {
-        const key = `${entry.printKey}\0${entry.lang}`;
+        const key = visualEntryKey(entry.printKey, entry.lang, entry.artRel);
         if (seen.has(key)) continue;
         seen.add(key);
+        seen.add(visualEntryKey(entry.printKey, entry.lang));
         merged.push(entry);
       }
     }
@@ -412,9 +439,10 @@ export async function runDataPackCardVisualIndex(
       exclude: seen,
     });
     for (const entry of setLayout.entries) {
-      const key = `${entry.printKey}\0${entry.lang}`;
+      const key = visualEntryKey(entry.printKey, entry.lang, entry.artRel);
       if (seen.has(key)) continue;
       seen.add(key);
+      seen.add(visualEntryKey(entry.printKey, entry.lang));
       merged.push(entry);
     }
     return writeCardVisualIndexIfChanged(

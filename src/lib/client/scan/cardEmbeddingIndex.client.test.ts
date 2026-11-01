@@ -11,9 +11,14 @@ import {
   matchClientEmbeddings,
   promotePackHot,
   promotePacksHot,
+  RESIDENT_BUDGET_BYTES,
+  RESIDENT_BUDGET_CONSTRAINED_BYTES,
+  residentBudgetForDevice,
+  residentBytesUsedForTests,
   residentPackIds,
   resetClientEmbeddingMemory,
   setHotF32BudgetForTests,
+  setResidentBudgetForTests,
   shardRevalidationDecision,
   type ClientEmbeddingMeta,
   type ClientLoadedPack,
@@ -128,6 +133,16 @@ describe("hotBudgetForDevice", () => {
   });
 });
 
+describe("residentBudgetForDevice", () => {
+  it("caps Safari/phone residency below the full catalogue", () => {
+    expect(residentBudgetForDevice(8)).toBe(RESIDENT_BUDGET_BYTES);
+    expect(residentBudgetForDevice(undefined)).toBe(
+      RESIDENT_BUDGET_CONSTRAINED_BYTES,
+    );
+    expect(RESIDENT_BUDGET_CONSTRAINED_BYTES).toBeLessThan(RESIDENT_BUDGET_BYTES);
+  });
+});
+
 describe("resident packs: f16 always, hot f32 bounded", () => {
   const dim = 4;
   function shard(packId: string, rows: number) {
@@ -235,6 +250,32 @@ describe("resident packs: f16 always, hot f32 bounded", () => {
     const query = l2Normalize(Float32Array.from(huge.matrix.subarray(0, dim)));
     const hits = matchClientEmbeddings(query, [huge], { maxDistance: 1000 });
     expect(hits[0]?.printKey).toBe("huge:a-0");
+  });
+
+  it("evicts LRU f16 residents when over the device residency budget", async () => {
+    resetClientEmbeddingMemory();
+    // Three 10-row f16 packs ≈ 3 * 10 * 4 * 2 bytes; budget fits two.
+    const f16Bytes = (rows: number) => rows * dim * 2;
+    setResidentBudgetForTests(f16Bytes(25));
+    await shard("old", 10);
+    await shard("mid", 10);
+    getResidentPack("old"); // touch so mid is LRU when "new" arrives
+    await shard("new", 10);
+    expect(residentPackIds().sort()).toEqual(["new", "old"]);
+    expect(getResidentPack("mid")).toBeNull();
+    expect(residentBytesUsedForTests()).toBeLessThanOrEqual(f16Bytes(25));
+  });
+
+  it("never evicts a pack the current shortlist still needs", async () => {
+    resetClientEmbeddingMemory();
+    const f16Bytes = (rows: number) => rows * dim * 2;
+    setResidentBudgetForTests(f16Bytes(25));
+    await shard("keep", 10);
+    await shard("mid", 10);
+    // Mark shortlist before admitting the overcrowding pack.
+    promotePacksHot(["keep", "mid"]);
+    await shard("new", 10);
+    expect(residentPackIds().sort()).toEqual(["keep", "mid", "new"]);
   });
 });
 

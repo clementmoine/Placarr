@@ -50,6 +50,7 @@
     "cardDescription": "Frame the card — a suggestion appears live; confirm it. Never auto-accepted.",
     "cardSnap": "Snap",
     "cardCameraStarting": "Opening camera…",
+    "enginesPreparing": "Preparing scanner…",
     "cardLiveHint": "Point at the face — rough framing is fine…",
     "cardConfirm": "Confirm",
     "cardBest": "best",

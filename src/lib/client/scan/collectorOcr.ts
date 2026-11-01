@@ -43,6 +43,12 @@ export const COLLECTOR_OCR_LANGS = ["eng", "fra"] as const;
  */
 export const OCR_BAND_HEIGHT_FRAC = 0.12;
 /**
+ * Top strip where the printed name lives on most TCG faces (and on unique
+ * versos). Read as a *clue* — never as a sure identity by itself. Kept
+ * separate from the footer so flavor text cannot invent a collector number.
+ */
+export const OCR_TITLE_BAND_HEIGHT_FRAC = 0.18;
+/**
  * Side inset for a loose crop (the live AABB), where the card's own edge and
  * whatever lies beside it sit in the strip. A rectified band is cut on the
  * card's own corners and needs none: the collector number starts flush with
@@ -62,6 +68,20 @@ export function collectorBandRect(
   const sy = Math.max(0, h - sh);
   const sw = Math.max(1, w - insetX * 2);
   return { sx: insetX, sy, sw, sh };
+}
+
+/** Top nameplate band — same inset rules as {@link collectorBandRect}. */
+export function titleBandRect(
+  width: number,
+  height: number,
+  insetXFrac: number = OCR_BAND_INSET_X_FRAC,
+): CollectorBandRect {
+  const w = Math.max(1, Math.floor(width));
+  const h = Math.max(1, Math.floor(height));
+  const insetX = Math.floor(w * Math.max(0, insetXFrac));
+  const sh = Math.max(8, Math.floor(h * OCR_TITLE_BAND_HEIGHT_FRAC));
+  const sw = Math.max(1, w - insetX * 2);
+  return { sx: insetX, sy: 0, sw, sh };
 }
 
 /**

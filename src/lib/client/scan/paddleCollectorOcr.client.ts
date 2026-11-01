@@ -12,6 +12,7 @@ import type { PaddleOcrService as PaddleOcrServiceClass } from "ppu-paddle-ocr/w
 import {
   collectorBandRect,
   collectorBandUpscale,
+  titleBandRect,
   type CollectorBandRect,
   type CollectorOcrResult,
 } from "@/lib/client/scan/collectorOcr";
@@ -20,7 +21,10 @@ import {
   ORT_LIBRARY_SESSION_PROVIDERS,
   runOrtExclusive,
 } from "@/lib/client/scan/ortRuntime";
-import { interpretPaddleRaw } from "@/lib/client/scan/paddleOcrInterpret";
+import {
+  interpretPaddleRaw,
+  interpretPaddleTitleRaw,
+} from "@/lib/client/scan/paddleOcrInterpret";
 
 type PaddleOcrInstance = InstanceType<typeof PaddleOcrServiceClass>;
 
@@ -152,6 +156,7 @@ function drawUpscaled(
 async function prepareBand(
   blob: Blob,
   pre?: PreCroppedBand,
+  role: "footer" | "title" = "footer",
 ): Promise<BandCanvas | null> {
   const bitmap = await createImageBitmap(blob).catch(() => null);
   if (!bitmap) return null;
@@ -174,7 +179,10 @@ async function prepareBand(
         sourceHeight: pre.sourceHeight,
       };
     }
-    const band = collectorBandRect(bitmap.width, bitmap.height);
+    const band =
+      role === "title"
+        ? titleBandRect(bitmap.width, bitmap.height)
+        : collectorBandRect(bitmap.width, bitmap.height);
     const scale = collectorBandUpscale(band.sw);
     const canvas = drawUpscaled(bitmap, band, scale);
     if (!canvas) return null;
@@ -200,7 +208,12 @@ async function prepareBand(
  */
 export async function recognizeCollectorOcrClient(
   image: Blob,
-  opts?: { timeoutMs?: number; preCropped?: PreCroppedBand },
+  opts?: {
+    timeoutMs?: number;
+    preCropped?: PreCroppedBand;
+    /** Footer = collector filter; title = nameplate words (clue only). */
+    role?: "footer" | "title";
+  },
 ): Promise<(CollectorOcrResult & { engine: "ppocr-client" }) | null> {
   const timeoutMs = opts?.timeoutMs ?? 1500;
   // Still warming up (first open): don't hold the sample for the download —
@@ -214,14 +227,17 @@ export async function recognizeCollectorOcrClient(
   > => {
     const service = await loadService();
     if (!service) return null;
-    const prepared = await prepareBand(image, opts?.preCropped);
+    const role = opts?.role ?? "footer";
+    const prepared = await prepareBand(image, opts?.preCropped, role);
     if (!prepared) return null;
 
     const raw = await runOrtExclusive("ppocr:recognize", () =>
       service.recognize(prepared.canvas, { flatten: true }),
     );
     const inv = 1 / prepared.scale;
-    const { text, words } = interpretPaddleRaw(
+    const interpret =
+      role === "title" ? interpretPaddleTitleRaw : interpretPaddleRaw;
+    const { text, words } = interpret(
       raw,
       prepared.band,
       { sx: prepared.band.sx, sy: prepared.band.sy },

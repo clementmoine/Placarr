@@ -22,6 +22,10 @@ import {
   rerankMatchesByCollectorHint,
 } from "@/core/identify/collectorNumberHint";
 import {
+  ocrTitleTokens,
+  rerankMatchesByTitleTokens,
+} from "@/core/identify/ocrTitleHint";
+import {
   buildCardIdentifyViews,
   finalizeIdentifyConfidence,
   IDENTIFY_EMBED_SHORTLIST_MAX,
@@ -41,7 +45,8 @@ import {
 import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { isCataloguePackId } from "@/lib/admin/cataloguePacks";
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { identifyMatchDisplayUrl } from "@/lib/packAssetUrls";
+import { loadPrintTitlesForKeys } from "@/lib/server/identify/printTitles";
 import {
   prefetchPaddleCollectorOcr,
   recognizeCollectorBandServer,
@@ -71,15 +76,17 @@ function withFaceUrl(match: CardVisualMatch): CardVisualMatch & {
   method?: "embed" | "dhash";
 } {
   const packId = match.packId?.trim();
-  const rel = match.artRel?.trim();
-  if (!packId || !rel) {
+  if (!packId || !match.printKey) {
     return { ...match, faceUrl: null };
   }
-  const parts = rel.split(/[/\\]/).filter(Boolean);
-  if (!parts.length) return { ...match, faceUrl: null };
   return {
     ...match,
-    faceUrl: assetsPackFileUrl(packId, ...parts),
+    // Display only — `/prints/…/thumb` (falls back to face art on disk).
+    faceUrl: identifyMatchDisplayUrl(
+      packId,
+      match.printKey,
+      match.lang || "fr",
+    ),
   };
 }
 
@@ -289,16 +296,20 @@ export async function POST(req: NextRequest) {
 
     const views = built.views;
     const useEmbed = embeddingIndexesAvailable(packId ? [packId] : undefined);
-    // PP-OCR on the dewarped/live card face in parallel with embed/dHash —
-    // never blocks the critical match path beyond Promise.all.
+    // Client already OCR'd on-device — do not re-run PP-OCR here. DINOv2 and
+    // paddle share onnxruntime-node; overlapping runs have aborted Node with
+    // a native malloc double-free (phone then sees blue "?" on every face).
+    const clientAlreadyRead =
+      typeof ocrRaw === "string" && ocrRaw.trim().length > 0;
     const ocrSource = views[0]?.buffer ?? buffer;
     const [embedResult, visualMatches, serverOcr] = await Promise.all([
       useEmbed
         ? matchEmbedViews(views, packId, packIds, preferLang)
         : Promise.resolve(null),
       matchVisualViews(views, packId, packIds),
-      // Init is outside this timeout; 2.5s covers CPU contention with CLIP.
-      recognizeCollectorBandServer(ocrSource, { timeoutMs: 2500 }),
+      clientAlreadyRead
+        ? Promise.resolve(null)
+        : recognizeCollectorBandServer(ocrSource, { timeoutMs: 2500 }),
     ]);
     const embedMatches = embedResult?.matches ?? null;
     const embedQuery = embedResult?.query ?? null;
@@ -362,7 +373,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const reranked = rerankMatchesByCollectorHint(shortlist, collectorHint);
+    let reranked = rerankMatchesByCollectorHint(shortlist, collectorHint);
+    const titleTokens = ocrTitleTokens(
+      (typeof ocrRaw === "string" ? ocrRaw : "") || serverOcr?.text || "",
+    );
+    if (titleTokens.length && reranked.length > 1) {
+      const titles = loadPrintTitlesForKeys(
+        packId ? [packId] : (packIds ?? []),
+        reranked.map((row) => row.printKey),
+      );
+      if (titles.size) {
+        reranked = rerankMatchesByTitleTokens(reranked, titleTokens, (key) =>
+          titles.get(key)?.join(" "),
+        );
+      }
+    }
     const ocrReinforced =
       Boolean(collectorHint?.set) &&
       Boolean(reranked[0]) &&

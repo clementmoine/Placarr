@@ -18,6 +18,7 @@ import {
   interpretPaddleRaw,
   type PaddleFlatRaw,
 } from "@/lib/client/scan/paddleOcrInterpret";
+import { runServerOrtExclusive } from "@/lib/server/ortExclusive";
 
 export type ServerOcrStatus =
   "ok" | "empty" | "timeout" | "init_fail" | "bad_image";
@@ -63,7 +64,8 @@ async function getService(): Promise<PaddleService | null> {
         const service = new mod.PaddleOcrService({
           model: mod.V5_LATIN_MOBILE_MODEL,
         }) as unknown as PaddleService;
-        await service.initialize();
+        // Init creates det+rec sessions — serialize with DINOv2 (shared ORT).
+        await runServerOrtExclusive(() => service.initialize());
         return service;
       } catch (err) {
         console.warn("[paddleCollectorOcr] init failed", err);
@@ -194,9 +196,11 @@ export async function recognizeCollectorBandServer(
 
     let raw: PaddleRaw;
     try {
-      raw = await service.recognize(toArrayBuffer(prepared.jpeg), {
-        flatten: true,
-      });
+      raw = await runServerOrtExclusive(() =>
+        service.recognize(toArrayBuffer(prepared.jpeg), {
+          flatten: true,
+        }),
+      );
     } catch (err) {
       console.warn("[paddleCollectorOcr] recognize failed", err);
       return {

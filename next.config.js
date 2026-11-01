@@ -100,6 +100,20 @@ const nextConfig = {
    * shelves scan surface so ort-web can use SharedArrayBuffer when available
    * without breaking cross-origin catalogue faces (credentialless).
    */
+  /**
+   * `public/models` would otherwise win over an app route and skip our
+   * gzip/br stream. beforeFiles runs ahead of the public filesystem.
+   */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/models/:path*",
+          destination: "/api/models/:path*",
+        },
+      ],
+    };
+  },
   async headers() {
     return [
       {

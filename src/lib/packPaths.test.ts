@@ -155,6 +155,13 @@ describe("packPaths", () => {
     ).toBe(true);
   });
 
+  it("points scan carousels at the print thumb role, not full artRel", async () => {
+    const { identifyMatchDisplayUrl } = await import("./packAssetUrls");
+    expect(
+      identifyMatchDisplayUrl("dragonball/cg", "dbscg:bt1-001", "fr"),
+    ).toMatch(/\/prints\/[^/]+\/thumb$/);
+  });
+
   it("still refuses a segment that names neither a pack root nor a nest", async () => {
     const { splitAssetsPackPath } = await import("./packPaths");
     expect(splitAssetsPackPath(["lorcana", "etc", "passwd"])).toBeNull();

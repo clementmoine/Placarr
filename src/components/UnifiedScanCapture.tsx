@@ -45,7 +45,10 @@ import {
 } from "@/lib/client/scan/grabCollectorBand";
 import { hapticLong, hapticShort } from "@/lib/client/scan/haptics";
 import { grabRectifiedSample } from "@/lib/client/scan/rectifyCardFace";
-import { bootScanRuntime } from "@/lib/client/scan/scanRuntime";
+import {
+  bootScanRuntime,
+  isScanRuntimeReady,
+} from "@/lib/client/scan/scanRuntime";
 import {
   useScanPipeline,
   type LiveSubjectHit,
@@ -376,6 +379,9 @@ export function UnifiedScanCapture({
 
   const [live, setLive] = useState(false);
   const [starting, setStarting] = useState(false);
+  /** On-device engines (ORT / OCR / DINOv2) — not the camera permission. */
+  const [enginesReady, setEnginesReady] = useState(() => isScanRuntimeReady());
+  const enginesReadyRef = useRef(enginesReady);
   const [sampling, setSampling] = useState(false);
   const [phase, setPhase] = useState<ScanPhase>("looking");
   const [gateHint, setGateHint] = useState<QualityHint>("ok");
@@ -486,8 +492,16 @@ export function UnifiedScanCapture({
       key: string,
       label: string,
       faceUrl?: string | null,
+      opts?: { force?: boolean },
     ) => {
-      const entry = sessionRef.current.tryLock(kind, key, label, faceUrl);
+      const entry = sessionRef.current.tryLock(
+        kind,
+        key,
+        label,
+        faceUrl,
+        Date.now(),
+        opts,
+      );
       if (entry) {
         setSessionLocks([...sessionRef.current.list()]);
         hapticLong();
@@ -518,16 +532,23 @@ export function UnifiedScanCapture({
       const row =
         matches.find((m) => m.printKey === printKey) ?? matches[0] ?? null;
       if (!row) return;
-      if (!recordSessionLock("card", row.printKey, row.printKey, row.faceUrl)) {
+      // Explicit tap always records a copy — cooldown only blocks auto-locks.
+      if (
+        !recordSessionLock("card", row.printKey, row.printKey, row.faceUrl, {
+          force: true,
+        })
+      ) {
         return;
       }
+      toast.success(t("scanner.addedKeepScanning"));
       setMatches([]);
       setStable(null);
+      setIdentifyMiss(false);
       setPanel("camera");
       setPhase("looking");
       acceptRef.current = createAcceptState();
     },
-    [matches, recordSessionLock],
+    [matches, recordSessionLock, t],
   );
 
   const undoSessionLock = useCallback((id: string) => {
@@ -703,10 +724,20 @@ export function UnifiedScanCapture({
       body.set("lang", locale);
       body.set("fallback", "1");
       if (ocr.text) body.set("ocrText", ocr.text);
-      const response = await fetch("/api/identify/card-image?fallback=1", {
-        method: "POST",
-        body,
-      });
+      let response: Response;
+      try {
+        response = await fetch("/api/identify/card-image?fallback=1", {
+          method: "POST",
+          body,
+          // Dead/hung server must not freeze the live identify loop (iOS
+          // "plantage" with missing thumbs while the tab stays up).
+          signal: AbortSignal.timeout(8_000),
+        });
+      } catch {
+        if (generation !== genRef.current) return;
+        setPhase("looking");
+        return;
+      }
       adaptiveRef.current.recordIdentifyMs(performance.now() - started);
       if (generation !== genRef.current) return;
       const data = (await response.json()) as {
@@ -859,6 +890,8 @@ export function UnifiedScanCapture({
     async (opts?: { force?: boolean }) => {
       const video = videoRef.current;
       if (!video || inFlightRef.current) return;
+      // Wait for the preparing screen to clear — no silent server thrash.
+      if (!enginesReadyRef.current) return;
       if (!opts?.force) {
         if (Date.now() < backoffUntilRef.current) return;
         if (!allowIdentifyTick()) return;
@@ -869,15 +902,14 @@ export function UnifiedScanCapture({
       const roi = sampleCardRoi(video, detectedRegion);
       if (!roi) return;
 
-      if (looksLikeCardBack(roi)) {
+      // A flat/desaturated ROI is often the shared pack sleeve — but unique
+      // versos (leaders, morphs) look the same to this heuristic and must
+      // still go through identify. "Retournez" is only shown when identify
+      // misses (scanHints + identifyMiss).
+      const maybeBack = looksLikeCardBack(roi);
+      if (maybeBack) {
         setGateHint("card_back");
-        adaptiveRef.current.noteAim(false);
-        patchScanDebug({
-          gateHint: "card_back",
-          blurVariance: 0,
-          phase: "looking",
-        });
-        return;
+        patchScanDebug({ gateHint: "card_back" });
       }
 
       const quality = evaluateQualityGates(roi);
@@ -965,11 +997,28 @@ export function UnifiedScanCapture({
   );
 
   // Warm the on-device stack as soon as the scanner opens — not after the
-  // camera permission round-trip — so the frame and identify are ready by
-  // the time the first frame arrives.
+  // camera permission round-trip. Fail open so a download glitch never
+  // traps the user on the preparing screen.
   useEffect(() => {
     if (!active) return;
-    void bootScanRuntime([]);
+    if (isScanRuntimeReady()) {
+      enginesReadyRef.current = true;
+      setEnginesReady(true);
+      return;
+    }
+    enginesReadyRef.current = false;
+    setEnginesReady(false);
+    let cancelled = false;
+    void bootScanRuntime([])
+      .catch(() => null)
+      .then(() => {
+        if (cancelled) return;
+        enginesReadyRef.current = true;
+        setEnginesReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [active]);
 
   // Vision overlay (Sobel ≤5 Hz + DocAligner ≤2 Hz + EMA). Yields during identify.
@@ -1311,7 +1360,9 @@ export function UnifiedScanCapture({
     cameraClassName,
     cameraCompact
       ? "shrink-0 basis-[28vh] min-h-[140px] max-h-[220px] cursor-pointer"
-      : "flex-1 min-h-[42vh] basis-auto",
+      : // Full remaining dialog height on open — no artificial 42vh floor that
+        // left a dead band under the viewfinder before the first match.
+        "flex-1 min-h-0 basis-auto",
   );
 
   return (
@@ -1348,12 +1399,43 @@ export function UnifiedScanCapture({
             muted
             autoPlay
           />
-          {(starting || !live) && (
-            <div className="absolute inset-0 flex items-center justify-center text-xs text-white/70 bg-black/80 z-20">
-              {t("scanner.cardCameraStarting")}
+          {(starting || !live || !enginesReady) && (
+            <div
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/80 px-6 text-center"
+              role="status"
+              aria-live="polite"
+              data-preparing={
+                !starting && live && !enginesReady ? "engines" : "camera"
+              }
+            >
+              <span
+                className="inline-flex items-center gap-1.5"
+                aria-hidden="true"
+              >
+                <span className="size-1.5 rounded-full bg-white/90 motion-safe:animate-pulse" />
+                <span
+                  className="size-1.5 rounded-full bg-white/90 motion-safe:animate-pulse"
+                  style={{ animationDelay: "140ms" }}
+                />
+                <span
+                  className="size-1.5 rounded-full bg-white/90 motion-safe:animate-pulse"
+                  style={{ animationDelay: "280ms" }}
+                />
+              </span>
+              <p className="text-xs text-white/75 leading-snug">
+                {starting || !live
+                  ? t("scanner.cardCameraStarting")
+                  : t("scanner.enginesPreparing")}
+              </p>
             </div>
           )}
-          {!cameraCompact ? (
+          {cameraCompact ? (
+            <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/55 via-transparent to-transparent flex items-end justify-center pb-2.5">
+              <span className="text-[10px] font-medium text-white/80">
+                {t("scanner.expandCamera")}
+              </span>
+            </div>
+          ) : enginesReady ? (
             <ScanOverlay
               mode="auto"
               phase={phase}
@@ -1362,16 +1444,10 @@ export function UnifiedScanCapture({
               sampling={sampling}
               onTap={() => void runCardSample({ force: true })}
             />
-          ) : (
-            <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/55 via-transparent to-transparent flex items-end justify-center pb-2.5">
-              <span className="text-[10px] font-medium text-white/80">
-                {t("scanner.expandCamera")}
-              </span>
-            </div>
-          )}
+          ) : null}
 
           <div
-            className="absolute top-3 inset-x-3 z-30 flex items-start justify-between pointer-events-none"
+            className="absolute inset-x-3 z-30 flex items-start justify-between pointer-events-none top-[max(0.75rem,env(safe-area-inset-top))]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pointer-events-auto flex gap-2">
@@ -1478,6 +1554,11 @@ export function UnifiedScanCapture({
                           alt={row.printKey}
                           className="absolute inset-0 size-full object-cover"
                           loading="lazy"
+                          onError={(e) => {
+                            // iOS paints a blue "?" on a broken img — hide it
+                            // and leave the muted tile (printKey sits below).
+                            e.currentTarget.style.display = "none";
+                          }}
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground p-2 text-center">

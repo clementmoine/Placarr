@@ -101,9 +101,23 @@ export function faceFingerprint(absPath: string): string | null {
   }
 }
 
-/** Reuse key for a face row: one entry per print + locale. */
-export function visualEntryKey(printKey: string, lang: string): string {
-  return `${printKey}\0${lang}`;
+/**
+ * Reuse key for a face row. Three parts when `artRel` is set (recto and
+ * verso of the same print are different files); two parts = "this print in
+ * this locale" (layout-merge exclude / legacy prior lookup).
+ */
+export function visualEntryKey(
+  printKey: string,
+  lang: string,
+  artRel?: string,
+): string {
+  return artRel ? `${printKey}\0${lang}\0${artRel}` : `${printKey}\0${lang}`;
+}
+
+/** Front scan (`art.*`). Versos use `back.*` and share the printKey. */
+export function isFrontArtRel(artRel: string): boolean {
+  const base = artRel.split("/").pop() ?? artRel;
+  return /^art(\.|$)/i.test(base);
 }
 
 /**
@@ -274,21 +288,19 @@ async function signalsFromFile(
   };
 }
 
-function listArtFiles(dir: string): string[] {
+function listRoleFiles(dir: string, role: "art" | "back"): string[] {
   if (!existsSync(dir)) return [];
+  const prefix = role === "art" ? /^art(\.|$)/i : /^back(\.|$)/i;
   return readdirSync(dir).filter(
-    (name) =>
-      /^art(\.|$)/i.test(name) && /\.(webp|jpg|jpeg|png|gif)$/i.test(name),
+    (name) => prefix.test(name) && /\.(webp|jpg|jpeg|png|gif)$/i.test(name),
   );
 }
 
-function pickArtName(arts: string[]): string | null {
-  if (!arts.length) return null;
-  return (
-    arts.find((n) => n.toLowerCase() === "art.webp") ??
-    arts.find((n) => n.toLowerCase().startsWith("art.")) ??
-    arts[0]!
-  );
+function pickRoleName(files: string[], role: "art" | "back"): string | null {
+  if (!files.length) return null;
+  const exact = files.find((n) => n.toLowerCase() === `${role}.webp`);
+  if (exact) return exact;
+  return files.find((n) => n.toLowerCase().startsWith(`${role}.`)) ?? files[0]!;
 }
 
 function listSubdirs(dir: string): string[] {
@@ -301,6 +313,53 @@ function listSubdirs(dir: string): string[] {
   } catch {
     return [];
   }
+}
+
+async function pushFaceFile(opts: {
+  printKey: string;
+  lang: string;
+  set: string;
+  card: string;
+  abs: string;
+  artRel: string;
+  entries: CardVisualIndexEntry[];
+  seen: Set<string>;
+  prior: ReadonlyMap<string, CardVisualIndexEntry> | null;
+  exclude?: ReadonlySet<string>;
+}): Promise<boolean> {
+  const faceKey = visualEntryKey(opts.printKey, opts.lang, opts.artRel);
+  const localeKey = visualEntryKey(opts.printKey, opts.lang);
+  if (
+    opts.seen.has(faceKey) ||
+    opts.exclude?.has(faceKey) ||
+    opts.exclude?.has(localeKey)
+  ) {
+    return false;
+  }
+  const fp = faceFingerprint(opts.abs);
+  const prev =
+    opts.prior?.get(faceKey) ??
+    (isFrontArtRel(opts.artRel) ? opts.prior?.get(localeKey) : undefined);
+  if (canReuseVisualEntry(prev, opts.artRel, fp)) {
+    opts.seen.add(faceKey);
+    opts.entries.push({ ...prev, set: opts.set, card: opts.card });
+    return true;
+  }
+  const signals = await signalsFromFile(opts.abs);
+  if (!signals) return false;
+  opts.seen.add(faceKey);
+  opts.entries.push({
+    printKey: opts.printKey,
+    lang: opts.lang,
+    set: opts.set,
+    card: opts.card,
+    artRel: opts.artRel,
+    hash: signals.hash,
+    aHash: signals.aHash,
+    color: signals.color,
+    ...(fp ? { fp } : {}),
+  });
+  return true;
 }
 
 async function pushCardDir(opts: {
@@ -317,35 +376,34 @@ async function pushCardDir(opts: {
   exclude?: ReadonlySet<string>;
 }): Promise<void> {
   const printKey = `${opts.printGame}:${opts.set}-${opts.card}`;
-  const dedupe = visualEntryKey(printKey, opts.lang);
-  // Already indexed (this walk or a previous layout pass) → no readdir, no decode.
-  if (opts.seen.has(dedupe) || opts.exclude?.has(dedupe)) return;
-  const arts = listArtFiles(opts.cardDir);
-  const artName = pickArtName(arts);
-  if (!artName) return;
-  const abs = path.join(opts.cardDir, artName);
-  const artRel = [...opts.relParts, artName].join("/");
-  const fp = faceFingerprint(abs);
-  const prev = opts.prior?.get(dedupe);
-  if (canReuseVisualEntry(prev, artRel, fp)) {
-    opts.seen.add(dedupe);
-    opts.entries.push({ ...prev, set: opts.set, card: opts.card });
-    return;
+  const localeKey = visualEntryKey(printKey, opts.lang);
+  // A previous layout pass already indexed this print+locale (front ± back).
+  if (opts.seen.has(localeKey) || opts.exclude?.has(localeKey)) return;
+
+  const faces: Array<{ name: string }> = [];
+  const artName = pickRoleName(listRoleFiles(opts.cardDir, "art"), "art");
+  if (artName) faces.push({ name: artName });
+  const backName = pickRoleName(listRoleFiles(opts.cardDir, "back"), "back");
+  if (backName) faces.push({ name: backName });
+  if (!faces.length) return;
+
+  let added = false;
+  for (const face of faces) {
+    const ok = await pushFaceFile({
+      printKey,
+      lang: opts.lang,
+      set: opts.set,
+      card: opts.card,
+      abs: path.join(opts.cardDir, face.name),
+      artRel: [...opts.relParts, face.name].join("/"),
+      entries: opts.entries,
+      seen: opts.seen,
+      prior: opts.prior,
+      exclude: opts.exclude,
+    });
+    added = added || ok;
   }
-  const signals = await signalsFromFile(abs);
-  if (!signals) return;
-  opts.seen.add(dedupe);
-  opts.entries.push({
-    printKey,
-    lang: opts.lang,
-    set: opts.set,
-    card: opts.card,
-    artRel,
-    hash: signals.hash,
-    aHash: signals.aHash,
-    color: signals.color,
-    ...(fp ? { fp } : {}),
-  });
+  if (added) opts.seen.add(localeKey);
 }
 
 /**
@@ -457,14 +515,17 @@ export async function buildCardVisualIndex(opts: {
   return writeCardVisualIndexIfChanged(file, onDisk).file;
 }
 
-/** `printKey\0lang` → entry, for incremental rebuilds. */
+/** Face key + locale key (front only) → entry, for incremental rebuilds. */
 export function indexEntriesByKey(
   entries: readonly CardVisualIndexEntry[] | null | undefined,
 ): Map<string, CardVisualIndexEntry> | null {
   if (!entries?.length) return null;
   const map = new Map<string, CardVisualIndexEntry>();
   for (const entry of entries) {
-    map.set(visualEntryKey(entry.printKey, entry.lang), entry);
+    map.set(visualEntryKey(entry.printKey, entry.lang, entry.artRel), entry);
+    if (isFrontArtRel(entry.artRel)) {
+      map.set(visualEntryKey(entry.printKey, entry.lang), entry);
+    }
   }
   return map;
 }

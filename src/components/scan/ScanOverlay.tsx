@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Lens-style overlay: one animated frame (guide → card → guide), one line of
+ * Lens-style overlay: circle guide → object outline → circle, one line of
  * text. Technical vision rects (ROI, OCR words) only in debug.
  */
 import { useSyncExternalStore } from "react";
@@ -58,7 +58,6 @@ function useVisionSnapshot(): ScanDebugSnapshot {
 }
 
 export function ScanOverlay({
-  mode,
   phase,
   hint,
   quadNorm,
@@ -97,11 +96,7 @@ export function ScanOverlay({
       }
       aria-label={onTap ? hint : undefined}
     >
-      <SubjectFrame
-        quadNorm={frameQuad}
-        locked={locked}
-        guideAspect={mode === "barcode" ? 16 / 10 : 63 / 88}
-      />
+      <SubjectFrame quadNorm={frameQuad} locked={locked} />
 
       {showVisionDetails &&
       (vision.overlays.length > 0 || vision.texts.length > 0) ? (

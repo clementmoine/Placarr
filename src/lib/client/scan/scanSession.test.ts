@@ -28,4 +28,13 @@ describe("ScanSession", () => {
     expect(s.list()).toHaveLength(0);
     expect(s.tryLock("card", "p1", "p1", null, 10)?.key).toBe("p1");
   });
+
+  it("force bypasses cooldown so an explicit confirm can add another copy", () => {
+    const s = new ScanSession({ cooldownMs: 5000 });
+    expect(s.tryLock("card", "p1", "p1", null, 0)).not.toBeNull();
+    expect(s.tryLock("card", "p1", "p1", null, 10)).toBeNull();
+    const forced = s.tryLock("card", "p1", "p1", null, 20, { force: true });
+    expect(forced?.key).toBe("p1");
+    expect(s.list()).toHaveLength(2);
+  });
 });

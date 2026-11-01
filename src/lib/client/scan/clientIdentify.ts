@@ -6,7 +6,7 @@
 import { shortlistPacksByCentroid } from "@/core/identify/cardEmbeddingSearch";
 import { finalizeIdentifyConfidence } from "@/core/identify/identifyConfidence";
 import { parseCollectorNumberHint } from "@/core/identify/collectorNumberHint";
-import { assetsPackFileUrl } from "@/lib/packAssetUrls";
+import { identifyMatchDisplayUrl } from "@/lib/packAssetUrls";
 import {
   embedCardFaceBlobClient,
   isCardEmbedClientReady,
@@ -103,9 +103,35 @@ export async function recognizeCollectorBandClient(
   bandHalfTurn?: CollectorBandGrab | null,
 ): Promise<ClientOcrOutcome> {
   const first = await readBand(face, band, false);
-  if (!bandHalfTurn || parseCollectorNumberHint(first.text)) return first;
-  const second = await readBand(face, bandHalfTurn, true);
-  return parseCollectorNumberHint(second.text) ? second : first;
+  let best = first;
+  if (bandHalfTurn && !parseCollectorNumberHint(first.text)) {
+    const second = await readBand(face, bandHalfTurn, true);
+    if (parseCollectorNumberHint(second.text)) best = second;
+  }
+  if (parseCollectorNumberHint(best.text)) return best;
+
+  // No footer number — read the nameplate. Title/description is a clue
+  // (unique verso, objects without a collector line), never a sure alone.
+  const title = await recognizeCollectorOcrClient(face, { role: "title" });
+  if (!title?.text) return best;
+  return {
+    text: [title.text, best.text].filter(Boolean).join(" ").trim(),
+    status: "ok",
+    engine: "ppocr-client",
+    words: [
+      ...title.words.map((w) => ({
+        text: w.text,
+        x: w.x,
+        y: w.y,
+        width: w.width,
+        height: w.height,
+      })),
+      ...best.words,
+    ],
+    sourceWidth: best.sourceWidth ?? title.sourceWidth,
+    sourceHeight: best.sourceHeight ?? title.sourceHeight,
+    halfTurn: best.halfTurn,
+  };
 }
 
 export type ClientIdentifyMatch = {
@@ -141,13 +167,10 @@ export type ClientIdentifyResult = {
 };
 
 function withFaceUrl(hit: ClientEmbedHit): ClientIdentifyMatch {
-  const faceUrl =
-    hit.packId && hit.artRel
-      ? assetsPackFileUrl(
-          hit.packId,
-          ...hit.artRel.split(/[/\\]/).filter(Boolean),
-        )
-      : null;
+  // Display only — prefer `/prints/…/thumb` (disk falls back to full art).
+  const faceUrl = hit.packId
+    ? identifyMatchDisplayUrl(hit.packId, hit.printKey, hit.lang)
+    : null;
   return {
     printKey: hit.printKey,
     lang: hit.lang,

@@ -84,3 +84,41 @@ export function interpretPaddleRaw(
 
   return { text, words, confidence: raw.confidence ?? 0 };
 }
+
+/**
+ * Title / description words — no collector filter. Short garbage is dropped;
+ * the rest is joined for {@link ocrTitleTokens}.
+ */
+export function interpretPaddleTitleRaw(
+  raw: PaddleFlatRaw,
+  band: CollectorBandRect,
+  origin: { sx: number; sy: number },
+  scaleX: number,
+  scaleY: number,
+): { text: string; words: OcrWordBox[]; confidence: number } {
+  const flat = Array.isArray(raw.results) ? raw.results : [];
+  const words: OcrWordBox[] = [];
+  for (const item of flat) {
+    const text = item.text?.replace(/\s+/g, " ").trim() ?? "";
+    const box = item.box;
+    if (!box || text.length < 3) continue;
+    const conf = item.confidence <= 1 ? item.confidence * 100 : item.confidence;
+    if (conf < 40) continue;
+    const boxW = box.width * scaleX;
+    const boxH = box.height * scaleY;
+    if (boxH > band.sh * 0.9 && boxW > band.sw * 0.9) continue;
+    words.push({
+      text,
+      x: origin.sx + box.x * scaleX,
+      y: origin.sy + box.y * scaleY,
+      width: boxW,
+      height: boxH,
+      confidence: conf,
+    });
+  }
+  const text = words
+    .map((w) => w.text)
+    .join(" ")
+    .trim();
+  return { text, words, confidence: raw.confidence ?? 0 };
+}

@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * The one rectangle of the scan UI.
+ * The one outline of the scan UI.
  *
- * It rests as a centred portrait guide, glides onto the card when the
- * detector finds one (spring, no teleport), follows it, and glides back when
- * the card leaves. Rounded corners, hairline outline, soft dim outside —
+ * At rest: a circle in the centre (mode-agnostic — barcode or card).
+ * On detection: the same path springs onto the object quad and the corner
+ * radius softens from circle → card. Rounded outline, soft dim outside —
  * nothing else. Frames are written straight to the SVG (no React re-render
  * per animation frame).
  */
@@ -19,8 +19,8 @@ import {
 
 import {
   createQuadSpring,
+  frameOutlinePath,
   retargetQuadSpring,
-  roundedQuadPath,
   scaleQuadAboutCentre,
   stepQuadSpring,
   type MotionPoint,
@@ -37,28 +37,32 @@ export type SubjectFrameProps = {
   locked: boolean;
   /** Keep the last detection this long before gliding back to the guide. */
   holdMs?: number;
-  /** Resting guide aspect (w / h): portrait card by default. */
+  /**
+   * @deprecated Guide is a circle; kept optional for callers that still pass
+   * a card/barcode aspect.
+   */
   guideAspect?: number;
   className?: string;
 };
 
-/** Corner radius of the drawn frame, px. */
+/** Soft card corner once the outline has left the circle. */
 const FRAME_RADIUS_PX = 18;
 /** Dim outside the frame (guide / tracking). */
 const DIM_ALPHA = 0.28;
 const DEFAULT_HOLD_MS = 450;
+/** Resting guide: perfect 32px circle in the viewport centre. */
+const GUIDE_DIAMETER_PX = 32;
 
-/** Centred guide in box pixels. */
-function guideQuad(w: number, h: number, aspect: number): MotionQuad {
-  const gw = Math.min(w * 0.72, 320, h * 0.62 * aspect);
-  const gh = gw / aspect;
-  const x = (w - gw) / 2;
-  const y = (h - gh) / 2 - h * 0.03;
+/** Centred circle guide (axis-aligned square → full corner radius). */
+export function guideCircleQuad(w: number, h: number): MotionQuad {
+  const d = GUIDE_DIAMETER_PX;
+  const x = (w - d) / 2;
+  const y = (h - d) / 2;
   return [
     { x, y },
-    { x: x + gw, y },
-    { x: x + gw, y: y + gh },
-    { x, y: y + gh },
+    { x: x + d, y },
+    { x: x + d, y: y + d },
+    { x, y: y + d },
   ];
 }
 
@@ -79,7 +83,6 @@ export function SubjectFrame({
   quadNorm,
   locked,
   holdMs = DEFAULT_HOLD_MS,
-  guideAspect = 63 / 88,
   className,
 }: SubjectFrameProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -112,7 +115,8 @@ export function SubjectFrame({
   }, []);
 
   const paint = useCallback((q: MotionQuad) => {
-    const d = roundedQuadPath(q, FRAME_RADIUS_PX);
+    // Near-square → true circle arcs; once the object stretches it, rounded quad.
+    const d = frameOutlinePath(q, FRAME_RADIUS_PX);
     outlineRef.current?.setAttribute("d", d);
     dimRef.current?.setAttribute(
       "d",
@@ -135,7 +139,7 @@ export function SubjectFrame({
     rafRef.current = requestAnimationFrame(loop);
   }, [paint]);
 
-  // Target selection: detection (held briefly) or the guide.
+  // Target selection: detection (held briefly) or the circle guide.
   useEffect(() => {
     if (!size.w || !size.h) return;
     const now = performance.now();
@@ -143,7 +147,7 @@ export function SubjectFrame({
     if (detected) lastDetectedRef.current = { quad: detected, at: now };
     const held = lastDetectedRef.current;
     const holding = held && now - held.at < holdMs ? held : null;
-    const target = holding?.quad ?? guideQuad(size.w, size.h, guideAspect);
+    const target = holding?.quad ?? guideCircleQuad(size.w, size.h);
 
     if (!springRef.current) {
       // First paint: settle in from a touch larger.
@@ -161,7 +165,7 @@ export function SubjectFrame({
           if (!spring) return;
           retargetQuadSpring(
             spring,
-            guideQuad(sizeRef.current.w, sizeRef.current.h, guideAspect),
+            guideCircleQuad(sizeRef.current.w, sizeRef.current.h),
           );
           setTone(locked ? "locked" : "guide");
           kick();
@@ -171,7 +175,7 @@ export function SubjectFrame({
       return () => clearTimeout(t);
     }
     return undefined;
-  }, [quadNorm, size.w, size.h, locked, holdMs, guideAspect, kick]);
+  }, [quadNorm, size.w, size.h, locked, holdMs, kick]);
 
   useEffect(
     () => () => {
@@ -192,6 +196,7 @@ export function SubjectFrame({
       ref={hostRef}
       className={cn("absolute inset-0 pointer-events-none", className)}
       aria-hidden
+      data-tone={tone}
     >
       {size.w > 0 ? (
         <svg

@@ -7,7 +7,10 @@ allowBuilds:
   "@parcel/watcher": true
   "@prisma/engines": true
   esbuild: true
+  onnxruntime-node: true
   prisma: true
+  protobufjs: true
+  tesseract.js: true
   unrs-resolver: true
 
 # Avoid interactive purge prompt when switching pnpm major (CI / agent installs).

@@ -74,6 +74,38 @@ const nextConfig = {
     remotePatterns: NEXT_IMAGE_CONFIG_REMOTE_PATTERNS,
   },
   /**
+   * Models / WASM threads: CORP on static models; COEP credentialless on the
+   * shelves scan surface so ort-web can use SharedArrayBuffer when available
+   * without breaking cross-origin catalogue faces (credentialless).
+   */
+  async headers() {
+    return [
+      {
+        source: "/models/:path*",
+        headers: [
+          {
+            key: "Cross-Origin-Resource-Policy",
+            value: "cross-origin",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/shelves",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          {
+            key: "Cross-Origin-Embedder-Policy",
+            value: "credentialless",
+          },
+        ],
+      },
+    ];
+  },
+  /**
    * Server packages Next must NOT bundle.
    *
    * This used to be `[]`, which reads like "nothing special to declare" but
@@ -89,8 +121,12 @@ const nextConfig = {
    * minus that one entry.
    */
   serverExternalPackages: [
+    "@huggingface/transformers",
     "eslint",
+    "onnxruntime-node",
     "pg",
+    "ppu-paddle-ocr",
+    "ppu-ocv",
     "prettier",
     "prisma",
     "sharp",

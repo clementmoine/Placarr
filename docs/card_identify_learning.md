@@ -8,8 +8,10 @@ Doc produit / MLOps pour la reconnaissance visuelle TCG.
 > client (WebGPU fp32 / WASM q8). Bench Lorcana FR 3 462 arts × 150 photos
 > dégradées : 4 vraies erreurs (le reste des « échecs » = art réimprimé,
 > indécidable sans OCR), marge #1/#2 p10 = 52 milli (CLIP ViT‑B/32 : ≈ 0).
-> « CLIP » ci-dessous désigne la famille « encodeur image figé » ; la
-> stratégie (ré-embed, pas retrain) est inchangée.
+> q8 vs fp32 (même 150, galerie fp32, seuils sure 230/70) : 0 sure-FP des
+> deux côtés, sure-TP 117→116, R@1 87.3%→89.3% (jumeaux reprint). On garde
+> q8 en WASM. « CLIP » ci-dessous désigne la famille « encodeur image figé » ;
+> la stratégie (ré-embed, pas retrain) est inchangée.
 
 ## TL;DR (une phrase)
 
@@ -19,14 +21,14 @@ qualité photo→art stagne malgré index complet + OCR + gates.
 
 ## Deux objets distincts
 
-| Objet | C’est quoi | Change quand… |
-| ----- | ---------- | ------------- |
-| **Modèle** (CLIP / ONNX) | Fonction fixe image → vecteur | Rarement (version bump / fine-tune) |
-| **Index / galerie** | Liste de vecteurs des faces catalogue | **À chaque set / face nouvelle** |
+| Objet                    | C’est quoi                            | Change quand…                       |
+| ------------------------ | ------------------------------------- | ----------------------------------- |
+| **Modèle** (CLIP / ONNX) | Fonction fixe image → vecteur         | Rarement (version bump / fine-tune) |
+| **Index / galerie**      | Liste de vecteurs des faces catalogue | **À chaque set / face nouvelle**    |
 
 Identifier une carte = encoder la photo avec le modèle, puis chercher les
 voisins dans l’index. Sans entrée dans l’index, la carte est **invisible** —
-même avec un modèle parfait. C’est le *cold start au niveau index*, pas un
+même avec un modèle parfait. C’est le _cold start au niveau index_, pas un
 problème de « modèle pas assez entraîné ».
 
 Industry standard (e-commerce / docs / TCG) :
@@ -101,12 +103,12 @@ droit, 6–85 % du cadre, convexe) ; sinon retour AABB / plein cadre.
 
 Quand un extract Sync ramène un nouveau set :
 
-| Étape | Automatique ? | Coût |
-| ----- | ------------- | ---- |
-| Faces sur disque / ledger | Extract / refresh admin | I/O + réseau |
-| Visual index | Sync | CPU léger |
-| CLIP embeddings des **nouvelles** faces | Sync / **Indexes caméra** | ONNX CPU/GPU — **pas** de training |
-| Fine-tune CLIP | **Non** | Dataset + GPU + eval + re-embed **tout** |
+| Étape                                   | Automatique ?             | Coût                                     |
+| --------------------------------------- | ------------------------- | ---------------------------------------- |
+| Faces sur disque / ledger               | Extract / refresh admin   | I/O + réseau                             |
+| Visual index                            | Sync                      | CPU léger                                |
+| CLIP embeddings des **nouvelles** faces | Sync / **Indexes caméra** | ONNX CPU/GPU — **pas** de training       |
+| Fine-tune CLIP                          | **Non**                   | Dataset + GPU + eval + re-embed **tout** |
 
 Donc : « on aura de nouvelles cartes régulièrement » → **ops d’index**, pas
 de retrain. Le produit doit garantir que Sync laisse l’embedding index à jour

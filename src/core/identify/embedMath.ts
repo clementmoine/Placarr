@@ -5,7 +5,8 @@
  * Model: DINOv2-small (Meta, Apache-2.0), CLS token, 384-d. Chosen on the
  * Lorcana FR pack (3 462 arts, 150 phone-degraded queries): 4 true errors vs
  * 41 for CLIP ViT-B/32, #1–#2 margin p50 124 vs 33 milli. CLIP is a semantic
- * model; instance re-identification is DINO's job.
+ * model; instance re-identification is DINO's job. Client WASM uses the q8
+ * weights of the same checkpoint (0 sure-FP vs fp32 on that set).
  */
 
 export const CARD_EMBED_MODEL = "Xenova/dinov2-small";

@@ -79,8 +79,12 @@ async function loadExtractor(): Promise<FeatureExtractor | null> {
       env.allowRemoteModels = false;
       env.localModelPath = LOCAL_MODEL_PATH;
       const device = await resolveClientEmbedDevice();
-      // fp32 on GPU (exact server parity); q8 on CPU/WASM keeps phones
-      // responsive — quality delta measured below noise on Lorcana FR.
+      // fp32 on GPU (exact server / index parity). q8 on WASM: Lorcana FR
+      // 150 degraded queries vs the fp32 gallery — 0 sure-FP either side,
+      // sure-TP 117→116 (one reprint-margin 66 vs 70), R@1 87.3%→89.3%
+      // (reprint coin-flips). Cosine min 0.963 is not a retrieval metric
+      // (ExecuTorch withdrew their int8 on that mistake). WASM fp32 is
+      // slower and can OOM; no settings, one path.
       const pipe = await runOrtExclusive("dinov2:load", () =>
         pipeline("image-feature-extraction", modelId, {
           device,

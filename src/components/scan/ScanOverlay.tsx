@@ -152,7 +152,7 @@ blur=${debug.blurVariance.toFixed(0)} lum=${debug.meanLuminance.toFixed(0)} glar
 margin=${debug.margin.toFixed(3)} weight=${debug.runWeight.toFixed(2)} aim=${debug.aimToLockMs ?? "—"}ms
 method=${debug.method} conf=${debug.confidence} quad=${debug.quadSource} crop=${debug.faceCrop}
 embed=${debug.bestEmbedDistance ?? "—"} dhash=${debug.bestDhashDistance ?? "—"} ${debug.bestEmbedKey || ""}
-ident=${debug.meanIdentifyMs || "—"}ms idle=${debug.idleBackoff ? 1 : 0} ocr=${debug.ocrPreview || "—"}
+ident=${debug.meanIdentifyMs || "—"}ms ocr=${debug.ocrMs || "—"}ms embed=${debug.embedMs || "—"}ms idle=${debug.idleBackoff ? 1 : 0} ocr=${debug.ocrPreview || "—"}
 texts=${debug.texts.length}`}
           </pre>
         </div>

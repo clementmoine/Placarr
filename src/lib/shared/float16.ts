@@ -109,6 +109,20 @@ function halfView(
   return aligned;
 }
 
+/**
+ * Zero-copy native half view over a little-endian float16 buffer — reads
+ * yield f32 numbers directly. Null where `Float16Array` is unavailable
+ * (older browsers), in which case callers decode to f32 instead.
+ */
+export function float16View(
+  buffer: ArrayBuffer | ArrayBufferView,
+  expectedLength?: number,
+): Float16Array | null {
+  if (typeof Float16Array === "undefined") return null;
+  const halves = halfView(buffer, expectedLength);
+  return new Float16Array(halves.buffer, halves.byteOffset, halves.length);
+}
+
 /** Decode a little-endian float16 buffer into Float32Array. */
 export function decodeFloat16Matrix(
   buffer: ArrayBuffer | ArrayBufferView,

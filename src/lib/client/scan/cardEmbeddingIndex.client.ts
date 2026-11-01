@@ -4,12 +4,16 @@
  * Packs served under `/assets/<pack>/card-embedding-index.f16` + `.json`.
  * Same topK / centroid logic as server `cardEmbeddingSearch`.
  *
- * Residency: decoded f32 matrices live in a bounded LRU (`RESIDENT_BUDGET`);
- * the f16 copy stays in IndexedDB. A pack becomes resident when the
- * background queue reaches it (cheapest first) or when a query's centroid
- * shortlist asks for it (`prioritizePack`). Nothing here ever blocks the
- * camera: decoding yields, downloads are sequential and low priority, and
- * identify only reads what is already resident (`getResidentPack`).
+ * Residency: every pack stays in RAM as its f16 shard (zero-copy native
+ * `Float16Array` view — ~half the catalogue's f32 size, nothing to decode
+ * at load). Packs a query actually scans are then promoted to a bounded
+ * LRU of hot f32 copies (`HOT_F32_BUDGET_BYTES`), which read ~6× faster;
+ * matching works on either, so identify never waits for memory. A pack
+ * becomes resident when the background queue reaches it (cheapest first)
+ * or when a query's centroid shortlist asks for it (`prioritizePack`).
+ * Nothing here blocks the camera: promotion decodes in yielding chunks,
+ * downloads are sequential and low priority, and identify only reads what
+ * is already resident (`getResidentPack`).
  *
  * Freshness: an IndexedDB hit is served immediately, then revalidated once
  * per session with a conditional GET on the meta (`If-None-Match`). A 304
@@ -21,6 +25,7 @@ import {
   computePackCentroid,
   shortlistPacksByCentroid,
   topKMilliDistances,
+  type EmbeddingMatrix,
 } from "@/core/identify/cardEmbeddingSearch";
 import type { CardEmbeddingIndexEntry } from "@/core/identify/cardEmbeddingIndex";
 import {
@@ -28,7 +33,7 @@ import {
   printKeyMatchesCollectorHint,
   type CollectorNumberHint,
 } from "@/core/identify/collectorNumberHint";
-import { decodeFloat16MatrixChunked } from "@/lib/shared/float16";
+import { decodeFloat16MatrixChunked, float16View } from "@/lib/shared/float16";
 import { assetsPackFileUrl, CARD_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import {
   clientEmbedDim,
@@ -48,7 +53,8 @@ export type ClientEmbeddingMeta = {
 
 export type ClientLoadedPack = {
   meta: ClientEmbeddingMeta;
-  matrix: Float32Array;
+  /** What matching reads: hot f32 once promoted, else the resident f16 view. */
+  matrix: EmbeddingMatrix;
   centroid: Float32Array;
 };
 
@@ -102,42 +108,33 @@ async function idbPut(rec: IdbRecord): Promise<void> {
 }
 
 /**
- * Decoded (f32) matrices kept in RAM. 160 MB holds the largest shard
- * (Yu-Gi-Oh ≈ 112 MB) plus a few mid-size packs; beyond that the least
- * recently used pack is dropped (its f16 copy stays in IndexedDB).
+ * Hot f32 copies kept beside the f16 residents. 128 MB holds the largest
+ * shard (Yu-Gi-Oh ≈ 112 MB f32) or several mid-size packs; the least
+ * recently used hot pack is demoted back to its f16 view when a newcomer
+ * needs room. A pack whose f32 copy alone exceeds the budget is simply
+ * scanned as f16 — slower, never missing.
  */
-export const RESIDENT_BUDGET_BYTES = 160 * 1024 * 1024;
+export const HOT_F32_BUDGET_BYTES = 128 * 1024 * 1024;
+let hotBudget = HOT_F32_BUDGET_BYTES;
 
-type Resident = { pack: ClientLoadedPack; bytes: number; lastUsed: number };
+type Resident = {
+  pack: ClientLoadedPack;
+  /** f16 view for demotion; null → no Float16Array, f32 only, never demoted. */
+  half: Float16Array | null;
+  /** Bytes of the hot f32 copy (0 while reading f16). */
+  hotBytes: number;
+  lastUsed: number;
+};
 const memory = new Map<string, Resident>();
 let clock = 0;
 
-function packBytes(pack: ClientLoadedPack): number {
-  return pack.matrix.byteLength;
-}
-
-function admit(pack: ClientLoadedPack): void {
-  const packId = pack.meta.packId;
-  const bytes = packBytes(pack);
-  memory.delete(packId);
-  let used = 0;
-  for (const r of memory.values()) used += r.bytes;
-  // Evict LRU until the newcomer fits (a single over-budget pack still
-  // gets admitted alone — better one big pack than none).
-  while (memory.size && used + bytes > RESIDENT_BUDGET_BYTES) {
-    let victim: string | null = null;
-    let oldest = Infinity;
-    for (const [id, r] of memory) {
-      if (r.lastUsed < oldest) {
-        oldest = r.lastUsed;
-        victim = id;
-      }
-    }
-    if (!victim) break;
-    used -= memory.get(victim)!.bytes;
-    memory.delete(victim);
-  }
-  memory.set(packId, { pack, bytes, lastUsed: ++clock });
+function admit(pack: ClientLoadedPack, half: Float16Array | null): void {
+  memory.set(pack.meta.packId, {
+    pack,
+    half,
+    hotBytes: half ? 0 : pack.matrix.byteLength,
+    lastUsed: ++clock,
+  });
 }
 
 /** Resident pack (sync) — the only read path identify is allowed to use. */
@@ -152,16 +149,90 @@ export function residentPackIds(): string[] {
   return [...memory.keys()];
 }
 
-function materialize(
+/** True when the pack is being matched from its f32 copy. */
+export function isPackHot(packId: string): boolean {
+  const r = memory.get(packId);
+  return Boolean(r && r.hotBytes > 0);
+}
+
+function hotBytesUsed(): number {
+  let used = 0;
+  for (const r of memory.values()) used += r.hotBytes;
+  return used;
+}
+
+function demote(r: Resident): void {
+  if (!r.half) return;
+  r.pack.matrix = r.half;
+  r.hotBytes = 0;
+}
+
+const promoting = new Set<string>();
+
+/**
+ * Decode a resident pack to f32 (yielding) so its next scan is fast,
+ * evicting least recently used hot packs to stay under budget. Called after
+ * a query scanned the pack — never on the identify critical path.
+ */
+export async function promotePackHot(packId: string): Promise<void> {
+  const r = memory.get(packId);
+  if (!r || !r.half || r.hotBytes > 0 || promoting.has(packId)) return;
+  const bytes = r.half.length * 4;
+  if (bytes > hotBudget) return;
+  promoting.add(packId);
+  try {
+    while (hotBytesUsed() + bytes > hotBudget) {
+      let victim: Resident | null = null;
+      for (const cand of memory.values()) {
+        if (cand.hotBytes > 0 && cand.half && cand !== r) {
+          if (!victim || cand.lastUsed < victim.lastUsed) victim = cand;
+        }
+      }
+      if (!victim) break;
+      demote(victim);
+    }
+    const f32 = await decodeFloat16MatrixChunked(r.half, r.half.length);
+    // The pack may have been swapped (revalidation) while decoding.
+    if (memory.get(packId) !== r) return;
+    r.pack.matrix = f32;
+    r.hotBytes = bytes;
+  } catch {
+    /* stay on f16 */
+  } finally {
+    promoting.delete(packId);
+  }
+}
+
+/** Fire-and-forget promotion for the packs a query just scanned. */
+export function promotePacksHot(packIds: readonly string[]): void {
+  for (const id of packIds) void promotePackHot(id);
+}
+
+/**
+ * Resident pack from a raw f16 shard: a zero-copy half view where the
+ * browser has `Float16Array`, otherwise a one-off f32 decode.
+ */
+async function materialize(
   meta: ClientEmbeddingMeta,
-  matrix: Float32Array,
-): ClientLoadedPack {
+  f16: ArrayBuffer,
+): Promise<{ pack: ClientLoadedPack; half: Float16Array | null }> {
   const rows = meta.entries.length;
+  const half = float16View(f16, rows * meta.dim);
+  const matrix: EmbeddingMatrix =
+    half ?? (await decodeFloat16MatrixChunked(f16, rows * meta.dim));
   const centroid =
     meta.centroid && meta.centroid.length === meta.dim
       ? Float32Array.from(meta.centroid)
       : computePackCentroid(matrix, rows, meta.dim);
-  return { meta, matrix, centroid };
+  return { pack: { meta, matrix, centroid }, half };
+}
+
+function admitMaterialized(m: {
+  pack: ClientLoadedPack;
+  half: Float16Array | null;
+}): ClientLoadedPack {
+  admit(m.pack, m.half);
+  return m.pack;
 }
 
 function metaUrlFor(packId: string): string {
@@ -173,7 +244,7 @@ async function installShard(
   packId: string,
   metaRes: Response,
   fetchBin: () => Promise<Response>,
-): Promise<ClientLoadedPack | null> {
+): Promise<Materialized | null> {
   const meta = (await metaRes.json()) as ClientEmbeddingMeta;
   if (!meta?.entries?.length || !meta.dim) return null;
   const expectedModel = clientEmbedModelId();
@@ -187,11 +258,6 @@ async function installShard(
   const binRes = await fetchBin();
   if (!binRes.ok) return null;
   const buf = await binRes.arrayBuffer();
-  const matrix = await decodeFloat16MatrixChunked(
-    buf,
-    meta.entries.length * meta.dim,
-  );
-  const packed = materialize(meta, matrix);
   const etag = metaRes.headers.get("etag") ?? undefined;
   await idbPut({
     packId,
@@ -202,15 +268,15 @@ async function installShard(
     matrixF16: buf.slice(0),
     ...(etag ? { etag } : {}),
   });
-  return packed;
+  return materialize(meta, buf);
 }
+
+type Materialized = Awaited<ReturnType<typeof materialize>>;
 
 /** Background shard traffic must not starve the camera's own requests. */
 const LOW_PRIORITY = { priority: "low" } as RequestInit;
 
-async function fetchPackShard(
-  packId: string,
-): Promise<ClientLoadedPack | null> {
+async function fetchPackShard(packId: string): Promise<Materialized | null> {
   const binUrl = assetsPackFileUrl(packId, CARD_EMBED_SHARD_FILES.f16);
   try {
     const metaRes = await fetch(metaUrlFor(packId), {
@@ -289,7 +355,7 @@ async function revalidatePackShard(
         cache: "no-store",
       }),
     );
-    if (packed && memory.has(packId)) admit(packed);
+    if (packed && memory.has(packId)) admitMaterialized(packed);
   } catch {
     // offline / transient — keep what we have
   }
@@ -297,17 +363,13 @@ async function revalidatePackShard(
 
 async function loadFromIdb(
   packId: string,
-): Promise<{ pack: ClientLoadedPack; rec: IdbRecord } | null> {
+): Promise<{ m: Materialized; rec: IdbRecord } | null> {
   try {
     const rec = await idbGet(packId);
     if (!rec) return null;
     if (rec.model !== clientEmbedModelId()) return null;
     const meta = JSON.parse(rec.metaJson) as ClientEmbeddingMeta;
-    const matrix = await decodeFloat16MatrixChunked(
-      rec.matrixF16,
-      meta.entries.length * meta.dim,
-    );
-    return { pack: materialize(meta, matrix), rec };
+    return { m: await materialize(meta, rec.matrixF16), rec };
   } catch {
     return null;
   }
@@ -330,16 +392,14 @@ export function ensurePackResident(
     try {
       const fromIdb = await loadFromIdb(packId);
       if (fromIdb) {
-        admit(fromIdb.pack);
+        const pack = admitMaterialized(fromIdb.m);
         void revalidatePackShard(packId, fromIdb.rec);
-        return fromIdb.pack;
+        return pack;
       }
       const fetched = await fetchPackShard(packId);
-      if (fetched) {
-        admit(fetched);
-        revalidated.add(packId);
-      }
-      return fetched;
+      if (!fetched) return null;
+      revalidated.add(packId);
+      return admitMaterialized(fetched);
     } catch {
       return null;
     } finally {
@@ -551,10 +611,20 @@ export function resetClientEmbeddingMemory(): void {
   memory.clear();
   revalidated.clear();
   inflight.clear();
+  promoting.clear();
   queue.length = 0;
+  hotBudget = HOT_F32_BUDGET_BYTES;
 }
 
-/** Tests: admit a pack directly into residency. */
-export function admitResidentPackForTests(pack: ClientLoadedPack): void {
-  admit(pack);
+/** Tests: shrink the hot budget so eviction is exercised with tiny shards. */
+export function setHotF32BudgetForTests(bytes: number): void {
+  hotBudget = bytes;
+}
+
+/** Tests: make a raw f16 shard resident exactly like a loaded one. */
+export async function admitShardForTests(
+  meta: ClientEmbeddingMeta,
+  f16: ArrayBuffer,
+): Promise<ClientLoadedPack> {
+  return admitMaterialized(await materialize(meta, f16));
 }

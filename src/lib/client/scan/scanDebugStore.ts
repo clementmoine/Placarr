@@ -27,6 +27,9 @@ export type ScanDebugSnapshot = {
   faceCrop: "none" | "rectified" | "aabb";
   /** Rolling mean identify round-trip (ms) — pacing info, never a mode. */
   meanIdentifyMs: number;
+  /** Last identify stage timings (ms): OCR band, embed+match. */
+  ocrMs: number;
+  embedMs: number;
   idleBackoff: boolean;
   /** Last client OCR snippet (joined). */
   ocrPreview: string;
@@ -55,6 +58,8 @@ const EMPTY: ScanDebugSnapshot = {
   quadSource: "none",
   faceCrop: "none",
   meanIdentifyMs: 0,
+  ocrMs: 0,
+  embedMs: 0,
   idleBackoff: false,
   ocrPreview: "",
   overlays: [],

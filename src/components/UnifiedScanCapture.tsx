@@ -616,11 +616,16 @@ export function UnifiedScanCapture({
       // OCR stage: native-res collector band (same frame as the face). Its
       // text feeds client identify *and* the server fallback.
       const ocr = await recognizeCollectorBandClient(blob, band);
+      const ocrDone = performance.now();
       if (generation !== genRef.current) return;
 
       // Full-client path first; server only if WASM/models/shards can't finish.
       try {
         const client = await identifyCardBlobClient(blob, { ocr });
+        patchScanDebug({
+          ocrMs: Math.round(ocrDone - started),
+          embedMs: Math.round(performance.now() - ocrDone),
+        });
         if (client && generation === genRef.current) {
           adaptiveRef.current.recordIdentifyMs(performance.now() - started);
           noteOcr({

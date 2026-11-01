@@ -17,6 +17,7 @@ import {
   matchClientEmbeddings,
   prefetchClientEmbeddingPacks,
   prioritizePack,
+  promotePacksHot,
   type ClientEmbedHit,
   type ClientLoadedPack,
 } from "@/lib/client/scan/cardEmbeddingIndex.client";
@@ -277,6 +278,8 @@ export async function identifyCardBlobClient(
     maxDistance: 450,
     ocrText,
   });
+  // The packs this card lives near get a hot f32 copy for the next frame.
+  promotePacksHot(packs.map((p) => p.meta.packId));
   const hint = parseCollectorNumberHint(ocrText);
   const finalized = finalizeIdentifyConfidence(
     rawHits.map((h) => ({

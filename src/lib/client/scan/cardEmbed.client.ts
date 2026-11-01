@@ -3,8 +3,9 @@
  * the server index (`@/core/identify/embedMath`): DINOv2-small CLS on the
  * art band. Shards built by Sync are therefore directly comparable here.
  *
- * transformers.js + ONNX Runtime Web, WebGPU → WASM. Weights are cached by
- * the browser after first load (~88 MB fp32 / ~24 MB q8).
+ * transformers.js + ONNX Runtime Web, WebGPU → WASM. Weights are served
+ * from `/models/Xenova/dinov2-small/` (~88 MB fp32 / ~24 MB q8) and cached
+ * by the browser after first load.
  */
 import {
   CARD_EMBED_DIM,
@@ -58,9 +59,11 @@ async function loadExtractor(): Promise<FeatureExtractor | null> {
   extractorPromise = (async () => {
     try {
       const { pipeline, env } = await import("@huggingface/transformers");
-      // Weights come from the hub (browser Cache API afterwards); skipping
-      // the `/models/<id>` probe avoids a 404 round-trip per file.
-      env.allowLocalModels = false;
+      // Weights are self-hosted under `/models/<id>/` (immutable, browser
+      // Cache API afterwards) — the first open never depends on the hub.
+      env.allowLocalModels = true;
+      env.allowRemoteModels = false;
+      env.localModelPath = "/models/";
       const device = await pickDevice();
       // fp32 on GPU (exact server parity); q8 on CPU/WASM keeps phones
       // responsive — quality delta measured below noise on Lorcana FR.

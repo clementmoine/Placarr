@@ -21,10 +21,11 @@ vi.mock("@/lib/client/scan/paddleCollectorOcr.client", () => ({
 }));
 
 import {
-  admitResidentPackForTests,
+  admitShardForTests,
   resetClientEmbeddingMemory,
-  type ClientLoadedPack,
+  type ClientEmbeddingMeta,
 } from "@/lib/client/scan/cardEmbeddingIndex.client";
+import { encodeFloat16Matrix } from "@/lib/shared/float16";
 import {
   identifyCardBlobClient,
   resetClientIdentifyPackIds,
@@ -46,30 +47,29 @@ function manifest(packId: string, centroid: number[]): ClientPackManifest {
   };
 }
 
-function pack(packId: string, row: number[]): ClientLoadedPack {
+/** Make a one-row pack resident the way a loaded f16 shard would be. */
+async function admitPack(packId: string, row: number[]): Promise<void> {
   const matrix = new Float32Array(dim);
   matrix.set(unit(row), 0);
-  return {
-    meta: {
-      version: 1,
-      packId,
-      model: CARD_EMBED_MODEL,
-      dim,
-      builtAt: "2026-01-01T00:00:00.000Z",
-      entries: [
-        {
-          printKey: `${packId}:a-1`,
-          lang: "en",
-          set: "a",
-          card: "1",
-          artRel: "cards/en/a/1/art.webp",
-          row: 0,
-        },
-      ],
-    },
-    matrix,
-    centroid: unit(row),
+  const meta: ClientEmbeddingMeta = {
+    version: 1,
+    packId,
+    model: CARD_EMBED_MODEL,
+    dim,
+    builtAt: "2026-01-01T00:00:00.000Z",
+    entries: [
+      {
+        printKey: `${packId}:a-1`,
+        lang: "en",
+        set: "a",
+        card: "1",
+        artRel: "cards/en/a/1/art.webp",
+        row: 0,
+      },
+    ],
+    centroid: Array.from(unit(row)),
   };
+  await admitShardForTests(meta, encodeFloat16Matrix(matrix));
 }
 
 function stubManifest(packs: ClientPackManifest[]) {
@@ -103,15 +103,15 @@ describe("identifyCardBlobClient — never waits on the first open", () => {
 
   it("returns null when a shortlisted pack is not resident yet, without blocking", async () => {
     // Only "x" resident; the shortlist (minPacks 2) also wants "y".
-    admitResidentPackForTests(pack("x", [1, 0, 0, 0]));
+    await admitPack("x", [1, 0, 0, 0]);
     const started = performance.now();
     expect(await identifyCardBlobClient(new Blob())).toBeNull();
     expect(performance.now() - started).toBeLessThan(200);
   });
 
   it("answers on-device once every shortlisted pack is resident", async () => {
-    admitResidentPackForTests(pack("x", [1, 0, 0, 0]));
-    admitResidentPackForTests(pack("y", [0, 1, 0, 0]));
+    await admitPack("x", [1, 0, 0, 0]);
+    await admitPack("y", [0, 1, 0, 0]);
     const res = await identifyCardBlobClient(new Blob());
     expect(res?.path).toBe("client");
     expect(res?.bestEmbedKey).toBe("x:a-1");

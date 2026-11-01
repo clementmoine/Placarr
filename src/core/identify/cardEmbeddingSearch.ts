@@ -18,11 +18,18 @@ export type EmbeddingHit = {
 };
 
 /**
+ * Row-major embedding gallery. The server scans f32; the client may scan
+ * the resident f16 shard directly (native `Float16Array`) until a pack is
+ * promoted to a hot f32 copy — element reads are identical for both.
+ */
+export type EmbeddingMatrix = Float32Array | Float16Array;
+
+/**
  * Mean of all rows, L2-normalized — coarse pack fingerprint for multi-pack
  * shortlisting (discovery-based pack ids, never provider literals).
  */
 export function computePackCentroid(
-  matrix: Float32Array,
+  matrix: EmbeddingMatrix,
   rows: number,
   dim: number = CARD_EMBED_DIM,
 ): Float32Array {
@@ -41,7 +48,7 @@ export function computePackCentroid(
 /** Dot product of query against matrix row `row` (assumes both ~unit). */
 export function rowDot(
   query: Float32Array,
-  matrix: Float32Array,
+  matrix: EmbeddingMatrix,
   row: number,
   dim: number = CARD_EMBED_DIM,
 ): number {
@@ -60,7 +67,7 @@ export function rowDot(
  */
 export function topKMilliDistances(
   query: Float32Array,
-  matrix: Float32Array,
+  matrix: EmbeddingMatrix,
   rows: number,
   opts?: {
     limit?: number;

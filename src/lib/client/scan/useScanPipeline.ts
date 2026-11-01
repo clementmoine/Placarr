@@ -125,7 +125,7 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
         const coverage =
           (aabb.width * aabb.height) /
           Math.max(1, video.videoWidth * video.videoHeight);
-        const usable = isUsableSubject({ coverage, aabb });
+        const usable = isUsableSubject({ coverage, aabb, corners: q.corners });
         if (!usable) {
           onnxRef.current = null;
           return;
@@ -170,7 +170,11 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
       const detection = detectCardQuadFromVideo(video);
       const classicalUsable =
         !!detection &&
-        isUsableSubject({ coverage: detection.coverage, aabb: detection.aabb });
+        isUsableSubject({
+          coverage: detection.coverage,
+          aabb: detection.aabb,
+          corners: detection.corners,
+        });
       const budgetPatch = { sobelHz: 5, inferInFlight: budget.inferInFlight };
 
       // 1. Closed-loop classical quad: exact corners, any tilt, immune to

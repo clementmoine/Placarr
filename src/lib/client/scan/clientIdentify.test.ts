@@ -5,12 +5,21 @@ import { CARD_EMBED_MODEL, l2Normalize } from "@/core/identify/embedMath";
 const embedState = vi.hoisted(() => ({
   ready: false,
   query: null as Float32Array | null,
+  /** What the art band reads when the face is taken half a turn round. */
+  upsideDown: null as Float32Array | null,
+  reads: [] as boolean[],
 }));
 
 vi.mock("@/lib/client/scan/cardEmbed.client", () => ({
   isCardEmbedClientReady: () => embedState.ready,
   prefetchCardEmbedClient: vi.fn(async () => {}),
-  embedCardFaceBlobClient: vi.fn(async () => embedState.query),
+  embedCardFaceBlobClient: vi.fn(
+    async (_blob: Blob, opts?: { upsideDown?: boolean }) => {
+      const flipped = opts?.upsideDown === true;
+      embedState.reads.push(flipped);
+      return flipped ? embedState.upsideDown : embedState.query;
+    },
+  ),
   clientEmbedDim: () => 4,
   clientEmbedModelId: () => CARD_EMBED_MODEL,
 }));
@@ -90,6 +99,8 @@ describe("identifyCardBlobClient — never waits on the first open", () => {
     resetClientIdentifyPackIds();
     embedState.ready = true;
     embedState.query = unit([1, 0, 0, 0]);
+    embedState.upsideDown = null;
+    embedState.reads = [];
     stubManifest([manifest("x", [1, 0, 0, 0]), manifest("y", [0, 1, 0, 0])]);
   });
   afterEach(() => {
@@ -115,6 +126,44 @@ describe("identifyCardBlobClient — never waits on the first open", () => {
     const res = await identifyCardBlobClient(new Blob());
     expect(res?.path).toBe("client");
     expect(res?.bestEmbedKey).toBe("x:a-1");
+    // One read is enough when the card is already the right way up.
+    expect(embedState.reads).toEqual([false]);
+  });
+});
+
+describe("identifyCardBlobClient — card presented the other way up", () => {
+  beforeEach(() => {
+    resetClientEmbeddingMemory();
+    resetClientIdentifyPackIds();
+    embedState.ready = true;
+    embedState.upsideDown = null;
+    embedState.reads = [];
+    stubManifest([manifest("x", [1, 0, 0, 0]), manifest("y", [0, 1, 0, 0])]);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("recognises the card once the face is read half a turn round", async () => {
+    await admitPack("x", [1, 0, 0, 0]);
+    await admitPack("y", [0, 1, 0, 0]);
+    // Nothing near either pack this way up; the flipped read lands on "x".
+    embedState.query = unit([0, 0, 1, 0]);
+    embedState.upsideDown = unit([1, 0, 0, 0]);
+    const res = await identifyCardBlobClient(new Blob());
+    expect(res?.confidence).not.toBe("miss");
+    expect(res?.bestEmbedKey).toBe("x:a-1");
+    expect(embedState.reads).toEqual([false, true]);
+  });
+
+  it("stays an honest miss when neither way up matches", async () => {
+    await admitPack("x", [1, 0, 0, 0]);
+    await admitPack("y", [0, 1, 0, 0]);
+    embedState.query = unit([0, 0, 1, 0]);
+    embedState.upsideDown = unit([0, 0, 0, 1]);
+    const res = await identifyCardBlobClient(new Blob());
+    expect(res?.confidence).toBe("miss");
+    expect(embedState.reads).toEqual([false, true]);
   });
 });
 

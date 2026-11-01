@@ -133,8 +133,15 @@ export function clientEmbedDim(): number {
   return CARD_EMBED_DIM;
 }
 
-/** Same crop as the server's `extractCardArtBand` (sharp) — canvas edition. */
-async function cropArtBand(blob: Blob): Promise<Blob | null> {
+/**
+ * Same crop as the server's `extractCardArtBand` (sharp) — canvas edition.
+ * `upsideDown` reads the face rotated half a turn, for the card presented the
+ * other way up (a card lying on its side has no "up" the user can see).
+ */
+async function cropArtBand(
+  blob: Blob,
+  upsideDown = false,
+): Promise<Blob | null> {
   const bitmap = await createImageBitmap(blob).catch(() => null);
   if (!bitmap) return null;
   try {
@@ -145,10 +152,14 @@ async function cropArtBand(blob: Blob): Promise<Blob | null> {
     canvas.height = rect.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
+    if (upsideDown) {
+      ctx.translate(rect.width, rect.height);
+      ctx.rotate(Math.PI);
+    }
     ctx.drawImage(
       bitmap,
-      rect.left,
-      rect.top,
+      upsideDown ? bitmap.width - rect.left - rect.width : rect.left,
+      upsideDown ? bitmap.height - rect.top - rect.height : rect.top,
       rect.width,
       rect.height,
       0,
@@ -167,11 +178,12 @@ async function cropArtBand(blob: Blob): Promise<Blob | null> {
 /** Embed a full card-face blob: art-band crop → DINOv2 CLS → unit vector. */
 export async function embedCardFaceBlobClient(
   blob: Blob,
+  opts?: { upsideDown?: boolean },
 ): Promise<Float32Array | null> {
   try {
     const extractor = await loadExtractor();
     if (!extractor) return null;
-    const band = await cropArtBand(blob);
+    const band = await cropArtBand(blob, opts?.upsideDown === true);
     if (!band) return null;
     const { RawImage } = await import("@huggingface/transformers");
     const image = await RawImage.read(band);

@@ -229,6 +229,50 @@ export function shortlistManifest(
   });
 }
 
+type MatchAttempt = {
+  rawHits: ClientEmbedHit[];
+  finalized: ReturnType<typeof finalizeIdentifyConfidence>;
+};
+
+/**
+ * Shortlist the packs this query lands near, match inside them and score the
+ * confidence. Null means the client cannot answer right now (a shard it needs
+ * is not resident yet) — never a partial-coverage answer.
+ */
+async function matchQuery(
+  query: Float32Array,
+  scope: readonly ClientPackManifest[],
+  ocrText: string,
+): Promise<MatchAttempt | null> {
+  const wanted = shortlistManifest(query, scope);
+  const packs: ClientLoadedPack[] = [];
+  let missing = 0;
+  for (const m of wanted) {
+    const resident = getResidentPack(m.packId);
+    if (resident) packs.push(resident);
+    else {
+      missing += 1;
+      prioritizePack(m.packId);
+    }
+  }
+  if (missing || !packs.length) return null;
+
+  const rawHits = matchClientEmbeddings(query, packs, {
+    limit: 8,
+    maxDistance: 450,
+    ocrText,
+  });
+  // The packs this card lives near get a hot f32 copy for the next frame.
+  promotePacksHot(packs.map((p) => p.meta.packId));
+  const hint = parseCollectorNumberHint(ocrText);
+  const finalized = finalizeIdentifyConfidence(
+    rawHits.map((h) => ({ printKey: h.printKey, distance: h.distance })),
+    "embed",
+    { ocrReinforced: Boolean(hint) },
+  );
+  return { rawHits, finalized };
+}
+
 /**
  * Run on-device identify. Returns null whenever the client stack cannot
  * answer *right now* — model still loading, a shortlisted shard not yet
@@ -260,35 +304,18 @@ export async function identifyCardBlobClient(
   const query = await embedCardFaceBlobClient(blob);
   if (!query) return null;
 
-  const wanted = shortlistManifest(query, scope);
-  const packs: ClientLoadedPack[] = [];
-  let missing = 0;
-  for (const m of wanted) {
-    const resident = getResidentPack(m.packId);
-    if (resident) packs.push(resident);
-    else {
-      missing += 1;
-      prioritizePack(m.packId);
-    }
+  let attempt = await matchQuery(query, scope, ocrText);
+  if (!attempt) return null;
+  if (attempt.finalized.confidence === "miss") {
+    // Nothing recognised this way up. A card lying on its side (Lorcana
+    // locations, split cards) shows the user no "up", so the face may be
+    // rectified half a turn from the catalogue scan — read it once more
+    // upside down before giving up. Same gate, so still no lucky guess.
+    const flipped = await embedCardFaceBlobClient(blob, { upsideDown: true });
+    const alt = flipped ? await matchQuery(flipped, scope, ocrText) : null;
+    if (alt && alt.finalized.confidence !== "miss") attempt = alt;
   }
-  if (missing || !packs.length) return null;
-
-  const rawHits = matchClientEmbeddings(query, packs, {
-    limit: 8,
-    maxDistance: 450,
-    ocrText,
-  });
-  // The packs this card lives near get a hot f32 copy for the next frame.
-  promotePacksHot(packs.map((p) => p.meta.packId));
-  const hint = parseCollectorNumberHint(ocrText);
-  const finalized = finalizeIdentifyConfidence(
-    rawHits.map((h) => ({
-      printKey: h.printKey,
-      distance: h.distance,
-    })),
-    "embed",
-    { ocrReinforced: Boolean(hint) },
-  );
+  const { rawHits, finalized } = attempt;
 
   const matches = finalized.matches
     .map((m) => {

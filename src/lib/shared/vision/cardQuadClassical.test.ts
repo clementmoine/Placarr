@@ -244,6 +244,19 @@ describe("detectCardQuadFromGray — scenes that are not 'one card on white'", (
     expect(sums[0]).toBe(Math.min(...sums));
   });
 
+  it("finds a card lying on its side (landscape location / split card)", () => {
+    const dw = 300;
+    const dh = 400;
+    const gray = paintScene(dw, dh, [
+      { cx: 150, cy: 200, w: 212, h: 152, angleDeg: 3 },
+    ]);
+    const found = detectCardQuadFromGray(gray, dw, dh, dw, dh);
+    expect(found).not.toBeNull();
+    expect(found!.precision).toBe("high");
+    expect(found!.aabb.width).toBeGreaterThan(found!.aabb.height);
+    expect(found!.aabb.width).toBeLessThan(dw * 0.85);
+  });
+
   it("finds a sleeved card on a grey table (second closed loop inside)", () => {
     const dw = 200;
     const dh = 360;

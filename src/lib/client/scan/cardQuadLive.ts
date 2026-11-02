@@ -3,15 +3,11 @@
  */
 import {
   detectCardQuadFromGray,
+  detectCardQuadsFromGray,
   rgbaToGray,
   type ClassicalCardQuad,
 } from "@/lib/shared/vision/cardQuadClassical";
-
-/**
- * 480 on the long side: at 320 the gap between two cards lying a finger
- * apart shrinks to ~7 px and the edge dilation welds them into one blob.
- */
-const DETECT_MAX_EDGE = 480;
+import { DETECT_LONG_EDGE_PX } from "@/lib/client/scan/isUsableSubject";
 
 export type LiveCardDetection = ClassicalCardQuad & {
   /** Video intrinsic size used for the detection. */
@@ -19,18 +15,18 @@ export type LiveCardDetection = ClassicalCardQuad & {
   videoHeight: number;
 };
 
-/**
- * Detect card edges in the current video frame.
- * Returns null when nothing card-like dominates the frame.
- */
-export function detectCardQuadFromVideo(
-  video: HTMLVideoElement,
-): LiveCardDetection | null {
+function readDetectGray(video: HTMLVideoElement): {
+  gray: Uint8Array;
+  dw: number;
+  dh: number;
+  fullW: number;
+  fullH: number;
+} | null {
   const fullW = video.videoWidth;
   const fullH = video.videoHeight;
   if (!fullW || !fullH) return null;
 
-  const scale = Math.min(1, DETECT_MAX_EDGE / Math.max(fullW, fullH));
+  const scale = Math.min(1, DETECT_LONG_EDGE_PX / Math.max(fullW, fullH));
   const dw = Math.max(32, Math.round(fullW * scale));
   const dh = Math.max(32, Math.round(fullH * scale));
 
@@ -42,12 +38,53 @@ export function detectCardQuadFromVideo(
   ctx.drawImage(video, 0, 0, fullW, fullH, 0, 0, dw, dh);
   const image = ctx.getImageData(0, 0, dw, dh);
   const gray = rgbaToGray(image.data, dw, dh);
+  return { gray: boxBlur3(gray, dw, dh), dw, dh, fullW, fullH };
+}
 
-  // Light 3×3 box blur (≈ sharp.blur(1.2) for edge closing).
-  const blurred = boxBlur3(gray, dw, dh);
-  const found = detectCardQuadFromGray(blurred, dw, dh, fullW, fullH);
+/**
+ * Detect card edges in the current video frame.
+ * Returns null when nothing card-like dominates the frame.
+ */
+export function detectCardQuadFromVideo(
+  video: HTMLVideoElement,
+): LiveCardDetection | null {
+  const buf = readDetectGray(video);
+  if (!buf) return null;
+  const found = detectCardQuadFromGray(
+    buf.gray,
+    buf.dw,
+    buf.dh,
+    buf.fullW,
+    buf.fullH,
+  );
   if (!found) return null;
-  return { ...found, videoWidth: fullW, videoHeight: fullH };
+  return {
+    ...found,
+    videoWidth: buf.fullW,
+    videoHeight: buf.fullH,
+  };
+}
+
+/**
+ * All usable-looking classical quads in the frame, score-desc (centre-biased).
+ * Cap = detector's existing blob keep (not a separate maxCards knob).
+ */
+export function detectCardQuadsFromVideo(
+  video: HTMLVideoElement,
+): LiveCardDetection[] {
+  const buf = readDetectGray(video);
+  if (!buf) return [];
+  return detectCardQuadsFromGray(
+    buf.gray,
+    buf.dw,
+    buf.dh,
+    buf.fullW,
+    buf.fullH,
+  ).map((q) => ({
+    ...q,
+    videoWidth: buf.fullW,
+    videoHeight: buf.fullH,
+  }));
 }
 
 function boxBlur3(gray: Uint8Array, width: number, height: number): Uint8Array {

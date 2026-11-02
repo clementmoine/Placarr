@@ -6,6 +6,8 @@
  * vision overlay.
  */
 
+import { CARD_ASPECT_MAX } from "@/lib/shared/vision/cardGeometry";
+
 export type Point2 = { x: number; y: number };
 
 export type ClassicalCardQuad = {
@@ -552,15 +554,15 @@ function sideLen(a: Point2, b: Point2): number {
 }
 
 /**
- * A landscape card is 88/63 ≈ 1.40 wide; past {@link MAX_FILLED_ASPECT} a
+ * A landscape card is ~CARD_PRINT_ASPECT wide; past {@link CARD_ASPECT_MAX} a
  * scanline blob is a row of cards stitched by the horizontal fill, since that
  * fill can only ever merge sideways.
  */
-const MAX_FILLED_ASPECT = 1.6;
+const MAX_FILLED_ASPECT = CARD_ASPECT_MAX;
 
 function aspectOk(
   points: readonly [Point2, Point2, Point2, Point2],
-  maxLandscape = 2.2,
+  maxLandscape = CARD_ASPECT_MAX,
 ): boolean {
   const [tl, tr, br, bl] = points;
   const w = (sideLen(tl, tr) + sideLen(bl, br)) / 2;
@@ -610,18 +612,19 @@ export function isNearAxisAligned(
 }
 
 /**
- * Detect best card-like quad from a grayscale buffer already at detect resolution.
+ * Detect every card-like quad from a grayscale buffer already at detect
+ * resolution, score-desc (centre-biased). Cap = existing blob keep (4).
  * `fullW`/`fullH` scale corners back to the original frame.
  */
-export function detectCardQuadFromGray(
+export function detectCardQuadsFromGray(
   gray: Uint8Array | Buffer,
   dw: number,
   dh: number,
   fullW: number,
   fullH: number,
-): ClassicalCardQuad | null {
-  if (dw < 32 || dh < 32 || fullW < 48 || fullH < 48) return null;
-  if (gray.length < dw * dh) return null;
+): ClassicalCardQuad[] {
+  if (dw < 32 || dh < 32 || fullW < 48 || fullH < 48) return [];
+  if (gray.length < dw * dh) return [];
 
   const mag = sobelMagnitude(gray, dw, dh);
   // Bright tables (white desk) → weaker border contrast; use a lower edge
@@ -660,14 +663,14 @@ export function detectCardQuadFromGray(
   // still yields its true 4 corners (extreme points only work upright).
   //
   // Lightly dilated edges first: one dilation keeps the gap between cards
-  // lying a finger apart open, so a spread yields the single card the user
-  // aims at. Two dilations are needed when glare breaks a border, but they
-  // also weld neighbours into one (rectangular-looking) blob — only fall back
-  // to them when the strict pass found nothing.
-  const strict = enclosedCandidate(dilate3(edge, dw, dh), ctx);
-  if (strict) return strict;
-  const enclosed = enclosedCandidate(closed, ctx);
-  if (enclosed) return enclosed;
+  // lying a finger apart open, so a spread yields every separable card.
+  // Two dilations are needed when glare breaks a border, but they also weld
+  // neighbours into one (rectangular-looking) blob — only fall back to them
+  // when the strict pass found nothing.
+  const strict = enclosedCandidates(dilate3(edge, dw, dh), ctx);
+  if (strict.length) return strict;
+  const enclosed = enclosedCandidates(closed, ctx);
+  if (enclosed.length) return enclosed;
 
   // Pass 2 — scanline fill. Tolerates a border broken by glare and cards that
   // touch the frame edge (no closed loop), at the cost of merging neighbours.
@@ -685,7 +688,21 @@ export function detectCardQuadFromGray(
       for (let x = first; x <= last; x++) filled[y * dw + x] = 1;
     }
   }
-  return bestCandidate(largestBlobs(filled, dw, dh, 4), ctx, "filled");
+  return collectCandidates(largestBlobs(filled, dw, dh, 4), ctx, "filled");
+}
+
+/**
+ * Detect best card-like quad from a grayscale buffer already at detect resolution.
+ * `fullW`/`fullH` scale corners back to the original frame.
+ */
+export function detectCardQuadFromGray(
+  gray: Uint8Array | Buffer,
+  dw: number,
+  dh: number,
+  fullW: number,
+  fullH: number,
+): ClassicalCardQuad | null {
+  return detectCardQuadsFromGray(gray, dw, dh, fullW, fullH)[0] ?? null;
 }
 
 type DetectContext = {
@@ -748,15 +765,15 @@ export function quadEdgeSupport(
   return total ? hit / total : 0;
 }
 
-/** Hole-fill the closed edges, open the result, keep the best card blob. */
-function enclosedCandidate(
+/** Hole-fill the closed edges, open the result, keep ranked card blobs. */
+function enclosedCandidates(
   closed: Uint8Array,
   ctx: DetectContext,
-): ClassicalCardQuad | null {
+): ClassicalCardQuad[] {
   const { dw, dh } = ctx;
   let solid = enclosedMask(closed, dw, dh);
   for (let i = 0; i < ENCLOSED_ERODE_PX; i++) solid = erode3(solid, dw, dh);
-  return bestCandidate(largestBlobs(solid, dw, dh, 4), ctx, "enclosed");
+  return collectCandidates(largestBlobs(solid, dw, dh, 4), ctx, "enclosed");
 }
 
 /** Enclosed blobs must be convex and rectangular; filled blobs are looser. */
@@ -807,13 +824,13 @@ function growQuad(
   }) as [Point2, Point2, Point2, Point2];
 }
 
-function bestCandidate(
+function collectCandidates(
   blobs: readonly BlobInfo[],
   ctx: DetectContext,
   mode: "enclosed" | "filled",
-): ClassicalCardQuad | null {
+): ClassicalCardQuad[] {
   const { dw, dh, fullW, fullH, frameArea } = ctx;
-  let best: ClassicalCardQuad | null = null;
+  const out: ClassicalCardQuad[] = [];
 
   for (const blob of blobs) {
     const coverage = blob.area / frameArea;
@@ -878,7 +895,7 @@ function bestCandidate(
     // path keeps its historical 3 % safety inset.
     const corners = mode === "enclosed" ? scaled : insetQuad(scaled, 0.03);
 
-    const candidate: ClassicalCardQuad = {
+    out.push({
       corners,
       aabb: aabbFromBlob(
         blob,
@@ -888,11 +905,11 @@ function bestCandidate(
       coverage,
       score,
       precision: mode === "enclosed" ? "high" : "low",
-    };
-    if (!best || candidate.score > best.score) best = candidate;
+    });
   }
 
-  return best;
+  out.sort((a, b) => b.score - a.score);
+  return out;
 }
 
 function aabbFromBlob(

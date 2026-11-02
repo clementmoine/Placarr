@@ -1,22 +1,64 @@
 /**
  * Single usable-subject gate for overlay paint + identify crop.
  *
- * A card window that dominates enough of the frame without swallowing the
- * whole desk. Judged on the quad's own sides when they are known: the
- * bounding box of a card lying on its side is landscape, and the one of a
- * portrait card tilted 45° is square, yet both are the card the user aims at
- * — the rectifier turns either back into an upright face.
+ * Bounds are derived from catalogue card geometry and the embed model's
+ * input size — not free-floating coverage floats. Judged on the quad's own
+ * sides when known so tilt / landscape cards stay valid.
  */
 
+import { CARD_EMBED_PREPROCESS } from "@/core/identify/embedMath";
+import {
+  CARD_ASPECT_MAX,
+  CARD_ASPECT_MIN,
+  CARD_ASPECT_PERSPECTIVE_SLACK,
+  CARD_PRINT_ASPECT,
+  CARD_PRINT_SIDES,
+} from "@/lib/shared/vision/cardGeometry";
+
+export {
+  CARD_ASPECT_MAX,
+  CARD_ASPECT_MIN,
+  CARD_ASPECT_PERSPECTIVE_SLACK,
+  CARD_PRINT_ASPECT,
+  CARD_PRINT_SIDES,
+};
+
+/**
+ * Short side in video pixels must clear the embed shortest-edge enough for
+ * the art band to still feed DINOv2 after downscale (½ of shortest_edge).
+ */
+export const MIN_SUBJECT_SHORT_PX = Math.ceil(
+  CARD_EMBED_PREPROCESS.shortestEdge / 2,
+);
+
+/** Long side floor — same ratio as the print, from the short floor. */
+export const MIN_SUBJECT_LONG_PX = Math.ceil(
+  MIN_SUBJECT_SHORT_PX * CARD_PRINT_ASPECT,
+);
+
+/**
+ * Long-edge of the classical detect buffer — twice the embed shortest edge
+ * so a min-size card still resolves as a blob after downscale (~480 on the
+ * current 256 shortest_edge).
+ */
+export const DETECT_LONG_EDGE_PX = CARD_EMBED_PREPROCESS.shortestEdge * 2;
+
+/**
+ * Desk coverage floor from a min-size card on a reference 1080p frame;
+ * ceiling leaves table around the subject (same family as classical span).
+ */
+const REF_FRAME_AREA = 1920 * 1080;
+const minCoverageFromEmbed =
+  (MIN_SUBJECT_SHORT_PX * MIN_SUBJECT_LONG_PX) / REF_FRAME_AREA;
+
 export const USABLE_SUBJECT = {
-  minCoverage: 0.08,
-  maxCoverage: 0.78,
-  /** Long side over short side: a TCG face is 88/63 ≈ 1.4, never square. */
-  minSideRatio: 1.02,
-  /** …and never a band (two cards welded, a desk edge, a sleeve strip). */
-  maxSideRatio: 2.2,
-  minShortSide: 48,
-  minLongSide: 64,
+  minCoverage: Math.max(0.04, minCoverageFromEmbed),
+  /** Leave frame around the subject (table / fingers). */
+  maxCoverage: 0.86,
+  minSideRatio: CARD_ASPECT_MIN,
+  maxSideRatio: CARD_ASPECT_MAX,
+  minShortSide: MIN_SUBJECT_SHORT_PX,
+  minLongSide: MIN_SUBJECT_LONG_PX,
 } as const;
 
 export type SubjectPoint = { x: number; y: number };

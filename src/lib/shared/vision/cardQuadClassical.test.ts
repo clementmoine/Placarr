@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   convexHull,
   detectCardQuadFromGray,
+  detectCardQuadsFromGray,
   MAX_SUBJECT_FRAME_SPAN,
   MIN_FILLED_EDGE_SUPPORT,
   extremePointQuad,
@@ -242,6 +243,31 @@ describe("detectCardQuadFromGray — scenes that are not 'one card on white'", (
     // Corners come out upright-ordered (TL has the smallest x+y).
     const sums = found!.corners.map((p) => p.x + p.y);
     expect(sums[0]).toBe(Math.min(...sums));
+  });
+
+  it("returns multiple separable in-frame cards, centre-ranked first", () => {
+    const dw = 320;
+    const dh = 240;
+    const gray = paintScene(dw, dh, [
+      { cx: 80, cy: 120, w: 70, h: 98, angleDeg: 0 },
+      { cx: 160, cy: 120, w: 70, h: 98, angleDeg: 0 },
+      { cx: 240, cy: 120, w: 70, h: 98, angleDeg: 0 },
+    ]);
+    const found = detectCardQuadsFromGray(gray, dw, dh, dw, dh);
+    expect(found.length).toBeGreaterThanOrEqual(2);
+    // Primary = most centred (middle card).
+    const primaryCx =
+      (found[0]!.corners[0].x +
+        found[0]!.corners[1].x +
+        found[0]!.corners[2].x +
+        found[0]!.corners[3].x) /
+      4;
+    expect(primaryCx).toBeGreaterThan(120);
+    expect(primaryCx).toBeLessThan(200);
+    // Scores are descending.
+    for (let i = 1; i < found.length; i++) {
+      expect(found[i - 1]!.score).toBeGreaterThanOrEqual(found[i]!.score);
+    }
   });
 
   it("finds a card lying on its side (landscape location / split card)", () => {

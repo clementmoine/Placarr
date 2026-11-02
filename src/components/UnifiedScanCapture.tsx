@@ -34,7 +34,6 @@ import {
   summarizeCameraCapabilities,
   type CameraCapabilitiesSummary,
 } from "@/lib/client/scan/cameraControls";
-import { detectQuadOnnx } from "@/lib/client/scan/cardQuadOnnx";
 import {
   identifyCardBlobClient,
   recognizeCollectorBandClient,
@@ -47,12 +46,19 @@ import { hapticLong, hapticShort } from "@/lib/client/scan/haptics";
 import { grabRectifiedSample } from "@/lib/client/scan/rectifyCardFace";
 import {
   bootScanRuntime,
+  getScanRuntime,
   isScanRuntimeReady,
 } from "@/lib/client/scan/scanRuntime";
+import {
+  releaseInfer,
+  tryAcquireInfer,
+} from "@/lib/client/scan/scanBudget";
+import { pickSubjectAtNorm } from "@/lib/client/scan/subjectFocus";
 import {
   useScanPipeline,
   type LiveSubjectHit,
 } from "@/lib/client/scan/useScanPipeline";
+import { startVideoFrameLoop } from "@/lib/client/scan/videoFrameLoop";
 import {
   nextZoomFromPinch,
   nextZoomFromWheel,
@@ -82,7 +88,6 @@ import {
 import { scanOverlayHint } from "@/lib/client/scan/scanHints";
 import { ScanSession, type SessionLock } from "@/lib/client/scan/scanSession";
 import {
-  mapRoiCornersToObjectCover,
   mapVideoRectToObjectCover,
   type ScanVisionRect,
   type ScanVisionText,
@@ -128,13 +133,10 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   },
 };
 
-/** Card identify hunt cadence (OCR never blocks this path). */
-const SAMPLE_HUNT_MS = 1000; // scanBudget identifyHz = 1
+/** Pause after a stable session lock before hunting the next card. */
 const SAMPLE_STABLE_MS = 1800;
 /** Barcode gets its own high-frequency loop — priority over card/OCR. */
 const BARCODE_TICK_MS = 125; // ~8 Hz
-/** Edge overlay — cheaper than identify; yields while identify flies. */
-const VISION_TICK_MS = 200; // ≤5 Hz Sobel budget
 const ROI_SIZE = 96;
 
 /** Live DINOv2 hits land ~120–380 milli-dissimilarity (not cosine). */
@@ -374,8 +376,16 @@ export function UnifiedScanCapture({
   const lastCardCornersRef = useRef<LiveSubjectHit["cornersVideo"]>(null);
   const onnxGenRef = useRef(0);
 
-  const { tickSubject, noteIdentify, noteOcr, noteBarcode, allowIdentifyTick } =
-    useScanPipeline();
+  const {
+    tickSubject,
+    promoteFocus,
+    clearFocus,
+    noteIdentify,
+    noteOcr,
+    noteBarcode,
+    allowIdentifyTick,
+  } = useScanPipeline();
+  const subjectsRef = useRef<LiveSubjectHit[]>([]);
 
   const [live, setLive] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -406,6 +416,9 @@ export function UnifiedScanCapture({
     x: number;
     y: number;
   }> | null>(null);
+  const [secondaryQuadsNorm, setSecondaryQuadsNorm] = useState<
+    Array<Array<{ x: number; y: number }>>
+  >([]);
   const matchesFpRef = useRef("");
 
   zoomRef.current = zoom;
@@ -620,8 +633,10 @@ export function UnifiedScanCapture({
               ? Date.now() - aimStartedRef.current
               : null;
           patchScanDebug({ aimToLockMs: aimMs, phase: "delivering" });
-          // Multi-frame sure → stage in session tray (not shelf). Keep hunting.
+          // Multi-frame sure → stage in session tray (not shelf). Keep hunting
+          // the next ranked subject (clear tap-focus so centre ranking wins).
           recordSessionLock("card", top.printKey, top.printKey, top.faceUrl);
+          clearFocus();
           setStable(null);
           setMatches([]);
           setPanel("camera");
@@ -634,7 +649,7 @@ export function UnifiedScanCapture({
       setStable(null);
       setPhase("understanding");
     },
-    [recordSessionLock],
+    [clearFocus, recordSessionLock],
   );
 
   const identifyBlob = useCallback(
@@ -668,17 +683,20 @@ export function UnifiedScanCapture({
                   : "unavailable",
             words: client.ocrWords,
           });
-          noteIdentify({
-            confidence: client.confidence,
-            matches: client.matches.map((m) => ({
-              printKey: m.printKey,
-              distance: m.distance,
-              method: "embed",
-              packId: m.packId,
-            })),
-            bestEmbedDistance: client.bestEmbedDistance,
-            path: "client",
-          });
+          noteIdentify(
+            {
+              confidence: client.confidence,
+              matches: client.matches.map((m) => ({
+                printKey: m.printKey,
+                distance: m.distance,
+                method: "embed",
+                packId: m.packId,
+              })),
+              bestEmbedDistance: client.bestEmbedDistance,
+              path: "client",
+            },
+            performance.now() - started,
+          );
           patchScanDebug({
             bestEmbedDistance: client.bestEmbedDistance,
             bestEmbedKey: client.bestEmbedKey ?? "",
@@ -761,21 +779,24 @@ export function UnifiedScanCapture({
           height: number;
         }>;
       };
-      noteIdentify({
-        confidence:
-          data.confidence ?? (data.matches?.length ? "doubt" : "miss"),
-        matches: (data.matches ?? []).map((m) => ({
-          printKey: m.printKey,
-          distance: m.distance,
-          method: m.method === "dhash" ? "dhash" : "embed",
-          packId: m.packId,
-        })),
-        bestEmbedDistance:
-          typeof data.bestEmbedDistance === "number"
-            ? data.bestEmbedDistance
-            : null,
-        path: "server",
-      });
+      noteIdentify(
+        {
+          confidence:
+            data.confidence ?? (data.matches?.length ? "doubt" : "miss"),
+          matches: (data.matches ?? []).map((m) => ({
+            printKey: m.printKey,
+            distance: m.distance,
+            method: m.method === "dhash" ? "dhash" : "embed",
+            packId: m.packId,
+          })),
+          bestEmbedDistance:
+            typeof data.bestEmbedDistance === "number"
+              ? data.bestEmbedDistance
+              : null,
+          path: "server",
+        },
+        performance.now() - started,
+      );
       noteOcr({
         text: data.ocrText ?? "",
         engine: "ppocr-server",
@@ -838,48 +859,52 @@ export function UnifiedScanCapture({
     [applyCardMatches, locale, noteIdentify, noteOcr, t],
   );
 
-  /** Continuous vision overlay — budgets + EMA via useScanPipeline. */
+  /** Continuous vision overlay — frame-driven; keeps tracking during identify. */
   const updateLiveVision = useCallback(() => {
     const video = videoRef.current;
     if (!video?.videoWidth) return;
-    if (inFlightRef.current) return;
 
     const barcodeFresh = Date.now() - barcodeSeenAtRef.current < 2500;
     if (barcodeOverlayRef.current || barcodeFresh) {
       setQuadNorm(null);
+      setSecondaryQuadsNorm([]);
+      subjectsRef.current = [];
       lastCardAabbRef.current = null;
       lastCardCornersRef.current = null;
       return;
     }
 
-    const hit = tickSubject(video);
-    if (hit?.usable && hit.aabb.width > 0) {
-      lastCardAabbRef.current = hit.aabb;
-      lastCardCornersRef.current = hit.cornersVideo;
-      setQuadNorm(hit.cornersNorm);
+    const tick = tickSubject(video);
+    subjectsRef.current = tick.subjects;
+    const primary = tick.primary;
+    const secondaries = tick.subjects.slice(1).map((s) => s.cornersNorm);
+    setSecondaryQuadsNorm(secondaries);
+
+    if (primary?.usable && primary.aabb.width > 0) {
+      lastCardAabbRef.current = primary.aabb;
+      lastCardCornersRef.current = primary.cornersVideo;
+      setQuadNorm(primary.cornersNorm);
       patchScanDebug({
         quadSource:
-          hit.source === "classical"
+          primary.source === "classical"
             ? "classical"
-            : hit.source === "onnx"
+            : primary.source === "onnx"
               ? "onnx"
               : "classical",
       });
       return;
     }
-    if (hit?.cornersNorm?.length) {
-      setQuadNorm(hit.cornersNorm);
+    if (primary?.cornersNorm?.length) {
+      setQuadNorm(primary.cornersNorm);
       return;
     }
-    if (!hit) {
-      lastCardAabbRef.current = null;
-      lastCardCornersRef.current = null;
-      setQuadNorm(null);
-      if (!barcodeOverlayRef.current) {
-        clearCardVisionOverlays(null);
-      }
-      patchScanDebug({ quadSource: "none" });
+    lastCardAabbRef.current = null;
+    lastCardCornersRef.current = null;
+    setQuadNorm(null);
+    if (!barcodeOverlayRef.current) {
+      clearCardVisionOverlays(null);
     }
+    patchScanDebug({ quadSource: "none" });
   }, [tickSubject]);
 
   /**
@@ -897,10 +922,17 @@ export function UnifiedScanCapture({
         if (!allowIdentifyTick()) return;
       }
 
+      const budget = getScanRuntime().budget;
+      // Serialise with DocAligner / embed — force skips pace, never the slot.
+      if (!tryAcquireInfer(budget)) return;
+
       const detectedRegion = lastCardAabbRef.current;
       const detectedCorners = lastCardCornersRef.current;
       const roi = sampleCardRoi(video, detectedRegion);
-      if (!roi) return;
+      if (!roi) {
+        releaseInfer(budget);
+        return;
+      }
 
       // A flat/desaturated ROI is often the shared pack sleeve — but unique
       // versos (leaders, morphs) look the same to this heuristic and must
@@ -939,6 +971,7 @@ export function UnifiedScanCapture({
       });
 
       if (!allowIdentify) {
+        releaseInfer(budget);
         setIdentifyMiss(false);
         setPhase("looking");
         return;
@@ -947,14 +980,6 @@ export function UnifiedScanCapture({
       if (aimStartedRef.current == null) aimStartedRef.current = Date.now();
       setIdentifyMiss(false);
       setPhase((p) => (p === "delivering" ? p : "understanding"));
-
-      // Optional ONNX corners override classical when DocAligner is enabled.
-      void detectQuadOnnx(roi.data, roi.width, roi.height).then((q) => {
-        if (!q) return;
-        patchScanDebug({ quadSource: "onnx" });
-        const mapped = mapRoiCornersToObjectCover(video, q.corners, roi.width);
-        if (mapped) setQuadNorm(mapped);
-      });
 
       inFlightRef.current = true;
       setSampling(true);
@@ -989,6 +1014,7 @@ export function UnifiedScanCapture({
       } catch {
         /* soft */
       } finally {
+        releaseInfer(budget);
         inFlightRef.current = false;
         if (generation === genRef.current) setSampling(false);
       }
@@ -1021,31 +1047,18 @@ export function UnifiedScanCapture({
     };
   }, [active]);
 
-  // Vision overlay (Sobel ≤5 Hz + DocAligner ≤2 Hz + EMA). Yields during identify.
+  // Vision overlay — one classical pass per presented frame; skip if busy.
   useEffect(() => {
     if (!active || !live) return;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let cancelled = false;
-
-    const tick = () => {
-      if (cancelled) return;
+    const video = videoRef.current;
+    const loop = startVideoFrameLoop(video, () => {
       const now = performance.now();
       fpsTimesRef.current.push(now);
       fpsTimesRef.current = fpsTimesRef.current.filter((t0) => now - t0 < 1000);
       patchScanDebug({ fps: fpsTimesRef.current.length });
-      try {
-        updateLiveVision();
-      } catch {
-        /* soft */
-      }
-      timer = setTimeout(tick, VISION_TICK_MS);
-    };
-
-    tick();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
+      updateLiveVision();
+    });
+    return () => loop.stop();
   }, [active, live, updateLiveVision]);
 
   // Barcode — dedicated high-frequency loop. Never blocked by tap-to-scan / OCR.
@@ -1128,7 +1141,7 @@ export function UnifiedScanCapture({
     };
   }, [active, live, barcodePaused, handleBarcodeValue, noteBarcode]);
 
-  // Card identify loop — image only. OCR hint is attached from background ref.
+  // Card identify loop — one sample at a time; pace = measured duration.
   useEffect(() => {
     if (!active || !live) return;
 
@@ -1145,19 +1158,23 @@ export function UnifiedScanCapture({
 
       // Fresh barcode lock → skip card for a beat.
       if (Date.now() - barcodeSeenAtRef.current < 900) {
-        schedule(SAMPLE_HUNT_MS);
+        schedule(SAMPLE_STABLE_MS);
         return;
       }
 
-      // Continuous, whatever the device: the next sample starts as soon as
-      // this one is done, paced from its *start* so a fast phone tops out at
-      // the identify budget and a slow one runs back-to-back (no tap mode).
-      const startedAt = Date.now();
+      const startedAt = performance.now();
       await runCardSample();
-
+      const elapsed = performance.now() - startedAt;
+      const mean = adaptiveRef.current.profile().meanIdentifyMs;
       const idle = adaptiveRef.current.profile().idleBackoffMs;
-      const target = stable ? SAMPLE_STABLE_MS : SAMPLE_HUNT_MS + idle;
-      schedule(Math.max(0, target - (Date.now() - startedAt)));
+      // After a session lock, pause briefly then hunt the next ranked card.
+      if (stable) {
+        schedule(SAMPLE_STABLE_MS);
+        return;
+      }
+      // Pace from measured cost: wait out the remainder of the mean (0 → ASAP).
+      const pace = Math.max(0, (mean || elapsed) - elapsed) + idle;
+      schedule(pace);
     };
 
     void tick();
@@ -1441,7 +1458,20 @@ export function UnifiedScanCapture({
               phase={phase}
               hint={overlayHint}
               quadNorm={quadNorm}
+              secondaryQuadsNorm={secondaryQuadsNorm}
               sampling={sampling}
+              onTapAt={(nx, ny) => {
+                const hit = pickSubjectAtNorm(subjectsRef.current, nx, ny);
+                if (!hit) return false;
+                const primary = subjectsRef.current[0];
+                if (primary && hit.key === primary.key) return false;
+                promoteFocus(hit.key);
+                lastCardAabbRef.current = hit.aabb;
+                lastCardCornersRef.current = hit.cornersVideo;
+                setQuadNorm(hit.cornersNorm);
+                void runCardSample({ force: true });
+                return true;
+              }}
               onTap={() => void runCardSample({ force: true })}
             />
           ) : null}

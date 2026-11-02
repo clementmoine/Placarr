@@ -2,31 +2,32 @@ import { describe, expect, it } from "vitest";
 
 import {
   SCAN_BUDGET,
-  budgetAllows,
+  budgetAllowsBarcode,
+  budgetAllowsIdentify,
   createScanBudgetClock,
-  markBudget,
+  markBarcode,
+  markIdentifyComplete,
   minIntervalMs,
   releaseInfer,
   tryAcquireInfer,
 } from "@/lib/client/scan/scanBudget";
 
 describe("scanBudget", () => {
-  it("encodes hard Hz ceilings from the 2026 plan", () => {
-    expect(SCAN_BUDGET.sobelHz).toBe(5);
-    expect(SCAN_BUDGET.docAlignerHz).toBe(2);
-    expect(SCAN_BUDGET.identifyHz).toBe(1);
+  it("keeps barcode Hz + single infer slot; no vision metronomes", () => {
+    expect(SCAN_BUDGET.barcodeHz).toBe(8);
     expect(SCAN_BUDGET.maxInferInFlight).toBe(1);
-    expect(minIntervalMs("sobel")).toBe(200);
-    expect(minIntervalMs("docAligner")).toBe(500);
-    expect(minIntervalMs("identify")).toBe(1000);
+    expect(minIntervalMs("barcode")).toBe(125);
+    expect(SCAN_BUDGET).not.toHaveProperty("sobelHz");
+    expect(SCAN_BUDGET).not.toHaveProperty("docAlignerHz");
+    expect(SCAN_BUDGET).not.toHaveProperty("identifyHz");
   });
 
-  it("gates ticks by elapsed time", () => {
+  it("gates barcode by elapsed time", () => {
     const clock = createScanBudgetClock();
-    expect(budgetAllows(clock, "sobel", 1000)).toBe(true);
-    markBudget(clock, "sobel", 1000);
-    expect(budgetAllows(clock, "sobel", 1100)).toBe(false);
-    expect(budgetAllows(clock, "sobel", 1200)).toBe(true);
+    expect(budgetAllowsBarcode(clock, 1000)).toBe(true);
+    markBarcode(clock, 1000);
+    expect(budgetAllowsBarcode(clock, 1100)).toBe(false);
+    expect(budgetAllowsBarcode(clock, 1125)).toBe(true);
   });
 
   it("allows only one infer in-flight", () => {
@@ -35,5 +36,23 @@ describe("scanBudget", () => {
     expect(tryAcquireInfer(clock)).toBe(false);
     releaseInfer(clock);
     expect(tryAcquireInfer(clock)).toBe(true);
+  });
+
+  it("paces identify from measured duration", () => {
+    const clock = createScanBudgetClock();
+    expect(budgetAllowsIdentify(clock, 1000)).toBe(true);
+    expect(tryAcquireInfer(clock)).toBe(true);
+    expect(budgetAllowsIdentify(clock, 1000)).toBe(false);
+    releaseInfer(clock);
+    markIdentifyComplete(clock, 400, 1000);
+    expect(clock.identifyPaceMs).toBe(400);
+    expect(budgetAllowsIdentify(clock, 1200)).toBe(false);
+    expect(budgetAllowsIdentify(clock, 1400)).toBe(true);
+  });
+
+  it("refuses a second identify while the prior sample is in flight", () => {
+    const clock = createScanBudgetClock();
+    expect(tryAcquireInfer(clock)).toBe(true);
+    expect(budgetAllowsIdentify(clock, Date.now())).toBe(false);
   });
 });

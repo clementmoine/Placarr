@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import { CARD_EMBED_PREPROCESS } from "@/core/identify/embedMath";
 import {
+  CARD_PRINT_ASPECT,
+  DETECT_LONG_EDGE_PX,
+  MIN_SUBJECT_LONG_PX,
+  MIN_SUBJECT_SHORT_PX,
   USABLE_SUBJECT,
   isUsableSubject,
 } from "@/lib/client/scan/isUsableSubject";
+import {
+  CARD_ASPECT_MAX,
+  CARD_ASPECT_MIN,
+} from "@/lib/shared/vision/cardGeometry";
 
 /** Axis-aligned w × h quad centred at (cx, cy), rotated by `deg`. */
 function quad(w: number, h: number, deg = 0, cx = 500, cy = 500) {
@@ -56,15 +65,25 @@ describe("isUsableSubject", () => {
   it.each([
     {
       name: "too small coverage",
-      m: { coverage: 0.05, aabb: { width: 200, height: 280 } },
+      m: { coverage: 0.01, aabb: { width: 200, height: 280 } },
     },
     {
       name: "desk-swallowing coverage",
       m: { coverage: 0.9, aabb: { width: 200, height: 280 } },
     },
     {
-      name: "tiny aabb",
+      name: "tiny aabb (below embed short floor)",
       m: { coverage: 0.4, aabb: { width: 20, height: 40 } },
+    },
+    {
+      name: "short side below half embed shortest_edge",
+      m: {
+        coverage: 0.4,
+        aabb: {
+          width: MIN_SUBJECT_SHORT_PX - 1,
+          height: MIN_SUBJECT_LONG_PX,
+        },
+      },
     },
     {
       name: "square window (no card is square)",
@@ -86,8 +105,19 @@ describe("isUsableSubject", () => {
     ).toBe(false);
   });
 
-  it("exposes shared thresholds for overlay + crop", () => {
-    expect(USABLE_SUBJECT.minCoverage).toBe(0.08);
-    expect(USABLE_SUBJECT.maxCoverage).toBe(0.78);
+  it("derives gates from card aspect + embed shortest edge", () => {
+    expect(MIN_SUBJECT_SHORT_PX).toBe(
+      Math.ceil(CARD_EMBED_PREPROCESS.shortestEdge / 2),
+    );
+    expect(MIN_SUBJECT_LONG_PX).toBe(
+      Math.ceil(MIN_SUBJECT_SHORT_PX * CARD_PRINT_ASPECT),
+    );
+    expect(DETECT_LONG_EDGE_PX).toBe(CARD_EMBED_PREPROCESS.shortestEdge * 2);
+    expect(USABLE_SUBJECT.minShortSide).toBe(MIN_SUBJECT_SHORT_PX);
+    expect(USABLE_SUBJECT.minLongSide).toBe(MIN_SUBJECT_LONG_PX);
+    expect(USABLE_SUBJECT.minSideRatio).toBe(CARD_ASPECT_MIN);
+    expect(USABLE_SUBJECT.maxSideRatio).toBe(CARD_ASPECT_MAX);
+    expect(USABLE_SUBJECT.minCoverage).toBeGreaterThanOrEqual(0.04);
+    expect(USABLE_SUBJECT.maxCoverage).toBeLessThan(1);
   });
 });

@@ -1,6 +1,7 @@
 /**
- * Live scan pipeline hook — budgets, subject (Sobel→DocAligner + EMA),
- * observations store. UnifiedScanCapture owns UI state; this owns cadence.
+ * Live scan pipeline hook — subject list (Sobel → DocAligner on weak
+ * primary + EMA on focus), observations store. UnifiedScanCapture owns UI
+ * state and frame cadence; this owns detection + ORT eventing.
  */
 "use client";
 
@@ -12,15 +13,21 @@ import {
   type ScanObservations,
 } from "@/core/identify/scanObservations";
 import {
-  budgetAllows,
-  markBudget,
+  budgetAllowsIdentify,
+  inferSlotFree,
+  markBarcode,
+  markIdentifyComplete,
   releaseInfer,
   tryAcquireInfer,
   type ScanBudgetClock,
 } from "@/lib/client/scan/scanBudget";
-import { detectCardQuadFromVideo } from "@/lib/client/scan/cardQuadLive";
+import { detectCardQuadsFromVideo } from "@/lib/client/scan/cardQuadLive";
 import { detectQuadOnnxFromVideo } from "@/lib/client/scan/cardQuadOnnx";
 import { isUsableSubject } from "@/lib/client/scan/isUsableSubject";
+import {
+  orderSubjectsByFocus,
+  subjectKeyFromAabb,
+} from "@/lib/client/scan/subjectFocus";
 import {
   createSubjectQuadEma,
   pushSubjectQuadEma,
@@ -31,20 +38,30 @@ import { getScanRuntime } from "@/lib/client/scan/scanRuntime";
 import { mapVideoCornersToObjectCover } from "@/lib/client/scan/scanVisionOverlay";
 
 export type LiveSubjectHit = {
+  key: string;
+  score: number;
   cornersNorm: QuadPoint[];
   /** Raw TL→TR→BR→BL corners in video pixels — what identify rectifies. */
   cornersVideo: [QuadPoint, QuadPoint, QuadPoint, QuadPoint] | null;
   coverage: number;
   aabb: { left: number; top: number; width: number; height: number };
   source: "classical" | "onnx" | "ema";
+  precision: "high" | "low" | "onnx";
   usable: boolean;
+};
+
+export type LiveSubjectTick = {
+  /** Focus (primary) after ranking / tap promote. */
+  primary: LiveSubjectHit | null;
+  /** All usable subjects, primary first. */
+  subjects: LiveSubjectHit[];
 };
 
 export type UseScanPipelineOptions = {
   onObservations?: (obs: ScanObservations) => void;
 };
 
-/** A DocAligner quad older than this is stale at 5 Hz Sobel cadence. */
+/** A DocAligner quad older than this is stale relative to live classical. */
 const ONNX_FRESH_MS = 900;
 
 export function useScanPipeline(opts?: UseScanPipelineOptions) {
@@ -54,8 +71,8 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
   const emaRef = useRef<SubjectQuadEma>(createSubjectQuadEma(0.6));
   const budgetRef = useRef<ScanBudgetClock>(getScanRuntime().budget);
   const onnxInFlightRef = useRef(false);
-  const lastAabbRef = useRef<LiveSubjectHit["aabb"] | null>(null);
-  const lastCornersRef = useRef<LiveSubjectHit["cornersVideo"]>(null);
+  const lastPrimaryRef = useRef<LiveSubjectHit | null>(null);
+  const focusKeyRef = useRef<string | null>(null);
   const onObs = opts?.onObservations;
 
   const publish = useCallback(
@@ -68,43 +85,21 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
   );
 
   /** Last DocAligner quad (video px) with its timestamp — overrides a
-   *  low-precision classical blob while fresh. */
+   *  low-precision classical primary while fresh. */
   const onnxRef = useRef<{
     hit: LiveSubjectHit;
     at: number;
   } | null>(null);
 
-  const commitHit = useCallback(
-    (
-      hit: LiveSubjectHit,
-      budgetPatch: Parameters<typeof publish>[0]["budget"],
-    ) => {
-      lastAabbRef.current = hit.aabb;
-      lastCornersRef.current = hit.cornersVideo;
-      publish({
-        subject: {
-          source: hit.source === "ema" ? "classical" : hit.source,
-          cornersNorm: hit.cornersNorm,
-          coverage: hit.coverage,
-          usable: hit.usable,
-        },
-        budget: budgetPatch,
-      });
-      return hit;
-    },
-    [publish],
-  );
-
   const runDocAligner = useCallback((video: HTMLVideoElement) => {
     const budget = budgetRef.current;
     if (
-      !budgetAllows(budget, "docAligner") ||
       onnxInFlightRef.current ||
+      !inferSlotFree(budget) ||
       !tryAcquireInfer(budget)
     ) {
       return;
     }
-    markBudget(budget, "docAligner");
     onnxInFlightRef.current = true;
     void detectQuadOnnxFromVideo(video)
       .then((q) => {
@@ -131,14 +126,18 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
           return;
         }
         const mapped = mapVideoCornersToObjectCover(video, q.corners);
+        const key = subjectKeyFromAabb(aabb);
         onnxRef.current = {
           at: Date.now(),
           hit: {
+            key,
+            score: coverage * 1e6,
             cornersNorm: mapped ?? [],
             cornersVideo: q.corners,
             coverage,
             aabb,
             source: "onnx",
+            precision: "onnx",
             usable: true,
           },
         };
@@ -149,112 +148,126 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
       });
   }, []);
 
-  const tickSubject = useCallback(
-    (video: HTMLVideoElement): LiveSubjectHit | null => {
-      const budget = budgetRef.current;
-      if (!budgetAllows(budget, "sobel")) {
-        // Keep last EMA paint without re-running Sobel.
-        const corners = emaRef.current.corners;
-        if (!corners || !lastAabbRef.current) return null;
-        return {
-          cornersNorm: corners.map((p) => ({ ...p })),
-          cornersVideo: lastCornersRef.current,
-          coverage: obsRef.current.subject.coverage ?? 0,
-          aabb: lastAabbRef.current,
-          source: "ema",
-          usable: obsRef.current.subject.usable,
-        };
-      }
-      markBudget(budget, "sobel");
+  const promoteFocus = useCallback((key: string) => {
+    focusKeyRef.current = key;
+  }, []);
 
-      const detection = detectCardQuadFromVideo(video);
-      const classicalUsable =
-        !!detection &&
-        isUsableSubject({
+  const clearFocus = useCallback(() => {
+    focusKeyRef.current = null;
+  }, []);
+
+  /**
+   * Classical pass (sync). Frame backpressure lives in the video-frame loop;
+   * DocAligner fires only when the focus primary is weak/missing and ORT is free.
+   */
+  const tickSubject = useCallback(
+    (video: HTMLVideoElement): LiveSubjectTick => {
+      const budget = budgetRef.current;
+      const detections = detectCardQuadsFromVideo(video);
+      const classicalHits: LiveSubjectHit[] = [];
+      for (const detection of detections) {
+        const usable = isUsableSubject({
           coverage: detection.coverage,
           aabb: detection.aabb,
           corners: detection.corners,
         });
-      const budgetPatch = { sobelHz: 5, inferInFlight: budget.inferInFlight };
-
-      // 1. Closed-loop classical quad: exact corners, any tilt, immune to
-      //    neighbours cut by the frame — trust it outright.
-      if (detection && classicalUsable && detection.precision === "high") {
+        if (!usable) continue;
         const mapped = mapVideoCornersToObjectCover(video, detection.corners);
-        const smoothed = pushSubjectQuadEma(emaRef.current, mapped);
-        if (!smoothed) return null;
-        return commitHit(
-          {
-            cornersNorm: smoothed,
-            cornersVideo: detection.corners,
-            coverage: detection.coverage,
-            aabb: detection.aabb,
-            source: "classical",
-            usable: true,
-          },
-          budgetPatch,
-        );
+        if (!mapped) continue;
+        classicalHits.push({
+          key: subjectKeyFromAabb(detection.aabb),
+          score: detection.score,
+          cornersNorm: mapped,
+          cornersVideo: detection.corners,
+          coverage: detection.coverage,
+          aabb: detection.aabb,
+          source: "classical",
+          precision: detection.precision,
+          usable: true,
+        });
       }
 
-      // 2. No clean loop (busy table, glare-broken border, close-up): ask the
-      //    learned corner detector; its fresh answer beats the scanline blob.
-      runDocAligner(video);
+      let ordered = orderSubjectsByFocus(classicalHits, focusKeyRef.current);
+      // Drop stale promote if the tapped card left the frame.
+      if (
+        focusKeyRef.current &&
+        !ordered.some((s) => s.key === focusKeyRef.current)
+      ) {
+        focusKeyRef.current = null;
+        ordered = orderSubjectsByFocus(classicalHits, null);
+      }
+
+      let primary = ordered[0] ?? null;
+      const primaryWeak =
+        !primary || primary.precision === "low" || !primary.usable;
+
+      // DocAligner: event on weak/miss primary when ORT free — refine
+      // primary only (never N heatmaps).
+      if (primaryWeak) {
+        runDocAligner(video);
+      }
       const onnx = onnxRef.current;
-      if (onnx && Date.now() - onnx.at < ONNX_FRESH_MS) {
+      if (primaryWeak && onnx && Date.now() - onnx.at < ONNX_FRESH_MS) {
         const smoothed = pushSubjectQuadEma(
           emaRef.current,
           onnx.hit.cornersNorm.length ? onnx.hit.cornersNorm : null,
         );
-        return commitHit(
-          { ...onnx.hit, cornersNorm: smoothed ?? onnx.hit.cornersNorm },
-          { ...budgetPatch, docAlignerHz: 2 },
+        primary = {
+          ...onnx.hit,
+          cornersNorm: smoothed ?? onnx.hit.cornersNorm,
+        };
+        ordered = [
+          primary,
+          ...ordered.filter((s) => s.key !== primary!.key),
+        ];
+      } else if (primary) {
+        const smoothed = pushSubjectQuadEma(
+          emaRef.current,
+          primary.cornersNorm,
         );
-      }
-
-      // 3. Scanline fallback — rough but better than nothing for the ROI.
-      if (detection && classicalUsable) {
-        const mapped = mapVideoCornersToObjectCover(video, detection.corners);
-        const smoothed = pushSubjectQuadEma(emaRef.current, mapped);
-        if (!smoothed) return null;
-        return commitHit(
-          {
-            cornersNorm: smoothed,
-            cornersVideo: detection.corners,
-            coverage: detection.coverage,
-            aabb: detection.aabb,
-            source: "classical",
-            usable: true,
-          },
-          budgetPatch,
-        );
-      }
-
-      if (!detection) {
+        if (smoothed) {
+          primary = { ...primary, cornersNorm: smoothed };
+          ordered = [primary, ...ordered.slice(1)];
+        }
+      } else {
         pushSubjectQuadEma(emaRef.current, null);
-        lastAabbRef.current = null;
-        lastCornersRef.current = null;
-        publish({
-          subject: {
-            source: "none",
-            cornersNorm: null,
-            coverage: null,
-            usable: false,
-          },
-        });
       }
-      return null;
+
+      lastPrimaryRef.current = primary;
+      publish({
+        subject: {
+          source: primary
+            ? primary.source === "ema"
+              ? "classical"
+              : primary.source
+            : "none",
+          cornersNorm: primary?.cornersNorm ?? null,
+          coverage: primary?.coverage ?? null,
+          usable: primary?.usable ?? false,
+        },
+        budget: { inferInFlight: budget.inferInFlight },
+      });
+
+      return { primary, subjects: ordered };
     },
-    [publish, runDocAligner, commitHit],
+    [publish, runDocAligner],
   );
 
   const noteIdentify = useCallback(
-    (patch: {
-      confidence: "sure" | "doubt" | "miss";
-      matches: ScanObservations["identify"]["matches"];
-      bestEmbedDistance: number | null;
-      path: "client" | "server" | "none";
-    }) => {
-      markBudget(budgetRef.current, "identify");
+    (
+      patch: {
+        confidence: "sure" | "doubt" | "miss";
+        matches: ScanObservations["identify"]["matches"];
+        bestEmbedDistance: number | null;
+        path: "client" | "server" | "none";
+      },
+      durationMs?: number,
+    ) => {
+      if (durationMs != null) {
+        markIdentifyComplete(budgetRef.current, durationMs);
+      } else {
+        markIdentifyComplete(budgetRef.current, budgetRef.current.identifyPaceMs);
+      }
       publish({ identify: patch });
     },
     [publish],
@@ -269,19 +282,21 @@ export function useScanPipeline(opts?: UseScanPipelineOptions) {
 
   const noteBarcode = useCallback(
     (value: string | null, source: "native" | "zxing" | "none") => {
-      markBudget(budgetRef.current, "barcode");
+      markBarcode(budgetRef.current);
       publish({ barcode: { value, source } });
     },
     [publish],
   );
 
   const allowIdentifyTick = useCallback(() => {
-    return budgetAllows(budgetRef.current, "identify");
+    return budgetAllowsIdentify(budgetRef.current);
   }, []);
 
   return {
     observationsRef: obsRef,
     tickSubject,
+    promoteFocus,
+    clearFocus,
     noteIdentify,
     noteOcr,
     noteBarcode,

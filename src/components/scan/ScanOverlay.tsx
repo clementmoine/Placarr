@@ -30,7 +30,14 @@ export type ScanOverlayProps = {
   hint: string;
   /** Normalized detected card quad TL→TR→BR→BL; null = no edge hit yet. */
   quadNorm?: Array<{ x: number; y: number }> | null;
+  /** Extra usable quads (not focus) — discreet outlines, no dim. */
+  secondaryQuadsNorm?: ReadonlyArray<ReadonlyArray<{ x: number; y: number }>>;
   sampling?: boolean;
+  /**
+   * Tap: `(nx, ny)` in overlay 0..1. Return true if the tap was consumed
+   * (e.g. focus promote); otherwise the force-identify `onTap` runs.
+   */
+  onTapAt?: (nx: number, ny: number) => boolean;
   onTap?: () => void;
   className?: string;
 };
@@ -61,7 +68,9 @@ export function ScanOverlay({
   phase,
   hint,
   quadNorm,
+  secondaryQuadsNorm,
   sampling,
+  onTapAt,
   onTap,
   className,
 }: ScanOverlayProps) {
@@ -81,12 +90,28 @@ export function ScanOverlay({
   // the frame and one line of text.
   const showVisionDetails = Boolean(debug);
 
+  const handlePointer = (clientX: number, clientY: number, el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) {
+      onTap?.();
+      return;
+    }
+    const nx = (clientX - r.left) / r.width;
+    const ny = (clientY - r.top) / r.height;
+    if (onTapAt?.(nx, ny)) return;
+    onTap?.();
+  };
+
   return (
     <div
       className={cn("absolute inset-0 z-10", className)}
-      onClick={onTap}
-      role={onTap ? "button" : undefined}
-      tabIndex={onTap ? 0 : undefined}
+      onClick={
+        onTap || onTapAt
+          ? (e) => handlePointer(e.clientX, e.clientY, e.currentTarget)
+          : undefined
+      }
+      role={onTap || onTapAt ? "button" : undefined}
+      tabIndex={onTap || onTapAt ? 0 : undefined}
       onKeyDown={
         onTap
           ? (e) => {
@@ -94,9 +119,31 @@ export function ScanOverlay({
             }
           : undefined
       }
-      aria-label={onTap ? hint : undefined}
+      aria-label={onTap || onTapAt ? hint : undefined}
     >
       <SubjectFrame quadNorm={frameQuad} locked={locked} />
+
+      {secondaryQuadsNorm && secondaryQuadsNorm.length > 0 ? (
+        <svg
+          className="absolute inset-0 size-full pointer-events-none"
+          viewBox="0 0 1 1"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          {secondaryQuadsNorm.map((q, i) =>
+            q.length === 4 ? (
+              <polygon
+                key={`sec-${i}`}
+                points={q.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={0.004}
+                vectorEffect="non-scaling-stroke"
+              />
+            ) : null,
+          )}
+        </svg>
+      ) : null}
 
       {showVisionDetails &&
       (vision.overlays.length > 0 || vision.texts.length > 0) ? (

@@ -68,8 +68,15 @@ export {
 } from "@/lib/client/scan/scanVisionOverlay";
 export {
   detectCardQuadFromVideo,
+  detectCardQuadsFromVideo,
   type LiveCardDetection,
 } from "@/lib/client/scan/cardQuadLive";
+export {
+  orderSubjectsByFocus,
+  pickSubjectAtNorm,
+  subjectKeyFromAabb,
+} from "@/lib/client/scan/subjectFocus";
+export { startVideoFrameLoop } from "@/lib/client/scan/videoFrameLoop";
 export {
   detectQuadOnnx,
   detectQuadOnnxFromVideo,

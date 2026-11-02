@@ -149,6 +149,26 @@ export function resolveCatalogueArtPath(
   return null;
 }
 
+/** Sibling `art.*` / `back.*` basenames next to a resolved catalogue face. */
+export function listSiblingFaceBasenames(
+  absFace: string,
+  role: "art" | "back",
+): string[] {
+  const dir = path.dirname(absFace);
+  if (!existsSync(dir)) return [];
+  const prefix = role === "art" ? /^art(\.|$)/i : /^back(\.|$)/i;
+  try {
+    return readdirSync(dir)
+      .filter(
+        (name) =>
+          prefix.test(name) && /\.(webp|jpg|jpeg|png|gif)$/i.test(name),
+      )
+      .sort((a, b) => a.localeCompare(b));
+  } catch {
+    return [];
+  }
+}
+
 async function mapPool<T, R>(
   items: readonly T[],
   concurrency: number,
@@ -243,7 +263,22 @@ async function buildFromCatalogue(opts: {
     if (opts.limit != null && slots.length >= opts.limit) break;
     if (!FACE_LANGS.has(row.lang)) continue;
     if (langFilter && !langFilter.has(row.lang)) continue;
-    enqueue(row.printKey, row.lang, row.art || null);
+    // Catalogue tile picks one art; identify indexes every on-disk `art.*`
+    // sibling so a foil phone scan can hit Coleka when AnimeCollection is far.
+    if (row.art) {
+      const primary = resolveCatalogueArtPath(
+        opts.packId,
+        row.printKey,
+        row.lang,
+        row.art,
+      );
+      const arts = primary
+        ? listSiblingFaceBasenames(primary.abs, "art")
+        : [row.art];
+      for (const basename of arts.length ? arts : [row.art]) {
+        enqueue(row.printKey, row.lang, basename);
+      }
+    }
     enqueue(row.printKey, row.lang, row.back);
   }
 

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { allocateUniqueItemSlug } from "@/lib/routing/itemSlug";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
-import { parsePrintKey } from "@/core/identify/printKey";
+import { isPrintKey, parsePrintKey } from "@/core/identify/printKey";
 import {
   metadataAliases,
   promoteTitleKeepingAliases,
@@ -10,6 +10,22 @@ import { usesPrintSearch } from "@/lib/printSearchTypes";
 import type { Type } from "@/generated/prisma/browser";
 
 import { isBarcodePlaceholderItemName } from "./placeholderName";
+
+/**
+ * Scan used to persist `name = printKey` (`naruto:ns-0003`). That is a
+ * lookup key, not a title — enrich / create may replace it with the
+ * catalogue name when this returns true.
+ */
+export function isPrintKeyPlaceholderItemName(
+  name: string | null | undefined,
+  printKey?: string | null,
+): boolean {
+  const trimmed = name?.trim() ?? "";
+  if (!trimmed) return true;
+  if (isPrintKey(trimmed)) return true;
+  const key = printKey?.trim().toLowerCase();
+  return Boolean(key && trimmed.toLowerCase() === key);
+}
 
 async function updateItemDisplayName(
   itemId: string,
@@ -106,14 +122,19 @@ export async function syncPrintItemIdentityFromMetadata(input: {
   }
 
   const currentName = (item.name || input.itemName).trim();
+  const effectivePrintKey = (data.printKey ?? item.printKey)?.trim() || printKey;
+  // Adopt catalogue title when the stored name is still the printKey (scan
+  // path) — even if printKey was already persisted on create.
   if (
     metadataTitle &&
     metadataTitle.toLowerCase() !== currentName.toLowerCase() &&
-    !hadPrintKey
+    (!hadPrintKey ||
+      isPrintKeyPlaceholderItemName(currentName, effectivePrintKey))
   ) {
     data.name = metadataTitle;
     data.slug = await allocateUniqueItemSlug(item.shelfId, metadataTitle, {
       excludeItemId: input.itemId,
+      print: { printKey: effectivePrintKey },
     });
     lookupAlias = currentName || null;
   }

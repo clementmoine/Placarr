@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   assetsPackBase,
   assetsPrintFaceUrl,
+  identifyMatchDisplayUrl,
+  identifyMatchFaceUrl,
   pokemonFaceFileFromTex,
   rewriteAssetPackUrl,
   rewriteAssetUrlForPrintKeyChange,
@@ -27,6 +29,35 @@ describe("assetsPrintFaceUrl", () => {
     expect(
       assetsPrintFaceUrl("naruto/carddass", "naruto:s1-ni0019-prerelease", "fr"),
     ).toBe("/assets/naruto/carddass/prints/prerelease-ni0019-fr/face");
+  });
+});
+
+describe("identifyMatchFaceUrl", () => {
+  it("serves the indexed file when the set code itself contains a hyphen", () => {
+    // `pokemon:sv3-5-001` parses as set sv3 / number 5 / grouping 001, so the
+    // thumb stem looks up a folder that is not on disk and the tile stays gray.
+    expect(
+      identifyMatchDisplayUrl("pokemon", "pokemon:sv3-5-001", "fr"),
+    ).toBe("/assets/pokemon/prints/001-5-fr/thumb");
+    expect(
+      identifyMatchFaceUrl({
+        pack: "pokemon",
+        artRel: "cards/fr/sv3-5/001/art.webp",
+        printKey: "pokemon:sv3-5-001",
+        lang: "fr",
+      }),
+    ).toBe("/assets/pokemon/cards/fr/sv3-5/001/art.webp");
+  });
+
+  it("refuses an artRel that climbs out of the pack", () => {
+    expect(
+      identifyMatchFaceUrl({
+        pack: "pokemon",
+        artRel: "cards/../../etc/passwd",
+        printKey: "pokemon:sv1-001",
+        lang: "fr",
+      }),
+    ).toBe("/assets/pokemon/prints/sv1-001-fr/thumb");
   });
 });
 

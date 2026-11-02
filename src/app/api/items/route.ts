@@ -32,8 +32,11 @@ import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName"
 import { resolveItemMetadataLookupQuery } from "@/core/collect/metadataLookupQuery";
 import {
   catalogueSetFromPrintKey,
+  isPrintKey,
   parsePrintKey,
 } from "@/core/identify/printKey";
+import { lookupPrintCandidate, supportsPrintSearch } from "@/core/identify/printSearch";
+import { isPrintKeyPlaceholderItemName } from "@/core/collect/adoptMetadataTitle";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
 import { normalizeItemLoanInput } from "@/core/collect/itemLoan";
@@ -294,20 +297,10 @@ export async function POST(req: NextRequest) {
       // Cards are anchored by their printing rather than a barcode. Store only
       // a key that parses: an unusable one would never resolve again, and would
       // be indistinguishable from a real anchor at read time.
-      const printKey =
+      let printKey =
         typeof rawPrintKey === "string" && parsePrintKey(rawPrintKey)
           ? rawPrintKey.trim().toLowerCase()
           : null;
-      /*
-        Extension checklist. Prefer body; else the set segment of a set-scoped
-        printKey (`naruto:s3-ta0074`, `lorcana:1-106`). Legacy family-as-set
-        keys (`naruto:ni-0049`) yield null — set is not the series.
-      */
-      const setCodeFromBody =
-        typeof rawSetCode === "string" && rawSetCode.trim()
-          ? rawSetCode.trim().toLowerCase()
-          : null;
-      const setCode = setCodeFromBody || catalogueSetFromPrintKey(printKey);
       // Free text on purpose: the vocabulary is the provider's, not ours. It is
       // validated against the metadata's declared options at read time, so an
       // unknown value degrades to "no variant" rather than being rejected here.
@@ -337,6 +330,11 @@ export async function POST(req: NextRequest) {
           );
         }
       }
+      // Scan used to send only `name: "naruto:ns-0003"` — recover the key so
+      // local catalogue enrich can resolve (adapters are printKey-gated).
+      if (!printKey && isPrintKey(resolvedName)) {
+        printKey = resolvedName.trim().toLowerCase();
+      }
 
       const resolvedShelfId = await resolveShelfId(shelfId, auth.user.id);
 
@@ -357,6 +355,39 @@ export async function POST(req: NextRequest) {
           { status: 403 },
         );
       }
+
+      // Catalogue title immediately when the body still carries the printKey
+      // as a placeholder name (scan tray) — same as batch resolve / PrintPicker.
+      if (printKey && supportsPrintSearch(shelf.type)) {
+        try {
+          const hit = await lookupPrintCandidate(printKey, shelf.type, {
+            language: language ?? undefined,
+          });
+          const title = hit?.title?.trim();
+          if (
+            title &&
+            isPrintKeyPlaceholderItemName(resolvedName, printKey)
+          ) {
+            resolvedName = title;
+          }
+        } catch (error) {
+          console.warn(
+            `[Items] print title lookup failed for ${printKey}:`,
+            error,
+          );
+        }
+      }
+
+      /*
+        Extension checklist. Prefer body; else the set segment of a set-scoped
+        printKey (`naruto:s3-ta0074`, `lorcana:1-106`). Legacy family-as-set
+        keys (`naruto:ni-0049`) yield null — set is not the series.
+      */
+      const setCodeFromBody =
+        typeof rawSetCode === "string" && rawSetCode.trim()
+          ? rawSetCode.trim().toLowerCase()
+          : null;
+      const setCode = setCodeFromBody || catalogueSetFromPrintKey(printKey);
 
       let localImageUrl = imageUrl;
       let localBackgroundImageUrl = backgroundImageUrl;

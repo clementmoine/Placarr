@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  cameraOrientedQuad,
   growQuadFraction,
   halfTurnQuad,
   quadSafeForIdentifyCrop,
@@ -44,13 +43,16 @@ describe("quadSafeForIdentifyCrop", () => {
     expect(quadSafeForIdentifyCrop(q, VW, VH)).not.toBeNull();
   });
 
-  it("accepts a card lying on its side and turns it upright", () => {
+  it("accepts a native landscape card without quarter-turning it", () => {
+    // Ninja Sensei / locations: wide when upright. Forcing portrait used to
+    // rotate the art sideways against the catalogue scan → miss.
     const q = rotatedQuad(540, 960, 880, 630, 0);
     const safe = quadSafeForIdentifyCrop(q, VW, VH);
     expect(safe).not.toBeNull();
     const top = Math.hypot(safe![1].x - safe![0].x, safe![1].y - safe![0].y);
     const side = Math.hypot(safe![3].x - safe![0].x, safe![3].y - safe![0].y);
-    expect(top).toBeLessThan(side);
+    expect(top).toBeGreaterThan(side);
+    expect(safe).toEqual(q);
   });
 
   it("rejects the whole-table lozenge the old scanline pass produced", () => {
@@ -117,36 +119,6 @@ describe("rectifiedFaceSize / rectifiedBandGeometry", () => {
     const geo = rectifiedBandGeometry(rotatedQuad(540, 960, 900, 1257, 0));
     expect(geo.band.sx).toBe(0);
     expect(geo.band.sw).toBe(geo.faceWidth);
-  });
-});
-
-describe("cameraOrientedQuad", () => {
-  const corners = (w: number, h: number) => rotatedQuad(500, 700, w, h, 0);
-
-  it("leaves an upright card alone", () => {
-    const q = corners(630, 880);
-    const upright = quadSafeForIdentifyCrop(q, 1080, 1920)!;
-    expect(cameraOrientedQuad(q, upright)).toEqual(upright);
-  });
-
-  it("puts a card lying on its side back the way the camera saw it", () => {
-    const lying = corners(880, 630);
-    const upright = quadSafeForIdentifyCrop(lying, 1080, 1920)!;
-    // The identify face is portrait (catalogue scans store it that way)…
-    const [utl, utr, , ubl] = upright;
-    expect(Math.hypot(utr.x - utl.x, utr.y - utl.y)).toBeLessThan(
-      Math.hypot(ubl.x - utl.x, ubl.y - utl.y),
-    );
-    // …while the band is read off the card as it lies: wide again, and with
-    // the same bottom edge the camera sees, so the footer is in the strip.
-    const band = cameraOrientedQuad(lying, upright);
-    const [btl, btr, bbr, bbl] = band;
-    expect(Math.hypot(btr.x - btl.x, btr.y - btl.y)).toBeGreaterThan(
-      Math.hypot(bbl.x - btl.x, bbl.y - btl.y),
-    );
-    expect([btl, btr, bbr, bbl].map((p) => [p.x, p.y])).toEqual(
-      lying.map((p) => [p.x, p.y]),
-    );
   });
 });
 

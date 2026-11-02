@@ -26,6 +26,7 @@ import {
 import { localMediaFilePath } from "@/lib/media/localMediaPath";
 import { fetchAndStoreMetadata } from "@/core/enrich";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import { isPrintKey } from "@/core/identify/printKey";
 import {
   itemPricesContextFromRecord,
   itemPricesRefreshForceReason,
@@ -90,6 +91,21 @@ async function prepareItemForMetadataRefresh(input: {
   itemId: string;
   clearRemoteCover?: boolean;
 }): Promise<void> {
+  // Scan historically stored `name = printKey` without the column — local
+  // catalogue adapters only resolve by printKey. Recover before fetch.
+  {
+    const row = await prisma.item.findUnique({
+      where: { id: input.itemId },
+      select: { name: true, printKey: true },
+    });
+    if (row && !row.printKey?.trim() && isPrintKey(row.name)) {
+      await prisma.item.update({
+        where: { id: input.itemId },
+        data: { printKey: row.name.trim().toLowerCase() },
+      });
+    }
+  }
+
   if (input.clearRemoteCover) {
     const item = await prisma.item.findUnique({
       where: { id: input.itemId },

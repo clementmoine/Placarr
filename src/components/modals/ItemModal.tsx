@@ -194,6 +194,9 @@ export function ItemModal({
     barcode?: string;
     imageUrl?: string | null;
     shelfId?: string;
+    printKey?: string | null;
+    language?: string | null;
+    setCode?: string | null;
     metadataPreview?: MetadataResult | null;
   };
 }) {
@@ -693,7 +696,7 @@ export function ItemModal({
   } = useItemModalMetadataMutations({
     activeShelfType,
     activeShelfName: activeShelf?.name ?? null,
-    printKey: item?.printKey ?? null,
+    printKey: item?.printKey ?? prefilledValues?.printKey ?? null,
     applyMetadataPreviewToForm,
     onSuggestionsLoaded: (cleanSuggestions, primary) => {
       setSuggestions(cleanSuggestions);
@@ -1587,11 +1590,22 @@ export function ItemModal({
         backgroundImageUrl: backgroundImageUrl,
         // Create-from-scan: persist the preview so the item page keeps gallery /
         // facts while background enrichment runs (otherwise only the chosen cover survives).
+        // Print identity must travel with the create (ScanFAB / PrintPicker) —
+        // local catalogue adapters resolve only by printKey, never by name.
         ...(item
           ? {}
           : {
               metadataPreview:
                 fetchedMetadata ?? prefilledValues?.metadataPreview ?? null,
+              ...(prefilledValues?.printKey
+                ? { printKey: prefilledValues.printKey }
+                : {}),
+              ...(prefilledValues?.language
+                ? { language: prefilledValues.language }
+                : {}),
+              ...(prefilledValues?.setCode
+                ? { setCode: prefilledValues.setCode }
+                : {}),
             }),
       };
 

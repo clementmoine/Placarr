@@ -45,7 +45,7 @@ import {
 import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { isCataloguePackId } from "@/lib/admin/cataloguePacks";
-import { identifyMatchDisplayUrl } from "@/lib/packAssetUrls";
+import { identifyMatchFaceUrl } from "@/lib/packAssetUrls";
 import { loadPrintTitlesForKeys } from "@/lib/server/identify/printTitles";
 import {
   prefetchPaddleCollectorOcr,
@@ -81,12 +81,14 @@ function withFaceUrl(match: CardVisualMatch): CardVisualMatch & {
   }
   return {
     ...match,
-    // Display only — `/prints/…/thumb` (falls back to face art on disk).
-    faceUrl: identifyMatchDisplayUrl(
-      packId,
-      match.printKey,
-      match.lang || "fr",
-    ),
+    // Display only. Indexed art — the thumb stem cannot round-trip a set
+    // code that already contains a hyphen (`sv3-5`, `rsv10-5`).
+    faceUrl: identifyMatchFaceUrl({
+      pack: packId,
+      artRel: match.artRel,
+      printKey: match.printKey,
+      lang: match.lang || "fr",
+    }),
   };
 }
 

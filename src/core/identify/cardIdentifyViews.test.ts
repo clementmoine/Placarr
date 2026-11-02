@@ -351,12 +351,30 @@ describe("finalizeIdentifyConfidence", () => {
     expect(out.confidence).toBe("doubt");
   });
 
-  it("misses when a foreign game sits close to #1", () => {
+  it("misses when a foreign game sits close to a sure-band #1", () => {
     const out = finalizeIdentifyConfidence(
       [m("dbscg:bt20-129", 200), m("naruto:uc-0022", 230)],
       "embed",
     );
     expect(out.confidence).toBe("miss");
     expect(out.matches).toEqual([]);
+  });
+
+  it("keeps a soft foil hit when a foreign FP is close (Gaï / Ninja Sensei)", () => {
+    // Live dewarp ~251 vs Coleka; Pokémon glare neighbor ~267 must not wipe
+    // the correct Naruto shortlist into an honest-looking miss.
+    const out = finalizeIdentifyConfidence(
+      [
+        m("naruto:ns-0003", 251),
+        m("pokemon:sm8-8a", 267),
+        m("naruto:nr-0014", 310),
+      ],
+      "embed",
+    );
+    expect(out.confidence).toBe("doubt");
+    expect(out.matches.map((row) => row.printKey)).toEqual([
+      "naruto:ns-0003",
+      "naruto:nr-0014",
+    ]);
   });
 });

@@ -9,8 +9,11 @@ export type SessionLock = {
   kind: SessionLockKind;
   /** Barcode raw value or card printKey. */
   key: string;
+  /** Display label — catalogue title when known, else the key. */
   label: string;
   faceUrl?: string | null;
+  /** Card copy language from identify (`fr` / `en`…), not a barcode field. */
+  language?: string | null;
   lockedAt: number;
 };
 
@@ -54,15 +57,17 @@ export class ScanSession {
     label: string,
     faceUrl?: string | null,
     now = Date.now(),
-    opts?: { force?: boolean },
+    opts?: { force?: boolean; language?: string | null },
   ): SessionLock | null {
     if (!opts?.force && this.isCoolingDown(kind, key, now)) return null;
+    const language = opts?.language?.trim().toLowerCase() || null;
     const entry: SessionLock = {
       id: `${kind}:${key}:${now}`,
       kind,
       key,
       label,
       faceUrl: faceUrl ?? null,
+      ...(language ? { language } : {}),
       lockedAt: now,
     };
     this.locks = [entry, ...this.locks].slice(0, 40);

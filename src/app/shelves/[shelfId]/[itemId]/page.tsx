@@ -3435,8 +3435,9 @@ export default function ItemDetailsPage() {
                       lenticularGrid={variantView.lenticularGrid}
                       lenticularCropProfile={variantView.lenticularCropProfile}
                       scanCrop={variantView.scanCrop}
-                      /* The wrapper leans the whole card so the back turns with
-                         it; this keeps only the light on its own surface. */
+                      /* Pointer still tips the wrapper so the back turns with
+                         it. Device tilt does not: the plane stays square and
+                         only the light on this surface follows the phone. */
                       tilt={false}
                       trackPointer
                       disableCompass

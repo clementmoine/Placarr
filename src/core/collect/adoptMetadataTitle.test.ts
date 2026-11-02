@@ -26,12 +26,24 @@ vi.mock("@/lib/routing/itemSlug", () => ({
 import { prisma } from "@/lib/db/prisma";
 import {
   adoptItemNameFromMetadataIfPlaceholder,
+  isPrintKeyPlaceholderItemName,
   syncPrintItemIdentityFromMetadata,
 } from "./adoptMetadataTitle";
 
 const mockedUpdate = vi.mocked(prisma.item.update);
 const mockedFindUnique = vi.mocked(prisma.item.findUnique);
 const mockedMetadataUpdate = vi.mocked(prisma.metadata.update);
+
+describe("isPrintKeyPlaceholderItemName", () => {
+  it("treats empty, printKey-shaped, and printKey-equal names as placeholders", () => {
+    expect(isPrintKeyPlaceholderItemName("")).toBe(true);
+    expect(isPrintKeyPlaceholderItemName("naruto:ns-0003")).toBe(true);
+    expect(
+      isPrintKeyPlaceholderItemName("naruto:ns-0003", "naruto:ns-0003"),
+    ).toBe(true);
+    expect(isPrintKeyPlaceholderItemName("Gaï", "naruto:ns-0003")).toBe(false);
+  });
+});
 
 describe("adoptItemNameFromMetadataIfPlaceholder", () => {
   beforeEach(() => {
@@ -169,7 +181,7 @@ describe("syncPrintItemIdentityFromMetadata", () => {
     });
   });
 
-  it("does not rename an item that already has a printKey", async () => {
+  it("does not rename an item that already has a printKey and a real title", async () => {
     mockedFindUnique.mockResolvedValue({
       shelfId: "shelf-tcg",
       printKey: "lorcana:1-1",
@@ -186,6 +198,33 @@ describe("syncPrintItemIdentityFromMetadata", () => {
 
     expect(adopted).toBe(false);
     expect(mockedUpdate).not.toHaveBeenCalled();
+  });
+
+  it("replaces a scan printKey-as-name even when printKey was already stored", async () => {
+    mockedFindUnique.mockResolvedValue({
+      shelfId: "shelf-tcg",
+      printKey: "naruto:ns-0003",
+      name: "naruto:ns-0003",
+      metadataId: null,
+      metadata: null,
+    } as never);
+
+    const adopted = await syncPrintItemIdentityFromMetadata({
+      itemId: "item-1",
+      shelfType: "tcg",
+      itemName: "naruto:ns-0003",
+      metadataTitle: "Gaï",
+      metadataPrintKey: "naruto:ns-0003",
+    });
+
+    expect(adopted).toBe(true);
+    expect(mockedUpdate).toHaveBeenCalledWith({
+      where: { id: "item-1" },
+      data: {
+        name: "Gaï",
+        slug: "gai",
+      },
+    });
   });
 
   it("ignores non-print shelves", async () => {

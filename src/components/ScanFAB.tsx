@@ -42,6 +42,9 @@ export function ScanFAB() {
         imageUrl: string | null;
         barcode: string;
         shelfId?: string;
+        printKey?: string | null;
+        language?: string | null;
+        setCode?: string | null;
         metadataPreview?: MetadataResult | null;
       }
     | undefined
@@ -91,11 +94,15 @@ export function ScanFAB() {
       popBatchHead();
       return;
     }
+    // Same identity PrintPicker posts — printKey unlocks local catalogue
+    // enrich; name is replaced by the catalogue title on POST when still a key.
     setPrefilledItemValues({
-      name: head.key,
+      name: head.label?.trim() || head.key,
       imageUrl: head.faceUrl ?? null,
       barcode: "",
       shelfId,
+      printKey: head.key,
+      language: head.language ?? null,
     });
     setIsItemModalOpen(true);
     popBatchHead();

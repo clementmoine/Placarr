@@ -142,17 +142,38 @@ export type ArtBandPixels = {
  * to encode then decode and no full-resolution copy to resize afterwards.
  * The scaler is the same canvas `drawImage` transformers.js would have used.
  *
- * `upsideDown` reads the face rotated half a turn, for the card presented the
- * other way up (a card lying on its side has no "up" the user can see).
+ * `quarterTurns` rotates the face 0..3 × 90° CW before the art band, for a
+ * portrait card lying on its side (camera-native face is landscape, catalogue
+ * scan is portrait) or the reverse. `upsideDown` is the half-turn shorthand
+ * (`quarterTurns: 2`).
  */
 async function cropArtBand(
   blob: Blob,
-  upsideDown = false,
+  opts?: { upsideDown?: boolean; quarterTurns?: number },
 ): Promise<ArtBandPixels | null> {
   const bitmap = await createImageBitmap(blob).catch(() => null);
   if (!bitmap) return null;
   try {
-    const rect = cardArtBandRect(bitmap.width, bitmap.height);
+    const turns =
+      ((opts?.quarterTurns ?? (opts?.upsideDown ? 2 : 0)) % 4 + 4) % 4;
+    let src: ImageBitmap | HTMLCanvasElement = bitmap;
+    let srcW = bitmap.width;
+    let srcH = bitmap.height;
+    if (turns !== 0) {
+      const rotated = document.createElement("canvas");
+      const landscape = turns % 2 === 1;
+      rotated.width = landscape ? bitmap.height : bitmap.width;
+      rotated.height = landscape ? bitmap.width : bitmap.height;
+      const rctx = rotated.getContext("2d");
+      if (!rctx) return null;
+      rctx.translate(rotated.width / 2, rotated.height / 2);
+      rctx.rotate((turns * Math.PI) / 2);
+      rctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+      src = rotated;
+      srcW = rotated.width;
+      srcH = rotated.height;
+    }
+    const rect = cardArtBandRect(srcW, srcH);
     if (!rect) return null;
     const target = cardEmbedResizeTarget(rect.width, rect.height);
     if (!target) return null;
@@ -161,14 +182,10 @@ async function cropArtBand(
     canvas.height = target.height;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
-    if (upsideDown) {
-      ctx.translate(target.width, target.height);
-      ctx.rotate(Math.PI);
-    }
     ctx.drawImage(
-      bitmap,
-      upsideDown ? bitmap.width - rect.left - rect.width : rect.left,
-      upsideDown ? bitmap.height - rect.top - rect.height : rect.top,
+      src,
+      rect.left,
+      rect.top,
       rect.width,
       rect.height,
       0,
@@ -186,12 +203,12 @@ async function cropArtBand(
 /** Embed a full card-face blob: art-band crop → DINOv2 CLS → unit vector. */
 export async function embedCardFaceBlobClient(
   blob: Blob,
-  opts?: { upsideDown?: boolean },
+  opts?: { upsideDown?: boolean; quarterTurns?: number },
 ): Promise<Float32Array | null> {
   try {
     const extractor = await loadExtractor();
     if (!extractor) return null;
-    const band = await cropArtBand(blob, opts?.upsideDown === true);
+    const band = await cropArtBand(blob, opts);
     if (!band) return null;
     const { RawImage } = await import("@huggingface/transformers");
     const image = new RawImage(band.data, band.width, band.height, 4);

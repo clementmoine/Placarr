@@ -37,4 +37,12 @@ describe("ScanSession", () => {
     expect(forced?.key).toBe("p1");
     expect(s.list()).toHaveLength(2);
   });
+
+  it("keeps card language on the lock for create", () => {
+    const s = new ScanSession();
+    const lock = s.tryLock("card", "naruto:ns-0003", "naruto:ns-0003", null, 0, {
+      language: "FR",
+    });
+    expect(lock?.language).toBe("fr");
+  });
 });

@@ -60,8 +60,12 @@ export function trimDoubtShortlist<
 }
 
 /**
- * Drop other games from a shortlist. If a foreign game sits close to #1,
- * abstain entirely — cross-game "plusieurs possibilités" is worse than miss.
+ * Drop other games from a shortlist.
+ *
+ * When a foreign neighbor sits close to a *sure-band* #1, abstain — a
+ * confident cross-game pick is worse than miss. Soft #1s (foil glare,
+ * landscape Sensei…) often have foreign FPs a few dozen milli away; keep
+ * the same-game shortlist as doubt instead of wiping a correct hit.
  */
 export function sameGameOrAbstain<
   T extends { printKey: string; distance: number },
@@ -71,13 +75,16 @@ export function sameGameOrAbstain<
   if (!topGame) return [...matches];
 
   const foreignMargin = opts?.foreignMargin ?? IDENTIFY_SURE_MARGIN_EMBED;
+  const top = matches[0]!;
   const foreign = matches.find((row) => {
     const game = printGameFromPrintKey(row.printKey);
     return Boolean(game && game !== topGame);
   });
   if (foreign) {
-    const margin = foreign.distance - matches[0]!.distance;
-    if (margin < foreignMargin) return [];
+    const margin = foreign.distance - top.distance;
+    if (margin < foreignMargin && top.distance <= IDENTIFY_SURE_EMBED) {
+      return [];
+    }
   }
   return matches.filter(
     (row) => printGameFromPrintKey(row.printKey) === topGame,

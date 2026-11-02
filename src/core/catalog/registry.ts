@@ -26,6 +26,7 @@ import { decitreModule } from "@/providers/decitre";
 import { deezerModule } from "@/providers/deezer";
 import { discogsModule } from "@/providers/discogs";
 import { ebayModule } from "@/providers/commerce/ebay";
+import { cardnexusModule } from "@/providers/commerce/cardnexus";
 import { freakxyModule } from "@/providers/freakxy";
 import { fullsetModule } from "@/providers/fullset";
 import { lorcanajsonModule } from "@/providers/lorcana/lorcanajson";
@@ -191,5 +192,6 @@ export const PROVIDER_MODULES: ProviderModule[] = [
   hdjvModule,
   freakxyModule,
   ebayModule,
+  cardnexusModule,
   scandexModule,
 ];

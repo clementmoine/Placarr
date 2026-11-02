@@ -61,12 +61,13 @@ const nextConfig = {
    *
    * Private ranges only, and `next dev` only, so nothing routable can reach it.
    * A home network hands out a different address often enough that pinning one
-   * would only break again.
+   * would only break again. `*` matches a single label, so `172.16.*.*` does
+   * not cover the rest of 172.16.0.0/12 — an iPhone hotspot is 172.20.10.0/28.
    */
   allowedDevOrigins: [
     "192.168.*.*",
     "10.*.*.*",
-    "172.16.*.*",
+    ...Array.from({ length: 16 }, (_, octet) => `172.${16 + octet}.*.*`),
     "*.local",
     "*.localhost",
   ],

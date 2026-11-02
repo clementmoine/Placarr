@@ -84,6 +84,24 @@ export function turnTowardBack(turn: number): number {
   return showsBack(turn) ? turn : turn + 180;
 }
 
+/** What is currently posing the card plane. */
+export type CardPlaneDriver = "pointer" | "idle" | "device";
+
+/**
+ * Angles written on the card plane.
+ *
+ * Pointer and the idle sway tip the object. Device tilt does not: the phone
+ * is already the thing being tipped, and the foil light follows the sensor
+ * on its own. Writing the gyro onto this plane makes the card tumble.
+ */
+export function cardPlaneLeanStyle(
+  lean: Pick<Lean, "tiltX" | "tiltY"> | null,
+  driver: CardPlaneDriver,
+): { x: string; y: string } {
+  if (!lean || driver === "device") return { x: "0deg", y: "0deg" };
+  return { x: `${lean.tiltX}deg`, y: `${lean.tiltY}deg` };
+}
+
 /** One of the Face / Dos pills above the card. */
 function SideTab({
   label,
@@ -197,14 +215,17 @@ export function FlippableCard({
   /** Phone in hand or cursor on the card — either way, idle must not fight. */
   const isDriven = pointerActive || Boolean(deviceLean);
 
-  const applyLean = useCallback((lean: Lean) => {
+  const applyLean = useCallback((lean: Lean, driver: CardPlaneDriver) => {
     const frame = frameRef.current;
     if (!frame) return;
-    frame.style.setProperty("--flip-lean-x", `${lean.tiltX}deg`);
-    frame.style.setProperty("--flip-lean-y", `${lean.tiltY}deg`);
+    const style = cardPlaneLeanStyle(lean, driver);
+    frame.style.setProperty("--flip-lean-x", style.x);
+    frame.style.setProperty("--flip-lean-y", style.y);
   }, []);
 
-  const { noteLean } = useFoilIdleLean(isDriven, MAX_TILT, applyLean);
+  const { noteLean } = useFoilIdleLean(isDriven, MAX_TILT, (lean) =>
+    applyLean(lean, "idle"),
+  );
 
   const applyPointer = useCallback(
     (clientX: number, clientY: number) => {
@@ -221,7 +242,7 @@ export function FlippableCard({
         MAX_TILT,
       );
       noteLean(lean);
-      applyLean(lean);
+      applyLean(lean, "pointer");
     },
     [applyLean, noteLean],
   );
@@ -229,18 +250,18 @@ export function FlippableCard({
   const rest = useCallback(() => {
     pointerOwnsLean.current = false;
     setPointerActive(false);
-    // Device pose, if motion is on, is applied by the effect below; otherwise
-    // the idle hook eases from the last noted lean into the shared sweep.
+    // Gyro stays off the plane. Noting a flat pose means turning motion off
+    // eases into the idle sway from rest, instead of from a tilt we never drew.
     if (deviceLean) {
-      noteLean(deviceLean, 0.4);
-      applyLean(deviceLean);
+      noteLean(leanFromPointer(50, 50, MAX_TILT), 0);
+      applyLean(deviceLean, "device");
     }
   }, [applyLean, deviceLean, noteLean]);
 
   useEffect(() => {
     if (!deviceLean || pointerOwnsLean.current) return;
-    noteLean(deviceLean, 0.4);
-    applyLean(deviceLean);
+    noteLean(leanFromPointer(50, 50, MAX_TILT), 0);
+    applyLean(deviceLean, "device");
   }, [deviceLean, applyLean, noteLean]);
 
   const canFlip = Boolean(backUrl);

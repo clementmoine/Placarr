@@ -60,7 +60,8 @@ export type CardVisualIndexFile = {
   entries: CardVisualIndexEntry[];
 };
 
-export const CARD_VISUAL_INDEX_VERSION = 2 as const;
+/** v3: every on-disk `art.*` sibling (not only `print_assets.art`). */
+export const CARD_VISUAL_INDEX_VERSION = 3 as const;
 
 const INDEX_NAME = "card-visual-index.json";
 const LANG_SEGMENT = /^[a-z]{2}([a-z]{2})?$/i;
@@ -303,6 +304,21 @@ function pickRoleName(files: string[], role: "art" | "back"): string | null {
   return files.find((n) => n.toLowerCase().startsWith(`${role}.`)) ?? files[0]!;
 }
 
+/**
+ * Every on-disk `art.*` (or a single best `back.*`). Phone scans of foil
+ * cards often match a marketplace photo better than the HD catalogue dump
+ * the tile prefers — index both, let NN + printKey dedupe pick the closer
+ * vector.
+ */
+function listFaceNames(dir: string, role: "art" | "back"): string[] {
+  const files = listRoleFiles(dir, role);
+  if (role === "back") {
+    const one = pickRoleName(files, role);
+    return one ? [one] : [];
+  }
+  return [...files].sort((a, b) => a.localeCompare(b));
+}
+
 function listSubdirs(dir: string): string[] {
   if (!existsSync(dir)) return [];
   try {
@@ -380,11 +396,10 @@ async function pushCardDir(opts: {
   // A previous layout pass already indexed this print+locale (front ± back).
   if (opts.seen.has(localeKey) || opts.exclude?.has(localeKey)) return;
 
-  const faces: Array<{ name: string }> = [];
-  const artName = pickRoleName(listRoleFiles(opts.cardDir, "art"), "art");
-  if (artName) faces.push({ name: artName });
-  const backName = pickRoleName(listRoleFiles(opts.cardDir, "back"), "back");
-  if (backName) faces.push({ name: backName });
+  const faces: Array<{ name: string }> = [
+    ...listFaceNames(opts.cardDir, "art").map((name) => ({ name })),
+    ...listFaceNames(opts.cardDir, "back").map((name) => ({ name })),
+  ];
   if (!faces.length) return;
 
   let added = false;

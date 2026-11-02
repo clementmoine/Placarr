@@ -265,6 +265,18 @@ l’abstraction : on devinerait la forme de l’API. Trois constantes localisée
 coûtent moins qu’une mauvaise abstraction. À faire en une passe le jour où un
 catalogue CD / jeu porte une image d’identité stable (point 5 ci-dessus).
 
+#### Scan live — reporté (plan détection 2026-11-01)
+
+Chantier en cours : frame-driven + multi-contours + identify sérialisé, **sans**
+doubler ORT ni changer de modèle. À reprendre seulement si le ressenti iPhone
+le demande encore après ça :
+
+| Priorité | Item | Détail |
+| -------- | ---- | ------ |
+| **P3** | **2e session ORT (inférence parallèle)** | Aujourd’hui DocAligner / PP-OCR / DINOv2 partagent **une** file (`maxInferInFlight: 1` + `runOrtExclusive`) — contrainte Safari Asyncify / Jetsam. Une 2e session permettrait refine + OCR/embed en parallèle (ou N DocAligner). **Risque** : freeze / kill mémoire iOS. Critère : mesurer d’abord le gain après frame-driven ; n’ouvrir que si le tracking reste saturé par la file unique. |
+| **P3** | **Nouveau détecteur d’objet** | Remplacer ou dual-path Sobel + DocAligner par un autre réseau (YOLO / équivalent mobile). Poids, quantiz, self-host `/models`, eval anti-FP, perf téléphone. **Pas** nécessaire pour exposer les multi-blobs déjà calculés côté classique. Reconsidérer si le classique + DocAligner plafonnent sur tables denses / sujets hors carte. |
+| **P4** | **Identify batch parallèle** | Identifier plusieurs cartes du frame en même temps — dépend d’une 2e capacité ORT / mémoire ; sinon rester sur queue sérialisée + focus qui enchaîne. |
+
 ### Uniformité TCG — audit 2026-10-23
 
 **Déjà aligné.** `LocalTcgLine` / `createEmptyLocalTcgProvider` +

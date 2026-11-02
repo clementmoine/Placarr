@@ -6,7 +6,7 @@
 import { shortlistPacksByCentroid } from "@/core/identify/cardEmbeddingSearch";
 import { finalizeIdentifyConfidence } from "@/core/identify/identifyConfidence";
 import { parseCollectorNumberHint } from "@/core/identify/collectorNumberHint";
-import { identifyMatchDisplayUrl } from "@/lib/packAssetUrls";
+import { identifyMatchFaceUrl } from "@/lib/packAssetUrls";
 import {
   embedCardFaceBlobClient,
   isCardEmbedClientReady,
@@ -18,6 +18,7 @@ import {
   prefetchClientEmbeddingPacks,
   prioritizePack,
   promotePacksHot,
+  residentPackIds,
   type ClientEmbedHit,
   type ClientLoadedPack,
 } from "@/lib/client/scan/cardEmbeddingIndex.client";
@@ -167,9 +168,15 @@ export type ClientIdentifyResult = {
 };
 
 function withFaceUrl(hit: ClientEmbedHit): ClientIdentifyMatch {
-  // Display only — prefer `/prints/…/thumb` (disk falls back to full art).
+  // Display only. The indexed file — a `/prints/…/thumb` rebuilt from the
+  // key misses every set code that itself contains a hyphen.
   const faceUrl = hit.packId
-    ? identifyMatchDisplayUrl(hit.packId, hit.printKey, hit.lang)
+    ? identifyMatchFaceUrl({
+        pack: hit.packId,
+        artRel: hit.artRel,
+        printKey: hit.printKey,
+        lang: hit.lang,
+      })
     : null;
   return {
     printKey: hit.printKey,
@@ -284,6 +291,19 @@ type MatchAttempt = {
   finalized: ReturnType<typeof finalizeIdentifyConfidence>;
 };
 
+function finalizeHits(
+  rawHits: ClientEmbedHit[],
+  ocrText: string,
+): MatchAttempt {
+  const hint = parseCollectorNumberHint(ocrText);
+  const finalized = finalizeIdentifyConfidence(
+    rawHits.map((h) => ({ printKey: h.printKey, distance: h.distance })),
+    "embed",
+    { ocrReinforced: Boolean(hint) },
+  );
+  return { rawHits, finalized };
+}
+
 /**
  * Shortlist the packs this query lands near, match inside them and score the
  * confidence. Null means the client cannot answer right now (a shard it needs
@@ -314,13 +334,35 @@ async function matchQuery(
   });
   // The packs this card lives near get a hot f32 copy for the next frame.
   promotePacksHot(packs.map((p) => p.meta.packId));
-  const hint = parseCollectorNumberHint(ocrText);
-  const finalized = finalizeIdentifyConfidence(
-    rawHits.map((h) => ({ printKey: h.printKey, distance: h.distance })),
-    "embed",
-    { ocrReinforced: Boolean(hint) },
-  );
-  return { rawHits, finalized };
+  return finalizeHits(rawHits, ocrText);
+}
+
+/**
+ * Rematch against every resident pack in scope. The centroid shortlist is
+ * cheap but can drop a small pack (Ninja Ranks, 281 faces) whose centroid
+ * sits far from a glare-heavy phone frame — then every orientation "misses"
+ * inside the wrong games. Same distance gate, just more shelves.
+ */
+function matchAllResidentInScope(
+  query: Float32Array,
+  scope: readonly ClientPackManifest[],
+  ocrText: string,
+): MatchAttempt | null {
+  const allowed = new Set(scope.map((m) => m.packId));
+  const packs: ClientLoadedPack[] = [];
+  for (const id of residentPackIds()) {
+    if (!allowed.has(id)) continue;
+    const pack = getResidentPack(id);
+    if (pack) packs.push(pack);
+  }
+  if (!packs.length) return null;
+  const rawHits = matchClientEmbeddings(query, packs, {
+    limit: 8,
+    maxDistance: 450,
+    ocrText,
+  });
+  promotePacksHot(packs.map((p) => p.meta.packId));
+  return finalizeHits(rawHits, ocrText);
 }
 
 /**
@@ -351,24 +393,36 @@ export async function identifyCardBlobClient(
   const ocr = opts?.ocr ?? (await recognizeCollectorBandClient(blob));
   const ocrText = ocr.text;
 
-  // The collector line was found at the far end: the card is upside down, so
-  // read the art band the same way round rather than guessing twice.
-  const upsideDown = ocr.halfTurn;
-  const query = await embedCardFaceBlobClient(blob, { upsideDown });
+  // OCR half-turn tells us which end held the collector line; start there so
+  // a card pushed in upside down does not pay an extra embed on the hot path.
+  const startTurn = ocr.halfTurn ? 2 : 0;
+  const query = await embedCardFaceBlobClient(blob, {
+    quarterTurns: startTurn,
+  });
   if (!query) return null;
 
   let attempt = await matchQuery(query, scope, ocrText);
   if (!attempt) return null;
+  let bestQuery = query;
   if (attempt.finalized.confidence === "miss") {
-    // Nothing recognised this way up. A card lying on its side (Lorcana
-    // locations, split cards) shows the user no "up", so the face may be
-    // rectified half a turn from the catalogue scan — read it once more
-    // upside down before giving up. Same gate, so still no lucky guess.
-    const flipped = await embedCardFaceBlobClient(blob, {
-      upsideDown: !upsideDown,
-    });
-    const alt = flipped ? await matchQuery(flipped, scope, ocrText) : null;
-    if (alt && alt.finalized.confidence !== "miss") attempt = alt;
+    // Camera-native face can still be a quarter-turn off the catalogue scan:
+    // a 63:88 card on its side, or a landscape print held the other way.
+    // Try the three remaining orientations before an honest miss — never a
+    // looser distance gate.
+    for (const turn of [1, 2, 3]) {
+      const quarterTurns = (startTurn + turn) % 4;
+      const rotated = await embedCardFaceBlobClient(blob, { quarterTurns });
+      const alt = rotated ? await matchQuery(rotated, scope, ocrText) : null;
+      if (alt && alt.finalized.confidence !== "miss") {
+        attempt = alt;
+        if (rotated) bestQuery = rotated;
+        break;
+      }
+    }
+  }
+  if (attempt.finalized.confidence === "miss") {
+    const wide = matchAllResidentInScope(bestQuery, scope, ocrText);
+    if (wide && wide.finalized.confidence !== "miss") attempt = wide;
   }
   const { rawHits, finalized } = attempt;
 

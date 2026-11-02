@@ -412,7 +412,6 @@ export function CardScanCapture({
                         src={row.faceUrl}
                         alt={row.printKey}
                         className="absolute inset-0 size-full object-cover"
-                        loading="lazy"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground p-2 text-center">

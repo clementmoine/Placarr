@@ -107,6 +107,10 @@ export function printKeyAssetStem(
 /**
  * Scan carousel / lock tray URL — prefer the print `thumb` role (falls back
  * to full art on disk when no thumb exists). Identify math never reads this.
+ *
+ * Do not use this when an `artRel` is known. A print key splits on `-`, so a
+ * set code that already contains one (`sv3-5`, `rsv10-5`) rebuilds a folder
+ * that is not on disk and the tile stays empty.
  */
 export function identifyMatchDisplayUrl(
   pack: string,
@@ -114,6 +118,43 @@ export function identifyMatchDisplayUrl(
   lang: string,
 ): string {
   return assetsPrintFaceUrl(pack, printKey, lang, "thumb");
+}
+
+/**
+ * The file the visual index actually embedded.
+ * `/assets/<pack>/cards/{lang}/{set}/{card}/art.webp`
+ */
+export function identifyMatchArtUrl(
+  pack: string,
+  artRel: string | null | undefined,
+): string | null {
+  const rel = artRel?.trim().replace(/\\/g, "/") ?? "";
+  if (!rel || rel.startsWith("/") || rel.includes(":")) return null;
+  const segments = rel.split("/").filter(Boolean);
+  if (
+    !segments.length ||
+    segments.some((segment) => segment === "." || segment === "..")
+  ) {
+    return null;
+  }
+  return assetsPackFileUrl(pack, ...segments);
+}
+
+/**
+ * Face shown next to a scan hit. Indexed `artRel` when we have it, otherwise
+ * the print-role thumb (callers that only know the key).
+ */
+export function identifyMatchFaceUrl(opts: {
+  pack: string;
+  artRel?: string | null;
+  printKey?: string | null;
+  lang?: string | null;
+}): string | null {
+  const fromArt = identifyMatchArtUrl(opts.pack, opts.artRel);
+  if (fromArt) return fromArt;
+  const printKey = opts.printKey?.trim();
+  if (!printKey) return null;
+  return identifyMatchDisplayUrl(opts.pack, printKey, opts.lang || "fr");
 }
 
 export function assetsPrintFaceUrl(

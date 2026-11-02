@@ -102,11 +102,16 @@ export type ScanMode = "auto" | "barcode" | "card";
  * One identify sample: 640 px face thumbnail + native-res collector band,
  * plus the same band taken from the other end of the card (which end carries
  * the collector line is settled by reading them, not assumed).
+ *
+ * `frame` is the same camera moment at full-ish resolution — server fallback
+ * dewarps it. Posting only the face crop made landscape foil cards (Ninja
+ * Sensei) miss: AABB/face embeds sat ~500 while full-frame dewarp hits ~250.
  */
 type IdentifySample = {
   face: Blob;
   band: CollectorBandGrab | null;
   bandHalfTurn: CollectorBandGrab | null;
+  frame: Blob | null;
 };
 
 export type CardLiveMatch = {
@@ -285,6 +290,28 @@ async function grabFinderBlob(
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, dw, dh);
+  return new Promise((resolve) =>
+    canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.88),
+  );
+}
+
+/** Full camera frame for server dewarp (long edge capped — upload budget). */
+async function grabVideoFrameBlob(
+  video: HTMLVideoElement,
+  maxEdge = 1280,
+): Promise<Blob | null> {
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  if (!width || !height) return null;
+  const scale = Math.min(1, maxEdge / Math.max(width, height));
+  const dw = Math.max(1, Math.round(width * scale));
+  const dh = Math.max(1, Math.round(height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = dw;
+  canvas.height = dh;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(video, 0, 0, width, height, 0, 0, dw, dh);
   return new Promise((resolve) =>
     canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.88),
   );
@@ -505,7 +532,7 @@ export function UnifiedScanCapture({
       key: string,
       label: string,
       faceUrl?: string | null,
-      opts?: { force?: boolean },
+      opts?: { force?: boolean; language?: string | null },
     ) => {
       const entry = sessionRef.current.tryLock(
         kind,
@@ -546,9 +573,12 @@ export function UnifiedScanCapture({
         matches.find((m) => m.printKey === printKey) ?? matches[0] ?? null;
       if (!row) return;
       // Explicit tap always records a copy — cooldown only blocks auto-locks.
+      // Label stays the printKey until create resolves the catalogue title
+      // (ScanFAB / POST /api/items); language travels with the lock.
       if (
         !recordSessionLock("card", row.printKey, row.printKey, row.faceUrl, {
           force: true,
+          language: row.lang,
         })
       ) {
         return;
@@ -635,7 +665,9 @@ export function UnifiedScanCapture({
           patchScanDebug({ aimToLockMs: aimMs, phase: "delivering" });
           // Multi-frame sure → stage in session tray (not shelf). Keep hunting
           // the next ranked subject (clear tap-focus so centre ranking wins).
-          recordSessionLock("card", top.printKey, top.printKey, top.faceUrl);
+          recordSessionLock("card", top.printKey, top.printKey, top.faceUrl, {
+            language: top.lang,
+          });
           clearFocus();
           setStable(null);
           setMatches([]);
@@ -718,24 +750,30 @@ export function UnifiedScanCapture({
             );
           }
           backoffUntilRef.current = 0;
-          applyCardMatches(client.matches, client.confidence, frame);
-          if (!client.matches.length) {
-            patchScanDebug({
-              confidence: client.confidence,
-              method: "client-embed",
-              phase: "looking",
-            });
+          // Client "miss" still asks the server (full pack walk). The phone
+          // shortlist can skip a small pack whose shard is resident but whose
+          // centroid was far from a glare frame — server does not shortlist.
+          if (client.confidence !== "miss") {
+            applyCardMatches(client.matches, client.confidence, frame);
+            return;
           }
-          return;
+          patchScanDebug({
+            confidence: "miss",
+            method: "client-embed",
+            phase: "understanding",
+          });
         }
       } catch {
         /* fall through to server fallback */
       }
 
+      // Prefer the full frame: server classical dewarp recovers landscape
+      // foil cards that the on-device face crop misses.
+      const fallbackImage = sample.frame ?? blob;
       const body = new FormData();
       body.set(
         "image",
-        new File([blob], `card-live-${Date.now()}.jpg`, {
+        new File([fallbackImage], `card-live-${Date.now()}.jpg`, {
           type: "image/jpeg",
         }),
       );
@@ -991,21 +1029,25 @@ export function UnifiedScanCapture({
         const rectified = detectedCorners
           ? await grabRectifiedSample(video, detectedCorners)
           : null;
-        const [blob, band, bandHalfTurn] = rectified
-          ? [rectified.face.blob, rectified.band, rectified.bandHalfTurn]
-          : [
-              ...(await Promise.all([
-                grabFinderBlob(video, detectedRegion),
-                grabCollectorBandBlob(video, detectedRegion),
-              ])),
-              null,
-            ];
+        const [blob, band, bandHalfTurn, frame] = rectified
+          ? [
+              rectified.face.blob,
+              rectified.band,
+              rectified.bandHalfTurn,
+              await grabVideoFrameBlob(video),
+            ]
+          : await Promise.all([
+              grabFinderBlob(video, detectedRegion),
+              grabCollectorBandBlob(video, detectedRegion),
+              Promise.resolve(null),
+              grabVideoFrameBlob(video),
+            ]);
         patchScanDebug({ faceCrop: rectified ? "rectified" : "aabb" });
         if (!blob || generation !== genRef.current) return;
 
         burstRef.current.open();
         const maybe = burstRef.current.push(
-          { face: blob, band, bandHalfTurn },
+          { face: blob, band, bandHalfTurn, frame },
           quality.blurVariance,
         );
         const chosen = maybe ?? burstRef.current.close();
@@ -1583,7 +1625,6 @@ export function UnifiedScanCapture({
                           src={row.faceUrl}
                           alt={row.printKey}
                           className="absolute inset-0 size-full object-cover"
-                          loading="lazy"
                           onError={(e) => {
                             // iOS paints a blue "?" on a broken img — hide it
                             // and leave the muted tile (printKey sits below).

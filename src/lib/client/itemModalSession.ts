@@ -43,6 +43,10 @@ export type ItemModalPrefilledValues = {
   barcode?: string;
   imageUrl?: string | null;
   shelfId?: string;
+  /** Scan / PrintPicker — required for local catalogue enrich. */
+  printKey?: string | null;
+  language?: string | null;
+  setCode?: string | null;
   metadataPreview?: MetadataResult | null;
 };
 
@@ -83,7 +87,7 @@ export function itemModalSessionKey({
   }
 
   const prefilledShelfId = prefilledValues?.shelfId ?? shelfId;
-  return `new:${prefilledValues?.barcode ?? ""}|${prefilledValues?.name ?? ""}|${prefilledShelfId}`;
+  return `new:${prefilledValues?.barcode ?? ""}|${prefilledValues?.printKey ?? ""}|${prefilledValues?.name ?? ""}|${prefilledShelfId}`;
 }
 
 function defaultFormValues(

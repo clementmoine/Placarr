@@ -1,11 +1,38 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cardPlaneLeanStyle,
   showsBack,
   turnAfterPush,
   turnTowardBack,
   turnTowardFace,
 } from "./FlippableCard";
+
+describe("cardPlaneLeanStyle", () => {
+  const lean = { tiltX: 12, tiltY: -8 };
+
+  it("tips the plane for a pointer or the idle sway", () => {
+    expect(cardPlaneLeanStyle(lean, "pointer")).toEqual({
+      x: "12deg",
+      y: "-8deg",
+    });
+    expect(cardPlaneLeanStyle(lean, "idle")).toEqual({
+      x: "12deg",
+      y: "-8deg",
+    });
+  });
+
+  it("keeps the plane square when the phone is the thing tipping", () => {
+    expect(cardPlaneLeanStyle(lean, "device")).toEqual({
+      x: "0deg",
+      y: "0deg",
+    });
+    expect(cardPlaneLeanStyle(null, "pointer")).toEqual({
+      x: "0deg",
+      y: "0deg",
+    });
+  });
+});
 
 describe("turnAfterPush", () => {
   it("turns the way the card was pushed", () => {

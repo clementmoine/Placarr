@@ -13,8 +13,11 @@ import {
 } from "@/lib/client/scan/collectorOcr";
 import type { CollectorBandGrab } from "@/lib/client/scan/grabCollectorBand";
 import {
+  CARD_ASPECT_MAX,
+  CARD_ASPECT_MIN,
+} from "@/lib/shared/vision/cardGeometry";
+import {
   quadNaturalSize,
-  uprightPortraitQuad,
   warpQuadToRect,
   type WarpPoint,
   type WarpQuad,
@@ -57,9 +60,15 @@ function quadArea(q: WarpQuad): number {
 }
 
 /**
- * Only rectify quads that look like one card: portrait-ish side ratio once
- * upright, convex, a sane share of the frame, not a sliver. Anything else
- * falls back to the AABB / full-frame path (server dewarp still runs there).
+ * Only rectify quads that look like one card: print-like side ratio (portrait
+ * *or* landscape), convex, a sane share of the frame, not a sliver. Anything
+ * else falls back to the AABB / full-frame path (server dewarp still runs).
+ *
+ * Returns the corners **as the camera ordered them** (TL→TR→BR→BL in the
+ * frame). Forcing a portrait warp used to quarter-turn every wide quad —
+ * correct for a 63:88 card on its side, fatal for a native landscape print
+ * (Ninja Sensei, Lorcana locations): the art landed sideways against the
+ * catalogue scan and identify returned an honest miss on a perfect frame.
  */
 export function quadSafeForIdentifyCrop(
   corners: WarpQuad | null | undefined,
@@ -70,7 +79,7 @@ export function quadSafeForIdentifyCrop(
   if (!corners.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y))) {
     return null;
   }
-  const q = uprightPortraitQuad(corners);
+  const q = corners;
   const [tl, tr, br, bl] = q;
   const top = sideLen(tl, tr);
   const bottom = sideLen(bl, br);
@@ -80,8 +89,12 @@ export function quadSafeForIdentifyCrop(
   // Opposite sides within 35 % of each other — rules out triangles/wedges.
   if (Math.min(top, bottom) / Math.max(top, bottom) < 0.65) return null;
   if (Math.min(left, right) / Math.max(left, right) < 0.65) return null;
-  const ratio = (top + bottom) / (left + right);
-  if (ratio < 0.55 || ratio > 0.9) return null;
+  const meanTop = (top + bottom) / 2;
+  const meanSide = (left + right) / 2;
+  const long = Math.max(meanTop, meanSide);
+  const short = Math.min(meanTop, meanSide);
+  const aspect = long / short;
+  if (aspect < CARD_ASPECT_MIN || aspect > CARD_ASPECT_MAX) return null;
   const frac = quadArea(q) / (videoW * videoH);
   if (frac < 0.06 || frac > 0.85) return null;
   // Convex: all cross products share a sign.
@@ -231,29 +244,13 @@ export function halfTurnQuad(quad: WarpQuad): WarpQuad {
 }
 
 /**
- * The quad as the camera framed it, undoing the quarter turn that
- * {@link uprightPortraitQuad} applies to a card lying on its side.
- *
- * The identify face must be portrait (that is how catalogue scans store a
- * landscape card), but its footer then runs down a *side* of that face and
- * no horizontal band can catch it. Read the band off the card the way it
- * lies instead: the collector line is printed along the bottom edge, and a
- * card lying flat still shows that edge horizontally to the camera.
- */
-export function cameraOrientedQuad(
-  corners: WarpQuad,
-  upright: WarpQuad,
-): WarpQuad {
-  const [tl, tr, , bl] = corners;
-  const lyingDown = sideLen(tl, tr) > sideLen(tl, bl);
-  // uprightPortraitQuad turned it by [tr, br, bl, tl]; step back by one.
-  return lyingDown ? [upright[3], upright[0], upright[1], upright[2]] : upright;
-}
-
-/**
  * One native-resolution read of the video, two warps: the identify face
  * (long edge ≤ 640) and the collector band (only the footer rows, at native
  * width). Null when the quad is not a plausible single card.
+ *
+ * Face and band share the camera-native corner order — landscape prints stay
+ * landscape. A portrait card lying on its side is handled by trying a
+ * quarter-turn embed on miss (see {@link identifyCardBlobClient}).
  */
 export async function grabRectifiedSample(
   video: HTMLVideoElement,
@@ -275,10 +272,7 @@ export async function grabRectifiedSample(
     outHeight: size.height,
   });
   // Footer: off the card as it lies in front of the lens, both ends.
-  const bandQuad = growQuadFraction(
-    cameraOrientedQuad(corners, patch.quad),
-    BAND_QUAD_GROW_FRAC,
-  );
+  const bandQuad = growQuadFraction(patch.quad, BAND_QUAD_GROW_FRAC);
   const { faceWidth, faceHeight, band } = rectifiedBandGeometry(bandQuad);
   const bandRows = { start: band.sy, end: band.sy + band.sh };
   const bandWarp = warpQuadToRect(src, bandQuad, {

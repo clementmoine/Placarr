@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveCatalogueArtPath } from "./visualIndexStep";
+import {
+  listSiblingFaceBasenames,
+  resolveCatalogueArtPath,
+} from "./visualIndexStep";
 
 describe("resolveCatalogueArtPath", () => {
   it("resolves Lorcana lang-first art from print_assets basename", () => {
@@ -30,5 +33,25 @@ describe("resolveCatalogueArtPath", () => {
     expect(
       resolveCatalogueArtPath("lorcana", "not-a-print-key", "fr", "art.jpg"),
     ).toBeNull();
+  });
+});
+
+describe("listSiblingFaceBasenames", () => {
+  it("lists every art.* next to Gaï Ninja Sensei (coleka + animecollection)", () => {
+    const hit = resolveCatalogueArtPath(
+      "naruto/ninja-ranks",
+      "naruto:ns-0003",
+      "fr",
+      "art.animecollection.jpg",
+    );
+    if (!hit) return;
+    const arts = listSiblingFaceBasenames(hit.abs, "art");
+    expect(arts).toEqual(
+      expect.arrayContaining([
+        "art.animecollection.jpg",
+        "art.coleka.webp",
+      ]),
+    );
+    expect(arts.length).toBeGreaterThanOrEqual(2);
   });
 });

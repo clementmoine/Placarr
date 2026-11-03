@@ -104,6 +104,7 @@ export async function runDbsCgPackPipeline(
         const result = await scrapeDbscardsIndex({
           packId: DBS_CG_PACK_ID,
           lang,
+          force,
           delayMs: optionalNumber(argv, "--delay"),
           onProgress: (page, total) => {
             if (page % 20 === 0) {
@@ -114,8 +115,10 @@ export async function runDbsCgPackPipeline(
           },
         });
         console.log(
-          `── dbscards ${lang} : ${result.cards} cartes sur ${result.pages} pages ` +
-            `(${result.priced} cotées, ${result.withBack} avec verso)`,
+          result.pages === 0
+            ? `── dbscards ${lang} : ${result.cards} cartes (liste fraîche, crawl sauté)`
+            : `── dbscards ${lang} : ${result.cards} cartes sur ${result.pages} pages ` +
+                `(${result.priced} cotées, ${result.withBack} avec verso)`,
         );
       }
       const tokens = mergeDbscardsTokensIntoCatalog();

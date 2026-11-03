@@ -4,6 +4,7 @@ import {
   BACKGROUND_WORK_KIND,
   BACKGROUND_WORK_STATUS,
   cancelBackgroundWorkJobsForItem,
+  cancelOpenCatalogueJobsVisibleToUser,
   claimNextBackgroundWorkJob,
   completeBackgroundWorkJob,
   enqueueBackgroundWorkJob,
@@ -151,6 +152,7 @@ describe("workQueue", () => {
       BACKGROUND_WORK_KIND.priceRefresh,
       BACKGROUND_WORK_KIND.catalogueExtract,
       BACKGROUND_WORK_KIND.apkStoreFetch,
+      BACKGROUND_WORK_KIND.catalogProviderSync,
     ]);
     expect(resolveWorkerKinds("catalog")).toEqual([
       BACKGROUND_WORK_KIND.icollectCatalogSync,
@@ -173,6 +175,30 @@ describe("workQueue", () => {
   it("cancels open jobs for an item", async () => {
     await cancelBackgroundWorkJobsForItem("item-1");
     expect(h.updateMany).toHaveBeenCalled();
+  });
+
+  it("cancels catalogue Sync jobs visible in the menu (user or system)", async () => {
+    h.updateMany.mockResolvedValueOnce({ count: 4 });
+    await expect(
+      cancelOpenCatalogueJobsVisibleToUser("user-1"),
+    ).resolves.toBe(4);
+    expect(h.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [{ userId: "user-1" }, { userId: null }],
+          kind: {
+            in: [
+              BACKGROUND_WORK_KIND.catalogueExtract,
+              BACKGROUND_WORK_KIND.apkStoreFetch,
+              BACKGROUND_WORK_KIND.catalogProviderSync,
+              BACKGROUND_WORK_KIND.icollectCatalogSync,
+              BACKGROUND_WORK_KIND.launchboxIndexSync,
+              BACKGROUND_WORK_KIND.nointroIndexSync,
+            ],
+          },
+        }),
+      }),
+    );
   });
 
   it("completes a running job", async () => {

@@ -433,7 +433,18 @@ export async function executeBackgroundWorkJob(
     if (!mdl?.catalog) {
       throw new Error(`No catalog hooks for provider ${providerId}`);
     }
-    await mdl.catalog.refresh(catalogRefreshOptsFromPayload(catalogPayload));
+    // Heartbeat like foilExtract — Bandai/dbscards crawls outlive the 30 min
+    // stale window and used to flip running→pending while still working.
+    const heartbeat = setInterval(() => {
+      void touchBackgroundWorkJobLock(job.id);
+    }, FOIL_LOCK_HEARTBEAT_MS);
+    if (typeof heartbeat.unref === "function") heartbeat.unref();
+    void touchBackgroundWorkJobLock(job.id);
+    try {
+      await mdl.catalog.refresh(catalogRefreshOptsFromPayload(catalogPayload));
+    } finally {
+      clearInterval(heartbeat);
+    }
     return;
   }
 

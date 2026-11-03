@@ -5,7 +5,7 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "models:ort": "node scripts/copy-ort-wasm.mjs",
-    "dev:ssl": "pnpm models:ort && next dev --experimental-https",
+    "dev:ssl": "concurrently -k -n next,worker,icollect -c cyan,magenta,yellow \"pnpm models:ort && next dev --experimental-https\" \"pnpm worker:dev\" \"pnpm worker:icollect:dev\"",
     "dev:app": "pnpm models:ort && next dev --turbopack",
     "dev:app:webpack": "pnpm models:ort && next dev --webpack",
     "dev": "concurrently -k -n next,worker,icollect -c cyan,magenta,yellow \"pnpm dev:app\" \"pnpm worker:dev\" \"pnpm worker:icollect:dev\"",

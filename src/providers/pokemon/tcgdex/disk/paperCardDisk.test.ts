@@ -43,6 +43,18 @@ describe("localPokemonCatalogueArtUrl", () => {
       localPokemonCatalogueArtUrl("pokemon:me05.5c-001", "fr", root),
     ).toBe("/assets/pokemon/cards/fr/me5-5c/002/art.webp");
   });
+
+  it("counts Live set-first dumps as catalogue art (same print)", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "poke-live-setfirst-"));
+    // Live extract layout: cards/{set}/{lang}/{num}/art.webp
+    const liveDir = path.join(root, "bw2", "fr", "024");
+    mkdirSync(liveDir, { recursive: true });
+    writeFileSync(path.join(liveDir, "art.webp"), "live");
+
+    expect(
+      localPokemonCatalogueArtUrl("pokemon:bw2-24", "fr", root),
+    ).toBe("/assets/pokemon/cards/fr/bw2/024/art.webp");
+  });
 });
 
 describe("buildPokemonDiskArtAttachments", () => {

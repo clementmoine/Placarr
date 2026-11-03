@@ -113,7 +113,16 @@
     "completeSuccess": "Code-barres ajouté — enrichissement en cours",
     "completeFailed": "Impossible de compléter l'objet",
     "objectType": "Type",
-    "estimatedShelf": "Étagère estimée"
+    "estimatedShelf": "Étagère estimée",
+    "unrecognizedTitle": "Illisible / non reconnu",
+    "unrecognizedHint": "Ajoutez un titre ou un code-barres, puis continuez à scanner.",
+    "addManually": "Ajouter à la main",
+    "addAnyway": "Ajouter quand même",
+    "sessionOpenOwned": "Ouvrir",
+    "sessionAddCopy": "Ajouter une copie",
+    "sessionComplete": "Compléter",
+    "sessionReviewBack": "Continuer à scanner",
+    "pickMatch": "Choisir le bon produit"
   },
   "user": {
     "lock": "Verrouiller",

@@ -28,10 +28,11 @@ import {
   ensurePokemonDbLayout,
   pokemonIdentityDbPath,
 } from "@/providers/pokemon/paths";
-import { resolvePokemonArtFilename } from "./disk/faceChoice";
+import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
+import { remapCollectorNumberForLive } from "@/effects/pokemon/liveJoin";
 import {
   pokemonCardFolderId,
-  pokemonPaperCardDir,
+  resolvePokemonCatalogueArtFilename,
 } from "./disk/paperCardDisk";
 import { POKEMON_GAME } from "./fetch";
 
@@ -419,10 +420,11 @@ export function writeTcgdexSet(input: {
 }
 
 /**
- * Index on-disk paper faces into `print_assets.art` (basename only).
+ * Index on-disk catalogue faces into `print_assets.art` (basename only).
  *
- * Layout: `cards/{lang}/{set}/{num}/art.*`. CDN stays on `source_url` /
- * `prints.image_base_url` when no local winner exists.
+ * Probes lang-first paper harvest **and** Live set-first dumps — same print,
+ * same card. CDN stays on `source_url` / `prints.image_base_url` when no local
+ * winner exists.
  */
 export function syncTcgdexPrintAssetsFromDisk(input: {
   dbPath?: string;
@@ -472,14 +474,26 @@ export function syncTcgdexPrintAssetsFromDisk(input: {
         if (!printExists.get(printKey)) continue;
         const id = parsePrintKey(printKey);
         if (!id || id.game !== POKEMON_GAME) continue;
+        const liveNumber = remapCollectorNumberForLive(id.set, id.number);
+        const liveStems = liveSetCandidatesFromTcgdexSet(id.set);
         for (const lang of languages) {
-          const cardDir = pokemonPaperCardDir({
+          let art = resolvePokemonCatalogueArtFilename({
             setId: id.set,
             lang,
             localId: id.number,
             cardsRoot: input.cardsRoot,
           });
-          const art = resolvePokemonArtFilename(cardDir, lang);
+          if (!art && liveNumber) {
+            for (const stem of liveStems) {
+              art = resolvePokemonCatalogueArtFilename({
+                setId: stem,
+                lang,
+                localId: liveNumber,
+                cardsRoot: input.cardsRoot,
+              });
+              if (art) break;
+            }
+          }
           if (!art) continue;
           upsert.run(printKey, lang, art);
           synced += 1;

@@ -15,11 +15,20 @@
  * Sequential, like every other scrape here: this host banned us for an evening
  * when a pass went parallel.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { foilPackDataDir } from "@/lib/runtimeData";
+
+/** Re-crawl when the on-disk list is older than this (same idea as products TTL). */
+export const DBSCARDS_LIST_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 import {
   DBSCARDS_SITES,
@@ -157,12 +166,43 @@ export async function scrapeDbscardsIndex(opts: {
   delayMs?: number;
   /** Full path override (e.g. `pkmcards-fr.json` for Pokémon). */
   indexPath?: string;
+  /** Bypass the on-disk freshness skip. */
+  force?: boolean;
+  /** Override {@link DBSCARDS_LIST_MAX_AGE_MS}. */
+  maxAgeMs?: number;
   onProgress?: (page: number, total: number) => void;
 }): Promise<ScrapeDbscardsIndexResult> {
   const site = opts.site ?? DBSCARDS_SITES.masters;
   const lang = (opts.lang ?? "fr").toLowerCase();
   const maxPages = opts.maxPages ?? 400;
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
+  const file = opts.indexPath ?? dbscardsIndexPath(opts.packId, lang);
+  const maxAgeMs = opts.maxAgeMs ?? DBSCARDS_LIST_MAX_AGE_MS;
+
+  if (!opts.force && existsSync(file)) {
+    try {
+      const st = statSync(file);
+      const ageMs = Date.now() - st.mtimeMs;
+      if (ageMs >= 0 && ageMs < maxAgeMs) {
+        const entries = JSON.parse(
+          readFileSync(file, "utf8"),
+        ) as DbscardsIndexEntry[];
+        if (Array.isArray(entries) && entries.length > 0) {
+          return {
+            lang,
+            cards: entries.length,
+            pages: 0,
+            priced: entries.filter((entry) => entry.price != null).length,
+            withBack: entries.filter((entry) => entry.imageBack).length,
+            file,
+          };
+        }
+      }
+    } catch {
+      // Fall through to a full crawl.
+    }
+  }
+
   const all = new Map<string, DbscardsIndexEntry>();
   let empty = 0;
   let lastPage = 0;
@@ -201,7 +241,6 @@ export async function scrapeDbscardsIndex(opts: {
   }
 
   const entries = [...all.values()];
-  const file = opts.indexPath ?? dbscardsIndexPath(opts.packId, lang);
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(entries, null, 1)}\n`, "utf8");
   return {

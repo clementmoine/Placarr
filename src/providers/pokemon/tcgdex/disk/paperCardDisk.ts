@@ -1,6 +1,12 @@
 /**
- * Disk helpers for Pokémon paper faces under `data/pokemon/cards/{lang}/{set}/{num}/`
- * (lang-first, same order as `packCardDir`).
+ * Disk helpers for Pokémon catalogue faces.
+ *
+ * Two layouts coexist under `data/pokemon/cards/`:
+ * - Lang-first (paper harvest / canonical URL): `{lang}/{set}/{num}/`
+ * - Set-first (Live CDN dump): `{set}/{lang}/{num}/`
+ *
+ * Same print = same card — Live `art.webp` counts as catalogue art, not
+ * foil-only. Digital-only rows stay `printed=false` in sqlite (tcgp/misc).
  */
 import path from "node:path";
 
@@ -42,6 +48,41 @@ export function pokemonPaperCardDir(opts: {
     opts.setId.trim().toLowerCase(),
     pokemonCardFolderId(opts.localId),
   );
+}
+
+/** Live extract layout — set before language. */
+export function pokemonLiveCardDir(opts: {
+  setId: string;
+  lang: string;
+  localId: string;
+  cardsRoot?: string;
+}): string {
+  const root = opts.cardsRoot ?? packCardsDir("pokemon");
+  return path.join(
+    root,
+    opts.setId.trim().toLowerCase(),
+    opts.lang.trim().toLowerCase(),
+    pokemonCardFolderId(opts.localId),
+  );
+}
+
+/**
+ * Resolve an art basename from lang-first paper harvest, then Live set-first.
+ */
+export function resolvePokemonCatalogueArtFilename(
+  opts: {
+    setId: string;
+    lang: string;
+    localId: string;
+    cardsRoot?: string;
+  },
+): string | null {
+  const paper = resolvePokemonArtFilename(
+    pokemonPaperCardDir(opts),
+    opts.lang,
+  );
+  if (paper) return paper;
+  return resolvePokemonArtFilename(pokemonLiveCardDir(opts), opts.lang);
 }
 
 export function pokemonPaperCardDirFromPrintKey(
@@ -92,14 +133,14 @@ export function localPokemonCatalogueArtUrl(
 
   const tryArt = (setId: string, localId: string): string | null => {
     for (const lang of langs) {
-      const cardDir = pokemonPaperCardDir({
+      const art = resolvePokemonCatalogueArtFilename({
         setId,
         lang,
         localId,
         cardsRoot,
       });
-      const art = resolvePokemonArtFilename(cardDir, lang);
       if (!art) continue;
+      // Canonical URL stays lang-first; assets rewrite serves set-first bytes.
       return assetsCardUrl(
         "pokemon",
         {
@@ -152,13 +193,24 @@ export function buildPokemonDiskArtAttachments(opts: {
   ].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
   for (const lang of langs) {
-    const cardDir = pokemonPaperCardDir({
+    const paperDir = pokemonPaperCardDir({
       setId: id.set,
       lang,
       localId: id.number,
       cardsRoot: opts.cardsRoot,
     });
-    const arts = listPokemonArtFiles(cardDir);
+    const liveDir = pokemonLiveCardDir({
+      setId: id.set,
+      lang,
+      localId: id.number,
+      cardsRoot: opts.cardsRoot,
+    });
+    const paperArts = listPokemonArtFiles(paperDir);
+    const paperSet = new Set(paperArts);
+    const arts = [
+      ...paperArts,
+      ...listPokemonArtFiles(liveDir).filter((file) => !paperSet.has(file)),
+    ];
     if (arts.length === 0) continue;
 
     const diskId = {
@@ -166,7 +218,12 @@ export function buildPokemonDiskArtAttachments(opts: {
       lang,
       card: pokemonCardFolderId(id.number),
     };
-    const defaultArt = resolvePokemonArtFilename(cardDir, lang);
+    const defaultArt = resolvePokemonCatalogueArtFilename({
+      setId: id.set,
+      lang,
+      localId: id.number,
+      cardsRoot: opts.cardsRoot,
+    });
     const defaultUrl = defaultArt
       ? assetsCardUrl("pokemon", diskId, defaultArt)
       : null;

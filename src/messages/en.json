@@ -113,7 +113,16 @@
     "completeSuccess": "Barcode added — enrichment in progress",
     "completeFailed": "Could not complete the item",
     "objectType": "Type",
-    "estimatedShelf": "Estimated shelf"
+    "estimatedShelf": "Estimated shelf",
+    "unrecognizedTitle": "Unreadable / unrecognized",
+    "unrecognizedHint": "Add a title or barcode, then keep scanning.",
+    "addManually": "Add manually",
+    "addAnyway": "Add anyway",
+    "sessionOpenOwned": "Open",
+    "sessionAddCopy": "Add a copy",
+    "sessionComplete": "Complete",
+    "sessionReviewBack": "Keep scanning",
+    "pickMatch": "Pick the right product"
   },
   "user": {
     "lock": "Lock",

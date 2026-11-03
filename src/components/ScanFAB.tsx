@@ -14,11 +14,14 @@ import { saveItem } from "@/lib/api/items";
 import { itemPath } from "@/lib/routing/slugs";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
-import { UnifiedScanCapture } from "@/components/UnifiedScanCapture";
+import {
+  UnifiedScanCapture,
+  type ScanAddPrefill,
+} from "@/components/UnifiedScanCapture";
 import { warmScanAssetsWhenIdle } from "@/lib/client/scan/scanRuntime";
-import type { SessionLock } from "@/lib/client/scan/scanSession";
 import dynamic from "next/dynamic";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { Type } from "@/generated/prisma/browser";
 
 const ItemModal = dynamic(
   () => import("./modals/ItemModal").then((m) => m.ItemModal),
@@ -29,25 +32,26 @@ const QuickScanModal = dynamic(
   { ssr: false },
 );
 
+type PrefillState = {
+  name: string;
+  imageUrl: string | null;
+  barcode: string;
+  shelfId?: string;
+  printKey?: string | null;
+  language?: string | null;
+  setCode?: string | null;
+  shelfType?: Type | string | null;
+  shelfSure?: boolean;
+  metadataPreview?: MetadataResult | null;
+};
+
 export function ScanFAB() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [batch, setBatch] = useState<SessionLock[]>([]);
-  const [batchOpen, setBatchOpen] = useState(false);
-  const [scannedBarcode, setScannedBarcode] = useState<string>("");
   const [quickScanOpen, setQuickScanOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState("");
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [prefilledItemValues, setPrefilledItemValues] = useState<
-    | {
-        name: string;
-        imageUrl: string | null;
-        barcode: string;
-        shelfId?: string;
-        printKey?: string | null;
-        language?: string | null;
-        setCode?: string | null;
-        metadataPreview?: MetadataResult | null;
-      }
-    | undefined
+    PrefillState | undefined
   >(undefined);
 
   const pathname = usePathname() || "";
@@ -56,14 +60,11 @@ export function ScanFAB() {
   const queryClient = useQueryClient();
   const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
 
-  // Model files land in the browser cache while the user browses (no
-  // session is created — browsing costs no RAM), so the first tap on the
-  // button opens a scanner whose models are already local.
   useEffect(() => {
     if (!isCameraUnavailable && !isCheckingCamera) warmScanAssetsWhenIdle();
   }, [isCameraUnavailable, isCheckingCamera]);
 
-  const shelfMatch = pathname.match(/^\/shelves\/([^\/]+)/);
+  const shelfMatch = pathname.match(/^\/shelves\/([^/]+)/);
   const shelfId = shelfMatch ? shelfMatch[1] : undefined;
 
   const handleScanButtonClick = () => {
@@ -75,38 +76,35 @@ export function ScanFAB() {
     setIsScannerOpen(true);
   };
 
-  const handleBatchDone = useCallback((locks: SessionLock[]) => {
-    setIsScannerOpen(false);
-    setBatch(locks);
-    setBatchOpen(true);
-  }, []);
-
-  const popBatchHead = useCallback(() => {
-    setBatch((prev) => prev.slice(1));
-  }, []);
-
-  const addBatchHead = useCallback(() => {
-    const head = batch[0];
-    if (!head) return;
-    if (head.kind === "barcode") {
-      setScannedBarcode(head.key);
-      setQuickScanOpen(true);
-      popBatchHead();
-      return;
-    }
-    // Same identity PrintPicker posts — printKey unlocks local catalogue
-    // enrich; name is replaced by the catalogue title on POST when still a key.
-    setPrefilledItemValues({
-      name: head.label?.trim() || head.key,
-      imageUrl: head.faceUrl ?? null,
-      barcode: "",
-      shelfId,
-      printKey: head.key,
-      language: head.language ?? null,
-    });
+  const openAddModal = useCallback((prefill: PrefillState) => {
+    setPrefilledItemValues(prefill);
     setIsItemModalOpen(true);
-    popBatchHead();
-  }, [batch, popBatchHead, shelfId]);
+  }, []);
+
+  const handleCommitAdd = useCallback(
+    (prefill: ScanAddPrefill) => {
+      openAddModal({
+        name: prefill.name,
+        imageUrl: prefill.imageUrl,
+        barcode: prefill.barcode,
+        shelfId: prefill.shelfId || shelfId,
+        printKey: prefill.printKey,
+        language: prefill.language,
+        shelfType: prefill.shelfType,
+        shelfSure: prefill.shelfSure,
+        metadataPreview: prefill.metadataPreview ?? null,
+      });
+    },
+    [openAddModal, shelfId],
+  );
+
+  const handleOpenOwned = useCallback(
+    (path: string) => {
+      setIsScannerOpen(false);
+      router.push(path);
+    },
+    [router],
+  );
 
   const shouldUseManualScan = isCameraUnavailable || isCheckingCamera;
   const scanButtonLabel = shouldUseManualScan
@@ -121,8 +119,7 @@ export function ScanFAB() {
     metadataPreview?: MetadataResult | null;
   }) => {
     setQuickScanOpen(false);
-    setPrefilledItemValues(product);
-    setIsItemModalOpen(true);
+    openAddModal(product);
   };
 
   const handleItemModalSubmit = async (
@@ -139,7 +136,7 @@ export function ScanFAB() {
       });
 
       toast.success(t("common.success"));
-      if (!batchOpen && !isScannerOpen) {
+      if (!isScannerOpen) {
         router.push(
           itemPath(newItem.shelf || { id: newItem.shelfId }, newItem),
         );
@@ -184,85 +181,16 @@ export function ScanFAB() {
           <div className="flex-1 min-h-0 flex flex-col">
             <UnifiedScanCapture
               active={isScannerOpen}
-              onBatchDone={handleBatchDone}
+              preferredShelfId={shelfId}
+              pathname={pathname}
+              onCommitAdd={handleCommitAdd}
+              onOpenOwned={handleOpenOwned}
             />
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={batchOpen}
-        onOpenChange={(open) => {
-          setBatchOpen(open);
-          if (!open) setBatch([]);
-        }}
-      >
-        <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden">
-          <div className="p-5 border-b border-border space-y-1">
-            <DialogTitle className="text-base font-bold">
-              {t("scanner.sessionReviewTitle")}
-            </DialogTitle>
-            <p className="text-xs text-muted-foreground">
-              {t("scanner.sessionReviewHint")}
-            </p>
-          </div>
-          <div className="max-h-[50vh] overflow-y-auto divide-y divide-border">
-            {batch.length === 0 ? (
-              <p className="p-5 text-sm text-muted-foreground">
-                {t("scanner.sessionEmpty")}
-              </p>
-            ) : (
-              batch.map((lock) => (
-                <div
-                  key={lock.id}
-                  className="flex items-center gap-3 px-4 py-3"
-                >
-                  {lock.faceUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={lock.faceUrl}
-                      alt=""
-                      className="size-12 rounded-lg object-cover bg-muted"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="size-12 rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
-                      {lock.kind === "barcode" ? "▦" : "▣"}
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{lock.label}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">
-                      {lock.kind}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          {batch.length > 0 ? (
-            <div className="p-4 flex gap-2 border-t border-border">
-              <button
-                type="button"
-                onClick={popBatchHead}
-                className="flex-1 h-11 rounded-xl border border-border text-sm font-semibold cursor-pointer"
-              >
-                {t("scanner.sessionSkip")}
-              </button>
-              <button
-                type="button"
-                onClick={addBatchHead}
-                className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold cursor-pointer"
-              >
-                {t("scanner.sessionAdd")}
-              </button>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
-
+      {/* No-camera fallback only — hunt path no longer stacks QuickScan. */}
       <QuickScanModal
         isOpen={quickScanOpen}
         onClose={() => setQuickScanOpen(false)}
@@ -280,6 +208,9 @@ export function ScanFAB() {
           }}
           onSubmit={handleItemModalSubmit}
           shelfId={prefilledItemValues.shelfId || ""}
+          shelfType={
+            (prefilledItemValues.shelfType as Type | undefined) || undefined
+          }
           prefilledValues={prefilledItemValues}
         />
       )}

@@ -197,6 +197,8 @@ export function ItemModal({
     printKey?: string | null;
     language?: string | null;
     setCode?: string | null;
+    /** When true, prefer / lock the prefilled shelfId as a sure guess. */
+    shelfSure?: boolean;
     metadataPreview?: MetadataResult | null;
   };
 }) {
@@ -330,10 +332,13 @@ export function ItemModal({
 
   // Radix SelectValue stays blank until a matching SelectItem exists — seed the
   // current shelf so the trigger never flashes empty while the list loads.
+  // When the scan knows a shelf type, keep the picker on compatible shelves.
   const shelfOptions = useMemo(() => {
     type Opt = { id: string; name: string; type?: Shelf["type"] | null };
     const byId = new Map<string, Opt>();
+    const typeFilter = shelfType ?? null;
     for (const entry of shelves ?? []) {
+      if (typeFilter && entry.type && entry.type !== typeFilter) continue;
       byId.set(entry.id, {
         id: entry.id,
         name: entry.name,
@@ -368,6 +373,9 @@ export function ItemModal({
       shelf?.type ?? cachedCurrent?.type ?? shelfType,
     );
     seed(item?.shelfId, item?.shelf?.name, item?.shelf?.type);
+    // Always keep the currently selected / prefilled shelf visible even if
+    // type filter would hide it (user can still change type via that shelf).
+    seed(prefilledValues?.shelfId, null, typeFilter);
     return Array.from(byId.values()).sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );
@@ -377,6 +385,7 @@ export function ItemModal({
     shelf?.name,
     shelf?.type,
     shelfType,
+    prefilledValues?.shelfId,
     currentShelfId,
     item?.shelfId,
     item?.shelf?.name,
@@ -432,7 +441,93 @@ export function ItemModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
+  const [guessedShelfId, setGuessedShelfId] = useState<string | null>(
+    prefilledValues?.shelfSure ? prefilledValues.shelfId || null : null,
+  );
+
+  // Sure shelf from scan hydrate / barcode guess — apply once when empty.
+  useEffect(() => {
+    if (!isOpen || item) return;
+    const sureId =
+      (prefilledValues?.shelfSure && prefilledValues.shelfId) ||
+      guessedShelfId ||
+      null;
+    if (!sureId) return;
+    const current = form.getValues("shelfId");
+    if (current && current === sureId) return;
+    if (current && current !== (prefilledValues?.shelfId || "") && current !== shelfId) {
+      return;
+    }
+    form.setValue("shelfId", sureId, { shouldDirty: false });
+  }, [
+    form,
+    guessedShelfId,
+    isOpen,
+    item,
+    prefilledValues?.shelfId,
+    prefilledValues?.shelfSure,
+    shelfId,
+  ]);
+
+  // Bootstrap catalogue title when the form still shows a raw printKey.
+  useEffect(() => {
+    if (!isOpen || item) return;
+    const printKey = prefilledValues?.printKey?.trim();
+    if (!printKey) return;
+    const currentName = (form.getValues("name") || "").trim();
+    const looksLikeKey =
+      !currentName ||
+      currentName.toLowerCase() === printKey.toLowerCase();
+    if (!looksLikeKey) return;
+    // Hydrate already resolved a human title — keep it.
+    if (
+      prefilledValues?.name &&
+      prefilledValues.name.trim().toLowerCase() !== printKey.toLowerCase()
+    ) {
+      if (currentName.toLowerCase() === printKey.toLowerCase()) {
+        form.setValue("name", prefilledValues.name, { shouldDirty: false });
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const type = shelfType || "tcg";
+    const params = new URLSearchParams({ printKey, type });
+    if (prefilledValues?.language) {
+      params.set("language", prefilledValues.language);
+    }
+    void axios
+      .get(`/api/prints?${params.toString()}`)
+      .then((res) => {
+        if (cancelled) return;
+        const candidate = res.data?.candidate as
+          | { name?: string; title?: string }
+          | null
+          | undefined;
+        const title =
+          candidate?.name?.trim() || candidate?.title?.trim() || "";
+        if (!title) return;
+        const stillKey =
+          (form.getValues("name") || "").trim().toLowerCase() ===
+            printKey.toLowerCase() ||
+          !(form.getValues("name") || "").trim();
+        if (stillKey) {
+          form.setValue("name", title, { shouldDirty: false });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    form,
+    isOpen,
+    item,
+    prefilledValues?.language,
+    prefilledValues?.name,
+    prefilledValues?.printKey,
+    shelfType,
+  ]);
 
   const watchedName = useWatch({ control: form.control, name: "name" });
   const watchedCondition = useWatch({
@@ -1427,7 +1522,20 @@ export function ItemModal({
             preferredShelfId: form.getValues("shelfId") || shelfId || null,
           });
 
-          setGuessedShelfId(shelfGuess?.shelfId ?? null);
+          const nextGuessId = shelfGuess?.shelfId ?? null;
+          setGuessedShelfId(nextGuessId);
+          // Auto-apply barcode shelf guess (QuickScan parity) when the form
+          // still holds the initial / empty shelf.
+          if (nextGuessId && shelfGuess?.isGuessed !== false) {
+            const current = form.getValues("shelfId");
+            if (
+              !current ||
+              current === shelfId ||
+              current === (prefilledValues?.shelfId || "")
+            ) {
+              form.setValue("shelfId", nextGuessId, { shouldDirty: false });
+            }
+          }
         }
 
         if (

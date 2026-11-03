@@ -26,13 +26,18 @@ export const BACKGROUND_WORK_KIND = {
 export type BackgroundWorkKind =
   (typeof BACKGROUND_WORK_KIND)[keyof typeof BACKGROUND_WORK_KIND];
 
-/** Interactive enrich path — must not share slots with the catalog crawl. */
+/**
+ * Interactive enrich path. Also claims `catalogProviderSync` so a lone
+ * `pnpm worker` (or Admin Sync / Tout rafraîchir without icollect) does not
+ * leave catalogue jobs pending forever — icollect still prefers them when up.
+ */
 export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.metadataRefresh,
   BACKGROUND_WORK_KIND.priceRefresh,
   BACKGROUND_WORK_KIND.catalogueExtract,
   // Same pool as the extract it feeds — a fresh APK enqueues its foilExtract.
   BACKGROUND_WORK_KIND.apkStoreFetch,
+  BACKGROUND_WORK_KIND.catalogProviderSync,
 ];
 
 /** Local index / catalog crawl — dedicated process (`pnpm worker:icollect`). */
@@ -292,6 +297,41 @@ export async function cancelBackgroundWorkJobsForUser(
   userId: string,
 ): Promise<number> {
   return cancelOpenJobs({ userId });
+}
+
+/**
+ * Catalogue Sync / foil extract / index ticks shown in the jobs menu for an
+ * admin — including system-wide rows (`userId` null) that enqueue from auto
+ * Sync. « Tout annuler » must hit the same set as the list, not only rows
+ * stamped with the caller's id.
+ */
+export async function cancelOpenCatalogueJobsVisibleToUser(
+  userId: string,
+): Promise<number> {
+  const kinds: BackgroundWorkKind[] = [
+    BACKGROUND_WORK_KIND.catalogueExtract,
+    BACKGROUND_WORK_KIND.apkStoreFetch,
+    BACKGROUND_WORK_KIND.catalogProviderSync,
+    BACKGROUND_WORK_KIND.icollectCatalogSync,
+    BACKGROUND_WORK_KIND.launchboxIndexSync,
+    BACKGROUND_WORK_KIND.nointroIndexSync,
+  ];
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: {
+      kind: { in: kinds },
+      status: {
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+      },
+      OR: [{ userId }, { userId: null }],
+    },
+    data: {
+      status: BACKGROUND_WORK_STATUS.cancelled,
+      finishedAt: new Date(),
+      lockedAt: null,
+      lockedBy: null,
+    },
+  });
+  return result.count;
 }
 
 export async function hasActiveBackgroundWorkJobForItem(

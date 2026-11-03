@@ -12,6 +12,7 @@ import {
   BACKGROUND_WORK_STATUS,
   cancelBackgroundWorkJobById,
   cancelBackgroundWorkJobsForUser,
+  cancelOpenCatalogueJobsVisibleToUser,
 } from "@/core/collect/jobs/workQueue";
 import { getProviderModule } from "@/core/catalog/catalog";
 import {
@@ -396,6 +397,10 @@ export async function cancelBackgroundJobForUser(
 export async function cancelAllBackgroundJobsForUser(
   userId: string,
 ): Promise<number> {
+  // Foil / catalogue Sync first — often `userId: null` (auto + admin Sync)
+  // while still listed in the menu.
+  const catalogueCancelled = await cancelOpenCatalogueJobsVisibleToUser(userId);
+  // Remaining work rows stamped with this user (price / metadata queue…).
   const workCancelled = await cancelBackgroundWorkJobsForUser(userId);
 
   const inMemoryIds = getInMemoryMetadataRefreshItemIds();
@@ -418,5 +423,5 @@ export async function cancelAllBackgroundJobsForUser(
     await cancelAndClearItemMetadataRefresh(itemId);
   }
 
-  return workCancelled + itemIds.length;
+  return catalogueCancelled + workCancelled + itemIds.length;
 }

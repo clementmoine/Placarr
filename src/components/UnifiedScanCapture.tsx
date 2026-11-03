@@ -11,15 +11,29 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Flashlight, FlashlightOff, ImageIcon } from "lucide-react";
+import { Flashlight, FlashlightOff, ImageIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 import { ScanOverlay, type ScanPhase } from "@/components/scan/ScanOverlay";
+import { ScanSessionMiniCard } from "@/components/scan/ScanSessionMiniCard";
+import {
+  ManualUnrecognizedSheet,
+  type ManualUnrecognizedPayload,
+} from "@/components/scan/ManualUnrecognizedSheet";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import {
   markCameraUnavailable,
   useCameraAvailability,
 } from "@/lib/client/hooks/useCameraAvailability";
+import { getShelves } from "@/lib/api/shelves";
+import { saveItem } from "@/lib/api/items";
+import {
+  hydrateScanLock,
+  prefillFromHydrated,
+  type HydratedScanLock,
+} from "@/lib/client/scan/hydrateScanLock";
+import { itemPath } from "@/lib/routing/slugs";
 import { AdaptivePerf } from "@/lib/client/scan/adaptivePerf";
 import {
   detectBarcodeHitFromVideo,
@@ -366,14 +380,23 @@ function sampleCardRoi(
   };
 }
 
+export type ScanAddPrefill = ReturnType<typeof prefillFromHydrated>;
+
 export function UnifiedScanCapture({
   active = true,
-  onBatchDone,
+  preferredShelfId,
+  pathname,
+  onCommitAdd,
+  onOpenOwned,
   cameraClassName,
 }: {
   active?: boolean;
-  /** Finish the live session — parent reviews / commits the tray. */
-  onBatchDone: (locks: SessionLock[]) => void;
+  preferredShelfId?: string | null;
+  pathname?: string | null;
+  /** Open the single ItemModal with hydrate prefill (non-owned add). */
+  onCommitAdd: (prefill: ScanAddPrefill) => void;
+  /** Navigate to an already-owned item. */
+  onOpenOwned: (path: string) => void;
   cameraClassName?: string;
 }) {
   const { t, locale } = useLocale();
@@ -426,6 +449,12 @@ export function UnifiedScanCapture({
   const [matches, setMatches] = useState<CardLiveMatch[]>([]);
   const [stable, setStable] = useState<CardLiveMatch | null>(null);
   const [sessionLocks, setSessionLocks] = useState<SessionLock[]>([]);
+  const [hydrations, setHydrations] = useState<
+    Record<string, HydratedScanLock>
+  >({});
+  const hydrateAbortRef = useRef(new Map<string, AbortController>());
+  const [manualOpen, setManualOpen] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
   const [torchOn, setTorchOn] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [caps, setCaps] = useState<CameraCapabilitiesSummary>({
@@ -438,7 +467,13 @@ export function UnifiedScanCapture({
   });
   const [barcodePaused, setBarcodePaused] = useState(false);
   /** Lens layout: camera-first vs results sheet (scan keeps running either way). */
-  const [panel, setPanel] = useState<"camera" | "results">("camera");
+  const [panel, setPanel] = useState<"camera" | "results" | "review">("camera");
+
+  const { data: shelves } = useQuery({
+    queryKey: ["shelves", "picker"],
+    queryFn: () => getShelves(null, { lite: true }),
+    enabled: active,
+  });
   const [quadNorm, setQuadNorm] = useState<Array<{
     x: number;
     y: number;
@@ -518,21 +553,34 @@ export function UnifiedScanCapture({
       adaptiveRef.current.reset();
       sessionRef.current.clear();
       setSessionLocks([]);
+      setHydrations({});
+      for (const controller of hydrateAbortRef.current.values()) {
+        controller.abort();
+      }
+      hydrateAbortRef.current.clear();
       setMatches([]);
       setStable(null);
       setPhase("looking");
       setBarcodePaused(false);
+      setManualOpen(false);
+      setPanel("camera");
+      setReviewIndex(0);
       aimStartedRef.current = null;
     }
   }, [active]);
 
   const recordSessionLock = useCallback(
     (
-      kind: "barcode" | "card",
+      kind: SessionLock["kind"],
       key: string,
       label: string,
       faceUrl?: string | null,
-      opts?: { force?: boolean; language?: string | null },
+      opts?: {
+        force?: boolean;
+        language?: string | null;
+        packId?: string | null;
+        note?: string | null;
+      },
     ) => {
       const entry = sessionRef.current.tryLock(
         kind,
@@ -550,6 +598,84 @@ export function UnifiedScanCapture({
     },
     [],
   );
+
+  const queueHydration = useCallback(
+    (lock: SessionLock) => {
+      const existing = hydrateAbortRef.current.get(lock.id);
+      existing?.abort();
+      const controller = new AbortController();
+      hydrateAbortRef.current.set(lock.id, controller);
+
+      const shelfRows = (shelves ?? []).map((shelf) => ({
+        id: shelf.id,
+        name: shelf.name,
+        type: shelf.type,
+        slug: "slug" in shelf ? ((shelf as { slug?: string | null }).slug ?? null) : null,
+      }));
+
+      setHydrations((prev) => ({
+        ...prev,
+        [lock.id]: {
+          lockId: lock.id,
+          kind: lock.kind,
+          key: lock.key,
+          title: lock.label || lock.key,
+          imageUrl: lock.faceUrl ?? null,
+          language: lock.language ?? null,
+          packId: lock.packId ?? null,
+          shelfType: lock.kind === "card" ? "tcg" : null,
+          suggestedShelfId: null,
+          shelfSure: false,
+          owned: null,
+          hits: [],
+          selectedHitIndex: 0,
+          status: "loading",
+          metadataPreview: null,
+        },
+      }));
+
+      void hydrateScanLock(lock, {
+        shelves: shelfRows,
+        preferredShelfId: preferredShelfId ?? null,
+        pathname: pathname ?? null,
+        signal: controller.signal,
+        onProgress: (partial) => {
+          if (controller.signal.aborted) return;
+          setHydrations((prev) => ({ ...prev, [lock.id]: partial }));
+          if (partial.title && partial.title !== lock.key) {
+            sessionRef.current.patch(lock.id, {
+              label: partial.title,
+              faceUrl: partial.imageUrl,
+            });
+            setSessionLocks([...sessionRef.current.list()]);
+          }
+        },
+      }).then((result) => {
+        if (controller.signal.aborted) return;
+        setHydrations((prev) => ({ ...prev, [lock.id]: result }));
+        if (result.title) {
+          sessionRef.current.patch(lock.id, {
+            label: result.title,
+            faceUrl: result.imageUrl,
+          });
+          setSessionLocks([...sessionRef.current.list()]);
+        }
+      });
+    },
+    [pathname, preferredShelfId, shelves],
+  );
+
+  useEffect(() => {
+    if (!active || shelves === undefined) return;
+    for (const lock of sessionLocks) {
+      const status = hydrations[lock.id]?.status;
+      if (status === "ready" || status === "loading" || status === "error") {
+        continue;
+      }
+      if (hydrateAbortRef.current.has(lock.id)) continue;
+      queueHydration(lock);
+    }
+  }, [active, sessionLocks, hydrations, queueHydration, shelves]);
 
   const handleBarcodeValue = useCallback(
     (raw: string) => {
@@ -573,12 +699,12 @@ export function UnifiedScanCapture({
         matches.find((m) => m.printKey === printKey) ?? matches[0] ?? null;
       if (!row) return;
       // Explicit tap always records a copy — cooldown only blocks auto-locks.
-      // Label stays the printKey until create resolves the catalogue title
-      // (ScanFAB / POST /api/items); language travels with the lock.
+      // Title/face hydrate in the tray; language + packId travel with the lock.
       if (
         !recordSessionLock("card", row.printKey, row.printKey, row.faceUrl, {
           force: true,
           language: row.lang,
+          packId: row.packId ?? null,
         })
       ) {
         return;
@@ -595,16 +721,132 @@ export function UnifiedScanCapture({
   );
 
   const undoSessionLock = useCallback((id: string) => {
+    hydrateAbortRef.current.get(id)?.abort();
+    hydrateAbortRef.current.delete(id);
     if (!sessionRef.current.remove(id)) return;
     setSessionLocks([...sessionRef.current.list()]);
+    setHydrations((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     hapticShort();
   }, []);
 
   const finishBatch = useCallback(() => {
-    const locks = [...sessionRef.current.list()];
-    if (!locks.length) return;
-    onBatchDone(locks);
-  }, [onBatchDone]);
+    if (!sessionRef.current.count()) return;
+    setReviewIndex(0);
+    setPanel("review");
+    setManualOpen(false);
+    setMatches([]);
+    setStable(null);
+  }, []);
+
+  const exitReviewToHunt = useCallback(() => {
+    setPanel("camera");
+    setPhase("looking");
+  }, []);
+
+  const confirmManualLock = useCallback(
+    (payload: ManualUnrecognizedPayload) => {
+      const barcode = payload.barcode.replace(/\D/g, "");
+      const title = payload.title.trim();
+      const key = barcode || `manual:${Date.now()}`;
+      const label = title || barcode || t("scanner.addManually");
+      const kind = barcode.length >= 8 ? "barcode" : "manual";
+      if (
+        !recordSessionLock(kind, key, label, null, {
+          force: true,
+          note: title || null,
+        })
+      ) {
+        return;
+      }
+      toast.success(t("scanner.addedKeepScanning"));
+      setManualOpen(false);
+      setIdentifyMiss(false);
+      setPanel("camera");
+      setPhase("looking");
+      setBarcodePaused(false);
+    },
+    [recordSessionLock, t],
+  );
+
+  const consumeReviewHead = useCallback(() => {
+    const lock = sessionLocks[reviewIndex];
+    if (lock) {
+      hydrateAbortRef.current.get(lock.id)?.abort();
+      hydrateAbortRef.current.delete(lock.id);
+      sessionRef.current.remove(lock.id);
+      setHydrations((prev) => {
+        const next = { ...prev };
+        delete next[lock.id];
+        return next;
+      });
+    }
+    const remaining = [...sessionRef.current.list()];
+    setSessionLocks(remaining);
+    if (remaining.length === 0) {
+      setReviewIndex(0);
+      setPanel("camera");
+      setPhase("looking");
+      return;
+    }
+    setReviewIndex((idx) => Math.min(idx, remaining.length - 1));
+  }, [reviewIndex, sessionLocks]);
+
+  const handleReviewAdd = useCallback(() => {
+    const lock = sessionLocks[reviewIndex];
+    if (!lock) return;
+    const hydrated = hydrations[lock.id];
+    if (!hydrated || hydrated.status === "loading") {
+      toast.message(t("scanner.searching"));
+      return;
+    }
+    onCommitAdd(prefillFromHydrated(hydrated));
+    consumeReviewHead();
+  }, [
+    consumeReviewHead,
+    hydrations,
+    onCommitAdd,
+    reviewIndex,
+    sessionLocks,
+    t,
+  ]);
+
+  const handleReviewOpenOwned = useCallback(() => {
+    const lock = sessionLocks[reviewIndex];
+    if (!lock) return;
+    const owned = hydrations[lock.id]?.owned;
+    if (!owned) return;
+    onOpenOwned(
+      itemPath(
+        { id: owned.shelfId, name: owned.shelfName || undefined },
+        { id: owned.id, name: owned.name },
+      ),
+    );
+    consumeReviewHead();
+  }, [consumeReviewHead, hydrations, onOpenOwned, reviewIndex, sessionLocks]);
+
+  const handleReviewCompleteOwned = useCallback(async () => {
+    const lock = sessionLocks[reviewIndex];
+    if (!lock || lock.kind !== "barcode") return;
+    const owned = hydrations[lock.id]?.owned;
+    if (!owned?.completable) return;
+    try {
+      await saveItem({
+        id: owned.id,
+        barcode: lock.key,
+        currentShelfId: owned.shelfId,
+        refreshMetadata: true,
+      });
+      toast.success(t("scanner.completeSuccess"));
+      consumeReviewHead();
+    } catch (error) {
+      console.error(error);
+      toast.error(t("scanner.completeFailed"));
+    }
+  }, [consumeReviewHead, hydrations, reviewIndex, sessionLocks, t]);
 
   const applyCardMatches = useCallback(
     (
@@ -667,6 +909,7 @@ export function UnifiedScanCapture({
           // the next ranked subject (clear tap-focus so centre ranking wins).
           recordSessionLock("card", top.printKey, top.printKey, top.faceUrl, {
             language: top.lang,
+            packId: top.packId ?? null,
           });
           clearFocus();
           setStable(null);
@@ -1029,7 +1272,7 @@ export function UnifiedScanCapture({
         const rectified = detectedCorners
           ? await grabRectifiedSample(video, detectedCorners)
           : null;
-        const [blob, band, bandHalfTurn, frame] = rectified
+        const [blob, band, bandHalfTurn, frameBlob] = rectified
           ? [
               rectified.face.blob,
               rectified.band,
@@ -1047,7 +1290,7 @@ export function UnifiedScanCapture({
 
         burstRef.current.open();
         const maybe = burstRef.current.push(
-          { face: blob, band, bandHalfTurn, frame },
+          { face: blob, band, bandHalfTurn, frame: frameBlob },
           quality.blurVariance,
         );
         const chosen = maybe ?? burstRef.current.close();
@@ -1266,9 +1509,8 @@ export function UnifiedScanCapture({
         if (confidence === "sure" && next[0]) {
           setStable(next[0]);
           setPhase("delivering");
-        } else if (!next.length) {
-          toast.message(t("scanner.cardNoMatches"));
         }
+        // Empty match → identifyMiss + overlay hint + in-chrome CTA (no toast).
       } catch {
         toast.error(t("scanner.error"));
       } finally {
@@ -1366,8 +1608,11 @@ export function UnifiedScanCapture({
 
   const showCamera = active && !isCameraUnavailable && !isCheckingCamera;
   const hasCardMatches = matches.length > 0;
-  const resultsOpen = hasCardMatches && panel === "results";
-  const cameraCompact = resultsOpen;
+  const reviewOpen = panel === "review";
+  const resultsOpen = hasCardMatches && panel === "results" && !reviewOpen;
+  const cameraCompact = resultsOpen || reviewOpen;
+  const reviewLock = reviewOpen ? sessionLocks[reviewIndex] ?? null : null;
+  const reviewHydrated = reviewLock ? hydrations[reviewLock.id] : null;
 
   const matchesFp = matches.map((m) => m.printKey).join("|");
   useEffect(() => {
@@ -1518,16 +1763,20 @@ export function UnifiedScanCapture({
             />
           ) : null}
 
+          {/*
+            Leave the top-right clear for the Dialog close (≈2.75rem). Gallery
+            sits just left of that slot so the two never stack.
+          */}
           <div
-            className="absolute inset-x-3 z-30 flex items-start justify-between pointer-events-none top-[max(0.75rem,env(safe-area-inset-top))]"
+            className="absolute left-3 z-30 flex items-start justify-between gap-2 pointer-events-none top-[max(0.75rem,env(safe-area-inset-top))] right-[max(3.25rem,calc(env(safe-area-inset-right)+2.75rem))]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pointer-events-auto flex gap-2">
+            <div className="pointer-events-auto flex gap-2 min-w-0">
               {caps.torch ? (
                 <button
                   type="button"
                   onClick={() => void toggleTorch()}
-                  className="size-9 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer"
+                  className="size-9 shrink-0 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer"
                   aria-label={t("scanner.torch")}
                 >
                   {torchOn ? (
@@ -1537,8 +1786,19 @@ export function UnifiedScanCapture({
                   )}
                 </button>
               ) : null}
+              {!identifyMiss ? (
+                <button
+                  type="button"
+                  onClick={() => setManualOpen(true)}
+                  className="h-9 px-3 rounded-full bg-black/40 backdrop-blur-sm text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer"
+                  aria-label={t("scanner.unrecognizedTitle")}
+                >
+                  <Plus className="size-3.5" />
+                  {t("scanner.addManually")}
+                </button>
+              ) : null}
             </div>
-            <label className="pointer-events-auto size-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-pointer">
+            <label className="pointer-events-auto size-9 shrink-0 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-pointer">
               <ImageIcon className="size-4 text-white/90" />
               <span className="sr-only">{t("scanner.cardPickPhoto")}</span>
               <input
@@ -1566,6 +1826,18 @@ export function UnifiedScanCapture({
           {t("scanner.error")}
         </div>
       )}
+
+      {identifyMiss && panel === "camera" && !manualOpen ? (
+        <div className="shrink-0 mx-4 mt-2 mb-1 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setManualOpen(true)}
+            className="h-10 px-4 rounded-full bg-white text-zinc-950 text-xs font-bold cursor-pointer"
+          >
+            {t("scanner.addAnyway")}
+          </button>
+        </div>
+      ) : null}
 
       {hasCardMatches && panel === "camera" ? (
         <button
@@ -1626,8 +1898,6 @@ export function UnifiedScanCapture({
                           alt={row.printKey}
                           className="absolute inset-0 size-full object-cover"
                           onError={(e) => {
-                            // iOS paints a blue "?" on a broken img — hide it
-                            // and leave the muted tile (printKey sits below).
                             e.currentTarget.style.display = "none";
                           }}
                         />
@@ -1659,19 +1929,171 @@ export function UnifiedScanCapture({
         </div>
       ) : null}
 
-      {sessionLocks.length > 0 ? (
-        <div className="shrink-0 border-t border-white/10 bg-black/90 px-3 py-3 space-y-2">
-          <div className="flex gap-2 overflow-x-auto">
-            {sessionLocks.slice(0, 12).map((lock) => (
+      {reviewOpen && reviewLock ? (
+        <div className="flex-1 min-h-0 flex flex-col bg-background text-foreground rounded-t-3xl overflow-hidden">
+          <div className="px-4 pt-4 pb-2 space-y-1 shrink-0">
+            <p className="text-sm font-bold">{t("scanner.sessionReviewTitle")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("scanner.sessionReviewHint")}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {reviewIndex + 1} / {sessionLocks.length}
+            </p>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-3 space-y-3">
+            <div className="flex gap-2 overflow-x-auto">
+              {sessionLocks.map((lock, index) => (
+                <ScanSessionMiniCard
+                  key={lock.id}
+                  hydrated={hydrations[lock.id]}
+                  label={lock.label}
+                  faceUrl={lock.faceUrl}
+                  ownedLabel={t("scanner.owned")}
+                  selected={index === reviewIndex}
+                  onClick={() => setReviewIndex(index)}
+                />
+              ))}
+            </div>
+            {reviewHydrated && reviewHydrated.hits.length > 1 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  {t("scanner.pickMatch")}
+                </p>
+                <div className="flex gap-2 overflow-x-auto">
+                  {reviewHydrated.hits.map((hit, index) => (
+                    <button
+                      key={`${hit.title}:${index}`}
+                      type="button"
+                      onClick={() =>
+                        setHydrations((prev) => {
+                          const current = prev[reviewLock.id];
+                          if (!current) return prev;
+                          return {
+                            ...prev,
+                            [reviewLock.id]: {
+                              ...current,
+                              selectedHitIndex: index,
+                              title: hit.title,
+                              imageUrl: hit.imageUrl,
+                              metadataPreview: hit.metadataPreview,
+                            },
+                          };
+                        })
+                      }
+                      className={cn(
+                        "shrink-0 w-28 rounded-xl border overflow-hidden text-left cursor-pointer",
+                        reviewHydrated.selectedHitIndex === index
+                          ? "border-primary ring-2 ring-primary/30"
+                          : "border-border",
+                      )}
+                    >
+                      <div className="aspect-square bg-muted relative">
+                        {hit.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={hit.imageUrl}
+                            alt=""
+                            className="absolute inset-0 size-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <p className="px-2 py-1 text-[10px] font-medium truncate">
+                        {hit.title}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="rounded-2xl border border-border p-3 space-y-1">
+              <p className="text-sm font-semibold truncate">
+                {reviewHydrated?.title || reviewLock.label}
+              </p>
+              <p className="text-[11px] text-muted-foreground uppercase">
+                {reviewLock.kind}
+              </p>
+              {reviewHydrated?.owned ? (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  {reviewHydrated.owned.completable
+                    ? t("scanner.alreadyIncomplete").replace(
+                        "{shelf}",
+                        reviewHydrated.owned.shelfName || "Placarr",
+                      )
+                    : `${t("scanner.alreadyIn")} ${reviewHydrated.owned.shelfName || ""}`}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <div className="p-4 flex flex-col gap-2 border-t border-border shrink-0">
+            {reviewHydrated?.owned ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleReviewOpenOwned}
+                  className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold cursor-pointer"
+                >
+                  {t("scanner.sessionOpenOwned")}
+                </button>
+                {reviewHydrated.owned.completable ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleReviewCompleteOwned()}
+                    className="w-full h-11 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+                  >
+                    {t("scanner.sessionComplete")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleReviewAdd}
+                    className="w-full h-11 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+                  >
+                    {t("scanner.sessionAddCopy")}
+                  </button>
+                )}
+              </>
+            ) : (
               <button
-                key={lock.id}
                 type="button"
-                onClick={() => undoSessionLock(lock.id)}
-                className="shrink-0 rounded-full bg-white/10 hover:bg-white/15 px-3 py-1.5 text-[10px] max-w-[140px] truncate text-white/90 cursor-pointer"
-                title={t("scanner.sessionUndo")}
+                onClick={handleReviewAdd}
+                className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold cursor-pointer"
               >
-                {lock.label} ×
+                {t("scanner.sessionAdd")}
               </button>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={consumeReviewHead}
+                className="flex-1 h-10 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+              >
+                {t("scanner.sessionSkip")}
+              </button>
+              <button
+                type="button"
+                onClick={exitReviewToHunt}
+                className="flex-1 h-10 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+              >
+                {t("scanner.sessionReviewBack")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {!reviewOpen && sessionLocks.length > 0 ? (
+        <div className="shrink-0 border-t border-white/10 bg-black/90 px-3 py-3 space-y-2">
+          <div className="flex gap-2 overflow-x-auto pb-0.5">
+            {sessionLocks.slice(0, 12).map((lock) => (
+              <ScanSessionMiniCard
+                key={lock.id}
+                compact
+                hydrated={hydrations[lock.id]}
+                label={lock.label}
+                faceUrl={lock.faceUrl}
+                ownedLabel={t("scanner.owned")}
+                onClick={() => undoSessionLock(lock.id)}
+              />
             ))}
           </div>
           <button
@@ -1683,6 +2105,12 @@ export function UnifiedScanCapture({
           </button>
         </div>
       ) : null}
+
+      <ManualUnrecognizedSheet
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        onConfirm={confirmManualLock}
+      />
     </div>
   );
 }

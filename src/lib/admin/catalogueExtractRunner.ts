@@ -613,6 +613,34 @@ export async function runCatalogueExtractCommand(
         "@/providers/shared/cardCatalogue/identifyIndexesStep"
       );
       await runDataPackCardIdentifyIndexes(pack.id, { onLog });
+      // Admin Sync is foilExtract — without this stamp, auto-sync keeps the
+      // pack stale for 2 days and re-enqueues catalogProviderSync forever.
+      try {
+        const { mkdirSync, writeFileSync } = await import("node:fs");
+        const { packCatalogDb, packLogsDir } = await import("@/lib/packPaths");
+        const { measureCatalogDbCorpus } =
+          await import("@/providers/shared/catalogCorpus");
+        const logs = packLogsDir(pack.id);
+        mkdirSync(logs, { recursive: true });
+        const corpus = measureCatalogDbCorpus(packCatalogDb(pack.id));
+        writeFileSync(
+          path.join(logs, "last-run.json"),
+          `${JSON.stringify({
+            finishedAt: new Date().toISOString(),
+            auto: options.auto === true,
+            source: "foilExtract",
+            cards: corpus.cards,
+            products: corpus.products,
+            sets: corpus.sets,
+          })}\n`,
+        );
+      } catch (stampError) {
+        onLog(
+          `── last-run stamp skipped: ${
+            stampError instanceof Error ? stampError.message : String(stampError)
+          }`,
+        );
+      }
     }
     onLog("── done");
   } catch (error) {

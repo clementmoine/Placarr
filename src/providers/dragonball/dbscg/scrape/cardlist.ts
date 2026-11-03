@@ -253,6 +253,24 @@ export async function scrapeDbsCgCardlist(
 
   const { prints, titles, assets } = rowsFromCards(allCards);
   const seriesCount = Object.values(seriesByLang).reduce((a, b) => a + b, 0);
+
+  // Same printKey set as on disk → leave catalog.sqlite mtime alone so the
+  // identify visual-index fast-path still holds on an immediate re-Sync.
+  const existing = loadDbsCgIndex();
+  if (existing && !opts.force) {
+    const nextKeys = prints.map((row) => row.printKey).sort();
+    const prevKeys = existing.prints.map((row) => row.printKey).sort();
+    if (
+      nextKeys.length === prevKeys.length &&
+      nextKeys.every((key, i) => key === prevKeys[i])
+    ) {
+      console.log(
+        `── index inchangé (${nextKeys.length} prints) — sqlite non réécrit`,
+      );
+      return { printCount: nextKeys.length, seriesCount };
+    }
+  }
+
   const { dbPath, printCount } = writeDbsCgIndex({
     prints,
     titles,

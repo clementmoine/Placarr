@@ -33,9 +33,9 @@ export type PrintPickerDefaults = {
   setId: string | null;
 };
 
-const MIN_CATALOGUE_SCORE = 0.78;
+export const MIN_CATALOGUE_SCORE = 0.78;
 /** Écart minimum avec le 2ᵉ pour déclarer un vainqueur unique. */
-const MIN_SCORE_GAP = 0.1;
+export const MIN_SCORE_GAP = 0.1;
 
 const CJK_RE =
   /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf\uac00-\ud7af]/;
@@ -69,7 +69,7 @@ function tokenCoverage(needles: string[], haystack: string[]): number {
  *   set : « Lorcana Premier Chapitre »).
  * - Un préfixe franchise seul (« Naruto ») ne capture pas « Naruto Carddass ».
  */
-function shelfCatalogueScore(shelfName: string, label: string): number {
+export function shelfCatalogueScore(shelfName: string, label: string): number {
   const shelfTokens = distinctiveTitleTokens(shelfName);
   const labelTokens = catalogueTokens(label);
   if (shelfTokens.length === 0 || labelTokens.length === 0) return 0;

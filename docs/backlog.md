@@ -1,6 +1,6 @@
 # Backlog
 
-> Dernière vérification : **2026-10-30** (index visuel multi-pack TCG + objectif catalogues → objets).
+> Dernière vérification : **2026-11-03** (citations vérifiables + re-sync `printKey` + encart « Le saviez-vous ? »).
 > Index docs : [README.md](README.md).
 
 ## Plan perf métadonnées — terminé (2026-07-25)
@@ -24,6 +24,19 @@ disparu.
 
 ## Ouverts
 
+### Provenance & items vivants — **P1 produit** (2026-11-03)
+
+Critère : **citer = preuve ouvrable**, pas un hostname — **tous les providers**
+(catalogue Sync, scrape, API live, commerce). Un Sync corpus ou un refresh item
+doit pouvoir **ajouter / mettre à jour** des faits sans perdre l’identité
+(`printKey`). Aligné [catalogue_contract.md](catalogue_contract.md) (faits
+`lang` + `provenance` + `source`) et le modèle d’observations d’enrich.
+
+| Priorité | Item | Détail |
+| -------- | ---- | ------ |
+| **P1** | **Citations vérifiables sur chaque fait (tous providers)** | Chaque affirmation (membership checklist, titre, promo, face, prix, metadata…) porte une **citation typée** ouvrable : `poster` (+ asset local), `youtube` (`watch?v=`), `article` / page scrape (URL canonique précise), dig ledger, etc. **API live** : stamp obligatoire d’un **lien public consultable** vers la ressource vérifiable (fiche produit / carte / édition sur le site du provider — ex. page TCGdex, Open Library, CardNexus product URL), pas seulement l’endpoint API opaque. UI : clic → ouvrir **la preuve**, jamais seulement le label provider. Digs Naruto (`sourceUrl` / ids YT) à **remonter jusqu’au fait affiché**. Même esprit que `MetadataObservation.provenance` + `sourceUrl` partout (catalogue *et* enrich). |
+| **P1** | **Re-sync item existant via `printKey`** | Un item d’étagère déjà lié à un `printKey` doit, au Sync corpus / refresh Plex-like, **récupérer les nouvelles infos et les mises à jour** du catalogue (titres, faces, facts, citations, prix catalogue…) sans recréer l’item ni casser l’identité. Pas de fiche figée à l’ajout : le corpus avance → les items qui pointent ce print suivent. Critère de fin : densifier un print (ex. poster checklist Naruto, art manquant) puis refresh → l’item shelf reflète le delta. |
+| **P1** | **Encart « Le saviez-vous ? » / storytelling objet** | Surface item d’étagère : **archéologie + storytelling** collectionneur (pas gatekeep, pas élitiste, **jamais inventé**). Chaque fact = prose qui **replante le décor** (pourquoi / comment / pratiques d’époque) + **sources vérifiables en bas**. Familles de faits : rareté (« pratiquement introuvable parce que… ») ; canaux de distribution (promo manga / site de commande à une époque où le e-commerce FR était rare — ex. *Double éclair pourfendeur* `PR-096` avec tomes) ; tournoi (participants / vainqueurs / Champion de France) ; physique (Made in Japan, dos bleuté S6 DVD) ; « première / une des seules / apparue dans un film » ; errata ; contexte territoire (S6 FR annulée / IT imprimée)… Digs déjà riches : S1 prerelease tomes, S6 DVD/blisters, Tin Box / Pack Découverte, shuriken, `NI-253`, `NI-127`, YT Collection Naruto **déjà chapitré** (`collection-naruto-youtube-…json`). Même famille Bleach / Lorcana / DBS. **Contrat** : attaché `printKey` / set / sealed SKU + citations typées (chantier provenance). **Hors TCG** : quand catalogues universels OK. **Méthode** : (1) recherche large (digs, packshots, wikis, guides OP/promo, Wayback, YT…) ; (2) **validation un par un** ; (3) **multi-sources** ; (4) YT = lien + **chapitre / timecode** ; (5) contextualiser l’époque sans inventer. **Forums = veine majeure** : fils d’époque (narutocarddassfrance / 1fr1, Ultrajeux, JVC, Reddit r/Narutoccg, Elite Fourum, groupes FB collection…) — témoignages de distribution, errata, rareté perçue, photos de classeurs / DVD / blisters ; miner via Wayback + archives API quand le live est mort (déjà fait pour certains digs). Croiser toujours forum ↔ preuve visuelle / packing. **Pistes externes** (pas SSOT Placarr) : Bulbapedia / wikis TCG ; guides OP Elite Fourum ; Manga-News ; YT collection ; PokeBeach / équivalents ; pages Bandai/Kana archivées. Pas un hub unique fun facts — Pokémon mieux documenté ; Naruto/Bleach/DBS = digs + **archives forum** à continuer. |
 
 ### Densif sealed / TCG — session 2026-10-15/16
 

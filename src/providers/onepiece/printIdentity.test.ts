@@ -89,6 +89,33 @@ describe("parsePunkRecordsCardsById", () => {
     expect(writes[0]!.titles.map((t) => t.lang).sort()).toEqual(["en", "fr"]);
   });
 
+  it("inherits titles onto nameless parallels from the base print", () => {
+    const writes = buildOnepiecePrintWrites([
+      {
+        lang: "en",
+        cards: parsePunkRecordsCardsById({
+          "OP05-062": {
+            card_id: "OP05-062",
+            name: "O-Nami",
+            rarity: "R",
+            category: "Character",
+          },
+          "OP05-062_p1": {
+            card_id: "OP05-062_p1",
+            name: "",
+            rarity: "R",
+            category: "Character",
+            img_url: "https://example.test/OP05-062_p1.webp",
+          },
+        }),
+      },
+    ]);
+    const parallel = writes.find((w) => w.printKey === "onepiece:op05-062-p1");
+    expect(parallel?.titles).toEqual([
+      { lang: "en", fullName: "O-Nami", rarity: "R" },
+    ]);
+  });
+
   it("conserve Event / Stage sur le write", () => {
     const writes = buildOnepiecePrintWrites([
       {

@@ -119,6 +119,11 @@ Sync → `art.coleka.webp` sous `data/leclerc/<set>/cards/<set>/fr/<n>/`.
 
 | Set | Faces | Checklist | Notes |
 |-----|------:|----------:|-------|
+| sw15 | **54** | **54** | Cosmic Shells 2015 — noms densifiés 2026-11-04 depuis dump `?nbpp=240` |
+| sw16 | **54** | **54** | Cosmic Shells Rogue One 2016 — idem |
+| sw18 | **90** | **90** | Solo 2018 — idem |
+| sw19 | **114** | **114** | Maîtriser la Force — A–H→089–096 ; J1–J18 = titres Coleka `J NN/18` |
+| marvel20 | **184** | **184** | stickers 1–144 + C1–C40 → `cNN` — noms densifiés 2026-11-04 |
 | marvel21 | **108** | 108 | `revele-ton-pouvoir_r22334` |
 | marvel22 | **108** | 108 | |
 | marvel23 | **132** | 108+24 Fixeez | Fixeez matchés checklist (+ `aka`) — pas de n° F Coleka |
@@ -132,11 +137,11 @@ Périmètre déjà utilisé pour faces Leclerc : **Coleka** (`cartes-de-supermar
 
 | Set | Checklist | Coleka | Autres | Verdict harvest |
 |-----|----------:|--------|--------|-----------------|
-| `sw15` | 54 jetons (stubs) | **Oui** — feuille [`cartes-leclerc-star-wars-2015_r35`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/cartes-leclerc-star-wars-2015_r35) (hub [`_r440`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc_r440)) | TCDB Cosmic Shells 2015 ; Bibelotmania album ; SWU noms | **Mappé** — dump `?nbpp=240` + Sync faces |
-| `sw16` | 54 jetons (stubs) | **Oui** — feuille [`leclerc-cosmic-shell-2016-rogue-one_r343`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/leclerc-cosmic-shell-2016-rogue-one_r343) | SWU 1–54 ; Bibelotmania album | **Mappé** — idem |
-| `sw18` | 90 (stubs) | **Oui** — [`leclerc-star-wars-solo_r4483`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/leclerc-star-wars-solo_r4483) | laststicker / TCDB / Paninimania samples | **Mappé** — dump + Sync |
-| `sw19` | 114 stubs (1–88+A–H ; J1–J18 à part) | **Oui** — [`star-wars-maitriser-la-force-leclerc-2019_r11922`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/star-wars-maitriser-la-force-leclerc-2019_r11922) | laststicker / eBay / Paninimania samples | **Mappé** — dump + Sync (A–H→089–096, J→`jNN`) |
-| `marvel20` | 184 stubs (1–144+C1–C40) | **Oui** — [`marvel-2020-deviens-un-heros-leclerc_r15811`](https://www.coleka.com/fr/stickers-autocollants/stickers-de-supermarche/marvel-2020-deviens-un-heros-leclerc_r15811) (**stickers**) | laststicker / Paninimania samples | **Mappé** — dump + Sync (`C0NN`→`cNN`) |
+| `sw15` | **54** noms Coleka | **Oui** — feuille [`cartes-leclerc-star-wars-2015_r35`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/cartes-leclerc-star-wars-2015_r35) (hub [`_r440`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc_r440)) | TCDB Cosmic Shells 2015 ; Bibelotmania album | **Noms OK** — faces staging déjà là |
+| `sw16` | **54** noms Coleka | **Oui** — feuille [`leclerc-cosmic-shell-2016-rogue-one_r343`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/leclerc-cosmic-shell-2016-rogue-one_r343) | SWU 1–54 ; Bibelotmania album | **Noms OK** — idem |
+| `sw18` | **90** noms Coleka | **Oui** — [`leclerc-star-wars-solo_r4483`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/leclerc-star-wars-solo_r4483) | laststicker / TCDB / Paninimania samples | **Noms OK** — dump + Sync |
+| `sw19` | **114** noms Coleka | **Oui** — [`star-wars-maitriser-la-force-leclerc-2019_r11922`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/star-wars-maitriser-la-force-leclerc-2019_r11922) | laststicker / eBay / Paninimania samples | **Noms OK** (A–H→089–096, J→`jNN` ; titres J = `J NN/18` Coleka) |
+| `marvel20` | **184** noms Coleka | **Oui** — [`marvel-2020-deviens-un-heros-leclerc_r15811`](https://www.coleka.com/fr/stickers-autocollants/stickers-de-supermarche/marvel-2020-deviens-un-heros-leclerc_r15811) (**stickers**) | laststicker / Paninimania samples | **Noms OK** — dump + Sync (`C0NN`→`cNN`) |
 | `disney26` | noms ColleX | Non | ColleX album | **Attendre** faces Coleka / eBay / scan ; noms OK |
 
 `COLEKA_LECLERC_LISTINGS` = sw15 + sw16 + sw18 + sw19 + marvel20–24 + disney25. Hub `_r440` = doc seulement. Sync installe aussi depuis dumps staging si Flare muré.

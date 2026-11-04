@@ -12,6 +12,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
@@ -29,7 +30,7 @@ import {
   recordCatalogPromoteAndPurgeStaging,
 } from "@/providers/shared/catalogIngestLedger";
 
-import { ONEPIECE_PACK_ID } from "./pack";
+import { ONEPIECE_PACK_ID, ONEPIECE_PRINT_GAME } from "./pack";
 import {
   formatOnepieceReference,
   onepiecePrintIdentity,
@@ -150,24 +151,36 @@ export function parsePunkRecordsCardsById(
         ? rec.card_id.trim()
         : cardId.trim();
     if (!id || !onepiecePrintKey(id)) continue;
+    const imgUrl =
+      typeof rec.img_url === "string" ? rec.img_url.trim() || null : null;
     const nameRaw =
       typeof rec.name === "string"
         ? rec.name
         : typeof rec.card_id === "string"
           ? rec.card_id
           : id;
-    const name = decodeHtmlName(nameRaw);
-    if (!name) continue;
+    let name = decodeHtmlName(nameRaw);
+    // Bandai id echoed as name is not a title — keep the row if art exists.
+    if (name === id || name === decodeHtmlName(id)) name = "";
+    if (!name && !imgUrl) continue;
     out.push({
       cardId: id,
       name,
       rarity: typeof rec.rarity === "string" ? rec.rarity.trim() || null : null,
-      imgUrl: typeof rec.img_url === "string" ? rec.img_url.trim() || null : null,
+      imgUrl,
       category:
         typeof rec.category === "string" ? rec.category.trim() || null : null,
     });
   }
   return out.sort((a, b) => a.cardId.localeCompare(b.cardId));
+}
+
+/** `onepiece:op05-062-p1` → `onepiece:op05-062` (strip trailing `-pN` groups). */
+export function onepieceBasePrintKey(printKey: string): string | null {
+  const key = printKey.trim().toLowerCase();
+  if (!key.startsWith(`${ONEPIECE_PRINT_GAME}:`)) return null;
+  const base = key.replace(/(?:-p\d+)+$/i, "");
+  return base !== key ? base : null;
 }
 
 export function buildOnepiecePrintWrites(
@@ -206,13 +219,26 @@ export function buildOnepiecePrintWrites(
       }
       if (!row.category && card.category) row.category = card.category;
       if (!row.sourceUrl && card.imgUrl) row.sourceUrl = card.imgUrl;
-      if (!row.titles.has(locale.lang)) {
+      if (card.name && !row.titles.has(locale.lang)) {
         row.titles.set(locale.lang, {
           fullName: card.name,
           rarity: card.rarity,
         });
       }
     }
+  }
+
+  // Parallels sometimes ship without a name in punk-records — inherit the base.
+  for (const row of byKey.values()) {
+    if (row.titles.size > 0) continue;
+    const baseKey = onepieceBasePrintKey(row.printKey);
+    if (!baseKey) continue;
+    const base = byKey.get(baseKey);
+    if (!base?.titles.size) continue;
+    for (const [lang, title] of base.titles) {
+      row.titles.set(lang, { ...title });
+    }
+    if (!row.category && base.category) row.category = base.category;
   }
 
   return [...byKey.values()]
@@ -371,6 +397,81 @@ export async function listOnepieceRemoteSets(opts?: {
   return [...byId.entries()].map(([id, label]) => ({ id, label }));
 }
 
+/**
+ * Titleless parallel keys (`…-pN`) inherit the base print's titles.
+ * Ghost parallels minted outside punk-records still get a name this way.
+ */
+export function densifyOnepieceParallelTitles(
+  index: LocalPrintsIndex,
+): { filled: number } {
+  const dbPath = index.dbPath();
+  if (!existsSync(dbPath)) return { filled: 0 };
+
+  const db = new DatabaseSync(dbPath, { readOnly: true });
+  const writes: LocalPrintWrite[] = [];
+  try {
+    const missing = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM prints p
+           WHERE print_key GLOB 'onepiece:*-p[0-9]*'
+             AND NOT EXISTS (
+               SELECT 1 FROM print_titles t WHERE t.print_key = p.print_key
+             )`,
+        )
+        .all() as Array<{ printKey: string }>
+    ).map((row) => row.printKey);
+
+    const titlesFor = db.prepare(
+      `SELECT lang, full_name AS fullName, rarity FROM print_titles WHERE print_key = ?`,
+    );
+    const printMeta = db.prepare(
+      `SELECT set_code AS setCode, number, grouping, category, source_url AS sourceUrl
+         FROM prints WHERE print_key = ?`,
+    );
+
+    for (const printKey of missing) {
+      const baseKey = onepieceBasePrintKey(printKey);
+      if (!baseKey) continue;
+      const titles = titlesFor.all(baseKey) as Array<{
+        lang: string;
+        fullName: string;
+        rarity: string | null;
+      }>;
+      if (!titles.length) continue;
+      const meta = printMeta.get(printKey) as
+        | {
+            setCode: string;
+            number: string;
+            grouping: string | null;
+            category: string | null;
+            sourceUrl: string | null;
+          }
+        | undefined;
+      if (!meta) continue;
+      writes.push({
+        printKey,
+        setCode: meta.setCode,
+        number: meta.number,
+        cardType: meta.setCode,
+        grouping: meta.grouping,
+        category: meta.category,
+        sourceUrl: meta.sourceUrl,
+        titles: titles.map((t) => ({
+          lang: t.lang,
+          fullName: t.fullName,
+          rarity: t.rarity,
+        })),
+      });
+    }
+  } finally {
+    db.close();
+  }
+
+  if (!writes.length) return { filled: 0 };
+  return { filled: index.writePrints(writes).prints };
+}
+
 export function seedOnepieceFromPunkRecords(
   index: LocalPrintsIndex,
   opts: { stagingDir?: string } = {},
@@ -380,6 +481,7 @@ export function seedOnepieceFromPunkRecords(
   );
   const writes = buildOnepiecePrintWrites(locales);
   if (writes.length) index.writePrints(writes);
+  densifyOnepieceParallelTitles(index);
   return {
     prints: writes.length,
     titles: writes.reduce((n, w) => n + w.titles.length, 0),

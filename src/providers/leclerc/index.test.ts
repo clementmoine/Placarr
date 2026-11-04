@@ -123,6 +123,31 @@ describe("leclerc printKey / ledgers", () => {
     // Named ops stay ungated.
     expect(leclercNameDensifyGate("disney25").ready).toBe(true);
   });
+
+  it.each([
+    ["sw15", 54, "001", "Leia Organa"],
+    ["sw16", 54, "001", "Poe Dameron"],
+    ["sw18", 90, "001", "Leia Organa"],
+    ["sw19", 114, "089", "L'empereur Palpatine"],
+    ["marvel20", 184, "c01", "HULK"],
+  ] as const)(
+    "densifies %s names from Coleka listing dump (%i cards)",
+    (setCode, count, sampleNumber, sampleName) => {
+      expect(colekaLeclercListingForSet(setCode)).not.toBeNull();
+      const gate = leclercNameDensifyGate(setCode);
+      expect(gate).toMatchObject({ ready: true, named: count, stubs: 0 });
+      const ledger = readLeclercChecklistForSet(setCode);
+      expect(ledger?.url).toContain("coleka.com");
+      expect(ledger?.cards).toHaveLength(count);
+      expect(ledger?.cards.every((c) => !c.note)).toBe(true);
+      expect(ledger?.cards.find((c) => c.number === sampleNumber)?.name).toBe(
+        sampleName,
+      );
+      const built = buildLeclercFromLedgers({ setCode, dryRun: true });
+      expect(built.placeholders).toBe(0);
+      expect(built.prints).toBe(count);
+    },
+  );
 });
 
 describe("leclerc curated back", () => {

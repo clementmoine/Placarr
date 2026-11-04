@@ -13,7 +13,7 @@ Dos de carte (Paninimania) curés par opération :
 | `marvel23` | idm=7561 |
 | `marvel24` | idm=7726 |
 | `disney25` | idm=7872 « Dos de cartes 1 » (mosaïque 2×4 → crop 1 dos, variante « 3 ») |
-| `disney26` | **Gate 2026-10-23** — album « En route pour l'aventure ! » (27/10–13/12/2026) ; pas de dos Paninimania ni listing Coleka → stubs only, **ne pas inventer de noms** |
+| `disney26` | Album « En route pour l'aventure ! » (27/10–13/12/2026). **Noms 2026-11-04** via [ColleX cartes](https://www.collexstash.com/fr/collections/cards/cartes-disney-leclerc-2026) + [Fixeez](https://www.collexstash.com/fr/collections/figures/fixeez-disney-leclerc-2026) (lecture album) — 7 n° illisibles + 2 partiels restent stubs. Pas de dos Paninimania / Coleka faces encore. |
 
 Fichiers : `curated/cards/<set>/back.{png,jpg,webp}` → Sync les convertit en
 `data/leclerc/<set>/cards/<set>/back.webp`.
@@ -31,6 +31,8 @@ Overlay curated `sources/leclerc-<set>-sealed.json` + packshots sous
 | `disney25` | `collector-album` — « Découvre la magie de Disney » ; **1,99€** (Paninimania idm=7872, EAN 4251906523445) | `art.paninimania.jpg` + `back.paninimania.jpg` (plus de composites `art.scan`) |
 | `disney25` | `pochette` — 4 cartes ; Fixeez possible non garanti (`kind: booster`) | `products/disney25/pochette/fr/art.paninimania.jpg` |
 | `disney25` | `display` — stub (nb pochettes inconnu) | — |
+| `disney26` | `display` — présentoir caisse (studio) ; `packsContained` null | `art.packshot.png` |
+| `disney26` | `fixeez-integrale` — **L'intégrale des 24 Fixeez** (édition exclusive 2026) ; EAN **8718973125386** (lu sur carton) ; contenu connu = 24 Fixeez (pas aléatoire). Packshot clean reconstruit depuis annonces Vinted set complet. | `products/disney26/fixeez-integrale/fr/art.vinted.png` |
 | `marvel23` | `collector-album` — « Défie tes Héros » ; **1,99€** (Paninimania idm=7561) | `art.paninimania.jpg` + `back.paninimania.jpg` |
 | `marvel23` | `pochette` — 4 cartes (SKU distinct) | `products/marvel23/pochette/fr/art.paninimania.jpg` |
 | `marvel23` | `pochette-fixeez` — 1 Fixeez (Paninimania « Pochette de 1 fixeez » + dos) | `art.paninimania.jpg` + `back.paninimania.jpg` |
@@ -70,6 +72,24 @@ Pochettes (contenu) : OK partout via Paninimania / C&S / Bibelotmania.
 | `marvel24`/`disney25` | **4** (+ Fixeez possible) | 400 | aucune attestation carton | `null` |
 | `disney26` | seed **4** cartes (pas stickers) | 300 | inventé ; Gemini dit « stickers » à tort | `null` |
 
+### Disney26 — intégrale Fixeez (2026-11-04)
+
+SKU **hors seed** : boîte collector « L'INTÉGRALE DES 24 FIXEEZ / ÉDITION EXCLUSIVE 2026 »
+(EAN `8718973125386`). Les annonces Vinted disent souvent « Pomeez » — le carton
+imprimé dit **Fixeez** (même famille disney25 / marvel23).
+
+| URL | Rôle |
+|-----|------|
+| [Vinted 10654634248](https://www.vinted.fr/items/10654634248-set-complet-de-24-pomeez-disneyr-2026) | photos packshot / set complet |
+| [Vinted 10648100734](https://www.vinted.fr/items/10648100734-vend-lot-complet-pomeez-disney-2026) | idem |
+| [Vinted 10645230571](https://www.vinted.fr/items/10645230571-lintegrale-des-24-pomeez-disney-leclerc-2026) | titre « l'intégrale » |
+| [Vinted 10597629201](https://www.vinted.fr/items/10597629201-fixeez-disney-2026) | photos |
+| [Vinted 10599672404](https://www.vinted.fr/items/10599672404-collection-complete-fixeez-2026) | collection complète |
+| [IG leclercsaintpaullesdax DfPLb02FZac](https://www.instagram.com/p/DfPLb02FZac/) | **attestation magasin** — « L'intégrale des 24 fixeez À GAGNER SUR L'APPLI » ; boîtes = lot complet 24 (instant gagnant appli + tirage Disneyland) |
+
+Art curated : `art.vinted.png` (version clean). Ledger :
+`data/leclerc/sources/leclerc-disney26-sealed.json`.
+
 Audit dump URLs (2026-10-24) — **aucun nouveau `packsContained`** :
 
 | URL | Verdict |
@@ -104,7 +124,7 @@ Sync → `art.coleka.webp` sous `data/leclerc/<set>/cards/<set>/fr/<n>/`.
 | marvel23 | **132** | 108+24 Fixeez | Fixeez matchés checklist (+ `aka`) — pas de n° F Coleka |
 | marvel24 | **132** | 108+24 Fixeez | Fixeez f01–f24 dans le filename Coleka |
 | disney25 | **132** Coleka + **108** eBay cartes + Fixeez MSKU | 108+24 Fixeez | Cartes : `236426654358`. Fixeez : `236423984089` (noms nus → checklist). f06 Main de Mickey = galerie eBay `art.ebay.jpg`. Install eBay cartes : crop fixe L/R 255 (pas Fixeez). |
-| disney26 | — (stub) | 108+24 Fixeez stub | Gate `leclercNameDensifyGate` fermée (pas Coleka / album) ; densifier dès listing réel. |
+| disney26 | — | **99+24** noms ColleX (9 stubs album) | Faces encore absentes ; Coleka listing toujours null — gate faces/Coleka ouverte, **noms densifiés**. |
 
 ### Trous faces (0 art sur disque) — audit sources 2026-10-24
 
@@ -117,7 +137,7 @@ Périmètre déjà utilisé pour faces Leclerc : **Coleka** (`cartes-de-supermar
 | `sw18` | 90 (stubs) | **Oui** — [`leclerc-star-wars-solo_r4483`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/leclerc-star-wars-solo_r4483) | laststicker / TCDB / Paninimania samples | **Mappé** — dump + Sync |
 | `sw19` | 114 stubs (1–88+A–H ; J1–J18 à part) | **Oui** — [`star-wars-maitriser-la-force-leclerc-2019_r11922`](https://www.coleka.com/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/star-wars-maitriser-la-force-leclerc-2019_r11922) | laststicker / eBay / Paninimania samples | **Mappé** — dump + Sync (A–H→089–096, J→`jNN`) |
 | `marvel20` | 184 stubs (1–144+C1–C40) | **Oui** — [`marvel-2020-deviens-un-heros-leclerc_r15811`](https://www.coleka.com/fr/stickers-autocollants/stickers-de-supermarche/marvel-2020-deviens-un-heros-leclerc_r15811) (**stickers**) | laststicker / Paninimania samples | **Mappé** — dump + Sync (`C0NN`→`cNN`) |
-| `disney26` | stubs | Non (gate) | — | Attendre listing réel |
+| `disney26` | noms ColleX | Non | ColleX album | **Attendre** faces Coleka / eBay / scan ; noms OK |
 
 `COLEKA_LECLERC_LISTINGS` = sw15 + sw16 + sw18 + sw19 + marvel20–24 + disney25. Hub `_r440` = doc seulement. Sync installe aussi depuis dumps staging si Flare muré.
 

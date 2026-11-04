@@ -443,6 +443,58 @@ describe.each([
   },
 );
 
+describe("leclerc disney26 fixeez-integrale (Vinted packshot)", () => {
+  it("ships curated packshot + ledger SKU (24 Fixeez known bundle)", () => {
+    const ledger = readLeclercSealedLedger("disney26");
+    expect(ledger?.products.map((p) => p.slug)).toEqual([
+      "collector-album",
+      "pochette",
+      "display",
+      "fixeez-integrale",
+    ]);
+    expect(ledger?.products.find((p) => p.slug === "pochette")).toMatchObject({
+      packComposition: { possibleChase: ["Fixeez"] },
+    });
+    const integrale = ledger?.products.find((p) => p.slug === "fixeez-integrale");
+    expect(integrale).toMatchObject({
+      kind: "collector_box",
+      source: "vinted",
+      art: "art.vinted.png",
+      declaredCardCount: 24,
+      cardsPerPack: 24,
+      name: "L'intégrale des 24 Fixeez — Le Monde avec Disney",
+      packComposition: {
+        provenance: "structural",
+        cardsPerPack: 24,
+        slots: [{ id: "fixeez", count: 24, kind: "dedicated" }],
+      },
+    });
+    expect(
+      existsSync(
+        path.join(
+          leclercCuratedProductsDir("disney26"),
+          "fixeez-integrale",
+          "fr",
+          "art.vinted.png",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("writes fixeez-integrale into products-index with /face", () => {
+    const out = ingestLeclercSealedProducts("disney26");
+    expect(out.written).toBeGreaterThanOrEqual(4);
+    const index = loadSealedProductsIndex("leclerc/disney26");
+    expect(index.products["leclerc/disney26::fixeez-integrale"]).toMatchObject({
+      slug: "fixeez-integrale",
+      kind: "collector_box",
+      declaredCardCount: 24,
+      cardsPerPack: 24,
+      image: "/assets/leclerc/disney26/products/fixeez-integrale/fr/face",
+    });
+  });
+});
+
 describe("leclerc display packshots (studio)", () => {
   it.each([
     ["disney25", "Display — Découvre la magie de Disney"],

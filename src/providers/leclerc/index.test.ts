@@ -102,28 +102,24 @@ describe("leclerc printKey / ledgers", () => {
     expect(disney25.placeholders).toBe(0);
     expect(disney26.sets).toEqual(["disney26"]);
     expect(disney26.prints).toBe(132);
-    expect(disney26.placeholders).toBe(132);
+    // 7 illisibles + 2 partiels (ColleX album) restent stubs.
+    expect(disney26.placeholders).toBe(9);
     expect(marvel24.prints).toBe(132);
     expect(marvel24.placeholders).toBe(0);
   });
 
-  it("gates disney26 name densify until Coleka / album evidence (no invent)", () => {
+  it("densifies disney26 names from ColleX album; Coleka faces gate still closed", () => {
     expect(colekaLeclercListingForSet("disney26")).toBeNull();
     const gate = leclercNameDensifyGate("disney26");
     expect(gate.ready).toBe(false);
-    expect(gate.named).toBe(0);
-    expect(gate.stubs).toBe(132);
-    expect(gate.reasons).toEqual(
-      expect.arrayContaining([
-        "pas de listing Coleka",
-        "checklist stub-only — ne pas inventer de noms",
-      ]),
-    );
+    expect(gate.named).toBe(123); // 99 cartes + 24 Fixeez
+    expect(gate.stubs).toBe(9);
+    expect(gate.reasons).toEqual(["pas de listing Coleka"]);
     const ledger = readLeclercChecklistForSet("disney26");
-    expect(ledger?.cards.every((c) => Boolean(c.note))).toBe(true);
-    expect(ledger?.cards.every((c) => /^Carte #|^Fixeez #/i.test(c.name))).toBe(
-      true,
-    );
+    expect(ledger?.url).toContain("collexstash.com");
+    expect(ledger?.cards.find((c) => c.number === "001")?.name).toBe("Woody");
+    expect(ledger?.cards.find((c) => c.number === "f24")?.name).toBe("Joie");
+    expect(ledger?.cards.find((c) => c.number === "008")?.note).toMatch(/stub/);
     // Named ops stay ungated.
     expect(leclercNameDensifyGate("disney25").ready).toBe(true);
   });

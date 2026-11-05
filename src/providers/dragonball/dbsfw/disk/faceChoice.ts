@@ -15,7 +15,7 @@ import {
   type StoredFace as SharedStoredFace,
 } from "@/providers/shared/cardFaces";
 
-export const DBS_FW_FACE_SOURCES = ["dbscards", "bandai"] as const;
+export const DBS_FW_FACE_SOURCES = ["dbscards", "bandai", "cardnexus"] as const;
 
 export type DbsFwFaceSource = (typeof DBS_FW_FACE_SOURCES)[number];
 
@@ -28,8 +28,8 @@ export type DbsFwFaceSource = (typeof DBS_FW_FACE_SOURCES)[number];
  */
 export const DBS_FW_FACE_PRIORITY: Record<string, readonly DbsFwFaceSource[]> =
   {
-    en: ["dbscards", "bandai"],
-    ja: ["dbscards", "bandai"],
+    en: ["dbscards", "bandai", "cardnexus"],
+    ja: ["dbscards", "bandai", "cardnexus"],
   };
 
 const choice = createCardFaceChoice<DbsFwFaceSource>({

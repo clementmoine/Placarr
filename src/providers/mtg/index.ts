@@ -51,11 +51,18 @@ const built = createEmptyLocalTcgProvider({
     },
   },
   runPipeline: async (argv) => {
+    const { withCardnexusPackFacesStep } = await import(
+      /* webpackIgnore: true */
+      "@/providers/commerce/cardnexus/fillPackFaces"
+    );
     const { runMtgPackPipeline } = await import(
       /* webpackIgnore: true */
       "./extract"
     );
-    return runMtgPackPipeline(argv);
+    return withCardnexusPackFacesStep(
+      { packId: MTG_PACK_ID, printGame: MTG_PRINT_GAME },
+      runMtgPackPipeline,
+    )(argv);
   },
 });
 

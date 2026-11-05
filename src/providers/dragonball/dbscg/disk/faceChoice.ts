@@ -15,7 +15,12 @@ import {
 } from "@/providers/shared/cardFaces";
 
 /** Every source a stored face can come from. */
-export const DBS_FACE_SOURCES = ["dbscards", "bandai", "deckplanet"] as const;
+export const DBS_FACE_SOURCES = [
+  "dbscards",
+  "bandai",
+  "deckplanet",
+  "cardnexus",
+] as const;
 
 export type DbsFaceSource = (typeof DBS_FACE_SOURCES)[number];
 
@@ -35,8 +40,8 @@ export type DbsFaceSource = (typeof DBS_FACE_SOURCES)[number];
  */
 export const DBS_FACE_PRIORITY: Record<string, readonly DbsFaceSource[]> = {
   // Deckplanet mirrors no French printing at all.
-  fr: ["dbscards", "bandai"],
-  en: ["deckplanet", "dbscards", "bandai"],
+  fr: ["dbscards", "bandai", "cardnexus"],
+  en: ["deckplanet", "dbscards", "bandai", "cardnexus"],
 };
 
 const choice = createCardFaceChoice<DbsFaceSource>({

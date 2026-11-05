@@ -17,6 +17,16 @@ describe("catalogueFacePick", () => {
     );
   });
 
+  it("ranks cardnexus below publisher dumps and above coleka", () => {
+    expect(catalogueFaceSourceRank("art.cardnexus.webp")).toBe(45);
+    expect(catalogueFaceSourceRank("art.bandai.webp")).toBeGreaterThan(
+      catalogueFaceSourceRank("art.cardnexus.webp"),
+    );
+    expect(catalogueFaceSourceRank("art.cardnexus.webp")).toBeGreaterThan(
+      catalogueFaceSourceRank("art.coleka.webp"),
+    );
+  });
+
   it("prefère la plus grande face pour un tirage neutre", () => {
     const entry = {
       set: "nr",

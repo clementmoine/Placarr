@@ -7,21 +7,26 @@
  */
 import { DBS_CG_EFFECT_PACK_ID } from "@/effects/dbscg";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
+import { withCardnexusPackFacesStep } from "@/providers/commerce/cardnexus/fillPackFaces";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 
 import { dbsCgDbPath, DBS_CG_PACK_ID } from "../indexStore";
+import { DBS_CG_GAME } from "../identity";
 
 const hooks = cardCatalogueHooks({
   packId: DBS_CG_PACK_ID,
   effectPackId: DBS_CG_EFFECT_PACK_ID,
   dbPath: dbsCgDbPath,
-  runPipeline: async (argv) => {
-    const { runDbsCgPackPipeline } = await import(
-      /* webpackIgnore: true */
-      "../extract"
-    );
-    return runDbsCgPackPipeline(argv);
-  },
+  runPipeline: withCardnexusPackFacesStep(
+    { packId: DBS_CG_PACK_ID, printGame: DBS_CG_GAME },
+    async (argv) => {
+      const { runDbsCgPackPipeline } = await import(
+        /* webpackIgnore: true */
+        "../extract"
+      );
+      return runDbsCgPackPipeline(argv);
+    },
+  ),
 });
 
 export const refreshDbsCgCatalog = hooks.refresh;

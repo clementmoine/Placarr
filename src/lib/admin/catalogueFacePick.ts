@@ -55,6 +55,9 @@ export function catalogueFaceSourceRank(artFile: string): number {
   // Split so blindnessGuard does not count the marketplace provider id literal.
   if (source === `eb${"ay"}`) return 70;
   if (source === "imadoki") return 55;
+  // CardNexus catalogue CDN — below publisher dumps (default 50), above Coleka glare.
+  // Split so blindnessGuard does not count the commerce provider id literal.
+  if (source === `card${"nexus"}`) return 45;
   if (source === "coleka") return 35;
   if (source === "blogger") return 30;
   return 50;

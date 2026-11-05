@@ -1,5 +1,5 @@
 /**
- * Map CardNexus `pricesByFinish` → Placarr new/foil EUR cents (EU region).
+ * Map CardNexus `pricesByFinish` / sealed `prices` → Placarr EUR cents (EU).
  */
 
 export type CardnexusMoney = {
@@ -22,6 +22,16 @@ export type CardnexusFinishBlock = {
 
 export type CardnexusPricesByFinish = Record<string, CardnexusFinishBlock>;
 
+/** Sealed products use a flat `prices.cardnexus` block (no finishes). */
+export type CardnexusSealedPrices = {
+  cardnexus?: CardnexusFinishBlock["cardnexus"];
+};
+
+export type CardnexusExternalIds = {
+  cardmarket?: Array<{ id?: number; finish?: string }>;
+  tcgplayer?: Array<{ id?: number; finish?: string }>;
+};
+
 export type CardnexusPriceCard = {
   id: number;
   name: string;
@@ -31,6 +41,11 @@ export type CardnexusPriceCard = {
   sourceUrl: string;
   newCents: number | null;
   foilCents: number | null;
+  /** Marketplace CDN face / packshot when present. */
+  imageUrl: string | null;
+  productType: "card" | "sealed" | string;
+  productCategory: string | null;
+  externalIds: CardnexusExternalIds | null;
 };
 
 function euroToCents(amount: number | null | undefined): number | null {
@@ -71,6 +86,25 @@ export function centsFromPricesByFinish(prices: CardnexusPricesByFinish | null |
   };
 }
 
+/** Sealed / single-price products. */
+export function centsFromSealedPrices(
+  prices: CardnexusSealedPrices | null | undefined,
+): number | null {
+  if (!prices?.cardnexus) return null;
+  return euroLowCentsFromFinish({ cardnexus: prices.cardnexus });
+}
+
 export function productSourceUrl(productId: number): string {
   return `https://cardnexus.com/product/${productId}`;
+}
+
+/** First Cardmarket / TCGplayer id — useful as a cross-catalogue SKU hint. */
+export function primaryExternalSku(
+  externalIds: CardnexusExternalIds | null | undefined,
+): { source: "cardmarket" | "tcgplayer"; id: number } | null {
+  const cm = externalIds?.cardmarket?.find((x) => typeof x.id === "number");
+  if (cm?.id != null) return { source: "cardmarket", id: cm.id };
+  const tp = externalIds?.tcgplayer?.find((x) => typeof x.id === "number");
+  if (tp?.id != null) return { source: "tcgplayer", id: tp.id };
+  return null;
 }

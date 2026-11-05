@@ -49,11 +49,18 @@ const built = createEmptyLocalTcgProvider({
       "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
   },
   runPipeline: async (argv) => {
+    const { withCardnexusPackFacesStep } = await import(
+      /* webpackIgnore: true */
+      "@/providers/commerce/cardnexus/fillPackFaces"
+    );
     const { runOnepiecePackPipeline } = await import(
       /* webpackIgnore: true */
       "./extract"
     );
-    return runOnepiecePackPipeline(argv);
+    return withCardnexusPackFacesStep(
+      { packId: ONEPIECE_PACK_ID, printGame: ONEPIECE_PRINT_GAME },
+      runOnepiecePackPipeline,
+    )(argv);
   },
 });
 

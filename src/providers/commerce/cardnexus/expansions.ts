@@ -1,5 +1,8 @@
 /**
  * Expansion id lookup by set code (cached per CardNexus game).
+ *
+ * Catalogue pages are offset-paginated (`pagination.hasMore`) — a single GET
+ * only returns the first page (~50–100), which silently drops modern JA sets.
  */
 
 import { cardnexusGet } from "./client";
@@ -9,13 +12,23 @@ export type CardnexusExpansion = {
   id: number;
   code: string;
   name: string;
+  cardCount?: number;
+  sealedProductCount?: number;
 };
 
 type ExpansionsPage = {
   data?: CardnexusExpansion[];
+  pagination?: {
+    offset?: number;
+    limit?: number;
+    total?: number;
+    hasMore?: boolean;
+  };
 };
 
 const cache = new Map<CardnexusGameId, Map<string, number>>();
+
+const PAGE_LIMIT = 100;
 
 function normCode(code: string): string {
   return code.trim().toLowerCase();
@@ -47,15 +60,22 @@ export async function loadExpansionIndex(
   const hit = cache.get(gameId);
   if (hit) return hit;
 
-  const page = await cardnexusGet<ExpansionsPage>(
-    `/games/${encodeURIComponent(gameId)}/expansions`,
-    opts,
-  );
   const map = new Map<string, number>();
-  for (const exp of page?.data ?? []) {
-    if (typeof exp?.id !== "number" || !exp.code) continue;
-    map.set(normCode(exp.code), exp.id);
+  let offset = 0;
+  for (let page = 0; page < 50; page++) {
+    const res = await cardnexusGet<ExpansionsPage>(
+      `/games/${encodeURIComponent(gameId)}/expansions?limit=${PAGE_LIMIT}&offset=${offset}`,
+      opts,
+    );
+    const rows = res?.data ?? [];
+    for (const exp of rows) {
+      if (typeof exp?.id !== "number" || !exp.code) continue;
+      map.set(normCode(exp.code), exp.id);
+    }
+    if (!rows.length || !res?.pagination?.hasMore) break;
+    offset += rows.length;
   }
+
   cache.set(gameId, map);
   return map;
 }

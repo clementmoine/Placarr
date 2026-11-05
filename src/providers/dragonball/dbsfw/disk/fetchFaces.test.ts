@@ -70,9 +70,13 @@ describe("fwListedUrl", () => {
 });
 
 describe("pickBestFwFace", () => {
-  it("has only the two sources this game publishes", () => {
+  it("lists publisher dumps plus CardNexus catalogue CDN", () => {
     // Deckplanet mirrors no Fusion World printing at all.
-    expect([...DBS_FW_FACE_SOURCES]).toEqual(["dbscards", "bandai"]);
+    expect([...DBS_FW_FACE_SOURCES]).toEqual([
+      "dbscards",
+      "bandai",
+      "cardnexus",
+    ]);
   });
 
   it("prefers the larger scan over Bandai's smaller one", () => {

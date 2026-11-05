@@ -47,11 +47,18 @@ const built = createEmptyLocalTcgProvider({
       "Yu-Gi-Oh! TCG → `data/yugioh/`. YGOPRODeck (EN+FR names, images) + ScanFlip FR (codes LDD-F…). Fullset.fr libellés FR set (pack_documents). Konami Neuron sans API publique.",
   },
   runPipeline: async (argv) => {
+    const { withCardnexusPackFacesStep } = await import(
+      /* webpackIgnore: true */
+      "@/providers/commerce/cardnexus/fillPackFaces"
+    );
     const { runYugiohPackPipeline } = await import(
       /* webpackIgnore: true */
       "./extract"
     );
-    return runYugiohPackPipeline(argv);
+    return withCardnexusPackFacesStep(
+      { packId: YUGIOH_PACK_ID, printGame: YUGIOH_PRINT_GAME },
+      runYugiohPackPipeline,
+    )(argv);
   },
 });
 

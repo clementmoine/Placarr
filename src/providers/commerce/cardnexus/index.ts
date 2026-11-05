@@ -1,8 +1,9 @@
 /**
- * CardNexus marketplace prices (EUR) for TCG printKeys.
+ * CardNexus marketplace — prices (EUR), visuals, SKUs for TCG printKeys.
  *
  * One module covers every Placarr game CardNexus catalogues — plug-and-play
- * via the registry, no per-franchise wiring.
+ * via the registry. faceChoice decides which visual wins when several sources
+ * dump `art.<source>.*`.
  */
 import {
   createMetadataHealthCheck,
@@ -94,7 +95,7 @@ export const cardnexusModule: ProviderModule = {
     id: "cardnexus",
     label: "CardNexus",
     types: ["tcg"],
-    capabilities: ["price"],
+    capabilities: ["price", "cover"],
     auth: { kind: "key", env: [CARDNEXUS_API_KEY_ENV], free: true },
     supplyMode: "api_live",
     canonical: false,
@@ -102,7 +103,7 @@ export const cardnexusModule: ProviderModule = {
     minRequestIntervalMs: CARDNEXUS_MIN_INTERVAL_MS,
     websiteUrl: "https://cardnexus.com/",
     apiKeyDashboardUrl: "https://cardnexus.com/settings/api-keys",
-    notes: `Cotes marketplace EUR (low EU / NM) pour ${supportedPrintGames().join(", ")}. Match printKey → expansion code + collector number. Clé ${CARDNEXUS_API_KEY_ENV} (docs.cardnexus.com).`,
+    notes: `Cotes marketplace EUR + visuels + SKUs (Cardmarket/TCGplayer) + scellés pour ${supportedPrintGames().join(", ")} (+ forks JA pokemon-japan / ygo-ocg). Match printKey → expansion + collector number. Clé ${CARDNEXUS_API_KEY_ENV} (docs.cardnexus.com).`,
   },
   healthCheck: cardnexusHealthCheck(),
   mappingProbe: {
@@ -127,3 +128,22 @@ export const cardnexusModule: ProviderModule = {
   },
   refreshBarcodePriceOffers: refresh,
 };
+
+export {
+  fetchCardnexusCardForPrintKey,
+  fetchCardnexusProductForPrintKey,
+} from "./match";
+export { listSealedForSetCode, listSealedForExpansionId } from "./sealed";
+export { fillCardnexusFaces, cardnexusImageDownloadUrl } from "./fillFaces";
+export {
+  fillCardnexusPackFaces,
+  listCardnexusPackGapTargets,
+  runCardnexusPackFacesStep,
+  withCardnexusPackFacesStep,
+} from "./fillPackFaces";
+export {
+  cardnexusGameIdForPrintGame,
+  cardnexusGameIdsForPrint,
+  supportedPrintGames,
+  supportedCardnexusGameIds,
+} from "./games";

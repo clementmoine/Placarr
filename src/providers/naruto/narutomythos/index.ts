@@ -55,11 +55,18 @@ const built = createEmptyLocalTcgProvider({
       "CICABOOM Naruto Mythos TCG → `data/naruto/mythos/`. Faces `art.official` (gallery API cards.narutotcgmythos.com). Complément sans watermark : narutomythos.com (`art.narutomythos`). LorenZone / Narutopia / ScanFlip en secours. Autre jeu que Carddass, Ninja Ranks, Ultra Challenge et Kayou.",
   },
   runPipeline: async (argv) => {
+    const { withCardnexusPackFacesStep } = await import(
+      /* webpackIgnore: true */
+      "@/providers/commerce/cardnexus/fillPackFaces"
+    );
     const { runNarutoMythosPackPipeline } = await import(
       /* webpackIgnore: true */
       "./extract"
     );
-    return runNarutoMythosPackPipeline(argv);
+    return withCardnexusPackFacesStep(
+      { packId: NARUTO_MYTHOS_PACK_ID, printGame: NARUTO_MYTHOS_PRINT_GAME },
+      runNarutoMythosPackPipeline,
+    )(argv);
   },
 });
 

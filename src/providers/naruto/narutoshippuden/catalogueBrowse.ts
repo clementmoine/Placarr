@@ -116,3 +116,31 @@ export function buildShippudenCatalogueBrowseRows(): CatalogueCardRow[] | null {
 export function clearShippudenCatalogueBrowseCache(): void {
   cache = null;
 }
+
+export type ShippudenCatalogueBrowsePageInput = {
+  langs?: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+};
+
+export function listShippudenCatalogueBrowsePage(
+  input: ShippudenCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  const index = createLocalPrintsIndex(NARUTO_SHIPPUDEN_PACK_ID);
+  if (!index.hasIdentityCorpus()) return { rows: [], total: 0 };
+  const page = index.listBrowsePage({
+    langs: input.langs?.length ? input.langs : ["ja"],
+    q: input.q,
+    offset: input.offset,
+    limit: input.limit,
+    missingArtOnly: input.missingArtOnly,
+    missingNameOnly: input.missingNameOnly,
+  });
+  return {
+    total: page.total,
+    rows: page.rows.map((row) => rowToCatalogueCard(row)),
+  };
+}

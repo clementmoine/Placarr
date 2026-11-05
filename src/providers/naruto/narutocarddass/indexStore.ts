@@ -7,7 +7,6 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  renameSync,
   statSync,
   unlinkSync,
   writeFileSync,
@@ -24,6 +23,7 @@ import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { canonicalDataPack, packCardsDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { migrateProductsSchema } from "@/providers/shared/sealedProducts/productsSqlite";
+import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { appearanceSetsOf } from "./identity";
@@ -343,6 +343,9 @@ function createSchema(db: DatabaseSync): void {
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
+
+    CREATE INDEX IF NOT EXISTS idx_print_titles_lang ON print_titles(lang);
+    CREATE INDEX IF NOT EXISTS idx_prints_set_code ON prints(set_code);
   `);
 }
 
@@ -748,22 +751,8 @@ export function writeNarutoCcgIndex(input: {
   // Identity rebuild replaces the whole file — keep sealed / faces / pack docs.
   copyCatalogSideTablesFromPrevious(dbPath, buildPath);
 
-  /*
-    Replace the live file only after dropping WAL/SHM sidecars. Renaming a
-    fresh `.building` over a WAL-mode DB while `-wal`/`-shm` still point at the
-    old inode leaves "database disk image is malformed" for every reader
-    (Next, integrity_check, the post-rebuild load).
-  */
-  unlinkSqliteSidecars(dbPath);
-  if (existsSync(dbPath)) {
-    try {
-      unlinkSync(dbPath);
-    } catch {
-      /* ignore — rename may still overwrite on same filesystem */
-    }
-  }
-  renameSync(buildPath, dbPath);
-  unlinkSqliteSidecars(dbPath);
+  // WAL sidecars must die with the old inode — see replaceSqliteLiveFile.
+  replaceSqliteLiveFile(dbPath, buildPath);
   /*
     Les lecteurs (Next) qui tenaient l'ancien fichier doivent le lâcher —
     sinon ils servent encore l'inode remplacé.
@@ -788,21 +777,6 @@ function refreshNarutoSealedPackshotsAfterCatalogRebuild(packId: string): void {
         error instanceof Error ? error.message : String(error)
       }`,
     );
-  }
-}
-
-/** Drop SQLite WAL/journal sidecars next to `dbPath` (best-effort). */
-function unlinkSqliteSidecars(dbPath: string): void {
-  for (const side of [
-    `${dbPath}-wal`,
-    `${dbPath}-shm`,
-    `${dbPath}-journal`,
-  ]) {
-    try {
-      unlinkSync(side);
-    } catch {
-      /* ignore */
-    }
   }
 }
 

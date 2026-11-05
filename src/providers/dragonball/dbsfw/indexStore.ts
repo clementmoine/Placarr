@@ -6,7 +6,6 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  renameSync,
   statSync,
   unlinkSync,
   writeFileSync,
@@ -25,6 +24,7 @@ import {
   printAssetsArtSql,
   printAssetsColumnNames,
 } from "@/providers/shared/cardCatalogue/printAssetsCore";
+import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
 
 import { dataRoot } from "@/lib/runtimeData";
 import { packCardDir } from "@/lib/packPaths";
@@ -253,7 +253,7 @@ export function writeDbsFwIndex(input: {
 
   db.close();
   try {
-    renameSync(tmpPath, dbPath);
+    replaceSqliteLiveFile(dbPath, tmpPath);
   } catch (error) {
     try {
       unlinkSync(tmpPath);
@@ -262,6 +262,7 @@ export function writeDbsFwIndex(input: {
     }
     throw error;
   }
+  resetDbsFwDbCache();
   return { dbPath, printCount: input.prints.length };
 }
 
@@ -414,6 +415,72 @@ export function listDbsFwRowsForLanguage(language = "en"): DbsFwBrowseRow[] {
                  COALESCE(p.grouping, '')`,
     )
     .all(lang) as DbsFwBrowseRow[];
+}
+
+export type DbsFwCatalogueBrowsePageOpts = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+};
+
+export function listDbsFwCatalogueBrowsePage(
+  opts: DbsFwCatalogueBrowsePageOpts,
+): { rows: DbsFwBrowseRow[]; total: number } {
+  const db = ensureDbsFwIndex();
+  if (!db) return { rows: [], total: 0 };
+  const langs = [
+    ...new Set(
+      opts.langs.map((lang) => lang.trim().toLowerCase()).filter(Boolean),
+    ),
+  ];
+  if (!langs.length) return { rows: [], total: 0 };
+  const offset = Math.max(0, Math.floor(opts.offset));
+  const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
+  const artSql = printAssetsArtSql(printAssetsColumnNames(db));
+  const params: unknown[] = [];
+  const where: string[] = [
+    `t.lang IN (${langs.map(() => "?").join(",")})`,
+  ];
+  params.push(...langs);
+  if (opts.missingArtOnly) {
+    where.push(`(${artSql} IS NULL OR TRIM(${artSql}) = '')`);
+  }
+  if (opts.missingNameOnly) {
+    where.push(`(t.full_name IS NULL OR TRIM(t.full_name) = '')`);
+  }
+  const q = opts.q?.trim().toLowerCase();
+  if (q) {
+    where.push(
+      `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
+        OR LOWER(COALESCE(t.full_name, '')) LIKE ?)`,
+    );
+    const like = `%${q}%`;
+    params.push(like, like, like, like);
+  }
+  const whereSql = where.join(" AND ");
+  const from = `prints p
+         JOIN print_titles t ON t.print_key = p.print_key
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang`;
+  const totalRow = db
+    .prepare(`SELECT COUNT(*) AS n FROM ${from} WHERE ${whereSql}`)
+    .get(...params) as { n: number };
+  const rows = db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+              p.grouping, t.lang, t.full_name AS fullName,
+              ${artSql} AS imageUrl
+         FROM ${from}
+        WHERE ${whereSql}
+        ORDER BY LOWER(p.set_code), CAST(p.number AS INTEGER), p.number,
+                 COALESCE(p.grouping, ''), t.lang
+        LIMIT ? OFFSET ?`,
+    )
+    .all(...params, limit, offset) as DbsFwBrowseRow[];
+  return { rows, total: Number(totalRow?.n ?? 0) };
 }
 
 /**

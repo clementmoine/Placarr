@@ -31,10 +31,10 @@ import {
 import { resolveSealedLang } from "@/providers/shared/sealedProducts/lang";
 import { curatedProductsContentsPath } from "@/providers/shared/sealedProducts/curatedContents";
 import { sealedStructureAttested } from "@/providers/shared/sealedProducts/contentLayers";
-import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
-import { resolveSealedProductFace } from "@/providers/shared/sealedProducts/resolveProductFace";
 import { assetsSealedProductRoleUrl } from "@/lib/packAssetUrls";
+import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
+import { listProductsCataloguePage } from "@/providers/shared/sealedProducts/productsSqlite";
 import { providerModuleProviding } from "@/providers/shared/packOwner";
 
 export type CatalogueSealedRow = {
@@ -294,35 +294,24 @@ function rowFromEntry(
   } else {
     count = String(printCount);
   }
+  /*
+    Browse: never readdir sealed product dirs. Prefer ledger role URLs; else
+    emit the canonical role URL (HTTP 404 if missing). Detail can probe disk.
+  */
   const image = !corpusPack
     ? entry.image
     : isSealedProductRoleUrl(entry.image, "face")
       ? entry.image
-      : resolveSealedPackshotUrl({
-          packId: corpusPack,
-          slug: entry.slug,
-          lang,
-          fallback: entry.image,
-        });
+      : entry.image?.trim()
+        ? entry.image
+        : assetsSealedProductRoleUrl(corpusPack, entry.slug, lang, "face");
   const imageBack = !corpusPack
     ? (entry.imageBack ?? null)
     : isSealedProductRoleUrl(entry.imageBack, "back")
       ? entry.imageBack
-      : (() => {
-          const hit = resolveSealedProductFace({
-            packId: corpusPack,
-            slug: entry.slug,
-            lang,
-            role: "back",
-          });
-          if (!hit) return entry.imageBack ?? null;
-          return assetsSealedProductRoleUrl(
-            corpusPack,
-            entry.slug,
-            hit.disk.lang,
-            "back",
-          );
-        })();
+      : entry.imageBack?.trim()
+        ? entry.imageBack
+        : null;
   return {
     productKey,
     slug: entry.slug,
@@ -740,6 +729,45 @@ export function listCatalogueProducts(
 ): ListCatalogueProductsResult {
   const offset = Math.max(0, Math.floor(input.offset ?? 0));
   const limit = Math.min(200, Math.max(1, Math.floor(input.limit ?? 48)));
+
+  /*
+    contentsUnknown needs structureAttested from entry JSON — keep the
+    in-memory path. Otherwise page from catalog.sqlite when present.
+  */
+  if (!input.contentsUnknown) {
+    const corpus = catalogueCorpusPack(input.pack);
+    const locales = cataloguePackInfo(input.pack)?.catalogueLocales;
+    const langs = [
+      ...new Set([
+        ...(locales ?? ["ja"]),
+        "fr",
+        "en",
+      ].map((lang) => lang.trim().toLowerCase()).filter(Boolean)),
+    ];
+    const page = listProductsCataloguePage(corpus, {
+      offset,
+      limit,
+      q: input.q,
+      langs,
+      missingPrice: input.missingPrice,
+    });
+    if (page) {
+      const labelSet = labelPrintSetFn(corpus);
+      const products = page.entries
+        .map(({ productKey, entry }) =>
+          rowFromEntry(productKey, entry, corpus, labelSet),
+        )
+        .filter((row) => isCatalogueProductLang(row.lang, locales));
+      return {
+        pack: input.pack,
+        total: page.total,
+        offset,
+        limit,
+        products,
+      };
+    }
+  }
+
   let rows = rowsForPack(input.pack);
   if (input.contentsUnknown) {
     rows = rows.filter((row) => !row.contentsKnown && !row.structureAttested);

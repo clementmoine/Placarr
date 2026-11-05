@@ -68,15 +68,15 @@ export function pokemonLiveCardDir(opts: {
 
 /**
  * Resolve an art basename from lang-first paper harvest, then Live set-first.
+ * Sync on purpose — callers build `/assets/…/{file}` URLs; an accidental
+ * `async` left Promises in the path (`…/[object%20Promise]`).
  */
-export async function resolvePokemonCatalogueArtFilename(
-  opts: {
-    setId: string;
-    lang: string;
-    localId: string;
-    cardsRoot?: string;
-  },
-): Promise<string | null> {
+export function resolvePokemonCatalogueArtFilename(opts: {
+  setId: string;
+  lang: string;
+  localId: string;
+  cardsRoot?: string;
+}): string | null {
   const paper = resolvePokemonArtFilename(
     pokemonPaperCardDir(opts),
     opts.lang,

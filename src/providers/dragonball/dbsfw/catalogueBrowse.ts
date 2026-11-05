@@ -10,7 +10,7 @@ import {
   DBS_FW_PACK_ID,
   dbsFwCardFolder,
   dbsFwDbPath,
-  dbsFwLocalArtFilename,
+  listDbsFwCatalogueBrowsePage,
   listDbsFwRowsForLanguage,
   type DbsFwBrowseRow,
 } from "@/providers/dragonball/dbsfw/indexStore";
@@ -36,19 +36,19 @@ function rowToCatalogueCard(row: DbsFwBrowseRow): CatalogueCardRow {
     number: row.number,
     grouping: row.grouping,
   });
-  const localFile = dbsFwLocalArtFilename(
-    { setCode: set, number: row.number, grouping: row.grouping },
-    lang,
-  );
+  const raw = row.imageUrl?.trim() || "";
+  const remote =
+    raw &&
+    (catalogUrlMayStayRemote(raw) || /^https?:\/\//i.test(raw))
+      ? raw
+      : null;
+  const localFile =
+    raw && !remote && !raw.includes("/")
+      ? raw
+      : null;
   const local = localFile
     ? assetsCardUrl(DBS_FW_PACK_ID, { set, lang, card }, localFile)
     : null;
-  const remote =
-    row.imageUrl?.trim() &&
-    (catalogUrlMayStayRemote(row.imageUrl) ||
-      /^https?:\/\//i.test(row.imageUrl))
-      ? row.imageUrl.trim()
-      : null;
   const artUrl = local ?? remote ?? "";
   const name = row.fullName?.trim() || undefined;
   const label = name ? `${set}-${card} — ${name}` : `${set}-${card}`;
@@ -96,4 +96,23 @@ export function buildDbsFwCatalogueBrowseRows(): CatalogueCardRow[] {
 
 export function clearDbsFwCatalogueBrowseCache(): void {
   cache = null;
+}
+
+export type DbsFwCatalogueBrowsePageInput = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+};
+
+export function listDbsFwCatalogueBrowsePageRows(
+  input: DbsFwCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  const page = listDbsFwCatalogueBrowsePage(input);
+  return {
+    total: page.total,
+    rows: page.rows.map((row) => rowToCatalogueCard(row)),
+  };
 }

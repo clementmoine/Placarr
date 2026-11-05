@@ -120,9 +120,9 @@ Wiring : `createCardFaceChoice` (packs), `resolvePrintFace` (probe dims sync),
 `coverProvenanceForArtFile` sur le module + stamp index
 (`enrichCardsIndexArtDimensions` / rebuild writers).
 
-**Gaps restants (hors chantier face-rank)** : sealed
-`preferPriorityOverScore` (productChoice) ; watermark SAMPLE / CLIP ;
-labels UI attribution vs host.
+**Gaps restants (hors chantier face-rank)** : CLIP-side SAMPLE /
+watermark detection beyond filename markers ; labels UI attribution vs host
+(mostly done via `destinationSiteDisplayLabel`).
 
 ## Checklist PR core
 

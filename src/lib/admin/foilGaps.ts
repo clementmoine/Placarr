@@ -4,7 +4,7 @@
 
 import "@/lib/foilMetaLoad.server";
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -213,8 +213,43 @@ function apkGatedItems(): FoilGapItem[] {
   return items;
 }
 
+function mtimeOrZero(filePath: string): number {
+  try {
+    return existsSync(filePath) ? statSync(filePath).mtimeMs : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Inputs that change the foil-status report — poll-friendly memo. */
+function foilGapsStamp(): string {
+  return [
+    mtimeOrZero(packShadersDir("pokemon")),
+    mtimeOrZero(foilPackDir("pokemon")),
+    mtimeOrZero(packShadersDir("lorcana")),
+    mtimeOrZero(foilPackDir("lorcana")),
+    mtimeOrZero(path.join(foilPackDir("lorcana"), "web")),
+    mtimeOrZero(path.join(packLogsDir("lorcana"), "web-source.json")),
+    mtimeOrZero(lorcanaTcgDbPath()),
+    mtimeOrZero(pokemonSimeyCssCardsDir("poke-holo")),
+    mtimeOrZero(pokemonSimeyCssCardsDir("poke-151")),
+  ].join(":");
+}
+
+let foilGapsCache: { stamp: string; report: FoilGapsReport } | null = null;
+
+/** Test seam. */
+export function clearFoilGapsCache(): void {
+  foilGapsCache = null;
+}
+
 /** Compute foil integration gaps from on-disk dump + ported registries. */
 export function computeFoilGaps(): FoilGapsReport {
+  const stamp = foilGapsStamp();
+  if (foilGapsCache && foilGapsCache.stamp === stamp) {
+    return foilGapsCache.report;
+  }
+
   const dumpFrags = listFragStems(packShadersDir("pokemon"));
   const foilNames = listPokemonFoilNames();
   const sheetAliases = Object.keys(POKEMON_MAT_ALIASES);
@@ -294,7 +329,7 @@ export function computeFoilGaps(): FoilGapsReport {
     ...apkGated,
   ];
 
-  return {
+  const report: FoilGapsReport = {
     finishedAt: new Date().toISOString(),
     docs: "docs/foil_new_finish.md",
     actionableCount: items.filter((i) => !i.apkGated).length + apkGated.length,
@@ -317,4 +352,6 @@ export function computeFoilGaps(): FoilGapsReport {
     },
     apkGated,
   };
+  foilGapsCache = { stamp, report };
+  return report;
 }

@@ -60,7 +60,16 @@ export function catalogueArtQualityMarker(artFile: string): number {
   const source = match?.[1] ?? "";
   if (source.includes("corrected") || /\.corrected\./i.test(name)) return 100;
   if (source.includes("reconstructed")) return 95;
+  // Bandai / official SAMPLE watermark faces — keep as fallback, never hero.
+  if (source.includes("sample") || /\.sample\./i.test(name)) return 20;
   return 50;
+}
+
+/** Near-1:1 embeds (DOCX / padded squares) lose to real packshot aspect. */
+export function catalogueNearSquareScale(width: number, height: number): number {
+  if (width <= 0 || height <= 0) return 1;
+  const ratio = Math.min(width, height) / Math.max(width, height);
+  return ratio >= 0.92 ? 0.15 : 1;
 }
 
 /**
@@ -85,9 +94,10 @@ export function catalogueFaceRankScore(input: CatalogueFaceRankInput): number {
 
   const w = input.width ?? 0;
   const h = input.height ?? 0;
+  const aspectScale = catalogueNearSquareScale(w, h);
   let score =
     w > 0 && h > 0
-      ? Math.floor(w * h * (marker / 50) * provenanceScale)
+      ? Math.floor(w * h * (marker / 50) * provenanceScale * aspectScale)
       : Math.floor(marker * provenanceScale);
 
   if (input.thumbOnly) score = Math.floor(score * 0.5);

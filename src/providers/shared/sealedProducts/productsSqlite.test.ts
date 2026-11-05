@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { emptyProductsIndex, type SealedProductEntry } from "./indexFormat";
 import {
+  listProductsCataloguePage,
   loadProductsIndexFromSqlite,
   readPackDocument,
   writePackDocument,
@@ -69,6 +70,58 @@ describe("productsSqlite", () => {
       "naruto:ni-0001",
     );
     expect(loaded!.products["demo::booster-s1"]?.priceCents).toBe(450);
+  });
+
+  it("pages products with stable total (SQL LIMIT/OFFSET)", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-page-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const index = emptyProductsIndex("demo");
+    for (let i = 0; i < 5; i++) {
+      const slug = `booster-s${i}`;
+      index.products[`demo::${slug}`] = {
+        slug,
+        path: `products/${slug}`,
+        kind: "booster",
+        behavior: "random_pack",
+        category: "booster",
+        name: `Booster ${i}`,
+        image: null,
+        imageBack: null,
+        setLogo: null,
+        setCode: `s${i}`,
+        lang: "fr",
+        releaseDate: null,
+        priceCents: i === 0 ? null : 100,
+        cardsPerPack: 5,
+        packsContained: 1,
+        guaranteedPrints: [],
+        randomPoolScope: "set",
+        randomPoolPrints: [],
+        declaredCardCount: null,
+        setCardCount: null,
+        contentsKnown: true,
+        containsPrintsIsPreview: false,
+        prints: [],
+      };
+    }
+    writeProductsIndexToSqlite("demo", index, { dbPath });
+
+    const first = listProductsCataloguePage(
+      "demo",
+      { offset: 0, limit: 2, langs: ["fr", "en"] },
+      dbPath,
+    );
+    expect(first).not.toBeNull();
+    expect(first!.total).toBe(5);
+    expect(first!.entries).toHaveLength(2);
+
+    const missing = listProductsCataloguePage(
+      "demo",
+      { offset: 0, limit: 10, missingPrice: true, langs: ["fr"] },
+      dbPath,
+    );
+    expect(missing!.total).toBe(1);
+    expect(missing!.entries[0]?.productKey).toBe("demo::booster-s0");
   });
 
   it("writes pack_documents under busy_timeout / WAL", () => {

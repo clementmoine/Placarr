@@ -2,14 +2,25 @@ import {
   createReadStream,
   createWriteStream,
   existsSync,
+  mkdirSync,
   promises as fs,
+  readFileSync,
+  writeFileSync,
 } from "node:fs";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import { httpGet } from "@/lib/http/httpClient";
 import { DatabaseSync } from "node:sqlite";
+
+import {
+  downloadRemoteArtifactIfChanged,
+  localArtifactUnchanged,
+  localFileFingerprintAsync,
+  recordLocalArtifactMeta,
+  type ArtifactSourceMeta,
+} from "@/providers/shared/remoteArtifactFreshness";
+import { unlinkSqliteSidecars } from "@/providers/shared/sqliteLiveReplace";
 
 import {
   extractLaunchBoxBlock,
@@ -53,10 +64,51 @@ function metadataXmlPath(): string {
   );
 }
 
+function sourceMetaPath(): string {
+  return path.join(cacheDir(), "source-meta.json");
+}
+
+function buildMetaPath(): string {
+  return path.join(cacheDir(), "build-meta.json");
+}
+
+function metadataZipUrl(): string {
+  return process.env.LAUNCHBOX_METADATA_ZIP_URL?.trim() || DEFAULT_ZIP_URL;
+}
+
 export type LaunchBoxIndexBuildOptions = {
   /** Intentional prebuild (admin Local indexes) — may download Metadata.zip. */
   allowDownload?: boolean;
+  /** Rebuild even when remote/local validators match. */
+  force?: boolean;
 };
+
+type LaunchBoxBuildMeta = {
+  version: 1;
+  schemaVersion: string;
+  source: ArtifactSourceMeta;
+  /** Fingerprint of Metadata.xml used for the last successful build. */
+  xmlFp?: string;
+  builtAt: string;
+};
+
+function readBuildMeta(): LaunchBoxBuildMeta | null {
+  try {
+    if (!existsSync(buildMetaPath())) return null;
+    const parsed = JSON.parse(
+      readFileSync(buildMetaPath(), "utf8"),
+    ) as LaunchBoxBuildMeta;
+    if (parsed?.version !== 1) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeBuildMeta(meta: LaunchBoxBuildMeta): void {
+  mkdirSync(path.dirname(buildMetaPath()), { recursive: true });
+  writeFileSync(buildMetaPath(), `${JSON.stringify(meta, null, 2)}\n`, "utf8");
+}
 
 /** Opt-in network fetch of Metadata.zip (env or build options). Default: off. */
 export function isLaunchBoxDownloadAllowed(
@@ -82,18 +134,6 @@ export function shouldBuildLaunchBoxIndex(
   );
 }
 
-function shouldDownloadLaunchBoxZip(
-  options?: LaunchBoxIndexBuildOptions,
-): boolean {
-  if (!isLaunchBoxDownloadAllowed(options)) return false;
-  const hasExplicitZipUrl = Boolean(
-    process.env.LAUNCHBOX_METADATA_ZIP_URL?.trim(),
-  );
-  const hasZip = existsSync(zipPath());
-
-  return hasExplicitZipUrl || (!hasZip && !existsSync(metadataXmlPath()));
-}
-
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
@@ -103,41 +143,16 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-async function downloadMetadataZip(): Promise<string | null> {
-  const zipUrl =
-    process.env.LAUNCHBOX_METADATA_ZIP_URL?.trim() || DEFAULT_ZIP_URL;
-  await fs.mkdir(cacheDir(), { recursive: true });
-
-  try {
-    const response = await httpGet<ArrayBuffer>(zipUrl, {
-      responseType: "arraybuffer",
-      timeout: 10 * 60_000,
-      maxContentLength: 256 * 1024 * 1024,
-    });
-    await fs.writeFile(zipPath(), Buffer.from(response.data));
-    return zipPath();
-  } catch (error) {
-    console.warn("[LaunchBox] Failed to download Metadata.zip", error);
-    return null;
-  }
-}
-
-async function extractMetadataXmlFromZip(
-  options?: LaunchBoxIndexBuildOptions,
+async function extractMetadataXmlFromZipFile(
+  zipFile: string,
 ): Promise<string | null> {
-  if (!(await fileExists(zipPath()))) {
-    if (!shouldDownloadLaunchBoxZip(options)) {
-      return null;
-    }
-    const downloaded = await downloadMetadataZip();
-    if (!downloaded) return null;
-  }
+  if (!(await fileExists(zipFile))) return null;
 
   await fs.mkdir(cacheDir(), { recursive: true });
   const target = metadataXmlPath();
 
   await new Promise<void>((resolve, reject) => {
-    const unzip = spawn("unzip", ["-p", zipPath(), "Metadata.xml"], {
+    const unzip = spawn("unzip", ["-p", zipFile, "Metadata.xml"], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     const output = createWriteStream(target);
@@ -155,23 +170,118 @@ async function extractMetadataXmlFromZip(
   return target;
 }
 
-async function resolveMetadataXmlSource(
+type LaunchBoxSourceResolution = {
+  xmlPath: string;
+  source: ArtifactSourceMeta;
+  /** True when zip/xml bytes may have changed since last build. */
+  changed: boolean;
+};
+
+/**
+ * Resolve Metadata.xml for an intentional build. When download is allowed,
+ * probe the remote zip and skip the GET when validators still match.
+ */
+async function resolveLaunchBoxSourceForBuild(
   options?: LaunchBoxIndexBuildOptions,
-): Promise<string | null> {
+): Promise<LaunchBoxSourceResolution | null> {
   const explicitXml = process.env.LAUNCHBOX_METADATA_XML?.trim();
   if (explicitXml) {
-    if (await fileExists(explicitXml)) {
-      return explicitXml;
+    if (!(await fileExists(explicitXml))) {
+      console.warn(`[LaunchBox] Configured XML file not found: ${explicitXml}`);
+      return null;
     }
-    console.warn(`[LaunchBox] Configured XML file not found: ${explicitXml}`);
+    const prior = readBuildMeta()?.source ?? null;
+    const unchanged = await localArtifactUnchanged(explicitXml, prior);
+    const source =
+      (unchanged && prior) ||
+      (await recordLocalArtifactMeta({
+        absPath: explicitXml,
+        metaPath: sourceMetaPath(),
+      }));
+    if (!source) return null;
+    return { xmlPath: explicitXml, source, changed: !unchanged };
+  }
+
+  if (isLaunchBoxDownloadAllowed(options)) {
+    const url = metadataZipUrl();
+    const downloaded = await downloadRemoteArtifactIfChanged({
+      url,
+      destPath: zipPath(),
+      metaPath: sourceMetaPath(),
+      timeoutMs: 10 * 60_000,
+      maxContentLength: 256 * 1024 * 1024,
+    });
+    if (downloaded) {
+      const cachedXml = metadataXmlPath();
+      if (downloaded.changed || !(await fileExists(cachedXml))) {
+        const extracted = await extractMetadataXmlFromZipFile(downloaded.path);
+        if (!extracted) return null;
+        return {
+          xmlPath: extracted,
+          source: downloaded.meta,
+          changed: true,
+        };
+      }
+      return {
+        xmlPath: cachedXml,
+        source: downloaded.meta,
+        changed: false,
+      };
+    }
+    // Fall through to local zip/xml if remote failed.
+  }
+
+  if (await fileExists(zipPath())) {
+    const prior = readBuildMeta()?.source ?? null;
+    const unchanged = await localArtifactUnchanged(zipPath(), prior);
+    const cachedXml = metadataXmlPath();
+    if (!unchanged || !(await fileExists(cachedXml))) {
+      const extracted = await extractMetadataXmlFromZipFile(zipPath());
+      if (!extracted) return null;
+      const source = await recordLocalArtifactMeta({
+        absPath: zipPath(),
+        metaPath: sourceMetaPath(),
+      });
+      if (!source) return null;
+      return { xmlPath: extracted, source, changed: true };
+    }
+    return {
+      xmlPath: cachedXml,
+      source: prior!,
+      changed: false,
+    };
   }
 
   const cachedXml = metadataXmlPath();
   if (await fileExists(cachedXml)) {
-    return cachedXml;
+    const prior = readBuildMeta()?.source ?? null;
+    const unchanged = await localArtifactUnchanged(cachedXml, prior);
+    const source =
+      (unchanged && prior) ||
+      (await recordLocalArtifactMeta({
+        absPath: cachedXml,
+        metaPath: sourceMetaPath(),
+      }));
+    if (!source) return null;
+    return { xmlPath: cachedXml, source, changed: !unchanged };
   }
 
-  return extractMetadataXmlFromZip(options);
+  return null;
+}
+
+async function openExistingLaunchBoxIndex(): Promise<DatabaseSync | null> {
+  if (memoryDb) return memoryDb;
+  if (activeDbConnection) return activeDbConnection;
+  const file = indexPath();
+  if (!(await fileExists(file))) return null;
+  try {
+    const db = new DatabaseSync(file);
+    if (!isIndexSchemaCurrent(db)) return null;
+    activeDbConnection = db;
+    return db;
+  } catch {
+    return null;
+  }
 }
 
 function createIndexSchema(db: DatabaseSync): void {
@@ -382,21 +492,56 @@ async function buildSqliteIndex(
 export async function buildLaunchBoxIndex(
   options?: LaunchBoxIndexBuildOptions,
 ): Promise<DatabaseSync | null> {
-  const xmlPath = await resolveMetadataXmlSource(options);
-  if (!xmlPath) {
+  const resolved = await resolveLaunchBoxSourceForBuild(options);
+  if (!resolved) {
     console.warn(
       "[LaunchBox] No Metadata.xml/zip — sync LaunchBox from admin Local indexes (download is opt-in, not at scan)",
     );
     return null;
   }
 
-  console.info(`[LaunchBox] Building SQLite index from ${xmlPath}...`);
+  const xmlFp = await localFileFingerprintAsync(resolved.xmlPath);
+  const priorBuild = readBuildMeta();
+  const sourceUnchanged = !resolved.changed;
+  const xmlUnchanged =
+    Boolean(xmlFp) &&
+    Boolean(priorBuild?.xmlFp) &&
+    priorBuild!.xmlFp === xmlFp;
+  const schemaMatches =
+    priorBuild?.schemaVersion === LAUNCHBOX_INDEX_SCHEMA_VERSION;
+
+  if (
+    !options?.force &&
+    sourceUnchanged &&
+    xmlUnchanged &&
+    schemaMatches
+  ) {
+    const existing = await openExistingLaunchBoxIndex();
+    if (existing) {
+      console.info(
+        "[LaunchBox] Source unchanged — skipping Metadata download / index rebuild",
+      );
+      return existing;
+    }
+  }
+
+  console.info(`[LaunchBox] Building SQLite index from ${resolved.xmlPath}...`);
   const file = indexPath();
   await fs.mkdir(path.dirname(file), { recursive: true });
 
   try {
+    if (activeDbConnection) {
+      try {
+        activeDbConnection.close();
+      } catch {
+        /* ignore */
+      }
+      activeDbConnection = null;
+    }
     if (await fileExists(file)) {
+      unlinkSqliteSidecars(file);
       await fs.unlink(file);
+      unlinkSqliteSidecars(file);
     }
   } catch (err) {
     console.warn("[LaunchBox] Error unlinking old database", err);
@@ -404,12 +549,19 @@ export async function buildLaunchBoxIndex(
 
   try {
     const db = new DatabaseSync(file);
-    const stats = await buildSqliteIndex(xmlPath, db);
+    const stats = await buildSqliteIndex(resolved.xmlPath, db);
     console.info(
       `[LaunchBox] SQLite index ready (${stats.games} games, ${stats.alternateNames} alternate names, ${stats.images} images)`,
     );
 
     activeDbConnection = db;
+    writeBuildMeta({
+      version: 1,
+      schemaVersion: LAUNCHBOX_INDEX_SCHEMA_VERSION,
+      source: resolved.source,
+      ...(xmlFp ? { xmlFp } : {}),
+      builtAt: new Date().toISOString(),
+    });
 
     const legacyJson = path.join(cacheDir(), "games-index.json");
     const legacySqlite = path.join(cacheDir(), "games-index.sqlite");

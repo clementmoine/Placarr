@@ -138,3 +138,24 @@ export function clearMtgCatalogueBrowseCache(): void {
   cache = null;
   clearMtgArtUrlCache();
 }
+
+export type MtgCatalogueBrowsePageInput = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+};
+
+export function listMtgCatalogueBrowsePage(
+  input: MtgCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  const index = createLocalPrintsIndex(MTG_PACK_ID);
+  if (!index.hasIdentityCorpus()) return { rows: [], total: 0 };
+  const page = index.listBrowsePage(input);
+  return {
+    total: page.total,
+    rows: page.rows.map((row) => rowToCatalogueCard(row)),
+  };
+}

@@ -15,12 +15,17 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { packCatalogDb } from "@/lib/packPaths";
+import {
+  replaceSqliteLiveFile,
+  unlinkSqliteSidecars,
+} from "@/providers/shared/sqliteLiveReplace";
 
 import {
   isProductsIndexV1,
   type ProductsIndexV1,
   type SealedProductEntry,
 } from "./indexFormat";
+import { SEALED_KIND_ORDER, type SealedKind } from "./kinds";
 
 /** Wait for writers (Sync / browse / worker) instead of failing SQLITE_BUSY. */
 const PACK_SQLITE_BUSY_MS = 30_000;
@@ -136,20 +141,10 @@ export function migrateProductsSchema(db: DatabaseSync): void {
   `);
 }
 
-function unlinkSqliteSidecars(dbPath: string): void {
-  for (const side of [`${dbPath}-wal`, `${dbPath}-shm`, `${dbPath}-journal`]) {
-    try {
-      unlinkSync(side);
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
 /**
  * Quarantine a malformed catalog, copy surviving non-product tables into a
  * fresh file, and swap it in. Next sealed write can then populate products.
- * Same WAL/sidecar discipline as Naruto identity rebuild.
+ * Same WAL/sidecar discipline as identity rebuild (`replaceSqliteLiveFile`).
  */
 export function salvageCorruptPackCatalog(dbPath: string): {
   quarantined: string;
@@ -176,9 +171,7 @@ export function salvageCorruptPackCatalog(dbPath: string): {
     migrateProductsSchema(dest);
     if (!existsSync(quarantine)) {
       dest.close();
-      unlinkSqliteSidecars(dbPath);
-      renameSync(building, dbPath);
-      unlinkSqliteSidecars(dbPath);
+      replaceSqliteLiveFile(dbPath, building);
       return { quarantined: quarantine, copiedTables };
     }
 
@@ -268,16 +261,7 @@ export function salvageCorruptPackCatalog(dbPath: string): {
     }
   }
 
-  unlinkSqliteSidecars(dbPath);
-  if (existsSync(dbPath)) {
-    try {
-      unlinkSync(dbPath);
-    } catch {
-      /* ignore */
-    }
-  }
-  renameSync(building, dbPath);
-  unlinkSqliteSidecars(dbPath);
+  replaceSqliteLiveFile(dbPath, building);
   return { quarantined: quarantine, copiedTables };
 }
 
@@ -355,6 +339,17 @@ export function writeProductsIndexToSqlite(
     return writeProductsIndexToSqliteOnce(packId, index, dbPath);
   } catch (error) {
     if (!isSqliteCorrupt(error)) throw error;
+    /*
+      Orphan `-wal`/`-shm` after an identity rebuild rename often surfaces as
+      SQLITE_CORRUPT. Drop sidecars and retry once before quarantine salvage
+      (which can wipe prints when ATTACH finds no readable tables).
+    */
+    unlinkSqliteSidecars(dbPath);
+    try {
+      return writeProductsIndexToSqliteOnce(packId, index, dbPath);
+    } catch (retryErr) {
+      if (!isSqliteCorrupt(retryErr)) throw retryErr;
+    }
     const salvage = salvageCorruptPackCatalog(dbPath);
     console.warn(
       `[productsSqlite] ${packId}: catalog malformed — quarantined ${path.basename(salvage.quarantined)}; kept [${salvage.copiedTables.join(", ") || "—"}]; rewriting products`,
@@ -438,6 +433,116 @@ export function catalogHasProductsCorpus(packId: string): boolean {
       db.close();
     } catch {
       /* corrupt handle */
+    }
+  }
+}
+
+function sealedKindOrderSql(): string {
+  const cases = (Object.keys(SEALED_KIND_ORDER) as SealedKind[])
+    .map((kind) => `WHEN '${kind}' THEN ${SEALED_KIND_ORDER[kind]}`)
+    .join(" ");
+  return `CASE kind ${cases} ELSE 999 END`;
+}
+
+export type ProductsCataloguePageOpts = {
+  offset: number;
+  limit: number;
+  q?: string;
+  /** Lowercase locale allowlist; empty = no lang filter. */
+  langs?: readonly string[];
+  missingPrice?: boolean;
+};
+
+/**
+ * Admin Scellés page — SQL LIMIT/OFFSET over `products` (no full index load).
+ */
+export function listProductsCataloguePage(
+  packId: string,
+  opts: ProductsCataloguePageOpts,
+  dbPath = packCatalogDb(packId),
+): {
+  entries: Array<{ productKey: string; entry: SealedProductEntry }>;
+  total: number;
+} | null {
+  const db = openPackSqliteRead(dbPath);
+  if (!db) return null;
+  try {
+    const has = db
+      .prepare(
+        `SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = 'products'`,
+      )
+      .get() as { ok?: number } | undefined;
+    if (!has?.ok) return null;
+
+    const offset = Math.max(0, Math.floor(opts.offset));
+    const limit = Math.max(1, Math.min(200, Math.floor(opts.limit)));
+    const params: unknown[] = [];
+    const where: string[] = ["1=1"];
+
+    const langs = [
+      ...new Set(
+        (opts.langs ?? [])
+          .map((lang) => lang.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ];
+    if (langs.length) {
+      where.push(
+        `(lang IS NULL OR TRIM(lang) = '' OR LOWER(lang) IN (${langs.map(() => "?").join(",")}))`,
+      );
+      params.push(...langs);
+    }
+    if (opts.missingPrice) {
+      where.push(`(price_cents IS NULL OR price_cents <= 0)`);
+    }
+    const q = opts.q?.trim().toLowerCase();
+    if (q) {
+      where.push(
+        `(LOWER(product_key) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(COALESCE(name, '')) LIKE ?
+          OR LOWER(COALESCE(set_code, '')) LIKE ? OR LOWER(COALESCE(kind, '')) LIKE ?)`,
+      );
+      const like = `%${q}%`;
+      params.push(like, like, like, like, like);
+    }
+
+    const whereSql = where.join(" AND ");
+    const totalRow = db
+      .prepare(`SELECT COUNT(*) AS n FROM products WHERE ${whereSql}`)
+      .get(...params) as { n: number };
+    const rows = db
+      .prepare(
+        `SELECT product_key AS productKey, entry_json AS entryJson
+           FROM products
+          WHERE ${whereSql}
+          ORDER BY ${sealedKindOrderSql()},
+                   LOWER(COALESCE(set_code, slug)), slug
+          LIMIT ? OFFSET ?`,
+      )
+      .all(...params, limit, offset) as Array<{
+      productKey: string;
+      entryJson: string;
+    }>;
+
+    const entries: Array<{ productKey: string; entry: SealedProductEntry }> =
+      [];
+    for (const row of rows) {
+      try {
+        entries.push({
+          productKey: row.productKey,
+          entry: JSON.parse(row.entryJson) as SealedProductEntry,
+        });
+      } catch {
+        /* skip bad row */
+      }
+    }
+    return { entries, total: Number(totalRow?.n ?? 0) };
+  } catch {
+    return null;
+  } finally {
+    try {
+      db.close();
+    } catch {
+      /* ignore */
     }
   }
 }

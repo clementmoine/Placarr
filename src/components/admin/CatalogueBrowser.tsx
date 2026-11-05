@@ -531,7 +531,14 @@ export function CatalogueBrowser({
                 <CatalogueCardArt card={card} fr={fr} />
                 <figcaption className="truncate text-[11px] text-muted-foreground">
                   {card.label}
-                  {card.lang && card.lang !== "—" ? (
+                  {/*
+                    Pack/set backs already encode locale in the label
+                    (« Dos · pack · JA ») — do not re-append lang / « · back ».
+                  */}
+                  {card.kind !== "pack-back" &&
+                  card.kind !== "set-back" &&
+                  card.lang &&
+                  card.lang !== "—" ? (
                     <span className="ml-1 font-medium uppercase text-foreground/80">
                       {` ${card.lang}`}
                     </span>
@@ -564,9 +571,6 @@ export function CatalogueBrowser({
                   ) : null}
                   {card.hasFoil ? (
                     <span className="ml-1 text-foreground/70">· foil</span>
-                  ) : null}
-                  {card.kind === "pack-back" || card.kind === "set-back" ? (
-                    <span className="ml-1 text-foreground/70">· back</span>
                   ) : null}
                   {debugTags.map((tag) => (
                     <span

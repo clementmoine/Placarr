@@ -11,10 +11,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { resolveCoverProvenance } from "@/core/enrich/media/coverProvenance";
-import {
-  catalogueFaceRankScore,
-  pickBestCatalogueFace,
-} from "@/core/enrich/media/catalogueFaceRank";
+import { pickBestCatalogueFace } from "@/core/enrich/media/catalogueFaceRank";
 
 /**
  * Named files a catalogue folder can hold: `art.<source>.<ext>`,
@@ -78,9 +75,8 @@ export function createCardFaceChoice<S extends string>(config: {
   /** Every source a stored face can come from. */
   sources: readonly S[];
   /**
-   * Optional per-locale declaration-order when `preferPriorityOverScore` is
-   * set (sealed packshots still migrating). Print faces omit this — ranking
-   * is [`pickBestCatalogueFace`] only.
+   * Optional declaration-order for score ties (`tieBreakIds`). Print and
+   * sealed faces both rank via [`pickBestCatalogueFace`] only.
    */
   priority?: Readonly<Record<string, readonly S[]>>;
   /**
@@ -99,11 +95,6 @@ export function createCardFaceChoice<S extends string>(config: {
    * par le score d'affichage (padded thumbs vs real pack photos).
    */
   areaDecidesBelow?: number;
-  /**
-   * When true, locale `priority` beats core score within the same provenance
-   * tier (sealed packshots). Print faces must leave this unset.
-   */
-  preferPriorityOverScore?: boolean;
 }): CardFaceChoice<S> {
   const { sources } = config;
   const priority = config.priority ?? {};
@@ -114,13 +105,15 @@ export function createCardFaceChoice<S extends string>(config: {
         config.sourceCoverProvenance?.(source) ?? defaultProvenance,
     });
   const areaFloor = config.areaDecidesBelow ?? 0;
-  const priorityFirst = Boolean(config.preferPriorityOverScore);
 
-  /** Rank within a locale; unlisted sources sort last, in declaration order. */
-  const priorityOf = (source: S, lang: string): number => {
+  /** Locale declaration order → tie-break ids (earlier wins on equal score). */
+  const tieBreakForLang = (lang: string): readonly S[] => {
     const list = priority[lang.toLowerCase()];
-    const rank = list?.indexOf(source) ?? -1;
-    return rank >= 0 ? rank : sources.length + sources.indexOf(source);
+    if (list?.length) {
+      const rest = sources.filter((s) => !list.includes(s));
+      return [...list, ...rest];
+    }
+    return sources;
   };
 
   /*
@@ -160,44 +153,6 @@ export function createCardFaceChoice<S extends string>(config: {
     faces: readonly StoredFace<S>[],
     lang = "fr",
   ): S | null => {
-    /*
-      Sealed migration path only: locale priority may beat score. Print faces
-      never set preferPriorityOverScore — they use core criteria exclusively.
-    */
-    if (priorityFirst) {
-      const measurable = faces.filter((f) => f.width > 0 && f.height > 0);
-      if (!measurable.length) return null;
-      let best: StoredFace<S> | null = null;
-      let bestScore = -1;
-      for (const face of measurable) {
-        const coverProvenance = provenanceOf(face.source);
-        const score = catalogueFaceRankScore({
-          artFile: face.file ?? faceFilename(face.source),
-          width: face.width,
-          height: face.height,
-          coverProvenance,
-        });
-        if (!best) {
-          best = face;
-          bestScore = score;
-          continue;
-        }
-        const facePri = priorityOf(face.source, lang);
-        const bestPri = priorityOf(best.source, lang);
-        if (facePri < bestPri) {
-          best = face;
-          bestScore = score;
-          continue;
-        }
-        if (facePri > bestPri) continue;
-        if (score > bestScore) {
-          best = face;
-          bestScore = score;
-        }
-      }
-      return best?.source ?? null;
-    }
-
     const picked = pickBestCatalogueFace(
       faces.map((face) => ({
         id: face.source,
@@ -208,7 +163,7 @@ export function createCardFaceChoice<S extends string>(config: {
       })),
       {
         areaDecidesBelow: areaFloor,
-        tieBreakIds: sources,
+        tieBreakIds: tieBreakForLang(lang),
       },
     );
     return (picked?.id as S | undefined) ?? null;

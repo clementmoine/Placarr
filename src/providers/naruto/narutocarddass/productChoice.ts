@@ -405,12 +405,6 @@ const choice = createCardFaceChoice<NarutoProductSource>({
     pack. Sous ce plancher, la taille tranche.
   */
   areaDecidesBelow: 200_000,
-  /*
-    Potomac / ViaLudi / UltraJeux : la priorité locale doit battre un embed
-    Drive 1600×1600 (carré rembourré) qui scorait mieux malgré un moins bon
-    packshot.
-  */
-  preferPriorityOverScore: true,
 });
 
 export const NARUTO_PRODUCT_ROLES = CARD_FACE_ROLES;

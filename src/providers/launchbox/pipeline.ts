@@ -5,6 +5,7 @@ import type {
   ProviderCatalogRefreshOpts,
   ProviderCatalogStatus,
 } from "@/types/providerModule";
+import { catalogMaxAgeMs } from "@/providers/shared/catalogCorpus";
 
 import { buildLaunchBoxIndex, getLaunchBoxIndexPath } from "./indexStore";
 
@@ -24,7 +25,8 @@ export function launchBoxCatalogStatus(): ProviderCatalogStatus {
     const mtime = statSync(file).mtimeMs;
     return {
       empty: false,
-      stale: false,
+      // Age wake-up for auto-sync; refresh no-ops when remote validators match.
+      stale: Date.now() - mtime > catalogMaxAgeMs(),
       lastSyncAt: new Date(mtime).toISOString(),
     };
   } catch {

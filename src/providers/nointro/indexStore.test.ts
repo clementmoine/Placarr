@@ -217,6 +217,17 @@ describe("No-Intro indexStore", () => {
     const hits = lookupNoIntroGamesByChecksum(built!, { crc: "46df91ad" });
     expect(hits[0]?.name).toBe("Tetris (World) (Rev 1)");
 
+    const mtimeBefore = (await fs.stat(sqliteFile)).mtimeMs;
+    __resetNoIntroIndexForTests();
+    const again = await buildNoIntroIndex({
+      allowDownload: true,
+      packPath: zipPath,
+      datPath: datsDir,
+    });
+    expect(again).not.toBeNull();
+    const mtimeAfter = (await fs.stat(sqliteFile)).mtimeMs;
+    expect(mtimeAfter).toBe(mtimeBefore);
+
     await fs.rm(dir, { recursive: true, force: true });
   });
 });

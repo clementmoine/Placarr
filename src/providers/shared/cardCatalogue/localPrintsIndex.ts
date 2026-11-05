@@ -113,6 +113,18 @@ export type LocalPrintsIndex = {
    * checklist (même sqlite que searchRows).
    */
   listRowsForLanguage: (language?: string) => LocalPrintSearchRow[];
+  /**
+   * Admin Catalogue page — SQL LIMIT/OFFSET (no full-language `.all()`).
+   */
+  listBrowsePage: (opts: {
+    langs: readonly string[];
+    q?: string;
+    offset: number;
+    limit: number;
+    missingArtOnly?: boolean;
+    missingNameOnly?: boolean;
+    printed?: "all" | "printed" | "unprinted";
+  }) => { rows: LocalPrintSearchRow[]; total: number };
   /** True when `catalog.sqlite` exists and exposes LocalPrints `art` assets. */
   hasIdentityCorpus: () => boolean;
   writePrints: (rows: readonly LocalPrintWrite[]) => {
@@ -270,6 +282,7 @@ export function createPrintsSchema(db: DatabaseSync): void {
 
     CREATE INDEX IF NOT EXISTS idx_prints_set ON prints(set_code);
     CREATE INDEX IF NOT EXISTS idx_print_sets_set ON print_sets(set_code);
+    CREATE INDEX IF NOT EXISTS idx_print_titles_lang ON print_titles(lang);
   `);
   migrateLocalPrintsSchema(db);
   migrateProductsSchema(db);
@@ -570,6 +583,78 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
         .all(lang) as LocalPrintSearchRow[];
     } catch {
       return [];
+    }
+  };
+
+  const listBrowsePage = (opts: {
+    langs: readonly string[];
+    q?: string;
+    offset: number;
+    limit: number;
+    missingArtOnly?: boolean;
+    missingNameOnly?: boolean;
+    printed?: "all" | "printed" | "unprinted";
+  }): { rows: LocalPrintSearchRow[]; total: number } => {
+    const db = ensure();
+    if (!db) return { rows: [], total: 0 };
+    const langs = [
+      ...new Set(
+        opts.langs.map((lang) => lang.trim().toLowerCase()).filter(Boolean),
+      ),
+    ];
+    if (!langs.length) return { rows: [], total: 0 };
+    const offset = Math.max(0, Math.floor(opts.offset));
+    const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
+    const params: unknown[] = [];
+    const where: string[] = [
+      `t.lang IN (${langs.map(() => "?").join(",")})`,
+    ];
+    params.push(...langs);
+    if (opts.printed === "printed") {
+      where.push("COALESCE(a.printed, 1) != 0");
+    } else if (opts.printed === "unprinted") {
+      where.push("COALESCE(a.printed, 1) = 0");
+    }
+    if (opts.missingArtOnly) {
+      where.push(
+        `(a.art IS NULL OR TRIM(a.art) = '') AND (a.thumb IS NULL OR TRIM(a.thumb) = '')`,
+      );
+    }
+    if (opts.missingNameOnly) {
+      where.push(`(t.full_name IS NULL OR TRIM(t.full_name) = '')`);
+    }
+    const q = opts.q?.trim().toLowerCase();
+    if (q) {
+      where.push(
+        `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
+          OR LOWER(COALESCE(t.full_name, '')) LIKE ?)`,
+      );
+      const like = `%${q}%`;
+      params.push(like, like, like, like);
+    }
+    const whereSql = where.join(" AND ");
+    try {
+      const totalRow = db
+        .prepare(
+          `SELECT COUNT(*) AS n
+             FROM prints p
+             JOIN print_titles t ON t.print_key = p.print_key
+             LEFT JOIN print_assets a
+                    ON a.print_key = p.print_key AND a.lang = t.lang
+            WHERE ${whereSql}`,
+        )
+        .get(...params) as { n: number };
+      const rows = db
+        .prepare(
+          `${SELECT_ROW}
+            WHERE ${whereSql}
+            ORDER BY LOWER(p.set_code), CAST(p.number AS INTEGER), p.number, t.lang
+            LIMIT ? OFFSET ?`,
+        )
+        .all(...params, limit, offset) as LocalPrintSearchRow[];
+      return { rows, total: Number(totalRow?.n ?? 0) };
+    } catch {
+      return { rows: [], total: 0 };
     }
   };
 
@@ -884,6 +969,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     lookupAssets,
     listSets,
     listRowsForLanguage,
+    listBrowsePage,
     hasIdentityCorpus,
     writePrints,
     prunePrintsExcept,

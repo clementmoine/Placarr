@@ -95,12 +95,11 @@ describe("areaDecidesBelow", () => {
     ).toBe("boutique");
   });
 
-  it("preferPriorityOverScore lets locale order beat a larger padded square", () => {
+  it("demotes near-square padded embeds vs a real packshot aspect", () => {
     const sealed = createCardFaceChoice<"potomac" | "drive">({
       sources: ["potomac", "drive"],
       priority: { en: ["potomac", "drive"] },
       areaDecidesBelow: 200_000,
-      preferPriorityOverScore: true,
     });
     expect(
       sealed.pickBestFace(

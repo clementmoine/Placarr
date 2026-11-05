@@ -12,6 +12,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { dataRoot } from "@/lib/runtimeData";
+import { unlinkSqliteSidecars } from "@/providers/shared/sqliteLiveReplace";
 
 export const POKEMON_PACK_ID = "pokemon";
 
@@ -66,9 +67,13 @@ export function ensurePokemonDbLayout(): void {
     !tableExists(identity, "prints")
   ) {
     if (!existsSync(live)) {
+      unlinkSqliteSidecars(identity);
+      unlinkSqliteSidecars(live);
       renameSync(identity, live);
+      unlinkSqliteSidecars(live);
     } else {
       // Stale Live dump blocking the identity name — remove after live.sqlite exists.
+      unlinkSqliteSidecars(identity);
       try {
         unlinkSync(identity);
       } catch {
@@ -80,9 +85,13 @@ export function ensurePokemonDbLayout(): void {
   // Pre-contract identity file → catalog.sqlite.
   if (existsSync(legacyPrints)) {
     if (!existsSync(identity)) {
+      unlinkSqliteSidecars(legacyPrints);
+      unlinkSqliteSidecars(identity);
       renameSync(legacyPrints, identity);
+      unlinkSqliteSidecars(identity);
     } else if (tableExists(identity, "prints")) {
       // Duplicate leftover after a prior migrate.
+      unlinkSqliteSidecars(legacyPrints);
       try {
         unlinkSync(legacyPrints);
       } catch {

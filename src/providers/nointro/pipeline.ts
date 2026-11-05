@@ -5,6 +5,7 @@ import type {
   ProviderCatalogRefreshOpts,
   ProviderCatalogStatus,
 } from "@/types/providerModule";
+import { catalogMaxAgeMs } from "@/providers/shared/catalogCorpus";
 
 import { buildNoIntroIndex, getNoIntroIndexPath } from "./indexStore";
 import { isNoIntroDatSourceConfigured } from "./syncDatPack";
@@ -35,7 +36,8 @@ export function noIntroCatalogStatus(): ProviderCatalogStatus {
     const mtime = statSync(file).mtimeMs;
     return {
       empty: false,
-      stale: false,
+      // Age wake-up for auto-sync; refresh no-ops when pack validators match.
+      stale: Date.now() - mtime > catalogMaxAgeMs(),
       lastSyncAt: new Date(mtime).toISOString(),
     };
   } catch {

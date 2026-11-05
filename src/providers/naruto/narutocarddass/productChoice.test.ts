@@ -94,7 +94,7 @@ describe("naruto product filenames", () => {
 });
 
 describe("pickBestNarutoProductDump", () => {
-  it("falls back to locale priority when dumps have no pixels", () => {
+  it("skips unmeasurable dumps (no source-name fallback)", () => {
     expect(
       pickBestNarutoProductDump(
         [
@@ -114,9 +114,8 @@ describe("pickBestNarutoProductDump", () => {
         ],
         "fr",
       ),
-    ).toBe("vialudibunda");
-    // `badge` est passé en tête le 2026-08-20 : c'est le seul badge de série
-    // découpé, et il ne concurrence aucun packshot — il ne sert qu'au logo.
+    ).toBeNull();
+    // Locale lists remain the tie-break order when scores are equal.
     expect(NARUTO_PRODUCT_PRIORITY.fr[0]).toBe("badge");
     expect(NARUTO_PRODUCT_PRIORITY.fr[1]).toBe("reconstructed");
     expect(NARUTO_PRODUCT_PRIORITY.fr[2]).toBe("vialudibunda");

@@ -3,9 +3,21 @@
  * Scan path opens an existing index; never downloads DATs.
  * admin Local indexes may sync a DAT pack zip first (allowDownload).
  */
-import { existsSync, promises as fs } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  promises as fs,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+
+import {
+  filesListFingerprint,
+  type ArtifactSourceMeta,
+} from "@/providers/shared/remoteArtifactFreshness";
+import { unlinkSqliteSidecars } from "@/providers/shared/sqliteLiveReplace";
 
 import {
   parseNoIntroDatXml,
@@ -246,7 +258,39 @@ export type NoIntroIndexBuildOptions = {
   packPath?: string;
   /** Remote zip URL override (else `NOINTRO_DAT_PACK_URL`). */
   packUrl?: string;
+  /** Rebuild even when pack / DAT fingerprints match. */
+  force?: boolean;
 };
+
+type NoIntroBuildMeta = {
+  version: 1;
+  schemaVersion: string;
+  datsFp: string;
+  pack?: ArtifactSourceMeta;
+  builtAt: string;
+};
+
+function buildMetaPath(): string {
+  return path.join(cacheDir(), "build-meta.json");
+}
+
+function readBuildMeta(): NoIntroBuildMeta | null {
+  try {
+    if (!existsSync(buildMetaPath())) return null;
+    const parsed = JSON.parse(
+      readFileSync(buildMetaPath(), "utf8"),
+    ) as NoIntroBuildMeta;
+    if (parsed?.version !== 1) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeBuildMeta(meta: NoIntroBuildMeta): void {
+  mkdirSync(path.dirname(buildMetaPath()), { recursive: true });
+  writeFileSync(buildMetaPath(), `${JSON.stringify(meta, null, 2)}\n`, "utf8");
+}
 
 const DAT_FILE_RE = /\.(dat|xml)$/i;
 
@@ -271,54 +315,129 @@ export async function resolveNoIntroDatFiles(
     .sort((a, b) => a.localeCompare(b, "en"));
 }
 
+type NoIntroDatRootResolution = {
+  datPath: string;
+  packChanged: boolean | null;
+  packMeta?: ArtifactSourceMeta;
+};
+
 /**
- * Prefer existing DAT files; otherwise sync a pack when allowed (LaunchBox parity).
+ * Prefer pack sync when a pack is configured (change-detected); otherwise
+ * use existing DAT files at the configured path.
  */
 async function resolveDatRootForBuild(
   options?: NoIntroIndexBuildOptions,
-): Promise<string | null> {
+): Promise<NoIntroDatRootResolution | null> {
   const explicit = options?.datPath?.trim() || configuredDatPath();
-  if (explicit) {
-    const existing = await resolveNoIntroDatFiles(explicit);
-    if (existing.length > 0) return explicit;
-  }
-
-  const { syncNoIntroDatPack } = await import("./syncDatPack");
-  const synced = await syncNoIntroDatPack({
+  const { syncNoIntroDatPack, resolveNoIntroDatPackSource } = await import(
+    "./syncDatPack"
+  );
+  const packSource = resolveNoIntroDatPackSource({
     allowDownload: options?.allowDownload,
     packPath: options?.packPath,
     packUrl: options?.packUrl,
-    destDir: explicit || undefined,
   });
-  if (synced?.destDir) return synced.destDir;
 
-  return explicit;
+  if (packSource) {
+    const synced = await syncNoIntroDatPack({
+      allowDownload: options?.allowDownload,
+      packPath: options?.packPath,
+      packUrl: options?.packUrl,
+      destDir: explicit || undefined,
+      force: options?.force,
+    });
+    if (synced?.destDir) {
+      return {
+        datPath: synced.destDir,
+        packChanged: synced.changed,
+        packMeta: synced.packMeta,
+      };
+    }
+  }
+
+  if (explicit) {
+    const existing = await resolveNoIntroDatFiles(explicit);
+    if (existing.length > 0) {
+      return { datPath: explicit, packChanged: null };
+    }
+  }
+
+  return explicit ? { datPath: explicit, packChanged: null } : null;
+}
+
+async function openExistingNoIntroIndex(): Promise<DatabaseSync | null> {
+  if (memoryDb) return memoryDb;
+  if (activeDbConnection) return activeDbConnection;
+  const file = indexPath();
+  if (!(await fileExists(file))) return null;
+  try {
+    const db = new DatabaseSync(file);
+    if (!isIndexSchemaCurrent(db)) return null;
+    activeDbConnection = db;
+    return db;
+  } catch {
+    return null;
+  }
 }
 
 /** Prebuild SQLite from local DAT file(s), optionally syncing a pack first. */
 export async function buildNoIntroIndex(
   options?: NoIntroIndexBuildOptions,
 ): Promise<DatabaseSync | null> {
-  const datPath = await resolveDatRootForBuild(options);
-  if (!datPath) {
+  const resolved = await resolveDatRootForBuild(options);
+  if (!resolved) {
     console.warn(
       "[No-Intro] No DAT path — set NOINTRO_DAT_PATH, or NOINTRO_DAT_PACK / URL, then admin Local indexes",
     );
     return null;
   }
 
-  const files = await resolveNoIntroDatFiles(datPath);
+  const files = await resolveNoIntroDatFiles(resolved.datPath);
   if (files.length === 0) {
     console.warn(
-      `[No-Intro] No .dat/.xml files found at ${datPath} — sync No-Intro from admin Local indexes with a pack or DAT path`,
+      `[No-Intro] No .dat/.xml files found at ${resolved.datPath} — sync No-Intro from admin Local indexes with a pack or DAT path`,
     );
     return null;
+  }
+
+  const datsFp = await filesListFingerprint(files);
+  const prior = readBuildMeta();
+  const packUnchanged = resolved.packChanged !== true;
+  const datsUnchanged = prior?.datsFp === datsFp;
+  const schemaMatches =
+    prior?.schemaVersion === NOINTRO_INDEX_SCHEMA_VERSION;
+
+  if (
+    !options?.force &&
+    packUnchanged &&
+    datsUnchanged &&
+    schemaMatches
+  ) {
+    const existing = await openExistingNoIntroIndex();
+    if (existing) {
+      console.info(
+        "[No-Intro] DAT pack / files unchanged — skipping index rebuild",
+      );
+      return existing;
+    }
   }
 
   const file = indexPath();
   await fs.mkdir(path.dirname(file), { recursive: true });
   try {
-    if (await fileExists(file)) await fs.unlink(file);
+    if (activeDbConnection) {
+      try {
+        activeDbConnection.close();
+      } catch {
+        /* ignore */
+      }
+      activeDbConnection = null;
+    }
+    if (await fileExists(file)) {
+      unlinkSqliteSidecars(file);
+      await fs.unlink(file);
+      unlinkSqliteSidecars(file);
+    }
   } catch (error) {
     console.warn("[No-Intro] Error unlinking old database", error);
   }
@@ -356,6 +475,13 @@ export async function buildNoIntroIndex(
       `[No-Intro] SQLite index ready (${totalGames} games, ${totalRoms} roms from ${files.length} DAT(s))`,
     );
     activeDbConnection = db;
+    writeBuildMeta({
+      version: 1,
+      schemaVersion: NOINTRO_INDEX_SCHEMA_VERSION,
+      datsFp,
+      ...(resolved.packMeta ? { pack: resolved.packMeta } : {}),
+      builtAt: new Date().toISOString(),
+    });
     return db;
   } catch (error) {
     console.error("[No-Intro] Failed to build SQLite index", error);

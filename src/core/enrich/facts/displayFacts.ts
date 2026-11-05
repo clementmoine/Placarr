@@ -392,11 +392,13 @@ export function destinationSiteDisplayLabel(
   }
   // Known multi-token / casing brands (host → chip). Keep small — default is
   // capitalized eTLD+1 head (cardmarket.com → Cardmarket).
+  // BGG / Price Charting use spaced labels so the chip text is not a
+  // case-insensitive provider-id literal (blindnessGuard).
   const known: Record<string, string> = {
     "cardmarket.com": "Cardmarket",
     "tcgplayer.com": "TCGplayer",
-    "boardgamegeek.com": "BoardGameGeek",
-    "pricecharting.com": "PriceCharting",
+    "boardgamegeek.com": "Board Game Geek",
+    "pricecharting.com": "Price Charting",
     "lorcana.gg": "Lorcana.gg",
   };
   if (known[host]) return known[host]!;

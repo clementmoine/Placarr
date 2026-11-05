@@ -9,6 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
+
 const LONG_FORM_RE =
   /([A-Za-z][A-Za-z0-9']*)_([a-z0-9.-]+)_(\d{1,3})_([a-z]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)_([A-Za-z0-9]+)/g;
 
@@ -455,7 +457,7 @@ export function writeLiveCardsSqlite(
     db.close();
   }
 
-  fs.renameSync(tmp, dest);
+  replaceSqliteLiveFile(dest, tmp);
   return {
     path: dest,
     rows: rows.length,

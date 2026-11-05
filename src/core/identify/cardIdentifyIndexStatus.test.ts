@@ -65,4 +65,41 @@ describe("cardIdentifyIndexStatus", () => {
     expect(status.embeddingEntries).toBe(0);
     expect(status.embeddingsStale).toBe(true);
   });
+
+  it("prefers .count sidecar over scanning the visual JSON", () => {
+    const root = tmpData();
+    const pack = path.join(root, "demo");
+    fs.mkdirSync(pack, { recursive: true });
+    const visual = path.join(pack, "card-visual-index.json");
+    fs.writeFileSync(
+      visual,
+      JSON.stringify({
+        version: 2,
+        packId: "demo",
+        lang: "*",
+        builtAt: new Date().toISOString(),
+        entries: [
+          {
+            printKey: "demo:1-1",
+            lang: "en",
+            set: "1",
+            card: "1",
+            artRel: "x.webp",
+            hash: "0".repeat(16),
+          },
+          {
+            printKey: "demo:1-2",
+            lang: "en",
+            set: "1",
+            card: "2",
+            artRel: "y.webp",
+            hash: "1".repeat(16),
+          },
+        ],
+      }),
+    );
+    // Sidecar claims 2 — must win without needing another full scan path.
+    fs.writeFileSync(`${visual}.count`, "2");
+    expect(cardIdentifyIndexStatus("demo").visualEntries).toBe(2);
+  });
 });

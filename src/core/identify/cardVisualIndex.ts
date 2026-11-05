@@ -168,6 +168,11 @@ export function cardVisualIndexPath(packId: string): string {
   return path.join(packDataDir(packId), INDEX_NAME);
 }
 
+/** Sidecar count for admin corpora — avoid scanning the full JSON on poll. */
+export function cardVisualIndexCountPath(packId: string): string {
+  return `${cardVisualIndexPath(packId)}.count`;
+}
+
 /** Process-local cache — live camera hits this every ~1s; avoid re-parsing 70k+ JSON. */
 const indexCache = new Map<
   string,
@@ -231,6 +236,15 @@ export function writeCardVisualIndex(
 ): CardVisualIndexFile {
   const dest = cardVisualIndexPath(file.packId);
   writeFileSync(dest, JSON.stringify(file));
+  try {
+    writeFileSync(
+      cardVisualIndexCountPath(file.packId),
+      String(file.entries.length),
+      "utf8",
+    );
+  } catch {
+    /* count sidecar is best-effort */
+  }
   try {
     indexCache.set(file.packId, {
       mtimeMs: statSync(dest).mtimeMs,

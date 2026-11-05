@@ -130,7 +130,8 @@ export function matchPrintsAssetRest(
   return null;
 }
 
-function readFaceJsonArt(cardDir: string, names: string[]): string | null {
+/** `face.json` art basename when the file exists — no directory listing. */
+function readFaceJsonArtFast(cardDir: string): string | null {
   const decisionPath = path.join(cardDir, CARD_FACE_DECISION_FILE);
   if (!existsSync(decisionPath)) return null;
   try {
@@ -138,15 +139,16 @@ function readFaceJsonArt(cardDir: string, names: string[]): string | null {
       art?: string;
     };
     const named = raw.art?.trim();
-    if (named && names.includes(named) && /^art\./i.test(named)) return named;
+    if (!named || !/^art\./i.test(named)) return null;
+    if (named.includes("/") || named.includes("..")) return null;
+    return existsSync(path.join(cardDir, named)) ? named : null;
   } catch {
-    /* fall through */
+    return null;
   }
-  return null;
 }
 
 /**
- * Owned face basename — `face.json` wins, else best `art.*` by
+ * Owned face basename — `face.json` wins (no readdir), else best `art.*` by
  * {@link catalogueFaceRankScore} (probed pixels + pack provenance stamp).
  * Same criteria as Catalogue → Cards — no provider-name lists / byte proxy.
  */
@@ -156,6 +158,14 @@ function pickOwnedArtFile(
   pack: string,
 ): string | null {
   if (!existsSync(cardDir) || !statSync(cardDir).isDirectory()) return null;
+  /*
+    Hot path (catalogue /assets grid): honor face.json without listing the
+    folder. Thumb / face-b still need a directory listing when no decision.
+  */
+  if (role === "face") {
+    const decided = readFaceJsonArtFast(cardDir);
+    if (decided) return decided;
+  }
   let names: string[] = [];
   try {
     names = readdirSync(cardDir);
@@ -171,12 +181,11 @@ function pickOwnedArtFile(
       names.find((n) => /^art\.[^/]*-b\.(jpe?g|png|webp|gif)$/i.test(n)) ?? null
     );
   }
-  const fromDecision = readFaceJsonArt(cardDir, names);
-  if (fromDecision) return fromDecision;
   const arts = names.filter(
     (n) => /^art\./i.test(n) && /\.(jpe?g|png|webp|gif)$/i.test(n),
   );
   if (!arts.length) return null;
+  if (arts.length === 1) return arts[0]!;
   const corpus = catalogueCorpusPack(pack) || canonicalAssetPack(pack);
   const provenanceOf = providerModuleProviding(
     corpus,

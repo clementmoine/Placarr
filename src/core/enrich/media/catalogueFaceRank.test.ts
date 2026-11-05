@@ -7,10 +7,41 @@ import {
 } from "./catalogueFaceRank";
 
 describe("catalogueFaceRank", () => {
-  it("marks corrected / reconstructed without naming providers", () => {
+  it("marks corrected / reconstructed / sample without naming providers", () => {
     expect(catalogueArtQualityMarker("art.foo.corrected.jpg")).toBe(100);
     expect(catalogueArtQualityMarker("art.reconstructed.webp")).toBe(95);
+    expect(catalogueArtQualityMarker("art.sample.webp")).toBe(20);
     expect(catalogueArtQualityMarker("art.any.webp")).toBe(50);
+  });
+
+  it("demotes near-square padded embeds vs packshot aspect", () => {
+    const packshot = catalogueFaceRankScore({
+      artFile: "art.shop.jpg",
+      width: 736,
+      height: 597,
+      coverProvenance: "catalog",
+    });
+    const square = catalogueFaceRankScore({
+      artFile: "art.drive.png",
+      width: 1600,
+      height: 1600,
+      coverProvenance: "catalog",
+    });
+    expect(packshot).toBeGreaterThan(square);
+  });
+
+  it("demotes SAMPLE watermark faces vs equal-size catalog art", () => {
+    const clean = catalogueFaceRankScore({
+      artFile: "art.publisher.webp",
+      width: 500,
+      height: 700,
+    });
+    const sample = catalogueFaceRankScore({
+      artFile: "art.sample.webp",
+      width: 500,
+      height: 700,
+    });
+    expect(clean).toBeGreaterThan(sample);
   });
 
   it("prefers more pixels at equal provenance", () => {

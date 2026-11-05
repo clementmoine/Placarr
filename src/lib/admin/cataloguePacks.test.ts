@@ -2014,15 +2014,17 @@ describe("same-number art fallback (Naruto)", () => {
     ]);
   });
 
-  it("filtre aussi les dos language-specific (tier back.ja)", async () => {
+  it("filtre aussi les dos language-specific (back.ja via packBackUrl)", async () => {
     expect(catalogueBackLangFromTierSlug("ja")).toBe("ja");
+    expect(catalogueBackLangFromTierSlug("zh")).toBe("zh");
+    expect(catalogueBackLangFromTierSlug("ko")).toBe("ko");
     expect(catalogueBackLangFromTierSlug("hr")).toBe("—");
     const jaBack = {
-      printKey: "naruto/shippuden:__pack-back-tier-ja__",
+      printKey: "naruto/shippuden:__pack-back-ja__",
       set: "",
       card: "back",
       lang: "ja",
-      artUrl: "/back.ja.webp",
+      artUrl: "/assets/naruto/shippuden/backs/ja",
       hasFoil: false,
       label: "Dos · pack · JA",
       kind: "pack-back" as const,
@@ -2042,6 +2044,46 @@ describe("same-number art fallback (Naruto)", () => {
     expect(backs.every((row) => row.lang === "—" || row.lang === "ja")).toBe(
       true,
     );
+    // Locale sleeve once — not also as `__pack-back-tier-ja__`.
+    expect(
+      backs.filter((row) => row.printKey.includes("pack-back")).length,
+    ).toBeLessThanOrEqual(1);
+    expect(
+      backs.some((row) => row.printKey.includes("__pack-back-tier-ja__")),
+    ).toBe(false);
+  });
+
+  it("ne duplique pas Dos · pack quand back.webp est partagé entre locales", async () => {
+    const { resolvePackBackPath } = await import("@/lib/packPaths");
+    for (const pack of ["onepiece", "naruto/kayou", "lorcana"] as const) {
+      const shared = resolvePackBackPath(pack);
+      const en = resolvePackBackPath(pack, "en");
+      const ja = resolvePackBackPath(pack, "ja");
+      if (!shared) continue;
+      // Only assert when EN/JA fall back to the same shared file.
+      if (en && en !== shared) continue;
+      if (ja && ja !== shared) continue;
+
+      const listed = await listCatalogueCards({
+        pack,
+        locales: "preferred",
+        preferLang: "en",
+        limit: 24,
+      });
+      const localePackBacks = listed.cards.filter(
+        (row) =>
+          row.kind === "pack-back" &&
+          !row.printKey.includes("-tier-") &&
+          (row.label === "Dos · pack" ||
+            /^Dos · pack · (FR|EN|JA|IT|DE|ES)$/.test(row.label)),
+      );
+      expect(
+        localePackBacks,
+        `${pack}: shared back.webp must yield one locale pack-back tile`,
+      ).toHaveLength(1);
+      expect(localePackBacks[0]?.lang).toBe("—");
+      expect(localePackBacks[0]?.label).toBe("Dos · pack");
+    }
   });
 
   it("Mythos missions keep set/lang/card disk paths (not Carddass M-001)", () => {

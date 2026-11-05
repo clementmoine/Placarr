@@ -11,7 +11,10 @@ import {
   cardEmbeddingIndexBinPath,
   cardEmbeddingIndexMetaPath,
 } from "@/core/identify/cardEmbeddingIndex";
-import { cardVisualIndexPath } from "@/core/identify/cardVisualIndex";
+import {
+  cardVisualIndexCountPath,
+  cardVisualIndexPath,
+} from "@/core/identify/cardVisualIndex";
 
 export type CardIdentifyIndexStatus = {
   visualEntries: number;
@@ -50,6 +53,24 @@ function countPrintKeyOccurrences(filePath: string): number {
     i += needle.length;
   }
   return n;
+}
+
+/** Prefer `.count` sidecar written with the visual index. */
+function readVisualEntryCount(packId: string, visualPath: string): number {
+  const countPath = cardVisualIndexCountPath(packId);
+  try {
+    if (
+      existsSync(countPath) &&
+      mtimeOrZero(countPath) >= mtimeOrZero(visualPath)
+    ) {
+      const raw = readFileSync(countPath, "utf8").trim();
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return Math.floor(n);
+    }
+  } catch {
+    /* fall through */
+  }
+  return countPrintKeyOccurrences(visualPath);
 }
 
 function peekEmbeddingModel(metaPath: string): string | null {
@@ -94,7 +115,7 @@ export function cardIdentifyIndexStatus(
   }
 
   const visualEntries =
-    visualMtime > 0 ? countPrintKeyOccurrences(visualPath) : 0;
+    visualMtime > 0 ? readVisualEntryCount(packId, visualPath) : 0;
   const hasEmbedFiles = embedMetaMtime > 0 && embedBinMtime > 0;
   const embeddingEntries = hasEmbedFiles
     ? countPrintKeyOccurrences(embedMetaPath)

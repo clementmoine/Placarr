@@ -180,6 +180,13 @@ export type EffectPackModule = {
       secondVarnishMaskUrl?: string | null;
       /** Live foil mask enum — toggles Cast-and-Cure / laminate CC plates. */
       foilMask?: string | null;
+      /**
+       * When `foilMask` is omitted (product UI), packs may join printKey →
+       * Live `foil_mask` the same way {@link resolveMaterialForPrint} does.
+       */
+      printKey?: string | null;
+      title?: string | null;
+      finish?: string | null;
     },
   ): FoilMaterial | null;
   /** Parse a dumped material name into catalogue finish / varnish (playroom). */

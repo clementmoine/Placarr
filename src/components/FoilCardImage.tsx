@@ -385,6 +385,11 @@ export function FoilCardImage({
         pack.materialForPrint?.(materialName, {
           secondVarnishMaskUrl,
           foilMask: liveFoilMask,
+          // Product often omits liveFoilMask; pack joins printKey → foil_mask
+          // (CastAndCure / laminates) so WebGL CC layers match Live.
+          printKey,
+          title,
+          finish,
         }) ?? pack.material(materialName)
       );
     }

@@ -13,7 +13,10 @@ import type { EffectPackModule } from "@/core/render/foil/types";
 import { registerEffectPack } from "@/core/render/foil/backend";
 
 import { resolveCssRecipe } from "./cssRecipes";
-import { liveFoilMaskForBundle, isLiveFoilMaskOverride } from "./liveFoilMasks";
+import {
+  isLiveFoilMaskOverride,
+  resolveLiveFoilMaskOverride,
+} from "./liveFoilMasks";
 import { lookupByBundle } from "./liveCardsLookups";
 import {
   paperMaterial,
@@ -105,16 +108,18 @@ export {
 } from "./playroomArt";
 export type { PlayroomArt } from "./playroomArt";
 
-function foilMaskForBundle(
-  bundleId: string | null | undefined,
-  opts?: { variant?: string | null },
-): string | null {
-  if (!bundleId) return null;
+function foilMaskForPrint(opts: {
+  foilMask?: string | null;
+  bundleId?: string | null;
+  variant?: string | null;
+  maskTex?: string | null;
+}): string | null {
+  const fromResolve = resolveLiveFoilMaskOverride(opts);
+  if (fromResolve) return fromResolve;
+  if (!opts.bundleId) return null;
   // Prefer the client-safe JSON slice; fall back to sqlite when installed.
-  const fromJson = liveFoilMaskForBundle(bundleId, { variant: opts?.variant });
-  if (fromJson) return fromJson;
-  const row = lookupByBundle(bundleId, {
-    variant: opts?.variant ?? undefined,
+  const row = lookupByBundle(opts.bundleId, {
+    variant: opts.variant ?? undefined,
   });
   const mask = row?.foilMask ?? null;
   return isLiveFoilMaskOverride(mask) ? mask : null;
@@ -127,7 +132,11 @@ function materialFromName(name: string, opts?: { foilMask?: string | null }) {
   if (!resolved) return null;
   const foilMask =
     opts?.foilMask ??
-    foilMaskForBundle(resolved.bundle, { variant: resolved.variant });
+    foilMaskForPrint({
+      bundleId: resolved.bundle,
+      variant: resolved.variant,
+      maskTex: resolved.maskTex,
+    });
   return paperMaterial(resolved.shader, { foilMask });
 }
 
@@ -150,9 +159,12 @@ export const pokemonPaperEffectPack: EffectPackModule = {
         opts.title,
       );
       if (resolved) {
-        const foilMask =
-          opts.foilMask ??
-          foilMaskForBundle(resolved.bundle, { variant: resolved.variant });
+        const foilMask = foilMaskForPrint({
+          foilMask: opts.foilMask,
+          bundleId: resolved.bundle,
+          variant: resolved.variant,
+          maskTex: resolved.maskTex,
+        });
         return paperMaterial(resolved.shader, { foilMask });
       }
     }
@@ -170,11 +182,12 @@ export const pokemonPaperEffectPack: EffectPackModule = {
         opts.title,
       );
       if (resolved) {
-        foilMask =
-          opts.foilMask ??
-          foilMaskForBundle(resolved.bundle, {
-            variant: resolved.variant,
-          });
+        foilMask = foilMaskForPrint({
+          foilMask: opts.foilMask,
+          bundleId: resolved.bundle,
+          variant: resolved.variant,
+          maskTex: resolved.maskTex,
+        });
         // Synthetic live-std / live-ph are catalogue buckets, not Live leaves.
         // Resolve CSS from the leaf (PikachuFoil, Rainbow, …) or the look is the
         // generic regularHolo bars instead of the print's shader.
@@ -187,8 +200,27 @@ export const pokemonPaperEffectPack: EffectPackModule = {
   },
   listMaterials: () => listPokemonMaterialNames(),
   material: (name) => paperMaterial(name),
-  materialForPrint: (name, opts) =>
-    paperMaterial(name, { foilMask: opts?.foilMask }),
+  materialForPrint: (name, opts) => {
+    // Product passes materialName (Live leaf) without liveFoilMask — still need
+    // CastAndCure / ReverseLaminate* from the print join, or CC stays MAT-off.
+    let foilMask = opts?.foilMask ?? null;
+    if (!(foilMask ?? "").trim() && opts?.printKey) {
+      const resolved = resolveEffectForPrintKey(
+        opts.printKey,
+        opts.finish,
+        "fr",
+        opts.title,
+      );
+      if (resolved) {
+        foilMask = foilMaskForPrint({
+          bundleId: resolved.bundle,
+          variant: resolved.variant,
+          maskTex: resolved.maskTex,
+        });
+      }
+    }
+    return paperMaterial(name, { foilMask });
+  },
   parseMaterialName: parsePaperMaterialName,
   playroomArtForMaterial,
   playroomArtsForMaterial: listPlayroomArtsForMaterial,

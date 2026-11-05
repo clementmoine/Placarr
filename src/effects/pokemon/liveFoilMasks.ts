@@ -142,3 +142,48 @@ export function isLiveFoilMaskOverride(
 ): boolean {
   return Boolean(mask && OVERRIDE_MASKS.has(mask));
 }
+
+/**
+ * Dump `card_foil` stores Poké/Master Ball whiteplates as `std`/`ph` rows with
+ * `_wp_sph_` / `_wp_mph_` in `mask_tex`, while `liveFoilMasks.json` keys the
+ * same prints as `::sph` / `::mph`. Product resolve only knows std|ph — so the
+ * map miss is normal. The plate stem (or canonical `mask-sph.webp` URL) is the
+ * unambiguous signal for which ReverseLaminate* CC layer to arm.
+ */
+export function liveFoilMaskFromMaskTex(
+  maskTex: string | null | undefined,
+): string | null {
+  const t = (maskTex ?? "").trim().toLowerCase();
+  if (!t) return null;
+  if (t.includes("_wp_mph_") || /(^|[/_])mask-mph(\.|$)/.test(t)) {
+    return "ReverseLaminateMasterBall";
+  }
+  if (t.includes("_wp_sph_") || /(^|[/_])mask-sph(\.|$)/.test(t)) {
+    return "ReverseLaminatePokeBall";
+  }
+  return null;
+}
+
+/**
+ * Resolve a CC / laminate override: explicit enum → bundle map → whiteplate.
+ */
+export function resolveLiveFoilMaskOverride(opts: {
+  foilMask?: string | null;
+  bundleId?: string | null;
+  variant?: string | null;
+  maskTex?: string | null;
+}): string | null {
+  const explicit = (opts.foilMask ?? "").trim();
+  // Caller forced MAT defaults (playroom NonFoil / no-CC) — do not re-join.
+  if (explicit === "None") return null;
+  if (explicit && isLiveFoilMaskOverride(explicit)) return explicit;
+  if (explicit) {
+    // Non-override enums (Holo, Reverse, …) leave MAT defaults alone.
+    return null;
+  }
+  const fromMap = liveFoilMaskForBundle(opts.bundleId, {
+    variant: opts.variant,
+  });
+  if (fromMap) return fromMap;
+  return liveFoilMaskFromMaskTex(opts.maskTex);
+}

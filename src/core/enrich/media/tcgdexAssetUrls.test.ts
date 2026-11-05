@@ -2,10 +2,35 @@ import { describe, expect, it } from "vitest";
 
 import {
   nextTcgdexDisplayUrl,
+  synthesizeTcgdexImageBase,
   tcgdexDisplayCandidates,
   tcgdexImageCandidates,
   tcgdexImageUrl,
 } from "./tcgdexAssetUrls";
+
+describe("synthesizeTcgdexImageBase", () => {
+  it("keeps remote set casing for Asia CDN paths", () => {
+    expect(
+      synthesizeTcgdexImageBase({
+        lang: "ja",
+        serieId: "S",
+        setId: "S8b",
+        localId: "001",
+      }),
+    ).toBe("https://assets.tcgdex.net/ja/S/S8b/001");
+  });
+
+  it("rejects incomplete segments", () => {
+    expect(
+      synthesizeTcgdexImageBase({
+        lang: "ja",
+        serieId: "",
+        setId: "S8b",
+        localId: "001",
+      }),
+    ).toBeNull();
+  });
+});
 
 describe("tcgdexImageCandidates", () => {
   it("orders webp → png → jpg, then the other quality", () => {

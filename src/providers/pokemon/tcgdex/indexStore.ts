@@ -697,6 +697,34 @@ export function tcgdexSetIdsNeedingFrImageRefresh(): string[] {
 }
 
 /**
+ * JA sets whose prints still have no CDN URL at all.
+ * Incremental harvest skips when card counts match — re-fetch so JA `image`
+ * gained later (or never written on first pass) can fill `image_base_url`.
+ */
+export function tcgdexSetIdsNeedingJaImageRefresh(): string[] {
+  const db = ensureTcgdexIndex();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT LOWER(s.set_id) AS setId
+         FROM sets s
+         JOIN prints p ON LOWER(p.set_id) = LOWER(s.set_id)
+        WHERE s.lang = 'ja'
+        GROUP BY LOWER(s.set_id)
+       HAVING sum(
+                CASE
+                  WHEN p.image_base_url IS NOT NULL
+                       AND TRIM(p.image_base_url) != ''
+                  THEN 1 ELSE 0
+                END
+              ) = 0
+          AND count(p.print_key) > 0`,
+    )
+    .all() as { setId: string }[];
+  return rows.map((row) => row.setId);
+}
+
+/**
  * Exact print + preferred-language title from the local identity store.
  */
 export function lookupTcgdexSearchRow(
@@ -907,6 +935,113 @@ export function listTcgdexTitlesMissingRarity(
         LIMIT ?`,
     )
     .all(cap) as TcgdexTitleDetailGap[];
+}
+
+/**
+ * Fill empty `prints.image_base_url` (+ matching `print_assets.source_url`).
+ * Never overwrites a non-empty CDN base — harvest / locale preference stay
+ * authoritative once a URL exists.
+ */
+export function patchTcgdexPrintImageBases(
+  patches: readonly {
+    printKey: string;
+    imageBaseUrl: string;
+    /** Title langs that should mirror `source_url` (default: ja). */
+    langs?: readonly string[];
+  }[],
+  dbPath?: string,
+): number {
+  if (patches.length === 0) return 0;
+  const pathToDb = dbPath ?? tcgdexDbPath();
+  mkdirSync(path.dirname(pathToDb), { recursive: true });
+  const db = new DatabaseSync(pathToDb);
+  try {
+    db.exec("PRAGMA busy_timeout = 30000");
+    createSchema(db);
+    const updatePrint = db.prepare(`
+      UPDATE prints
+         SET image_base_url = ?
+       WHERE print_key = ?
+         AND (image_base_url IS NULL OR TRIM(image_base_url) = '')
+    `);
+    const upsertAsset = db.prepare(`
+      INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, printed)
+      VALUES (?, ?, NULL, NULL, NULL, ?, COALESCE(
+        (SELECT printed FROM prints WHERE print_key = ?), 1))
+      ON CONFLICT(print_key, lang) DO UPDATE SET
+        source_url = COALESCE(print_assets.source_url, excluded.source_url)
+    `);
+    let written = 0;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const row of patches) {
+        const base = row.imageBaseUrl.trim();
+        if (!base) continue;
+        const result = updatePrint.run(base, row.printKey);
+        const changed = Number(result.changes ?? 0);
+        if (changed === 0) continue;
+        written += changed;
+        const langs = row.langs?.length ? row.langs : ["ja"];
+        for (const lang of langs) {
+          const locale = lang.trim().toLowerCase();
+          if (!locale) continue;
+          upsertAsset.run(row.printKey, locale, base, row.printKey);
+        }
+      }
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+    return written;
+  } finally {
+    db.close();
+    resetTcgdexIndexCache();
+  }
+}
+
+/** JA printed titles still without any CDN base (for CDN HEAD backfill). */
+export function listTcgdexJaPrintsMissingImageBase(opts?: {
+  dbPath?: string;
+  limit?: number;
+}): {
+  printKey: string;
+  setId: string;
+  localId: string;
+  providerId: string;
+}[] {
+  const pathToDb = opts?.dbPath ?? tcgdexDbPath();
+  if (!existsSync(pathToDb)) return [];
+  const db = new DatabaseSync(pathToDb, { readOnly: true });
+  try {
+    const lim =
+      opts?.limit != null
+        ? Math.max(1, Math.min(Math.floor(opts.limit), 50_000))
+        : null;
+    const sql = `
+      SELECT p.print_key AS printKey,
+             p.set_id AS setId,
+             p.local_id AS localId,
+             p.provider_id AS providerId
+        FROM print_titles t
+        JOIN prints p ON p.print_key = t.print_key
+       WHERE t.lang = 'ja'
+         AND COALESCE(p.printed, 1) != 0
+         AND (p.image_base_url IS NULL OR TRIM(p.image_base_url) = '')
+       ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id
+       ${lim != null ? "LIMIT ?" : ""}
+    `;
+    return (
+      lim != null ? db.prepare(sql).all(lim) : db.prepare(sql).all()
+    ) as {
+      printKey: string;
+      setId: string;
+      localId: string;
+      providerId: string;
+    }[];
+  } finally {
+    db.close();
+  }
 }
 
 /** Patch rarity/stage from per-card detail enrich (does not touch names). */

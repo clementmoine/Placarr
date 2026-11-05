@@ -23,6 +23,7 @@ import { tcgdexSetSerie } from "./setMeta";
 
 /** Append TCGdex CDN quality suffix — see `tcgdexAssetUrls` for fallback chain. */
 export {
+  synthesizeTcgdexImageBase,
   tcgdexDisplayCandidates,
   tcgdexImageCandidates,
   tcgdexImageUrl,

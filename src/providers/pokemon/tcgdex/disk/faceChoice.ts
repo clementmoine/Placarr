@@ -21,9 +21,15 @@ export const POKEMON_FACE_SOURCES = [
   "live",
   "mcdn",
   "pokemoncom",
+  "trainers",
   "pokecardex",
+  "pokellector",
   "coleka",
   "tcgdex",
+  "limitless",
+  "dittobase",
+  "alamedyang",
+  "cardnexus",
   "tcgplayer",
   "pokemontcg",
   "pkmcards",
@@ -33,35 +39,37 @@ export type PokemonFaceSource = (typeof POKEMON_FACE_SOURCES)[number];
 
 /**
  * Prefer Live, then encyclopédie mcdn, then official McDo tiles, then
- * PokéCardex scans (HQ), then Coleka photos, then TCGdex catalogue CDN,
- * then marketplace CDNs.
+ * Trainers Website JP (pokemon-card.com), then PokéCardex scans (HQ), then
+ * Pokéllector JP CDN, then Coleka photos, then TCGdex catalogue CDN, then
+ * Limitless JP (fills JA gaps TCGdex omits), then Dittobase JA-order CDN,
+ * then Alamedyang vintage JA scans, then CardNexus catalogue CDN, then
+ * marketplace CDNs.
  */
+const POKEMON_FACE_PRIORITY_DEFAULT = [
+  "live",
+  "mcdn",
+  "pokemoncom",
+  "trainers",
+  "pokecardex",
+  "pokellector",
+  "coleka",
+  "tcgdex",
+  "limitless",
+  "dittobase",
+  "alamedyang",
+  "cardnexus",
+  "tcgplayer",
+  "pokemontcg",
+  "pkmcards",
+] as const satisfies readonly PokemonFaceSource[];
+
 export const POKEMON_FACE_PRIORITY: Record<
   string,
   readonly PokemonFaceSource[]
 > = {
-  fr: [
-    "live",
-    "mcdn",
-    "pokemoncom",
-    "pokecardex",
-    "coleka",
-    "tcgdex",
-    "tcgplayer",
-    "pokemontcg",
-    "pkmcards",
-  ],
-  en: [
-    "live",
-    "mcdn",
-    "pokemoncom",
-    "pokecardex",
-    "coleka",
-    "tcgdex",
-    "tcgplayer",
-    "pokemontcg",
-    "pkmcards",
-  ],
+  fr: POKEMON_FACE_PRIORITY_DEFAULT,
+  en: POKEMON_FACE_PRIORITY_DEFAULT,
+  ja: POKEMON_FACE_PRIORITY_DEFAULT,
 };
 
 const choice = createCardFaceChoice<PokemonFaceSource>({

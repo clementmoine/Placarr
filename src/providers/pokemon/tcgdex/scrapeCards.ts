@@ -20,9 +20,14 @@
 import { httpGet } from "@/lib/http/httpClient";
 
 import {
+  fillMissingImageBasesFromCdnProbe,
+  backfillTcgdexMissingImageBasesFromCdn,
+} from "./backfillCdnImageBases";
+import {
   patchTcgdexSetCounts,
   tcgdexHarvestedSets,
   tcgdexSetIdsNeedingFrImageRefresh,
+  tcgdexSetIdsNeedingJaImageRefresh,
   writeTcgdexSet,
   type TcgdexPrintRow,
   type TcgdexTitleRow,
@@ -89,6 +94,8 @@ export async function harvestTcgdexCatalogue(
   unkeyable: string[];
   /** Sets numériques gardés avec `printed: false` (admin + filtre). */
   digitalOnly: string[];
+  /** Bases CDN synthétisées (API sans `image`, asset présent). */
+  cdnImageBackfill: number;
 }> {
   const languages = opts.languages ?? TCGDEX_HARVEST_LANGUAGES;
   const delayMs = opts.delayMs ?? 200;
@@ -97,6 +104,7 @@ export async function harvestTcgdexCatalogue(
 
   let sets = 0;
   let skipped = 0;
+  let cdnImageBackfill = 0;
   let prints = 0;
   let titles = 0;
   const emptyAtSource: string[] = [];
@@ -113,6 +121,12 @@ export async function harvestTcgdexCatalogue(
   if (needFrImages.size > 0) {
     report(
       `${needFrImages.size} sets FR à re-moissonner (images encore EN/vides)`,
+    );
+  }
+  const needJaImages = new Set(tcgdexSetIdsNeedingJaImageRefresh());
+  if (needJaImages.size > 0) {
+    report(
+      `${needJaImages.size} sets JA à re-moissonner (aucun image_base_url)`,
     );
   }
 
@@ -188,11 +202,14 @@ export async function harvestTcgdexCatalogue(
         0;
       const refreshFrImages =
         language === "fr" && needFrImages.has(setId.toLowerCase());
+      const refreshJaImages =
+        language === "ja" && needJaImages.has(setId.toLowerCase());
       if (
         !opts.force &&
         announced > 0 &&
         already >= announced &&
-        !refreshFrImages
+        !refreshFrImages &&
+        !refreshJaImages
       ) {
         skipped += 1;
         continue;
@@ -211,6 +228,8 @@ export async function harvestTcgdexCatalogue(
 
       const setName = detail?.name?.trim() || setId;
       const serieName = detail?.serie?.name?.trim() || null;
+      const serieId = detail?.serie?.id?.trim() || null;
+      const remoteCasedSetId = detail?.id?.trim() || remoteSetId;
       const printRows: TcgdexPrintRow[] = [];
       const titleRows: TcgdexTitleRow[] = [];
 
@@ -237,6 +256,19 @@ export async function harvestTcgdexCatalogue(
           serieName,
         });
       }
+
+      /*
+        JA (and other locales) often omit `card.image` while assets.tcgdex.net
+        already hosts `/lang/{serie}/{Set}/{num}`. Probe once per set — never
+        invent a base that 404s.
+      */
+      const filledFromCdn = await fillMissingImageBasesFromCdnProbe({
+        lang: language,
+        serieId,
+        remoteSetId: remoteCasedSetId,
+        prints: printRows,
+      });
+      cdnImageBackfill += filledFromCdn;
 
       if (printRows.length === 0) {
         /*
@@ -270,10 +302,25 @@ export async function harvestTcgdexCatalogue(
     }
   }
 
+  /*
+    Sets skipped as « already complete » still need CDN bases when the API
+    never published `image`. Catch those without re-downloading every set.
+    JA-only: FR/EN briefs almost always ship `image` when the CDN has art.
+  */
+  if (languages.some((lang) => lang.trim().toLowerCase() === "ja")) {
+    report("Pokémon : rattrapage CDN pour tirages JA sans image_base_url…");
+    const backfill = await backfillTcgdexMissingImageBasesFromCdn({
+      delayMs: Math.min(delayMs, 120),
+      onProgress: report,
+    });
+    cdnImageBackfill += backfill.printsPatched;
+  }
+
   report(
     `Pokémon : ${sets} sets écrits, ${skipped} déjà complets, ${titles} titres` +
       ` — ${emptyAtSource.length} vides à la source, ${unkeyable.length} sans clé possible,` +
-      ` ${digitalOnlyKept.length} numériques (printed=false)`,
+      ` ${digitalOnlyKept.length} numériques (printed=false),` +
+      ` ${cdnImageBackfill} bases CDN synthétisées`,
   );
   return {
     sets,
@@ -283,5 +330,6 @@ export async function harvestTcgdexCatalogue(
     emptyAtSource,
     unkeyable,
     digitalOnly: digitalOnlyKept,
+    cdnImageBackfill,
   };
 }

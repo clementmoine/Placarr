@@ -1,6 +1,8 @@
 /**
  * Paper-face harvest for Pokémon (mcdn encyclopédie + McDo tiles + PokéCardex
- * scans + Coleka + TCGPlayer + pokemontcg.io + pkmcards.fr).
+ * scans + Coleka + TCGPlayer + pokemontcg.io + pkmcards.fr + Trainers JA +
+ * Limitless JA + Dittobase JA + Alamedyang vintage JA + Pokéllector JA-order +
+ * CardNexus catalogue CDN).
  *
  * Bulk TCGdex CDN dump (`art.tcgdex.*`) is **opt-in** (`tcgdexCatalogue: true`):
  * assets.tcgdex.net is a reliable remote fallback for the paper catalogue —
@@ -22,8 +24,14 @@ import {
   fillTcgplayerMcdo2023,
   POKEMONTCG_MCDO_STEMS,
 } from "./faces";
+import { fillAlamedyangJaFaces } from "./alamedyang/fillJaFaces";
+import { fillPokemonCardnexusFaces } from "./cardnexus/fillFaces";
+import { fillDittobaseJaFaces } from "./dittobase/fillJaFaces";
+import { fillLimitlessJaFaces } from "./limitless/fillJaFaces";
 import { fillPokecardexMcdoFaces } from "./pokecardex/fillMcdo";
 import { fillPokecardexRetailFaces } from "./pokecardex/fillSets";
+import { fillPokellectorJaFaces } from "./pokellector/fillJaFaces";
+import { fillTrainersJaFaces } from "./trainers/fillJaFaces";
 
 export type PokemonPaperFacesReport = {
   tcgdex: Awaited<ReturnType<typeof fillTcgdexCatalogueFaces>>;
@@ -35,6 +43,12 @@ export type PokemonPaperFacesReport = {
   tcgplayer: Awaited<ReturnType<typeof fillTcgplayerMcdo2023>>;
   pokemontcg: Awaited<ReturnType<typeof fillPokemontcgIoFacesForSet>>[];
   pkmcards: Awaited<ReturnType<typeof fillPkmcardsFaces>>;
+  trainersJa: Awaited<ReturnType<typeof fillTrainersJaFaces>>;
+  limitlessJa: Awaited<ReturnType<typeof fillLimitlessJaFaces>>;
+  dittobaseJa: Awaited<ReturnType<typeof fillDittobaseJaFaces>>;
+  alamedyangJa: Awaited<ReturnType<typeof fillAlamedyangJaFaces>>;
+  pokellectorJa: Awaited<ReturnType<typeof fillPokellectorJaFaces>>;
+  cardnexus: Awaited<ReturnType<typeof fillPokemonCardnexusFaces>>;
   indexCards: number;
 };
 
@@ -67,6 +81,9 @@ export async function runPokemonPaperFacesHarvest(
     tcgdex = await fillTcgdexCatalogueFaces({
       force: opts.force,
       cardsRoot: opts.cardsRoot,
+      // Mirror FR+EN+JA when opted in — JA catalogue gaps are mostly empty
+      // `print_assets` despite TCGdex `/ja/` CDN existing for shared sets.
+      langs: ["fr", "en", "ja"],
       onProgress: (done, total) => {
         if (done - lastLog < 500 && done !== total) return;
         lastLog = done;
@@ -189,6 +206,92 @@ export async function runPokemonPaperFacesHarvest(
     `   pkmcards: ${pkmcards.written} écrites / ${pkmcards.skipped} skip / ${pkmcards.unmapped} hors map / ${pkmcards.failed} fail (${pkmcards.indexCards} tuiles)`,
   );
 
+  console.log("── Pokémon paper faces — Trainers Website JA (pokemon-card.com)");
+  const trainersJa = await fillTrainersJaFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    onProgress: (done, total) => {
+      if (done !== total && done % 25 !== 0) return;
+      console.log(`   trainers JA progress ${done}/${total}`);
+    },
+  });
+  console.log(
+    `   trainers JA: ${trainersJa.written} écrites / ${trainersJa.skipped} skip / ${trainersJa.unmapped} hors map / ${trainersJa.failed} fail (${trainersJa.prints} cibles, ${trainersJa.products} produits → assets ${trainersJa.assetsSynced})`,
+  );
+
+  console.log("── Pokémon paper faces — Limitless JA (TCGdex sans image)");
+  let lastLimitlessLog = 0;
+  const limitlessJa = await fillLimitlessJaFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    onProgress: (done, total) => {
+      if (done - lastLimitlessLog < 250 && done !== total) return;
+      lastLimitlessLog = done;
+      console.log(`   limitless JA progress ${done}/${total}`);
+    },
+  });
+  console.log(
+    `   limitless JA: ${limitlessJa.written} écrites / ${limitlessJa.skipped} skip / ${limitlessJa.failed} fail (${limitlessJa.prints} sans CDN → assets ${limitlessJa.assetsSynced})`,
+  );
+
+  console.log("── Pokémon paper faces — Dittobase JA (collector-order CDN)");
+  let lastDittobaseLog = 0;
+  const dittobaseJa = await fillDittobaseJaFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    onProgress: (done, total) => {
+      if (done - lastDittobaseLog < 50 && done !== total) return;
+      lastDittobaseLog = done;
+      console.log(`   dittobase JA progress ${done}/${total}`);
+    },
+  });
+  console.log(
+    `   dittobase JA: ${dittobaseJa.written} écrites / ${dittobaseJa.skipped} skip / ${dittobaseJa.unmapped} hors map / ${dittobaseJa.failed} fail (${dittobaseJa.prints} cibles → assets ${dittobaseJa.assetsSynced})`,
+  );
+
+  console.log("── Pokémon paper faces — Alamedyang vintage JA");
+  let lastAlamedyangLog = 0;
+  const alamedyangJa = await fillAlamedyangJaFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    onProgress: (done, total) => {
+      if (done - lastAlamedyangLog < 50 && done !== total) return;
+      lastAlamedyangLog = done;
+      console.log(`   alamedyang JA progress ${done}/${total}`);
+    },
+  });
+  console.log(
+    `   alamedyang JA: ${alamedyangJa.written} écrites / ${alamedyangJa.skipped} skip / ${alamedyangJa.unmapped} hors map / ${alamedyangJa.failed} fail (${alamedyangJa.prints} cibles → assets ${alamedyangJa.assetsSynced})`,
+  );
+
+  console.log("── Pokémon paper faces — Pokéllector JA-order sets");
+  const pokellectorJa = await fillPokellectorJaFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    onProgress: (done, total) => {
+      if (done !== total && done % 50 !== 0) return;
+      console.log(`   pokellector JA progress ${done}/${total}`);
+    },
+  });
+  console.log(
+    `   pokellector JA: ${pokellectorJa.written} écrites / ${pokellectorJa.skipped} skip / ${pokellectorJa.unmapped} hors map / ${pokellectorJa.failed} fail (${pokellectorJa.prints} cibles → assets ${pokellectorJa.assetsSynced})`,
+  );
+
+  console.log("── Pokémon paper faces — CardNexus catalogue CDN (gaps)");
+  let lastCardnexusLog = 0;
+  const cardnexus = await fillPokemonCardnexusFaces({
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    onProgress: (done, total) => {
+      if (done - lastCardnexusLog < 50 && done !== total) return;
+      lastCardnexusLog = done;
+      console.log(`   cardnexus progress ${done}/${total}`);
+    },
+  });
+  console.log(
+    `   cardnexus: ${cardnexus.written} écrites / ${cardnexus.skipped} skip / ${cardnexus.unmapped} hors map / ${cardnexus.failed} fail (${cardnexus.prints} cibles → assets ${cardnexus.assetsSynced})`,
+  );
+
   // Rebuild only the live data root index (custom cardsRoot = tests).
   const shouldRebuild = opts.rebuildIndex !== false && !opts.cardsRoot;
   const index = shouldRebuild
@@ -208,6 +311,12 @@ export async function runPokemonPaperFacesHarvest(
     tcgplayer,
     pokemontcg,
     pkmcards,
+    trainersJa,
+    limitlessJa,
+    dittobaseJa,
+    alamedyangJa,
+    pokellectorJa,
+    cardnexus,
     indexCards: index.cards,
   };
 }

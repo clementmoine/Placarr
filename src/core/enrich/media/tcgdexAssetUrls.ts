@@ -22,6 +22,24 @@ export function tcgdexImageBaseFromUrl(
 }
 
 /**
+ * Build a CDN image base when the API omits `card.image` but assets exist
+ * (`/ja/S/S8b/001` …). `setId` must keep remote casing (S8b ≠ s8b on the CDN).
+ */
+export function synthesizeTcgdexImageBase(opts: {
+  lang: string;
+  serieId: string;
+  setId: string;
+  localId: string;
+}): string | null {
+  const lang = opts.lang.trim().toLowerCase();
+  const serieId = opts.serieId.trim();
+  const setId = opts.setId.trim();
+  const localId = opts.localId.trim().replace(/^\/+|\/+$/g, "");
+  if (!lang || !serieId || !setId || !localId) return null;
+  return `https://assets.tcgdex.net/${lang}/${serieId}/${setId}/${localId}`;
+}
+
+/**
  * Ordered candidates for a CDN base (`…/base/base3/1`).
  * Preferred quality first (webp→png→jpg), then the other quality.
  */

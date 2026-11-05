@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   isLiveFoilMaskOverride,
   liveFoilMaskFromMap,
+  liveFoilMaskFromMaskTex,
   liveLaminatePreferFromMap,
+  resolveLiveFoilMaskOverride,
 } from "./liveFoilMasks";
 import { paperMaterial } from "./materials";
 
@@ -84,5 +86,57 @@ describe("liveFoilMaskFromMap", () => {
   it("isLiveFoilMaskOverride", () => {
     expect(isLiveFoilMaskOverride("CastAndCure")).toBe(true);
     expect(isLiveFoilMaskOverride("Reverse")).toBe(false);
+  });
+});
+
+describe("liveFoilMaskFromMaskTex", () => {
+  it("maps dump whiteplate stems and canonical mask URLs", () => {
+    expect(liveFoilMaskFromMaskTex("rsv10-5_wp_sph_fr_001")).toBe(
+      "ReverseLaminatePokeBall",
+    );
+    expect(liveFoilMaskFromMaskTex("rsv10-5_wp_mph_de_044")).toBe(
+      "ReverseLaminateMasterBall",
+    );
+    expect(
+      liveFoilMaskFromMaskTex("/assets/pokemon/cards/fr/rsv10-5/001/mask-sph.webp"),
+    ).toBe("ReverseLaminatePokeBall");
+    expect(liveFoilMaskFromMaskTex("mask-mph.webp")).toBe(
+      "ReverseLaminateMasterBall",
+    );
+    expect(liveFoilMaskFromMaskTex("rsv10-5_wp_ph_fr_001")).toBeNull();
+    expect(liveFoilMaskFromMaskTex("rsv10-5_wp_fr_001")).toBeNull();
+  });
+});
+
+describe("resolveLiveFoilMaskOverride", () => {
+  it("prefers whiteplate when std|ph map misses dual laminates", () => {
+    // Simulate product: map has sph+mph, resolve only knows variant std.
+    expect(
+      resolveLiveFoilMaskOverride({
+        bundleId: "rsv10-5_fr_001",
+        variant: "std",
+        maskTex: "rsv10-5_wp_sph_fr_001",
+      }),
+    ).toBe("ReverseLaminatePokeBall");
+  });
+
+  it("keeps CastAndCure from the map when present", () => {
+    expect(
+      resolveLiveFoilMaskOverride({
+        foilMask: "CastAndCure",
+        maskTex: "rsv10-5_wp_sph_fr_001",
+      }),
+    ).toBe("CastAndCure");
+  });
+
+  it("honours None without re-joining", () => {
+    expect(
+      resolveLiveFoilMaskOverride({
+        foilMask: "None",
+        bundleId: "me5_fr_045",
+        variant: "std",
+        maskTex: "anything",
+      }),
+    ).toBeNull();
   });
 });

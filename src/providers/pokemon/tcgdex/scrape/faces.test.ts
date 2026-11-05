@@ -386,9 +386,14 @@ describe("pokemonFaceSourceOf", () => {
     expect(pokemonFaceSourceOf("art.png")).toBe("live");
     expect(pokemonFaceSourceOf("art.coleka.webp")).toBe("coleka");
     expect(pokemonFaceSourceOf("art.pokemoncom.png")).toBe("pokemoncom");
+    expect(pokemonFaceSourceOf("art.trainers.jpg")).toBe("trainers");
     expect(pokemonFaceSourceOf("art.pokecardex.jpg")).toBe("pokecardex");
+    expect(pokemonFaceSourceOf("art.pokellector.png")).toBe("pokellector");
     expect(pokemonFaceSourceOf("art.mcdn.png")).toBe("mcdn");
     expect(pokemonFaceSourceOf("art.tcgdex.png")).toBe("tcgdex");
+    expect(pokemonFaceSourceOf("art.limitless.png")).toBe("limitless");
+    expect(pokemonFaceSourceOf("art.dittobase.webp")).toBe("dittobase");
+    expect(pokemonFaceSourceOf("art.alamedyang.jpg")).toBe("alamedyang");
     expect(pokemonFaceSourceOf("art.tcgplayer.jpg")).toBe("tcgplayer");
     expect(pokemonFaceSourceOf("art.pokemontcg.png")).toBe("pokemontcg");
     expect(pokemonFaceSourceOf("art.pkmcards.webp")).toBe("pkmcards");
@@ -397,13 +402,18 @@ describe("pokemonFaceSourceOf", () => {
 });
 
 describe("pickBestPokemonFace", () => {
-  it("ranks live above mcdn above pokemoncom above pokecardex above coleka above tcgdex", () => {
+  it("ranks live above mcdn above pokemoncom above trainers above pokecardex above coleka above tcgdex", () => {
     expect(POKEMON_FACE_SOURCES[0]).toBe("live");
     expect(POKEMON_FACE_SOURCES[1]).toBe("mcdn");
     expect(POKEMON_FACE_SOURCES[2]).toBe("pokemoncom");
-    expect(POKEMON_FACE_SOURCES[3]).toBe("pokecardex");
-    expect(POKEMON_FACE_SOURCES[4]).toBe("coleka");
-    expect(POKEMON_FACE_SOURCES[5]).toBe("tcgdex");
+    expect(POKEMON_FACE_SOURCES[3]).toBe("trainers");
+    expect(POKEMON_FACE_SOURCES[4]).toBe("pokecardex");
+    expect(POKEMON_FACE_SOURCES[5]).toBe("pokellector");
+    expect(POKEMON_FACE_SOURCES[6]).toBe("coleka");
+    expect(POKEMON_FACE_SOURCES[7]).toBe("tcgdex");
+    expect(POKEMON_FACE_SOURCES[8]).toBe("limitless");
+    expect(POKEMON_FACE_SOURCES[9]).toBe("dittobase");
+    expect(POKEMON_FACE_SOURCES[10]).toBe("alamedyang");
     expect(
       pickBestPokemonFace(
         [

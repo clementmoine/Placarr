@@ -64,9 +64,9 @@ visual index et mtime embedding ≥ mtime visual → skip ; sinon rebuild
 incrémental (delta seulement). Un Sync sans nouvelle carte ne décode donc
 aucune image et n’écrit aucun index (mesuré : Yu‑Gi‑Oh 73 k faces → 1–3 s).
 
-Rattrapage / force rebuild : admin Catalogue → **Indexes caméra**
-(pack) ou **CLIP manquant (N)** (tous les packs stale) — `only: ["identify"]`,
-force — **pas de CLI**. Le statut corpora affiche `vis / CLIP`.
+Rattrapage : admin Catalogue → **Sync** (pack affiché) ou **Sync tout**.
+Le Sync inclut dHash + CLIP — pas de bouton indexes séparé. Le statut corpora
+affiche encore `vis / CLIP` (info, pas une action).
 
 Query path (caméra Auto) : multi-signaux + hybride dHash/CLIP + soft abstain
 cross-game + (scaffold) OCR collector# — principe produit inchangé :
@@ -107,7 +107,7 @@ Quand un extract Sync ramène un nouveau set :
 | --------------------------------------- | ------------------------- | ---------------------------------------- |
 | Faces sur disque / ledger               | Extract / refresh admin   | I/O + réseau                             |
 | Visual index                            | Sync                      | CPU léger                                |
-| CLIP embeddings des **nouvelles** faces | Sync / **Indexes caméra** | ONNX CPU/GPU — **pas** de training       |
+| CLIP embeddings des **nouvelles** faces | Sync (pack / Sync tout) | ONNX CPU/GPU — **pas** de training       |
 | Fine-tune CLIP                          | **Non**                   | Dataset + GPU + eval + re-embed **tout** |
 
 Donc : « on aura de nouvelles cartes régulièrement » → **ops d’index**, pas
@@ -155,9 +155,9 @@ Hors ces conditions, FT = coût + risque sans levier produit.
 
 ## Règles opérationnelles Placarr
 
-1. **Default path** : admin Sync → visual → embed. Missing vectors = bug de
-   fraîcheur (bouton **Indexes caméra**), pas « besoin de fine-tune ». Pas de
-   script `package.json` pour ça.
+1. **Default path** : admin Sync → visual → embed. Missing vectors = Sync
+   incomplet / à relancer, pas « besoin de fine-tune ». Pas de script
+   `package.json` pour ça.
 2. **Versionner** le modèle dans les sidecars embedding (`modelId`). Changer
    de checkpoint = invalidation globale + rebuild.
 3. **Incrémental** (évolution souhaitable) : encoder seulement les

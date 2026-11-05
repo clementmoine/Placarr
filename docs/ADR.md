@@ -399,7 +399,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   modèle à chaque vague de cartes ?
 - **Décision** :
   1. **Nouvelles cartes / faces** → encoder avec le **même** modèle et mettre
-     à jour l’index (Catalogue Sync / admin **Indexes caméra**). C’est le
+     à jour l’index (Catalogue **Sync** pack / **Sync tout**). C’est le
      chemin produit par défaut — **pas de CLI** `package.json`.
   2. **Fine-tune CLIP** = chantier **offline rare**, seulement si eval photo
      réelle plafonne *après* index complet + OCR + gates, avec dataset

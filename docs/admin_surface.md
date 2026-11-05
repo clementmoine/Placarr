@@ -8,8 +8,7 @@
 
 | Action | Où |
 |--------|-----|
-| Catalogue Sync (TCG + LaunchBox…) | `/admin` Catalogue → Sync / corpora ; jobs `catalogProviderSync` |
-| Local indexes | Admin Refresh → `LocalIndexesPanel` ; API `catalog-index-sync` remap legacy → `catalogProviderSync` |
+| Catalogue Sync (TCG + LaunchBox…) | `/admin` Catalogue → **Sync** (pack) / **Sync tout** ; job unique `catalogProviderSync` → `catalog.refresh` (harvest + faces + CLIP). Ancien `foilExtract` / Local indexes = remap ou legacy worker only. |
 | Affinités providers | Admin Refresh → `ProviderAffinitiesPanel` ; `GET /api/admin/provider-affinities` |
 | Promote shelf → corpus | Admin Refresh → `CorpusPromotePanel` ; confirm only (`CorpusPromoteCandidate`) |
 | Refresh metadata items | Admin Refresh (file `metadataRefresh`) — **libellé distinct** du Sync corpus |
@@ -48,6 +47,6 @@ CLIs comme chemin utilisateur.
 
 ## Cible
 
-1. Un cockpit admin : Sync / Indexes / Affinités / Provenance.
-2. Réduire `CATALOGUE_PACKS` / `catalogueExtract` au legacy derrière le même job.
+1. Un cockpit admin : **Sync** (+ Affinités / Provenance) — rien hors Sync pour densifier un corpus.
+2. `catalogue-extract` et indexes locaux remappent vers `catalogProviderSync`.
 3. Ne **jamais** ajouter d’alias npm pour un ingest métier sans surface admin.

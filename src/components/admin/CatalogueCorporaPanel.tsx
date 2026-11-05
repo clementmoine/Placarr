@@ -162,7 +162,8 @@ export function formatCorpusLastGrowth(
 }
 
 /** Refresh every catalog provider at once (corpus panels / callers that need it). */
-export function RefreshAllCorporaButton({
+/** Enqueue a full Sync (harvest + faces + camera indexes) for every corpus. */
+export function SyncAllCorporaButton({
   busy,
   disabled,
   onRefresh,
@@ -180,60 +181,23 @@ export function RefreshAllCorporaButton({
       variant="outline"
       className="h-7 gap-1 px-2 text-xs"
       disabled={busy !== null || disabled}
+      title={
+        fr
+          ? "Sync tous les corpora (moisson + faces + indexes caméra)"
+          : "Sync every corpus (harvest + faces + camera indexes)"
+      }
       onClick={() => void onRefresh({ all: true })}
     >
       <RefreshCw
         className={`h-3.5 w-3.5 ${busy === ALL ? "animate-spin" : ""}`}
       />
-      {fr ? "Tout rafraîchir" : "Refresh all"}
+      {fr ? "Sync tout" : "Sync all"}
     </Button>
   );
 }
 
-/** Enqueue identify-index rebuild for every pack with stale CLIP sidecars. */
-export function RebuildMissingCameraIndexesButton({
-  busy,
-  disabled,
-  staleCount,
-  onRefresh,
-}: {
-  busy: string | null;
-  disabled?: boolean;
-  staleCount: number;
-  onRefresh: (opts: CatalogueRefreshRequest) => void | Promise<void>;
-}) {
-  const { locale } = useLocale();
-  const fr = locale === "fr";
-  if (staleCount <= 0) return null;
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="secondary"
-      className="h-7 gap-1 px-2 text-xs"
-      disabled={busy !== null || disabled}
-      title={
-        fr
-          ? "Rebuild dHash + CLIP pour les packs dont l’index CLIP manque"
-          : "Rebuild dHash + CLIP for packs with missing CLIP indexes"
-      }
-      onClick={() =>
-        void onRefresh({
-          all: true,
-          only: ["identify"],
-          missingEmbeddingsOnly: true,
-        })
-      }
-    >
-      <RefreshCw
-        className={`h-3.5 w-3.5 ${busy === ALL ? "animate-spin" : ""}`}
-      />
-      {fr
-        ? `CLIP manquant (${staleCount})`
-        : `Missing CLIP (${staleCount})`}
-    </Button>
-  );
-}
+/** @deprecated Use {@link SyncAllCorporaButton} */
+export const RefreshAllCorporaButton = SyncAllCorporaButton;
 
 /**
  * A corpus with no cards browser of its own (LaunchBox, No-Intro, Players):
@@ -271,6 +235,11 @@ export function CorpusPanel({
             variant="outline"
             className="h-7 gap-1 px-2 text-xs"
             disabled={busy !== null}
+            title={
+              fr
+                ? "Sync ce corpus (moisson + faces + indexes caméra)"
+                : "Sync this corpus (harvest + faces + camera indexes)"
+            }
             onClick={() => {
               const limitN = Number(limit);
               void onRefresh({
@@ -288,34 +257,7 @@ export function CorpusPanel({
                 busy === corpus.providerId ? "animate-spin" : ""
               }`}
             />
-            {fr ? "Rafraîchir" : "Refresh"}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={
-              corpus.identifyIndexes?.embeddingsStale ? "secondary" : "ghost"
-            }
-            className="h-7 gap-1 px-2 text-xs"
-            disabled={busy !== null}
-            title={
-              fr
-                ? "Rebuild dHash + CLIP sans re-moissonner"
-                : "Rebuild dHash + CLIP without re-harvesting"
-            }
-            onClick={() => {
-              const limitN = Number(limit);
-              void onRefresh({
-                providerId: corpus.providerId,
-                only: ["identify"],
-                ...(langs.trim() ? { langs: langs.trim() } : {}),
-                ...(Number.isFinite(limitN) && limitN > 0
-                  ? { limit: Math.floor(limitN) }
-                  : {}),
-              });
-            }}
-          >
-            {fr ? "Indexes caméra" : "Camera indexes"}
+            Sync
           </Button>
         </div>
       </div>

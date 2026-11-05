@@ -28,4 +28,13 @@ describe("catalogRefreshOptsFromPayload", () => {
       }),
     ).toEqual({ auto: false });
   });
+
+  it("parses extractScope / scope aliases", () => {
+    expect(
+      catalogRefreshOptsFromPayload({ scope: "catalogue" }),
+    ).toEqual({ auto: false, extractScope: "catalogue" });
+    expect(
+      catalogRefreshOptsFromPayload({ extractScope: "inventory" }),
+    ).toEqual({ auto: false, extractScope: "inventory" });
+  });
 });

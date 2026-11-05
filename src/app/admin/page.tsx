@@ -12,7 +12,6 @@ import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { useOptimisticUrlValue } from "@/lib/client/useOptimisticUrlValue";
 import Header from "@/components/Header";
 import { CorpusPromotePanel } from "@/components/admin/CorpusPromotePanel";
-import { LocalIndexesPanel } from "@/components/admin/LocalIndexesPanel";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
 import { ProviderAffinitiesPanel } from "@/components/admin/ProviderAffinitiesPanel";
 import {
@@ -816,7 +815,6 @@ function AdminDashboardComponent() {
 
           <TabsContent value="refresh" className="space-y-6 outline-none">
             <MetadataRefreshPanel />
-            <LocalIndexesPanel />
             <ProviderAffinitiesPanel />
             <CorpusPromotePanel />
           </TabsContent>

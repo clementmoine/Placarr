@@ -49,11 +49,8 @@ export type CatalogueRefreshRequest = {
   skip?: string[] | string;
   langs?: string[] | string;
   limit?: number;
-  /**
-   * With `all` + `only: identify` — enqueue only packs whose CLIP index is
-   * missing / behind the visual index.
-   */
-  missingEmbeddingsOnly?: boolean;
+  /** Pokémon CDN breadth when Sync goes through catalog.refresh. */
+  extractScope?: "inventory" | "catalogue";
 };
 
 export async function fetchCatalogueCorpora(): Promise<CatalogueCorpusRow[]> {

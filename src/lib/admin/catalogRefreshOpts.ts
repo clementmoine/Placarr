@@ -35,11 +35,19 @@ export function catalogRefreshOptsFromPayload(
   const skip = stringList(body?.skip);
   const langs = stringList(body?.langs);
   const limit = positiveInt(body?.limit);
+  const scopeRaw = String(body?.extractScope ?? body?.scope ?? "")
+    .trim()
+    .toLowerCase();
+  const extractScope =
+    scopeRaw === "catalogue" || scopeRaw === "inventory"
+      ? (scopeRaw as "catalogue" | "inventory")
+      : undefined;
   return {
     auto: Boolean(body?.auto),
     ...(only ? { only } : {}),
     ...(skip ? { skip } : {}),
     ...(langs ? { langs } : {}),
     ...(limit != null ? { limit } : {}),
+    ...(extractScope ? { extractScope } : {}),
   };
 }

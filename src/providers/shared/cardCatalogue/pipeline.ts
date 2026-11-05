@@ -154,6 +154,11 @@ export function catalogueRefreshArgv(
     argv.push("--limit", String(Math.floor(opts.limit)));
   }
 
+  // Pokémon full CDN catalogue (AssetManifests) — same flag as former foilExtract.
+  if (opts?.extractScope === "catalogue") {
+    argv.push("--refresh-manifests");
+  }
+
   return argv;
 }
 
@@ -170,7 +175,8 @@ export function cardCatalogueHooks(
     (() => measureCatalogDbCorpus(input.dbPath()));
 
   const refresh = async (opts?: ProviderCatalogRefreshOpts): Promise<void> => {
-    // Admin « Indexes caméra » — rebuild dHash + CLIP without re-harvesting.
+    // Targeted `only: identify` — rebuild dHash + CLIP without re-harvesting
+    // (API / tests). Product Sync always runs the full path below.
     if (isIdentifyOnlyRefresh(opts?.only)) {
       const { runDataPackCardIdentifyIndexes } = await import(
         "@/providers/shared/cardCatalogue/identifyIndexesStep"

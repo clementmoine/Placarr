@@ -19,6 +19,8 @@ import type {
   CatalogueExtractTarget,
 } from "@/lib/client/catalogueExtract";
 import {
+  adminCatalogueHref,
+  cataloguePackForExtractTarget,
   cataloguePackInfo,
   foilExtractNeedsApk,
   resolveCataloguePackId,
@@ -179,9 +181,17 @@ export function FoilPackSources({
     refetchIntervalInBackground: true,
   });
 
-  const jobRunning = (backgroundJobs?.jobs ?? []).some(
-    (job) => job.kind === "foilExtract" && job.foilTarget === target,
+  const packHref = adminCatalogueHref(
+    cataloguePackForExtractTarget(target)?.id ?? target,
   );
+  const jobRunning = (backgroundJobs?.jobs ?? []).some((job) => {
+    if (job.kind === "foilExtract" && job.foilTarget === target) return true;
+    // Unified Sync path.
+    if (job.kind === "catalogProviderSync" && job.href === packHref) {
+      return true;
+    }
+    return false;
+  });
 
   const { data: statusPayload, refetch: refetchStatus } = useQuery({
     queryKey: ["foilStatus"],
@@ -369,11 +379,11 @@ export function FoilPackSources({
                   : "Full CDN catalogue (AssetManifests) — skips existing"
                 : !foilExtractNeedsApk(target)
                   ? fr
-                    ? "Sync le catalogue local de cette ligne"
-                    : "Sync this line’s local catalogue"
+                    ? "Sync cette ligne (moisson + faces + indexes caméra)"
+                    : "Sync this line (harvest + faces + camera indexes)"
                   : fr
-                    ? "Sync foil (store APK si màj, puis web + cards + Unity)"
-                    : "Foil sync (store APK if newer, then web + cards + Unity)"
+                    ? "Sync foil (APK si màj, puis web + cards + Unity + indexes caméra)"
+                    : "Foil sync (APK if newer, then web + cards + Unity + camera indexes)"
             }
           >
             {busy ? (

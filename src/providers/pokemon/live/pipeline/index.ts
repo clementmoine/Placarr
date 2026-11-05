@@ -1,11 +1,9 @@
 /**
  * Crochets de catalogue du pack `pokemon`.
  *
- * Corps commun : `shared/cardCatalogue/pipeline`. Ici : ré-index Live +
- * cards-index + graphe produits pkmcards.fr (toujours — Sync = surface complète).
- *
- * L'extract CDN / Unity / APK passe par Catalogue Extract (admin / worker
- * in-process) — ce pipeline catalogue ne le lance pas.
+ * Corps commun : `shared/cardCatalogue/pipeline`. Sync = foil extract
+ * (CDN / Malie / APK) + ré-index Live + cards-index + produits pkmcards.fr.
+ * Pas de chemin produit hors `catalog.refresh`.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,7 +40,12 @@ const hooks = cardCatalogueHooks({
   dbPath: cardsDbPath,
   // Identity corpus is catalog.sqlite; dbPath stays on live.sqlite for empty/stale.
   measureCorpus: () => measureCatalogDbCorpus(pokemonIdentityDbPath()),
-  runPipeline: async () => {
+  runPipeline: async (argv) => {
+    const { runPokemonFoilExtract } = await import(
+      /* webpackIgnore: true */
+      "@/providers/pokemon/live/extract"
+    );
+    await runPokemonFoilExtract(argv);
     try {
       indexLiveCards();
     } catch (err) {

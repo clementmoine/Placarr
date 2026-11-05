@@ -636,7 +636,8 @@ export type ProviderCatalogRefreshOpts = {
   /**
    * Run only these pipeline steps. Prefer steps declared on the pack
    * (`extract.pipelineSteps`). Special: `["identify"]` rebuilds camera
-   * indexes (dHash + CLIP) in-process without re-harvesting — admin only.
+   * indexes without re-harvesting — **tests / resume only** ; product Sync
+   * always runs the full `catalog.refresh` path (includes identify).
    */
   only?: readonly string[];
   /** Extra steps to skip — resume / rare pack hooks, not product opt-out. */
@@ -645,6 +646,11 @@ export type ProviderCatalogRefreshOpts = {
   langs?: readonly string[];
   /** Cap for series / faces / listings / identify vectors. */
   limit?: number;
+  /**
+   * Pokémon CDN harvest breadth — inventory (APK∪Malie) vs full AssetManifest
+   * catalogue. Other packs ignore this.
+   */
+  extractScope?: "inventory" | "catalogue";
 };
 
 /**

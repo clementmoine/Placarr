@@ -75,9 +75,8 @@ export async function POST(req: NextRequest) {
   const body = (await req.json()) as Record<string, unknown>;
   const refreshOpts = catalogRefreshOptsFromPayload(body);
   const identifyOnly = isIdentifyOnlyRefresh(refreshOpts.only);
-  const missingEmbeddingsOnly = Boolean(body.missingEmbeddingsOnly);
 
-  let targets = body.all
+  const targets = body.all
     ? discoverCatalogProviderModules()
     : (() => {
         const id = String(body.providerId || "").trim();
@@ -92,8 +91,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Bulk identify rebuild is allowed (camera indexes). Other granularity
-  // stays single-provider so a debug --only faces pass does not fan out.
+  // Bulk Sync is full-pipeline only. Targeted only/skip/langs/limit stays
+  // single-provider (debug). `only: identify` may still fan out for tests.
   if (
     body.all &&
     (refreshOpts.only || refreshOpts.skip || refreshOpts.langs || refreshOpts.limit) &&
@@ -103,21 +102,6 @@ export async function POST(req: NextRequest) {
       { error: "only/skip/langs/limit require a single providerId" },
       { status: 400 },
     );
-  }
-
-  if (body.all && identifyOnly && missingEmbeddingsOnly) {
-    targets = targets.filter((mdl) => {
-      const dataPack = mdl.catalog?.dataPack;
-      if (!dataPack) return false;
-      return cardIdentifyIndexStatus(dataPack).embeddingsStale;
-    });
-    if (targets.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        jobs: [],
-        hint: "all camera embedding indexes are fresh",
-      });
-    }
   }
 
   const jobs: { providerId: string; jobId: string; label: string }[] = [];

@@ -17,7 +17,9 @@ export type FoilExtractEnqueued = {
   jobId: string;
   target: CatalogueExtractTarget;
   scope: CatalogueExtractScope;
-  kind: "foilExtract";
+  /** Unified Sync — always catalogProviderSync → catalog.refresh. */
+  kind: "catalogProviderSync" | "foilExtract";
+  providerIds?: string[];
   label: string;
   hint?: string;
 };
@@ -45,7 +47,8 @@ export async function enqueueCatalogueExtract(
     jobId?: string;
     target?: CatalogueExtractTarget;
     scope?: CatalogueExtractScope;
-    kind?: "foilExtract";
+    kind?: "catalogProviderSync" | "foilExtract";
+    providerIds?: string[];
     label?: string;
     hint?: string;
   };
@@ -59,7 +62,8 @@ export async function enqueueCatalogueExtract(
     jobId: body.jobId,
     target: body.target ?? target,
     scope: body.scope ?? scope,
-    kind: "foilExtract",
+    kind: body.kind ?? "catalogProviderSync",
+    providerIds: body.providerIds,
     label: body.label ?? target,
     hint: body.hint,
   };

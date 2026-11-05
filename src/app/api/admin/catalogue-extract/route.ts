@@ -10,20 +10,18 @@ import {
   catalogueExtractLabel,
   normalizeCatalogueExtractScope,
   normalizeCatalogueExtractTarget,
-  resolveCatalogueExtractCommand,
 } from "@/lib/admin/catalogueExtractRunner";
+import { cataloguePackForExtractTarget } from "@/lib/admin/cataloguePacks";
 import { beginCatalogueExtractLog } from "@/lib/admin/catalogueExtractLog";
+import { catalogProviderIdsForDataPack } from "@/providers/shared/packOwner";
 
 export const maxDuration = 60;
 
 /**
- * Admin: enqueue a durable catalogue extract on the interactive worker.
- * Survives leaving the admin page — progress shows in the header
- * background-jobs menu. In-process Node (no CLI).
- *
- * No per-user extract throttle: each Sync is cheap to enqueue; the worker
- * serialises / concurrency-caps runs. Re-clicking the same target replaces
- * that pack's open job only (`replaceOpenPayloadMatch`).
+ * Admin Sync for a catalogue extract target → unified
+ * `catalogProviderSync` → `ProviderModule.catalog.refresh` (includes harvest,
+ * faces, camera indexes). No product path enqueues bare `foilExtract` anymore;
+ * in-flight legacy jobs still run via the worker.
  */
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
@@ -42,50 +40,60 @@ export async function POST(req: NextRequest) {
     );
   }
   const scope = normalizeCatalogueExtractScope(body.scope);
+  const pack = cataloguePackForExtractTarget(target);
+  if (!pack) {
+    return NextResponse.json(
+      { error: `No catalogue pack for extract target ${target}` },
+      { status: 404 },
+    );
+  }
 
-  // Validate paths before enqueue so the UI gets a fast error.
-  try {
-    await resolveCatalogueExtractCommand(target, { scope });
-  } catch (error) {
+  const providerIds = catalogProviderIdsForDataPack(pack.id);
+  if (providerIds.length === 0) {
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : String(error),
+        error: `No ProviderModule.catalog.refresh for dataPack ${pack.id}`,
       },
       { status: 404 },
     );
   }
 
-  const job = await enqueueBackgroundWorkJob({
-    kind: BACKGROUND_WORK_KIND.catalogueExtract,
-    userId: auth.user.id,
-    payload: { target, scope },
-    // Replace this pack's own run, not the neighbours': every extract shares
-    // the kind `foilExtract`, so an unrestricted sweep cancelled a running
-    // Lorcana pass when a Pokémon one was queued seconds later.
-    replaceOpenForKind: true,
-    replaceOpenPayloadMatch: { path: ["target"], equals: target },
-  });
+  const jobs: { providerId: string; jobId: string }[] = [];
+  for (const providerId of providerIds) {
+    const job = await enqueueBackgroundWorkJob({
+      kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+      userId: auth.user.id,
+      payload: {
+        providerId,
+        allowDownload: true,
+        source: "admin",
+        extractScope: scope,
+      },
+      replaceOpenForKind: true,
+      replaceOpenPayloadMatch: { path: ["providerId"], equals: providerId },
+    });
+    jobs.push({ providerId, jobId: job.id });
+  }
 
-  // Seed the pack log immediately so Logs opens with “queued” before the
-  // worker claims the job (and even if an old worker process lacks tee).
+  // Keep the pack extract log as the UI Logs surface (same file as before).
   await beginCatalogueExtractLog(target, [
-    `jobId=${job.id}`,
+    `jobs=${jobs.map((j) => j.jobId).join(",")}`,
+    `providers=${providerIds.join(",")}`,
+    `scope=${scope}`,
     "status=queued",
+    "via catalogProviderSync → catalog.refresh",
     "waiting for worker…",
   ]);
 
   return NextResponse.json({
     ok: true,
-    jobId: job.id,
+    jobId: jobs[0]!.jobId,
+    jobs,
     target,
     scope,
-    kind: BACKGROUND_WORK_KIND.catalogueExtract,
+    kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+    providerIds,
     label: catalogueExtractLabel(target),
-    hint:
-      target === "pokemon"
-        ? scope === "catalogue"
-          ? "Catalogue complet en file d’attente : ~93k bundles, plusieurs heures. Tu peux quitter la page."
-          : "Sync Pokémon en file d’attente (worker). Tu peux quitter la page."
-        : `Sync ${catalogueExtractLabel(target)} en file d’attente (worker). Tu peux quitter la page.`,
+    hint: `Sync file (${providerIds.join(", ")}) — catalog.refresh`,
   });
 }

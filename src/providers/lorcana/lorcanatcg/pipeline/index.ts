@@ -1,11 +1,9 @@
 /**
  * Crochets de catalogue du pack `lorcana`.
  *
- * Corps commun : `shared/cardCatalogue/pipeline`. Ici : la moisson cartes +
- * le graphe produits lorcards.fr (toujours — Sync = surface complète).
- *
- * L'extract Unity / foil passe par Catalogue Extract (admin / worker
- * in-process) — ce pipeline catalogue ne le lance pas.
+ * Corps commun : `shared/cardCatalogue/pipeline`. Sync = foil extract
+ * (web / Unity / APK) + moisson cartes + produits lorcards.fr.
+ * Pas de chemin produit hors `catalog.refresh`.
  */
 import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
@@ -25,7 +23,12 @@ const hooks = cardCatalogueHooks({
   dbPath: lorcanaTcgDbPath,
   runPipeline: withCardnexusPackFacesStep(
     { packId: LORCANA_PACK_ID, printGame: "lorcana" },
-    async () => {
+    async (argv) => {
+      const { runLorcanaFoilExtract } = await import(
+        /* webpackIgnore: true */
+        "@/providers/lorcana/lorcanatcg/extract"
+      );
+      await runLorcanaFoilExtract(argv);
       /*
         Jamais `force` ici : Sync = admin manuel ou auto, pas de CLI. Un
         retéléchargement massif ne faisait que bouger les mtime (même pixels).

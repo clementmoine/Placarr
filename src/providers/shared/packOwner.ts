@@ -52,6 +52,16 @@ export function providerModuleProviding<K extends PackFnHook>(
 }
 
 /**
+ * Provider ids whose `catalog.refresh` owns this dataPack — Sync product path.
+ * Several modules may share a pack (Pokémon Live + TCGdex).
+ */
+export function catalogProviderIdsForDataPack(packId: string): string[] {
+  return providerModulesForPack(packId)
+    .filter((provider) => typeof provider.catalog?.refresh === "function")
+    .map((provider) => provider.info.id);
+}
+
+/**
  * Demande au pack de remettre à jour son relevé de logos de set.
  *
  * Rend le message de progression du pack, ou `null` s'il n'a rien à rafraîchir

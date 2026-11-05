@@ -38,9 +38,6 @@ const REFERER = "https://narutotcgcards.com/cards";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
 
-/** Mock IA Gen Con CP-001 — titres OK, pas d’art. */
-const SKIP_FACE_SLUGS = new Set(["cp-001-chakra-card-gencon-2026"]);
-
 function stagingDir(): string {
   return path.join(packStagingDir(NARUTO_CARDGAME_PACK_ID), STAGING_FOLDER);
 }
@@ -191,10 +188,6 @@ export async function installNarutoTcgCards(
     });
 
     if (opts.downloadFaces === false) continue;
-    if (SKIP_FACE_SLUGS.has(entry.slug.trim().toLowerCase())) {
-      skipped += 1;
-      continue;
-    }
 
     // preview gallery : même art EN pour FR (CDN welcome n'a pas de dossier FR).
     for (const lang of ["en", "fr"] as const) {

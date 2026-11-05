@@ -91,7 +91,9 @@ function normalizePrintedRef(raw: string): string | null {
  * `n01-001` → demo/n001 (même corpus Gen Con que narutomarket).
  * `pcc0-c-002` → premium00/c002.
  * `sample-19` → n01/sample19 (révélation sans collector).
- * `cp-001` → promo/cp001/event (une seule face guide, sans édition).
+ * `cp-001` bare → null (Gen Con / Event / Yankees sont des impressions
+ * distinctes — market + hub portent le grouping ; une seule face guide
+ * collée sur `event` polluait Gen Con).
  */
 export function narutoCardGuideIdentity(
   card: Pick<NarutoCardGuideCard, "id" | "set">,
@@ -106,8 +108,9 @@ export function narutoCardGuideIdentity(
     return { setCode: "premium00", number, grouping: "premiumvol00" };
   }
 
+  // Ambiguous promo face without edition — do not invent grouping.
   if (id === "cp-001" || id.startsWith("cp-001-")) {
-    return { setCode: "promo", number: "cp001", grouping: "event" };
+    return null;
   }
 
   const n01 = id.match(/^n01-(\d{1,4})$/);

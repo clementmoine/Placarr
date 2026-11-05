@@ -25,10 +25,8 @@ describe("narutoCardGuideIdentity", () => {
       { id: "s-001", set: "SUMMON" },
       { setCode: "demo", number: "s001" },
     ],
-    [
-      { id: "cp-001", set: "CHAKRA" },
-      { setCode: "promo", number: "cp001", grouping: "event" },
-    ],
+    [{ id: "cp-001", set: "CHAKRA" }, null],
+    [{ id: "cp-001-gencon", set: "CHAKRA" }, null],
     [
       { id: "pcc0-c-002", set: "CHAKRA" },
       { setCode: "premium00", number: "c002", grouping: "premiumvol00" },

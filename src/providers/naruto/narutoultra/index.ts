@@ -25,7 +25,7 @@ export {
 
 const line = createLocalTcgLine({
   providerId: NARUTO_ULTRA_PROVIDER_ID,
-  providerLabel: "Naruto Ultra Challenge (local)",
+  providerLabel: "Naruto Ultra Challenge",
   catalogueLabel: "Naruto Ultra Challenge",
   catalogueAliases: ["Ultra Challenge", "Naruto Ultra Challenge"],
   factLabel: "Ultra Challenge",

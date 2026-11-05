@@ -26,7 +26,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: BLEACH_SCB_PROVIDER_ID,
-    providerLabel: "Bleach Soul Card Battle (local)",
+    providerLabel: "Bleach Soul Card Battle",
     catalogueLabel: "Bleach Soul Card Battle",
     catalogueAliases: [
       { label: "Bleach Carddass", language: "en" },

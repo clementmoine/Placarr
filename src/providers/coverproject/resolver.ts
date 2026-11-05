@@ -125,7 +125,10 @@ export async function fetchFromCoverProject(
         providerId: "coverproject",
         providerLabel: "Cover Project",
         sourceDocumentRole: "reference_record",
-        sourceUrl: "https://www.thecoverproject.net/",
+        // Search results for this title — not the site homepage.
+        sourceUrl: `https://www.thecoverproject.net/search_simple.php?name=${encodeURIComponent(
+          [name, platform].filter(Boolean).join(" ").trim() || name,
+        )}`,
         evidenceSignals,
         titleRole: "object_title",
         aliasRole: "provider_grouped_alias",

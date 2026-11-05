@@ -5,7 +5,19 @@ vidéo, films/séries, musique, TCG, jeux de société) : Next.js + TypeScript +
 Prisma/Postgres, avec ~70 providers de métadonnées/prix et un moteur de rendu
 foil pour les cartes.
 
-Ce fichier répond à une seule question : **par où commencer la lecture ?**
+## Vision — cycle de vie
+
+Collection **générale** : TCG n’est qu’un domaine. Même boucle partout.
+
+| Idée | Règle |
+|------|--------|
+| **Étagère ↔ catalogue** | Densités du même objet (item shelf vs ligne corpus). Corpus densifie → items `printKey` / barcode suivent ; succès shelf peut **promouvoir** vers le corpus (confirm admin). |
+| **Providers = modules** | Adaptateurs branchables (`providers/` + registry). Comportement répété → **un** endroit core/shared — un fix s’applique partout. |
+| **Apprendre des réussites** | Un provider qui a alimenté un item (prix, cover, faces…) est mémorisé au **scope catalogue** ; Sync / refresh le préfèrent. Exploration « dans le doute » seulement sans preuve (ou rare si l’affine échoue). |
+| **Provenance** | Chaque fait = provider + quand + confiance + **citation ouvrable** (deep link public, ou Wayback du même lien — jamais la homepage). Ranking faces/covers = **critères** (pixels, provenance), pas listes de noms de sources. |
+| **Admin-only** | Sync / refresh / indexes via **admin web + worker**. Zéro CLI utilisateur (CLI = debug dev). |
+
+Ce fichier répond ensuite à : **par où commencer la lecture ?**
 
 ## Les cinq fichiers à lire, dans l'ordre
 
@@ -54,10 +66,11 @@ Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et
 - **Identifier un objet** : scan/saisie → `core/identify` (printKey pour les
   cartes, barcode sinon) → `core/enrich` (consensus multi-providers).
 - **Prix** : `core/commerce` interroge les providers à capability `price`.
-- **Catalogue TCG** : providers avec `searchPrints`/`listPrintSets` (tirages,
-  sets, langues) ; l'admin pilote l'extraction via `lib/admin/cataloguePacks.ts`
-  (registre `CATALOGUE_PACKS`) — refresh granulaire : `only` / `langs` /
-  `limit` (ADR-018).
+- **Catalogue** : providers avec hooks `catalog` / `searchPrints` /
+  `listPrintSets` ; Sync admin + worker (`catalogProviderSync`,
+  `ProviderModule.catalog.refresh`). Legacy `CATALOGUE_PACKS` /
+  `catalogueExtract` encore présent — cible = **un** chemin Sync. Refresh
+  granulaire : `only` / `langs` / `limit` (ADR-018).
 - **Jobs de fond** : processus séparé (`pnpm worker`), file Postgres
   `BackgroundWorkJob` (SKIP LOCKED), kinds dans `core/collect/jobs/workQueue.ts`
   ; extracts longs → `payload.completedSteps` (ADR-017).
@@ -85,3 +98,4 @@ Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et
   — ajouter un provider
 - [`docs/structure_vs_tako.md`](docs/structure_vs_tako.md) — pourquoi ce chemin
   de lecture (analyse tako-firehouse)
+- [`docs/admin_surface.md`](docs/admin_surface.md) — admin web vs CLI dev-only

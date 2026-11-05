@@ -154,6 +154,9 @@ model Shelf {
   color      String?
   type       Type
   cardFormat String   @default("default")
+  /// Optional catalogue pack scope (`data/<pack>/`) — checklist / Sync affinity
+  /// without inferring solely from item printKeys.
+  dataPack   String?
   userId     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -162,6 +165,7 @@ model Shelf {
 
   @@index([userId])
   @@index([slug])
+  @@index([dataPack])
 }
 
 model Author {
@@ -377,4 +381,45 @@ model ProviderEvidence {
   @@unique([providerId, url])
   @@index([expiresAt])
   @@index([providerId, kind])
+}
+
+/// Learned provider successes at catalogue scope (not per-item).
+/// A price/cover/face win on one shelf item generalizes to the corpus scope.
+model ProviderAffinity {
+  id           String   @id @default(cuid())
+  /// `type:<shelfType>` | `pack:<dataPack>` — never an item id.
+  scopeKey     String
+  /// price | cover | faces | identify | catalogRefresh
+  capability   String
+  providerId   String
+  successCount Int      @default(1)
+  confidence   Float    @default(0.5)
+  lastAt       DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([scopeKey, capability, providerId])
+  @@index([scopeKey, capability, successCount])
+  @@index([providerId, capability])
+}
+
+/// Shelf item proposed for promotion into a local catalogue corpus (admin confirm).
+model CorpusPromoteCandidate {
+  id        String   @id @default(cuid())
+  itemId    String
+  /// Target pack under `data/<pack>/` when known.
+  dataPack  String?
+  printKey  String?
+  barcode   String?
+  title     String?
+  /// pending | accepted | rejected
+  status    String   @default("pending")
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([itemId])
+  @@index([printKey])
+  @@index([barcode])
 }

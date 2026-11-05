@@ -56,6 +56,9 @@ describe("fillCardnexusFaces", () => {
     );
 
     expect(report.written).toBe(1);
+    expect(report.productUrlsByPrintKey["lorcana:12-223"]).toBe(
+      "https://cardnexus.com/product/1",
+    );
     expect(existsSync(path.join(cardDir, "art.cardnexus.jpg"))).toBe(true);
     expect(readFileSync(path.join(cardDir, "art.cardnexus.jpg")).length).toBe(
       1200,

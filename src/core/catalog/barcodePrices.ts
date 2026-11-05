@@ -9,6 +9,13 @@ import {
   resolveRequestAbortSignal,
   throwIfJobAborted,
 } from "@/lib/http/jobAbort";
+import {
+  affinityScopePackFromPrintKey,
+  affinityScopeType,
+  applyAffinityExploration,
+  listAffinities,
+  orderByAffinity,
+} from "./providerAffinity";
 import { PROVIDER_MODULES } from "./registry";
 import type {
   BarcodeLookupType,
@@ -87,8 +94,21 @@ export async function collectRefreshBarcodePriceOffers(
     }
     return true;
   });
+  const affinityScopes = [
+    affinityScopeType(ctx.shelfType),
+    affinityScopePackFromPrintKey(ctx.printKey),
+  ].filter((s): s is string => Boolean(s));
+  const affinities = await listAffinities({
+    scopeKeys: affinityScopes,
+    capability: "price",
+  });
+  const orderedModules = applyAffinityExploration(
+    orderByAffinity(modules, (module) => module.info.id, affinities),
+    (module) => module.info.id,
+    affinities,
+  );
   const settled = await runWithConcurrency(
-    modules,
+    orderedModules,
     BARCODE_PRICE_REFRESH_CONCURRENCY,
     async (module) => {
       throwIfJobAborted(signal);

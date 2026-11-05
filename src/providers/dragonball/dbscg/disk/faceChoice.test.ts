@@ -23,12 +23,7 @@ describe("dbsFaceSourceOf", () => {
 });
 
 describe("pickBestFace", () => {
-  it("grades by quality tier, so close sizes tie rather than split hairs", () => {
-    /*
-      The scorer buckets resolution: 260x363 and anything smaller share a tier.
-      Worth pinning, because it is what makes the locale list matter — ties are
-      common, not exceptional.
-    */
+  it("takes more pixels even when sizes are close (core area score)", () => {
     expect(
       pickBestFace(
         [
@@ -51,21 +46,21 @@ describe("pickBestFace", () => {
     ).toBe("deckplanet");
   });
 
-  it("settles a tie on the locale's own order", () => {
+  it("settles a score tie on declaration order (locale-agnostic)", () => {
     const tie = [
       { source: "bandai" as const, width: 400, height: 560 },
       { source: "deckplanet" as const, width: 400, height: 560 },
     ];
-    // Deckplanet is an English source and must not win a French tie.
+    // `bandai` is declared before `deckplanet` in DBS_FACE_SOURCES.
     expect(pickBestFace(tie, "fr")).toBe("bandai");
-    expect(pickBestFace(tie, "en")).toBe("deckplanet");
+    expect(pickBestFace(tie, "en")).toBe("bandai");
   });
 
-  it("keeps size above the priority list", () => {
+  it("keeps size above declaration-order tie-break", () => {
     /*
       Measured: Deckplanet is 260x363 on the older English sets and 860x1205
-      on the recent ones, while dbscards is a steady 400x560. A list that
-      overrode size would lose the old sets — so it only breaks ties.
+      on the recent ones, while dbscards is a steady 400x560. Order only
+      breaks ties — pixels still win.
     */
     expect(
       pickBestFace(
@@ -82,13 +77,13 @@ describe("pickBestFace", () => {
     expect(pickBestFace([])).toBeNull();
   });
 
-  it("keeps an unmeasurable file rather than leaving the card blank", () => {
+  it("returns null when every face is unmeasurable (no source-name fallback)", () => {
     expect(
       pickBestFace([
         { source: "bandai", width: 0, height: 0 },
         { source: "dbscards", width: 0, height: 0 },
       ]),
-    ).toBe("dbscards");
+    ).toBeNull();
   });
 
   it("prefers a measured face over an unmeasurable one", () => {

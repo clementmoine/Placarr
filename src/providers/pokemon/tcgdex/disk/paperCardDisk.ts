@@ -69,14 +69,14 @@ export function pokemonLiveCardDir(opts: {
 /**
  * Resolve an art basename from lang-first paper harvest, then Live set-first.
  */
-export function resolvePokemonCatalogueArtFilename(
+export async function resolvePokemonCatalogueArtFilename(
   opts: {
     setId: string;
     lang: string;
     localId: string;
     cardsRoot?: string;
   },
-): string | null {
+): Promise<string | null> {
   const paper = resolvePokemonArtFilename(
     pokemonPaperCardDir(opts),
     opts.lang,

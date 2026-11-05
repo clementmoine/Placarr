@@ -2,12 +2,13 @@
  * Which stored face a Pokémon print shows.
  *
  * Live dumps still use bare `art.webp` (source `live`). Coleka / TCGPlayer /
- * pokemontcg.io keep `art.<source>.<ext>` like Naruto. Ranking via shared
- * cardFaces; `art.webp` is treated as live without renaming the dump.
+ * pokemontcg.io keep `art.<source>.<ext>` like Naruto. Ranking = shared
+ * cardFaces (pixels + provenance) — no FACE_PRIORITY name lists.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
+import { probeFaceFileDimensionsSync } from "@/providers/shared/faceFileDimensions";
 import {
   CARD_FACE_DECISION_FILE,
   CARD_FACE_ROLES,
@@ -37,45 +38,23 @@ export const POKEMON_FACE_SOURCES = [
 
 export type PokemonFaceSource = (typeof POKEMON_FACE_SOURCES)[number];
 
-/**
- * Prefer Live, then encyclopédie mcdn, then official McDo tiles, then
- * Trainers Website JP (pokemon-card.com), then PokéCardex scans (HQ), then
- * Pokéllector JP CDN, then Coleka photos, then TCGdex catalogue CDN, then
- * Limitless JP (fills JA gaps TCGdex omits), then Dittobase JA-order CDN,
- * then Alamedyang vintage JA scans, then CardNexus catalogue CDN, then
- * marketplace CDNs.
- */
-const POKEMON_FACE_PRIORITY_DEFAULT = [
-  "live",
-  "mcdn",
-  "pokemoncom",
-  "trainers",
-  "pokecardex",
-  "pokellector",
+const POKEMON_LISTING_PHOTO = new Set<PokemonFaceSource>([
   "coleka",
-  "tcgdex",
-  "limitless",
-  "dittobase",
-  "alamedyang",
-  "cardnexus",
   "tcgplayer",
   "pokemontcg",
   "pkmcards",
-] as const satisfies readonly PokemonFaceSource[];
+]);
 
-export const POKEMON_FACE_PRIORITY: Record<
-  string,
-  readonly PokemonFaceSource[]
-> = {
-  fr: POKEMON_FACE_PRIORITY_DEFAULT,
-  en: POKEMON_FACE_PRIORITY_DEFAULT,
-  ja: POKEMON_FACE_PRIORITY_DEFAULT,
-};
+export function pokemonFaceCoverProvenance(
+  source: PokemonFaceSource,
+): "catalog" | "listing_photo" {
+  return POKEMON_LISTING_PHOTO.has(source) ? "listing_photo" : "catalog";
+}
 
 const choice = createCardFaceChoice<PokemonFaceSource>({
   sources: POKEMON_FACE_SOURCES,
-  priority: POKEMON_FACE_PRIORITY,
   coverProvenance: "catalog",
+  sourceCoverProvenance: pokemonFaceCoverProvenance,
 });
 
 export const POKEMON_FACE_ROLES = CARD_FACE_ROLES;
@@ -112,9 +91,29 @@ export function listPokemonArtFiles(cardDir: string): string[] {
   });
 }
 
+function loadStoredPokemonFaces(
+  cardDir: string,
+  arts: readonly string[],
+): StoredFace[] {
+  const out: StoredFace[] = [];
+  for (const file of arts) {
+    const source = pokemonFaceSourceOf(file);
+    if (!source) continue;
+    const dims = probeFaceFileDimensionsSync(path.join(cardDir, file));
+    if (!dims) continue;
+    out.push({
+      source,
+      file,
+      width: dims.width,
+      height: dims.height,
+    });
+  }
+  return out;
+}
+
 /**
  * Displayed art filename: face.json winner if still on disk, else re-rank by
- * source priority (dimensions unknown → priority only).
+ * pixels + provenance (dims probed from each dump).
  */
 export function resolvePokemonArtFilename(
   cardDir: string,
@@ -134,22 +133,16 @@ export function resolvePokemonArtFilename(
       if (named && arts.includes(named) && pokemonFaceSourceOf(named)) {
         return named;
       }
-      const parsed = named ? parsePokemonFaceDecision(
-        readFileSync(decisionPath, "utf8"),
-        "art",
-      ) : null;
+      const parsed = named
+        ? parsePokemonFaceDecision(readFileSync(decisionPath, "utf8"), "art")
+        : null;
       if (parsed && arts.includes(parsed)) return parsed;
     } catch {
       /* re-rank */
     }
   }
 
-  const faces: StoredFace[] = arts.map((file) => ({
-    source: pokemonFaceSourceOf(file)!,
-    file,
-    width: 0,
-    height: 0,
-  }));
+  const faces = loadStoredPokemonFaces(cardDir, arts);
   const best = pickBestPokemonFace(faces, lang);
   if (!best) return null;
   if (best === "live") {
@@ -167,16 +160,9 @@ export function refreshPokemonFaceDecision(
   cardDir: string,
   lang = "fr",
 ): string | null {
-  const winner = resolvePokemonArtFilename(cardDir, lang);
-  if (!winner) return null;
-  // Always re-pick from priority when dimensions are unknown so policy changes apply.
   const arts = listPokemonArtFiles(cardDir);
-  const faces: StoredFace[] = arts.map((file) => ({
-    source: pokemonFaceSourceOf(file)!,
-    file,
-    width: 0,
-    height: 0,
-  }));
+  if (!arts.length) return null;
+  const faces = loadStoredPokemonFaces(cardDir, arts);
   const best = pickBestPokemonFace(faces, lang);
   let file: string | null = null;
   if (best === "live") {
@@ -184,7 +170,8 @@ export function refreshPokemonFaceDecision(
   } else if (best) {
     file = arts.find((f) => pokemonFaceSourceOf(f) === best) ?? null;
   }
-  if (!file) file = winner;
+  if (!file) file = resolvePokemonArtFilename(cardDir, lang);
+  if (!file) return null;
   recordPokemonFaceDecision(cardDir, "art", file);
   return file;
 }

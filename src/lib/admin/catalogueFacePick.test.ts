@@ -1,33 +1,21 @@
 import { describe, expect, it } from "vitest";
 
+import { catalogueArtQualityMarker } from "@/core/enrich/media/catalogueFaceRank";
+
 import {
   catalogueFaceSlotScore,
-  catalogueFaceSourceRank,
   pickBestCatalogueFaceSlot,
   resolveCatalogueFace,
 } from "./catalogueFacePick";
 
 describe("catalogueFacePick", () => {
-  it("ranks carddass-fr with official carddass dumps", () => {
-    expect(catalogueFaceSourceRank("art.carddass-fr.gif")).toBe(
-      catalogueFaceSourceRank("art.carddass.jpg"),
-    );
-    expect(catalogueFaceSourceRank("art.carddass-fr.gif")).toBeGreaterThan(
-      catalogueFaceSourceRank("art.adilsons.jpg"),
-    );
+  it("marks corrected / reconstructed without provider-name lists", () => {
+    expect(catalogueArtQualityMarker("art.carddass-fr.gif")).toBe(50);
+    expect(catalogueArtQualityMarker("art.reconstructed.webp")).toBe(95);
+    expect(catalogueArtQualityMarker("art.foo.corrected.jpg")).toBe(100);
   });
 
-  it("ranks cardnexus below publisher dumps and above coleka", () => {
-    expect(catalogueFaceSourceRank("art.cardnexus.webp")).toBe(45);
-    expect(catalogueFaceSourceRank("art.bandai.webp")).toBeGreaterThan(
-      catalogueFaceSourceRank("art.cardnexus.webp"),
-    );
-    expect(catalogueFaceSourceRank("art.cardnexus.webp")).toBeGreaterThan(
-      catalogueFaceSourceRank("art.coleka.webp"),
-    );
-  });
-
-  it("prefère la plus grande face pour un tirage neutre", () => {
+  it("prefers more pixels at equal provenance", () => {
     const entry = {
       set: "nr",
       card: "0010",
@@ -44,13 +32,23 @@ describe("catalogueFacePick", () => {
     );
   });
 
-  it("préfère un scan éditeur à une photo Coleka reflétée à résolution proche", () => {
+  it("prefers catalog provenance over listing_photo at similar size", () => {
     const entry = {
       set: "ff",
       card: "0006",
       langs: {
-        fr: { art: "art.coleka.webp", artW: 750, artH: 1096 },
-        en: { art: "art.arcadegamecards.jpg", artW: 740, artH: 1032 },
+        fr: {
+          art: "art.coleka.webp",
+          artW: 750,
+          artH: 1096,
+          coverProvenance: "listing_photo",
+        },
+        en: {
+          art: "art.arcadegamecards.jpg",
+          artW: 740,
+          artH: 1032,
+          coverProvenance: "catalog",
+        },
         it: { art: "art.imadoki.jpg", artW: 244, artH: 342 },
       },
     };
@@ -263,8 +261,8 @@ describe("catalogueFacePick", () => {
       languageSpecific: false,
       bestFaceAcrossLocales: true,
     });
-    expect(face.artLang).toBe("en");
-    expect(face.file).toBe("art.arcadegamecards.jpg");
+    expect(face.artLang).toBe("fr");
+    expect(face.file).toBe("art.coleka.webp");
   });
 
   it("n'emprunte pas l'IT sur ff-0002 FR — bandeau « DEMON-RENARD »", () => {
@@ -289,12 +287,12 @@ describe("catalogueFacePick", () => {
     expect(face.file).toBeNull();
   });
 
-  it("préfère AnimeCollection HD à Coleka sur la même locale (score)", () => {
+  it("préfère plus de pixels à égal provenance (AnimeCollection vs Coleka)", () => {
     expect(
       catalogueFaceSlotScore({
         art: "art.animecollection.jpg",
-        artW: 727,
-        artH: 1024,
+        artW: 900,
+        artH: 1260,
       }),
     ).toBeGreaterThan(
       catalogueFaceSlotScore({
@@ -305,10 +303,20 @@ describe("catalogueFacePick", () => {
     );
   });
 
-  it("préfère eBay studio à Coleka listing (Leclerc Disney)", () => {
+  it("préfère eBay studio à Coleka listing quand les dims le disent", () => {
     expect(
-      catalogueFaceSlotScore({ art: "art.ebay.jpg" }),
-    ).toBeGreaterThan(catalogueFaceSlotScore({ art: "art.coleka.webp" }));
+      catalogueFaceSlotScore({
+        art: "art.ebay.jpg",
+        artW: 1200,
+        artH: 1600,
+      }),
+    ).toBeGreaterThan(
+      catalogueFaceSlotScore({
+        art: "art.coleka.webp",
+        artW: 400,
+        artH: 560,
+      }),
+    );
   });
 
   it("garde le Coleka FR sur N-412 quand l'index n'a pas artW/artH (ne pas laisser drive voler)", () => {

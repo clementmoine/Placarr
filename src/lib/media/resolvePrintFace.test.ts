@@ -71,7 +71,27 @@ describe("matchPrintsAssetRest", () => {
 });
 
 describe("resolvePrintFace (owned packs)", () => {
-  it("prefers AnimeCollection over Coleka glare when both sit on disk", () => {
+  const PNG_1X1 = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+
+  async function writeFace(
+    filePath: string,
+    width: number,
+    height: number,
+    format: "webp" | "jpeg" = "webp",
+  ) {
+    const { default: sharp } = await import("sharp");
+    const pipeline = sharp(PNG_1X1).resize(width, height);
+    const buf =
+      format === "jpeg"
+        ? await pipeline.jpeg().toBuffer()
+        : await pipeline.webp().toBuffer();
+    fs.writeFileSync(filePath, buf);
+  }
+
+  it("prefers larger catalog scan over Coleka when both sit on disk", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -85,8 +105,8 @@ describe("resolvePrintFace (owned packs)", () => {
       "0026",
     );
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "art.coleka.webp"), "glare");
-    fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), "clean");
+    await writeFace(path.join(dir, "art.coleka.webp"), 400, 560);
+    await writeFace(path.join(dir, "art.animecollection.jpg"), 800, 1120, "jpeg");
 
     const hit = resolvePrintFace({
       pack: "naruto/ninja-ranks",
@@ -97,7 +117,7 @@ describe("resolvePrintFace (owned packs)", () => {
     expect(hit?.artFile).toBe("art.animecollection.jpg");
   });
 
-  it("prefers eBay studio crop over Coleka listing when both sit on disk (Leclerc)", () => {
+  it("prefers larger eBay crop over smaller Coleka when both sit on disk (Leclerc)", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -111,9 +131,8 @@ describe("resolvePrintFace (owned packs)", () => {
       "001",
     );
     fs.mkdirSync(dir, { recursive: true });
-    // coleka sorts before ebay alphabetically — ranking must still pick ebay.
-    fs.writeFileSync(path.join(dir, "art.coleka.webp"), "glare");
-    fs.writeFileSync(path.join(dir, "art.ebay.jpg"), "clean");
+    await writeFace(path.join(dir, "art.coleka.webp"), 300, 420);
+    await writeFace(path.join(dir, "art.ebay.jpg"), 900, 1260, "jpeg");
 
     const hit = resolvePrintFace({
       pack: "leclerc/disney25",
@@ -124,7 +143,7 @@ describe("resolvePrintFace (owned packs)", () => {
     expect(hit?.artFile).toBe("art.ebay.jpg");
   });
 
-  it("borrows EN art when IT folder is missing (sd-0004 hole)", () => {
+  it("borrows EN art when IT folder is missing (sd-0004 hole)", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -142,7 +161,7 @@ describe("resolvePrintFace (owned packs)", () => {
       recursive: true,
     });
     fs.mkdirSync(enDir, { recursive: true });
-    fs.writeFileSync(path.join(enDir, "art.reconstructed.webp"), "kakashi");
+    await writeFace(path.join(enDir, "art.reconstructed.webp"), 400, 560);
 
     const hit = resolvePrintFace({
       pack: "naruto/ninja-ranks",
@@ -157,7 +176,7 @@ describe("resolvePrintFace (owned packs)", () => {
     });
   });
 
-  it("honours face.json over filesystem ranking", () => {
+  it("honours face.json over filesystem ranking", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -171,8 +190,8 @@ describe("resolvePrintFace (owned packs)", () => {
       "0044",
     );
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "art.coleka.webp"), "glare");
-    fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), "clean");
+    await writeFace(path.join(dir, "art.coleka.webp"), 900, 1260);
+    await writeFace(path.join(dir, "art.animecollection.jpg"), 400, 560, "jpeg");
     fs.writeFileSync(
       path.join(dir, "face.json"),
       `${JSON.stringify({ art: "art.animecollection.jpg" }, null, 2)}\n`,

@@ -14,11 +14,18 @@ sources + cold-start fallback only. **`data/uploads/`** = user media (custom
 covers, crops) — not catalogue masks. Layout stays **flat** (`hash.ext` +
 `hash_crop.ext`).
 
+**SSOT** = `data/<pack>/catalog.sqlite` (prints, products, assets, facts). Les
+fichiers `*-index.json` sont des **projections legacy / appendix** — lus tant
+que des chemins admin les appellent, **pas** une deuxième vérité. Contrat :
+[catalogue_contract.md](catalogue_contract.md).
+
 ```
 data/
   uploads/
   lorcana/ | pokemon/
-    catalog.sqlite | cards-index.json | products-index.json | cards/ | foil/ | staging/ | logs/
+    catalog.sqlite | cards/ | foil/ | staging/ | logs/
+    # appendix legacy (optionnel) : cards-index.json | products-index.json
+
     # lorcana/staging/lorcards-products/  — Sync admin (famille TCG Cards)
     # lorcana/staging/set-logos.json      — wordmarks de chapitre (viewer)
     # lorcana/products/sets/{set12}/logo.png
@@ -168,7 +175,7 @@ Voir [provider_supply_modes.md](provider_supply_modes.md) :
 | Artefact                              | Gap                                                                                                                                                                   |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + Catalogue Sync Pokémon                                                                                    |
-| `data/<pack>/products-index.json`     | Écriture via `persistSealedProductsIndex` (merge `curated/products-contents.json`). TCG Cards : ingest Sync. Carddass / Mythos / Ranks / … : writers dédiés. Lecture Catalogue : `loadSealedProductsIndex`. |
+| `data/<pack>/products-index.json`     | **Appendix legacy** — tables `products` / `product_contents` dans `catalog.sqlite` = SSOT. Écriture projection encore via `persistSealedProductsIndex` (merge curated) tant que l’admin lit le JSON ; cible = sqlite-only. |
 | `data/<pack>/curated/products-contents.json` | Overlay runtime (graine git ± rebuild Sync). Sync ne réécrit pas `providers/.../curated/products-contents.json`. |
 | `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                                           |
 | `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = Catalogue Extract (admin / worker)                                                                                      |
@@ -203,20 +210,24 @@ Generated TS JSON (gitignored) is written by Catalogue Extract when missing
 
 `next.config.js` ignores `data/` in webpack watch so foil/CDN dumps do not thrash `next dev`.
 
-## Scripts — repo-wide only
+## Scripts — ops vs dev-only
+
+Inventaire complet : [admin_surface.md](admin_surface.md).
 
 Provider ingest lives under `src/providers/<id>/` (see
-[provider_supply_modes.md](provider_supply_modes.md)).
+[provider_supply_modes.md](provider_supply_modes.md)). **Utilisateur final = admin
+web**, jamais `tsx` métier.
 
-| Path                                     | Role             | Entrypoint                         |
+| Path                                     | Role             | Entrypoint / classe                |
 | ---------------------------------------- | ---------------- | ---------------------------------- |
-| `scripts/backgroundWorker.ts`            | Background jobs  | `pnpm worker` · `worker:icollect`  |
-| `scripts/providerMappingAudit.ts`        | Mapping audit    | `pnpm providers:audit:mapping`     |
-| `scripts/record-all-barcode-fixtures.ts` | Barcode fixtures | `pnpm test:record:all`             |
-| `scripts/buildTitleIdfIndex.ts`          | Title IDF corpus | `tsx scripts/…` (pas d'alias npm)  |
+| `scripts/backgroundWorker.ts`            | Background jobs  | `pnpm worker` — **ops**            |
+| `scripts/providerMappingAudit.ts`        | Mapping audit    | `pnpm providers:audit:mapping` — **dev** |
+| `scripts/record-all-barcode-fixtures.ts` | Barcode fixtures | `pnpm test:record:all` — **dev**  |
+| `scripts/buildTitleIdfIndex.ts`          | Title IDF corpus | `tsx scripts/…` — **dev-only**     |
+| `scripts/refreshSealed*.ts`, `migrate*`, `harvest-*`, `audit*` | One-shots | **dev-only** — densif via Sync admin |
 
 Pack extracts: in-process via `catalogueExtractRunner` (admin Catalogue Sync /
-worker). Audits locaux optionnels : `tsx src/providers/pokemon/live/audit*.ts`.
+worker). Audits locaux optionnels : `tsx src/providers/pokemon/live/audit*.ts` (**dev**).
 Foil gaps: admin `/api/admin/foil-status` → `computeFoilGaps()` (`src/lib/admin/foilGaps.ts`).
 Unity extract: Node in-process via Catalogue Sync / worker (ADR-021 A–E). Voir
 [unity_without_python.md](unity_without_python.md).

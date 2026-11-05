@@ -12,6 +12,7 @@ import type {
   TitleObservationRole,
 } from "@/types/metadataObservation";
 import type { MetadataResult } from "@/types/metadataProvider";
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 
 export const METADATA_OBSERVATION_SCHEMA_VERSION =
   "metadata-observations/v1" as const;
@@ -112,7 +113,8 @@ function provenanceFromOptions(
     providerId: options.providerId,
     providerLabel: options.providerLabel,
     sourceDocumentRole: options.sourceDocumentRole,
-    sourceUrl: options.sourceUrl,
+    // Homepage / shallow hub must never masquerade as a verifiable citation.
+    sourceUrl: sanitizePublicCitationUrl(options.sourceUrl) ?? undefined,
     sourceId: options.sourceId,
     observedAt: options.observedAt,
     evidenceSignals: options.evidenceSignals,

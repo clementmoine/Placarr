@@ -4,7 +4,11 @@
  * Language-specific prints keep the face of the tile locale. Everyone else may
  * borrow the best recto across `catalogueLocales` while the verso stays on the
  * tile locale (often localized — missing back is fine).
+ *
+ * Ranking = core criteria (pixels + provenance + filename markers) — see
+ * {@link catalogueFaceRankScore}. No provider-name lists.
  */
+import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
 import type {
   CardsIndexEntry,
   CardsIndexLangFiles,
@@ -36,50 +40,18 @@ function catalogueFaceThumbFile(files: CardsIndexLangFiles): string | null {
   return null;
 }
 
-/**
- * Filename convention: `art.<source>.<ext>`. Rank = typical scan quality
- * (publisher / shop / reconstructed beat marketplace glare). Shared with
- * `/prints/…/face` resolve so sealed previews match Catalogue → Cards.
- */
-export function catalogueFaceSourceRank(artFile: string): number {
-  const match = /^art\.([^.]+)\./i.exec(artFile.trim());
-  const source = match?.[1]?.toLowerCase() ?? "";
-  if (source.includes("corrected")) return 100;
-  if (source.includes("reconstructed")) return 95;
-  // AnimeCollection HD FR — source principale Ninja Ranks (au-dessus de Coleka).
-  if (source === "animecollection") return 90;
-  if (source === "inkworks" || source === "arcadegamecards") return 85;
-  // Official Bandai Carddass site dumps (ex. Bleach SCB FR via carddass.fr).
-  if (source === "carddass" || source === "carddass-fr") return 80;
-  // Marketplace gallery crops (Leclerc Disney) beat Coleka listing glare.
-  // Split so blindnessGuard does not count the marketplace provider id literal.
-  if (source === `eb${"ay"}`) return 70;
-  if (source === "imadoki") return 55;
-  // CardNexus catalogue CDN — below publisher dumps (default 50), above Coleka glare.
-  // Split so blindnessGuard does not count the commerce provider id literal.
-  if (source === `card${"nexus"}`) return 45;
-  if (source === "coleka") return 35;
-  if (source === "blogger") return 30;
-  return 50;
-}
-
-/** Higher is better — area × source quality; unknown dims still beat missing art. */
+/** Higher is better — pixels + provenance + filename markers (core). */
 export function catalogueFaceSlotScore(files: CardsIndexLangFiles): number {
   const art = catalogueFaceArtFile(files);
   if (!art) return -1;
-  const w = files.artW ?? 0;
-  const h = files.artH ?? 0;
-  const rank = catalogueFaceSourceRank(art);
-  /*
-    Unknown pixel size: compare source rank alone. Using `area = 1` collapsed
-    every rank < 50 (notably Coleka = 35) to score 0, so a default-ranked dump
-    like `art.drive.webp` (50) always stole the tile — even when FR already had
-    a larger Coleka scan that simply lacked artW/artH in the index.
-  */
-  let score =
-    w > 0 && h > 0 ? Math.floor(w * h * (rank / 50)) : rank;
-  if (!files.art && files.thumb) score = Math.floor(score * 0.5);
-  return score;
+  return catalogueFaceRankScore({
+    artFile: art,
+    width: files.artW,
+    height: files.artH,
+    coverProvenance:
+      (files as { coverProvenance?: string | null }).coverProvenance ?? null,
+    thumbOnly: !files.art && Boolean(files.thumb),
+  });
 }
 
 function slotHasArtDims(files: CardsIndexLangFiles): boolean {

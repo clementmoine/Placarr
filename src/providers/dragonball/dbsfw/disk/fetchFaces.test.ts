@@ -91,8 +91,7 @@ describe("pickBestFwFace", () => {
     ).toBe("dbscards");
   });
 
-  it("still answers when nothing can be measured", () => {
-    // A file we cannot measure is still a face; the card must not go blank.
+  it("returns null when every face is unmeasurable (no source-name fallback)", () => {
     expect(
       pickBestFwFace(
         [
@@ -101,7 +100,7 @@ describe("pickBestFwFace", () => {
         ],
         "ja",
       ),
-    ).toBe("dbscards");
+    ).toBeNull();
   });
 
   it("names files by role and source", () => {

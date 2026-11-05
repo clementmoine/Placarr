@@ -1,37 +1,20 @@
 /**
  * Which stored face a card shows, for any pack that keeps several.
  *
- * Faces used to be first-hit-wins: the preferred host was asked first and
- * whatever answered got written to `art.webp`. That made the result depend on
- * the weather — a pass run while a source was rate-limiting froze thousands of
- * cards at the smallest available scan, and the only way back was
- * re-downloading everything with `--force`.
+ * Every source that answers is kept as `art.<source>.<ext>`; the displayed
+ * face is chosen by core criteria ([`pickBestCatalogueFace`]) — pixels +
+ * provenance + filename markers — never by provider-name lists.
  *
- * So every source that answers is kept side by side as `art.<source>.<ext>`, and
- * the displayed face is *chosen* rather than raced for. Adding a source later
- * needs no re-download of the others, and the choice is a pure function that
- * can be re-run offline.
- *
- * The ranking is not ours: `explainAttachmentScoreForDisplay` is what already
- * decides which cover an item shows, and a card face is the same question. It
- * takes plain objects — no Prisma row, no `sharp` — so a catalogue can use it
- * before any item exists.
- *
- * Language is not part of the ranking: it is a hard filter one level up, in the
- * folder (`cards/<set>/<lang>/`). A French print never sees an English
- * candidate, however large it is.
- *
- * Two packs read this — DBS Masters, with three sources, and Fusion World, with
- * two — so the source list and its per-locale tie-break are arguments.
+ * Language is a hard filter one level up (`cards/<set>/<lang>/`).
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { resolveCoverProvenance } from "@/core/enrich/media/coverProvenance";
 import {
-  coverProvenanceRank,
-  resolveCoverProvenance,
-} from "@/core/enrich/media/coverProvenance";
-import { explainAttachmentScoreForDisplay } from "@/core/enrich/media/attachmentDisplayScoring";
+  catalogueFaceRankScore,
+  pickBestCatalogueFace,
+} from "@/core/enrich/media/catalogueFaceRank";
 
 /**
  * Named files a catalogue folder can hold: `art.<source>.<ext>`,
@@ -95,14 +78,11 @@ export function createCardFaceChoice<S extends string>(config: {
   /** Every source a stored face can come from. */
   sources: readonly S[];
   /**
-   * Preferred order per locale, best first — the tie-break, not the rule.
-   *
-   * Deliberately *not* dominating size, because with today's sources it could
-   * only make things worse. It earns its keep the day a source is better
-   * without being bigger: a scan without the SAMPLE watermark every other
-   * source carries, say. That is the rule this list is here to hold.
+   * Optional per-locale declaration-order when `preferPriorityOverScore` is
+   * set (sealed packshots still migrating). Print faces omit this — ranking
+   * is [`pickBestCatalogueFace`] only.
    */
-  priority: Readonly<Record<string, readonly S[]>>;
+  priority?: Readonly<Record<string, readonly S[]>>;
   /**
    * Provenance handed to the scorer when `sourceCoverProvenance` is unset.
    * Publisher scans, not marketplace photos.
@@ -116,28 +96,17 @@ export function createCardFaceChoice<S extends string>(config: {
   sourceCoverProvenance?: (source: S) => string | null | undefined;
   /**
    * Surface (en pixels) sous laquelle la **taille** tranche seule, sans passer
-   * par le score d'affichage.
-   *
-   * Sous le plancher de résolution du scorer, celui-ci applique la même
-   * pénalité à tout le monde : il ne reste que le bonus de ratio. Or ce bonus
-   * récompense le **cadre**, pas le produit — une vignette de boutique de
-   * 200×300, rembourrée jusqu'au 2:3 idéal, y bat une photo de 286×500 qui
-   * montre deux fois plus de pack. Le scorer a déjà dit qu'il ne savait pas
-   * départager ; ce qu'il ajoute ensuite est du bruit.
-   *
-   * Laissé à zéro par défaut : seuls les paquets scellés, dont les visuels
-   * sont presque tous sous le plancher, en ont besoin aujourd'hui.
+   * par le score d'affichage (padded thumbs vs real pack photos).
    */
   areaDecidesBelow?: number;
   /**
-   * When true, locale priority beats display score within the same provenance
-   * tier (after the stub-floor exception). Sealed packshots need this: a
-   * padded 1600×1600 Drive embed otherwise outranks an angled distributor
-   * box photo that the catalogue prefers by source order.
+   * When true, locale `priority` beats core score within the same provenance
+   * tier (sealed packshots). Print faces must leave this unset.
    */
   preferPriorityOverScore?: boolean;
 }): CardFaceChoice<S> {
-  const { sources, priority } = config;
+  const { sources } = config;
+  const priority = config.priority ?? {};
   const defaultProvenance = config.coverProvenance ?? "catalog";
   const provenanceOf = (source: S): string =>
     resolveCoverProvenance({
@@ -192,111 +161,57 @@ export function createCardFaceChoice<S extends string>(config: {
     lang = "fr",
   ): S | null => {
     /*
-      A file we cannot measure is still a face. Dropping it would leave the card
-      blank over a metadata hiccup, so unmeasurable candidates fall back to the
-      source order rather than out of the running.
+      Sealed migration path only: locale priority may beat score. Print faces
+      never set preferPriorityOverScore — they use core criteria exclusively.
     */
-    if (faces.length > 0 && faces.every((f) => f.width <= 0 || f.height <= 0)) {
-      // No pixels → no provenance demotion (a stub GIF and a photo look alike
-      // at 0×0). Locale priority is the only signal left.
-      return [...faces].sort(
-        (a, b) => priorityOf(a.source, lang) - priorityOf(b.source, lang),
-      )[0]!.source;
-    }
-    let best: {
-      face: StoredFace<S>;
-      score: number;
-      provenanceRank: number;
-    } | null = null;
-    for (const face of faces) {
-      if (face.width <= 0 || face.height <= 0) continue;
-      const coverProvenance = provenanceOf(face.source);
-      const provenanceRank = coverProvenanceRank(coverProvenance);
-      const score = explainAttachmentScoreForDisplay(
-        {
-          type: "cover",
-          url: `${face.source}/${face.file ?? faceFilename(face.source)}`,
-          source: face.source,
+    if (priorityFirst) {
+      const measurable = faces.filter((f) => f.width > 0 && f.height > 0);
+      if (!measurable.length) return null;
+      let best: StoredFace<S> | null = null;
+      let bestScore = -1;
+      for (const face of measurable) {
+        const coverProvenance = provenanceOf(face.source);
+        const score = catalogueFaceRankScore({
+          artFile: face.file ?? faceFilename(face.source),
+          width: face.width,
+          height: face.height,
           coverProvenance,
-        },
-        { width: face.width, height: face.height },
-      ).score;
-      const area = face.width * face.height;
-      const bestArea = best ? best.face.width * best.face.height : 0;
-      /*
-        Provenance catalog > listing_photo. Exception: a stub catalogue dump
-        (carddass.fr GIF ~200×247 ≈ 50k px) must not demote a real seller photo.
-        Boutique packshots under `areaFloor` (UltraJeux 336×421) still count —
-        only dumps under this stub floor are ignored for provenance wins.
-      */
-      const provenanceStubFloor = Math.min(100_000, areaFloor || 100_000);
-      if (
-        best &&
-        provenanceRank !== best.provenanceRank &&
-        provenanceStubFloor > 0
-      ) {
-        const faceUsable = area >= provenanceStubFloor;
-        const bestUsable = bestArea >= provenanceStubFloor;
-        if (provenanceRank < best.provenanceRank) {
-          if (faceUsable || !bestUsable) {
-            best = { face, score, provenanceRank };
-          }
+        });
+        if (!best) {
+          best = face;
+          bestScore = score;
           continue;
         }
-        if (!bestUsable && faceUsable) {
-          best = { face, score, provenanceRank };
-        }
-        continue;
-      }
-      if (best && provenanceRank < best.provenanceRank) {
-        best = { face, score, provenanceRank };
-        continue;
-      }
-      if (best && provenanceRank > best.provenanceRank) continue;
-      // Les deux sous le plancher : la taille tranche, le score n'y voit rien.
-      const bothTiny =
-        best != null &&
-        areaFloor > 0 &&
-        area < areaFloor &&
-        bestArea < areaFloor;
-      if (bothTiny) {
-        if (area > bestArea) best = { face, score, provenanceRank };
-        else if (
-          area === bestArea &&
-          priorityOf(face.source, lang) < priorityOf(best!.face.source, lang)
-        ) {
-          best = { face, score, provenanceRank };
-        }
-        continue;
-      }
-      if (!best) {
-        best = { face, score, provenanceRank };
-        continue;
-      }
-      if (priorityFirst) {
         const facePri = priorityOf(face.source, lang);
-        const bestPri = priorityOf(best.face.source, lang);
+        const bestPri = priorityOf(best.source, lang);
         if (facePri < bestPri) {
-          best = { face, score, provenanceRank };
+          best = face;
+          bestScore = score;
           continue;
         }
         if (facePri > bestPri) continue;
-        if (score > best.score) best = { face, score, provenanceRank };
-        continue;
-      }
-      if (score > best.score) {
-        best = { face, score, provenanceRank };
-        continue;
-      }
-      if (score === best.score) {
-        if (
-          priorityOf(face.source, lang) < priorityOf(best.face.source, lang)
-        ) {
-          best = { face, score, provenanceRank };
+        if (score > bestScore) {
+          best = face;
+          bestScore = score;
         }
       }
+      return best?.source ?? null;
     }
-    return best?.face.source ?? null;
+
+    const picked = pickBestCatalogueFace(
+      faces.map((face) => ({
+        id: face.source,
+        artFile: face.file ?? faceFilename(face.source),
+        width: face.width,
+        height: face.height,
+        coverProvenance: provenanceOf(face.source),
+      })),
+      {
+        areaDecidesBelow: areaFloor,
+        tieBreakIds: sources,
+      },
+    );
+    return (picked?.id as S | undefined) ?? null;
   };
 
   /** The filename recorded for a role, or null when it says nothing usable. */

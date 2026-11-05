@@ -26,6 +26,18 @@ utile était souvent perdue (restée dans une observation, un `source-url`, ou l
 > apparaît dans Sources & boutiques.** Préférer une URL fiche produit ; sinon
 > le `websiteUrl` du registry (attribution). Jamais d’URL inventée.
 
+### Citations = preuve ouvrable (2026-11-05)
+
+> Un `sourceUrl` / citation **doit** ouvrir la ressource publique précise
+> (fiche produit, annonce, article, `watch?v=`, post forum…). **Jamais** la
+> page d’accueil du site. Si la page live a disparu mais existe sur Wayback,
+> stamp l’URL `web.archive.org/web/<ts>/<original>` (original = deep link).
+
+Helpers : [`publicCitationUrl.ts`](../src/core/enrich/citations/publicCitationUrl.ts)
+(`sanitizePublicCitationUrl`, `waybackPublicCitationUrl`). Appliqué à
+observations, field evidence, price offers, et
+`looksLikeProviderProductPageUrl`.
+
 - Kind affiché UI : `external-link` uniquement (`extractProviderLinkFacts`).
 - Kind intermédiaire accepté : `source-url` (mirrored en `external-link` au merge).
 - Pas de lien CDN (`looksLikeProviderProductPageUrl` filtre images, `book_cover`,

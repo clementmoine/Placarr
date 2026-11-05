@@ -30,7 +30,11 @@ import {
   attachTitlesToCardsIndex,
   type ResolvedIndexTitle,
 } from "@/providers/shared/cardCatalogue/attachIndexTitles";
-import { resolvePokemonArtFilename } from "@/providers/pokemon/tcgdex/disk/faceChoice";
+import {
+  pokemonFaceCoverProvenance,
+  pokemonFaceSourceOf,
+  resolvePokemonArtFilename,
+} from "@/providers/pokemon/tcgdex/disk/faceChoice";
 import {
   loadTcgdexNameLookup,
   resolveTcgdexIndexName,
@@ -85,7 +89,11 @@ function langFilesFromDir(
   const variants: NonNullable<CardsIndexLangFiles["variants"]> = {};
 
   const artWinner = resolvePokemonArtFilename(cardDir, lang);
-  if (artWinner) langFiles.art = artWinner;
+  if (artWinner) {
+    langFiles.art = artWinner;
+    const source = pokemonFaceSourceOf(artWinner);
+    if (source) langFiles.coverProvenance = pokemonFaceCoverProvenance(source);
+  }
 
   for (const file of listFiles(cardDir)) {
     const low = file.toLowerCase();

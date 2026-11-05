@@ -402,77 +402,49 @@ describe("pokemonFaceSourceOf", () => {
 });
 
 describe("pickBestPokemonFace", () => {
-  it("ranks live above mcdn above pokemoncom above trainers above pokecardex above coleka above tcgdex", () => {
+  it("keeps declaration order of catalog sources and demotes listing_photo", () => {
     expect(POKEMON_FACE_SOURCES[0]).toBe("live");
-    expect(POKEMON_FACE_SOURCES[1]).toBe("mcdn");
-    expect(POKEMON_FACE_SOURCES[2]).toBe("pokemoncom");
-    expect(POKEMON_FACE_SOURCES[3]).toBe("trainers");
-    expect(POKEMON_FACE_SOURCES[4]).toBe("pokecardex");
-    expect(POKEMON_FACE_SOURCES[5]).toBe("pokellector");
     expect(POKEMON_FACE_SOURCES[6]).toBe("coleka");
-    expect(POKEMON_FACE_SOURCES[7]).toBe("tcgdex");
-    expect(POKEMON_FACE_SOURCES[8]).toBe("limitless");
-    expect(POKEMON_FACE_SOURCES[9]).toBe("dittobase");
-    expect(POKEMON_FACE_SOURCES[10]).toBe("alamedyang");
+    // Equal catalog dims → earlier declaration wins (live before mcdn).
     expect(
       pickBestPokemonFace(
         [
-          { source: "coleka", width: 0, height: 0 },
-          { source: "live", width: 0, height: 0 },
-          { source: "mcdn", width: 0, height: 0 },
+          { source: "coleka", width: 400, height: 560 },
+          { source: "live", width: 400, height: 560 },
+          { source: "mcdn", width: 400, height: 560 },
         ],
         "fr",
       ),
     ).toBe("live");
+    // Catalog pokemoncom beats larger coleka listing_photo.
     expect(
       pickBestPokemonFace(
         [
-          { source: "pokemoncom", width: 0, height: 0 },
-          { source: "mcdn", width: 0, height: 0 },
-          { source: "coleka", width: 0, height: 0 },
-        ],
-        "en",
-      ),
-    ).toBe("mcdn");
-    expect(
-      pickBestPokemonFace(
-        [
-          { source: "tcgplayer", width: 0, height: 0 },
-          { source: "coleka", width: 0, height: 0 },
-          { source: "pokecardex", width: 0, height: 0 },
-          { source: "pokemoncom", width: 0, height: 0 },
+          { source: "coleka", width: 800, height: 1120 },
+          { source: "pokemoncom", width: 400, height: 560 },
         ],
         "en",
       ),
     ).toBe("pokemoncom");
+    // Among listing_photo only, more pixels win.
     expect(
       pickBestPokemonFace(
         [
-          { source: "tcgplayer", width: 0, height: 0 },
-          { source: "coleka", width: 0, height: 0 },
-          { source: "pokecardex", width: 0, height: 0 },
-        ],
-        "fr",
-      ),
-    ).toBe("pokecardex");
-    expect(
-      pickBestPokemonFace(
-        [
-          { source: "tcgplayer", width: 0, height: 0 },
-          { source: "tcgdex", width: 0, height: 0 },
-        ],
-        "en",
-      ),
-    ).toBe("tcgdex");
-    expect(
-      pickBestPokemonFace(
-        [
-          { source: "pokemontcg", width: 0, height: 0 },
-          { source: "tcgplayer", width: 0, height: 0 },
+          { source: "pokemontcg", width: 300, height: 420 },
+          { source: "tcgplayer", width: 600, height: 840 },
         ],
         "en",
       ),
     ).toBe("tcgplayer");
+    expect(
+      pickBestPokemonFace(
+        [
+          { source: "live", width: 0, height: 0 },
+          { source: "coleka", width: 0, height: 0 },
+        ],
+        "fr",
+      ),
+    ).toBeNull();
   });
 });
 
@@ -556,10 +528,19 @@ describe("fillTcgdexCatalogueFaces", () => {
 });
 
 describe("resolvePokemonArtFilename", () => {
-  it("prefers live art.webp over art.coleka when both exist", () => {
+  /** 1×1 PNG — header probe needs real image bytes. */
+  const PNG_1X1 = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+
+  it("prefers live art.webp over art.coleka when both exist", async () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "poke-face-"));
-    writeFileSync(path.join(dir, "art.webp"), "live");
-    writeFileSync(path.join(dir, "art.coleka.webp"), "coleka");
+    const { default: sharp } = await import("sharp");
+    const live = await sharp(PNG_1X1).resize(800, 1120).webp().toBuffer();
+    const coleka = await sharp(PNG_1X1).resize(400, 560).webp().toBuffer();
+    writeFileSync(path.join(dir, "art.webp"), live);
+    writeFileSync(path.join(dir, "art.coleka.webp"), coleka);
     expect(resolvePokemonArtFilename(dir, "fr")).toBe("art.webp");
     expect(refreshPokemonFaceDecision(dir, "fr")).toBe("art.webp");
     const decision = JSON.parse(
@@ -568,10 +549,28 @@ describe("resolvePokemonArtFilename", () => {
     expect(decision.art).toBe("art.webp");
   });
 
-  it("picks coleka alone", () => {
+  it("picks coleka alone", async () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "poke-face-c-"));
     mkdirSync(dir, { recursive: true });
-    writeFileSync(path.join(dir, "art.coleka.webp"), "x");
+    const { default: sharp } = await import("sharp");
+    writeFileSync(
+      path.join(dir, "art.coleka.webp"),
+      await sharp(PNG_1X1).resize(400, 560).webp().toBuffer(),
+    );
     expect(resolvePokemonArtFilename(dir, "fr")).toBe("art.coleka.webp");
+  });
+
+  it("prefers catalog live over larger coleka listing_photo", async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "poke-face-prov-"));
+    const { default: sharp } = await import("sharp");
+    writeFileSync(
+      path.join(dir, "art.webp"),
+      await sharp(PNG_1X1).resize(336, 421).webp().toBuffer(),
+    );
+    writeFileSync(
+      path.join(dir, "art.coleka.webp"),
+      await sharp(PNG_1X1).resize(764, 1000).webp().toBuffer(),
+    );
+    expect(resolvePokemonArtFilename(dir, "fr")).toBe("art.webp");
   });
 });

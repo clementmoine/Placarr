@@ -8,11 +8,16 @@ import {
   loadCardsIndexDoc,
   persistCardsIndexDoc,
 } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
+import { providerModuleProviding } from "@/providers/shared/packOwner";
 
 /**
  * Probe on-disk face files for orientation (raw file pixels — never the
  * margin-trimmed display box, which skews aspect and lenticular strip checks). Soft no-op when no CardsIndex
  * doc remains in sqlite (identity lives elsewhere).
+ *
+ * Also stamps `coverProvenance` from the pack's `coverProvenanceForArtFile`
+ * when present (listing_photo vs catalog) so Catalogue tiles can demote
+ * marketplace dumps without name lists.
  */
 export async function enrichCardsIndexArtDimensions(
   packId: string,
@@ -24,6 +29,10 @@ export async function enrichCardsIndexArtDimensions(
   if (!isCardsIndexV1(index)) {
     throw new Error(`cards-index doc invalide : ${packId}`);
   }
+  const provenanceOf = providerModuleProviding(
+    packId,
+    "coverProvenanceForArtFile",
+  )?.coverProvenanceForArtFile;
   let probed = 0;
   let landscapePrints = 0;
 
@@ -35,6 +44,9 @@ export async function enrichCardsIndexArtDimensions(
     for (const [lang, slot] of Object.entries(entry.langs)) {
       const art = slot.art?.trim();
       if (!art) continue;
+      const stamped = provenanceOf?.(art)?.trim();
+      if (stamped) slot.coverProvenance = stamped;
+      else delete slot.coverProvenance;
       const artPath = path.join(
         packCardDir(packId, {
           set: entry.set,

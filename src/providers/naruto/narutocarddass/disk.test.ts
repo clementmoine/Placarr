@@ -2,7 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { NARUTO_FACE_PRIORITY, NARUTO_FACE_SOURCES, narutoDumpFaceRank, narutoFaceFilename, narutoFaceSourceOf, parseNarutoFaceDecision, pickBestNarutoDumpFace, narutoAssetsCardUrl, narutoCardPathFromCollector, narutoCardRelPath, normalizeNarutoLang, NARUTO_FACE_DECISION_FILE, existingNarutoArtForSource, saveNarutoFace, writeNarutoArtFile, isMarketplacePaddedImage, carddasJpVol1FaceOriginalUrls, carddasJpVol1FaceStem, carddasJpVol1FaceTargets, carddasJpVolumeFaceOriginalUrls, carddasJpVolumeFaceStem, carddasJpVolumeFaceTargets, waybackImageUrl } from "./disk";
+import { NARUTO_FACE_SOURCES, narutoDumpFaceRank, narutoFaceFilename, narutoFaceSourceOf, parseNarutoFaceDecision, pickBestNarutoDumpFace, narutoAssetsCardUrl, narutoCardPathFromCollector, narutoCardRelPath, normalizeNarutoLang, NARUTO_FACE_DECISION_FILE, existingNarutoArtForSource, saveNarutoFace, writeNarutoArtFile, isMarketplacePaddedImage, carddasJpVol1FaceOriginalUrls, carddasJpVol1FaceStem, carddasJpVol1FaceTargets, carddasJpVolumeFaceOriginalUrls, carddasJpVolumeFaceStem, carddasJpVolumeFaceTargets, waybackImageUrl } from "./disk";
 import { canonicalizeNarutoPrintKey, mintNarutoPrintKey, narutoCollectorsMatch, narutoDiskCardId } from "./identity";
 import sharp from "sharp";
 
@@ -121,54 +121,19 @@ import sharp from "sharp";
     });
   });
 
-  describe("NARUTO_FACE_PRIORITY", () => {
-    it("lists every dump source in every locale", () => {
-      for (const [lang, list] of Object.entries(NARUTO_FACE_PRIORITY)) {
-        expect(new Set(list), lang).toEqual(new Set(NARUTO_FACE_SOURCES));
-      }
-    });
-  });
-
   describe("narutoDumpFaceRank", () => {
-    it("prefers the locale dump on a size tie (filename order only)", () => {
-      expect(narutoDumpFaceRank("art.nikita.jpg", "ja")).toBeGreaterThan(
-        narutoDumpFaceRank("art.suruga.jpg", "ja"),
-      );
-      expect(narutoDumpFaceRank("art.nikita.jpg", "ja")).toBeGreaterThan(
-        narutoDumpFaceRank("art.slabz.jpg", "ja"),
-      );
-      expect(narutoDumpFaceRank("art.vintage.jpg", "en")).toBeGreaterThan(
-        narutoDumpFaceRank("art.goat.jpg", "en"),
-      );
-      expect(narutoDumpFaceRank("art.drive.jpg", "en")).toBeGreaterThan(
-        narutoDumpFaceRank("art.vintage.jpg", "en"),
-      );
+    it("ranks by provenance then declaration order (no locale FACE_PRIORITY)", () => {
       expect(narutoDumpFaceRank("art.carddass.jpg", "fr")).toBeGreaterThan(
-        narutoDumpFaceRank("art.ultrajeux.jpg", "fr"),
-      );
-      expect(narutoDumpFaceRank("art.ultrajeux.jpg", "fr")).toBeGreaterThan(
         narutoDumpFaceRank("art.coleka.jpg", "fr"),
       );
-      expect(narutoDumpFaceRank("art.coleka.jpg", "fr")).toBeGreaterThan(
-        narutoDumpFaceRank("art.leboncoin.jpg", "fr"),
+      expect(narutoDumpFaceRank("art.nikita.jpg", "ja")).toBeGreaterThan(
+        narutoDumpFaceRank("art.ebay.jpg", "ja"),
       );
-      expect(narutoDumpFaceRank("art.leboncoin.jpg", "fr")).toBeGreaterThan(
-        narutoDumpFaceRank("art.ebay.jpg", "fr"),
-      );
-      expect(narutoDumpFaceRank("art.coleka.jpg", "it")).toBeGreaterThan(
-        narutoDumpFaceRank("art.ebay.jpg", "it"),
-      );
-      expect(narutoDumpFaceRank("art.ebay.jpg", "ja")).toBeGreaterThan(
-        narutoDumpFaceRank("art.mercari.jpg", "ja"),
-      );
-      expect(narutoDumpFaceRank("art.mercari.jpg", "ja")).toBeGreaterThan(
+      expect(narutoDumpFaceRank("art.legacy.jpg", "ja")).toBeGreaterThan(
         narutoDumpFaceRank("art.yahoo.jpg", "ja"),
       );
-      expect(narutoDumpFaceRank("art.yahoo.jpg", "ja")).toBeGreaterThan(
-        narutoDumpFaceRank("art.legacy.jpg", "ja"),
-      );
-      expect(narutoDumpFaceRank("art.legacy.jpg", "en")).toBeGreaterThan(
-        narutoDumpFaceRank("art.fanset.jpg", "en"),
+      expect(narutoDumpFaceRank("art.carddas-a.png", "ja")).toBeGreaterThan(
+        narutoDumpFaceRank("art.carddas-b.png", "ja"),
       );
     });
   });
@@ -198,6 +163,28 @@ import sharp from "sharp";
   });
 
   describe("pickBestNarutoDumpFace", () => {
+    it("prefers catalog shop scan over larger marketplace listing_photo", () => {
+      expect(
+        pickBestNarutoDumpFace(
+          [
+            {
+              source: "ebay",
+              file: "art.ebay.jpg",
+              width: 1200,
+              height: 1600,
+            },
+            {
+              source: "suruga",
+              file: "art.suruga.jpg",
+              width: 350,
+              height: 512,
+            },
+          ],
+          "ja",
+        ),
+      ).toBe("suruga");
+    });
+
     it("picks pixels first, locale only on a tie", () => {
       expect(
         pickBestNarutoDumpFace(

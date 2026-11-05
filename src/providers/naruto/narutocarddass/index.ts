@@ -44,6 +44,8 @@ import { narutoPrintFacts } from "./identity";
 import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
+  narutoFaceCoverProvenance,
+  narutoFaceSourceOf,
 } from "./disk";
 import {
   buildNarutoDiskArtAttachments,
@@ -112,7 +114,7 @@ export const narutoCcgCatalogStatus = narutocarddassCatalogHooks.status;
 const narutocarddassCatalog: ProviderCatalogHooks = narutocarddassCatalogHooks;
 
 const PROVIDER_ID = "narutocarddass";
-const PROVIDER_LABEL = "Naruto CCG (local)";
+const PROVIDER_LABEL = "Naruto CCG";
 
 /** Probe sample: the first card of the first series, always on disk. */
 const PROBE_PRINT_KEY = "naruto:s1-ni001";
@@ -262,6 +264,10 @@ export const narutocarddassModule = defineProvider({
       ...(hit.donorPrintKey ? { donorPrintKey: hit.donorPrintKey } : {}),
       disk: hit.disk,
     };
+  },
+  coverProvenanceForArtFile: (artFile) => {
+    const source = narutoFaceSourceOf(artFile);
+    return source ? narutoFaceCoverProvenance(source) : null;
   },
   loadBoosterComposition: () => {
     const raw = narutoBoosterComposition as BoosterCompositionFile;

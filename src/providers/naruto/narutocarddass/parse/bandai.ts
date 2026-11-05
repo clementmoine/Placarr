@@ -905,8 +905,9 @@ export function pickPreferredFaceArtFilename(
  * 0 means "not a face" (thumb, back, …).
  */
 export function faceArtRank(filename: string, lang = "fr"): number {
-  if (/^art\.reconstructed\.(jpe?g|png|webp|gif)$/i.test(filename)) return 300;
-  if (/^art\.corrected\.(jpe?g|png|webp|gif)$/i.test(filename)) return 200;
+  // Above any dump rank (`narutoDumpFaceRank` ≈ catalogBoost 200 + order ≤ ~240).
+  if (/^art\.reconstructed\.(jpe?g|png|webp|gif)$/i.test(filename)) return 1000;
+  if (/^art\.corrected\.(jpe?g|png|webp|gif)$/i.test(filename)) return 900;
   return narutoDumpFaceRank(filename, lang);
 }
 

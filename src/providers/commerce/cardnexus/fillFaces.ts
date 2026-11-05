@@ -15,6 +15,7 @@ import {
   fetchCardnexusProductForPrintKey,
   type FetchCardnexusOpts,
 } from "./match";
+import { productSourceUrl } from "./prices";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
@@ -26,6 +27,8 @@ export type CardnexusFaceFillReport = {
   skipped: number;
   failed: number;
   unmapped: number;
+  /** printKey → public product fiche (never the site homepage). */
+  productUrlsByPrintKey: Record<string, string>;
 };
 
 export type CardnexusFaceTarget = {
@@ -113,6 +116,7 @@ export async function fillCardnexusFaces(
     skipped: 0,
     failed: 0,
     unmapped: 0,
+    productUrlsByPrintKey: {},
   };
   if (!cardnexusApiKey() || targets.length === 0) return report;
 
@@ -161,6 +165,11 @@ export async function fillCardnexusFaces(
     const ext = extFromUrl(imageUrl);
     writeFileSync(path.join(target.cardDir, `art.cardnexus.${ext}`), buf);
     report.written += 1;
+    if (product?.id != null) {
+      report.productUrlsByPrintKey[target.printKey] = productSourceUrl(
+        product.id,
+      );
+    }
     done += 1;
     opts?.onProgress?.(done, targets.length);
   }

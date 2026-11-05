@@ -1,7 +1,13 @@
-# Contenu des produits scellés — contrat
+# Contenu des produits (ex-« scellés ») — contrat
+
+**Framing 2026-11-05** : « scellé » = instance TCG d’un **produit** plus large
+(SKU avec EAN, packshot, composition — posters, accessoires, boîtes jeux…).
+Tables sqlite = `products` / `product_contents` ; l’UI admin peut encore dire
+« Scellés » le temps de la migration de libellés.
 
 Pour le conseil d'achat (« singles vs booster vs display »), **chaque** SKU de
-`products-index.json` doit décrire ce qu'il contient. Absent = non vérifié.
+la base produits (`catalog.sqlite` SSOT ; `products-index.json` = appendix) doit
+décrire ce qu'il contient. Absent = non vérifié.
 
 Quatre faits catalogue au même rang : **contenu** (quantité / garanties / pool),
 **composition de sachet** (slots C/U/R/foil + taux), **art**, **prix**.

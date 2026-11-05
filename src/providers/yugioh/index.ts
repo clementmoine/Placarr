@@ -26,7 +26,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: YUGIOH_PROVIDER_ID,
-    providerLabel: "Yu-Gi-Oh! (local)",
+    providerLabel: "Yu-Gi-Oh!",
     catalogueLabel: "Yu-Gi-Oh!",
     factLabel: "Yu-Gi-Oh!",
     packId: YUGIOH_PACK_ID,

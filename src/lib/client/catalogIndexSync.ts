@@ -19,9 +19,11 @@ export type CatalogIndexSyncTarget = CatalogIndexSyncKind;
 export type CatalogIndexSyncEnqueued = {
   ok: true;
   jobId: string;
-  kind: CatalogIndexSyncKind;
+  /** May be unified `catalogProviderSync` after admin-first remap. */
+  kind: string;
   label: string;
   hint?: string;
+  providerId?: string;
 };
 
 export async function enqueueCatalogIndexSync(
@@ -40,9 +42,10 @@ export async function enqueueCatalogIndexSync(
     error?: string;
     ok?: boolean;
     jobId?: string;
-    kind?: CatalogIndexSyncKind;
+    kind?: string;
     label?: string;
     hint?: string;
+    providerId?: string;
   };
 
   if (!res.ok || !body.ok || !body.jobId) {
@@ -55,5 +58,6 @@ export async function enqueueCatalogIndexSync(
     kind: body.kind ?? kind,
     label: body.label ?? kind,
     hint: body.hint,
+    providerId: body.providerId,
   };
 }

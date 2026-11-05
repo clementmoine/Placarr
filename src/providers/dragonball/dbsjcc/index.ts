@@ -35,7 +35,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: DBS_JCC_PROVIDER_ID,
-    providerLabel: "Dragon Ball JCC (local)",
+    providerLabel: "Dragon Ball JCC",
     catalogueLabel: "Dragon Ball Cartes À Jouer Et À Collectionner",
     catalogueAliases: [
       { label: "Dragon Ball JCC", language: "fr" },

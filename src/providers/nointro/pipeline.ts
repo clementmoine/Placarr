@@ -49,6 +49,7 @@ export function noIntroCatalogStatus(): ProviderCatalogStatus {
 
 export const nointroCatalog: ProviderCatalogHooks = {
   dataPack: "nointro",
+  legacyWorkKind: "nointroIndexSync",
   status: noIntroCatalogStatus,
   refresh: refreshNoIntroCatalog,
 };

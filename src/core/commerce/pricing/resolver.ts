@@ -8,6 +8,7 @@ import {
   collectRefreshBarcodePriceOffers,
   priceProviderTokenFromOffers,
 } from "@/core/catalog/barcodePrices";
+import { recordPriceAffinityFromOffers } from "@/core/catalog/providerAffinity";
 import {
   persistProviderExternalLinksForBarcodeItems,
   persistProviderExternalLinksForMetadata,
@@ -727,6 +728,12 @@ export async function persistBarcodePrices(params: {
     data: { priceNew, priceUsed, priceUsedCIB, priceLastUpdated: now },
   });
 
+  void recordPriceAffinityFromOffers({
+    shelfType,
+    printKey: null,
+    providerIds: incoming.map((offer) => offer.source),
+  });
+
   await persistProviderExternalLinksForBarcodeItems(cleanedBarcode, merged);
 
   return withFxPriceEstimated(
@@ -769,6 +776,7 @@ export async function persistItemPrices(params: {
     select: {
       barcode: true,
       name: true,
+      printKey: true,
       shelf: { select: { name: true } },
     },
   });
@@ -799,6 +807,12 @@ export async function persistItemPrices(params: {
     observations,
   );
   const now = new Date();
+
+  void recordPriceAffinityFromOffers({
+    shelfType,
+    printKey: item?.printKey,
+    providerIds: incoming.map((offer) => offer.source),
+  });
 
   if (metadataId) {
     await persistProviderExternalLinksForMetadata(metadataId, {

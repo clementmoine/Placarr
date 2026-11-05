@@ -12,7 +12,7 @@ import {
   CARD_FACE_DECISION_FILE,
   type FaceDecision,
 } from "@/providers/shared/cardFaces";
-import { catalogueFaceSourceRank } from "@/lib/admin/catalogueFacePick";
+import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
 
 import { resolveSealedLang } from "./lang";
 
@@ -49,11 +49,11 @@ function filesWithPrefix(dir: string, prefix: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((name) => name.toLowerCase().startsWith(prefix.toLowerCase()))
-    .sort((a, b) => {
-      const rankDiff =
-        catalogueFaceSourceRank(b) - catalogueFaceSourceRank(a);
-      return rankDiff !== 0 ? rankDiff : a.localeCompare(b);
-    });
+    .sort(
+      (a, b) =>
+        catalogueFaceRankScore({ artFile: b }) -
+          catalogueFaceRankScore({ artFile: a }) || a.localeCompare(b),
+    );
 }
 
 function readDecision(dir: string): FaceDecision {

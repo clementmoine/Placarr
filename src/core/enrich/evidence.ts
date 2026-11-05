@@ -6,6 +6,7 @@ import {
   normalizeLegacyPriceOffer,
   needsLegacyPriceOfferNormalization,
 } from "@/core/commerce/pricing/normalizeLegacyPriceOffer";
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 
 type EvidenceScope = {
   itemId?: string | null;
@@ -85,7 +86,7 @@ export async function replaceFieldEvidence(
       rawValue: item.rawValue as Prisma.InputJsonValue,
       confidence: item.confidence ?? null,
       priority: item.priority ?? null,
-      sourceUrl: item.sourceUrl ?? null,
+      sourceUrl: sanitizePublicCitationUrl(item.sourceUrl),
       locale: item.locale ?? null,
       region: item.region ?? null,
       observedAt: item.observedAt ?? new Date(),
@@ -150,7 +151,7 @@ export async function replacePriceOffers(
       currency: offer.currency ?? "EUR",
       shippingCents: offer.shippingCents ?? null,
       totalCents: offer.totalCents ?? null,
-      sourceUrl: offer.sourceUrl ?? null,
+      sourceUrl: sanitizePublicCitationUrl(offer.sourceUrl),
       availability: offer.availability ?? null,
       offerCount: offer.offerCount ?? null,
       rawValue: offer.rawValue as Prisma.InputJsonValue,
@@ -261,7 +262,7 @@ export async function mergePriceOffers(
       currency: normalized.currency ?? "EUR",
       shippingCents: normalized.shippingCents ?? null,
       totalCents: normalized.totalCents ?? null,
-      sourceUrl: normalized.sourceUrl ?? null,
+      sourceUrl: sanitizePublicCitationUrl(normalized.sourceUrl),
       availability: normalized.availability ?? null,
       offerCount: normalized.offerCount ?? null,
       rawValue,

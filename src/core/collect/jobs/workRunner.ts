@@ -442,6 +442,16 @@ export async function executeBackgroundWorkJob(
     void touchBackgroundWorkJobLock(job.id);
     try {
       await mdl.catalog.refresh(catalogRefreshOptsFromPayload(catalogPayload));
+      // Corpus densified → soft-refresh shelf items sharing those printKeys.
+      const { enqueuePrintCatalogPropagate } = await import(
+        "@/core/collect/jobs/printCatalogPropagate"
+      );
+      const n = await enqueuePrintCatalogPropagate({ providerId });
+      if (n > 0) {
+        console.log(
+          `[catalogProviderSync] ${providerId}: propagated soft refresh to ${n} shelf item(s)`,
+        );
+      }
     } finally {
       clearInterval(heartbeat);
     }

@@ -31,7 +31,7 @@ export {
 
 const line = createLocalTcgLine({
   providerId: NARUTO_RANKS_PROVIDER_ID,
-  providerLabel: "Naruto Ninja Ranks (local)",
+  providerLabel: "Naruto Ninja Ranks",
   catalogueLabel: "Naruto Ninja Ranks",
   catalogueAliases: ["Ninja Ranks", "Naruto Ninja Ranks"],
   factLabel: "Ninja Ranks",

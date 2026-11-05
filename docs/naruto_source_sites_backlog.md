@@ -646,7 +646,7 @@ catégorie, décodée EUC-JP, dont on ne garde que les titres ouvrant sur une re
 遊戯王…) et la ligne ナルティメット de la même boutique. Câblé dans l'étape
 `scrape` du CLI. Première passe : **39 faces écrites, dont 8 sur des cartes qui
 n'avaient aucune image**. `art.avalon` est enregistré en dernier recours dans
-`NARUTO_FACE_PRIORITY` (photo boutique 265×400, pas un scan).
+provenance catalogue + pixels (photo boutique 265×400, pas un scan).
 
 ### NI-020 うちはサスケ — 5 URLs collées, 2 faces installées
 

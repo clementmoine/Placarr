@@ -26,7 +26,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: DBH_PROVIDER_ID,
-    providerLabel: "Dragon Ball Heroes (local)",
+    providerLabel: "Dragon Ball Heroes",
     catalogueLabel: "Dragon Ball Heroes",
     catalogueAliases: [
       { label: "スーパードラゴンボールヒーローズ", language: "ja" },

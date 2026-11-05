@@ -119,8 +119,8 @@ drop a noisy observation just because today's display engine will rank it low.
         typeless home-page scans get this anchor (parity).
   - [ ] `mappingProbe` + `runMappingProbe` (`metadataProbe`).
 - [ ] **External link** (retailers / comparateurs avec fiche produit) :
-  - [ ] `provenance.sourceUrl` sur observations catalogue / offer ;
-  - [ ] offers prix avec `sourceUrl` ;
+  - [ ] `provenance.sourceUrl` = **deep link public** (fiche / annonce / article / vidéo), jamais homepage ; Wayback si live mort ;
+  - [ ] offers prix avec `sourceUrl` deep link (passé par `sanitizePublicCitationUrl`) ;
   - [ ] `refreshBarcodePriceOffers` lit `ctx.providerProductUrls` avant seek ;
   - [ ] gate EAN si slug URL ou barcode page peut diverger.
   - [ ] Voir [provider_external_links.md](provider_external_links.md).

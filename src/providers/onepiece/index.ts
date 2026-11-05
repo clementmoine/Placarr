@@ -23,7 +23,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: ONEPIECE_PROVIDER_ID,
-    providerLabel: "One Piece Card Game (local)",
+    providerLabel: "One Piece Card Game",
     catalogueLabel: "One Piece Card Game",
     catalogueAliases: ["OPTCG", "One Piece"],
     factLabel: "One Piece Card Game",

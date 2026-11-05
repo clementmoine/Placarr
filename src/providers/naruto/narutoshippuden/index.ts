@@ -44,7 +44,7 @@ const PROBE_PRINT_KEY = "naruto:shi-0001";
 
 const line = createLocalTcgLine({
   providerId: PROVIDER_ID,
-  providerLabel: "Naruto 疾風伝 (local)",
+  providerLabel: "Naruto 疾風伝",
   catalogueLabel: "Naruto 疾風伝",
   catalogueAliases: [
     { label: "Naruto Shippuden Card Game", language: "ja" },

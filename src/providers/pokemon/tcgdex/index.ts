@@ -483,6 +483,22 @@ export function toChecklistPrintCandidate(
   };
 }
 
+/**
+ * Public TCGdex database page when serie + set + localId + name are known.
+ * Example: `/database/Sword-&-Shield/Brilliant-Stars/TG09-Ariados`.
+ * Returns null when we cannot build a verifiable deep link (never the homepage).
+ */
+export function tcgdexPublicCardUrl(card: TcgdexCard): string | null {
+  const serie = card.serieName?.trim();
+  const set = card.setName?.trim();
+  const localId = card.localId?.trim();
+  const name = card.name?.trim();
+  if (!serie || !set || !localId || !name) return null;
+  const slug = (value: string) =>
+    encodeURIComponent(value.replace(/\s+/g, "-"));
+  return `https://www.tcgdex.net/database/${slug(serie)}/${slug(set)}/${slug(`${localId}-${name}`)}`;
+}
+
 export function mapTcgdexMetadata(
   card: TcgdexCard | null,
 ): MetadataResult | null {
@@ -515,7 +531,9 @@ export function mapTcgdexMetadata(
       providerId: PROVIDER_ID,
       providerLabel: PROVIDER_LABEL,
       sourceDocumentRole: "reference_record",
-      sourceUrl: "https://tcgdex.dev/",
+      // Public card pages need set+name slugs we don't always have — omit
+      // rather than stamp the API docs homepage (not a verifiable citation).
+      sourceUrl: tcgdexPublicCardUrl(card),
       sourceId: card.providerId,
       evidenceSignals: ["structured_data", "title_match"],
       titleRole: "catalog_title",

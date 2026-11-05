@@ -31,6 +31,7 @@ export const launchboxModule = defineProvider({
     ],
     auth: { kind: "none" },
     supplyMode: "local_catalog",
+    catalogLifecycle: "living",
     canonical: true,
     defaultLanguage: "en",
     isRealBoxCover: true,

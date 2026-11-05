@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-05T13:32:35.894Z",
+ "generatedAt": "2026-11-05T16:10:28.222Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{lang}/{set}/{id}/ (Mercari restorations: the mercdn ingest row in sources/mercari.json)",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",

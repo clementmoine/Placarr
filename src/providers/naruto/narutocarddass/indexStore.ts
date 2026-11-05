@@ -60,7 +60,11 @@ import { NARUTO_GAME } from "./parse/bandai";
 import { isNarutoLangPrinted } from "./identity";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
-import { narutoCardPathFromCollector } from "./disk";
+import {
+  narutoCardPathFromCollector,
+  narutoFaceCoverProvenance,
+  narutoFaceSourceOf,
+} from "./disk";
 import { resolveNarutoDiskArtFilename } from "./diskArtAttachments";
 
 /**
@@ -949,7 +953,12 @@ export function exportNarutoCardsIndexJson(
       continue;
     }
     const lang = entry.langs[a.lang] ?? {};
-    if (a.art) lang.art = a.art;
+    if (a.art) {
+      lang.art = a.art;
+      const source = narutoFaceSourceOf(a.art);
+      if (source) lang.coverProvenance = narutoFaceCoverProvenance(source);
+      else delete lang.coverProvenance;
+    }
     if (a.thumb) lang.thumb = a.thumb;
     if (a.back) lang.back = a.back;
     if (a.printed === false) lang.printed = false;
@@ -1227,7 +1236,12 @@ export function loadNarutoCardsIndexFromSqlite(
         continue;
       }
       const lang = entry.langs[a.lang] ?? {};
-      if (a.art) lang.art = a.art;
+      if (a.art) {
+        lang.art = a.art;
+        const source = narutoFaceSourceOf(a.art);
+        if (source) lang.coverProvenance = narutoFaceCoverProvenance(source);
+        else delete lang.coverProvenance;
+      }
       if (a.thumb) lang.thumb = a.thumb;
       if (a.back) lang.back = a.back;
       if (a.printed === 0) lang.printed = false;
@@ -1255,7 +1269,11 @@ export function loadNarutoCardsIndexFromSqlite(
         const art = resolveNarutoDiskArtFilename(
           path.join(cardsRoot, pathId.lang, pathId.set, pathId.diskId),
         );
-        if (art) slot.art = art;
+        if (art) {
+          slot.art = art;
+          const source = narutoFaceSourceOf(art);
+          if (source) slot.coverProvenance = narutoFaceCoverProvenance(source);
+        }
       }
     }
 

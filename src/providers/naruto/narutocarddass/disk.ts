@@ -236,7 +236,7 @@ export const NARUTO_FR_PUBLISHER_SOURCES: ReadonlySet<NarutoFaceSource> =
  * `slabz` (guide collector, ~865×1230) is intentionally **out** of this pool:
  * when a nikita/suruga/… scan is present it must win even if smaller (ex. 忍-1
  * nikita 341×500 vs slabz 880×1206). Alone, slabz still beats marketplace via
- * the full JA priority list + pixels.
+ * catalog provenance + pixels.
  */
 export const NARUTO_JA_SHOP_SCAN_SOURCES: ReadonlySet<NarutoFaceSource> =
   new Set([
@@ -280,148 +280,11 @@ export function narutoFaceCoverProvenance(
     : "catalog";
 }
 
-export const NARUTO_FACE_PRIORITY: Record<string, readonly NarutoFaceSource[]> =
-  {
-    fr: [
-      "carddass",
-      "ultrajeux",
-      "rakuten",
-      "tvtokyo",
-      "tvtokyo-a",
-      "tvtokyo-b",
-      "coleka",
-      "cardgameclub",
-      "primegame",
-      "leboncoin",
-      "ebay",
-      "mercari",
-      "yahoo",
-      "drive",
-      "nikita",
-      "suruga",
-      "tcgrepublic",
-      "avalon",
-      "fril",
-      "chitoroshop",
-      "vintage",
-      "goat",
-      "stop2shop",
-      "carddas",
-      "carddas-a",
-      "carddas-b",
-      "zabuza",
-      "slabz",
-      "narutocardgamegg",
-      "legacy",
-      "fanset",
-    ],
-    en: [
-      "drive",
-      "vintage",
-      "goat",
-      "stop2shop",
-      "coleka",
-      "cardgameclub",
-      "primegame",
-      "ebay",
-      "leboncoin",
-      "mercari",
-      "yahoo",
-      "carddass",
-      "ultrajeux",
-      "nikita",
-      "suruga",
-      "tcgrepublic",
-      "avalon",
-      "fril",
-      "carddas",
-      "carddas-a",
-      "carddas-b",
-      "zabuza",
-      "slabz",
-      "chitoroshop",
-      "rakuten",
-      "tvtokyo",
-      "tvtokyo-a",
-      "tvtokyo-b",
-      "narutocardgamegg",
-      "legacy",
-      "fanset",
-    ],
-    it: [
-      "cardgameclub",
-      "primegame",
-      "coleka",
-      "ebay",
-      "leboncoin",
-      "mercari",
-      "yahoo",
-      "drive",
-      "carddass",
-      "ultrajeux",
-      "vintage",
-      "goat",
-      "stop2shop",
-      "nikita",
-      "suruga",
-      "tcgrepublic",
-      "avalon",
-      "fril",
-      "carddas",
-      "carddas-a",
-      "carddas-b",
-      "zabuza",
-      "slabz",
-      "chitoroshop",
-      "rakuten",
-      "tvtokyo",
-      "tvtokyo-a",
-      "tvtokyo-b",
-      "narutocardgamegg",
-      "legacy",
-      "fanset",
-    ],
-    ja: [
-      // nikita avant slabz : le pool shop exclut slabz, donc égalité rare —
-      // l'ordre sert surtout quand seul slabz + marketplace restent.
-      "nikita",
-      "chitoroshop",
-      "suruga",
-      "tcgrepublic",
-      "avalon",
-      "slabz",
-      "fril",
-      "carddas",
-      "carddas-a",
-      "carddas-b",
-      "zabuza",
-      "carddass",
-      "ultrajeux",
-      "drive",
-      "vintage",
-      "goat",
-      "stop2shop",
-      "coleka",
-      "cardgameclub",
-      "primegame",
-      "ebay",
-      "leboncoin",
-      "mercari",
-      "yahoo",
-      "rakuten",
-      "tvtokyo",
-      "tvtokyo-a",
-      "tvtokyo-b",
-      "narutocardgamegg",
-      "legacy",
-      "fanset",
-    ],
-  };
-
 const choice = createCardFaceChoice<NarutoFaceSource>({
   sources: NARUTO_FACE_SOURCES,
-  priority: NARUTO_FACE_PRIORITY,
+  // No FACE_PRIORITY — ranking is pixels + provenance (listing_photo demotion).
   coverProvenance: "catalog",
+  sourceCoverProvenance: narutoFaceCoverProvenance,
   /*
     JA shop thumbs (tvtokyo ~80×114) sit under the scorer's 0.2 MP floor with
     nikita/suruga (~340×500). Without this, the aspect-ratio bonus made the
@@ -529,15 +392,20 @@ export function narutoFaceSourceOf(filename: string): NarutoFaceSource | null {
   return null;
 }
 
-/** Higher wins among dumps. 0 = not a dump face. */
-export function narutoDumpFaceRank(filename: string, lang = "fr"): number {
+/**
+ * Higher wins among dumps when dimensions are unknown.
+ * Criteria only: illustration-B demotion, then catalog vs listing_photo,
+ * then stable declaration order in `NARUTO_FACE_SOURCES` (not locale lists).
+ */
+export function narutoDumpFaceRank(filename: string, _lang = "fr"): number {
   const source = narutoFaceSourceOf(filename);
   if (!source) return 0;
-  const list =
-    NARUTO_FACE_PRIORITY[lang.toLowerCase()] ?? NARUTO_FACE_PRIORITY.fr!;
-  const idx = list.indexOf(source);
-  const order = idx >= 0 ? idx : list.length;
-  return 100 - order;
+  if (ILLUSTRATION_B_FACE_SOURCES.has(source)) return 1;
+  const catalogBoost =
+    narutoFaceCoverProvenance(source) === "catalog" ? 200 : 0;
+  const idx = NARUTO_FACE_SOURCES.indexOf(source);
+  const order = idx >= 0 ? idx : NARUTO_FACE_SOURCES.length;
+  return catalogBoost + (NARUTO_FACE_SOURCES.length - order);
 }
 
 // --- from narutoCardDisk.ts ---
@@ -739,6 +607,9 @@ export async function promoteNarutoFace(
     if (!source) continue;
     try {
       const meta = await sharp(path.join(cardDir, name)).metadata();
+      const width = meta.width ?? 0;
+      const height = meta.height ?? 0;
+      if (width <= 0 || height <= 0) continue;
       /*
         Un composite marketing (photo paddée, fond menthe, watermark boutique)
         n'est pas une face : il ne peut pas gagner le choix, quelques soient
@@ -752,11 +623,11 @@ export async function promoteNarutoFace(
       stored.push({
         source,
         file: name,
-        width: meta.width ?? 0,
-        height: meta.height ?? 0,
+        width,
+        height,
       });
     } catch {
-      stored.push({ source, file: name, width: 0, height: 0 });
+      /* unreadable — not a candidate (never rank by source name) */
     }
   }
   const best = pickBestNarutoDumpFace(stored, lang);

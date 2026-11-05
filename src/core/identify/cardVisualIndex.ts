@@ -52,8 +52,8 @@ export type CardVisualIndexEntry = {
 };
 
 export type CardVisualIndexFile = {
-  /** v2 adds aHash + color grid on entries. */
-  version: 1 | 2;
+  /** v2 adds aHash + color; v3 indexes every on-disk `art.*` sibling. */
+  version: 1 | 2 | 3;
   packId: string;
   lang: string;
   builtAt: string;
@@ -190,7 +190,9 @@ export function loadCardVisualIndex(
       readFileSync(filePath, "utf8"),
     ) as CardVisualIndexFile;
     if (
-      (parsed?.version !== 1 && parsed?.version !== 2) ||
+      (parsed?.version !== 1 &&
+        parsed?.version !== 2 &&
+        parsed?.version !== 3) ||
       !Array.isArray(parsed.entries)
     ) {
       return null;

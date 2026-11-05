@@ -34,6 +34,7 @@ export function launchBoxCatalogStatus(): ProviderCatalogStatus {
 
 export const launchboxCatalog: ProviderCatalogHooks = {
   dataPack: "launchbox",
+  legacyWorkKind: "launchboxIndexSync",
   status: launchBoxCatalogStatus,
   refresh: refreshLaunchBoxCatalog,
 };

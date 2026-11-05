@@ -661,6 +661,11 @@ export interface ProviderCatalogHooks {
    * wiring guard: `localTcgWiring.test.ts`.
    */
   effectPack?: string;
+  /**
+   * Legacy admin Local-indexes work kind that remaps to
+   * `catalogProviderSync` + this module (no provider-id literals in the API).
+   */
+  legacyWorkKind?: string;
   status: () => ProviderCatalogStatus | Promise<ProviderCatalogStatus>;
   refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
 }
@@ -758,6 +763,14 @@ export interface ProviderModule {
     lang: string;
     role?: PrintFaceRole;
   }) => PrintFaceHit | null;
+  /**
+   * Provenance of a disk art basename for cards-index stamping
+   * (`listing_photo` vs `catalog`). Provider-side only — core ranks tiers,
+   * never source names. Absent = leave `coverProvenance` unset.
+   */
+  coverProvenanceForArtFile?: (
+    artFile: string,
+  ) => string | null | undefined;
   /**
    * Les langues dans lesquelles ce catalogue a été imprimé.
    *

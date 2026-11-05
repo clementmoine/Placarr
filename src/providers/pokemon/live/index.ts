@@ -40,9 +40,13 @@ import {
   searchPokemonLivePrints,
   searchPokemonLivePrintsWithRemote,
 } from "./printSearch";
+import {
+  pokemonFaceCoverProvenance,
+  pokemonFaceSourceOf,
+} from "@/providers/pokemon/tcgdex/disk/faceChoice";
 
 const PROVIDER_ID = "pokemontcglive";
-const PROVIDER_LABEL = "Pokémon TCG Live (local)";
+const PROVIDER_LABEL = "Pokémon TCG Live";
 const POKEMON_GAME = "pokemon";
 
 export function pokemonLiveCardsDbPath(): string {
@@ -170,6 +174,10 @@ export const pokemontcgliveModule = defineProvider({
       return resolveFromLocal(ctx);
     },
   }),
+  coverProvenanceForArtFile: (artFile) => {
+    const source = pokemonFaceSourceOf(artFile);
+    return source ? pokemonFaceCoverProvenance(source) : null;
+  },
   // Local ingest resolves by printKey only — probe the same path.
   mappingProbe: {
     sampleInput: "pokemon:bw10-001",

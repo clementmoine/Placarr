@@ -1,9 +1,8 @@
 /**
  * Which stored face a DBS Masters print shows.
  *
- * The mechanism is shared — see `providers/shared/cardFaces` for why a face is
- * chosen rather than raced for. What belongs to this pack is the source list
- * and its per-locale tie-break.
+ * Ranking = shared `cardFaces` (pixels + provenance). No FACE_PRIORITY lists —
+ * size already settles dbscards vs Deckplanet vs Bandai in practice.
  */
 import {
   CARD_FACE_DECISION_FILE,
@@ -24,29 +23,9 @@ export const DBS_FACE_SOURCES = [
 
 export type DbsFaceSource = (typeof DBS_FACE_SOURCES)[number];
 
-/**
- * Preferred order per locale, best first — the tie-break, not the rule.
- *
- * Deliberately *not* dominating size, because with today's sources it could
- * only make things worse. Measured: Deckplanet serves 260x363 on the older
- * English sets and 860x1205 on the recent ones, while dbscards is a steady
- * 400x560. An English list headed by Deckplanet would therefore lose on the
- * old sets. Size-first already picks correctly everywhere — dbscards in
- * French, dbscards on old English, Deckplanet on recent English.
- *
- * It earns its keep the day a source is better without being bigger: the Fnac
- * scans are 500x680 *without* the SAMPLE watermark every other source carries.
- * That is the rule this list is here to hold when it comes.
- */
-export const DBS_FACE_PRIORITY: Record<string, readonly DbsFaceSource[]> = {
-  // Deckplanet mirrors no French printing at all.
-  fr: ["dbscards", "bandai", "cardnexus"],
-  en: ["deckplanet", "dbscards", "bandai", "cardnexus"],
-};
-
 const choice = createCardFaceChoice<DbsFaceSource>({
   sources: DBS_FACE_SOURCES,
-  priority: DBS_FACE_PRIORITY,
+  coverProvenance: "catalog",
 });
 
 export const DBS_FACE_ROLES = CARD_FACE_ROLES;

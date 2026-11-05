@@ -31,7 +31,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: NARUTO_DATA_CARDDASS_PROVIDER_ID,
-    providerLabel: "Naruto Data Carddass (local)",
+    providerLabel: "Naruto Data Carddass",
     catalogueLabel: "Naruto Data Carddass",
     catalogueAliases: [
       "Data Carddass",

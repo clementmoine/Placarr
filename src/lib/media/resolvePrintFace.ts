@@ -9,11 +9,12 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { parsePrintKey } from "@/core/identify/printKey";
-import { catalogueFaceSourceRank } from "@/lib/admin/catalogueFacePick";
+import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
 import { catalogueCorpusPack } from "@/lib/admin/cataloguePacks";
 import { canonicalAssetPack } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
 import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
+import { probeFaceFileDimensionsSync } from "@/providers/shared/faceFileDimensions";
 import {
   providerModuleProviding,
   providerModulesForPack,
@@ -146,13 +147,13 @@ function readFaceJsonArt(cardDir: string, names: string[]): string | null {
 
 /**
  * Owned face basename — `face.json` wins, else best `art.*` by
- * {@link catalogueFaceSourceRank} (same order as Catalogue → Cards quality).
- * Avoids sealed `/prints/…/face` picking `art.coleka` via readdir order while
- * the cards tab shows a cleaner `art.ebay` index pointer.
+ * {@link catalogueFaceRankScore} (probed pixels + pack provenance stamp).
+ * Same criteria as Catalogue → Cards — no provider-name lists / byte proxy.
  */
 function pickOwnedArtFile(
   cardDir: string,
   role: PrintFaceRole,
+  pack: string,
 ): string | null {
   if (!existsSync(cardDir) || !statSync(cardDir).isDirectory()) return null;
   let names: string[] = [];
@@ -176,11 +177,31 @@ function pickOwnedArtFile(
     (n) => /^art\./i.test(n) && /\.(jpe?g|png|webp|gif)$/i.test(n),
   );
   if (!arts.length) return null;
-  arts.sort(
-    (a, b) =>
-      catalogueFaceSourceRank(b) - catalogueFaceSourceRank(a) ||
-      a.localeCompare(b),
-  );
+  const corpus = catalogueCorpusPack(pack) || canonicalAssetPack(pack);
+  const provenanceOf = providerModuleProviding(
+    corpus,
+    "coverProvenanceForArtFile",
+  )?.coverProvenanceForArtFile;
+  arts.sort((a, b) => {
+    const pathA = path.join(cardDir, a);
+    const pathB = path.join(cardDir, b);
+    const dimsA = probeFaceFileDimensionsSync(pathA);
+    const dimsB = probeFaceFileDimensionsSync(pathB);
+    return (
+      catalogueFaceRankScore({
+        artFile: b,
+        width: dimsB?.width,
+        height: dimsB?.height,
+        coverProvenance: provenanceOf?.(b),
+      }) -
+        catalogueFaceRankScore({
+          artFile: a,
+          width: dimsA?.width,
+          height: dimsA?.height,
+          coverProvenance: provenanceOf?.(a),
+        }) || a.localeCompare(b)
+    );
+  });
   return arts[0] ?? null;
 }
 
@@ -197,7 +218,7 @@ function resolveOwnedPrintFace(opts: {
   const cardsRoot = packCardsDir(opts.pack);
   const tryLang = (code: string): PrintFaceHit | null => {
     const dir = path.join(cardsRoot, code, id.set, card);
-    const artFile = pickOwnedArtFile(dir, opts.role);
+    const artFile = pickOwnedArtFile(dir, opts.role, opts.pack);
     if (!artFile) return null;
     const filePath = path.join(dir, artFile);
     if (!existsSync(filePath) || !statSync(filePath).isFile()) return null;

@@ -528,7 +528,8 @@ export function mapLorcanaMetadata(
       providerId: PROVIDER_ID,
       providerLabel: PROVIDER_LABEL,
       sourceDocumentRole: "reference_record",
-      sourceUrl: "https://lorcanajson.org/",
+      // Prefer Cardmarket fiche when LorcanaJSON carries it — never the dump homepage.
+      sourceUrl: primary.cardmarketUrl?.trim() || null,
       sourceId: primary.providerId,
       evidenceSignals: ["structured_data", "title_match"],
       titleRole: "catalog_title",

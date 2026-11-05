@@ -3,7 +3,7 @@
  *
  * Enumerates `catalog.sqlite` prints missing art, resolves disk layout
  * (lang-first or set-first), downloads CardNexus `imageUrl`, upserts
- * `print_assets`. faceChoice / {@link catalogueFaceSourceRank} decide display.
+ * `print_assets`. faceChoice / catalogueFaceRankScore decide display.
  */
 
 import { existsSync, readdirSync, statSync } from "node:fs";
@@ -349,11 +349,14 @@ export async function fillCardnexusPackFaces(
       artName = null;
     }
     if (!artName) continue;
+    // Public product fiche only — never the CardNexus homepage.
+    const sourceUrl = report.productUrlsByPrintKey[p.printKey]?.trim();
+    if (!sourceUrl) continue;
     assetRows.push({
       printKey: p.printKey,
       lang: p.lang,
       art: artName,
-      sourceUrl: "https://cardnexus.com/",
+      sourceUrl,
     });
   }
 

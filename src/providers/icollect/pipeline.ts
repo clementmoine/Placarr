@@ -46,6 +46,7 @@ export async function iCollectCatalogStatus(): Promise<ProviderCatalogStatus> {
 
 export const icollectCatalog: ProviderCatalogHooks = {
   dataPack: "icollect",
+  legacyWorkKind: "icollectCatalogSync",
   status: iCollectCatalogStatus,
   refresh: refreshICollectCatalog,
 };

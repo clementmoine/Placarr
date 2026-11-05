@@ -72,6 +72,7 @@ describe("provider mapping probes", () => {
         "booknode",
         "brickset",
         "canalbd",
+        "cardnexus",
         "cestlejeu",
         "chasseauxlivres",
         "chipweld",

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -10,12 +10,11 @@ describe("areaDecidesBelow", () => {
   /*
     Relevé le 2026-08-20 sur `booster-s4` : une vignette de boutique 200×300,
     rembourrée jusqu'au 2:3 idéal, scorait 656 contre 632 pour une photo
-    286×500 qui montre deux fois plus de pack. Sous le plancher de résolution
-    du scorer, le bonus de ratio mesure le cadre, pas le produit.
+    286×500 qui montre deux fois plus de pack. Sous le plancher, la taille
+    tranche (core catalogueFaceRank).
   */
   const choice = createCardFaceChoice<"petit" | "grand">({
     sources: ["petit", "grand"],
-    priority: { fr: ["petit", "grand"] },
     areaDecidesBelow: 200_000,
   });
 
@@ -31,7 +30,7 @@ describe("areaDecidesBelow", () => {
   });
 
   it("laisse le score décider dès qu'une image passe le plancher", () => {
-    // 800×1200 = 0,96 MP : le scorer sait de nouveau départager.
+    // 800×1200 = 0,96 MP : au-dessus du plancher, plus de pixels gagne.
     const best = choice.pickBestFace(
       [
         { source: "petit", file: "art.petit.jpg", width: 800, height: 1200 },
@@ -42,7 +41,7 @@ describe("areaDecidesBelow", () => {
     expect(best).toBe("petit");
   });
 
-  it("retombe sur la priorité à surface égale", () => {
+  it("retombe sur l'ordre de déclaration à surface égale", () => {
     const best = choice.pickBestFace(
       [
         { source: "grand", file: "art.grand.jpg", width: 200, height: 300 },
@@ -53,13 +52,10 @@ describe("areaDecidesBelow", () => {
     expect(best).toBe("petit");
   });
 
-  it("sans l'option, le comportement d'avant est intact", () => {
+  it("sans areaDecidesBelow, les pixels décident (pas le ratio scorer)", () => {
     const plain = createCardFaceChoice<"petit" | "grand">({
       sources: ["petit", "grand"],
-      priority: { fr: ["petit", "grand"] },
     });
-    // La vignette rembourrée gagnait, et gagne toujours : rien n'a bougé pour
-    // les appelants qui ne demandent pas la règle.
     expect(
       plain.pickBestFace(
         [
@@ -68,19 +64,18 @@ describe("areaDecidesBelow", () => {
         ],
         "fr",
       ),
-    ).toBe("petit");
+    ).toBe("grand");
   });
 
   it("prefers catalog provenance over a larger listing photo", () => {
-    const choice = createCardFaceChoice<"boutique" | "photo">({
+    const ranked = createCardFaceChoice<"boutique" | "photo">({
       sources: ["boutique", "photo"],
-      priority: { fr: ["photo", "boutique"] },
       sourceCoverProvenance: (source) =>
         source === "photo" ? "listing_photo" : "catalog",
       areaDecidesBelow: 200_000,
     });
     expect(
-      choice.pickBestFace(
+      ranked.pickBestFace(
         [
           {
             source: "photo",
@@ -101,14 +96,14 @@ describe("areaDecidesBelow", () => {
   });
 
   it("preferPriorityOverScore lets locale order beat a larger padded square", () => {
-    const choice = createCardFaceChoice<"potomac" | "drive">({
+    const sealed = createCardFaceChoice<"potomac" | "drive">({
       sources: ["potomac", "drive"],
       priority: { en: ["potomac", "drive"] },
       areaDecidesBelow: 200_000,
       preferPriorityOverScore: true,
     });
     expect(
-      choice.pickBestFace(
+      sealed.pickBestFace(
         [
           {
             source: "drive",
@@ -129,15 +124,14 @@ describe("areaDecidesBelow", () => {
   });
 
   it("keeps a real listing photo when the only catalog dump is a stub GIF", () => {
-    const choice = createCardFaceChoice<"gif" | "photo" | "boutique">({
+    const ranked = createCardFaceChoice<"gif" | "photo" | "boutique">({
       sources: ["gif", "photo", "boutique"],
-      priority: { fr: ["gif", "photo", "boutique"] },
       sourceCoverProvenance: (source) =>
         source === "photo" ? "listing_photo" : "catalog",
       areaDecidesBelow: 200_000,
     });
     expect(
-      choice.pickBestFace(
+      ranked.pickBestFace(
         [
           { source: "gif", file: "art.gif.gif", width: 200, height: 247 },
           {
@@ -152,7 +146,7 @@ describe("areaDecidesBelow", () => {
     ).toBe("photo");
     // Boutique packshot under areaFloor but above stub floor still beats photo.
     expect(
-      choice.pickBestFace(
+      ranked.pickBestFace(
         [
           {
             source: "photo",
@@ -171,12 +165,32 @@ describe("areaDecidesBelow", () => {
       ),
     ).toBe("boutique");
   });
+
+  it("skips unmeasurable faces instead of falling back to source-name order", () => {
+    expect(
+      choice.pickBestFace(
+        [
+          { source: "petit", file: "art.petit.jpg", width: 0, height: 0 },
+          { source: "grand", file: "art.grand.jpg", width: 0, height: 0 },
+        ],
+        "fr",
+      ),
+    ).toBeNull();
+    expect(
+      choice.pickBestFace(
+        [
+          { source: "petit", file: "art.petit.jpg", width: 0, height: 0 },
+          { source: "grand", file: "art.grand.jpg", width: 400, height: 560 },
+        ],
+        "fr",
+      ),
+    ).toBe("grand");
+  });
 });
 
 describe("recordFaceDecision", () => {
   const choice = createCardFaceChoice<"a" | "b">({
     sources: ["a", "b"],
-    priority: { fr: ["a", "b"] },
   });
 
   it("does not rewrite face.json when the winner is unchanged", () => {

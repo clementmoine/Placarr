@@ -2379,8 +2379,19 @@ describe("same-number art fallback (Naruto)", () => {
           card: "0044",
           name: "Guy",
           langs: {
-            en: { art: "art.arcadegamecards.jpg", artW: 748, artH: 1032 },
-            fr: { name: "Gaï", art: "art.coleka.webp", artW: 750, artH: 1098 },
+            en: {
+              art: "art.arcadegamecards.jpg",
+              artW: 748,
+              artH: 1032,
+              coverProvenance: "catalog",
+            },
+            fr: {
+              name: "Gaï",
+              art: "art.coleka.webp",
+              artW: 750,
+              artH: 1098,
+              coverProvenance: "listing_photo",
+            },
           },
         },
       },
@@ -2404,8 +2415,18 @@ describe("same-number art fallback (Naruto)", () => {
           card: "0006",
           name: "Itachi - Sasuke",
           langs: {
-            en: { art: "art.arcadegamecards.jpg", artW: 740, artH: 1032 },
-            fr: { art: "art.coleka.webp", artW: 750, artH: 1096 },
+            en: {
+              art: "art.arcadegamecards.jpg",
+              artW: 740,
+              artH: 1032,
+              coverProvenance: "catalog",
+            },
+            fr: {
+              art: "art.coleka.webp",
+              artW: 750,
+              artH: 1096,
+              coverProvenance: "listing_photo",
+            },
             it: { art: "art.imadoki.jpg", artW: 244, artH: 342 },
           },
         },

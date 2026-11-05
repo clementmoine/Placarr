@@ -107,6 +107,23 @@ Auth / DB / HTTP             → lib/
 5. ~~`metadataTitleAlign` / `residualIdentity`~~ **fait 2026-07-24** — align orchestrateur + series/score/volume/better-match ; residual facade + tokens/volumes/pairEvaluate.
 6. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
+## Faces catalogue — un scorer
+
+[`catalogueFaceRank.ts`](../src/core/enrich/media/catalogueFaceRank.ts) décide
+quelle face montrer (tile Catalogue, `/prints/…/face`, `face.json` harvest) :
+
+- **critères** = pixels + provenance stampée (`catalog` / `listing_photo`) +
+  markers fichier (`.corrected.` / `.reconstructed.`) ;
+- **interdit** = listes de noms de sources / fallback « all zeros → priority ».
+
+Wiring : `createCardFaceChoice` (packs), `resolvePrintFace` (probe dims sync),
+`coverProvenanceForArtFile` sur le module + stamp index
+(`enrichCardsIndexArtDimensions` / rebuild writers).
+
+**Gaps restants (hors chantier face-rank)** : sealed
+`preferPriorityOverScore` (productChoice) ; watermark SAMPLE / CLIP ;
+labels UI attribution vs host.
+
 ## Checklist PR core
 
 1. Un pilier, une responsabilité — pas de import `providers/*` hors `catalog/` + modules provider.

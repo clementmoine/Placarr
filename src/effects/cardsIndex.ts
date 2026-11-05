@@ -9,6 +9,12 @@ export type CardsIndexLangFiles = {
   artW?: number;
   /** Face pixel height — probed at index export for orientation. */
   artH?: number;
+  /**
+   * Observed cover provenance for this locale's art (`catalog` /
+   * `listing_photo` / …). Used by catalogue face ranking — never inferred
+   * from provider-name lists in core.
+   */
+  coverProvenance?: string;
   mask?: string;
   varnishMask?: string;
   secondVarnishMask?: string;

@@ -56,7 +56,7 @@ export {
 export { scrapeLorcanaCards } from "./scrape/cards";
 
 const PROVIDER_ID = "lorcanatcg";
-const PROVIDER_LABEL = "Lorcana TCG (local)";
+const PROVIDER_LABEL = "Lorcana TCG";
 
 function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   const printKey =

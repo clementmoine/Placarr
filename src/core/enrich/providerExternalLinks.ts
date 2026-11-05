@@ -23,6 +23,7 @@ import type {
   MetadataResult,
 } from "@/types/metadataProvider";
 import type { MetadataObservation } from "@/types/metadataObservation";
+import { isOpenablePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 
 const PRODUCT_PAGE_PATH_DENY = [
   /book_cover/i,
@@ -31,8 +32,6 @@ const PRODUCT_PAGE_PATH_DENY = [
   /googleusercontent\.com/i,
   /favicon/i,
 ];
-
-const IMAGE_EXTENSION_RE = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?|$)/i;
 
 /** Shelf name + soft aliases for retailer identity (seek/accept bag). */
 export function normalizeItemIdentityTitles(
@@ -95,22 +94,18 @@ function providerLinkOwnerKeyFromFact(fact: MetadataFact): string {
   return token ? normalizeProviderSourceKey(token) : "";
 }
 
-/** True when a URL likely points at a provider product/listing page (not a CDN asset). */
+/**
+ * True when a URL likely points at a provider product/listing page (not a CDN
+ * asset, not a homepage). Wayback deep links count when the archived target is
+ * itself openable — see {@link isOpenablePublicCitationUrl}.
+ */
 export function looksLikeProviderProductPageUrl(url: string): boolean {
-  if (!/^https?:\/\//i.test(url.trim())) return false;
-  try {
-    const parsed = new URL(url.trim());
-    if (IMAGE_EXTENSION_RE.test(parsed.pathname)) return false;
-    if (PRODUCT_PAGE_PATH_DENY.some((pattern) => pattern.test(url))) {
-      return false;
-    }
-    // Site roots (`https://www.netgamesretro.com/`) are not product fiches.
-    const path = parsed.pathname.replace(/\/+$/, "");
-    if (!path) return false;
-    return true;
-  } catch {
+  const trimmed = url.trim();
+  if (!isOpenablePublicCitationUrl(trimmed)) return false;
+  if (PRODUCT_PAGE_PATH_DENY.some((pattern) => pattern.test(trimmed))) {
     return false;
   }
+  return true;
 }
 
 type UrlCandidate = { url: string; priority: number };

@@ -128,7 +128,9 @@ export async function installDbsjccDetecteur(
         printKey: DBSJCC_DETECTEUR_PRINT_KEY,
         lang: "fr",
         art: artName,
-        sourceUrl: "http://www.dbzcollection.fr/2v2/",
+        // Prefer no URL over the section hub — FR face has no dedicated public fiche
+        // stampable here (Hatatoy product URL is used for the JA dump).
+        sourceUrl: null,
       },
     ]);
     faceFr = true;

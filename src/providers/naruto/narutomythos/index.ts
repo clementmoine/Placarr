@@ -29,7 +29,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: NARUTO_MYTHOS_PROVIDER_ID,
-    providerLabel: "Naruto Mythos (local)",
+    providerLabel: "Naruto Mythos",
     catalogueLabel: "Naruto Mythos",
     catalogueAliases: ["Mythos", "Naruto Mythos TCG"],
     factLabel: "Naruto Mythos",

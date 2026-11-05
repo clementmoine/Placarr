@@ -38,7 +38,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: NARUTO_KAYOU_PROVIDER_ID,
-    providerLabel: "Naruto Kayou (local)",
+    providerLabel: "Naruto Kayou",
     catalogueLabel: "Naruto Kayou",
     catalogueAliases: ["Kayou", "KAYOU Naruto"],
     factLabel: "Naruto Kayou",

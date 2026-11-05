@@ -31,7 +31,7 @@ export {
 const built = createEmptyLocalTcgProvider({
   lineSpec: {
     providerId: DBS_LAMINCARDS_PROVIDER_ID,
-    providerLabel: "Dragon Ball Lamincards (local)",
+    providerLabel: "Dragon Ball Lamincards",
     catalogueLabel: "Dragon Ball Lamincards",
     catalogueAliases: [
       { label: "Lamincards", language: "fr" },

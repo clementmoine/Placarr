@@ -368,9 +368,67 @@ export function filterRedundantDisplayFacts(facts: DetailFact[]): DetailFact[] {
   );
 }
 
+function brandToken(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/**
+ * Where the click opens — derived from the URL host, not the contributing
+ * provider brand. Lorcana.gg may cite a Cardmarket fiche: the chip must say
+ * Cardmarket (favicon already follows the host).
+ */
+export function destinationSiteDisplayLabel(
+  url: string | null | undefined,
+): string | null {
+  if (!url?.trim()) return null;
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+  if (!host || host === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    return null;
+  }
+  // Known multi-token / casing brands (host → chip). Keep small — default is
+  // capitalized eTLD+1 head (cardmarket.com → Cardmarket).
+  const known: Record<string, string> = {
+    "cardmarket.com": "Cardmarket",
+    "tcgplayer.com": "TCGplayer",
+    "boardgamegeek.com": "BoardGameGeek",
+    "pricecharting.com": "PriceCharting",
+    "lorcana.gg": "Lorcana.gg",
+  };
+  if (known[host]) return known[host]!;
+  const head = host.split(".")[0]?.trim();
+  if (!head || head.length < 2) return null;
+  return head.charAt(0).toUpperCase() + head.slice(1);
+}
+
+/**
+ * Chip label for Sources & boutiques: destination site when it disagrees with
+ * the provider attribution (Cardmarket URL from Lorcana.gg feed → Cardmarket).
+ */
 export function providerLinkDisplayLabel(fact: DetailFact): string {
-  if (fact.providerLabel) return fact.providerLabel;
-  return formatDetailFactSourceToken(fact, fact.label);
+  const attribution =
+    fact.providerLabel?.trim() ||
+    formatDetailFactSourceToken(fact, fact.label)?.trim() ||
+    "";
+  const destination = destinationSiteDisplayLabel(fact.url);
+  if (destination && attribution) {
+    const destTok = brandToken(destination);
+    const attrTok = brandToken(attribution);
+    if (
+      destTok &&
+      attrTok &&
+      !attrTok.includes(destTok) &&
+      !destTok.includes(attrTok)
+    ) {
+      return destination;
+    }
+  }
+  if (attribution) return attribution;
+  return destination || fact.label;
 }
 
 export function sortProviderLinkFacts(facts: DetailFact[]): DetailFact[] {

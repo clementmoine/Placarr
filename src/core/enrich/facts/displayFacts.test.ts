@@ -476,14 +476,38 @@ describe("displayFacts", () => {
   });
 
   describe("providerLinkDisplayLabel", () => {
-    it("prefers providerLabel when present", () => {
+    it("prefers providerLabel when present and aligned with the URL", () => {
       const fact: DetailFact = {
         kind: "external-link",
         label: "BGG",
         value: "Voir",
+        url: "https://boardgamegeek.com/boardgame/1",
         providerLabel: "BoardGameGeek",
       };
       expect(providerLinkDisplayLabel(fact)).toBe("BoardGameGeek");
+    });
+
+    it("labels a Cardmarket fiche Cardmarket even when the feed is Lorcana.gg", () => {
+      const fact: DetailFact = {
+        kind: "external-link",
+        label: "Lorcana.gg",
+        value: "Voir la fiche",
+        url: "https://www.cardmarket.com/en/Lorcana/Products/Singles/The-First-Chapter/Ariel-On-Human-Legs",
+        providerLabel: "Lorcana.gg",
+        source: "lorcanagg",
+      };
+      expect(providerLinkDisplayLabel(fact)).toBe("Cardmarket");
+    });
+
+    it("keeps Lorcana.gg when the URL is on lorcana.gg", () => {
+      const fact: DetailFact = {
+        kind: "external-link",
+        label: "Lorcana.gg",
+        value: "Voir",
+        url: "https://lorcana.gg/cards/ariel-on-human-legs",
+        providerLabel: "Lorcana.gg",
+      };
+      expect(providerLinkDisplayLabel(fact)).toBe("Lorcana.gg");
     });
   });
 

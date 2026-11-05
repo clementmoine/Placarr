@@ -45,6 +45,9 @@ observations, field evidence, price offers, et
 - Les chips `websiteUrl` (racine du site) **n’alimentent pas** le refresh prix
   URL-first (`providerProductUrlsFromMetadataFacts` exige un path produit).
 - Exclus : `MergedEngine`, clés internes (`__cached_fiche__`).
+- **Label chip** (`providerLinkDisplayLabel`) : si l’URL ouvre un autre site que
+  la marque du provider (ex. cote Lorcana.gg → fiche Cardmarket), le chip
+  affiche la **destination** (Cardmarket), pas l’agrégateur.
 
 ---
 

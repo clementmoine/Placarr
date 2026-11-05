@@ -179,12 +179,38 @@ import {
   });
 
   describe("narutodatacarddass curated back", () => {
-    it("n'installe pas de dos pack (verso unique par carte / CODE128)", () => {
+    it("ships numbered sleeve backs (pack + DN + NM)", () => {
       expect(
         listCuratedBackSources(
           path.join(narutoDataCarddassCuratedDir(), "cards"),
-        ),
-      ).toEqual([]);
+        ).map((row) => row.destRel),
+      ).toEqual([
+        "back.webp",
+        "ja/dn/back.ja.webp",
+        "ja/nm/back.ja.webp",
+      ]);
+    });
+
+    it("resolves DN/NM set sleeves from printKey, else pack default", () => {
+      expect(narutoDataCarddassEffectPack.cardBackUrl).toBe(
+        "/assets/naruto/data-carddass/backs/ja",
+      );
+      expect(
+        narutoDataCarddassEffectPack.resolveCardBack?.({
+          printKey: "datacarddass:dn-029t",
+        }),
+      ).toBe("/assets/naruto/data-carddass/backs/ja/sets/dn");
+      expect(
+        narutoDataCarddassEffectPack.resolveCardBack?.({
+          printKey: "datacarddass:nm-125",
+        }),
+      ).toBe("/assets/naruto/data-carddass/backs/ja/sets/nm");
+      // No curated NF sleeve yet → null (flip uses pack cardBackUrl).
+      expect(
+        narutoDataCarddassEffectPack.resolveCardBack?.({
+          printKey: "datacarddass:nf-058",
+        }),
+      ).toBeNull();
     });
 
     it("registers a catalogue-only effect pack", () => {

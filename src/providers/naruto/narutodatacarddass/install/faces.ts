@@ -97,12 +97,14 @@ export function dataCarddassChitoroshopContentHash(): string {
 }
 
 export function dataCarddassEbayContentHash(): string {
-  return hashCatalogArtefactBytes(curatedSourceBytes("ebay.json"));
+  // Ledger under dataRoot `sources/` (same as Suruga listings).
+  return hashCatalogArtefactBytes(syncedSourceBytes("ebay.json"));
 }
 
 export function dataCarddassSurugaContentHash(): string {
+  // Listings live under dataRoot `sources/` (synced), not curated/.
   return hashCatalogArtefactBytes(
-    curatedSourceBytes("suruga-ya-data-carddass-listings.tsv"),
+    syncedSourceBytes("suruga-ya-data-carddass-listings.tsv"),
   );
 }
 

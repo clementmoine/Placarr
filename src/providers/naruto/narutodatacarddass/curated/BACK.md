@@ -1,27 +1,36 @@
 # Naruto Data Carddass — verso
 
-**Pas de dos pack, pas de dos par cabinet.** Chaque carte porte son
-propre verso : double bande CODE128 optique (payload unique → lecteur
-arcade), donc un fichier par print.
-
-## Où le poser
+Chaque carte porte un verso **numéroté** (double bande CODE128, payload
+unique pour le lecteur arcade). Idéalement : un scan par print sous
 
 ```
 cards/{set}/{lang}/{number}/back.<source>.{jpg|png|webp}
 ```
 
-Ex. `cards/dn/ja/032t/back.suruga.jpg`. Install → `print_assets.back` ;
-le flip catalogue lit le verso de la print (`PrintCandidate.cardBackUrl`),
-jamais un sleeve partagé.
+Ex. `cards/dn/ja/032t/back.suruga.jpg` → `print_assets.back`.
 
-## Ce qu’on n’installe pas
+## Fallback catalogue (2026-11-05)
 
-- `cards/back.webp` (pack) — faux positif « Dos · pack » dans le catalogue.
-- `cards/{dn,nm,nf,nx}/back.webp` (cabinet) — le motif de fond peut se
-  ressembler entre cartes d’un même jeu, mais le **barcode** change : un
-  sleeve commun mentirait sur l’identité optique.
+Sans corpus verso carte-par-carte, on affiche un **dos numéroté
+représentatif** (motif + CODE128 + id imprimé) pour le flip :
 
-## À curer
+| Curated | Data | Rôle |
+| ------- | ---- | ---- |
+| `cards/back.jpg` | `cards/back.webp` | Pack défaut (`/assets/…/backs/ja`) |
+| `cards/ja/dn/back.ja.jpg` | `cards/ja/dn/back.ja.webp` | Série DN (+ DT tant qu’aucun DT distinct) |
+| `cards/ja/nm/back.ja.jpg` | `cards/ja/nm/back.ja.webp` | Série NM (Narutimet Mission) |
 
-Scans Suruga / eBay / collection perso en verso carte-par-carte. Aucun
-placeholder pack dans `curated/cards/`.
+Sources Amazon JP (scans produit, dos visible) :
+
+- DN-029T — [B09SV21Q16](https://www.amazon.co.jp/-/en/Naruto-DN-029T-Ultimate-Battle-Re-fukiri/dp/B09SV21Q16) → `I/71a9yZ5OBeL.jpg`
+- NM-125 — [B09SV1S7FM](https://www.amazon.co.jp/-/en/Naruto-Shippuden-NM-125-Narutimet-Mission/dp/B09SV1S7FM) → `I/71NU1Ifm8rL.jpg`
+
+Ce n’est **pas** l’identité optique exacte de chaque print (le barcode
+change) : c’est un sleeve honnête « dos numéroté DCD » en attendant des
+scans per-card. NF / NX / promos retombent sur le dos pack.
+
+## Ce qu’on n’installe toujours pas
+
+- Un dos cabinet **sans** numéro / barcode (motif seul) — mentirait sur le
+  type de verso.
+- Remplacer un `back.<source>` déjà posé sur une print.

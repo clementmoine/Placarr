@@ -123,6 +123,9 @@ function warnMisplacedLangBacksUnder(cardsDir: string): void {
   if (!existsSync(cardsDir)) return;
   for (const set of readdirSync(cardsDir)) {
     if (!isSafeSegment(set)) continue;
+    // Lang-first trees (`cards/{lang}/{set}/`) are collected above — not
+    // misplaced. Two-letter set codes (dn, nm, …) also match LANG_DIR.
+    if (LANG_DIR.test(set)) continue;
     const setDir = path.join(cardsDir, set);
     if (!statSync(setDir).isDirectory()) continue;
     for (const name of readdirSync(setDir)) {

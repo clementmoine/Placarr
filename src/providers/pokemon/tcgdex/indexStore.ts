@@ -839,6 +839,8 @@ export type TcgdexCatalogueBrowsePageOpts = {
   unprintedOnly?: boolean;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  /** Missing art OR missing name (admin « incomplet »). */
+  incompleteOnly?: boolean;
 };
 
 /**
@@ -871,13 +873,13 @@ export function listTcgdexCatalogueBrowsePage(
     where.push("COALESCE(p.printed, 1) != 0");
   }
 
-  if (opts.missingArtOnly) {
-    where.push(
-      `(a.art IS NULL OR TRIM(a.art) = '') AND (p.image_base_url IS NULL OR TRIM(p.image_base_url) = '')`,
-    );
-  }
-  if (opts.missingNameOnly) {
-    where.push(`(t.name IS NULL OR TRIM(t.name) = '')`);
+  const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '') AND (p.image_base_url IS NULL OR TRIM(p.image_base_url) = '')`;
+  const missingNameSql = `(t.name IS NULL OR TRIM(t.name) = '')`;
+  if (opts.incompleteOnly) {
+    where.push(`((${missingArtSql}) OR (${missingNameSql}))`);
+  } else {
+    if (opts.missingArtOnly) where.push(missingArtSql);
+    if (opts.missingNameOnly) where.push(missingNameSql);
   }
   const q = opts.q?.trim().toLowerCase();
   if (q) {

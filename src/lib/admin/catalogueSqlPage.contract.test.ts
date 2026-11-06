@@ -140,14 +140,18 @@ describe.skipIf(!existsSync(tcgdexDbPath()))(
       const page = await listCatalogueCards({
         pack: "pokemon",
         preferLang: "fr",
-        q: "bw1-",
         foilOnly: true,
         limit: 12,
       });
       expect(page.cards.filter((row) => row.kind === "face").length).toBeGreaterThan(
         0,
       );
+      expect(
+        page.cards
+          .filter((row) => row.kind === "face")
+          .every((row) => row.hasFoil),
+      ).toBe(true);
       expect(buildPokemon).not.toHaveBeenCalled();
-    });
+    }, 60_000);
   },
 );

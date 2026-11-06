@@ -156,6 +156,7 @@ export type LorcanaCatalogueBrowsePageInput = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
   foilOnly?: boolean;
 };
 
@@ -170,6 +171,7 @@ export function listLorcanaCatalogueBrowsePageRows(
     limit: input.limit,
     missingArtOnly: input.missingArtOnly,
     missingNameOnly: input.missingNameOnly,
+    incompleteOnly: input.incompleteOnly,
     foilOnly: input.foilOnly,
   });
   return {

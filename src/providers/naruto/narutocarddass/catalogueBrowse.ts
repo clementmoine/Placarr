@@ -3,23 +3,28 @@
  *
  * Identity = {@link listNarutoSetPrints} (`includeUnprinted: true`).
  * Presentation (URLs, borrow, collapse) comes from {@link buildCatalogueCardRows}.
+ * Paginated admin path uses SQL LIMIT/OFFSET — no `cards/` tree walk.
  */
-import { existsSync, readdirSync, statSync } from "node:fs";
-import path from "node:path";
+import { existsSync, statSync } from "node:fs";
 
 import {
   buildCatalogueCardRows,
   type CatalogueCardRow,
 } from "@/lib/admin/catalogueCards";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
-import { packCardsDir } from "@/lib/packPaths";
+import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
 import type { PrintCandidate } from "@/types/providerModule";
+
+import { NARUTO_CARDDASS_FINISHES } from "@/effects/narutocarddass";
 
 import {
   canonicalizeNarutoPrintKey,
+  narutoDiskCardId,
   NARUTO_PACK_ID,
 } from "./identity";
 import {
+  ensureNarutoPackIndex,
   loadNarutoCardsIndexFromSqlite,
   narutoPackDbPath,
 } from "./indexStore";
@@ -28,11 +33,15 @@ import {
   listNarutoSetPrints,
   searchNarutoPrints,
 } from "./search";
+import { attestedNarutoCarddassFinishes } from "./sources/faces";
 
 type Cache = { stamp: string; rows: CatalogueCardRow[] };
 let cache: Cache | null = null;
-let enumCache: { stamp: string; includeUnprinted: boolean; rows: CatalogueCardRow[] } | null =
-  null;
+let enumCache: {
+  stamp: string;
+  includeUnprinted: boolean;
+  rows: CatalogueCardRow[];
+} | null = null;
 
 function mtimeMs(file: string): number {
   try {
@@ -44,37 +53,12 @@ function mtimeMs(file: string): number {
 }
 
 /**
- * Max mtime under `cards/{lang}/{set}/` — materializing a face into
- * `fr/s1/*-prerelease/` must bust browse cache even when sqlite is unchanged.
+ * Browse cache stamp = sqlite mtime only.
+ * Walking `cards/` on every request was a multi-second tax; faces Sync updates
+ * sqlite assets, which bumps mtime.
  */
-function cardsTreeStamp(cardsRoot: string, depth = 2): number {
-  if (!existsSync(cardsRoot) || depth < 0) return 0;
-  let max = mtimeMs(cardsRoot);
-  if (depth === 0) return max;
-  try {
-    for (const name of readdirSync(cardsRoot)) {
-      if (name.startsWith(".")) continue;
-      const abs = path.join(cardsRoot, name);
-      try {
-        if (!statSync(abs).isDirectory()) {
-          max = Math.max(max, mtimeMs(abs));
-          continue;
-        }
-        max = Math.max(max, cardsTreeStamp(abs, depth - 1));
-      } catch {
-        /* ignore */
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  return max;
-}
-
 function browseStamp(): string {
-  const db = mtimeMs(narutoPackDbPath(NARUTO_PACK_ID));
-  const cards = cardsTreeStamp(packCardsDir(NARUTO_PACK_ID));
-  return `${db}:${cards}`;
+  return String(mtimeMs(narutoPackDbPath(NARUTO_PACK_ID)));
 }
 
 function cardFromPrintKey(printKey: string): string {
@@ -229,4 +213,185 @@ export function buildCarddassCatalogueBrowseRows(): CatalogueCardRow[] | null {
 export function clearCarddassCatalogueBrowseCache(): void {
   cache = null;
   enumCache = null;
+}
+
+type NarutoSqlBrowseRow = {
+  printKey: string;
+  setCode: string;
+  number: string;
+  lang: string;
+  fullName: string | null;
+  rarity: string | null;
+  art: string | null;
+  thumb: string | null;
+  printed: number | null;
+};
+
+/**
+ * Mirror {@link searchNarutoPrints} finish rules for admin tiles — finishes
+ * live in attested ledgers / defaults, not sqlite columns.
+ */
+export function carddassSqlRowHasFoil(row: {
+  setCode: string;
+  number: string;
+  printKey: string;
+}): boolean {
+  const set = row.setCode.trim().toLowerCase();
+  const number = row.number;
+  const printKey = row.printKey;
+  const isPrerelease =
+    /prerelease/i.test(number) || /prerelease/i.test(printKey);
+  if (isPrerelease) {
+    // Sealed bag / opened Normale alt — no holo cardboard on this key.
+    return false;
+  }
+  if (set === "promo" || /(?:^|-)promo(?:-|$)/i.test(number)) {
+    return NARUTO_CARDDASS_FINISHES.length > 0;
+  }
+  const attested = attestedNarutoCarddassFinishes(set, number);
+  const finishes = attested ?? ["normal", ...NARUTO_CARDDASS_FINISHES];
+  return finishes.some(
+    (finish) => finish !== "normal" && finish !== "sealed",
+  );
+}
+
+function sqlRowToCatalogueCard(row: NarutoSqlBrowseRow): CatalogueCardRow {
+  const lang = (row.lang ?? "fr").trim().toLowerCase() || "fr";
+  const set = (row.setCode ?? "").trim() || "—";
+  const card =
+    narutoDiskCardId(row.number, set) ??
+    cardFromPrintKey(row.printKey) ??
+    row.number;
+  const artFile = row.art?.trim() || row.thumb?.trim() || "";
+  const thumbFile =
+    row.thumb?.trim() && row.thumb.trim() !== artFile
+      ? row.thumb.trim()
+      : "";
+  const artUrl = artFile
+    ? assetsCardUrl(NARUTO_PACK_ID, { set, lang, card }, artFile)
+    : "";
+  const name = row.fullName?.trim() || undefined;
+  const label = name
+    ? `${set} · ${card} — ${name}`
+    : `${set} · ${card}`;
+  return {
+    printKey: row.printKey,
+    set,
+    card,
+    lang,
+    artUrl,
+    ...(thumbFile
+      ? {
+          thumbUrl: assetsCardUrl(
+            NARUTO_PACK_ID,
+            { set, lang, card },
+            thumbFile,
+          ),
+        }
+      : {}),
+    hasFoil: carddassSqlRowHasFoil(row),
+    label,
+    ...(name ? { name } : {}),
+    ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
+    ...(row.printed === 0 ? { printed: false } : {}),
+    missingArt: !artUrl,
+    kind: "face",
+  };
+}
+
+export type CarddassCatalogueBrowsePageInput = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
+  foilOnly?: boolean;
+  printed?: "all" | "printed" | "unprinted";
+};
+
+function listCarddassCatalogueBrowsePageSql(
+  input: Omit<CarddassCatalogueBrowsePageInput, "foilOnly">,
+): { rows: CatalogueCardRow[]; total: number } {
+  const db = ensureNarutoPackIndex(NARUTO_PACK_ID);
+  if (!db) return { rows: [], total: 0 };
+  const langs = [
+    ...new Set(
+      input.langs.map((lang) => lang.trim().toLowerCase()).filter(Boolean),
+    ),
+  ];
+  if (!langs.length) return { rows: [], total: 0 };
+  const offset = Math.max(0, Math.floor(input.offset));
+  const limit = Math.max(1, Math.min(1000, Math.floor(input.limit)));
+  const params: unknown[] = [];
+  const where: string[] = [
+    `t.lang IN (${langs.map(() => "?").join(",")})`,
+  ];
+  params.push(...langs);
+  if (input.printed === "printed") {
+    where.push("COALESCE(a.printed, 1) != 0");
+  } else if (input.printed === "unprinted") {
+    where.push("COALESCE(a.printed, 1) = 0");
+  }
+  const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '') AND (a.thumb IS NULL OR TRIM(a.thumb) = '')`;
+  const missingNameSql = `(t.full_name IS NULL OR TRIM(t.full_name) = '')`;
+  if (input.incompleteOnly) {
+    where.push(`((${missingArtSql}) OR (${missingNameSql}))`);
+  } else {
+    if (input.missingArtOnly) where.push(missingArtSql);
+    if (input.missingNameOnly) where.push(missingNameSql);
+  }
+  const q = input.q?.trim().toLowerCase();
+  if (q) {
+    where.push(
+      `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
+        OR LOWER(COALESCE(t.full_name, '')) LIKE ?)`,
+    );
+    const like = `%${q}%`;
+    params.push(like, like, like, like);
+  }
+  const whereSql = where.join(" AND ");
+  const from = `prints p
+         JOIN print_titles t ON t.print_key = p.print_key
+         LEFT JOIN print_assets a
+                ON a.print_key = p.print_key AND a.lang = t.lang`;
+  const totalRow = db
+    .prepare(`SELECT COUNT(*) AS n FROM ${from} WHERE ${whereSql}`)
+    .get(...params) as { n: number };
+  const rows = db
+    .prepare(
+      `SELECT p.print_key AS printKey, p.set_code AS setCode, p.number,
+              t.lang, t.full_name AS fullName, t.rarity,
+              a.art, a.thumb, a.printed AS printed
+         FROM ${from}
+        WHERE ${whereSql}
+        ORDER BY LOWER(p.set_code), CAST(p.number AS INTEGER), p.number, t.lang
+        LIMIT ? OFFSET ?`,
+    )
+    .all(...params, limit, offset) as NarutoSqlBrowseRow[];
+  return {
+    total: Number(totalRow?.n ?? 0),
+    rows: rows.map(sqlRowToCatalogueCard),
+  };
+}
+
+/**
+ * Paginated admin browse — SQL LIMIT/OFFSET (avoids full Carddass materialize).
+ * `foilOnly` filters attested/default finishes in-process (no finish column).
+ */
+export function listCarddassCatalogueBrowsePage(
+  input: CarddassCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  if (!input.foilOnly) return listCarddassCatalogueBrowsePageSql(input);
+
+  const { foilOnly: _foilOnly, ...base } = input;
+  return overscanFilterPage({
+    offset: input.offset,
+    limit: input.limit,
+    maxScan: 4_000,
+    fetchPage: (offset, limit) =>
+      listCarddassCatalogueBrowsePageSql({ ...base, offset, limit }),
+    keep: (row) => row.hasFoil,
+  });
 }

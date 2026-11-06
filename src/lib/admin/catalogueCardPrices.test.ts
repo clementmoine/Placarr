@@ -106,6 +106,21 @@ describe("matchesCatalogueAuditFilter missingPriceOnly", () => {
       ),
     ).toBe(false);
   });
+
+  it("ANDs Sans image with Sans prix (disk art must not leak)", () => {
+    expect(
+      matchesCatalogueAuditFilter(
+        face({ missingArt: false, priceCents: null, artUrl: "/assets/x.jpg" }),
+        { missingArtOnly: true, missingPriceOnly: true },
+      ),
+    ).toBe(false);
+    expect(
+      matchesCatalogueAuditFilter(
+        face({ missingArt: true, priceCents: null, artUrl: "" }),
+        { missingArtOnly: true, missingPriceOnly: true },
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("matchesCataloguePrintedFilter", () => {

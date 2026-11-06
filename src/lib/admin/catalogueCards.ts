@@ -18,6 +18,8 @@ import {
   assetsPackTierBackUrl,
   assetsSetBackUrl,
   listPackTierBackSlugs,
+  resolvePackBackPath,
+  resolveSetBackPath,
 } from "@/lib/packPaths";
 import { tryBuildIdentityCatalogueRows, clearIdentityCatalogueBrowseCache } from "@/lib/admin/catalogueIdentityBrowse";
 import {
@@ -53,6 +55,7 @@ import {
   loadLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
 import { catalogueCardPriceQuoteByPrintKey } from "@/lib/admin/catalogueCardPrices";
+import { overscanFilterPageAsync } from "@/lib/admin/catalogueOverscan";
 import {
   listPokemonCatalogueBrowsePage,
   POKEMON_CATALOGUE_BROWSE_LOCALES,
@@ -61,6 +64,19 @@ import {
   listLorcanaCatalogueBrowsePageRows,
   LORCANA_CATALOGUE_BROWSE_LOCALES,
 } from "@/providers/lorcana/lorcanatcg/catalogueBrowse";
+import { listCarddassCatalogueBrowsePage } from "@/providers/naruto/narutocarddass/catalogueBrowse";
+import { listShippudenCatalogueBrowsePage } from "@/providers/naruto/narutoshippuden/catalogueBrowse";
+import { NARUTO_SHIPPUDEN_PACK_ID } from "@/providers/naruto/narutoshippuden/indexStore";
+import { listDbsCgCatalogueBrowsePageRows } from "@/providers/dragonball/dbscg/catalogueBrowse";
+import { listDbsFwCatalogueBrowsePageRows } from "@/providers/dragonball/dbsfw/catalogueBrowse";
+import { listMtgCatalogueBrowsePage } from "@/providers/mtg/catalogueBrowse";
+import { MTG_PACK_ID } from "@/providers/mtg/pack";
+import { listKayouCatalogueBrowsePage } from "@/providers/naruto/narutokayou/catalogueBrowse";
+import { NARUTO_KAYOU_PACK_ID } from "@/providers/naruto/narutokayou/pack";
+import {
+  createLocalPrintsIndex,
+  type LocalPrintSearchRow,
+} from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { POKEMON_PACK_ID } from "@/providers/pokemon/paths";
 import { LORCANA_PACK_ID } from "@/providers/lorcana/lorcanatcg/indexStore";
 
@@ -1355,6 +1371,40 @@ export function mergeCatalogueBackRows(input: {
   return out;
 }
 
+/**
+ * Collapse pack/set backs that share one disk file.
+ *
+ * Role URLs differ by lang (`/backs/fr` vs `/backs/ja`) even when both resolve
+ * to the same `back.webp` — keying on URL duplicated « Dos · pack » +
+ * « Dos · pack · JA ». Distinct by realpath; locale-only sleeves keep their lang.
+ */
+function distinctBackTilesByDisk(input: {
+  langs: readonly string[];
+  resolveDisk: (lang: string | undefined) => string | null;
+  toUrl: (lang: string | undefined) => string | null;
+}): CatalogueBackTile[] {
+  const byDisk = new Map<string, string>();
+  const sharedDisk = input.resolveDisk(undefined);
+  if (sharedDisk) byDisk.set(sharedDisk, "—");
+  for (const lang of input.langs) {
+    const disk = input.resolveDisk(lang);
+    if (!disk || byDisk.has(disk)) continue;
+    byDisk.set(disk, lang);
+  }
+  const tiles: CatalogueBackTile[] = [];
+  for (const [disk, lang] of byDisk) {
+    const url =
+      lang === "—"
+        ? input.toUrl(undefined) ?? input.toUrl("fr")
+        : input.toUrl(lang);
+    if (!url) continue;
+    // Guarantees we only emit tiles whose disk we already accepted.
+    void disk;
+    tiles.push({ url, lang });
+  }
+  return tiles;
+}
+
 /** Resolve on-disk backs and prepend them to face rows. */
 export function withCatalogueBackRows(
   pack: CataloguePackId,
@@ -1364,28 +1414,30 @@ export function withCatalogueBackRows(
   // files: locales that share the common `back.webp` collapse to a single
   // tile, and a run with its own `back.<lang>.webp` gets its own.
   const langs = [...new Set(faceRows.map((r) => r.lang).filter(Boolean))];
-  const distinct = (
-    resolve: (lang: string | undefined) => string | null,
-  ): CatalogueBackTile[] => {
-    const shared = resolve(undefined);
-    const byUrl = new Map<string, string>();
-    if (shared) byUrl.set(shared, "—");
-    for (const lang of langs) {
-      const url = resolve(lang);
-      if (url && !byUrl.has(url)) byUrl.set(url, lang);
-    }
-    return [...byUrl].map(([url, lang]) => ({ url, lang }));
-  };
-
   const corpus = catalogueCorpusPack(pack);
-  const packBackUrl = distinct((lang) => assetsPackBackUrl(corpus, lang));
+  const packBackUrl = distinctBackTilesByDisk({
+    langs,
+    resolveDisk: (lang) => resolvePackBackPath(corpus, lang),
+    toUrl: (lang) => assetsPackBackUrl(corpus, lang),
+  });
+  /*
+    Locale sleeves (`back.ja.webp`) are resolved via `packBackUrl` above.
+    Listing them again as tiers (`/backs/…/tiers/ja`) duplicates the same
+    file under a second role URL → two « Dos · pack · JA » tiles.
+    Tier rows stay for rarity sleeves (Kayou HR/SR/…).
+  */
   const tierBackUrls = listPackTierBackSlugs(corpus).flatMap((slug) => {
+    if (catalogueBackLangFromTierSlug(slug) !== "—") return [];
     const url = assetsPackTierBackUrl(corpus, slug);
     return url ? [{ slug, url }] : [];
   });
   const setBackUrls = new Map<string, CatalogueBackTile[]>();
   for (const set of new Set(faceRows.map((r) => r.set))) {
-    const tiles = distinct((lang) => assetsSetBackUrl(corpus, set, lang));
+    const tiles = distinctBackTilesByDisk({
+      langs,
+      resolveDisk: (lang) => resolveSetBackPath(corpus, set, lang),
+      toUrl: (lang) => assetsSetBackUrl(corpus, set, lang),
+    });
     if (tiles.length) setBackUrls.set(set, tiles);
   }
   return mergeCatalogueBackRows({
@@ -1412,18 +1464,16 @@ function withNarutoUnifiedBacks(faces: CatalogueCardRow[]): CatalogueCardRow[] {
   const langs = [
     ...new Set(["fr", "en", "it", "ja", ...faces.map((row) => row.lang)]),
   ].filter(Boolean);
-  const tiles: CatalogueBackTile[] = [];
-  const seen = new Set<string>();
   const corpus = catalogueCorpusPack("naruto/carddass");
-  const resolve = (lang: string | undefined) => assetsPackBackUrl(corpus, lang);
-  for (const lang of langs) {
-    const url = resolve(lang);
-    if (url && !seen.has(url)) {
-      seen.add(url);
-      tiles.push({ url, lang, key: `-${lang}` });
-    }
-  }
-  // `back.webp` is the FR alias for flip — not a fifth catalogue tile.
+  // Same disk-dedupe as withCatalogueBackRows — shared back.webp ≠ one tile per lang URL.
+  const tiles = distinctBackTilesByDisk({
+    langs,
+    resolveDisk: (lang) => resolvePackBackPath(corpus, lang),
+    toUrl: (lang) => assetsPackBackUrl(corpus, lang),
+  }).map((tile) => ({
+    ...tile,
+    key: tile.lang === "—" ? undefined : `-${tile.lang}`,
+  }));
   return mergeCatalogueBackRows({
     pack: "naruto/carddass",
     faceRows: faces,
@@ -1449,13 +1499,21 @@ function isFaceRow(row: CatalogueCardRow): boolean {
   return row.kind !== "pack-back" && row.kind !== "set-back";
 }
 
-/** Locale-coded sleeve file (`back.ja.webp`) vs shared rarity tier (`back.hr.webp`). */
-const BACK_TIER_LOCALE = /^(fr|en|it|de|es|pt|ptbr|ja|jp)$/i;
+/**
+ * Locale-coded sleeve file (`back.ja.webp`) vs shared rarity tier (`back.hr.webp`).
+ * Keep BCP-47-ish pack langs here so they never double as Kayou-style tiers.
+ */
+const BACK_TIER_LOCALE =
+  /^(fr|en|it|de|es|pt|ptbr|pt-br|ja|jp|zh|zhcn|zhtw|ko|nl|pl|ru|sv|da|fi|no|cs|hu|ro|tr|ar|he|th|vi|id|ms)$/i;
 
 export function catalogueBackLangFromTierSlug(slug: string): string {
-  const raw = slug.trim().toLowerCase();
+  const raw = slug.trim().toLowerCase().replace(/_/g, "");
   if (!BACK_TIER_LOCALE.test(raw)) return "—";
-  return raw === "jp" ? "ja" : raw;
+  if (raw === "jp") return "ja";
+  if (raw === "ptbr" || raw === "pt-br") return "ptbr";
+  if (raw === "zhcn") return "zh";
+  if (raw === "zhtw") return "zh";
+  return raw;
 }
 
 /** FR retail + late exceptions (S6 inserts, Rampage/s11, Sage's/s24, Storm3/s28). */
@@ -1628,17 +1686,29 @@ export function matchesCatalogueAuditFilter(
   if (filter.incompleteOnly) {
     checks.push(Boolean(row.missingArt || row.versoOnly || !row.name?.trim()));
   }
-  if (filter.missingArtOnly) checks.push(Boolean(row.missingArt));
-  if (filter.missingNameOnly) checks.push(!row.name?.trim());
+  /*
+    UI « incomplete » checks both Sans image + Sans nom — that pair means
+    art OR name gap (same as incompleteOnly), not the AND of the two flags.
+  */
+  if (
+    filter.missingArtOnly &&
+    filter.missingNameOnly &&
+    !filter.incompleteOnly
+  ) {
+    checks.push(Boolean(row.missingArt || row.versoOnly || !row.name?.trim()));
+  } else {
+    if (filter.missingArtOnly) checks.push(Boolean(row.missingArt));
+    if (filter.missingNameOnly) checks.push(!row.name?.trim());
+  }
   if (filter.missingPriceOnly) {
     checks.push(!(typeof row.priceCents === "number" && row.priceCents > 0));
   }
   if (filter.borrowedArtOnly) {
     checks.push(Boolean(row.artFallbackFrom || row.artLocaleFrom));
   }
-  return checks.some(Boolean);
+  // Multiple distinct audit axes (art ∩ price ∩ borrowed…) must all match.
+  return checks.length === 0 ? false : checks.every(Boolean);
 }
-
 /**
  * Printed cardboard filter — faces only.
  * Pack/set backs are excluded from both « Imprimées » and « Non imprimées ».
@@ -1728,14 +1798,233 @@ export function restrictRowsToCatalogueLocales(
   });
 }
 
-/** Heavy audit filters that still need the full in-memory corpus. */
+/**
+ * Only borrowed-art audit still needs the full corpus (borrow markers come from
+ * presentation merge, not identity SQL). `missingPriceOnly` / `incompleteOnly`
+ * stay on the SQL / chunked paths.
+ */
 function needsFullCatalogueMaterialize(input: ListCatalogueCardsInput): boolean {
-  return Boolean(
-    input.missingPriceOnly ||
-      input.incompleteOnly ||
-      input.borrowedArtOnly ||
-      (input.foilOnly && input.pack === POKEMON_PACK_ID),
-  );
+  return Boolean(input.borrowedArtOnly);
+}
+
+function localPrintDiskCard(row: LocalPrintSearchRow): string {
+  return row.grouping ? `${row.number}-${row.grouping}` : row.number;
+}
+
+function localPrintRowToCatalogueCard(
+  pack: CataloguePackId,
+  row: LocalPrintSearchRow,
+): CatalogueCardRow {
+  const set = (row.setCode || row.cardType || "").trim() || "—";
+  const diskCard = localPrintDiskCard(row);
+  const artFile = row.art?.trim() || row.thumb?.trim() || "";
+  const thumbFile =
+    row.thumb?.trim() && row.thumb.trim() !== artFile
+      ? row.thumb.trim()
+      : "";
+  const artUrl = artFile
+    ? assetsCardUrl(pack, { set, lang: row.lang, card: diskCard }, artFile)
+    : "";
+  const name = row.fullName?.trim() || undefined;
+  const label = name
+    ? `${set} · ${diskCard} — ${name}`
+    : `${set} · ${diskCard}`;
+  return {
+    printKey: row.printKey,
+    set,
+    card: diskCard,
+    lang: row.lang,
+    artUrl,
+    ...(thumbFile
+      ? {
+          thumbUrl: assetsCardUrl(
+            pack,
+            { set, lang: row.lang, card: diskCard },
+            thumbFile,
+          ),
+        }
+      : {}),
+    hasFoil: false,
+    label,
+    ...(name ? { name } : {}),
+    ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
+    ...(row.printed === 0 || row.printed === false
+      ? { printed: false }
+      : {}),
+    missingArt: !artUrl,
+    languageSpecific: true,
+    kind: "face",
+  };
+}
+
+function declaredCatalogueLocales(
+  pack: CataloguePackId,
+): string[] | null {
+  const packInfo = cataloguePackInfo(pack);
+  if (packInfo?.catalogueLocales?.length) {
+    return [...packInfo.catalogueLocales];
+  }
+  if (pack === POKEMON_PACK_ID) return [...POKEMON_CATALOGUE_BROWSE_LOCALES];
+  if (pack === LORCANA_PACK_ID) return [...LORCANA_CATALOGUE_BROWSE_LOCALES];
+  return null;
+}
+
+function listSqlBrowseFacePage(
+  input: ListCatalogueCardsInput,
+  langs: readonly string[],
+  offset: number,
+  limit: number,
+  opts?: { identityOnly?: boolean },
+): { rows: CatalogueCardRow[]; total: number } | null {
+  /*
+    Foil-aware SQL browse: Lorcana (`foil_types`), Carddass (attested finishes),
+    Kayou (rarity→shiny), Pokémon (Live resolve). Every other SQL pack
+    hardcodes hasFoil:false — honour foilOnly with an empty page, never an
+    unfiltered corpus.
+  */
+  if (
+    input.foilOnly &&
+    input.pack !== LORCANA_PACK_ID &&
+    input.pack !== "naruto/carddass" &&
+    input.pack !== NARUTO_KAYOU_PACK_ID &&
+    input.pack !== POKEMON_PACK_ID
+  ) {
+    return { rows: [], total: 0 };
+  }
+  const pageOpts = {
+    langs,
+    q: input.q,
+    offset,
+    limit,
+    missingArtOnly: input.missingArtOnly,
+    missingNameOnly: input.missingNameOnly,
+    incompleteOnly: input.incompleteOnly,
+  };
+  if (input.pack === POKEMON_PACK_ID) {
+    return listPokemonCatalogueBrowsePage({
+      ...pageOpts,
+      foilOnly: input.foilOnly,
+      printed: input.printed ?? "all",
+      identityOnly: opts?.identityOnly,
+    });
+  }
+  if (input.pack === LORCANA_PACK_ID) {
+    return listLorcanaCatalogueBrowsePageRows({
+      ...pageOpts,
+      foilOnly: input.foilOnly,
+    });
+  }
+  if (input.pack === "naruto/carddass") {
+    return listCarddassCatalogueBrowsePage({
+      ...pageOpts,
+      foilOnly: input.foilOnly,
+      printed: input.printed ?? "all",
+    });
+  }
+  if (input.pack === NARUTO_KAYOU_PACK_ID) {
+    return listKayouCatalogueBrowsePage({
+      ...pageOpts,
+      foilOnly: input.foilOnly,
+    });
+  }
+  if (input.pack === NARUTO_SHIPPUDEN_PACK_ID) {
+    return listShippudenCatalogueBrowsePage(pageOpts);
+  }
+  if (input.pack === "dragonball/cg") {
+    return listDbsCgCatalogueBrowsePageRows(pageOpts);
+  }
+  if (input.pack === "dragonball/fw") {
+    return listDbsFwCatalogueBrowsePageRows(pageOpts);
+  }
+  if (input.pack === MTG_PACK_ID) {
+    return listMtgCatalogueBrowsePage(pageOpts);
+  }
+  const index = createLocalPrintsIndex(input.pack);
+  if (!index.hasIdentityCorpus()) return null;
+  const page = index.listBrowsePage({
+    ...pageOpts,
+    printed: input.printed ?? "all",
+  });
+  return {
+    total: page.total,
+    rows: page.rows.map((row) =>
+      localPrintRowToCatalogueCard(input.pack, row),
+    ),
+  };
+}
+
+/**
+ * « Sans prix » without quoting the whole corpus: walk SQL pages, quote each
+ * chunk, keep missing-price faces until offset+limit is filled.
+ */
+async function listMissingPriceCataloguePage(
+  input: ListCatalogueCardsInput,
+  langs: readonly string[],
+  availableLocales: string[],
+  offset: number,
+  limit: number,
+): Promise<ListCatalogueCardsResult | null> {
+  const corpus = catalogueCorpusPack(input.pack);
+  /*
+    Probe SQL path once — packs without a page helper fall through to
+    materialize. Keep counting matches past the first filled window so the
+    admin total is not capped at ~pageSize (same class of bug as « 77 sans
+    image »).
+  */
+  /*
+    Price-only audits don't need disk art / Live foil on every corpus row —
+    identity + quote is enough for keep/count (Pokémon FR was ~55s with full
+    resolve, ~2s identity). Combined art∩price still needs full resolve.
+  */
+  const identityOnly =
+    !input.missingArtOnly &&
+    !input.missingNameOnly &&
+    !input.incompleteOnly &&
+    !input.borrowedArtOnly;
+  const probe = listSqlBrowseFacePage(input, langs, 0, 1, { identityOnly });
+  if (!probe) return null;
+
+  const overscan = await overscanFilterPageAsync({
+    offset,
+    limit,
+    maxScan: 50_000,
+    chunk: Math.max(limit, 512),
+    fetchPage: async (scanned, chunk) => {
+      const page = listSqlBrowseFacePage(input, langs, scanned, chunk, {
+        identityOnly,
+      });
+      if (!page) return { rows: [], total: 0 };
+      const keys = [
+        ...new Set(page.rows.filter(isFaceRow).map((row) => row.printKey)),
+      ];
+      const priceByKey = await catalogueCardPriceQuoteByPrintKey(corpus, keys);
+      return {
+        rows: page.rows.map((row) => attachPriceQuote(row, priceByKey)),
+        total: page.total,
+      };
+    },
+    keep: (row) =>
+      matchesCatalogueAuditFilter(row, {
+        missingPriceOnly: true,
+        missingArtOnly: input.missingArtOnly,
+        missingNameOnly: input.missingNameOnly,
+        incompleteOnly: input.incompleteOnly,
+        borrowedArtOnly: input.borrowedArtOnly,
+      }),
+  });
+
+  let cards = overscan.rows;
+  if (offset === 0) {
+    cards = withCatalogueBackRows(input.pack, overscan.rows);
+  }
+  return {
+    pack: input.pack,
+    total: overscan.total,
+    offset,
+    limit,
+    cards,
+    availableLocales,
+  };
 }
 
 async function listSqlPagedCatalogueCards(
@@ -1744,25 +2033,21 @@ async function listSqlPagedCatalogueCards(
   limit: number,
 ): Promise<ListCatalogueCardsResult | null> {
   if (needsFullCatalogueMaterialize(input)) return null;
-  const packInfo = cataloguePackInfo(input.pack);
-  const declared =
-    packInfo?.catalogueLocales ??
-    (input.pack === POKEMON_PACK_ID
-      ? [...POKEMON_CATALOGUE_BROWSE_LOCALES]
-      : input.pack === LORCANA_PACK_ID
-        ? [...LORCANA_CATALOGUE_BROWSE_LOCALES]
-        : null);
-  if (!declared?.length) return null;
-  if (input.pack !== POKEMON_PACK_ID && input.pack !== LORCANA_PACK_ID) {
-    return null;
+  const declared = declaredCatalogueLocales(input.pack);
+  if (!declared?.length) {
+    // Still try LocalPrints when pack declares no locales but has sqlite.
+    if (!createLocalPrintsIndex(input.pack).hasIdentityCorpus()) return null;
   }
+  const availableLocales = declared?.length
+    ? [...declared]
+    : [...(cataloguePackInfo(input.pack)?.catalogueLocales ?? ["fr", "en"])];
 
   const localeMode = input.locales ?? "preferred";
   let preferLang = input.preferLang?.trim().toLowerCase();
-  const availableLocales = [...declared];
   if (
     localeMode === "preferred" &&
     preferLang &&
+    availableLocales.length > 0 &&
     !availableLocales.includes(preferLang)
   ) {
     preferLang = availableLocales.includes("en")
@@ -1776,35 +2061,25 @@ async function listSqlPagedCatalogueCards(
         ? [preferLang]
         : availableLocales;
 
-  const page =
-    input.pack === POKEMON_PACK_ID
-      ? listPokemonCatalogueBrowsePage({
-          langs,
-          q: input.q,
-          offset,
-          limit,
-          printed: input.printed ?? "all",
-          missingArtOnly: input.missingArtOnly,
-          missingNameOnly: input.missingNameOnly,
-        })
-      : listLorcanaCatalogueBrowsePageRows({
-          langs,
-          q: input.q,
-          offset,
-          limit,
-          missingArtOnly: input.missingArtOnly,
-          missingNameOnly: input.missingNameOnly,
-          foilOnly: input.foilOnly,
-        });
+  if (input.missingPriceOnly) {
+    return listMissingPriceCataloguePage(
+      input,
+      langs,
+      availableLocales,
+      offset,
+      limit,
+    );
+  }
+
+  const page = listSqlBrowseFacePage(input, langs, offset, limit);
+  if (!page) return null;
 
   // Back tiles are cheap existsSync — prepend on the first page only.
-  // `total` stays face COUNT so offset/limit stay SQL-aligned (client advances
-  // by `limit`, not by cards.length which would skip faces when backs inflate).
+  // `total` stays face COUNT so offset/limit stay SQL-aligned.
   let cards = page.rows;
   if (offset === 0) {
     cards = withCatalogueBackRows(input.pack, cards);
   }
-  const total = page.total;
 
   const corpus = catalogueCorpusPack(input.pack);
   const pageKeys = [
@@ -1816,7 +2091,7 @@ async function listSqlPagedCatalogueCards(
   );
   return {
     pack: input.pack,
-    total,
+    total: page.total,
     offset,
     limit,
     cards: cards.map((row) => attachPriceQuote(row, priceByKey)),
@@ -1914,23 +2189,44 @@ export async function listCatalogueCards(
 
   const corpus = catalogueCorpusPack(input.pack);
   if (input.missingPriceOnly) {
-    const faceKeys = [
-      ...new Set(rows.filter(isFaceRow).map((row) => row.printKey)),
-    ];
-    const priceByKey = await catalogueCardPriceQuoteByPrintKey(
-      corpus,
-      faceKeys,
-    );
-    rows = rows.map((row) => attachPriceQuote(row, priceByKey));
-    rows = rows.filter((row) =>
-      matchesCatalogueAuditFilter(row, { missingPriceOnly: true }),
-    );
-    return {
-      pack: input.pack,
-      total: rows.length,
+    /*
+      Rows are already in memory on the materialize path — quote in chunks and
+      count every missing-price match so total is not capped by page fill.
+    */
+    const overscan = await overscanFilterPageAsync({
       offset,
       limit,
-      cards: rows.slice(offset, offset + limit),
+      maxScan: rows.length,
+      chunk: 200,
+      fetchPage: async (scanned, chunk) => {
+        const slice = rows.slice(scanned, scanned + chunk);
+        const keys = [
+          ...new Set(slice.filter(isFaceRow).map((row) => row.printKey)),
+        ];
+        const priceByKey = await catalogueCardPriceQuoteByPrintKey(
+          corpus,
+          keys,
+        );
+        return {
+          rows: slice.map((row) => attachPriceQuote(row, priceByKey)),
+          total: rows.length,
+        };
+      },
+      keep: (row) =>
+        matchesCatalogueAuditFilter(row, {
+          missingPriceOnly: true,
+          missingArtOnly: input.missingArtOnly,
+          missingNameOnly: input.missingNameOnly,
+          incompleteOnly: input.incompleteOnly,
+          borrowedArtOnly: input.borrowedArtOnly,
+        }),
+    });
+    return {
+      pack: input.pack,
+      total: overscan.total,
+      offset,
+      limit,
+      cards: overscan.rows,
       availableLocales,
     };
   }

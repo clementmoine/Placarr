@@ -5,15 +5,22 @@ import {
   clearIdentityCatalogueBrowseCache,
   tryBuildIdentityCatalogueRows,
 } from "@/lib/admin/catalogueIdentityBrowse";
+import { listCatalogueCards, resetCatalogueCardsCache } from "@/lib/admin/catalogueCards";
+
+import { listMtgCatalogueBrowsePage } from "./catalogueBrowse";
+
+const hasMtg =
+  existsSync("data/mtg/catalog.sqlite") &&
+  existsSync("data/mtg/curated/art-urls.json");
 
 describe("MTG catalogue browse × Scryfall artUrl ledger", () => {
   afterEach(() => {
     clearIdentityCatalogueBrowseCache();
+    resetCatalogueCardsCache();
   });
 
   it("joins curated/art-urls.json so almost no EN/FR tile is missingArt", () => {
-    if (!existsSync("data/mtg/catalog.sqlite")) return;
-    if (!existsSync("data/mtg/curated/art-urls.json")) return;
+    if (!hasMtg) return;
 
     const rows = tryBuildIdentityCatalogueRows("mtg");
     expect(rows).not.toBeNull();
@@ -43,4 +50,34 @@ describe("MTG catalogue browse × Scryfall artUrl ledger", () => {
     );
     expect(sample?.missingArt).toBe(false);
   });
+
+  it.skipIf(!hasMtg)(
+    "incompleteOnly is post-Scryfall (not a.art IS NULL false positives)",
+    async () => {
+      const page = listMtgCatalogueBrowsePage({
+        langs: ["en", "fr"],
+        incompleteOnly: true,
+        offset: 0,
+        limit: 24,
+      });
+      // CDN ledger covers the corpus — honest empty (or rare name gaps only).
+      expect(page.total).toBeLessThan(1_000);
+      expect(
+        page.rows.every((row) => row.missingArt || !row.name?.trim()),
+      ).toBe(true);
+
+      const viaRouter = await listCatalogueCards({
+        pack: "mtg",
+        preferLang: "en",
+        incompleteOnly: true,
+        limit: 24,
+      });
+      expect(viaRouter.total).toBe(page.total);
+      expect(
+        viaRouter.cards
+          .filter((row) => row.kind === "face")
+          .every((row) => row.missingArt || !row.name?.trim()),
+      ).toBe(true);
+    },
+  );
 });

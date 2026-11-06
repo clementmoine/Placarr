@@ -124,6 +124,7 @@ export type ShippudenCatalogueBrowsePageInput = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
 };
 
 export function listShippudenCatalogueBrowsePage(
@@ -138,6 +139,7 @@ export function listShippudenCatalogueBrowsePage(
     limit: input.limit,
     missingArtOnly: input.missingArtOnly,
     missingNameOnly: input.missingNameOnly,
+    incompleteOnly: input.incompleteOnly,
   });
   return {
     total: page.total,

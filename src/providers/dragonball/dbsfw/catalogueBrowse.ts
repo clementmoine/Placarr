@@ -105,6 +105,7 @@ export type DbsFwCatalogueBrowsePageInput = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
 };
 
 export function listDbsFwCatalogueBrowsePageRows(

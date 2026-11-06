@@ -123,6 +123,7 @@ export type LocalPrintsIndex = {
     limit: number;
     missingArtOnly?: boolean;
     missingNameOnly?: boolean;
+    incompleteOnly?: boolean;
     printed?: "all" | "printed" | "unprinted";
   }) => { rows: LocalPrintSearchRow[]; total: number };
   /** True when `catalog.sqlite` exists and exposes LocalPrints `art` assets. */
@@ -593,6 +594,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     limit: number;
     missingArtOnly?: boolean;
     missingNameOnly?: boolean;
+    incompleteOnly?: boolean;
     printed?: "all" | "printed" | "unprinted";
   }): { rows: LocalPrintSearchRow[]; total: number } => {
     const db = ensure();
@@ -615,13 +617,13 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     } else if (opts.printed === "unprinted") {
       where.push("COALESCE(a.printed, 1) = 0");
     }
-    if (opts.missingArtOnly) {
-      where.push(
-        `(a.art IS NULL OR TRIM(a.art) = '') AND (a.thumb IS NULL OR TRIM(a.thumb) = '')`,
-      );
-    }
-    if (opts.missingNameOnly) {
-      where.push(`(t.full_name IS NULL OR TRIM(t.full_name) = '')`);
+    const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '') AND (a.thumb IS NULL OR TRIM(a.thumb) = '')`;
+    const missingNameSql = `(t.full_name IS NULL OR TRIM(t.full_name) = '')`;
+    if (opts.incompleteOnly) {
+      where.push(`((${missingArtSql}) OR (${missingNameSql}))`);
+    } else {
+      if (opts.missingArtOnly) where.push(missingArtSql);
+      if (opts.missingNameOnly) where.push(missingNameSql);
     }
     const q = opts.q?.trim().toLowerCase();
     if (q) {

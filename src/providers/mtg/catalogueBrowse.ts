@@ -6,6 +6,7 @@ import { existsSync, statSync } from "node:fs";
 
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
+import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCatalogDb } from "@/lib/packPaths";
 import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
@@ -146,10 +147,16 @@ export type MtgCatalogueBrowsePageInput = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
 };
 
-export function listMtgCatalogueBrowsePage(
-  input: MtgCatalogueBrowsePageInput,
+function listMtgCatalogueBrowsePageSql(
+  input: Omit<
+    MtgCatalogueBrowsePageInput,
+    "incompleteOnly" | "missingArtOnly"
+  > & {
+    missingNameOnly?: boolean;
+  },
 ): { rows: CatalogueCardRow[]; total: number } {
   const index = createLocalPrintsIndex(MTG_PACK_ID);
   if (!index.hasIdentityCorpus()) return { rows: [], total: 0 };
@@ -158,4 +165,61 @@ export function listMtgCatalogueBrowsePage(
     total: page.total,
     rows: page.rows.map((row) => rowToCatalogueCard(row)),
   };
+}
+
+/**
+ * `print_assets.art` is empty for nearly the whole MTG corpus — faces come from
+ * `curated/art-urls.json` (Scryfall). SQL `a.art IS NULL` therefore matches
+ * everything and must not drive `incompleteOnly` / `missingArtOnly`.
+ *
+ * - `incompleteOnly`: name gaps stay SQL (`missingNameOnly`); rare post-join
+ *   art gaps are dropped if Scryfall filled them (ledger covers the corpus).
+ * - `missingArtOnly`: overscan + keep only tiles still missing after Scryfall.
+ */
+function listMtgCatalogueBrowseAuditPage(
+  input: MtgCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  if (input.incompleteOnly && !input.missingArtOnly) {
+    const page = listMtgCatalogueBrowsePageSql({
+      langs: input.langs,
+      q: input.q,
+      offset: input.offset,
+      limit: input.limit,
+      missingNameOnly: true,
+    });
+    // Scryfall join never invents a title — SQL name gaps stay incomplete.
+    const rows = page.rows.filter(
+      (row) => row.missingArt || !row.name?.trim(),
+    );
+    return { rows, total: page.total };
+  }
+
+  return overscanFilterPage({
+    offset: input.offset,
+    limit: input.limit,
+    maxScan: 50_000,
+    chunk: 96,
+    fetchPage: (offset, limit) =>
+      listMtgCatalogueBrowsePageSql({
+        langs: input.langs,
+        q: input.q,
+        offset,
+        limit,
+        missingNameOnly: input.missingNameOnly || undefined,
+      }),
+    keep: (row) => {
+      if (input.missingArtOnly && !row.missingArt) return false;
+      if (input.missingNameOnly && row.name?.trim()) return false;
+      return true;
+    },
+  });
+}
+
+export function listMtgCatalogueBrowsePage(
+  input: MtgCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  if (input.incompleteOnly || input.missingArtOnly) {
+    return listMtgCatalogueBrowseAuditPage(input);
+  }
+  return listMtgCatalogueBrowsePageSql(input);
 }

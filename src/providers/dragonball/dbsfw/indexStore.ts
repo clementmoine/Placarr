@@ -424,6 +424,7 @@ export type DbsFwCatalogueBrowsePageOpts = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
 };
 
 export function listDbsFwCatalogueBrowsePage(
@@ -445,11 +446,13 @@ export function listDbsFwCatalogueBrowsePage(
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];
   params.push(...langs);
-  if (opts.missingArtOnly) {
-    where.push(`(${artSql} IS NULL OR TRIM(${artSql}) = '')`);
-  }
-  if (opts.missingNameOnly) {
-    where.push(`(t.full_name IS NULL OR TRIM(t.full_name) = '')`);
+  const missingArtSql = `(${artSql} IS NULL OR TRIM(${artSql}) = '')`;
+  const missingNameSql = `(t.full_name IS NULL OR TRIM(t.full_name) = '')`;
+  if (opts.incompleteOnly) {
+    where.push(`((${missingArtSql}) OR (${missingNameSql}))`);
+  } else {
+    if (opts.missingArtOnly) where.push(missingArtSql);
+    if (opts.missingNameOnly) where.push(missingNameSql);
   }
   const q = opts.q?.trim().toLowerCase();
   if (q) {

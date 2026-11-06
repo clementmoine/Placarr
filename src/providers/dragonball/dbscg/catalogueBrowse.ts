@@ -110,6 +110,7 @@ export type DbsCgCatalogueBrowsePageInput = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
 };
 
 export function listDbsCgCatalogueBrowsePageRows(

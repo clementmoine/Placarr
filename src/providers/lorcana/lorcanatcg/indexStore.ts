@@ -10,7 +10,6 @@ import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrint
 import {
   existsSync,
   mkdirSync,
-  renameSync,
   statSync,
   unlinkSync,
 } from "node:fs";
@@ -22,6 +21,7 @@ import {
   isAnsweredQuery,
   type SqlBindValue,
 } from "@/providers/shared/cardCatalogue/sets";
+import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
 import {
   isLorcanaMainCatalogueSetCode,
   lorcanaPromoChecklistSeries,
@@ -482,8 +482,12 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
   db.exec("COMMIT");
   db.close();
 
+  /*
+    WAL discipline: never rename a fresh file over a live DB while `-wal`/`-shm`
+    still point at the old inode (→ malformed → productsSqlite salvage wipes prints).
+  */
   try {
-    renameSync(tmpPath, dbPath);
+    replaceSqliteLiveFile(dbPath, tmpPath);
   } catch (error) {
     try {
       unlinkSync(tmpPath);
@@ -492,6 +496,7 @@ export function writeLorcanaTcgIndex(input: WriteLorcanaTcgIndexInput): {
     }
     throw error;
   }
+  resetLorcanaTcgDbCache();
 
   const live = new DatabaseSync(dbPath);
   activeDb = live;
@@ -984,6 +989,7 @@ export type LorcanaCatalogueBrowsePageOpts = {
   limit: number;
   missingArtOnly?: boolean;
   missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
   foilOnly?: boolean;
 };
 
@@ -1006,19 +1012,17 @@ export function listLorcanaCatalogueBrowsePage(
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];
   params.push(...langs);
-  if (opts.missingArtOnly) {
-    where.push(
-      `(a.art IS NULL OR TRIM(a.art) = '')
+  const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '')
        AND (t.image_url IS NULL OR TRIM(t.image_url) = '')
        AND (t.full_foil_url IS NULL OR TRIM(t.full_foil_url) = '')
-       AND (t.thumbnail_url IS NULL OR TRIM(t.thumbnail_url) = '')`,
-    );
-  }
-  if (opts.missingNameOnly) {
-    where.push(
-      `(t.full_name IS NULL OR TRIM(t.full_name) = '')
-       AND (t.name IS NULL OR TRIM(t.name) = '')`,
-    );
+       AND (t.thumbnail_url IS NULL OR TRIM(t.thumbnail_url) = '')`;
+  const missingNameSql = `(t.full_name IS NULL OR TRIM(t.full_name) = '')
+       AND (t.name IS NULL OR TRIM(t.name) = '')`;
+  if (opts.incompleteOnly) {
+    where.push(`((${missingArtSql}) OR (${missingNameSql}))`);
+  } else {
+    if (opts.missingArtOnly) where.push(missingArtSql);
+    if (opts.missingNameOnly) where.push(missingNameSql);
   }
   if (opts.foilOnly) {
     where.push(

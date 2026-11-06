@@ -90,4 +90,152 @@ describe.skipIf(!hasDb)("pokemon catalogue SQL browse page", () => {
     // Page 0 may prepend pack-back tiles; face total stays SQL COUNT.
     expect(page.cards.length).toBeGreaterThanOrEqual(48);
   });
+
+  it("incompleteOnly stays on SQL page (no materialize)", async () => {
+    const incomplete = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      incompleteOnly: true,
+      offset: 0,
+      limit: 24,
+    });
+    expect(
+      incomplete.rows.every((row) => row.missingArt || !row.name?.trim()),
+    ).toBe(true);
+
+    const viaRouter = await listCatalogueCards({
+      pack: "pokemon",
+      preferLang: "fr",
+      incompleteOnly: true,
+      offset: 0,
+      limit: 24,
+    });
+    expect(viaRouter.total).toBe(incomplete.total);
+    expect(viaRouter.cards.filter((row) => row.kind === "face").length).toBe(
+      Math.min(24, incomplete.total),
+    );
+  });
+
+  it("hasFoil from Live + foilOnly overscan (no materialize)", async () => {
+    const bw = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      q: "bw1-",
+      offset: 0,
+      limit: 24,
+    });
+    expect(bw.rows.length).toBeGreaterThan(0);
+    expect(bw.rows.some((row) => row.hasFoil)).toBe(true);
+
+    const foil = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      q: "bw1-",
+      foilOnly: true,
+      offset: 0,
+      limit: 12,
+    });
+    expect(foil.rows.length).toBeGreaterThan(0);
+    expect(foil.rows.every((row) => row.hasFoil)).toBe(true);
+
+    const viaRouter = await listCatalogueCards({
+      pack: "pokemon",
+      preferLang: "fr",
+      q: "bw1-",
+      foilOnly: true,
+      offset: 0,
+      limit: 12,
+    });
+    expect(
+      viaRouter.cards
+        .filter((row) => row.kind === "face")
+        .every((row) => row.hasFoil),
+    ).toBe(true);
+  });
+
+  it("missingArtOnly excludes disk art not indexed in a.art", () => {
+    /*
+      SQL `a.art` empty for cel25-25 but on-disk harvest still resolves under
+      `/assets/pokemon/cards/…` (formerly pokecardex paths).
+    */
+    const keyed = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      q: "cel25-25",
+      offset: 0,
+      limit: 24,
+    });
+    const withDisk = keyed.rows.filter((row) =>
+      row.artUrl.includes("/assets/pokemon/cards/"),
+    );
+    expect(withDisk.length).toBeGreaterThan(0);
+    expect(withDisk.every((row) => !row.missingArt)).toBe(true);
+
+    const missing = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      missingArtOnly: true,
+      offset: 0,
+      limit: 200,
+    });
+    const leaked = missing.rows.filter((row) =>
+      withDisk.some((hit) => hit.printKey === row.printKey),
+    );
+    expect(leaked, leaked.map((row) => row.printKey).join(",")).toEqual([]);
+    expect(missing.rows.every((row) => row.missingArt && !row.artUrl)).toBe(
+      true,
+    );
+  });
+
+  it("missingArtOnly total is not capped by the first page fill", async () => {
+    const small = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      missingArtOnly: true,
+      offset: 0,
+      limit: 24,
+    });
+    const large = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      missingArtOnly: true,
+      offset: 0,
+      limit: 1_000,
+    });
+    expect(small.total).toBe(large.total);
+    expect(small.total).toBeGreaterThan(24);
+    expect(small.rows).toHaveLength(24);
+    expect(small.rows.every((row) => row.missingArt && !row.artUrl)).toBe(true);
+
+    const viaRouter = await listCatalogueCards({
+      pack: "pokemon",
+      preferLang: "fr",
+      missingArtOnly: true,
+      limit: 24,
+    });
+    expect(viaRouter.total).toBe(small.total);
+  });
+
+  it(
+    "foilOnly without q skips leading NonFoil rows (not a false-empty page)",
+    async () => {
+      const foil = listPokemonCatalogueBrowsePage({
+        langs: ["fr"],
+        foilOnly: true,
+        offset: 0,
+        limit: 12,
+      });
+      expect(foil.rows.length).toBeGreaterThan(0);
+      expect(foil.rows.every((row) => row.hasFoil)).toBe(true);
+
+      const viaRouter = await listCatalogueCards({
+        pack: "pokemon",
+        preferLang: "fr",
+        foilOnly: true,
+        limit: 12,
+      });
+      expect(
+        viaRouter.cards.filter((row) => row.kind === "face").length,
+      ).toBeGreaterThan(0);
+      expect(
+        viaRouter.cards
+          .filter((row) => row.kind === "face")
+          .every((row) => row.hasFoil),
+      ).toBe(true);
+    },
+    120_000,
+  );
 });

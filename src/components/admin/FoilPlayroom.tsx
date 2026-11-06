@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/FoilSourcesPanel";
 import { CatalogueBrowser } from "@/components/admin/CatalogueBrowser";
 import { CatalogueSealedBrowser } from "@/components/admin/CatalogueSealedBrowser";
+import { PackDocumentsPanel } from "@/components/admin/PackDocumentsPanel";
 import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
@@ -1015,6 +1016,10 @@ export function FoilPlayroom({
           params.set("scope", "sealed");
           params.delete("material");
           params.delete("view");
+        } else if (next === "documents") {
+          params.set("scope", "documents");
+          params.delete("material");
+          params.delete("view");
         } else {
           params.set("scope", "all");
           params.delete("material");
@@ -1169,13 +1174,16 @@ export function FoilPlayroom({
       </div>
       <SegmentedControl<CatalogueBrowseScope>
         value={
-          browseScope === "sealed" && catalogueInfo.hasSealedProducts !== false
-            ? "sealed"
-            : catalogueInfo.hasFoilEffects
-              ? browseScope === "sealed"
-                ? "all"
-                : browseScope
-              : "all"
+          browseScope === "documents"
+            ? "documents"
+            : browseScope === "sealed" &&
+                catalogueInfo.hasSealedProducts !== false
+              ? "sealed"
+              : catalogueInfo.hasFoilEffects
+                ? browseScope === "sealed"
+                  ? "all"
+                  : browseScope
+                : "all"
         }
         onChange={selectScope}
         options={[
@@ -1191,6 +1199,10 @@ export function FoilPlayroom({
                 },
               ]
             : []),
+          {
+            value: "documents" as const,
+            label: fr ? "Documents" : "Documents",
+          },
           /*
             Last: foils, sachets, and later box/disc renders — not only TCG
             foil dumps. URL scope stays `foils` for bookmarks.
@@ -1206,7 +1218,9 @@ export function FoilPlayroom({
         ]}
       />
 
-      {browseScope === "sealed" ? (
+      {browseScope === "documents" ? (
+        <PackDocumentsPanel packId={cataloguePackId} locale={locale} />
+      ) : browseScope === "sealed" ? (
         <CatalogueSealedBrowser packId={cataloguePackId} locale={locale} />
       ) : !showFoilPlayroom ? (
         <CatalogueBrowser packId={cataloguePackId} locale={locale} />

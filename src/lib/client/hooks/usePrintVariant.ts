@@ -156,15 +156,14 @@ function isPrintRoleAssetUrl(url: string): boolean {
   return /\/assets\/.+\/prints\//i.test(url);
 }
 
-/** Legacy pack file path (`…/cards/{lang}/{set}/{id}/art.*`). */
-function isLegacyPackCardFileUrl(url: string): boolean {
-  return /\/assets\/.+\/cards\//i.test(url);
-}
-
 /**
  * Face to draw: user pin → catalogue print roles → other item cover →
- * catalogue file paths. Live `/prints/…` beats stale `/cards/…/art.*` pins so
- * shelves follow the simplified role URLs without a metadata rewrite.
+ * catalogue file paths.
+ *
+ * Live `/prints/…` beats any non-pinned item cover — including a *stale*
+ * `/prints/…` left on `Item.imageUrl` after a stem change (Mythos
+ * `vv2-0133-fr` → `ks1promo-0133-vv2-fr`). Requiring the fallback to be a
+ * legacy `/cards/…` path left foil heroes stuck on a 404 preload forever.
  */
 function resolveFaceUrl(
   info: PrintVariantInfo | null,
@@ -182,13 +181,7 @@ function resolveFaceUrl(
   const fallback = fallbackImageUrl?.trim() || null;
 
   if (fallback && isUserPinnedCover(fallback)) return fallback;
-  if (
-    catalogue &&
-    isPrintRoleAssetUrl(catalogue) &&
-    (!fallback || isLegacyPackCardFileUrl(fallback))
-  ) {
-    return catalogue;
-  }
+  if (catalogue && isPrintRoleAssetUrl(catalogue)) return catalogue;
   return fallback ?? catalogue ?? null;
 }
 

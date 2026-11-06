@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { selectBleachScbSteps } from "./extract";
 
 describe("selectBleachScbSteps", () => {
-  it("defaults to seed + faces + products", () => {
-    expect(selectBleachScbSteps([])).toEqual(["seed", "faces", "products"]);
+  it("defaults to seed + faces + products + documents", () => {
+    expect(selectBleachScbSteps([])).toEqual([
+      "seed",
+      "faces",
+      "products",
+      "documents",
+    ]);
   });
 
   it("honours --only and --skip", () => {
@@ -12,10 +17,11 @@ describe("selectBleachScbSteps", () => {
     expect(selectBleachScbSteps(["--skip", "faces"])).toEqual([
       "seed",
       "products",
+      "documents",
     ]);
   });
 
-  it("keeps products offline (curated sealed); drops seed/faces", () => {
+  it("keeps products offline (curated sealed); drops seed/faces/documents", () => {
     expect(selectBleachScbSteps(["--offline"])).toEqual(["products"]);
   });
 });

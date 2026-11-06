@@ -44,7 +44,12 @@ import {
 } from "./sources/crawl";
 import { harvestKayouFaces, installKayouFaces } from "./sources/faces";
 
-export const NARUTO_KAYOU_STEPS = ["seed", "faces", "products"] as const;
+export const NARUTO_KAYOU_STEPS = [
+  "seed",
+  "faces",
+  "products",
+  "documents",
+] as const;
 export type NarutoKayouStep = (typeof NARUTO_KAYOU_STEPS)[number];
 /** Face CDN harvests are network; seed/crawl from local manifests still run. */
 const NARUTO_KAYOU_ONLINE = new Set<NarutoKayouStep>(["faces"]);
@@ -79,6 +84,25 @@ export async function runNarutoKayouPackPipeline(
   console.log(
     `── Naruto Kayou — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+
+  if (steps.includes("documents")) {
+    const { loadKayouCuratedDocuments } = await import(
+      "@/providers/naruto/narutokayou/curated/documents"
+    );
+    const { harvestPackDocuments } = await import(
+      "@/providers/shared/documents/harvestPackDocuments"
+    );
+    const docs = await harvestPackDocuments({
+      packId: NARUTO_KAYOU_PACK_ID,
+      curated: loadKayouCuratedDocuments(),
+      force,
+    });
+    console.log(
+      `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+        `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+    );
+    if (steps.length === 1) return { cards: 0, products: 0 };
+  }
 
   const skipOfficial = argv.includes("--skip-official");
   const skipBacks = argv.includes("--skip-backs");

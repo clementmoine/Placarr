@@ -24,6 +24,7 @@ data/
   uploads/
   lorcana/ | pokemon/
     catalog.sqlite | cards/ | foil/ | staging/ | logs/
+    # documents/{lang}/{kind}/ + documents/index.json — PDF / notes Sync
     # appendix legacy (optionnel) : cards-index.json | products-index.json
 
     # lorcana/staging/lorcards-products/  — Sync admin (famille TCG Cards)
@@ -127,6 +128,10 @@ Produits scellés : même contrat sous `products/{slug}/{lang}/` (`art` +
 `logo`) — tous les hôtes archivés, `productChoice` décide. Le wordmark de
 série est recopié dans chaque SKU (Pokémon / Lorcana déjà un logo par produit ;
 Naruto S1–S5 partagent un GIF — on duplique).
+Documents officiels (rulebooks, set notes, OP) : `documents/{lang}/{kind}/`
++ `documents/index.json` — Sync harvest depuis curated provider ; admin
+onglet Documents.
+
 Titres attestés sans face (BGG EN S1, Coleka FR, Slab-Z JA) : print +
 `langs.*.name` dans `cards-index.json`, pas de dossier vide.
 PR-096 a désormais une face FR (`art.leboncoin`) et EN (`art.drive` + `art.coleka`).

@@ -61,7 +61,6 @@ import {
   NARUTO_MYTHOS_PACK_ID,
 } from "../pack";
 import {
-  MYTHOS_TITLE_LANG,
   mythosOfficialChecklistPath,
   readAllMythosChecklists,
   type MythosChecklistCard,
@@ -847,10 +846,6 @@ function titleLangForSet(setCode: string): string {
   return setCode === "ss2" ? "en" : "fr";
 }
 
-async function officialToWebp(buf: Buffer): Promise<Buffer> {
-  return sharp(buf).rotate().webp({ quality: 90 }).toBuffer();
-}
-
 export async function fetchOfficialMythosPrints(): Promise<
   MythosOfficialPrint[]
 > {
@@ -1129,14 +1124,9 @@ export async function installOfficialMythosFaces(
     mkdirSync(destDir, { recursive: true });
     const art = `art.${OFFICIAL_SOURCE_ID}.webp`;
     const dest = path.join(destDir, art);
-    const raw = readFileSync(from);
-    const webp =
-      raw.length >= 12 &&
-      raw.toString("ascii", 0, 4) === "RIFF" &&
-      raw.toString("ascii", 8, 12) === "WEBP"
-        ? raw
-        : await officialToWebp(raw);
-    writeFileSync(dest, webp);
+    // Always re-encode: CICABOOM CDN WebPs ship a transparent gutter that must
+    // be trimmed or the shelf hero letterboxes inside aspect-[5/7].
+    writeFileSync(dest, await mythosFaceToWebp(readFileSync(from)));
     assets.push({
       printKey,
       lang,
@@ -1380,9 +1370,26 @@ async function downloadLorenzoneImage(
   });
 }
 
-/** Shopify often serves PNG/JPEG; always persist real WebP under `.webp`. */
+/**
+ * Persist a Mythos face as WebP. Trims the transparent / corner-matched gutter
+ * the CICABOOM CDN (and some Shopify PNGs) bake around the rounded card so the
+ * print fills its shelf frame instead of floating inset.
+ *
+ * Uses sharp's edge trim (not a full-frame pixel walk) — Mythos packs thousands
+ * of faces and `trimLightImageMargins` is too slow for bulk re-encode.
+ */
 export async function mythosFaceToWebp(buf: Buffer): Promise<Buffer> {
-  return sharp(buf).rotate().webp({ quality: 90 }).toBuffer();
+  const oriented = sharp(buf).rotate();
+  try {
+    return await oriented
+      .clone()
+      .trim({ threshold: 12 })
+      .webp({ quality: 90 })
+      .toBuffer();
+  } catch {
+    // Entirely uniform / nothing to trim — sharp.trim throws.
+    return oriented.webp({ quality: 90 }).toBuffer();
+  }
 }
 
 function isRealWebp(buf: Buffer): boolean {
@@ -1520,8 +1527,6 @@ export async function installMythosFaces(
   for (const ledger of ledgers) {
     const setCode =
       ledger.set?.code?.trim().toLowerCase() || NARUTO_MYTHOS_KS1_SET_CODE;
-    const lang =
-      setCode === NARUTO_MYTHOS_KS1_SET_CODE ? MYTHOS_TITLE_LANG : "en";
     for (const card of ledger.cards) {
       if (!card.faceUrl) continue;
       const from = resolveLorenzoneStagingFile(staging, setCode, card);
@@ -1535,6 +1540,11 @@ export async function installMythosFaces(
         missing.push(card.printed);
         continue;
       }
+      // CDN stem (`…-fr-…` / `…-en-…`) wins over set default — SS2 VV2RE ships
+      // FR faces under an EN-title set and used to land wrongly in cards/en/.
+      const lang =
+        langFromMythosOfficialFaceUrl(card.faceUrl) ??
+        titleLangForSet(setCode);
       const destDir = packCardDir(NARUTO_MYTHOS_PACK_ID, {
         lang,
         set: setCode,
@@ -1544,11 +1554,7 @@ export async function installMythosFaces(
       const art = `art.${LORENZONE_SOURCE_ID}.webp`;
       const dest = path.join(destDir, art);
       try {
-        const raw = readFileSync(from);
-        writeFileSync(
-          dest,
-          isRealWebp(raw) ? raw : await mythosFaceToWebp(raw),
-        );
+        writeFileSync(dest, await mythosFaceToWebp(readFileSync(from)));
       } catch {
         missing.push(card.printed);
         continue;
@@ -1577,7 +1583,13 @@ export async function installMythosFaces(
   return { faces: assets.length, missing };
 }
 
-/** One-shot: re-encode on-disk `art.*.webp` that are still PNG/JPEG bytes. */
+/**
+ * One-shot: re-encode on-disk `art.*.webp` that are still PNG/JPEG bytes, or
+ * that still carry a transparent gutter (CICABOOM CDN framing).
+ *
+ * Skips the WebP encode when trim would not change dimensions — bulk runs
+ * cover thousands of faces.
+ */
 export async function reencodeMythosDiskFaces(opts: {
   cardsRoot?: string;
 } = {}): Promise<{ converted: number; skipped: number; failed: number }> {
@@ -1600,11 +1612,41 @@ export async function reencodeMythosDiskFaces(opts: {
   for (const file of files) {
     try {
       const raw = readFileSync(file);
-      if (isRealWebp(raw)) {
+      if (!isRealWebp(raw)) {
+        writeFileSync(file, await mythosFaceToWebp(raw));
+        converted += 1;
+        continue;
+      }
+      const before = await sharp(raw).metadata();
+      let trimmed: { data: Buffer; info: sharp.OutputInfo };
+      try {
+        trimmed = await sharp(raw)
+          .rotate()
+          .trim({ threshold: 12 })
+          .toBuffer({ resolveWithObject: true });
+      } catch {
         skipped += 1;
         continue;
       }
-      writeFileSync(file, await mythosFaceToWebp(raw));
+      if (
+        trimmed.info.width === before.width &&
+        trimmed.info.height === before.height
+      ) {
+        skipped += 1;
+        continue;
+      }
+      writeFileSync(
+        file,
+        await sharp(trimmed.data, {
+          raw: {
+            width: trimmed.info.width,
+            height: trimmed.info.height,
+            channels: trimmed.info.channels,
+          },
+        })
+          .webp({ quality: 90 })
+          .toBuffer(),
+      );
       converted += 1;
     } catch {
       failed += 1;

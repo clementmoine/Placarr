@@ -14,10 +14,15 @@ import {
 import { BLEACH_SCB_PACK_ID, bleachScbCuratedDir } from "./pack";
 import { ingestBleachScbSealedProducts } from "./sealed";
 
-export const BLEACH_SCB_STEPS = ["seed", "faces", "products"] as const;
+export const BLEACH_SCB_STEPS = [
+  "seed",
+  "faces",
+  "products",
+  "documents",
+] as const;
 export type BleachScbStep = (typeof BLEACH_SCB_STEPS)[number];
 /** Ledger harvest + face CDN downloads need the network. */
-const BLEACH_SCB_ONLINE = new Set<BleachScbStep>(["seed", "faces"]);
+const BLEACH_SCB_ONLINE = new Set<BleachScbStep>(["seed", "faces", "documents"]);
 
 export function selectBleachScbSteps(argv: readonly string[]): BleachScbStep[] {
   return selectCatalogueSteps(argv, BLEACH_SCB_STEPS, {
@@ -32,6 +37,24 @@ export async function runBleachScbPackPipeline(
   console.log(
     `── Bleach Soul Card Battle — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+
+  if (steps.includes("documents")) {
+    const { loadBleachScbCuratedDocuments } = await import(
+      "@/providers/bleach/bleachscb/curated/documents"
+    );
+    const { harvestPackDocuments } = await import(
+      "@/providers/shared/documents/harvestPackDocuments"
+    );
+    const docs = await harvestPackDocuments({
+      packId: BLEACH_SCB_PACK_ID,
+      curated: loadBleachScbCuratedDocuments(),
+    });
+    console.log(
+      `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+        `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+    );
+    if (steps.length === 1) return { cards: 0, products: 0 };
+  }
 
   if (steps.includes("seed")) {
     const harvested = await harvestBleachScbLedgers();

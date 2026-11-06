@@ -77,6 +77,9 @@ const built = createEmptyLocalTcgProvider({
 
 export const narutoMythosLine = built.line;
 export const narutoMythosCatalog = built.catalog;
+
+const baseMetadataAdapter = built.module.createMetadataAdapter?.();
+
 export const narutomythosModule = {
   ...built.module,
   info: {
@@ -89,6 +92,29 @@ export const narutomythosModule = {
     sourceAliases: ["narutocardgame.gg", "narutomythos.com"],
     notes: `${built.module.info.notes ?? ""} Prix : côtes narutocardgame.gg (staging) + annonces narutomythos.com/marketplace (EUR).`.trim(),
   },
+  createMetadataAdapter: () => ({
+    id: NARUTO_MYTHOS_PROVIDER_ID,
+    async resolve(ctx) {
+      const base = (await baseMetadataAdapter?.resolve(ctx)) ?? null;
+      const printKey =
+        ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim() || "";
+      if (!printKey) return base;
+
+      const { mythosPrintFacts, mythosPromoProofAttachments } = await import(
+        "./sources/promoDistribution"
+      );
+      const facts = mythosPrintFacts(printKey);
+      const proof = mythosPromoProofAttachments(printKey);
+      if (!facts.length && !proof.length) return base;
+      if (!base) return null;
+
+      return {
+        ...base,
+        facts: [...(base.facts ?? []), ...facts],
+        attachments: [...(base.attachments ?? []), ...proof],
+      };
+    },
+  }),
   refreshBarcodePriceOffers: async (
     ctx: import("@/types/providerModule").BarcodePriceRefreshContext,
   ) => {

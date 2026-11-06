@@ -30,7 +30,12 @@ import {
 import { ingestMythosSealedProducts } from "./sealed";
 import { NARUTO_MYTHOS_PACK_ID, narutoMythosCuratedDir } from "./pack";
 
-export const NARUTO_MYTHOS_STEPS = ["seed", "faces", "products"] as const;
+export const NARUTO_MYTHOS_STEPS = [
+  "seed",
+  "faces",
+  "documents",
+  "products",
+] as const;
 export type NarutoMythosStep = (typeof NARUTO_MYTHOS_STEPS)[number];
 const NARUTO_MYTHOS_ONLINE = new Set<NarutoMythosStep>(["faces"]);
 
@@ -90,6 +95,23 @@ export async function runNarutoMythosPackPipeline(
         `── narutocardgame.gg mythos — échec : ${err instanceof Error ? err.message : err}`,
       );
     }
+  }
+
+  if (steps.includes("documents")) {
+    const { loadMythosCuratedDocuments } = await import("./curated/documents");
+    const { harvestPackDocuments } = await import(
+      "@/providers/shared/documents/harvestPackDocuments"
+    );
+    const docs = await harvestPackDocuments({
+      packId: NARUTO_MYTHOS_PACK_ID,
+      curated: loadMythosCuratedDocuments(),
+      force,
+    });
+    console.log(
+      `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+        `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+    );
+    if (steps.length === 1) return { cards: 0, products: 0 };
   }
 
   if (wantFaces && !offline) {

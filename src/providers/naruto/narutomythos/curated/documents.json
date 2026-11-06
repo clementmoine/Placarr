@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Rulebook+FR.pdf",
+    "lang": "fr",
+    "kind": "rulebook",
+    "title": "Naruto Mythos TCG — Rulebook (FR)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Rulebook+EN.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Naruto Mythos TCG — Rulebook (EN)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Tournament+Rules-4ee6641f.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "Naruto Mythos TCG — Tournament Rules"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Tournament+Infraction+Guidelines-5173c2a1.pdf",
+    "lang": "en",
+    "kind": "penalty",
+    "title": "Naruto Mythos TCG — Tournament Infraction Guidelines"
+  }
+]

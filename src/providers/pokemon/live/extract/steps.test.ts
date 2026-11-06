@@ -10,6 +10,7 @@ describe("selectPokemonSteps", () => {
       "extract",
       "paper-faces",
       "products",
+      "documents",
     ]);
   });
 
@@ -24,6 +25,7 @@ describe("selectPokemonSteps", () => {
       "scrape",
       "extract",
       "products",
+      "documents",
     ]);
   });
 

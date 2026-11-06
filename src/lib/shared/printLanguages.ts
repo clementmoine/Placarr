@@ -36,6 +36,8 @@ const KNOWN: Readonly<Record<string, { flag: string; name: string }>> = {
   nl: { flag: "🇳🇱", name: "Nederlands" },
   pl: { flag: "🇵🇱", name: "Polski" },
   ru: { flag: "🇷🇺", name: "Русский" },
+  /** Undetermined — documents / digs without a clear locale. */
+  und: { flag: "", name: "—" },
 };
 
 /**

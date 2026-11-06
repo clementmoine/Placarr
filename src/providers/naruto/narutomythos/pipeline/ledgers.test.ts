@@ -72,6 +72,19 @@ function seedMythosSyncedSources(tmpDataRoot: string): void {
       expect(keys.has("ks1:0104:v")).toBe(false); // Coming Soon LZ skipped
     });
 
+    it("atteste les promos salon Shippuden / Final Valley (SP 7/147/148)", () => {
+      const keys = new Set(
+        readAllMythosChecklists().flatMap((l) =>
+          l.cards.map((c) =>
+            mythosPrintKey(l.set.code, c.number, c.grouping),
+          ),
+        ),
+      );
+      expect(keys.has("mythos:ss2-0007-sp")).toBe(true);
+      expect(keys.has("mythos:ss2-0147-sp")).toBe(true);
+      expect(keys.has("mythos:ss2-0148-sp")).toBe(true);
+    });
+
     it("retire les Coming Soon ks1 quand le twin ks1promo existe", () => {
       const previous = process.env.PLACARR_DATA_DIR;
       const tmp = mkdtempSync(path.join(os.tmpdir(), "placarr-mythos-prune-"));

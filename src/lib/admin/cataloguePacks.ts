@@ -58,7 +58,7 @@ export type CataloguePackId =
   | "leclerc/disney25"
   | "leclerc/disney26";
 
-export type CatalogueBrowseScope = "foils" | "all" | "sealed";
+export type CatalogueBrowseScope = "foils" | "all" | "sealed" | "documents";
 
 /** Naruto disk / verso line — same game, different back and sealed SKUs. */
 export type CatalogueCardLine = NarutoCardLine;
@@ -1355,6 +1355,14 @@ export function resolveCatalogueScope(
     }
     return "sealed";
   }
+  if (
+    raw === "documents" ||
+    raw === "document" ||
+    raw === "docs" ||
+    raw === "pdf"
+  ) {
+    return "documents";
+  }
   if (!pack.hasFoilEffects) return "all";
   if (raw === "all" || raw === "toutes" || raw === "cards") return "all";
   /*
@@ -1391,6 +1399,8 @@ export function applyCataloguePackParams(
   if (next?.hasSealedProducts === false && scope === "sealed") {
     params.set("scope", next.hasFoilEffects ? next.defaultScope : "all");
     if (params.get("scope") === "foils") params.delete("scope");
+  } else if (scope === "documents") {
+    // Documents exists for every pack line — keep across franchise switches.
   } else if (next && !next.hasFoilEffects) {
     if (scope !== "sealed") params.set("scope", "all");
   } else if (next?.defaultScope === "foils") {

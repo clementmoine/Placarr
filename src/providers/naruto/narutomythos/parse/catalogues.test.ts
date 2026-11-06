@@ -143,6 +143,19 @@ import {
         null,
       );
     });
+
+    it("classifie les SS2 VV2RE CDN -fr- sous fr (pas le défaut titre EN du set)", () => {
+      expect(
+        langFromMythosOfficialFaceUrl(
+          "https://cards.narutotcgmythos.com/storage/cards/121140-fr-37f1ce22.webp",
+        ),
+      ).toBe("fr");
+      expect(
+        langFromMythosOfficialFaceUrl(
+          "https://cards.narutotcgmythos.com/storage/cards/126140-fr-018a280a.webp",
+        ),
+      ).toBe("fr");
+    });
   });
 
   describe("mergeOfficialMythosLangRows", () => {

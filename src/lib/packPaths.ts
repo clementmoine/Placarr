@@ -255,6 +255,16 @@ export function packSealedProductsDir(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "products");
 }
 
+/** Official PDFs / notes — `data/<pack>/documents/{lang}/{kind}/`. */
+export function packDocumentsDir(pack: string): string {
+  return path.join(dataRoot(), canonicalDataPack(pack), "documents");
+}
+
+/** Pack documents manifest — `data/<pack>/documents/index.json`. */
+export function packDocumentsIndexPath(pack: string): string {
+  return path.join(packDocumentsDir(pack), "index.json");
+}
+
 /**
  * Absolute path to the pack default card back under `cards/`.
  * Prefers `back.webp` (Lorcana / Pokémon dump, Naruto curated install), then

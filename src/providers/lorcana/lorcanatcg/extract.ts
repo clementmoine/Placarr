@@ -26,6 +26,7 @@ export const LORCANA_STEPS = [
   "official",
   "mobile",
   "index",
+  "documents",
 ] as const;
 export type LorcanaStep = (typeof LORCANA_STEPS)[number];
 
@@ -39,6 +40,7 @@ const LORCANA_ONLINE = new Set<LorcanaStep>([
   "cards",
   "official",
   "mobile",
+  "documents",
 ]);
 
 const PROVIDER_TO_STEP: Record<string, LorcanaStep> = {
@@ -74,8 +76,29 @@ export function selectLorcanaSteps(argv: readonly string[]): LorcanaStep[] {
 
   return selectCatalogueSteps(argv, LORCANA_STEPS, {
     online: LORCANA_ONLINE,
-    defaults: ["web", "cards", "products", "mobile", "index"],
+    defaults: ["web", "cards", "products", "mobile", "index", "documents"],
   });
+}
+
+async function runDocumentsHarvest(
+  signal?: AbortSignal,
+): Promise<Record<string, unknown>> {
+  const { loadLorcanaCuratedDocuments } = await import(
+    "@/providers/lorcana/lorcanatcg/curated/documents"
+  );
+  const { harvestPackDocuments } = await import(
+    "@/providers/shared/documents/harvestPackDocuments"
+  );
+  const docs = await harvestPackDocuments({
+    packId: "lorcana",
+    curated: loadLorcanaCuratedDocuments(),
+    signal,
+  });
+  console.log(
+    `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+      `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+  );
+  return { provider: "lorcanadocuments", ok: docs.failed === 0, ...docs };
 }
 
 async function runCardVisualIndex(): Promise<Record<string, unknown>> {
@@ -343,6 +366,8 @@ export async function runLorcanaFoilExtract(
       results.push(await runUnity(repo, args.apk, args.data));
     } else if (step === "index") {
       results.push(await runCardVisualIndex());
+    } else if (step === "documents") {
+      results.push(await runDocumentsHarvest(signal));
     }
   }
   writeLastRun(repo, "lorcana", { domain: "lorcana", results });

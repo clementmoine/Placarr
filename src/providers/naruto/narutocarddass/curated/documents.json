@@ -1,0 +1,272 @@
+[
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/FAQ_generale_Naruto.pdf",
+    "localPath": "staging/carddass-fr/pdf/FAQ_generale_Naruto.pdf",
+    "lang": "fr",
+    "kind": "other"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/checklist_naruto_S1.pdf",
+    "localPath": "staging/carddass-fr/pdf/checklist_naruto_S1.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/checklist_naruto_S2.pdf",
+    "localPath": "staging/carddass-fr/pdf/checklist_naruto_S2.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/checklist_naruto_S3.pdf",
+    "localPath": "staging/carddass-fr/pdf/checklist_naruto_S3.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/checklist_naruto_S4.pdf",
+    "localPath": "staging/carddass-fr/pdf/checklist_naruto_S4.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/checklist_naruto_S5.pdf",
+    "localPath": "staging/carddass-fr/pdf/checklist_naruto_S5.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/faq_jcc_naruto_au_23_juillet_2007.pdf",
+    "localPath": "staging/carddass-fr/pdf/faq_jcc_naruto_au_23_juillet_2007.pdf",
+    "lang": "fr",
+    "kind": "other"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/mode_d'emploi_logiciel.pdf",
+    "localPath": "staging/carddass-fr/pdf/mode_d'emploi_logiciel.pdf",
+    "lang": "fr",
+    "kind": "other"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/regles_naruto_sc.pdf",
+    "localPath": "staging/carddass-fr/pdf/regles_naruto_sc.pdf",
+    "lang": "fr",
+    "kind": "rulebook"
+  },
+  {
+    "url": "http://www.carddass.fr/naruto/pdf/tableaux_pour_JO.pdf",
+    "localPath": "staging/carddass-fr/pdf/tableaux_pour_JO.pdf",
+    "lang": "fr",
+    "kind": "other"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/cardgame/rule/naruto_rulebook.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/cardgame/rule/naruto_rulebook.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/cardgame/rule/school_rule.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/cardgame/rule/school_rule.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/cardgame/rule/school_playseat.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/cardgame/rule/school_playseat.pdf",
+    "lang": "ja",
+    "kind": "other"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/cardgame/rule/naruto_playseat.pdf",
+    "localPath": "staging/wayback-extra/naruto_playseat.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080820091307id_/http://www.carddas.com/naruto/cardgame/rule/naruto_playseat.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "naruto_playseat"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_11.pdf",
+    "localPath": "staging/wayback-extra/leaflet_11.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080905103103id_/http://www.carddas.com/naruto/mission/room/leaflet_11.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 11"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_12.pdf",
+    "localPath": "staging/wayback-extra/leaflet_12.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080820092411id_/http://www.carddas.com/naruto/mission/room/leaflet_12.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 12"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_21.pdf",
+    "localPath": "staging/wayback-extra/leaflet_21.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080905043020id_/http://www.carddas.com/naruto/mission/room/leaflet_21.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 21"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_22.pdf",
+    "localPath": "staging/wayback-extra/leaflet_22.pdf",
+    "waybackUrl": "https://web.archive.org/web/20081205014447id_/http://www.carddas.com/naruto/mission/room/leaflet_22.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 22"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_31.pdf",
+    "localPath": "staging/wayback-extra/leaflet_31.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080828163802id_/http://www.carddas.com/naruto/mission/room/leaflet_31.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 31"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_32.pdf",
+    "localPath": "staging/wayback-extra/leaflet_32.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080905043721id_/http://www.carddas.com/naruto/mission/room/leaflet_32.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 32"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_41.pdf",
+    "localPath": "staging/wayback-extra/leaflet_41.pdf",
+    "waybackUrl": "https://web.archive.org/web/20080821115714id_/http://www.carddas.com/naruto/mission/room/leaflet_41.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 41"
+  },
+  {
+    "url": "http://www.carddas.com/naruto/mission/room/leaflet_42.pdf",
+    "localPath": "staging/wayback-extra/leaflet_42.pdf",
+    "waybackUrl": "https://web.archive.org/web/20081205013018id_/http://www.carddas.com/naruto/mission/room/leaflet_42.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "leaflet 42"
+  },
+  {
+    "url": "http://www.bandaicg.com/naruto/NarutoRuleBook.pdf",
+    "waybackUrl": "https://web.archive.org/web/20060410074157id_/http://www.bandaicg.com/naruto/NarutoRuleBook.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Naruto Rule Book (EN)"
+  },
+  {
+    "url": "http://www.bandaicg.com/naruto/quickstartguide.pdf",
+    "waybackUrl": "https://web.archive.org/web/20100601230522id_/http://www.bandaicg.com/naruto/quickstartguide.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Quick Start Guide (EN)"
+  },
+  {
+    "url": "http://www.bandaicg.com/naruto/attachments/NarutoFAQMaster_110806.pdf",
+    "waybackUrl": "https://web.archive.org/web/20070222161401id_/http://www.bandaicg.com/naruto/attachments/NarutoFAQMaster_110806.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Naruto FAQ Master 110806"
+  },
+  {
+    "url": "http://www.bandaicg.com/naruto/attachments/Naruto_Tournament_Rules_100108.pdf",
+    "waybackUrl": "https://web.archive.org/web/20101225201909id_/http://www.bandaicg.com/naruto/attachments/Naruto_Tournament_Rules_100108.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Naruto Tournament Rules 100108"
+  },
+  {
+    "url": "http://www.bandaicg.com/naruto/attachments/MeijinNarutoTournamentGuidelines120106.pdf",
+    "waybackUrl": "https://web.archive.org/web/20070320092239id_/http://www.bandaicg.com/naruto/attachments/MeijinNarutoTournamentGuidelines120106.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Meijin Tournament Guidelines 120106"
+  },
+  {
+    "url": "http://www.bandaicg.com/naruto/attachments/CosplayGuidelines.pdf",
+    "waybackUrl": "https://web.archive.org/web/20101225201848id_/http://www.bandaicg.com/naruto/attachments/CosplayGuidelines.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Cosplay Guidelines"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/01-02-03-04.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/01-02-03-04.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/05-06-07-08.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/05-06-07-08.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/09-10-11-12.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/09-10-11-12.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/13-14-15-16.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/13-14-15-16.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/17-18-19-20.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/17-18-19-20.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/21-22-23-24.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/21-22-23-24.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/25-26-27-28.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/25-26-27-28.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/manga_2.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/manga_2.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/naruto_play.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/naruto_play.pdf",
+    "lang": "ja",
+    "kind": "rulebook"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/playseat-l.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/playseat-l.pdf",
+    "lang": "ja",
+    "kind": "other"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/playseat-r.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/playseat-r.pdf",
+    "lang": "ja",
+    "kind": "other"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/playseat-ura1.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/playseat-ura1.pdf",
+    "lang": "ja",
+    "kind": "other"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/playseat-ura2.pdf",
+    "localPath": "staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/playseat-ura2.pdf",
+    "lang": "ja",
+    "kind": "other"
+  }
+]

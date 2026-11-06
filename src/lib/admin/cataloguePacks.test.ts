@@ -368,6 +368,8 @@ describe("cataloguePacks", () => {
     expect(resolveCatalogueScope("render", carddass)).toBe("foils");
     expect(resolveCatalogueScope("all", carddass)).toBe("all");
     expect(resolveCatalogueScope("sealed", carddass)).toBe("sealed");
+    expect(resolveCatalogueScope("documents", carddass)).toBe("documents");
+    expect(resolveCatalogueScope("docs", carddass)).toBe("documents");
   });
 
   it("carddass refuses cross-lang face borrow (FR≠EN≠JA)", () => {

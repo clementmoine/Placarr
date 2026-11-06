@@ -98,6 +98,21 @@ describe("variantRendering", () => {
     ).toBe("/uploads/my-scan.jpg");
   });
 
+  it("prefers live /prints/ over a stale /prints/ stem left on the item", () => {
+    const mythos = {
+      finishes: ["holo"],
+      plainFinishes: [] as string[],
+      effectPack: "naruto-mythos",
+      foilMaskUrl: "/assets/naruto/mythos/full_foil_mask.webp",
+      imageUrl: "/assets/naruto/mythos/prints/ks1promo-0133-vv2-en/face",
+      thumbnailUrl: "/assets/naruto/mythos/prints/ks1promo-0133-vv2-en/thumb",
+    };
+    const staleStem = "/assets/naruto/mythos/prints/vv2-0133-fr/face";
+    expect(variantRendering("holo", mythos, staleStem).imageUrl).toBe(
+      mythos.imageUrl,
+    );
+  });
+
   it("treats an unrecognized variant as plain rather than guessing", () => {
     expect(variantRendering("Rainbow", lorcana, BASE)).toMatchObject({
       imageUrl: BASE,

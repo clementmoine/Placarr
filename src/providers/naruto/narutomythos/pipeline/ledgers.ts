@@ -7,7 +7,11 @@ import path from "node:path";
 
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { narutoMythosSourcePath, NARUTO_MYTHOS_PACK_ID } from "../pack";
+import {
+  narutoMythosCuratedDir,
+  narutoMythosSourcePath,
+  NARUTO_MYTHOS_PACK_ID,
+} from "../pack";
 import {
   NARUTO_MYTHOS_KS1_SET_CODE,
   NARUTO_MYTHOS_KS1E2_SET_CODE,
@@ -41,6 +45,8 @@ const LORENZONE_FILES = [
 ] as const;
 
 const OFFICIAL_CHECKLIST = "narutotcgmythos-checklist.json";
+/** Salon / Shippuden preview promos — absents de l’API CICABOOM. */
+const EVENT_PROMOS_CHECKLIST = "event-promos-checklist.json";
 
 /** Prefer FR when a single-lang fallback title is needed (LorenZone). */
 export const MYTHOS_TITLE_LANG = "fr";
@@ -163,13 +169,36 @@ export function lorenzoneChecklistSupplement(
   return out;
 }
 
-/** Officiel CICABOOM + complément LorenZone (trous réels) ; sinon LorenZone seul. */
+function eventPromosChecklist(): MythosChecklist[] {
+  const dataPath = mythosChecklistPath(EVENT_PROMOS_CHECKLIST);
+  const curatedPath = path.join(
+    narutoMythosCuratedDir(),
+    "sources",
+    EVENT_PROMOS_CHECKLIST,
+  );
+  const file = existsSync(dataPath)
+    ? dataPath
+    : existsSync(curatedPath)
+      ? curatedPath
+      : null;
+  if (!file) return [];
+  return [
+    JSON.parse(readFileSync(file, "utf8")) as MythosChecklist,
+  ];
+}
+
+/** Officiel CICABOOM + complément LorenZone (trous réels) + promos events. */
 export function readAllMythosChecklists(): MythosChecklist[] {
+  const events = eventPromosChecklist();
   const official = officialAsChecklists();
   if (official.length) {
-    return [...official, ...lorenzoneChecklistSupplement(official)];
+    return [
+      ...official,
+      ...lorenzoneChecklistSupplement(official),
+      ...events,
+    ];
   }
-  return lorenzoneChecklists();
+  return [...lorenzoneChecklists(), ...events];
 }
 
 export type MythosLedgerBuildReport = {

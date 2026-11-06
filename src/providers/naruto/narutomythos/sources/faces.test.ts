@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import type { ScanflipCardRow } from "@/providers/shared/scanflip/client";
@@ -6,6 +7,7 @@ import {
   isScanflipFinishOnlyRarity,
   mapNarutopiaMythosHeading,
   mapScanflipMythosCard,
+  mythosFaceToWebp,
   mythosLorenzoneFacesContentHash,
   mythosOfficialFacesContentHash,
   mythosScanflipTitle,
@@ -312,3 +314,35 @@ import {
     });
   });
 }
+
+describe("mythosFaceToWebp", () => {
+  it("trims the transparent CDN gutter so the card fills its frame", async () => {
+    const card = await sharp({
+      create: {
+        width: 100,
+        height: 140,
+        channels: 3,
+        background: "#f97316",
+      },
+    })
+      .png()
+      .toBuffer();
+    const padded = await sharp({
+      create: {
+        width: 148,
+        height: 188,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .composite([{ input: card, left: 24, top: 24 }])
+      .png()
+      .toBuffer();
+
+    const out = await mythosFaceToWebp(padded);
+    const meta = await sharp(out).metadata();
+    expect(meta.format).toBe("webp");
+    expect(meta.width).toBe(100);
+    expect(meta.height).toBe(140);
+  });
+});

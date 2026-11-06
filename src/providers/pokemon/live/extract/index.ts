@@ -19,6 +19,7 @@ export const POKEMON_STEPS = [
   "extract",
   "paper-faces",
   "products",
+  "documents",
 ] as const;
 export type PokemonStep = (typeof POKEMON_STEPS)[number];
 
@@ -29,6 +30,7 @@ const POKEMON_DEFAULT_STEPS: PokemonStep[] = [
   "extract",
   "paper-faces",
   "products",
+  "documents",
 ];
 
 const POKEMON_ONLINE = new Set<PokemonStep>([
@@ -36,6 +38,7 @@ const POKEMON_ONLINE = new Set<PokemonStep>([
   "scrape",
   "paper-faces",
   "products",
+  "documents",
 ]);
 
 /** Resolve which Pokémon extract passes to run (full Sync surface by default). */
@@ -287,6 +290,8 @@ export type UpdateOpts = {
   skipProducts?: boolean;
   /** Skip Coleka / TCGPlayer / pkmcards face harvest (resume / step selection). */
   skipPaperFaces?: boolean;
+  /** Official PDFs / rulebooks → `data/pokemon/documents/`. */
+  skipDocuments?: boolean;
   /** AbortSignal from CLI background-job cancel. */
   signal?: AbortSignal;
 };
@@ -303,6 +308,7 @@ function applyPokemonSteps(
     textureMode: set.has("extract") ? (opts.textureMode ?? "cards") : "none",
     skipPaperFaces: !set.has("paper-faces") || Boolean(opts.skipPaperFaces),
     skipProducts: !set.has("products"),
+    skipDocuments: !set.has("documents"),
   };
 }
 
@@ -326,6 +332,43 @@ export async function runUpdate(
       `── products : ${products.listed} SKU, ${products.detail} fiches, ` +
         `${products.printsLinked} liens carte (${products.fetched} GET)`,
     );
+  }
+
+  let documentsReport: Record<string, unknown> | null = null;
+  if (!opts.skipDocuments) {
+    console.log("── documents (rulebooks / OP PDFs → data/pokemon/documents)");
+    const { loadPokemonCuratedDocuments } = await import(
+      "@/providers/pokemon/live/curated/documents"
+    );
+    const { harvestPackDocuments } = await import(
+      "@/providers/shared/documents/harvestPackDocuments"
+    );
+    const docs = await harvestPackDocuments({
+      packId: "pokemon",
+      curated: loadPokemonCuratedDocuments(),
+      signal,
+    });
+    documentsReport = docs as unknown as Record<string, unknown>;
+    console.log(
+      `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+        `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+    );
+  }
+
+  // `--only documents` (or equivalent skips) must not fall through into CDN /
+  // Malie / texture extract — that path is minutes of no-op work.
+  const foilWork =
+    opts.bootstrapMalie !== false ||
+    !opts.skipScrape ||
+    !opts.skipPaperFaces ||
+    !opts.skipProducts ||
+    (opts.textureMode != null && opts.textureMode !== "none");
+  if (!foilWork) {
+    return {
+      ok: true,
+      documentsOnly: true,
+      documents: documentsReport,
+    };
   }
 
   const cache = path.join(repo, "data/pokemon");
@@ -863,6 +906,7 @@ function parseArgs(argv: string[]): UpdateOpts & { repo: string } {
     // Overwritten by applyPokemonSteps from step selection (products on by default).
     skipProducts: false,
     skipPaperFaces: false,
+    skipDocuments: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;

@@ -1,0 +1,620 @@
+[
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me02-FR.pdf",
+    "localPath": "sources/official-checklists/me02-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me02.5-FR.pdf",
+    "localPath": "sources/official-checklists/me02.5-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me03-FR.pdf",
+    "localPath": "sources/official-checklists/me03-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me04-FR.pdf",
+    "localPath": "sources/official-checklists/me04-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me05-FR.pdf",
+    "localPath": "sources/official-checklists/me05-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me05.5-30th-FR.pdf",
+    "localPath": "sources/official-checklists/me05.5-30th-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/me06-FR.pdf",
+    "localPath": "sources/official-checklists/me06-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/svi_web_cardlist_en.pdf",
+    "localPath": "sources/official-checklists/cms-en/svi_web_cardlist_en.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/25th_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/25th_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/asc_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/asc_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw10_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw10_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw3_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw3_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw4_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw4_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw5_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw5_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw6_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw6_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw7_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw7_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw8_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw8_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/bw9_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/bw9_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/col1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/col1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/det_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/det_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp3_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp3_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp4_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp4_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp5_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp5_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp6_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp6_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/dp7_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/dp7_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/hgss1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/hgss1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/hgss2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/hgss2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/hgss3_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/hgss3_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/hgss4_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/hgss4_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/mew_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/mew_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/obf_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/obf_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/pal_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/pal_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/par_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/par_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/pgo_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/pgo_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/pl1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/pl1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/pl2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/pl2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/pl3_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/pl3_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/scr_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/scr_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm10_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm10_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm115_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm115_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm11_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm11_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm12_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm12_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm35_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm35_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm4_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm4_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm5_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm5_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm6_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm6_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm75_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm75_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm7_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm7_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm8_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm8_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sm9_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/sm9_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/svi_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/svi_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh10_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh10_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh11_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh11_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh125_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh125_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh12_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh12_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh35_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh35_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh3_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh3_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh45_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh45_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh4_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh4_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh5_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh5_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh6_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh6_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh7_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh7_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh8_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh8_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/swsh9_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/swsh9_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy0_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy0_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy10_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy10_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy11_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy11_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy12_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy12_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy1_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy1_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy2_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy2_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy3_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy3_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy4_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy4_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy5_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy5_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy6_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy6_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy7_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy7_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy8_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy8_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/xy9_web_cardlist_fr.pdf",
+    "localPath": "sources/official-checklists/cms-fr/xy9_web_cardlist_fr.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv02-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv02-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv02-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv02-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv03-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv03-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv03-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv03-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv04-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv04-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv04-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv04-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv05-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv05-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv05-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv05-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv06-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv06-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv06-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv06-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv07-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv07-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv07-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv07-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv08-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv08-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv08-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv08-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv09-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv09-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv09-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv09-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv10-EN.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv10-EN.pdf",
+    "lang": "en",
+    "kind": "checklist"
+  },
+  {
+    "url": "https://assets.pokemon.com/assets/cms/pdf/checklist/sv10-FR.pdf",
+    "localPath": "sources/official-checklists/cloudfront-sv/sv10-FR.pdf",
+    "lang": "fr",
+    "kind": "checklist"
+  }
+]

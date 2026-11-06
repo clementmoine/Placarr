@@ -1,0 +1,1033 @@
+{
+  "source": "narutotcgmythos.com — pages Événements / Events / Eventos",
+  "observed": "2026-11-06",
+  "kind": "research-dig",
+  "verdict": "confirmed",
+  "summary": "Calendrier officiel CICABOOM (FR/EN/ES) : salons, championnats régionaux, store championships, sorties de sets, et cartes promo / rewards associées.",
+  "pages": [
+    {
+      "lang": "fr",
+      "url": "https://www.narutotcgmythos.com/fr/evenements"
+    },
+    {
+      "lang": "en",
+      "url": "https://www.narutotcgmythos.com/events"
+    },
+    {
+      "lang": "es",
+      "url": "https://www.narutotcgmythos.com/es/eventos"
+    }
+  ],
+  "events": [
+    {
+      "id": "regional-championship-germany-2026-11-27",
+      "kind": "event",
+      "dateStart": "2026-11-27",
+      "dateEnd": "2026-11-29",
+      "dateLabel": {
+        "fr": "27 - 29 NOV 2026",
+        "en": "NOV 27-29, 2026",
+        "es": "27 - 29 NOV 2026"
+      },
+      "titles": {
+        "fr": "REGIONAL CHAMPIONSHIP ALLEMAGNE",
+        "en": "regional championship germany",
+        "es": "REGIONAL CHAMPIONSHIP GERMANY"
+      },
+      "location": [
+        "Münster, Germany",
+        "Messe und Congress Centrum Halle Münsterland"
+      ],
+      "rewards": [
+        {
+          "tier": "participation",
+          "name": "Sakura Haruno - I'm training so hard these days I can barely keep my eyes open",
+          "printKey": "mythos:ss2-0123-vrc"
+        },
+        {
+          "tier": "winner",
+          "name": "Kakashi Hatake - Make-Out Paradise",
+          "printKey": "mythos:ss2-0149-l"
+        },
+        {
+          "tier": "top8",
+          "name": "Sasuke Uchiha - I'm able to see...",
+          "printKey": "mythos:ss2-0126-vv2rc"
+        },
+        {
+          "tier": "top16",
+          "name": "Itachi Uchiha - You don't have enough hate",
+          "printKey": "mythos:ss2-0137-vv2rc"
+        },
+        {
+          "tier": "top32",
+          "name": "NARUTO Uzumaki - Eyes full of loneliness...",
+          "printKey": "mythos:ss2-0005-vv2rc"
+        },
+        {
+          "tier": "top64",
+          "name": "Gaara - Eyes full of hate...",
+          "printKey": "mythos:ss2-0114-vrc"
+        },
+        {
+          "tier": "judge",
+          "name": "Gaara - Eyes full of hate...",
+          "printKey": "mythos:ss2-0114-vrc"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "milan-games-week-2026-2026-11-27",
+      "kind": "event",
+      "dateStart": "2026-11-27",
+      "dateEnd": "2026-11-29",
+      "dateLabel": {
+        "fr": "27 - 29 NOV 2026",
+        "en": "NOV 27-29, 2026",
+        "es": "27 - 29 NOV 2026"
+      },
+      "titles": {
+        "fr": "MILAN GAMES WEEK 2026",
+        "en": "MILAN GAMES WEEK 2026",
+        "es": "MILAN GAMES WEEK 2026"
+      },
+      "location": [
+        "Milan, Italy",
+        "Fiera Milano Rho"
+      ],
+      "rewards": [
+        {
+          "tier": "demo",
+          "name": "NARUTO - Rasen Shuriken",
+          "printKey": "mythos:ss2-0007-sp"
+        },
+        {
+          "tier": "demo",
+          "name": "NARUTO - The Final Valley",
+          "printKey": "mythos:ss2-0147-sp"
+        },
+        {
+          "tier": "demo",
+          "name": "Sasuke - The Final Valley",
+          "printKey": "mythos:ss2-0148-sp"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "store-championship-2026-10-30",
+      "kind": "event",
+      "dateStart": "2026-10-30",
+      "dateEnd": "2026-11-15",
+      "dateLabel": {
+        "en": "OCT 30 - NOV 15, 2026"
+      },
+      "titles": {
+        "fr": "Store championship",
+        "en": "Store championship",
+        "es": "Store championship"
+      },
+      "rewards": [
+        {
+          "tier": "top4",
+          "name": "Kiba Inuzuka - Chunin Exams",
+          "printKey": "mythos:ss2-0120-shinobi"
+        },
+        {
+          "tier": "participation",
+          "name": "NARUTO Uzumaki - Chunin Exams",
+          "printKey": "mythos:ss2-0121-shinobi"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ],
+      "location": [
+        "Across Europe",
+        "Selected partner stores"
+      ]
+    },
+    {
+      "id": "lucca-comics-and-games-2026-2026-10-28",
+      "kind": "event",
+      "dateStart": "2026-10-28",
+      "dateEnd": "2026-11-01",
+      "dateLabel": {
+        "fr": "OCT 28 - NOV 1, 2026",
+        "en": "OCT 28 - NOV 1, 2026",
+        "es": "OCT 28 - NOV 1, 2026"
+      },
+      "titles": {
+        "fr": "LUCCA COMICS AND GAMES 2026",
+        "en": "LUCCA COMICS AND GAMES 2026",
+        "es": "LUCCA COMICS AND GAMES 2026"
+      },
+      "location": [
+        "Lucca, Italy"
+      ],
+      "rewards": [
+        {
+          "tier": "demo",
+          "name": "NARUTO - Rasen Shuriken",
+          "printKey": "mythos:ss2-0007-sp"
+        },
+        {
+          "tier": "demo",
+          "name": "NARUTO - The Final Valley",
+          "printKey": "mythos:ss2-0147-sp"
+        },
+        {
+          "tier": "demo",
+          "name": "Sasuke - The Final Valley",
+          "printKey": "mythos:ss2-0148-sp"
+        },
+        {
+          "tier": "exclusive-promo",
+          "name": "NARUTO - The Final Valley",
+          "printKey": "mythos:ss2-0147-sp"
+        },
+        {
+          "tier": "exclusive-promo",
+          "name": "Sasuke - The Final Valley",
+          "printKey": "mythos:ss2-0148-sp"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "spiel-essen-2026-2026-10-22",
+      "kind": "event",
+      "dateStart": "2026-10-22",
+      "dateEnd": "2026-10-25",
+      "dateLabel": {
+        "fr": "22 - 25 OCT 2026",
+        "en": "OCT 22-25, 2026",
+        "es": "22 - 25 OCT 2026"
+      },
+      "titles": {
+        "fr": "SPIEL ESSEN 2026",
+        "en": "SPIEL ESSEN 2026",
+        "es": "SPIEL ESSEN 2026"
+      },
+      "location": [
+        "Essen, Germany",
+        "JK Entertainment - Hall 5, Booth 5F600"
+      ],
+      "rewards": [
+        {
+          "tier": "achetez-10-boosters-chez-jk-entertainmen",
+          "name": "Neji Hyuga - You never meant to be a ninja",
+          "printKey": "mythos:ss2-0112-sp"
+        },
+        {
+          "tier": "box-purchase",
+          "name": "Neji Hyuga - You never meant to be a ninja",
+          "printKey": "mythos:ss2-0112-sp"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "paris-games-week-2026-10-22",
+      "kind": "event",
+      "dateStart": "2026-10-22",
+      "dateEnd": "2026-10-25",
+      "dateLabel": {
+        "fr": "22 - 25 OCT 2026",
+        "en": "OCT 22-25, 2026",
+        "es": "22 - 25 OCT 2026"
+      },
+      "titles": {
+        "fr": "PARIS GAMES WEEK",
+        "en": "PARIS GAMES WEEK",
+        "es": "PARIS GAMES WEEK"
+      },
+      "location": [
+        "Paris, France",
+        "Paris Expo Porte de Versailles - Booth E30"
+      ],
+      "rewards": [
+        {
+          "tier": "demo",
+          "name": "Neji Hyuga - You never meant to be a ninja",
+          "printKey": "mythos:ss2-0112-sp"
+        },
+        {
+          "tier": "achetez-des-produits",
+          "name": "NARUTO Uzumaki - Shadow Clone Jutsu",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        },
+        {
+          "tier": "box-purchase",
+          "name": "NARUTO Uzumaki - Shadow Clone Jutsu",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "new-york-comic-con-2026-10-08",
+      "kind": "event",
+      "dateStart": "2026-10-08",
+      "dateEnd": "2026-10-11",
+      "dateLabel": {
+        "fr": "OCT 8 - OCT 11, 2026",
+        "en": "OCT 8 - OCT 11, 2026",
+        "es": "OCT 8 - OCT 11, 2026"
+      },
+      "titles": {
+        "fr": "New York Comic Con",
+        "en": "New York Comic Con",
+        "es": "New York Comic Con"
+      },
+      "location": [
+        "New York, USA",
+        "Javits Center"
+      ],
+      "rewards": [
+        {
+          "tier": "demo",
+          "name": "Naruto Uzumaki - Ninja Art! Summoning Jutsu!",
+          "printKey": "mythos:ks1promo-0133-vv2"
+        },
+        {
+          "tier": "demo",
+          "name": "Naruto Uzumaki - Shadow Clone Jutsu V!",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        },
+        {
+          "tier": "box-purchase",
+          "name": "Naruto Uzumaki - Shadow Clone Jutsu V!",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "regional-championship-us-2026-09-27",
+      "kind": "event",
+      "dateStart": "2026-09-27",
+      "dateEnd": "2026-09-27",
+      "dateLabel": {
+        "fr": "27 SEP 2026",
+        "es": "27 SEP 2026"
+      },
+      "titles": {
+        "fr": "REGIONAL CHAMPIONSHIP US",
+        "es": "REGIONAL CHAMPIONSHIP US",
+        "en": "REGIONAL CHAMPIONSHIP US"
+      },
+      "location": [
+        "Orlando, USA",
+        "Osceola Heritage Park"
+      ],
+      "rewards": [
+        {
+          "tier": "participation",
+          "name": "Sakura Haruno - I'm training so hard these days I can barely keep my eyes open",
+          "printKey": "mythos:ss2-0123-vrc"
+        },
+        {
+          "tier": "winner",
+          "name": "Kakashi Hatake - Make-Out Paradise",
+          "printKey": "mythos:ss2-0149-l"
+        },
+        {
+          "tier": "side-participation",
+          "name": "Orochimaru - Come see the truth of the world through my eyes",
+          "printKey": "mythos:ss2-0127-vv2rc"
+        },
+        {
+          "tier": "side-winner",
+          "name": "Orochimaru - Come see the truth of the world through my eyes",
+          "printKey": "mythos:ss2-0127-vv2rc"
+        },
+        {
+          "tier": "top8",
+          "name": "Itachi Uchiha - You don't have enough hate",
+          "printKey": "mythos:ss2-0137-vv2rc"
+        },
+        {
+          "tier": "top16",
+          "name": "Sasuke Uchiha - I'm able to see...",
+          "printKey": "mythos:ss2-0126-vv2rc"
+        },
+        {
+          "tier": "top32",
+          "name": "NARUTO Uzumaki - Eyes full of loneliness...",
+          "printKey": "mythos:ss2-0005-vv2rc"
+        },
+        {
+          "tier": "top64",
+          "name": "Gaara - Eyes full of hate...",
+          "printKey": "mythos:ss2-0114-vrc"
+        },
+        {
+          "tier": "judge",
+          "name": "Gaara - Eyes full of hate...",
+          "printKey": "mythos:ss2-0114-vrc"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "regional-championship-france-2026-09-11",
+      "kind": "event",
+      "dateStart": "2026-09-11",
+      "dateEnd": "2026-09-13",
+      "dateLabel": {
+        "fr": "11 - 13 SEP 2026",
+        "en": "SEP 11 - 13, 2026",
+        "es": "11 - 13 SEP 2026"
+      },
+      "titles": {
+        "fr": "REGIONAL CHAMPIONSHIP FRANCE",
+        "en": "REGIONAL CHAMPIONSHIP FRANCE",
+        "es": "REGIONAL CHAMPIONSHIP FRANCE"
+      },
+      "location": [
+        "Montreuil, France",
+        "Paris Montreuil Expo - 128 Rue de Paris"
+      ],
+      "rewards": [
+        {
+          "tier": "participation",
+          "name": "Sakura Haruno - I'm training so hard these days I can barely keep my eyes open",
+          "printKey": "mythos:ss2-0123-vrc"
+        },
+        {
+          "tier": "winner",
+          "name": "Kakashi Hatake - Make-Out Paradise",
+          "printKey": "mythos:ss2-0149-l"
+        },
+        {
+          "tier": "side-participation",
+          "name": "Orochimaru - Come see the truth of the world through my eyes",
+          "printKey": "mythos:ss2-0127-vv2rc"
+        },
+        {
+          "tier": "side-winner",
+          "name": "Orochimaru - Come see the truth of the world through my eyes",
+          "printKey": "mythos:ss2-0127-vv2rc"
+        },
+        {
+          "tier": "top8",
+          "name": "Sasuke Uchiha - I'm able to see...",
+          "printKey": "mythos:ss2-0126-vv2rc"
+        },
+        {
+          "tier": "top16",
+          "name": "Itachi Uchiha - You don't have enough hate",
+          "printKey": "mythos:ss2-0137-vv2rc"
+        },
+        {
+          "tier": "top32",
+          "name": "NARUTO Uzumaki - Eyes full of loneliness...",
+          "printKey": "mythos:ss2-0005-vv2rc"
+        },
+        {
+          "tier": "top64",
+          "name": "Gaara - Eyes full of hate...",
+          "printKey": "mythos:ss2-0114-vrc"
+        },
+        {
+          "tier": "judge",
+          "name": "Gaara - Eyes full of hate...",
+          "printKey": "mythos:ss2-0114-vrc"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "release-set-2-shinobi-shiren-1st-2026-09-04",
+      "kind": "release",
+      "dateStart": "2026-09-04",
+      "dateEnd": "2026-09-04",
+      "dateLabel": {
+        "fr": "4 SEP 2026",
+        "en": "SEP 4 2026",
+        "es": "4 SEP 2026"
+      },
+      "titles": {
+        "en": "Release Set 2: Shinobi Shiren 1st edition",
+        "fr": "Sortie du Set 2: Shinobi Shiren 1re édition",
+        "es": "Lanzamiento Set 2: Shinobi Shiren 1ª edición"
+      },
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ],
+      "note": "FR page labels this “Set 1”; EN/ES + roadmap say Set 2 (Shinobi Shiren)."
+    },
+    {
+      "id": "gamescom-2026-08-26",
+      "kind": "event",
+      "dateStart": "2026-08-26",
+      "dateEnd": "2026-08-30",
+      "dateLabel": {
+        "en": "AUG 26 - 30, 2026",
+        "es": "26 - 30 AGO 2026"
+      },
+      "titles": {
+        "en": "GamesCom",
+        "es": "GamesCom",
+        "fr": "GamesCom"
+      },
+      "location": [
+        "Cologne, Germany",
+        "Hall 05.2 Booth A-025"
+      ],
+      "rewards": [
+        {
+          "tier": "box-purchase",
+          "name": "Neji Hyuga - You never meant to be a ninja",
+          "printKey": "mythos:ss2-0112-sp"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "gencon-2026-07-30",
+      "kind": "event",
+      "dateStart": "2026-07-30",
+      "dateEnd": "2026-08-02",
+      "dateLabel": {
+        "en": "JUL 30 -  AUG 2, 2026"
+      },
+      "titles": {
+        "en": "GENCON",
+        "fr": "GENCON",
+        "es": "GENCON"
+      },
+      "location": [
+        "Indianapolis, USA",
+        "Booth #1515 - GamingETC",
+        "Good Games store - 111 S Meridian St"
+      ],
+      "rewards": [
+        {
+          "tier": "demo",
+          "name": "NARUTO Uzumaki - Ninja Art! Summoning Jutsu!",
+          "printKey": "mythos:ks1promo-0133-vv2"
+        },
+        {
+          "tier": "box-purchase",
+          "name": "NARUTO Uzumaki - Shadow Clone Jutsu",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        },
+        {
+          "tier": "box-purchase",
+          "name": "Neji Hyuga - You never meant to be a ninja",
+          "printKey": "mythos:ss2-0112-sp"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "san-diego-comic-con-2026-07-23",
+      "kind": "event",
+      "dateStart": "2026-07-23",
+      "dateEnd": "2026-07-27",
+      "dateLabel": {
+        "fr": "23 - 27 JUIL 2026",
+        "en": "JUL 23 - 27, 2026",
+        "es": "23 - 27 JUL 2026"
+      },
+      "titles": {
+        "fr": "SAN DIEGO COMIC-CON",
+        "en": "SAN DIEGO COMIC-CON",
+        "es": "SAN DIEGO COMIC-CON"
+      },
+      "location": [
+        "San Diego, USA",
+        "IGN area - Marriott Hotel Lobby",
+        "Rocketship Entertainment - Booth #2707"
+      ],
+      "rewards": [
+        {
+          "tier": "goodie-bag",
+          "name": "NARUTO Uzumaki - Ninja Art! Summoning Jutsu!",
+          "printKey": "mythos:ks1promo-0133-vv2"
+        },
+        {
+          "tier": "box-purchase",
+          "name": "NARUTO Uzumaki - Shadow Clone Jutsu",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "japan-expo-2026-07-09",
+      "kind": "event",
+      "dateStart": "2026-07-09",
+      "dateEnd": "2026-07-12",
+      "dateLabel": {
+        "fr": "9 - 12 JUIL 2026",
+        "en": "JUL 9 - 12, 2026",
+        "es": "9 - 12 JUL 2026"
+      },
+      "titles": {
+        "fr": "JAPAN EXPO",
+        "en": "JAPAN EXPO",
+        "es": "JAPAN EXPO"
+      },
+      "location": [
+        "Paris, France",
+        "Parc des Expositions Paris-Nord Villepinte - Booth C432"
+      ],
+      "rewards": [
+        {
+          "tier": "participation",
+          "name": "NARUTO Uzumaki - Multiclonage",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ],
+      "proof": {
+        "face": {
+          "url": "https://irp.cdn-website.com/99e556bf/dms3rep/multi/opt/108_M_Naruto_Rasengan_Japan-Expo-1920w.webp",
+          "local": "official-events-media/japan-expo-2026-naruto-multiclonage.source.webp",
+          "note": "CDN filename says Rasengan; face text is FR Multiclonage 108/130 V (ks1promo-0108-vv2). Installed as art.japanexpo.webp.",
+          "printKey": "mythos:ks1promo-0108-vv2",
+          "art": "art.japanexpo.webp"
+        }
+      }
+    },
+    {
+      "id": "store-championship-2026-06-27",
+      "kind": "event",
+      "dateStart": "2026-06-27",
+      "dateEnd": "2026-07-12",
+      "dateLabel": {
+        "en": "JUN 27 - JUL 12, 2026"
+      },
+      "titles": {
+        "en": "STORE CHAMPIONSHIP"
+      },
+      "rewards": [
+        {
+          "tier": "participation",
+          "name": "NARUTO Uzumaki - Shadow Clone Jutsu",
+          "printKey": "mythos:ks1promo-0108-vv2"
+        },
+        {
+          "tier": "winner",
+          "name": "Sasuke Uchiha - Chidori",
+          "printKey": "mythos:ks1promo-0107-vv2sc"
+        }
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/events"
+      ],
+      "location": [
+        "Across Europe",
+        "Selected partner stores"
+      ]
+    },
+    {
+      "id": "release-set-1-konoha-shido-2nd-dition-2026-06-26",
+      "kind": "release",
+      "dateStart": "2026-06-26",
+      "dateEnd": "2026-06-26",
+      "dateLabel": {
+        "fr": "26 JUIN 2026",
+        "en": "JUN 26 2026",
+        "es": "26 JUN 2026"
+      },
+      "titles": {
+        "fr": "Sortie du Set 1: Konoha Shido 2e édition",
+        "en": "Release Set 1: Konoha Shidō 2nd edition",
+        "es": "Release Set 1 Konoha Shido 2nd edition"
+      },
+      "location": [
+        "27 JIUN - 12 JUIL 2026"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "pyrkon-2026-2026-06-19",
+      "kind": "event",
+      "dateStart": "2026-06-19",
+      "dateEnd": "2026-06-21",
+      "dateLabel": {
+        "fr": "19-21 JUIN 2026",
+        "en": "JUN 19 - 21, 2026",
+        "es": "19 - 21 JUN 2026"
+      },
+      "titles": {
+        "fr": "PYRKON 2026",
+        "en": "PYRKON 2026",
+        "es": "PYRKON 2026"
+      },
+      "location": [
+        "Poznań, Poland",
+        "Booth 38 – Pavilion 5"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "uk-game-expo-2026-2026-05-29",
+      "kind": "event",
+      "dateStart": "2026-05-29",
+      "dateEnd": "2026-05-31",
+      "dateLabel": {
+        "fr": "29 - 31 MAI 2026",
+        "en": "MAY 29 - 31, 2026",
+        "es": "29 - 31 MAY 2026"
+      },
+      "titles": {
+        "fr": "UK GAME EXPO 2026",
+        "en": "UK GAME EXPO 2026",
+        "es": "UK GAME EXPO 2026"
+      },
+      "location": [
+        "Birmingham, United Kingdom",
+        "The National Exhibition Centre"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "tcg-gala-paris-2026-04-18",
+      "kind": "event",
+      "dateStart": "2026-04-18",
+      "dateEnd": "2026-04-19",
+      "dateLabel": {
+        "fr": "18 - 19 AVR 2026",
+        "en": "APR 18 - 19, 2026"
+      },
+      "titles": {
+        "fr": "TCG Gala Paris",
+        "en": "TCG Gala Paris",
+        "es": "TCG Gala Paris"
+      },
+      "location": [
+        "Paris, France"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "royaume-of-the-tcg-2026-04-04",
+      "kind": "event",
+      "dateStart": "2026-04-04",
+      "dateEnd": "2026-04-05",
+      "dateLabel": {
+        "fr": "4 - 5 AVR 2026",
+        "en": "APR 4 - 5, 2026"
+      },
+      "titles": {
+        "fr": "Royaume of the TCG",
+        "en": "Royaume of the TCG",
+        "es": "Royaume of the TCG"
+      },
+      "location": [
+        "Paris, France",
+        "Parc Expo Paris Nord Villepinte"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "release-set-1-konoha-shido-1st-dition-2026-03-13",
+      "kind": "release",
+      "dateStart": "2026-03-13",
+      "dateEnd": "2026-03-13",
+      "dateLabel": {
+        "fr": "13 MAR 2026",
+        "en": "MAR 13 2026",
+        "es": "13 MAR 2026"
+      },
+      "titles": {
+        "fr": "Sortie du Set 1: Konoha Shido 1re édition",
+        "en": "Release Set 1: Konoha Shidō 1st edition",
+        "es": "Lanzamiento Set 1: Konoha Shidō 1ª edición"
+      },
+      "location": [
+        "27 FÉV - 1 MAR 2026"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "interocio-2026-2026-03-13",
+      "kind": "event",
+      "dateStart": "2026-03-13",
+      "dateEnd": "2026-03-15",
+      "dateLabel": {
+        "es": "13 -15 MAR 2026"
+      },
+      "titles": {
+        "es": "Interocio 2026",
+        "fr": "Interocio 2026",
+        "en": "Interocio 2026"
+      },
+      "location": [
+        "Madrid, Spain"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "festival-international-des-jeux-2026-02-27",
+      "kind": "event",
+      "dateStart": "2026-02-27",
+      "dateEnd": "2026-03-01",
+      "dateLabel": {
+        "fr": "27 FÉV - 1 MAR 2026",
+        "es": "13 MAR 2026",
+        "en": "FEB 27 - MAR 01, 2026"
+      },
+      "titles": {
+        "fr": "Festival International des jeux",
+        "es": "Festival International des jeux",
+        "en": "Festival International des jeux"
+      },
+      "location": [
+        "Cannes, France",
+        "Booth 16.D on the \"Croisette\""
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "spielwarenmesse-2026-01-27",
+      "kind": "event",
+      "dateStart": "2026-01-27",
+      "dateEnd": "2026-01-31",
+      "dateLabel": {
+        "fr": "27 - 31 JAN 2026",
+        "es": "27 - 31 ENE 2026"
+      },
+      "titles": {
+        "fr": "Spielwarenmesse",
+        "es": "Spielwarenmesse",
+        "en": "Spielwarenmesse"
+      },
+      "location": [
+        "Nuremberg, Germany",
+        "Hall 12 H-01B | HALL 10 F-14"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "london-toy-fair-2026-01-20",
+      "kind": "event",
+      "dateStart": "2026-01-20",
+      "dateEnd": "2026-01-22",
+      "dateLabel": {
+        "fr": "20 - 22 JAN 2026",
+        "es": "20 - 22 ENE 2026"
+      },
+      "titles": {
+        "fr": "London Toy Fair",
+        "es": "London Toy Fair",
+        "en": "London Toy Fair"
+      },
+      "location": [
+        "London, United Kingdom",
+        "Booth G90"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "milan-games-week-and-cartoomics-2025-2025-11-28",
+      "kind": "event",
+      "dateStart": "2025-11-28",
+      "dateEnd": "2025-11-30",
+      "dateLabel": {
+        "fr": "28 - 30 NOV 2025",
+        "es": "28 - 30 NOV 2025"
+      },
+      "titles": {
+        "fr": "Milan Games Week & Cartoomics 2025",
+        "es": "Milan Games Week & Cartoomics 2025",
+        "en": "Milan Games Week & Cartoomics 2025"
+      },
+      "location": [
+        "Milan, Italy",
+        "DNA CARDS - Hall 8"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "spiel-essen-2025-10-23",
+      "kind": "event",
+      "dateStart": "2025-10-23",
+      "dateEnd": "2025-10-26",
+      "dateLabel": {
+        "fr": "23 - 26 OCT 2025",
+        "es": "23 - 26 OCT 2025"
+      },
+      "titles": {
+        "fr": "Spiel Essen",
+        "es": "Spiel Essen",
+        "en": "Spiel Essen"
+      },
+      "location": [
+        "Essen, Germany",
+        "Hall 3 - Booth 3G300"
+      ],
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/events",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "release-set-3-2nd-edition",
+      "kind": "release",
+      "dateLabel": {
+        "fr": "MID NOV 2026",
+        "es": "MID NOV 2026"
+      },
+      "titles": {
+        "fr": "Release Set 3 2nd edition",
+        "es": "Release Set 3 2nd edition"
+      },
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "release-set-3-1st-edition",
+      "kind": "release",
+      "dateLabel": {
+        "fr": "EARLY OCT 2026",
+        "es": "EARLY OCT 2026"
+      },
+      "titles": {
+        "fr": "Release Set 3 1st edition",
+        "es": "Release Set 3 1st edition"
+      },
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "release-set-2-2nd-edition",
+      "kind": "release",
+      "dateLabel": {
+        "fr": "MID AUGUST 2026",
+        "es": "MID AUGUST 2026"
+      },
+      "titles": {
+        "fr": "Release Set 2 2nd edition",
+        "es": "Release Set 2 2nd edition"
+      },
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    },
+    {
+      "id": "release-set-2-1st-edition",
+      "kind": "release",
+      "dateLabel": {
+        "fr": "EARLY JULY 2026",
+        "es": "EARLY JULY 2026"
+      },
+      "titles": {
+        "fr": "Release Set 2 1st edition",
+        "es": "Release Set 2 1st edition"
+      },
+      "sourceUrls": [
+        "https://www.narutotcgmythos.com/es/eventos",
+        "https://www.narutotcgmythos.com/fr/evenements"
+      ]
+    }
+  ]
+}

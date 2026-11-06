@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 import { selectLorcanaSteps } from "./extract";
 
 describe("selectLorcanaSteps", () => {
-  it("defaults to web + cards + products + mobile + index", () => {
+  it("defaults to web + cards + products + mobile + index + documents", () => {
     expect(selectLorcanaSteps([])).toEqual([
       "web",
       "cards",
       "products",
       "mobile",
       "index",
+      "documents",
     ]);
   });
 
@@ -25,6 +26,7 @@ describe("selectLorcanaSteps", () => {
       "cards",
       "products",
       "index",
+      "documents",
     ]);
   });
 

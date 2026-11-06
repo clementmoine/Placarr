@@ -54,10 +54,10 @@ import { writeSealedContentsFromDbzc } from "./install/sealedContentsFromDbzc";
 import { installDbsJccJaTitles } from "./install/nikitaJa";
 import { DBS_JCC_PACK_ID, dbsJccCuratedDir } from "./pack";
 
-export const DBS_JCC_STEPS = ["seed", "faces", "products"] as const;
+export const DBS_JCC_STEPS = ["seed", "faces", "products", "documents"] as const;
 export type DbsJccStep = (typeof DBS_JCC_STEPS)[number];
 /** Face CDN / Wayback harvests are network; seed from local staging stays. */
-const DBS_JCC_ONLINE = new Set<DbsJccStep>(["faces"]);
+const DBS_JCC_ONLINE = new Set<DbsJccStep>(["faces", "documents"]);
 
 export function selectDbsJccSteps(argv: readonly string[]): DbsJccStep[] {
   return selectCatalogueSteps(withSkipFacesAlias(argv), DBS_JCC_STEPS, {
@@ -89,6 +89,26 @@ export async function runDbsJccPackPipeline(
   console.log(
     `── Dragon Ball Carddass / JCC — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+
+  if (steps.includes("documents") && !offline) {
+    const { loadDbsJccCuratedDocuments } = await import(
+      "@/providers/dragonball/dbsjcc/curated/documents"
+    );
+    const { harvestPackDocuments } = await import(
+      "@/providers/shared/documents/harvestPackDocuments"
+    );
+    const docs = await harvestPackDocuments({
+      packId: DBS_JCC_PACK_ID,
+      curated: loadDbsJccCuratedDocuments(),
+      force,
+    });
+    console.log(
+      `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+        `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+    );
+    if (steps.length === 1) return { cards: 0, products: 0 };
+  }
+
   const wantFaces = steps.includes("faces");
   const downloadFaces = wantFaces;
 

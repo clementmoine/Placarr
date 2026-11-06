@@ -111,6 +111,7 @@ const STEPS = [
   "checklist",
   "known",
   "sources",
+  "documents",
 ] as const;
 type Step = (typeof STEPS)[number];
 
@@ -686,6 +687,24 @@ export async function runNarutoPackPipeline(
       case "sources":
         runNarutoSources({ dryRun });
         break;
+      case "documents": {
+        const { loadCarddassCuratedDocuments } = await import(
+          "@/providers/naruto/narutocarddass/curated/documents"
+        );
+        const { harvestPackDocuments } = await import(
+          "@/providers/shared/documents/harvestPackDocuments"
+        );
+        const docs = await harvestPackDocuments({
+          packId: "naruto/carddass",
+          curated: loadCarddassCuratedDocuments(),
+          force,
+        });
+        console.log(
+          `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+            `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+        );
+        break;
+      }
     }
     logCatalogueCheckpoint(step);
   }

@@ -119,6 +119,13 @@ describe("pokemon materials shared motifs", () => {
     expect(a).not.toBe(paperMaterial("SunPillar"));
   });
 
+  it("GlobalReducedMotion defaults to 1 (not on MAT sheets)", () => {
+    expect(paperMaterial("FlatSilver")!.floats._GlobalReducedMotionSetting).toBe(
+      1,
+    );
+    expect(paperMaterial("SvHolo")!.floats._GlobalReducedMotionSetting).toBe(1);
+  });
+
   it("FlatSilver_CC / Rainbow02 / SwSecreT02: sheet alias → frag parent", () => {
     for (const [alias, frag] of Object.entries(POKEMON_MAT_ALIASES)) {
       const m = paperMaterial(alias)!;

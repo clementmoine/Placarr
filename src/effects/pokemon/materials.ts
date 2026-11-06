@@ -42,6 +42,11 @@ const BASE_FLOATS: FoilMaterial["floats"] = {
   _NormalMask_On: 1,
   _ShadowDarknessLimit: 0.75,
   _FoilAnimation: 1,
+  /*
+    Live global — not on MAT sheets. Unbound WebGL floats stay 0 and freeze
+    spectrum/time scroll that multiplies `_Time.y * _GlobalReducedMotionSetting`.
+  */
+  _GlobalReducedMotionSetting: 1,
 };
 
 /**

@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   aceFoilNormalLatticeOffset,
   cameraPosFromTilt,
+  flatEtchViewFactor,
   lightDirectionFromTilt,
+  LIVE_MESH_LEAN_SCALE,
   liveCardTbnFromLean,
+  meshLeanFromTilt,
 } from "./lightDirection";
 
 describe("lightDirectionFromTilt", () => {
@@ -59,21 +62,74 @@ describe("aceFoilNormalLatticeOffset", () => {
 });
 
 describe("cameraPosFromTilt", () => {
-  it("rests above the card at (0, 2, 0)", () => {
-    expect(cameraPosFromTilt(0, 0)).toEqual([0, 2, 0]);
+  it("rests at balanced elevation/frontal (0, 1.5, 1.5)", () => {
+    expect(cameraPosFromTilt(0, 0)).toEqual([0, 1.5, 1.5]);
   });
 
-  it("offsets X/Z with lean for view-dependent frags (SolidColor)", () => {
-    const [x, y, z] = cameraPosFromTilt(0.4, -0.3);
-    expect(x).toBeCloseTo(1.0);
-    expect(y).toBe(2);
-    expect(z).toBeCloseTo(-0.75);
+  it("ignores lean — Live camera is rest-fixed (mesh tip is u_CardLean)", () => {
+    expect(cameraPosFromTilt(0.4, -0.3)).toEqual([0, 1.5, 1.5]);
+    expect(cameraPosFromTilt(1, 0)).toEqual([0, 1.5, 1.5]);
+    expect(cameraPosFromTilt(-1, 1)).toEqual([0, 1.5, 1.5]);
   });
 
-  it("at full Live lean (±1) walks about a card extent off rest", () => {
-    const [x, y, z] = cameraPosFromTilt(1, 0);
-    expect(x).toBeCloseTo(2.5);
-    expect(y).toBe(2);
-    expect(z).toBe(0);
+  it("AceFoil-class face N·V (flat etch ≈ +Y) stays bright enough at rest", () => {
+    const cam = cameraPosFromTilt(0, 0);
+    const len = Math.hypot(cam[0], cam[1], cam[2]) || 1;
+    // albedo *= N·V — (0,1,2) was ~0.45 (muddy); keep ≥ ~1/√2.
+    expect(cam[1] / len).toBeGreaterThanOrEqual(0.7);
+  });
+});
+
+describe("flatEtchViewFactor", () => {
+  it("pure +Y camera kills FlatSilver shine (N·V = 0)", () => {
+    expect(flatEtchViewFactor([0, 2, 0])).toBeCloseTo(0, 6);
+  });
+
+  it("rest camera bias keeps FlatSilver flat-etch N·V > 0", () => {
+    const nDotV = flatEtchViewFactor(cameraPosFromTilt(0, 0));
+    expect(nDotV).toBeGreaterThan(0.3);
+  });
+
+  it("fixed cam + mesh-scaled tip keeps left/right mid B·V > 0", () => {
+    const cam = cameraPosFromTilt(0, 0);
+    const left = meshLeanFromTilt(-1, 0);
+    const right = meshLeanFromTilt(1, 0);
+    expect(flatEtchViewFactor(cam, [0, 0, 0], left)).toBeGreaterThan(0.2);
+    expect(flatEtchViewFactor(cam, [0, 0, 0], right)).toBeGreaterThan(0.2);
+  });
+
+  it("fixed cam + mesh tip at bottom/top edges keeps B·V > 0", () => {
+    const cam = cameraPosFromTilt(0, 0);
+    expect(
+      flatEtchViewFactor(cam, [0, 0, 0], meshLeanFromTilt(0, 1)),
+    ).toBeGreaterThan(0.2);
+    expect(
+      flatEtchViewFactor(cam, [0, 0, 0], meshLeanFromTilt(0, -1)),
+    ).toBeGreaterThan(0.2);
+  });
+});
+
+describe("meshLeanFromTilt", () => {
+  it("scales full light lean down to CSS ±18° tip", () => {
+    expect(LIVE_MESH_LEAN_SCALE).toBeCloseTo(Math.tan((18 * Math.PI) / 180), 6);
+    expect(meshLeanFromTilt(1, -1)).toEqual([
+      LIVE_MESH_LEAN_SCALE,
+      -LIVE_MESH_LEAN_SCALE,
+    ]);
+  });
+});
+
+describe("SunPillar mesh-N etch gate", () => {
+  it("top-center light lean does not zero clamp(N·V+0.16) under mesh tip", () => {
+    /*
+      SunPillar multiplies whole albedo by clamp(meshN·V + 0.16).
+      Full ±1 into u_CardLean → N·V≈-0.32 → black card; mesh scale stays >0.
+    */
+    const cam = cameraPosFromTilt(0, 0);
+    const mesh = meshLeanFromTilt(0, -1); // top-center → setTilt(0,-1)
+    const { N } = liveCardTbnFromLean(mesh[0], mesh[1]);
+    const len = Math.hypot(cam[0], cam[1], cam[2]) || 1;
+    const nDotV = (N[0] * cam[0] + N[1] * cam[1] + N[2] * cam[2]) / len;
+    expect(nDotV + 0.16).toBeGreaterThan(0.2);
   });
 });

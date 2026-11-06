@@ -90,11 +90,9 @@ describe("playroomArtForMaterial", () => {
     const dumped = pickDumpedBundleForShader("SunPillar");
     expect(dumped?.bundleId).toBe("me5_fr_045");
     const art = playroomArtForMaterial("SunPillar");
-    // me5 faces not harvested yet — TCGdex `me05` seed, not a 404 /assets URL.
-    expect(art?.imageUrl).toBe(
-      "https://assets.tcgdex.net/fr/me/me05/045/high.png",
-    );
-    expect(art?.maskUrl).toBeNull();
+    // ME05 faces are harvested — prefer local pack art over TCGdex seed.
+    expect(art?.imageUrl).toBe("/assets/pokemon/cards/fr/me5/045/art.webp");
+    expect(art?.maskUrl).toMatch(/\/assets\/pokemon\/cards\/fr\/me5\/045\/mask/);
     expect(art?.label).toMatch(/Charkos-ex/);
     expect(art?.label).toMatch(/Nuit Noire/);
     expect(art?.foilMask).toBe("CastAndCure");
@@ -193,6 +191,19 @@ describe("listPlayroomArtsForMaterial", () => {
     expect(arts[0]?.imageUrl).toMatch(/\/assets\/pokemon\/cards\//);
     // Reverse Rainbow dumps usually have wp mask, rarely etch.
     expect(arts[0]?.maskUrl || arts[0]?.varnishMaskUrl).toBeTruthy();
+  });
+
+  it("FlatSilver stack never pastes FOIL_SEED art onto another dump caption", () => {
+    const arts = listPlayroomArtsForMaterial("FlatSilver", 4);
+    const seed = playroomSeedHighPng("FlatSilver");
+    expect(arts.length).toBeGreaterThan(1);
+    for (const art of arts) {
+      expect(art.imageUrl).toBeTruthy();
+      if (art.bundleId && art.bundleId !== "ec_fr_036") {
+        expect(art.imageUrl, art.label ?? art.bundleId).not.toBe(seed);
+        expect(art.imageUrl).not.toContain("/ecard/ecard1/36/");
+      }
+    }
   });
 
   it("listDumpedBundlesForShader prefers the seed then FR", () => {

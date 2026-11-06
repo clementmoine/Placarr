@@ -74,7 +74,7 @@ function classifyFrag(
 
 describe("Live HoloFoil tilt drivers", () => {
   it.skipIf(!hasDump)(
-    "no Live frag reads _Tilt — lean must come from light/camera/TBN",
+    "no Live frag reads _Tilt — lean must come from light/TBN (camera rest-fixed)",
     () => {
       for (const name of readdirSync(SHADERS_DIR)) {
         if (!name.endsWith(".frag")) continue;
@@ -85,7 +85,7 @@ describe("Live HoloFoil tilt drivers", () => {
   );
 
   it.skipIf(!hasDump)(
-    "SDL≥1 leaves cannot rely on light lean alone (TBN or camera required)",
+    "SDL≥1 leaves cannot rely on light lean alone (TBN required; camera rest-fixed)",
     () => {
       const sheets = JSON.parse(readFileSync(SHEETS_PATH, "utf8")) as Record<
         string,
@@ -134,6 +134,7 @@ describe("Live HoloFoil tilt drivers", () => {
     const src = readFileSync(RENDERER_PATH, "utf8");
     expect(src).toMatch(/uniform vec2 u_CardLean/);
     expect(src).toMatch(/cardLeanLoc/);
+    expect(src).toMatch(/meshLeanFromTilt/);
     expect(src).toMatch(/uniform2f\(active\.cardLeanLoc/);
   });
 });

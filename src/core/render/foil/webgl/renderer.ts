@@ -17,7 +17,11 @@ import type {
   FoilWrap,
 } from "@/core/render/foil/types";
 import { hotFoilStampUniforms } from "@/core/render/foil/backend";
-import { cameraPosFromTilt, lightDirectionFromTilt } from "./lightDirection";
+import {
+  cameraPosFromTilt,
+  lightDirectionFromTilt,
+  meshLeanFromTilt,
+} from "./lightDirection";
 
 import type {
   WebglFoilRenderer,
@@ -756,8 +760,10 @@ export function createWebglFoilRenderer(
         if (color) {
           gl!.uniform3f(location, color[0], color[1], color[2]);
         } else if (info.name === "_WorldSpaceCameraPos") {
-          // Above the card — the app's card lies flat, normal +Y.
-          gl!.uniform3f(location, 0, 2, 0);
+          // Match `cameraPosFromTilt(0,0)` — +Z bias so FlatSilver flat-etch
+          // shine (world +Z normal) keeps N·V > 0.
+          const cam = cameraPosFromTilt(0, 0);
+          gl!.uniform3f(location, cam[0], cam[1], cam[2]);
         }
       } else if (info.type === gl!.FLOAT_VEC4) {
         if (color) {
@@ -768,7 +774,8 @@ export function createWebglFoilRenderer(
         } else if (info.name === "_Time" || info.name.startsWith("_Time[")) {
           gl!.uniform4f(location, 0, 0, 0, 0);
         } else if (info.name === "_WorldSpaceCameraPos") {
-          gl!.uniform4f(location, 0, 2, 0, 1);
+          const cam = cameraPosFromTilt(0, 0);
+          gl!.uniform4f(location, cam[0], cam[1], cam[2], 1);
         } else {
           const mtx = info.name.match(
             /^hlslcc_mtx4x4unity_(?:WorldToObject|ObjectToWorld)\[(\d+)\]$/,
@@ -846,7 +853,9 @@ export function createWebglFoilRenderer(
 
     if (active.tiltLoc) gl!.uniform2f(active.tiltLoc, tilt[0], tilt[1]);
     if (active.cardLeanLoc) {
-      gl!.uniform2f(active.cardLeanLoc, tilt[0], tilt[1]);
+      // Mesh tip matches CSS ±18° — not full ±1 light lean (SunPillar N·V gate).
+      const mesh = meshLeanFromTilt(tilt[0], tilt[1]);
+      gl!.uniform2f(active.cardLeanLoc, mesh[0], mesh[1]);
     }
     if (active.lightDirLoc) {
       const dir = lightDirectionFromTilt(tilt[0], tilt[1]);
@@ -857,7 +866,8 @@ export function createWebglFoilRenderer(
       }
     }
     if (active.cameraPosLoc) {
-      const cam = cameraPosFromTilt(tilt[0], tilt[1]);
+      // Live lean contract: world camera stays at rest; mesh tip is u_CardLean.
+      const cam = cameraPosFromTilt(0, 0);
       if (active.cameraPosSize === 4) {
         gl!.uniform4f(active.cameraPosLoc, cam[0], cam[1], cam[2], 1);
       } else {

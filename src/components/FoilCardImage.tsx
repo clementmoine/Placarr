@@ -62,17 +62,18 @@ import "@/effects";
 const MAX_TILT = 18;
 /**
  * Lorcana dual-frag / `_CosTime` scroll amplitude. Live HoloFoil (Pokémon) does
- * **not** declare `_TimeFactor` — its frags read `_LightDirection` /
- * `_WorldSpaceCameraPos`. Reusing 0.4 there capped lean at ±0.4 and the foil
- * layers barely moved vs the Mac app.
+ * **not** declare `_TimeFactor` — lean drives `_LightDirection` at full ±1;
+ * mesh TBN (`u_CardLean`) is scaled to CSS ±18° inside the WebGL renderer.
+ * `_WorldSpaceCameraPos` stays rest-fixed. Reusing 0.4 capped light lean and
+ * the foil layers barely moved vs the Mac app.
  */
 const LORCANA_TIME_FACTOR = 0.4;
-/** Live light/camera lean: full edge → ±1 into {@link lightDirectionFromTilt}. */
+/** Live light lean: full edge → ±1 into `_LightDirection` (camera stays rest). */
 const LIVE_LEAN_AMPLITUDE = 1;
 
 /**
  * Map a light position (0..100, 50 at rest) to one lean component for
- * `setTilt` / light+camera (or Lorcana `_Tilt` phase).
+ * `setTilt` / light+TBN (or Lorcana `_Tilt` phase).
  *
  * Lorcana Time-scroll uses `_CosTime.w * _TimeFactor` (±timeFactor). Live
  * Pokémon maps the same 0..100 pointer onto ±{@amplitude} so a full
@@ -89,8 +90,8 @@ export function tiltFromLightPercent(
  * How far `setTilt` should travel at the card edge.
  *
  * - Lorcana sheets ship `_TimeFactor` (0.33–0.4) for CosTime / tilt-frag phase.
- * - Pokémon Live sheets omit it — use full ±1 so `_LightDirection` /
- *   `_WorldSpaceCameraPos` actually swing (a ±0.4 cap was the “weak tilt”
+ * - Pokémon Live sheets omit it — use full ±1 so `_LightDirection` swings
+ *   (mesh tip is scaled separately; a ±0.4 light cap was the “weak tilt”
  *   feel vs TCG Live).
  */
 export function foilLeanAmplitude(opts: {

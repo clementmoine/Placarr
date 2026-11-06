@@ -286,17 +286,38 @@ function highPng(imageBase: string): string {
 }
 
 function liveArtUrl(pick: BundlePick | null): string | null {
-  if (!pick?.cardTex) return null;
-  return pokemonCardTextureUrl(pick.bundleId, pick.cardTex);
+  if (!pick?.bundleId) return null;
+  /*
+    Prefer the dump's cardTex stem. When the index leaves it empty (owned Live
+    face without a harvested Texture2D name), still resolve canonical
+    `art.webp` from the bundle stem — otherwise artFromDump fell through to
+    the FOIL_SEED high.png and Tropius showed Énergie Plante under a Tropius
+    caption.
+  */
+  if (pick.cardTex?.trim()) {
+    return pokemonCardTextureUrl(pick.bundleId, pick.cardTex);
+  }
+  return pokemonCardTextureUrl(pick.bundleId, pick.bundleId, "art");
+}
+
+function liveMaskUrl(pick: BundlePick | null): string | null {
+  if (!pick?.bundleId) return null;
+  if (pick.maskTex?.trim()) return textureUrlFor(pick, pick.maskTex);
+  const stem =
+    pick.variant === "ph"
+      ? `${pick.bundleId}_wp_ph`
+      : `${pick.bundleId}_wp`;
+  return pokemonCardTextureUrl(pick.bundleId, stem, "mask");
 }
 
 /**
- * Live ME05 / 30th celebration stems whose faces are not under
+ * Live 30th celebration stems whose faces are not under
  * `data/pokemon/cards/` yet. A constructed `/assets/…` URL would 404 and
  * shadow the TCGdex seed — playroom would show an empty card.
+ * ME05 (`me5_*`) is harvested; keep only me5-5 / classic / metal mini.
  */
 function liveStemLacksLocalFaces(bundleId: string): boolean {
-  return /^(me5|me5-5|me5-5c|me5-5m)_/i.test(bundleId);
+  return /^(me5-5|me5-5c|me5-5m)_/i.test(bundleId);
 }
 
 /**
@@ -497,16 +518,27 @@ function artFromDump(
   const liveOwned = Boolean(
     dumped?.bundleId && ownedBundlesForShader(shader).includes(dumped.bundleId),
   );
-  const useSeedArt =
-    !dumped?.bundleId || liveStemLacksLocalFaces(dumped.bundleId);
+  /*
+    Seed TCGdex art only for the seed print itself (or when there is no dump).
+    Unharvested stems that are *not* the seed return "" so the stack skips
+    them — never paste Énergie Plante under a Tropius caption.
+  */
+  const lacksLocal = Boolean(
+    dumped?.bundleId && liveStemLacksLocalFaces(dumped.bundleId),
+  );
+  const isSeedBundle = Boolean(
+    dumped?.bundleId && seed.bundleId && dumped.bundleId === seed.bundleId,
+  );
+  const useSeedArt = !dumped?.bundleId || (lacksLocal && isSeedBundle);
+  const seedArt = highPng(seed.imageBase);
+  const liveUrl = useSeedArt || lacksLocal ? null : liveArtUrl(dumped);
+  const imageUrl = useSeedArt
+    ? seedArt
+    : (liveUrl ?? (isSeedBundle ? seedArt : ""));
   return {
-    imageUrl: useSeedArt
-      ? highPng(seed.imageBase)
-      : (liveArtUrl(dumped) ?? highPng(seed.imageBase)),
+    imageUrl,
     // Skip broken /assets mask URLs for unharvested stems (black plate kills WebGL foil).
-    maskUrl: useSeedArt
-      ? null
-      : textureUrlFor(dumped, dumped?.maskTex),
+    maskUrl: useSeedArt ? null : liveMaskUrl(dumped),
     varnishMaskUrl: useSeedArt
       ? null
       : textureUrlFor(dumped, dumped?.etchTex),
@@ -586,16 +618,28 @@ export function listPlayroomArtsForMaterial(
 ): PlayroomArt[] {
   const shader = resolveShaderName(name);
   if (!shader) return [];
-  const dumps = listDumpedBundlesForShader(shader, Math.max(limit, 4));
+  // Pull extra dumps so faces without a resolvable image can be skipped.
+  const dumps = listDumpedBundlesForShader(shader, Math.max(limit * 3, 8));
   const arts: PlayroomArt[] = [];
   if (dumps.length === 0) {
     arts.push(artFromDump(shader, null));
   } else {
-    for (const dumped of dumps) arts.push(artFromDump(shader, dumped));
+    for (const dumped of dumps) {
+      const art = artFromDump(shader, dumped);
+      if (!art.imageUrl) continue;
+      arts.push(art);
+      if (arts.length >= Math.max(limit, 4)) break;
+    }
   }
+  if (arts.length === 0) arts.push(artFromDump(shader, null));
 
   const simeyArt = artFromSimeyAnchor(shader, name);
-  if (simeyArt?.bundleId && limit >= 2 && arts.length > 0) {
+  if (
+    simeyArt?.bundleId &&
+    simeyArt.imageUrl &&
+    limit >= 2 &&
+    arts.length > 0
+  ) {
     const hero = arts[0]!;
     const rest = arts
       .slice(1)
@@ -614,7 +658,7 @@ export function listPlayroomArtsForMaterial(
     }
   }
 
-  return arts.slice(0, limit);
+  return arts.filter((a) => Boolean(a.imageUrl)).slice(0, limit);
 }
 
 export function playroomArtForMaterial(name: string): PlayroomArt | null {

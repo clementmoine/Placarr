@@ -34,6 +34,8 @@ export type PackDocumentEntry = {
   sourceUrl: string;
   fetchedAt: string | null;
   relativePath: string | null;
+  /** Sibling preview under documents/ — `…/foo.thumb.webp` (page 1 for PDFs). */
+  thumbRelativePath?: string | null;
   sha256: string | null;
   bytes: number | null;
 };
@@ -248,6 +250,20 @@ export function documentRelativePath(
   return path.posix.join(lang, kind, filename);
 }
 
+/** `fr/rulebook/foo.pdf` → `fr/rulebook/foo.thumb.webp` (or null). */
+export function documentThumbRelativePath(
+  relativePath: string,
+): string | null {
+  const cleaned = relativePath.replace(/\\/g, "/").replace(/^\/+/, "");
+  const match = cleaned.match(
+    /^([a-z0-9_-]+\/[a-z0-9_-]+\/)(.+)\.([a-z0-9]{2,5})$/i,
+  );
+  if (!match) return null;
+  const [, dir, stem] = match;
+  if (!dir || !stem || stem.endsWith(".thumb")) return null;
+  return `${dir}${stem}.thumb.webp`;
+}
+
 /**
  * Resolve a relative document path to an absolute file under the pack tree.
  * Rejects traversal.
@@ -345,7 +361,15 @@ export function listPackDocuments(
       ) {
         continue;
       }
-      rows.push({ ...doc, packId });
+      // Prefer index, else discover sibling `*.thumb.webp` already on disk.
+      let thumbRelativePath = doc.thumbRelativePath ?? null;
+      if (!thumbRelativePath && doc.relativePath) {
+        const candidate = documentThumbRelativePath(doc.relativePath);
+        if (candidate && resolvePackDocumentFile(packId, candidate)) {
+          thumbRelativePath = candidate;
+        }
+      }
+      rows.push({ ...doc, packId, thumbRelativePath });
     }
   }
 

@@ -26,6 +26,9 @@ importers:
       '@huggingface/transformers':
         specifier: 4.3.2
         version: 4.3.2(@types/node@26.2.0)
+      '@napi-rs/canvas':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@prisma/adapter-pg':
         specifier: 7.9.1
         version: 7.9.1
@@ -182,6 +185,9 @@ importers:
       unityfs-js:
         specifier: 0.2.8
         version: 0.2.8(patch_hash=24539d1ec0e806ddd730e16e6c7f8a12bc0cd40d1accd9e42afe7cbe5a49035e)
+      unpdf:
+        specifier: ^2.1.0
+        version: 2.1.0(@napi-rs/canvas@1.1.0)
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -5090,6 +5096,15 @@ packages:
 
   unityfs-js@0.2.8:
     resolution: {integrity: sha512-PPIEyLlqOC0KLyuhiCIMDzEjFBXnCWnGkxA2u/DeesRJnaft0ej/X5CzZi7fBn2PH2NHzkpU6PGYODcOe1kv4Q==}
+
+  unpdf@2.1.0:
+    resolution: {integrity: sha512-G/Hsrm++g0EoubUhV8TDFItq6oQ+FUu9EMvIRtHUwseKXB0iJoCvaLvBGOpYUBqyvggv/XfxhYYtohL2QpE3xQ==}
+    engines: {node: '>=24'}
+    peerDependencies:
+      '@napi-rs/canvas': ^0.1.69 || ^1.0.0
+    peerDependenciesMeta:
+      '@napi-rs/canvas':
+        optional: true
 
   unrs-resolver@1.12.2:
     resolution: {integrity: sha512-dmlRxBJJayXjqTwC+JtF1HhJmgf3ftQ3YejFcZrf4+KKtJv0qDsK1pjqaaVjG7wJ5NJ6UVP1OqRMQ71Z4C3rxQ==}
@@ -10385,6 +10400,10 @@ snapshots:
       unist-util-visit-parents: 6.0.2
 
   unityfs-js@0.2.8(patch_hash=24539d1ec0e806ddd730e16e6c7f8a12bc0cd40d1accd9e42afe7cbe5a49035e): {}
+
+  unpdf@2.1.0(@napi-rs/canvas@1.1.0):
+    optionalDependencies:
+      '@napi-rs/canvas': 1.1.0
 
   unrs-resolver@1.12.2:
     dependencies:

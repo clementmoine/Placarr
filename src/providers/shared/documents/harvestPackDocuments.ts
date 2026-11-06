@@ -181,6 +181,18 @@ export async function harvestPackDocuments(
       }
       mkdirSync(path.dirname(abs), { recursive: true });
       writeFileSync(abs, bytes);
+      let thumbRelativePath: string | null = null;
+      try {
+        const { ensurePackDocumentThumb } = await import(
+          "@/lib/admin/packDocumentThumbs"
+        );
+        thumbRelativePath = await ensurePackDocumentThumb({
+          packId,
+          relativePath,
+        });
+      } catch {
+        /* preview is best-effort — PDF still counts as fetched */
+      }
       const entry: PackDocumentEntry = {
         id: classified.id,
         title: classified.title,
@@ -189,6 +201,7 @@ export async function harvestPackDocuments(
         sourceUrl: url,
         fetchedAt: new Date().toISOString(),
         relativePath,
+        thumbRelativePath,
         sha256,
         bytes: bytes.byteLength,
       };

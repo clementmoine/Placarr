@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyPackDocument,
   documentRelativePath,
+  documentThumbRelativePath,
   slugifyDocumentStem,
 } from "./packDocuments";
 
@@ -117,5 +118,20 @@ describe("classifyPackDocument", () => {
     expect(documentRelativePath(got.lang, got.kind, got.filename)).toBe(
       "en/set_notes/winterspell_setreleasenotes_en.pdf",
     );
+  });
+});
+
+describe("documentThumbRelativePath", () => {
+  it("maps a PDF to a sibling .thumb.webp", () => {
+    expect(
+      documentThumbRelativePath("fr/rulebook/regles_naruto_sc.pdf"),
+    ).toBe("fr/rulebook/regles_naruto_sc.thumb.webp");
+  });
+
+  it("rejects thumbs-of-thumbs and bad paths", () => {
+    expect(
+      documentThumbRelativePath("fr/rulebook/regles.thumb.webp"),
+    ).toBeNull();
+    expect(documentThumbRelativePath("../x.pdf")).toBeNull();
   });
 });

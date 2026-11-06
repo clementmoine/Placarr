@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ type PackDocumentRow = {
   sourceUrl: string;
   fetchedAt: string | null;
   relativePath: string | null;
+  thumbRelativePath?: string | null;
   sha256: string | null;
   bytes: number | null;
 };
@@ -42,16 +43,6 @@ type PackDocumentsResponse = {
   /** Unfiltered pack locales — keep the lang Select stable under filtering. */
   availableLocales?: string[];
 };
-
-function DocLangCell({ code }: { code: string }) {
-  const label = printLanguageLabel(code);
-  return (
-    <span title={label.name}>
-      {label.flag ? `${label.flag} ` : ""}
-      {label.name}
-    </span>
-  );
-}
 
 function formatBytes(n: number | null, fr: boolean): string {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -79,6 +70,58 @@ function kindLabel(kind: string, fr: boolean): string {
   const entry = KIND_LABELS[kind as PackDocumentKind];
   if (!entry) return kind;
   return fr ? entry.fr : entry.en;
+}
+
+function documentFileUrl(packId: string, relativePath: string): string {
+  return `/api/admin/pack-documents/file?pack=${encodeURIComponent(packId)}&path=${encodeURIComponent(relativePath)}`;
+}
+
+function documentThumbSrc(doc: PackDocumentRow): string | null {
+  if (doc.thumbRelativePath) {
+    return documentFileUrl(doc.packId, doc.thumbRelativePath);
+  }
+  if (!doc.relativePath) return null;
+  // Lazy generate + redirect to sibling webp.
+  return `/api/admin/pack-documents/thumb?pack=${encodeURIComponent(doc.packId)}&path=${encodeURIComponent(doc.relativePath)}`;
+}
+
+function DocumentCardArt({
+  doc,
+  fr,
+}: {
+  doc: PackDocumentRow;
+  fr: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+  const src = documentThumbSrc(doc);
+
+  return (
+    <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-muted/40">
+      {!src || failed ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
+          <FileText className="size-8 text-muted-foreground/70" aria-hidden />
+          <span className="text-[10px] font-medium text-muted-foreground">
+            {doc.relativePath
+              ? fr
+                ? "aperçu indisponible"
+                : "no preview"
+              : fr
+                ? "URL seule"
+                : "URL only"}
+          </span>
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-contain object-top"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </div>
+  );
 }
 
 /**
@@ -117,7 +160,6 @@ export function PackDocumentsPanel({
     if (data?.availableLocales?.length) {
       return [...data.availableLocales].sort((a, b) => a.localeCompare(b));
     }
-    // Fallback while older responses / first paint have no availableLocales.
     const set = new Set<string>();
     for (const doc of data?.documents ?? []) set.add(doc.lang);
     if (lang !== "all") set.add(lang);
@@ -176,16 +218,21 @@ export function PackDocumentsPanel({
           placeholder={fr ? "Filtrer…" : "Filter…"}
           aria-label={fr ? "Filtrer les documents" : "Filter documents"}
         />
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {fr
+            ? `${(data?.documents.length ?? 0).toLocaleString("fr-FR")} documents`
+            : `${(data?.documents.length ?? 0).toLocaleString("en-GB")} documents`}
+        </p>
         {isFetching ? (
           <span className="text-xs text-muted-foreground">…</span>
         ) : null}
       </div>
 
       {isLoading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+          {Array.from({ length: 12 }, (_, i) => (
+            <Skeleton key={i} className="aspect-[2/3] w-full rounded-md" />
+          ))}
         </div>
       ) : (data?.documents.length ?? 0) === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -194,89 +241,76 @@ export function PackDocumentsPanel({
             : "No documents for this pack. Densify via Catalogue Sync (documents step)."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-left">
-              <tr>
-                <th className="px-3 py-2 font-medium">
-                  {fr ? "Titre" : "Title"}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  {fr ? "Langue" : "Language"}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  {fr ? "Type" : "Type"}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  {fr ? "Taille" : "Size"}
-                </th>
-                <th className="px-3 py-2 font-medium">
-                  <span className="sr-only">
-                    {fr ? "Actions" : "Actions"}
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data!.documents.map((doc) => (
-                <tr key={`${doc.packId}:${doc.id}`} className="border-t">
-                  <td className="px-3 py-2 align-top">
-                    <div className="font-medium">{doc.title}</div>
-                    {doc.relativePath ? (
-                      <div className="text-xs text-muted-foreground">
-                        {doc.relativePath}
-                      </div>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+          {data!.documents.map((doc) => {
+            const langLabel = printLanguageLabel(doc.lang);
+            const openHref = doc.relativePath
+              ? documentFileUrl(doc.packId, doc.relativePath)
+              : doc.sourceUrl;
+            return (
+              <figure
+                key={`${doc.packId}:${doc.id}`}
+                className="flex flex-col gap-1"
+              >
+                <a
+                  href={openHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  title={doc.title}
+                >
+                  <DocumentCardArt doc={doc} fr={fr} />
+                </a>
+                <figcaption className="space-y-0.5 px-0.5">
+                  <div className="line-clamp-2 text-xs font-medium leading-snug">
+                    {doc.title}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+                    <span>
+                      {langLabel.flag ? `${langLabel.flag} ` : ""}
+                      {langLabel.name}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>{kindLabel(doc.kind, fr)}</span>
+                    {doc.bytes != null ? (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span>{formatBytes(doc.bytes, fr)}</span>
+                      </>
                     ) : (
-                      <Badge variant="outline" className="mt-1 text-[10px]">
-                        {fr ? "URL seule" : "URL only"}
+                      <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                        {fr ? "URL" : "URL"}
                       </Badge>
                     )}
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <DocLangCell code={doc.lang} />
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    {kindLabel(doc.kind, fr)}
-                  </td>
-                  <td className="px-3 py-2 align-top whitespace-nowrap">
-                    {formatBytes(doc.bytes, fr)}
-                  </td>
-                  <td className="px-3 py-2 align-top whitespace-nowrap">
-                    <div className="flex gap-1 justify-end">
-                      {doc.relativePath ? (
-                        <Button asChild size="sm" variant="outline">
-                          <a
-                            href={`/api/admin/pack-documents/file?pack=${encodeURIComponent(doc.packId)}&path=${encodeURIComponent(doc.relativePath)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {fr ? "Ouvrir" : "Open"}
-                          </a>
-                        </Button>
-                      ) : null}
-                      <Button asChild size="sm" variant="ghost">
-                        <a
-                          href={doc.sourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          title={
-                            fr
-                              ? `Source : ${doc.sourceUrl}`
-                              : `Source: ${doc.sourceUrl}`
-                          }
-                          aria-label={
-                            fr ? "Ouvrir la source" : "Open source"
-                          }
-                        >
-                          <ExternalLink className="size-3.5" />
-                        </a>
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  <div className="flex gap-1 pt-0.5">
+                    <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[10px]">
+                      <a href={openHref} target="_blank" rel="noreferrer">
+                        {fr ? "Ouvrir" : "Open"}
+                      </a>
+                    </Button>
+                    <Button asChild size="sm" variant="ghost" className="h-7 w-7 px-0">
+                      <a
+                        href={doc.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={
+                          fr
+                            ? `Source : ${doc.sourceUrl}`
+                            : `Source: ${doc.sourceUrl}`
+                        }
+                        aria-label={
+                          fr ? "Ouvrir la source" : "Open source"
+                        }
+                      >
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
+                  </div>
+                </figcaption>
+              </figure>
+            );
+          })}
         </div>
       )}
     </div>

@@ -148,18 +148,21 @@
     "url": "https://brand.ravensburger-group.com/d/e1vhRSQ7WeNy",
     "download": false,
     "kind": "brand",
-    "lang": "und"
+    "lang": "und",
+    "title": "Ravensburger Brand Portal (Lorcana)"
   },
   {
     "url": "https://brand.ravensburger-group.com/d/e1vhRSQ7WeNy/downloads#/set-assets/into-the-inkdark-1",
     "download": false,
     "kind": "brand",
-    "lang": "und"
+    "lang": "und",
+    "title": "Brand Portal — Into the Inkdark set assets"
   },
   {
     "url": "https://brand.ravensburger-group.com/d/e1vhRSQ7WeNy/downloads#/set-assets/hyperia-city-1",
     "download": false,
     "kind": "brand",
-    "lang": "und"
+    "lang": "und",
+    "title": "Brand Portal — Hyperia City set assets"
   }
 ]

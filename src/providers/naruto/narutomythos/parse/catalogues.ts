@@ -277,6 +277,21 @@ export function mapOfficialMythosCard(
   };
 }
 
+/**
+ * CICABOOM CDN stems encode the face language (`133130-fr-…` / `133130-en-…`).
+ * Official install used to dump every non-SS2 face under `cards/fr/`, so an
+ * English-only parallel (KS1 Promo Mythos VV2) showed English art on a FR item.
+ */
+export function langFromMythosOfficialFaceUrl(
+  url: string | null | undefined,
+): "fr" | "en" | null {
+  const path = (url ?? "").trim().split(/[?#]/)[0] ?? "";
+  const leaf = path.split("/").pop()?.toLowerCase() ?? "";
+  if (/(^|[^a-z])fr[^a-z]/.test(leaf) || leaf.includes("-fr-")) return "fr";
+  if (/(^|[^a-z])en[^a-z]/.test(leaf) || leaf.includes("-en-")) return "en";
+  return null;
+}
+
 /** Keep every API language; fill holes from other langs without collapsing. */
 export function mergeOfficialMythosLangRows(
   byLang: Readonly<Record<string, readonly OfficialMythosApiCard[]>>,

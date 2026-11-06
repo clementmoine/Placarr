@@ -26,6 +26,27 @@ const SEGMENT_SEPARATOR = "-";
  */
 const SEGMENT_PATTERN = /^[a-z0-9.!?]+$/;
 
+/**
+ * Promo / bag imprint groupings that {@link printKeyItemSlug} puts *before*
+ * the collector number (`p4-16`, `prerelease-ni0019`, `cdf-te0030`).
+ *
+ * Parallel markers (Mythos `v` / `vv2`, Carddass `h`, …) stay
+ * `{set}-{number}-{grouping}` — dropping the set made
+ * `/assets/…/prints/v-0104-fr/face` 404 while the file lived under
+ * `cards/fr/ks1promo/0104-v/`.
+ */
+const STEM_LEADING_GROUPINGS = new Set(["cdf", "prerelease", "ps"]);
+
+/** Lorcana-style promo axis (`P1`…`P9`) or the Naruto bag imprints above. */
+export function isStemLeadingGrouping(
+  grouping: string | null | undefined,
+): boolean {
+  const g = grouping?.trim().toLowerCase() ?? "";
+  if (!g) return false;
+  if (STEM_LEADING_GROUPINGS.has(g)) return true;
+  return /^p\d+$/.test(g);
+}
+
 export type PrintIdentity = {
   /** Game slug, e.g. the Lorcana slug. Not a provider id. */
   game: string;

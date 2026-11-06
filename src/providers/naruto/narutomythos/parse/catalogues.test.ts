@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  langFromMythosOfficialFaceUrl,
   mapOfficialMythosCard,
   matchMythosSs2FaceUrl,
   mergeOfficialMythosLangRows,
@@ -123,6 +124,24 @@ import {
           Title: "Naruto Uzumaki",
         }),
       ).toMatchObject({ setCode: "ss2", number: "m1", grouping: null });
+    });
+  });
+
+  describe("langFromMythosOfficialFaceUrl", () => {
+    it("lit fr/en dans le stem CDN CICABOOM", () => {
+      expect(
+        langFromMythosOfficialFaceUrl(
+          "https://cards.narutotcgmythos.com/storage/cards/133130-fr-7af2a3c0.webp",
+        ),
+      ).toBe("fr");
+      expect(
+        langFromMythosOfficialFaceUrl(
+          "https://cards.narutotcgmythos.com/storage/cards/133130-en-47e61bb5.webp",
+        ),
+      ).toBe("en");
+      expect(langFromMythosOfficialFaceUrl("https://cdn/no-lang.webp")).toBe(
+        null,
+      );
     });
   });
 

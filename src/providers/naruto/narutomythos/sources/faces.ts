@@ -49,6 +49,7 @@ import {
 import {
   NARUTO_MYTHOS_KS1E2_SET_CODE,
   NARUTO_MYTHOS_KS1PROMO_SET_CODE,
+  langFromMythosOfficialFaceUrl,
   mergeOfficialMythosLangRows,
   parseOfficialMythosApiPayload,
   type MythosOfficialPrint,
@@ -784,10 +785,12 @@ export async function installMythosNarutomythosSiteFaces(
     }
     matched += 1;
 
+    // Never cross-fill EN into `cards/fr/` (or the reverse) — missing locale
+    // faces are borrowed at lookup time, not by lying on disk.
     const wroteFr = await installSiteLangFace({
       ...resolved,
       lang: "fr",
-      faceUrl: card.faceFr ?? card.faceEn,
+      faceUrl: card.faceFr,
       downloadFaces,
       force,
       assets,
@@ -795,7 +798,7 @@ export async function installMythosNarutomythosSiteFaces(
     const wroteEn = await installSiteLangFace({
       ...resolved,
       lang: "en",
-      faceUrl: card.faceEn ?? card.faceFr,
+      faceUrl: card.faceEn,
       downloadFaces,
       force,
       assets,
@@ -1114,13 +1117,15 @@ export async function installOfficialMythosFaces(
       missing.push(`${print.setCode}:${print.printed}`);
       continue;
     }
-    const lang = titleLangForSet(print.setCode);
-    const destDir = path.join(
-      packCardsDir(NARUTO_MYTHOS_PACK_ID),
-      print.setCode,
+    const lang =
+      langFromMythosOfficialFaceUrl(print.faceUrl) ??
+      titleLangForSet(print.setCode);
+    // Contrat universel : cards/{lang}/{set}/{card}/ — jamais {set}/{lang}/.
+    const destDir = packCardDir(NARUTO_MYTHOS_PACK_ID, {
       lang,
-      officialDiskCard(print),
-    );
+      set: print.setCode,
+      card: officialDiskCard(print),
+    });
     mkdirSync(destDir, { recursive: true });
     const art = `art.${OFFICIAL_SOURCE_ID}.webp`;
     const dest = path.join(destDir, art);
@@ -1530,12 +1535,11 @@ export async function installMythosFaces(
         missing.push(card.printed);
         continue;
       }
-      const destDir = path.join(
-        packCardsDir(NARUTO_MYTHOS_PACK_ID),
-        setCode,
+      const destDir = packCardDir(NARUTO_MYTHOS_PACK_ID, {
         lang,
-        lorenzoneDiskCard(card),
-      );
+        set: setCode,
+        card: lorenzoneDiskCard(card),
+      });
       mkdirSync(destDir, { recursive: true });
       const art = `art.${LORENZONE_SOURCE_ID}.webp`;
       const dest = path.join(destDir, art);

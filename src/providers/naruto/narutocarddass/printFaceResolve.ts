@@ -8,7 +8,10 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  isStemLeadingGrouping,
+  parsePrintKey,
+} from "@/core/identify/printKey";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { packCardsDir } from "@/lib/packPaths";
 
@@ -325,12 +328,6 @@ function safeSegment(value: string): boolean {
 }
 
 /**
- * Groupings that {@link printKeyItemSlug} puts *before* the collector number
- * (`cdf-te0030-fr`, `prerelease-ni0019-fr`). Not catalogue set codes.
- */
-const STEM_LEADING_GROUPINGS = new Set(["cdf", "prerelease", "ps"]);
-
-/**
  * Reverse a shelf / asset stem head onto a set-scoped printKey.
  * `s1-cl0001` → `naruto:s1-cl0001`; `cdf-te0030` → `naruto:promo-te0030-cdf`
  * (not `naruto:cdf-te0030`).
@@ -340,10 +337,11 @@ function printKeyFromShelfStemHead(head: string): string | null {
   if (!lower || !safeSegment(lower) || lower.includes(":")) return null;
 
   const lead = /^([a-z]+)-(.+)$/i.exec(lower);
-  if (lead && STEM_LEADING_GROUPINGS.has(lead[1]!.toLowerCase())) {
+  if (lead && isStemLeadingGrouping(lead[1])) {
     const grouping = lead[1]!.toLowerCase();
     const number = lead[2]!.toLowerCase();
     if (!safeSegment(number) || number.includes(":")) return null;
+    // Lorcana-style `pN` never appears on Naruto stems; bag imprints only.
     const set = grouping === "prerelease" ? "s1" : "promo";
     return mintNarutoPrintKey(`${number}-${grouping}`, set);
   }

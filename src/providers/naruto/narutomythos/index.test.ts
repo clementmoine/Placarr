@@ -37,10 +37,26 @@ import { narutoMythosCuratedDir } from "./pack";
       ).toEqual(["back.webp"]);
     });
 
-    it("registers a catalogue-only effect pack", () => {
+    it("registers a catalogue-only effect pack with house holo flare", () => {
       expect(narutoMythosEffectPack.id).toBe("naruto-mythos");
-      expect(narutoMythosEffectPack.listMaterials()).toEqual([]);
+      expect(narutoMythosEffectPack.listMaterials()).toEqual(["holo"]);
+      expect(narutoMythosEffectPack.resolveCss("holo", null).finishShaderId).toBe(
+        "flare",
+      );
       expect(narutoMythosEffectPack.resolveMaterial("foil", null)).toBeNull();
+      expect(narutoMythosEffectPack.fallbackFoilMaskUrl).toContain(
+        "full_foil_mask",
+      );
+    });
+
+    it("stamps foil on the KS1 promo Mythos VV2 parallel", async () => {
+      const print = await narutomythosModule.lookupPrint!({
+        printKey: "mythos:ks1promo-0133-vv2",
+        language: "fr",
+      });
+      expect(print?.rarity).toBe("M");
+      expect(print?.finishes).toEqual(["holo"]);
+      expect(print?.foilMaskUrl).toContain("full_foil_mask");
     });
   });
 }

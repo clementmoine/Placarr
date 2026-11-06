@@ -238,6 +238,15 @@ describe("deux langues d'une même carte ne sont pas des copies", () => {
     expect(printKeyItemSlug("lorcana:9-34-p3", null, "fr")).toBe("p3-34-fr");
   });
 
+  it("keeps the set on Mythos / parallel groupings (not promo-leading)", () => {
+    expect(printKeyItemSlug("mythos:ks1promo-0104-v", null, "fr")).toBe(
+      "ks1promo-0104-v-fr",
+    );
+    expect(printKeyItemSlug("mythos:ks1promo-0133-vv2", "holo", "fr")).toBe(
+      "ks1promo-0133-vv2-fr-holo",
+    );
+  });
+
   /*
     Set-scoped Naruto keys already carry the series (`s3-ta0074`). Lorcana
     likewise — do not double the chapter. Legacy family-as-set keys still

@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Loader2, Search } from "lucide-react";
 
 import { BaseModal } from "@/components/modals/BaseModal";
@@ -8,12 +15,14 @@ import {
   printPickerActiveSearchQuery,
   printPickerListLines,
 } from "@/components/modals/printPickerListMode";
+import { CardBackSkeleton } from "@/components/CardBackSkeleton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { RemoteImage } from "@/components/RemoteImage";
 import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { resolveSharedCardBackSkeleton } from "@/core/render/foil/cardBacks";
 import {
   isSealedFinish,
   sealedBagOuterAspect,
@@ -221,6 +230,11 @@ function candidateAsVariantInfo(
 /**
  * Tile art: CSS foil when the pack has a recipe + mask (Lorcana today; Pokémon
  * when its CSS path is ready). Plain finishes stay on a static image.
+ *
+ * Pack/set card back sits under the face — same stack as {@link ItemCard}.
+ * `HoloCardImage` stays invisible until art + masks are ready; without a back
+ * the tile was only `bg-muted`. Parent {@link OrientedMediaFrame} already
+ * orients children, so the skeleton stays at 0 quarter-turns.
  */
 function PrintPickerTileArt({
   candidate,
@@ -236,10 +250,19 @@ function PrintPickerTileArt({
     fallback,
   );
   const art = view.imageUrl ?? fallback;
-  if (!art) return null;
+  const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
+    printKey: candidate.printKey,
+    setCode: candidate.setCode,
+    effectPackId: view.effectPackId ?? candidate.effectPack ?? null,
+  });
+  const [plainArtReady, setPlainArtReady] = useState(false);
+  useEffect(() => {
+    setPlainArtReady(false);
+  }, [art]);
 
-  if (view.foilMaskUrl && (view.shader || view.varnish)) {
-    return (
+  let face: ReactNode = null;
+  if (art && view.foilMaskUrl && (view.shader || view.varnish)) {
+    face = (
       <FoilCardImage
         effectPack={view.effectPackId}
         printKey={candidate.printKey}
@@ -266,30 +289,38 @@ function PrintPickerTileArt({
         className="absolute inset-0 h-full w-full"
       />
     );
-  }
-
-  const image = (
-    <RemoteImage
-      src={art}
-      alt={candidate.title}
-      fill
-      sizes="(max-width: 640px) 45vw, 180px"
-      className="object-cover"
-    />
-  );
-
-  if (isSealedFinish(view.finish ?? finish)) {
-    return (
+  } else if (art) {
+    const image = (
+      <RemoteImage
+        src={art}
+        alt={candidate.title}
+        fill
+        sizes="(max-width: 640px) 45vw, 180px"
+        onLoad={() => setPlainArtReady(true)}
+        className={cn(
+          "object-cover transition-opacity duration-150 ease-out",
+          cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
+        )}
+      />
+    );
+    face = isSealedFinish(view.finish ?? finish) ? (
       <SealedBagOverlay
         side="front"
         className="absolute inset-0 h-full w-full"
       >
         {image}
       </SealedBagOverlay>
+    ) : (
+      <div className="absolute inset-0 h-full w-full">{image}</div>
     );
   }
 
-  return <div className="absolute inset-0 h-full w-full">{image}</div>;
+  return (
+    <>
+      <CardBackSkeleton url={cardBackSkeletonUrl} faceQuarterTurns={0} />
+      {face}
+    </>
+  );
 }
 
 /**
@@ -1417,7 +1448,7 @@ export function PrintPickerModal({
                         }
                         faceQuarterTurns={row.faceQuarterTurns}
                         landscapeFace={row.landscapeFace}
-                        className="overflow-hidden rounded-lg bg-muted"
+                        className="overflow-hidden rounded-lg bg-zinc-200 dark:bg-zinc-950"
                       >
                         <PrintPickerTileArt
                           candidate={row}

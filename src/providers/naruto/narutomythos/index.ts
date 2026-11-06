@@ -11,6 +11,7 @@ import {
   NARUTO_MYTHOS_PRINT_GAME,
   NARUTO_MYTHOS_PROVIDER_ID,
 } from "./pack";
+import { decorateMythosCandidate } from "./finishes";
 import {
   formatMythosReference,
   mythosSetLabel,
@@ -40,10 +41,14 @@ const built = createEmptyLocalTcgProvider({
     catalogLifecycle: "living",
     syncHint: "Catalogue Sync (admin)",
     websiteUrl: "https://www.narutotcgmythos.com/",
+    // Some KS1 Promo parallels (Mythos VV2) only ship an EN gallery face —
+    // borrow rather than filing English bytes under `cards/fr/`.
+    borrowFaceAcrossLocales: true,
     formatReference: formatMythosReference,
     setLabel: mythosSetLabel,
     setSortKey: mythosSetSortKey,
     normalizeSearchQuery: normalizeMythosSearchQuery,
+    decorateCandidate: decorateMythosCandidate,
     listRemotePrintSets: async () => {
       const { listMythosRemoteSets } = await import(
         /* webpackIgnore: true */

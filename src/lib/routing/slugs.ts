@@ -1,4 +1,7 @@
-import { parsePrintKey } from "@/core/identify/printKey";
+import {
+  isStemLeadingGrouping,
+  parsePrintKey,
+} from "@/core/identify/printKey";
 import {
   normalizeVolumeNumber,
   unpaddedVolumeNumbersInTitle,
@@ -154,12 +157,17 @@ export function printKeyItemSlug(
   if (!identity) return "";
   const grouping = identity.grouping?.trim() || "";
   /*
-    Promo / alternate imprint: the collector reads `16/P4`, not « chapter 13
-    #16 with a p4 stamp ». Slug as `p4-16` so it matches the checklist axis
-    and does not collide with retail `13-16`.
+    Promo / bag imprint (`P4`, `prerelease`, `cdf`): the collector reads
+    `16/P4`, not « chapter 13 #16 with a p4 stamp ». Slug as `p4-16` so it
+    matches the checklist axis and does not collide with retail `13-16`.
+
+    Every other grouping (Mythos `v` / `vv2`, foil `h`, …) keeps the set —
+    otherwise the asset stem loses the home folder and the face 404s.
   */
   const reference = grouping
-    ? slugify(`${grouping}-${identity.number}`)
+    ? isStemLeadingGrouping(grouping)
+      ? slugify(`${grouping}-${identity.number}`)
+      : slugify(`${identity.set}-${identity.number}-${grouping}`)
     : slugify(`${identity.set}-${identity.number}`);
   if (!reference) return "";
   /*

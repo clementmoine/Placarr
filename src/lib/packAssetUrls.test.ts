@@ -30,15 +30,37 @@ describe("assetsPrintFaceUrl", () => {
       assetsPrintFaceUrl("naruto/carddass", "naruto:s1-ni0019-prerelease", "fr"),
     ).toBe("/assets/naruto/carddass/prints/prerelease-ni0019-fr/face");
   });
+
+  it("keeps the set on Mythos parallel stems (v / vv2)", () => {
+    // Grouping-first `v-0104-fr` 404s — art lives under cards/fr/ks1promo/0104-v/.
+    expect(
+      assetsPrintFaceUrl(
+        "naruto/mythos",
+        "mythos:ks1promo-0104-v",
+        "fr",
+        "face",
+      ),
+    ).toBe("/assets/naruto/mythos/prints/ks1promo-0104-v-fr/face");
+    expect(
+      assetsPrintFaceUrl(
+        "naruto/mythos",
+        "mythos:ks1promo-0133-vv2",
+        "fr",
+        "thumb",
+      ),
+    ).toBe("/assets/naruto/mythos/prints/ks1promo-0133-vv2-fr/thumb");
+  });
 });
 
 describe("identifyMatchFaceUrl", () => {
   it("serves the indexed file when the set code itself contains a hyphen", () => {
-    // `pokemon:sv3-5-001` parses as set sv3 / number 5 / grouping 001, so the
-    // thumb stem looks up a folder that is not on disk and the tile stays gray.
+    // `pokemon:sv3-5-001` still parses as set sv3 / number 5 / grouping 001
+    // (hyphen inside the real set code). The stem keeps set+number+grouping so
+    // it round-trips; the disk folder is `sv3-5/001`, so callers with artRel
+    // must prefer that path or the tile stays gray.
     expect(
       identifyMatchDisplayUrl("pokemon", "pokemon:sv3-5-001", "fr"),
-    ).toBe("/assets/pokemon/prints/001-5-fr/thumb");
+    ).toBe("/assets/pokemon/prints/sv3-5-001-fr/thumb");
     expect(
       identifyMatchFaceUrl({
         pack: "pokemon",

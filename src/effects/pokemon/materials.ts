@@ -142,6 +142,9 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
    * override wins over stale server hydrate too.
    */
   PikachuFoil: {
+    _Sampler51145: "FX_T_Noise_Dim",
+    // GLES samples `_Normal` for etch-like microrelief (MAT bump plate).
+    _Normal: "T_Normal_BumpRandom",
     _CCPatternTex: "TEX_StitchedRings",
     _SpectrumTex: "T_Holofoil_Pikachu_Spectrum",
     _TexDistort: "FX_T_Celeb_Confetti",
@@ -152,12 +155,21 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _SpectrumTexture: "FX_T_Spectrum_Bands_Angled",
   },
   Cosmos: {
+    // HLSLcc hash-seed samplers (`.y` → sin-hash); same plate as SvHolo.
+    _Sampler5685: "FX_T_Noise_Dim",
+    _Sampler5687: "FX_T_Noise_Dim",
+    _Sampler5690: "FX_T_Noise_Dim",
+    _Sampler5692: "FX_T_Noise_Dim",
     _FoilShineTexture: "FX_T_Gradient_Shine",
     _HolofoilSpectrumTexture: "FX_T_Spectrum_Bands_Rainbow_Bright",
     _StarsTexture: "T_Holofoil_Cosmos_Dots_RGBA_Gradient",
     _T_noise_dots: "T_CloudNoise",
   },
   CrackedIce: {
+    _Sampler5779: "FX_T_Noise_Dim",
+    _Sampler5781: "FX_T_Noise_Dim",
+    _Sampler5783: "FX_T_Noise_Dim",
+    _Sampler5785: "FX_T_Noise_Dim",
     _HolofoilSpectrumTexture: "FX_T_Spectrum_Bands_DesaturateOneSide",
     _StarsTexture: "T_Holofoil_Mask_Cracked_Ice_RGB",
     _T_noise_dots: "T_CloudNoise_Bright",
@@ -171,12 +183,25 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     // bind a real CC plate via foil_mask overrides.
     // GLES dumps rename MAT `_Tex_CC*` → `_CCPatternTex` / `_CCGlitterTex` /
     // `_CCSpectrumPatternTex` — bind the sampler names the .frag actually uses.
+    // Hash-seed `_Sampler*` (same pattern as SvHolo `_Sampler51071`).
+    _Sampler5705: "FX_T_Noise_Dim",
+    _Sampler5710: "FX_T_Noise_Dim",
+    _Sampler5724: "FX_T_Noise_Dim",
+    _Sampler5739: "FX_T_Noise_Dim",
+    _Sampler5769: "FX_T_Noise_Dim",
+    _Sampler5777: "FX_T_Noise_Dim",
     _CCGlitterTex: "FX_T_SVUltra_Glitter",
     _CCSpectrumPatternTex: "FX_T_Spectrum_SVHolo2",
     _Tex_Shine: "T_Holofoil_Mask_Bar_Wide_Single",
     _Tex_Spectrum: "FX_T_Spectrum_FlatSilver",
   },
   FlatSilver_CC: {
+    _Sampler5705: "FX_T_Noise_Dim",
+    _Sampler5710: "FX_T_Noise_Dim",
+    _Sampler5724: "FX_T_Noise_Dim",
+    _Sampler5739: "FX_T_Noise_Dim",
+    _Sampler5769: "FX_T_Noise_Dim",
+    _Sampler5777: "FX_T_Noise_Dim",
     _CCPatternTex: "TEX_CC_PB",
     _CCGlitterTex: "FX_T_SVUltra_Glitter",
     _CCSpectrumPatternTex: "FX_T_Spectrum_SVHolo2",
@@ -193,6 +218,10 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _FoilShineTexture: "FX_T_Gradient_Shine_Dull",
     _speccyspect: "FX_T_Spectrum_BlackSide",
   },
+  RGBFoil: {
+    _Sampler5483: "FX_T_Noise_Dim",
+    _Sampler5510: "FX_T_Noise_Dim",
+  },
   Rainbow: {
     _DirectionTexture: "FX_T_Distort",
     _SpectrumBright: "FX_T_Highlight_Over",
@@ -205,7 +234,8 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
   },
   SolidColor: {
     _SpectrumTexture: "FX_T_Spectrum_Bands_DesaturateOneSide",
-    _TextureLightSheen1: "T_Holofoil_Mask_Gradient_LightSheen",
+    // Frag sampler is `_TextureLightSheen` (not the MAT `…Sheen1` typo).
+    _TextureLightSheen: "T_Holofoil_Mask_Gradient_LightSheen",
     _barstexture: "T_HoloFoil_Bars_Mask",
   },
   Squares: {
@@ -233,6 +263,7 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     // Northern Cross is on the MAT, but `_UseCCFoil` defaults to 0 — CastAndCure
     // prints turn the layer on at runtime (see `applyLiveFoilMask`).
     // GLES frag samples `_CCPatternTex` (not MAT `_Tex_CC`).
+    _Sampler51931: "FX_T_Noise_Dim",
     _SpectrumTexture: "FX_T_Spectrum_Sunpillar",
     _CCPatternTex: "FX_T_Northern_Cross",
     _CCSpectrumPatternTex: "FX_T_Spectrum_SVHolo2",
@@ -251,6 +282,10 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _Spectrum_Tex: "FX_T_Spectrum_Rainbow",
   },
   SvUltraGoldRainbow: {
+    _Sampler51220: "FX_T_Noise_Dim",
+    _Sampler51226: "FX_T_Noise_Dim",
+    _Sampler51267: "FX_T_Noise_Dim",
+    _Sampler51352: "FX_T_Noise_Dim",
     _CardGlitter: "FX_T_SVUltra_Glitter",
     _Shine_Tex: "FX_T_Highlight_Gold_Band",
     _Spectrum_Tex: "FX_T_Spectrum_SVHolo2",

@@ -79,7 +79,7 @@ describe("pokemon materials shared motifs", () => {
       "FX_T_Spectrum_Bands_DesaturateOneSide",
     );
     expect(m.textures._barstexture?.file).toContain("T_HoloFoil_Bars_Mask");
-    expect(m.textures._TextureLightSheen1?.file).toContain(
+    expect(m.textures._TextureLightSheen?.file).toContain(
       "T_Holofoil_Mask_Gradient_LightSheen",
     );
     // Sheet dumps `_FoilAnimation: 0` with `_FoilScrollingOn: 1` — coerce.
@@ -140,7 +140,7 @@ describe("pokemon materials shared motifs", () => {
       _Tex_Starry: "T_Holofoil_Star_Classic",
       _Tex_Spectrum: "FX_T_Spectrum_Rainbow",
       _Tex_Glitter: "T_Holofoil_Noise_Pixel",
-      _Tex_Shine: "T_Holofoil_Mask_Bar_Thin_Single",
+      _Tex_Shine: "T_Holofoil_Mask_Bar_Wide_Single",
     });
     const m = paperMaterial("ClassicFoil")!;
     expect(m.fragment).toBe("ClassicFoil.frag");

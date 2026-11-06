@@ -201,7 +201,9 @@ export function HoloCardImage({
    * effect layers used to stretch to the frame itself: on a 313px-tall hero the
    * foil hung 6px past the artwork and the mask was stretched 2% against it.
    * The layers must cover the *painted art*, so everything below sits in a
-   * surface box of exactly this ratio, centred in the frame.
+   * surface box of exactly this ratio, centred in the frame. Inside that box
+   * we still `object-cover` (not contain): sub-pixel rounding of width/height
+   * can leave a 1px letterbox where absolute foil fringes past the print.
    */
   const [artRatio, setArtRatio] = useState<string | null>(null);
   const [artReady, setArtReady] = useState(false);
@@ -472,6 +474,14 @@ export function HoloCardImage({
     springTo(deviceLean, 0.4);
   }, [lightFromParent, deviceLean, isActive, springTo, noteLean]);
 
+  /*
+    Once the surface box has the scan's aspect ratio, `object-contain` can
+    still letterbox by a sub-pixel (width/height rounded independently) and
+    leave the absolute foil layers showing as a 1px fringe past the print.
+    Cover fills that box; `block` kills the inline-img baseline gap.
+  */
+  const artObjectFitClass = artRatio ? "object-cover" : objectFitClass(fit);
+
   const artLayer =
     useLenticularArt && lenticularGrid ? (
       <LenticularStripArt
@@ -479,7 +489,7 @@ export function HoloCardImage({
         imageUrl={imageUrl}
         grid={lenticularGrid}
         alt={alt}
-        className="h-full w-full"
+        className="block h-full w-full"
         listenPointer={!parentDrivesLenticular}
         tilt={parentDrivesLenticular ? 0 : undefined}
         lenticularCropProfile={lenticularCropProfile}
@@ -490,7 +500,7 @@ export function HoloCardImage({
         imageUrl={imageUrl}
         alt={alt}
         scanCrop={scanCrop}
-        className="h-full w-full"
+        className="block h-full w-full"
         onLoad={onKayouScanLoad}
       />
     ) : (
@@ -500,7 +510,7 @@ export function HoloCardImage({
         alt={alt}
         draggable={false}
         onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
-        className={cn("h-full w-full", objectFitClass(fit))}
+        className={cn("block h-full w-full", artObjectFitClass)}
       />
     );
 
@@ -698,9 +708,15 @@ export function HoloCardImage({
           this is `object-contain` as a box the layers can share. Until the
           ratio is known (or when the art covers), it simply fills the frame.
         */}
-          <div className="relative flex h-full w-full items-center justify-center">
+          <div className="relative flex h-full w-full items-center justify-center rounded-[inherit]">
+            {/*
+              Radius + overflow on the *surface* that owns art + mix-blend
+              layers. Ancestor clip alone is not enough: soft-light / overlay
+              shine can fringe past rounded corners onto the page backdrop.
+              `rounded-[inherit]` must chain through this flex wrapper too.
+            */}
             <div
-              className="relative"
+              className="relative overflow-hidden rounded-[inherit]"
               style={
                 useLenticularArt
                   ? { width: "100%", height: "100%" }
@@ -737,7 +753,12 @@ export function HoloCardImage({
                             : FOIL_POINTER_LIGHT_MASK,
                         ]),
                       }}
-                      className="pointer-events-none absolute inset-0"
+                      className={cn(
+                        // inset-px: keep shine inside the print when the ratio
+                        // box rounds a sub-pixel larger than the painted art.
+                        "pointer-events-none absolute inset-px rounded-[inherit]",
+                        overlayLook.layerClassName,
+                      )}
                     />
                   ))}
 
@@ -767,8 +788,15 @@ export function HoloCardImage({
                         : FOIL_POINTER_LIGHT_MASK,
                     ]),
                   }}
-                  className="pointer-events-none absolute inset-0"
-                />
+                  className={cn(
+                    "pointer-events-none absolute inset-px overflow-hidden rounded-[inherit]",
+                    shader.layerClassName,
+                  )}
+                >
+                  {shader.layerClassName === "holo-flare-shimmer" ? (
+                    <div className="holo-flare-shimmer__sweep" />
+                  ) : null}
+                </div>
               )}
 
               {/*
@@ -804,7 +832,10 @@ export function HoloCardImage({
                           : FOIL_POINTER_LIGHT_MASK,
                       ]),
                     }}
-                    className="pointer-events-none absolute inset-0"
+                    className={cn(
+                      "pointer-events-none absolute inset-px overflow-hidden rounded-[inherit]",
+                      overlayLook.layerClassName,
+                    )}
                   />
                 ))}
 
@@ -815,7 +846,10 @@ export function HoloCardImage({
                     ...holoLayerStyle(varnishShader, tuning),
                     ...maskedByStyle(varnishMask),
                   }}
-                  className="pointer-events-none absolute inset-0"
+                  className={cn(
+                    "pointer-events-none absolute inset-px overflow-hidden rounded-[inherit]",
+                    varnishShader.layerClassName,
+                  )}
                 />
               )}
 
@@ -834,7 +868,10 @@ export function HoloCardImage({
                     ),
                     ...maskedByStyle(secondVarnishMask),
                   }}
-                  className="pointer-events-none absolute inset-0"
+                  className={cn(
+                    "pointer-events-none absolute inset-px overflow-hidden rounded-[inherit]",
+                    varnishShader.layerClassName,
+                  )}
                 />
               )}
 
@@ -845,7 +882,7 @@ export function HoloCardImage({
               */}
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+                className="pointer-events-none absolute inset-px overflow-hidden rounded-[inherit] transition-opacity duration-300"
                 style={
                   shader?.id === "radiantHolo"
                     ? {
@@ -896,7 +933,7 @@ export function HoloCardImage({
               {foilPlate && (
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+                  className="pointer-events-none absolute inset-px overflow-hidden rounded-[inherit] transition-opacity duration-300"
                   style={{
                     ...FOIL_PLATE_GLARE_STYLE,
                     ...maskedByStyle(foilPlate),

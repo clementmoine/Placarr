@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  alignFragmentVaryings,
   aspectCorrectSquareCcUv,
   aspectCorrectSquareMotifUv,
   encodeLinearFoilOutput,
@@ -25,6 +26,24 @@ describe("foilCosTime", () => {
     expect(b).toBeCloseTo(Math.cos(t / 4));
     expect(c).toBeCloseTo(Math.cos(t / 2));
     expect(d).toBeCloseTo(Math.cos(t));
+  });
+});
+
+describe("alignFragmentVaryings", () => {
+  it("réduit FlatSilver/SvUltra TEXCOORD0 vec4 → vec2 (lien VS partagé)", () => {
+    const source = `in highp  vec4 vs_TEXCOORD0;
+in highp  vec3 vs_NORMAL0;
+in highp  vec4 vs_TEXCOORD4;
+u_xlat0.xy = vs_TEXCOORD0.xy;`;
+    const patched = alignFragmentVaryings(source);
+    expect(patched).toContain("in highp vec2 vs_TEXCOORD0;");
+    expect(patched).not.toMatch(/in\s+highp\s+vec4\s+vs_TEXCOORD0/);
+    expect(patched).toContain("in highp  vec3 vs_NORMAL0;");
+  });
+
+  it("laisse intact un frag déjà en vec2", () => {
+    const source = "in highp vec2 vs_TEXCOORD0;";
+    expect(alignFragmentVaryings(source)).toBe(source);
   });
 });
 

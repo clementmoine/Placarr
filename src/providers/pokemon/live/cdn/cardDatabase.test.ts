@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  clientFoilMaskOverrideFromLongForm,
   extractIdentitiesFromBlob,
   extractIdentitiesFromFile,
   liveFoilMaskOverrideMap,
@@ -230,6 +231,39 @@ describe("cardDatabase", () => {
     }
   });
 
+  it("recovers CastAndCure / Poké Ball laminate from longForm suffixes", () => {
+    expect(
+      clientFoilMaskOverrideFromLongForm(
+        "Rampardosex_me5_45_std_DoubleRare_SunPillar_Holo_CastAndCure_SouthernCross",
+        "Holo",
+      ),
+    ).toBe("CastAndCure");
+    expect(
+      clientFoilMaskOverrideFromLongForm(
+        "Sewaddle_rsv10-5_1_sph_PokeBallCommon_FlatSilver_Reverse_CastAndCure_SVPokeBall",
+        "Reverse",
+      ),
+    ).toBe("ReverseLaminatePokeBall");
+    expect(
+      clientFoilMaskOverrideFromLongForm(
+        "Sewaddle_rsv10-5_1_mph_MasterBallCommon_FlatSilver_Reverse_CastAndCure_SVMasterBall",
+        "Reverse",
+      ),
+    ).toBe("ReverseLaminateMasterBall");
+    const blob = makeBlob({
+      nameEn: "Rampardos ex",
+      nameFr: "Charkos-ex",
+      collector: "45",
+      longForm:
+        "Rampardosex_me5_45_std_DoubleRare_SunPillar_Holo_CastAndCure_SouthernCross",
+      extraSearch: "charkos",
+    });
+    const rows = extractIdentitiesFromBlob(blob, { lang: "fr" });
+    expect(rows[0]!.foil_mask).toBe("CastAndCure");
+    expect(rows[0]!.foil_effect).toBe("SunPillar");
+    expect(rows[0]!.long_form_id).toContain("CastAndCure_SouthernCross");
+  });
+
   it("liveFoilMaskOverrideMap / writeLiveFoilMasksJson", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "foil-masks-"));
     tmpDirs.push(dir);
@@ -240,13 +274,15 @@ describe("cardDatabase", () => {
         num: 45,
         lang: "fr",
         variant: "std",
-        long_form_id: "x_CastAndCure",
+        // Stored foil_mask stayed Holo; CC lives in the longForm suffix.
+        long_form_id:
+          "Rampardosex_me5_45_std_DoubleRare_SunPillar_Holo_CastAndCure_SouthernCross",
         card_id: "",
         name_en: "",
         name_fr: "",
         collector_num: "45",
         foil_effect: "SunPillar",
-        foil_mask: "CastAndCure",
+        foil_mask: "Holo",
         rarity_code: "",
         set_code: "",
       },

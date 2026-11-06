@@ -104,10 +104,16 @@ describe("pokemon pack assets", () => {
         const lang = m[2]!.toLowerCase();
         const num = m[3]!;
         // Live dump is still set-first; lang-first URLs remap at serve time.
+        // Placeholder empty dirs exist for many stems — only audit harvested
+        // faces (art on disk). Mask without art is a harvest gap, not a pack bug.
         const cardDir = [
           path.join(CARDS_ROOT, set, lang, num),
           path.join(CARDS_ROOT, lang, set, num),
-        ].find((dir) => existsSync(dir));
+        ].find(
+          (dir) =>
+            existsSync(path.join(dir, "art.webp")) ||
+            existsSync(path.join(dir, "art.png")),
+        );
         if (!cardDir) continue;
         for (const variant of variantsForBundle(bundleId)) {
           const maskTex = variant.maskTex.trim();

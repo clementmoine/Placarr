@@ -165,32 +165,27 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
   },
 
   /**
-   * One narrow glint that crosses the card and then leaves it alone.
+   * Gallery shimmer — Pokémon TCG `card__shine` lobe, Lorcana/Pokémon motion.
    *
    * The plainest look here on purpose. It suits a pack whose foil was never
    * captured: a spectrum would invent detail we do not have, while a glint
    * only claims "this copy is shiny", which is exactly what we do know.
    *
-   * Shape taken from the Pokémon TCG gallery's own hero cards: a thin white
-   * bar at -45°, `luminosity`. That blend is the part that matters — it lifts
-   * brightness while leaving the artwork's hue alone, so the card looks
-   * polished rather than washed white the way `screen` leaves it.
-   *
-   * Their bar is on a timer. Ours rides `--combined` like every other look
-   * here, so the glint tracks the tilt: it crosses as you turn the card and
-   * holds where you stop, instead of sweeping past on a clock that has nothing
-   * to do with what your hand is doing.
+   * Paint: `.holo-flare-shimmer` (`globals.css`) — soft white lobe, -45°,
+   * `soft-light` on the lobe only. Motion: `--combined` (pointer + idle lean
+   * blend on mouse out), same handoff as every other CSS foil. Inline
+   * `background-*` stay empty so we do not redraw a second band.
    */
   flare: {
     id: "flare",
-    backgroundImage: `linear-gradient(-45deg, transparent 44%, rgba(255,255,255,0.95) 50%, transparent 56%)`,
+    backgroundImage: "none",
     backgroundRepeat: "no-repeat",
-    // Wider than the card so the band is fully off it at both ends of the
-    // travel, instead of appearing and vanishing mid-face.
-    backgroundSize: "250% 250%",
-    backgroundPosition: "var(--combined) center",
-    mixBlendMode: "luminosity",
-    opacity: 0.7,
+    backgroundSize: "auto",
+    backgroundPosition: "center",
+    // Blend lives on the lobe pseudo (`.holo-flare-shimmer__sweep::after`),
+    // not this full-card layer — soft-light on the rect fringes past rounded
+    // corners onto the page. `normal` here keeps the wrapper a pure clip.
+    mixBlendMode: "normal",
     /*
       No pointer falloff. That mask fades the foil to nothing 68% out from the
       cursor, which suits a textured holo — light only reads where you point.
@@ -198,6 +193,7 @@ const HOUSE_SHADERS: Readonly<Record<HouseHoloShaderId, HoloShader>> = {
       crossed the card: the one thing this look is.
     */
     pointerFalloff: false,
+    layerClassName: "holo-flare-shimmer",
     // Brightest as the card turns away from you, which is when a real foil
     // catches the light; settles as you face it.
     filter: `brightness(${lit(0.95, 0.5)})`,

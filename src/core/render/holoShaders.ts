@@ -114,6 +114,12 @@ export type HoloShader = {
    * that to 0 — use for spotlight/halo only, never for motif lattices.
    */
   opacityFollowsGlare?: boolean;
+  /**
+   * Extra class on the shine layer node. Used when the look is owned by a
+   * stylesheet animation (house `flare` → Pokémon gallery `card__shine`)
+   * rather than by `background-*` alone.
+   */
+  layerClassName?: string;
 };
 
 export const HOLO_SHADER_IDS = [

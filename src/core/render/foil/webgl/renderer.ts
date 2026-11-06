@@ -69,6 +69,9 @@ out highp vec2 vs_TEXCOORD0;
 out highp vec4 vs_TEXCOORD1;
 out highp vec4 vs_TEXCOORD2;
 out highp vec4 vs_TEXCOORD3;
+// FlatSilver / SvUltra dumps also read a mesh normal + worldPos channel.
+out highp vec3 vs_NORMAL0;
+out highp vec4 vs_TEXCOORD4;
 void main() {
   vec2 uv = position * 0.5 + 0.5;
   vs_INTERP0 = vec4(uv, 0.0, 0.0);
@@ -92,6 +95,8 @@ void main() {
   vs_TEXCOORD1 = vec4(T.x, B.x, N.x, worldPos.x);
   vs_TEXCOORD2 = vec4(T.y, B.y, N.y, worldPos.y);
   vs_TEXCOORD3 = vec4(T.z, B.z, N.z, worldPos.z);
+  vs_NORMAL0 = N;
+  vs_TEXCOORD4 = vec4(worldPos, 1.0);
   gl_Position = vec4(position, 0.0, 1.0);
 }`;
 
@@ -255,6 +260,19 @@ export function aspectCorrectSquareCcUv(
   aspect: number = LIVE_CARD_ASPECT,
 ): string {
   return aspectCorrectSquareMotifUv(source, aspect);
+}
+
+/**
+ * FlatSilver / SvUltra declare `in highp vec4 vs_TEXCOORD0` while the shared
+ * quad VS emits `vec2` (and every other Live dump already expects `vec2`).
+ * WebGL2 rejects the type mismatch at link. Those two frags only swizzle
+ * `.xy` / `.xyxy` / `.x` / `.yy` — never `.zw` — so collapse the input.
+ */
+export function alignFragmentVaryings(source: string): string {
+  return source.replace(
+    /\bin\s+highp\s+vec4\s+vs_TEXCOORD0\s*;/g,
+    "in highp vec2 vs_TEXCOORD0;",
+  );
 }
 
 /**
@@ -847,8 +865,18 @@ export function createWebglFoilRenderer(
     for (const sampler of active.samplers) {
       gl!.uniform1i(sampler.location, sampler.unit);
       gl!.activeTexture(gl!.TEXTURE0 + sampler.unit);
-      const texture = texturesBySlot.get(sampler.slot);
-      if (texture) gl!.bindTexture(gl!.TEXTURE_2D, texture);
+      /*
+        Always bind — a missing slot (FlatSilver `_CCPatternTex` pathid 0)
+        must not reuse the previous unit's texture. Transparent fallback
+        matches Unity's unbound α≈0 so CC/spectrum gates stay off.
+      */
+      const texture =
+        texturesBySlot.get(sampler.slot) ??
+        solidTexture(UNBOUND_TEXTURE_FALLBACK);
+      if (!texturesBySlot.has(sampler.slot)) {
+        texturesBySlot.set(sampler.slot, texture);
+      }
+      gl!.bindTexture(gl!.TEXTURE_2D, texture);
     }
 
     gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
@@ -899,7 +927,8 @@ export function createWebglFoilRenderer(
   }
 
   const prepareFragment = (source: string): string => {
-    const opaque = restoreOpaqueFoilOutput(source);
+    const aligned = alignFragmentVaryings(source);
+    const opaque = restoreOpaqueFoilOutput(aligned);
     const isotropic = aspectCorrectSquareMotifUv(opaque);
     return material.linearOutput
       ? encodeLinearFoilOutput(isotropic)

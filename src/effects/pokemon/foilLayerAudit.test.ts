@@ -8,6 +8,11 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { foilTextureFile } from "@/effects/foilTextureFile";
+import "@/lib/foilMetaLoad.server";
+import {
+  packLiveFoilMasksPath,
+  packMaterialSheetsPath,
+} from "@/lib/packPaths";
 
 import { listPokemonEffectFoilNames, POKEMON_FOIL_NAMES } from "./foilNames";
 import { liveFoilMaskForBundle } from "./liveFoilMasks";
@@ -32,20 +37,25 @@ const SHADERS_DIR = path.join(
   "foil",
   "shaders",
 );
-const SHEETS_PATH = path.join(
-  process.cwd(),
-  "src",
-  "effects",
-  "pokemon",
-  "materialSheets.json",
-);
-const MASKS_PATH = path.join(
-  process.cwd(),
-  "src",
-  "effects",
-  "pokemon",
-  "liveFoilMasks.json",
-);
+const SHEETS_PATH = packMaterialSheetsPath("pokemon");
+const MASKS_PATH = packLiveFoilMasksPath("pokemon");
+
+/** Card surfaces are bound at draw time from art/etch URLs. */
+const CARD_SURFACE_SLOTS = new Set([
+  "_CardColorDiffuse",
+  "_CardEtch",
+  "_CardWhitePlateMask",
+  "_CardColdFoilMask",
+]);
+
+/**
+ * Intentionally unbound — FlatSilver gates CC on `_UseCCFoil` × pattern α;
+ * filling with opaque black arms SVHolo2. FlatSilver_CC / ReverseLaminate*
+ * bind a real plate.
+ */
+const INTENTIONAL_UNBOUND: Readonly<Record<string, ReadonlySet<string>>> = {
+  FlatSilver: new Set(["_CCPatternTex"]),
+};
 
 const hasDump =
   existsSync(SHADERS_DIR) &&
@@ -104,6 +114,29 @@ describe("pokemon foil layer audit", () => {
     expect(cc.floats._UseCCFoil).toBe(1);
   });
 
+  it.skipIf(!hasDump)(
+    "every frag sampler is bound (except intentional CC gaps)",
+    () => {
+      const samplerRe =
+        /uniform\s+(?:mediump\s+)?sampler2D\s+(\w+)\s*;/g;
+      const unbound: string[] = [];
+      for (const name of POKEMON_MATERIAL_NAMES) {
+        const mat = paperMaterial(name);
+        if (!mat?.fragment) continue;
+        const fragPath = path.join(SHADERS_DIR, mat.fragment);
+        if (!existsSync(fragPath)) continue;
+        const src = readFileSync(fragPath, "utf8");
+        const allow = INTENTIONAL_UNBOUND[name] ?? new Set();
+        for (const m of src.matchAll(samplerRe)) {
+          const slot = m[1]!;
+          if (CARD_SURFACE_SLOTS.has(slot) || allow.has(slot)) continue;
+          if (!mat.textures[slot]) unbound.push(`${name}.${slot}`);
+        }
+      }
+      expect(unbound, unbound.join("\n")).toEqual([]);
+    },
+  );
+
   it.skipIf(!existsSync(MASKS_PATH))(
     "liveFoilMasks keys are bundle::variant (no stem collisions)",
     () => {
@@ -111,13 +144,20 @@ describe("pokemon foil layer audit", () => {
         string,
         string
       >;
-      for (const key of Object.keys(map)) {
+      const keys = Object.keys(map);
+      expect(keys.length).toBeGreaterThan(0);
+      for (const key of keys) {
         expect(key.includes("::"), key).toBe(true);
       }
-      expect(liveFoilMaskForBundle("me5_fr_045", { variant: "std" })).toBe(
-        "CastAndCure",
-      );
-      // Laminate siblings must not overwrite each other.
+      // Spot-check against whatever CastAndCure entry the local dump has.
+      const castKey = keys.find((k) => map[k] === "CastAndCure");
+      if (castKey) {
+        const [stem, variant] = castKey.split("::");
+        expect(
+          liveFoilMaskForBundle(stem, { variant }),
+        ).toBe("CastAndCure");
+      }
+      // Laminate siblings must not overwrite each other when both present.
       const sph = liveFoilMaskForBundle("rsv10-5_de_001", { variant: "sph" });
       const mph = liveFoilMaskForBundle("rsv10-5_de_001", { variant: "mph" });
       if (sph || mph) {

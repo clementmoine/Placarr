@@ -48,10 +48,9 @@ export const NARUTO_S6_FR_BACK_URL = `${ASSET_BASE}/backs/fr/sets/s6`;
  * per-print mask we do not have.
  */
 const FINISH_SHADER: Record<string, string> = {
-  // A single band of white crossing the card. The spectrum look was busier
-  // than anything we can actually claim about these scans: no foil was ever
-  // captured for this pack, so a passing highlight says "shiny" without
-  // inventing detail.
+  // Pokémon TCG gallery `card__shine` lobe (house `flare`), idle/pointer
+  // via `--combined`. No foil was ever captured — a soft glint says "shiny"
+  // without inventing spectrum detail we cannot claim.
   holo: "flare",
 };
 

@@ -147,6 +147,27 @@ export function liveSetFromCardDatabasePath(filePath: string): string | null {
   return m ? m[1]!.toLowerCase() : null;
 }
 
+/**
+ * Consume trailing `_PascalCase` segments after the 7-group longForm match
+ * (CastAndCure / SouthernCross / SVPokeBall / …).
+ */
+function extendLongFormMatch(
+  text: string,
+  matchIndex: number,
+  matched: string,
+): { longForm: string; length: number } {
+  let end = matchIndex + matched.length;
+  let longForm = matched;
+  while (end < text.length && text[end] === "_") {
+    const rest = text.slice(end + 1);
+    const token = /^([A-Za-z][A-Za-z0-9]*)/.exec(rest)?.[1];
+    if (!token) break;
+    longForm += `_${token}`;
+    end += 1 + token.length;
+  }
+  return { longForm, length: end - matchIndex };
+}
+
 /** Find ASCII longForm matches in a binary blob (mirrors Python bytes regex). */
 function findLongForms(blob: Buffer): Array<{
   index: number;
@@ -175,9 +196,10 @@ function findLongForms(blob: Buffer): Array<{
   }> = [];
   LONG_FORM_RE.lastIndex = 0;
   for (const m of text.matchAll(LONG_FORM_RE)) {
+    const extended = extendLongFormMatch(text, m.index!, m[0]!);
     out.push({
       index: m.index!,
-      length: m[0].length,
+      length: extended.length,
       en: m[1]!,
       set: m[2]!,
       num: m[3]!,
@@ -185,7 +207,7 @@ function findLongForms(blob: Buffer): Array<{
       rarity: m[5]!,
       foil: m[6]!,
       mask: m[7]!,
-      longForm: m[0],
+      longForm: extended.longForm,
     });
   }
   return out;
@@ -207,7 +229,10 @@ export function extractIdentitiesFromBlob(
     const variant = m.variant.toLowerCase();
     const rarity = m.rarity;
     const foil = m.foil;
-    const mask = m.mask;
+    // Prefer CC / laminate suffix over the whiteplate token the 7-group regex
+    // captures (`Holo` in `…_Holo_CastAndCure_SouthernCross`).
+    const mask =
+      clientFoilMaskOverrideFromLongForm(m.longForm, m.mask) ?? m.mask;
 
     void opts.liveSetHint; // parity with Python (mismatch kept)
 
@@ -304,6 +329,46 @@ const CLIENT_FOIL_MASK_OVERRIDES = new Set([
 ]);
 
 /**
+ * Live longForm packs whiteplate (`Holo` / `Reverse`) as group 7 then suffixes
+ * the CC / laminate plate:
+ * - `…_Holo_CastAndCure_SouthernCross` → CastAndCure
+ * - `…_Reverse_CastAndCure_SVPokeBall` → ReverseLaminatePokeBall
+ * - `…_Reverse_CastAndCure_SVMasterBall` → ReverseLaminateMasterBall
+ * - `…_ReverseLaminatePokeBall` → ReverseLaminatePokeBall
+ *
+ * The 7-group regex only sees `Holo`/`Reverse` — recover the client override
+ * from the full id (including tokens past the regex match).
+ */
+export function clientFoilMaskOverrideFromLongForm(
+  longFormId: string | null | undefined,
+  foilMaskFallback?: string | null,
+): string | null {
+  const fallback = (foilMaskFallback ?? "").trim();
+  if (fallback && CLIENT_FOIL_MASK_OVERRIDES.has(fallback)) return fallback;
+  const id = (longFormId ?? "").trim();
+  if (!id) return null;
+  const tokens = id.split("_").filter(Boolean);
+
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const token = tokens[i]!;
+    if (
+      token === "ReverseLaminatePokeBall" ||
+      token === "ReverseLaminateMasterBall"
+    ) {
+      return token;
+    }
+  }
+
+  const ccIdx = tokens.lastIndexOf("CastAndCure");
+  if (ccIdx < 0) return null;
+  const after = tokens[ccIdx + 1] ?? "";
+  if (after === "SVPokeBall") return "ReverseLaminatePokeBall";
+  if (after === "SVMasterBall") return "ReverseLaminateMasterBall";
+  // SouthernCross, bare CastAndCure, or unknown plate → CC override.
+  return "CastAndCure";
+}
+
+/**
  * `bundle_stem::variant` → foil_mask for CastAndCure / laminate CC plates.
  *
  * Stem alone is not unique: the same art bundle carries std / ph / sph / mph
@@ -314,11 +379,15 @@ export function liveFoilMaskOverrideMap(
 ): Record<string, string> {
   const out: Record<string, string> = {};
   for (const row of rows) {
-    if (!CLIENT_FOIL_MASK_OVERRIDES.has(row.foil_mask)) continue;
+    const mask = clientFoilMaskOverrideFromLongForm(
+      row.long_form_id,
+      row.foil_mask,
+    );
+    if (!mask) continue;
     const variant = (row.variant || "std").trim().toLowerCase() || "std";
     const stem = row.bundle_stem.trim().toLowerCase();
     if (!stem) continue;
-    out[`${stem}::${variant}`] = row.foil_mask;
+    out[`${stem}::${variant}`] = mask;
   }
   return out;
 }

@@ -2,11 +2,12 @@
  * Regression audit: Live foil_effect / MAT / frag / SHARED layers stay in sync.
  * Runs against local dump + liveFoilMasks.json when present (skip otherwise).
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { restoreOpaqueFoilOutput } from "@/core/render/foil/webgl/renderer";
 import { foilTextureFile } from "@/effects/foilTextureFile";
 import "@/lib/foilMetaLoad.server";
 import {
@@ -134,6 +135,32 @@ describe("pokemon foil layer audit", () => {
         }
       }
       expect(unbound, unbound.join("\n")).toEqual([]);
+    },
+  );
+
+  it.skipIf(!hasDump)(
+    "prepareFragment forces opaque SV_Target0 (Unity RT ignored α)",
+    () => {
+      /*
+        Live HoloFoil is a *single* GLES pass that composites art + whiteplate
+        + etch + motifs into an opaque Unity RT. FlatSilver/SvUltra dumps still
+        write `SV_Target0.w = 0.0` — fine on an opaque target, invisible when
+        the same frag feeds a WebGL canvas composited over the page.
+      */
+      const translucent: string[] = [];
+      for (const name of readdirSync(SHADERS_DIR)) {
+        if (!name.endsWith(".frag")) continue;
+        const raw = readFileSync(path.join(SHADERS_DIR, name), "utf8");
+        const prepared = restoreOpaqueFoilOutput(raw);
+        const matches = [
+          ...prepared.matchAll(/SV_Target0\.w\s*=\s*([^;]+);/g),
+        ];
+        const last = matches.at(-1)?.[1]?.trim();
+        if (last !== "1.0" && last !== "1") {
+          translucent.push(`${name}: w=${last ?? "missing"}`);
+        }
+      }
+      expect(translucent, translucent.join("\n")).toEqual([]);
     },
   );
 

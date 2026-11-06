@@ -67,6 +67,17 @@ describe("restoreOpaqueFoilOutput", () => {
     const source = "SV_TARGET0 = vec4(1.0);";
     expect(restoreOpaqueFoilOutput(source)).toBe(source);
   });
+
+  it("forces opaque α when FlatSilver/SvUltra hardcode SV_Target0.w = 0", () => {
+    const source = `
+    SV_Target0.xyz = u_xlat0.xyz;
+    SV_Target0.w = 0.0;
+    return;
+}`;
+    const patched = restoreOpaqueFoilOutput(source);
+    expect(patched).toContain("SV_Target0.w = 1.0;");
+    expect(patched).not.toMatch(/SV_Target0\.w\s*=\s*0(?:\.0)?\s*;/);
+  });
 });
 
 describe("aspectCorrectSquareCcUv", () => {

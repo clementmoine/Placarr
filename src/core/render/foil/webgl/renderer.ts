@@ -157,11 +157,31 @@ export function foilCosTime(
  * Restore a normal opaque colour before link.
  */
 export function restoreOpaqueFoilOutput(source: string): string {
-  if (!source.includes("0.00392156886")) return source;
-  return source.replace(
-    /SV_TARGET0\.xyz = (\w+)\.www \* \1\.xyz;\s*SV_TARGET0\.w = \1\.w;/g,
-    "SV_TARGET0.xyz = $1.xyz;\n    SV_TARGET0.w = 1.0;",
+  let out = source;
+  /*
+    Live HoloFoil dumps often write coverage α then premultiply colour. Our
+    canvas composites over the page (not Unity's opaque RT) — restore opaque.
+  */
+  if (out.includes("0.00392156886")) {
+    out = out.replace(
+      /SV_TARGET0\.xyz = (\w+)\.www \* \1\.xyz;\s*SV_TARGET0\.w = \1\.w;/g,
+      "SV_TARGET0.xyz = $1.xyz;\n    SV_TARGET0.w = 1.0;",
+    );
+  }
+  /*
+    FlatSilver / SvUltra GLES dumps hardcode `SV_Target0.w = 0.0` (Unity wrote
+    colour into an opaque target and ignored α). On WebGL that makes the whole
+    foil canvas invisible — force opaque coverage.
+  */
+  out = out.replace(
+    /\bSV_Target0\.w\s*=\s*0(?:\.0)?\s*;/g,
+    "SV_Target0.w = 1.0;",
   );
+  out = out.replace(
+    /\bSV_TARGET0\.w\s*=\s*0(?:\.0)?\s*;/g,
+    "SV_TARGET0.w = 1.0;",
+  );
+  return out;
 }
 
 /**

@@ -1405,14 +1405,27 @@ export function FoilPlayroom({
               ) : (
                 <div className="flex min-h-0 flex-1 flex-col items-center gap-6 overflow-y-auto py-1">
                   {(focusedArts.length > 0 ? focusedArts : [null]).map(
-                    (art, artIndex) => (
+                    (art, artIndex) => {
+                      /*
+                        One face → `focus` + contain (fills the stage). Several
+                        faces → `stack` + fill-width: contain needs a definite
+                        parent height, and flex-1 rows in a scroll column
+                        collapse to 0×0 (Live FlatSilver / Tropius blank while
+                        captions still show).
+                      */
+                      const stacked = focusedArts.length > 1;
+                      return (
                       <div
                         key={
                           art?.bundleId ??
                           art?.imageUrl ??
                           `${focusedMaterial}:face-${artIndex}`
                         }
-                        className="flex min-h-0 w-full flex-1 flex-col items-center gap-2"
+                        className={
+                          stacked
+                            ? "flex w-full shrink-0 flex-col items-center gap-2"
+                            : "flex min-h-0 w-full flex-1 flex-col items-center gap-2"
+                        }
                       >
                         <MaterialTile
                           key={`${pack?.id ?? packId}:${focusedMaterial}:${art?.bundleId ?? artIndex}`}
@@ -1422,11 +1435,12 @@ export function FoilPlayroom({
                           backend={backend}
                           tilt={tilt}
                           locale={locale}
-                          size="focus"
+                          size={stacked ? "stack" : "focus"}
                           packArt={art}
                         />
                       </div>
-                    ),
+                      );
+                    },
                   )}
                 </div>
               )}

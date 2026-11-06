@@ -1029,5 +1029,124 @@
         "https://www.narutotcgmythos.com/fr/evenements"
       ]
     }
-  ]
+  ],
+  "stampFaces": {
+    "observed": "2026-11-06",
+    "note": "Faces tamponnées CDN evenements → art.* sur printKeys existants (data/…/cards/{lang}/…). SP Lucca/MGW déjà mintés à part.",
+    "cdnBase": "https://irp.cdn-website.com/99e556bf/dms3rep/multi/opt/",
+    "faces": [
+      {
+        "printKey": "mythos:ss2-0005-vv2rc",
+        "lang": "en",
+        "art": "art.top32.webp",
+        "cdn": "05_M_Naruto_REGIONAL_TOP32_-1920w.webp",
+        "local": "official-events-media/ss2-0005-regional-top32.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0114-vrc",
+        "lang": "en",
+        "art": "art.regional.webp",
+        "cdn": "114_M_Gaara_REGIONAL-Virgi-1920w.webp",
+        "local": "official-events-media/ss2-0114-regional.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0114-vrc",
+        "lang": "en",
+        "art": "art.judge.webp",
+        "cdn": "114_M_Gaara_REGIONAL-Virgi_JUDGE-1920w.webp",
+        "local": "official-events-media/ss2-0114-regional-judge.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0123-vrc",
+        "lang": "en",
+        "art": "art.regional.webp",
+        "cdn": "123_M_Sakura-regional-1920w.webp",
+        "local": "official-events-media/ss2-0123-regional.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0126-vv2rc",
+        "lang": "en",
+        "art": "art.regional.webp",
+        "cdn": "126_M_Sasuke_regional-1920w.webp",
+        "local": "official-events-media/ss2-0126-regional.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0127-vv2rc",
+        "lang": "en",
+        "art": "art.regional.webp",
+        "cdn": "127_M_Orochimaru_REGIONAL_SIDE-EVENT-1920w.webp",
+        "local": "official-events-media/ss2-0127-regional-side.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0127-vv2rc",
+        "lang": "en",
+        "art": "art.winner.webp",
+        "cdn": "127_M_Orochimaru_REGIONAL_SIDE-EVENT-WINNER-1920w.webp",
+        "local": "official-events-media/ss2-0127-regional-winner.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0137-vv2rc",
+        "lang": "en",
+        "art": "art.regional.webp",
+        "cdn": "137_M_Itachi_Uchiha-copia-1920w.webp",
+        "local": "official-events-media/ss2-0137-regional.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0149-l",
+        "lang": "en",
+        "art": "art.regional.webp",
+        "cdn": "Legendary_Kakashi_Regional_DEF-1920w.webp",
+        "local": "official-events-media/ss2-0149-regional-legendary.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0112-sp",
+        "lang": "en",
+        "art": "art.event.webp",
+        "cdn": "112_SPECIAL_NEJI+(master)_PromoEVENT_UNDERAPPROVAL-1920w.webp",
+        "local": "official-events-media/ss2-0112-sp-event.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0120-shinobi",
+        "lang": "en",
+        "art": "art.storetop4.webp",
+        "cdn": "120_SHINOBI_Kiba_STORE+Top4-1920w.png",
+        "local": "official-events-media/ss2-0120-store-top4.source.webp"
+      },
+      {
+        "printKey": "mythos:ss2-0121-shinobi",
+        "lang": "en",
+        "art": "art.store.webp",
+        "cdn": "121_SHINOBI_Naruto_STORE+Participation-1920w.png",
+        "local": "official-events-media/ss2-0121-store-participation.source.webp"
+      },
+      {
+        "printKey": "mythos:ks1promo-0108-vv2",
+        "lang": "fr",
+        "art": "art.promo.webp",
+        "cdn": "108_M_Naruto_Rasengan_PROMO-1920w.webp",
+        "local": "official-events-media/ks1promo-0108-promo.source.webp"
+      },
+      {
+        "printKey": "mythos:ks1promo-0108-vv2",
+        "lang": "en",
+        "art": "art.promo.webp",
+        "cdn": "108_M_Naruto_Rasengan_A-1920w.png",
+        "local": "official-events-media/ks1promo-0108-promo-en.source.webp"
+      },
+      {
+        "printKey": "mythos:ks1promo-0107-vv2sc",
+        "lang": "fr",
+        "art": "art.storechamp.webp",
+        "cdn": "fr_107_M_Sasuke_Chidori_1-1920w.webp",
+        "local": "official-events-media/ks1promo-0107-storechamp.source.webp"
+      },
+      {
+        "printKey": "mythos:ks1promo-0133-vv2",
+        "lang": "en",
+        "art": "art.promo.webp",
+        "cdn": "133_M_Naruto_pennello_PROMO_-1920w.webp",
+        "local": "official-events-media/ks1promo-0133-promo.source.webp"
+      }
+    ]
+  }
 }

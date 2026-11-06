@@ -1,5 +1,9 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
+import { narutoMythosCuratedDir } from "../pack";
 import {
   loadMythosOfficialEventsDig,
   mythosOfficialEventFacts,
@@ -49,6 +53,30 @@ describe("official-events dig", () => {
       milan?.rewards?.find((r) => r.name === "Sasuke - The Final Valley")
         ?.printKey,
     ).toBe("mythos:ss2-0148-sp");
+  });
+
+  it("lists densified regional/salon stamp faces with local sources", () => {
+    resetMythosOfficialEventsCache();
+    const dig = loadMythosOfficialEventsDig();
+    const faces = dig!.stampFaces?.faces ?? [];
+    expect(faces.length).toBeGreaterThanOrEqual(16);
+    expect(
+      faces.some(
+        (f) =>
+          f.printKey === "mythos:ss2-0123-vrc" &&
+          f.art === "art.regional.webp",
+      ),
+    ).toBe(true);
+    expect(
+      faces.some(
+        (f) =>
+          f.printKey === "mythos:ss2-0114-vrc" && f.art === "art.judge.webp",
+      ),
+    ).toBe(true);
+    const curated = path.join(narutoMythosCuratedDir(), "sources");
+    for (const face of faces) {
+      expect(existsSync(path.join(curated, face.local))).toBe(true);
+    }
   });
 });
 

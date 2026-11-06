@@ -36,6 +36,14 @@ export type MythosOfficialEvent = {
   sourceUrls: string[];
 };
 
+export type MythosOfficialStampFace = {
+  printKey: string;
+  lang: string;
+  art: string;
+  cdn: string;
+  local: string;
+};
+
 export type MythosOfficialEventsDig = {
   kind: string;
   verdict: string;
@@ -43,6 +51,13 @@ export type MythosOfficialEventsDig = {
   summary?: string;
   pages: readonly { lang: string; url: string }[];
   events: MythosOfficialEvent[];
+  /** CDN event stamps densified onto existing printKeys (`art.regional`…). */
+  stampFaces?: {
+    observed?: string;
+    note?: string;
+    cdnBase?: string;
+    faces: MythosOfficialStampFace[];
+  };
 };
 
 const TIER_FR: Record<string, string> = {

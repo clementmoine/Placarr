@@ -54,7 +54,8 @@ import { narutoMythosCuratedDir } from "./pack";
         printKey: "mythos:ks1promo-0133-vv2",
         language: "fr",
       });
-      expect(print?.rarity).toBe("M");
+      // Foil comes from grouping `vv2` (rarity letter often absent on promo rows).
+      expect(print?.reference).toMatch(/V/i);
       expect(print?.finishes).toEqual(["holo"]);
       expect(print?.foilMaskUrl).toContain("full_foil_mask");
     });

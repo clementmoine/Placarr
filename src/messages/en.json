@@ -339,6 +339,28 @@
         "away": "Away (temporary)",
         "wanted": "Wanted",
         "past": "Past"
+      },
+      "badge": {
+        "loaned": "Loaned",
+        "loaned_to": "→ {name}",
+        "rental": "Rental",
+        "rental_to": "→ {name}",
+        "ordered": "Ordered",
+        "ordered_detail": "Ordered · {detail}",
+        "expected": "Expected",
+        "expected_detail": "Expected · {detail}",
+        "repair": "Repair",
+        "away": "Away",
+        "sold": "Sold",
+        "sold_detail": "Sold · {detail}",
+        "exchanged": "Traded",
+        "gifted": "Gifted",
+        "discarded": "Discarded",
+        "consumed": "Consumed",
+        "lost": "Lost",
+        "stolen": "Stolen",
+        "past": "Past",
+        "wanted": "Wanted"
       }
     },
     "noItems": "No items in this shelf",
@@ -432,6 +454,17 @@
       "submit": "Delete {count} item(s)",
       "success": "{count} item(s) deleted",
       "failed": "Could not delete items"
+    },
+    "bulkEdit": {
+      "action": "Edit",
+      "title": "Bulk edit",
+      "description": "Edit {count} item(s). Mixed fields stay empty — only fields you change are applied.",
+      "hint": "Shared values are prefilled. Empty field = mixed values, left unchanged on apply.",
+      "mixedValues": "Multiple values",
+      "nothingToApply": "No fields changed",
+      "submit": "Apply to {count} item(s)",
+      "success": "{count} item(s) updated",
+      "failed": "Could not update items"
     },
     "multipleMatchesTitle": "Multiple products associated with this code",
     "editTabs": {
@@ -814,7 +847,14 @@
     "rating.any": "Any rating",
     "rating.atLeast": "{rating}+ / 10",
     "pricedOnly": "With price estimate",
-    "duplicatesOnly": "Duplicates only"
+    "duplicatesOnly": "Duplicates only",
+    "view": "View",
+    "view.active": "Active collection",
+    "view.away": "Away (loan, order…)",
+    "view.wanted": "Wanted",
+    "view.past": "Past / once owned",
+    "view.all": "Everything",
+    "view.duplicates": "Duplicates only"
   },
   "app": {
     "name": "Placarr",

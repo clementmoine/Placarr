@@ -2,6 +2,12 @@ import type { Condition } from "@/generated/prisma/browser";
 
 import { isItemCondition } from "@/core/collect/condition";
 import {
+  DEFAULT_ITEM_COLLECTION_SHELF_VIEW,
+  isItemCollectionShelfView,
+  type ItemCollectionShelfView,
+  parseItemCollectionShelfView,
+} from "@/core/collect/shelfView";
+import {
   getItemValueEstimate,
   type ItemValueEstimate,
 } from "@/core/collect/value";
@@ -16,6 +22,17 @@ import {
 import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { itemSlugSetCode } from "@/providers/shared/cardCatalogue/sets";
 import type { ItemWithMetadata } from "@/types/items";
+
+export type {
+  ItemCollectionShelfView,
+} from "@/core/collect/shelfView";
+export {
+  DEFAULT_ITEM_COLLECTION_SHELF_VIEW,
+  ITEM_COLLECTION_SHELF_VIEWS,
+  filterItemsByShelfView,
+  itemMatchesShelfView,
+  parseItemCollectionShelfView,
+} from "@/core/collect/shelfView";
 
 /** Extension catalogue pour le tri binder. */
 function itemCatalogueSetCode(item: ItemWithMetadata): string {
@@ -64,17 +81,17 @@ export type ItemCollectionFilters = {
   ratingMin: number | null;
   pricedOnly: boolean;
   /**
-   * Display-only: after {@link groupCopies}, keep groups with more than one
-   * copy. Not applied inside {@link filterCollectionItems}.
+   * Shelf grid presence / duplicates view. Display-only (not inside
+   * {@link filterCollectionItems}). Default hides `past` / `wanted`.
    */
-  duplicatesOnly: boolean;
+  shelfView: ItemCollectionShelfView;
 };
 
 export const DEFAULT_ITEM_COLLECTION_FILTERS: ItemCollectionFilters = {
   condition: "all",
   ratingMin: null,
   pricedOnly: false,
-  duplicatesOnly: false,
+  shelfView: DEFAULT_ITEM_COLLECTION_SHELF_VIEW,
 };
 
 const BASE_ITEM_COLLECTION_SORT_OPTIONS: ItemCollectionSort[] = [
@@ -331,11 +348,17 @@ export function parseItemCollectionFilters(searchParams: {
   const pricedParam = searchParams.get("priced");
   const pricedOnly = pricedParam === "1" || pricedParam === "true";
 
+  const viewParam = searchParams.get("view");
   const duplicatesParam = searchParams.get("duplicates");
-  const duplicatesOnly =
-    duplicatesParam === "1" || duplicatesParam === "true";
+  // Legacy `duplicates=1` → view=duplicates when `view` is absent.
+  const shelfView: ItemCollectionShelfView =
+    isItemCollectionShelfView(viewParam)
+      ? viewParam
+      : duplicatesParam === "1" || duplicatesParam === "true"
+        ? "duplicates"
+        : parseItemCollectionShelfView(viewParam);
 
-  return { condition, ratingMin, pricedOnly, duplicatesOnly };
+  return { condition, ratingMin, pricedOnly, shelfView };
 }
 
 export function hasActiveCollectionFilters(
@@ -345,7 +368,7 @@ export function hasActiveCollectionFilters(
     filters.condition !== "all" ||
     filters.ratingMin !== null ||
     filters.pricedOnly ||
-    filters.duplicatesOnly
+    filters.shelfView !== DEFAULT_ITEM_COLLECTION_SHELF_VIEW
   );
 }
 
@@ -356,6 +379,11 @@ export function collectionFiltersToSearchParams(
     condition: filters.condition === "all" ? null : filters.condition,
     ratingMin: filters.ratingMin === null ? null : String(filters.ratingMin),
     priced: filters.pricedOnly ? "1" : null,
-    duplicates: filters.duplicatesOnly ? "1" : null,
+    view:
+      filters.shelfView === DEFAULT_ITEM_COLLECTION_SHELF_VIEW
+        ? null
+        : filters.shelfView,
+    // Drop legacy param when writing URLs.
+    duplicates: null,
   };
 }

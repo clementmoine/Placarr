@@ -212,6 +212,96 @@ export function loanSince(item: LoanCompatFields): Date | string | null {
   return item.loanedAt ?? null;
 }
 
+export type AbsenceBadgeTone = "away" | "past" | "wanted";
+
+/**
+ * Compact shelf / fiche tag for non-owned presence.
+ * `labelKey` → `items.absence.badge.<key>` ; optional `{name}` / `{detail}`.
+ */
+export type AbsenceBadgeInfo = {
+  tone: AbsenceBadgeTone;
+  labelKey: string;
+  name?: string;
+  detail?: string;
+};
+
+type AbsenceBadgeFields = LoanCompatFields &
+  Partial<
+    Pick<
+      ItemAbsenceFields,
+      "absenceSource" | "absenceCarrier" | "absenceReason" | "presence"
+    >
+  >;
+
+/**
+ * Badge for away / wanted / past. Owned → null.
+ * Loan without recipient still shows « Prêté » (not silent).
+ */
+export function formatAbsenceBadge(
+  item: AbsenceBadgeFields | null | undefined,
+): AbsenceBadgeInfo | null {
+  if (!item) return null;
+  const presence = item.presence ?? "owned";
+  if (presence === "owned") return null;
+
+  if (presence === "wanted") {
+    return { tone: "wanted", labelKey: "wanted" };
+  }
+
+  const reason = isAbsenceReason(item.absenceReason)
+    ? item.absenceReason
+    : null;
+  const recipient =
+    item.absenceRecipient?.trim() ||
+    (typeof item.loanedTo === "string" ? item.loanedTo.trim() : "") ||
+    null;
+  const carrier = item.absenceCarrier?.trim() || null;
+  const source = item.absenceSource?.trim() || null;
+  const detail = carrier || source || undefined;
+
+  if (presence === "away") {
+    if (reason === "loaned" || (!reason && recipient)) {
+      return recipient
+        ? { tone: "away", labelKey: "loaned_to", name: recipient }
+        : { tone: "away", labelKey: "loaned" };
+    }
+    if (reason === "rental") {
+      return recipient
+        ? { tone: "away", labelKey: "rental_to", name: recipient }
+        : { tone: "away", labelKey: "rental" };
+    }
+    if (reason === "ordered" || reason === "expected") {
+      return detail
+        ? { tone: "away", labelKey: `${reason}_detail`, detail }
+        : { tone: "away", labelKey: reason };
+    }
+    if (reason === "repair") {
+      return { tone: "away", labelKey: "repair" };
+    }
+    return { tone: "away", labelKey: reason ?? "away" };
+  }
+
+  // past
+  if (reason === "sold") {
+    return detail
+      ? { tone: "past", labelKey: "sold_detail", detail }
+      : { tone: "past", labelKey: "sold" };
+  }
+  if (reason === "exchanged") {
+    return { tone: "past", labelKey: "exchanged" };
+  }
+  if (
+    reason === "gifted" ||
+    reason === "discarded" ||
+    reason === "consumed" ||
+    reason === "lost" ||
+    reason === "stolen"
+  ) {
+    return { tone: "past", labelKey: reason };
+  }
+  return { tone: "past", labelKey: "past" };
+}
+
 export function ownedAbsenceState(): ItemAbsenceFields {
   return {
     presence: "owned",

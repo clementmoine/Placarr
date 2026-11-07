@@ -5,6 +5,7 @@ import {
   absenceSinceInputValue,
   buildPresenceEvent,
   countsAsOwned,
+  formatAbsenceBadge,
   inferPresenceEventKind,
   isAwaitingReceiptReason,
   isDefinitiveAbsenceReason,
@@ -71,6 +72,53 @@ describe("isItemOnLoan", () => {
         absenceRecipient: null,
       }),
     ).toBe(false);
+  });
+});
+
+describe("formatAbsenceBadge", () => {
+  it("returns null when owned", () => {
+    expect(formatAbsenceBadge({ presence: "owned" })).toBeNull();
+    expect(formatAbsenceBadge({})).toBeNull();
+  });
+
+  it("shows loan without requiring a recipient", () => {
+    expect(
+      formatAbsenceBadge({
+        presence: "away",
+        absenceReason: "loaned",
+      }),
+    ).toEqual({ tone: "away", labelKey: "loaned" });
+    expect(
+      formatAbsenceBadge({
+        presence: "away",
+        absenceReason: "loaned",
+        absenceRecipient: "Alice",
+      }),
+    ).toEqual({ tone: "away", labelKey: "loaned_to", name: "Alice" });
+  });
+
+  it("covers ordered / expected / sold / wanted", () => {
+    expect(
+      formatAbsenceBadge({
+        presence: "away",
+        absenceReason: "ordered",
+        absenceCarrier: "Chronopost",
+      }),
+    ).toEqual({
+      tone: "away",
+      labelKey: "ordered_detail",
+      detail: "Chronopost",
+    });
+    expect(
+      formatAbsenceBadge({ presence: "away", absenceReason: "expected" }),
+    ).toEqual({ tone: "away", labelKey: "expected" });
+    expect(
+      formatAbsenceBadge({ presence: "past", absenceReason: "sold" }),
+    ).toEqual({ tone: "past", labelKey: "sold" });
+    expect(formatAbsenceBadge({ presence: "wanted" })).toEqual({
+      tone: "wanted",
+      labelKey: "wanted",
+    });
   });
 });
 

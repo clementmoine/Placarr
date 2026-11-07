@@ -1,7 +1,23 @@
 # Backlog
 
-> Dernière vérification : **2026-11-05** (vision lifecycle : catalogues universels + discovery débloqués en parallèle du TCG).
+> Dernière vérification : **2026-11-08** (absence : badges + filtre vue + bulk edit livrés ; reste → [backlog/2026-11-08-absence-reste-plan.md](backlog/2026-11-08-absence-reste-plan.md)).
 > Index docs : [README.md](README.md). Vision : [ARCHITECTURE.md](../ARCHITECTURE.md) § Vision.
+
+## Absence étagère — reste (2026-11-08)
+
+Socle livré (schéma, ItemModal lifecycle, badges, filtre grille, bulk edit dirty-only, checklist, scellé MVP).  
+Détail + exemples : **[backlog/2026-11-08-absence-reste-plan.md](backlog/2026-11-08-absence-reste-plan.md)**.
+
+| Priorité | Item | Exemple |
+| -------- | ---- | ------- |
+| **P1** | Matching « tu l’attendais ? » à l’ajout | Print déjà `ordered` → dialog réception plutôt que doublon |
+| **P1** | Modal d’ajout Catalogue vs Saisie libre | Menu + → Catalogue (picker) / Saisie libre (nom+barcode) |
+| **P1** | Trocs `ItemTradeLink` UI+API | Échangé ↔ titre sur les deux fiches |
+| **P2** | UI declare pulls scellé random | Après open display → « Déclarer les cartes » |
+| **P2** | Export présence / raison / prix | Markdown avec section déjà eus + prix vente |
+| **P2** | Stats cession | Vue past → « Ventes : 312,50 € » |
+| **P2** | Badges prix / timeline ItemModal | `Vendu · 25 €` ; events sous le bloc absence |
+| **P3** | Rappels / anti-doublon commande | Badge « Commandée il y a 21 j » |
 
 ## Plan perf métadonnées — terminé (2026-07-25)
 

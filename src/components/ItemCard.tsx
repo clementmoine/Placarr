@@ -57,7 +57,10 @@ import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import type { Condition } from "@/generated/prisma/browser";
 import { withoutCopyMarker } from "@/core/collect/groupCopies";
 import { shelfShowsItemCondition } from "@/core/collect/condition";
-import { isItemOnLoan } from "@/core/collect/itemLoan";
+import {
+  formatAbsenceBadge,
+  type AbsenceBadgeTone,
+} from "@/core/collect/itemAbsence";
 import { isLooseDiscShelfPresentation } from "@/core/enrich/media/opticalDisc";
 import { DiscFaceArt } from "@/components/DiscFaceArt";
 import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
@@ -75,6 +78,19 @@ function conditionBadgeClass(condition: Condition) {
       return "text-red-300 border-red-400/25";
     default:
       return "text-zinc-200 border-white/10";
+  }
+}
+
+function absenceBadgeClass(tone: AbsenceBadgeTone) {
+  switch (tone) {
+    case "away":
+      return "border-sky-400/35 bg-zinc-950/90 text-sky-200";
+    case "wanted":
+      return "border-violet-400/35 bg-zinc-950/90 text-violet-200";
+    case "past":
+      return "border-zinc-500/40 bg-zinc-950/90 text-zinc-300";
+    default:
+      return "border-white/15 bg-zinc-950/90 text-zinc-200";
   }
 }
 
@@ -120,6 +136,8 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.presence === next.presence &&
     prev.absenceReason === next.absenceReason &&
     prev.absenceRecipient === next.absenceRecipient &&
+    prev.absenceCarrier === next.absenceCarrier &&
+    prev.absenceSource === next.absenceSource &&
     prev.absenceSince === next.absenceSince &&
     prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
@@ -147,6 +165,13 @@ function ItemCardInner(props: ItemCardProps) {
    * wore it.
    */
   const displayName = copyCount > 1 ? withoutCopyMarker(name) : name;
+  const absenceBadge = formatAbsenceBadge(props);
+  const absenceLabel = absenceBadge
+    ? t(`items.absence.badge.${absenceBadge.labelKey}`, {
+        ...(absenceBadge.name ? { name: absenceBadge.name } : {}),
+        ...(absenceBadge.detail ? { detail: absenceBadge.detail } : {}),
+      })
+    : null;
   const titledName = displayName.replace(
     / — ([A-Za-z][\w]*)$/u,
     (_match, finish: string) => ` — ${localizeFinishLabel(finish, t)}`,
@@ -346,7 +371,7 @@ function ItemCardInner(props: ItemCardProps) {
         copyCount > 1 ||
         ((variantView.foilMaskUrl || isSealedFinish(props.variant)) &&
           props.variant) ||
-        isItemOnLoan(props)) && (
+        Boolean(absenceLabel)) && (
         <div className="absolute top-2 right-2 z-20 pointer-events-none select-none flex flex-col items-end gap-1">
           {estimatedPrice !== null && (
             <span className="text-[9px] font-black tabular-nums px-2 py-0.5 rounded-full bg-zinc-950/90 text-emerald-300 border border-emerald-400/30 shadow-sm">
@@ -365,11 +390,17 @@ function ItemCardInner(props: ItemCardProps) {
               ✦ {localizeFinishLabel(props.variant, t)}
             </span>
           )}
-          {isItemOnLoan(props) && (
-            <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-sky-400/35 bg-zinc-950/90 text-sky-200 shadow-sm max-w-[7.5rem] truncate">
-              → {props.absenceRecipient}
+          {absenceLabel && absenceBadge ? (
+            <span
+              className={cn(
+                "text-[9px] font-black px-2 py-0.5 rounded-full border shadow-sm max-w-[7.5rem] truncate",
+                absenceBadgeClass(absenceBadge.tone),
+              )}
+              title={absenceLabel}
+            >
+              {absenceLabel}
             </span>
-          )}
+          ) : null}
           {condition && shelfShowsItemCondition(shelfType) && (
             <span
               className={cn(

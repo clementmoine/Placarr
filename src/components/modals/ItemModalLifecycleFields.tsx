@@ -38,7 +38,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 export type ItemModalLifecycleFormSlice = {
-  presence: ItemPresence;
+  /** Empty string = mixed / unset (bulk edit). */
+  presence: ItemPresence | "";
   absenceReason: string;
   absenceSince: string;
   absenceRecipient: string;
@@ -70,7 +71,6 @@ const ABSENCE_SOURCES = [
   "Cardmarket",
   "Vinted",
   "Leboncoin",
-  "eBay",
   "Facebook",
   "Autre",
 ] as const;
@@ -95,6 +95,10 @@ type Props = {
   /** Hide purchase fields when not useful (optional). */
   showPurchase?: boolean;
   showGrade?: boolean;
+  /**
+   * Bulk edit: empty fields mean « mixed / leave alone »; presence may be "".
+   */
+  bulkMode?: boolean;
 };
 
 export function ItemModalLifecycleFields({
@@ -103,8 +107,9 @@ export function ItemModalLifecycleFields({
   t,
   showPurchase = true,
   showGrade = true,
+  bulkMode = false,
 }: Props) {
-  const presence = useWatch({ control, name: "presence" }) as ItemPresence;
+  const presence = useWatch({ control, name: "presence" }) as ItemPresence | "";
   const reason = useWatch({ control, name: "absenceReason" }) as string;
   const absenceSince = useWatch({ control, name: "absenceSince" }) as string;
   const gradeStatus = useWatch({
@@ -114,8 +119,12 @@ export function ItemModalLifecycleFields({
   const gradeHouse = useWatch({ control, name: "gradeHouse" }) as string;
   const gradeLabel = useWatch({ control, name: "gradeLabel" }) as string;
 
-  const reasonOptions = reasonsForPresence(presence);
-  const showAbsenceDetails = presence !== "owned";
+  const reasonOptions =
+    presence === ""
+      ? ABSENCE_REASONS
+      : reasonsForPresence(presence as ItemPresence);
+  const showAbsenceDetails =
+    bulkMode || (presence !== "owned" && presence !== "");
   const showRecipient =
     reason === "loaned" || reason === "rental" || reason === "expected";
   const showOrder =
@@ -409,7 +418,7 @@ export function ItemModalLifecycleFields({
                 {t("items.absence.presence")}
               </FormLabel>
               <Select
-                value={field.value}
+                value={field.value || undefined}
                 onValueChange={(value) => {
                   if (!ITEM_PRESENCES.includes(value as ItemPresence)) return;
                   const next = value as ItemPresence;
@@ -419,7 +428,11 @@ export function ItemModalLifecycleFields({
                     return;
                   }
                   const nextReason = defaultReason(next);
-                  setValue("absenceReason", nextReason, { shouldDirty: true });
+                  if (!bulkMode || !(reason || "").trim()) {
+                    setValue("absenceReason", nextReason, {
+                      shouldDirty: true,
+                    });
+                  }
                   if (!(absenceSince || "").trim()) {
                     setValue(
                       "absenceSince",
@@ -431,7 +444,11 @@ export function ItemModalLifecycleFields({
               >
                 <FormControl>
                   <SelectTrigger className="bg-background border-border/80 rounded-xl h-10">
-                    <SelectValue />
+                    <SelectValue
+                      placeholder={
+                        bulkMode ? t("items.bulkEdit.mixedValues") : undefined
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -458,12 +475,18 @@ export function ItemModalLifecycleFields({
                     {t("items.absence.reason")}
                   </FormLabel>
                   <Select
-                    value={field.value || reasonOptions[0] || ""}
+                    value={field.value || undefined}
                     onValueChange={field.onChange}
                   >
                     <FormControl>
                       <SelectTrigger className="bg-background border-border/80 rounded-xl h-10">
-                        <SelectValue />
+                        <SelectValue
+                          placeholder={
+                            bulkMode
+                              ? t("items.bulkEdit.mixedValues")
+                              : undefined
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

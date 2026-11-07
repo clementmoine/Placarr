@@ -339,6 +339,28 @@
         "away": "Absent (temporaire)",
         "wanted": "Recherchée",
         "past": "Déjà eu"
+      },
+      "badge": {
+        "loaned": "Prêté",
+        "loaned_to": "→ {name}",
+        "rental": "Location",
+        "rental_to": "→ {name}",
+        "ordered": "Commandé",
+        "ordered_detail": "Commandé · {detail}",
+        "expected": "Attendu",
+        "expected_detail": "Attendu · {detail}",
+        "repair": "Réparation",
+        "away": "Absent",
+        "sold": "Vendu",
+        "sold_detail": "Vendu · {detail}",
+        "exchanged": "Échangé",
+        "gifted": "Offert",
+        "discarded": "Jeté",
+        "consumed": "Consommé",
+        "lost": "Perdu",
+        "stolen": "Volé",
+        "past": "Déjà eu",
+        "wanted": "Recherchée"
       }
     },
     "noItems": "Aucun objet dans cette étagère",
@@ -432,6 +454,17 @@
       "submit": "Supprimer {count} objet(s)",
       "success": "{count} objet(s) supprimé(s)",
       "failed": "Impossible de supprimer les objets"
+    },
+    "bulkEdit": {
+      "action": "Modifier",
+      "title": "Modifier en lot",
+      "description": "Modifier {count} objet(s). Les champs mixtes sont vides — seuls les champs que tu changes sont appliqués.",
+      "hint": "Valeurs communes préremplies. Champ vide = valeurs différentes, laissé tel quel à l'application.",
+      "mixedValues": "Plusieurs valeurs",
+      "nothingToApply": "Aucun champ modifié",
+      "submit": "Appliquer à {count} objet(s)",
+      "success": "{count} objet(s) mis à jour",
+      "failed": "Impossible de mettre à jour les objets"
     },
     "multipleMatchesTitle": "Plusieurs produits associés à ce code",
     "editTabs": {
@@ -814,7 +847,14 @@
     "rating.any": "Toutes les notes",
     "rating.atLeast": "{rating}+ / 10",
     "pricedOnly": "Avec estimation de prix",
-    "duplicatesOnly": "Doublons seulement"
+    "duplicatesOnly": "Doublons seulement",
+    "view": "Vue",
+    "view.active": "Collection active",
+    "view.away": "Absents (prêt, commande…)",
+    "view.wanted": "Recherchées",
+    "view.past": "Déjà eus",
+    "view.all": "Tout",
+    "view.duplicates": "Doublons seulement"
   },
   "app": {
     "name": "Placarr",

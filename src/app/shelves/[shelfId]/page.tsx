@@ -29,6 +29,7 @@ import {
   Layers,
   Check,
   ArrowRightLeft,
+  Pencil,
   RefreshCw,
   Loader2,
   X,
@@ -62,8 +63,8 @@ import {
   groupCopies,
 } from "@/core/collect/groupCopies";
 import {
-  ItemCollectionDuplicatesFilter,
   ItemCollectionSortSelect,
+  ItemCollectionViewFilter,
 } from "@/components/ItemCollectionControls";
 import dynamic from "next/dynamic";
 import type { BulkAddTab } from "@/components/modals/BulkAddModal";
@@ -106,6 +107,11 @@ const BulkDeleteModal = dynamic(
     ),
   { ssr: false },
 );
+const BulkEditModal = dynamic(
+  () =>
+    import("@/components/modals/BulkEditModal").then((m) => m.BulkEditModal),
+  { ssr: false },
+);
 const ShelfModal = dynamic(
   () =>
     import("@/components/modals/ShelfModal").then((m) => m.ShelfModal),
@@ -128,10 +134,12 @@ import {
 import { countsAsOwned } from "@/core/collect/itemAbsence";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
+  filterItemsByShelfView,
   parseItemCollectionFilters,
   parseItemCollectionSort,
   queryCollectionItems,
   summarizeCollectionEstimatedValue,
+  type ItemCollectionShelfView,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useRefetchShelfItemsWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
@@ -277,8 +285,8 @@ function ShelfComponent() {
   const [sortBy, setSortBy] = useState<ItemCollectionSort>(
     parseItemCollectionSort(sortParam),
   );
-  const [duplicatesOnly, setDuplicatesOnly] = useState(
-    () => parseItemCollectionFilters(searchParams).duplicatesOnly,
+  const [shelfView, setShelfView] = useState<ItemCollectionShelfView>(
+    () => parseItemCollectionFilters(searchParams).shelfView,
   );
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
@@ -288,6 +296,7 @@ function ShelfComponent() {
   const selectionAnchorIdRef = useRef<string | null>(null);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const router = useRouter();
   const q = searchParams.get("q") || "";
@@ -401,7 +410,7 @@ function ShelfComponent() {
     setPrevSortSourceKey(sortSourceKey);
     setSearchQuery(q);
     setSortBy(parseItemCollectionSort(searchParams.get("sort"), shelf?.type));
-    setDuplicatesOnly(parseItemCollectionFilters(searchParams).duplicatesOnly);
+    setShelfView(parseItemCollectionFilters(searchParams).shelfView);
   }
 
   useDocumentTitle(shelf?.name);
@@ -459,6 +468,12 @@ function ShelfComponent() {
     });
   }, [shelf, sortBy]);
 
+  /** Presence / duplicates view — default hides past & wanted. */
+  const viewItems = useMemo(
+    () => filterItemsByShelfView(sortedItems, shelfView),
+    [sortedItems, shelfView],
+  );
+
   /**
    * Copies of the same object share a tile.
    *
@@ -467,16 +482,16 @@ function ShelfComponent() {
    * appears where its first copy did. See `docs/tcg_support.md` §4.
    */
   const groupedItems = useMemo(() => {
-    const groups = groupCopies(sortedItems);
-    return duplicatesOnly ? filterDuplicateGroups(groups) : groups;
-  }, [sortedItems, duplicatesOnly]);
+    const groups = groupCopies(viewItems);
+    return shelfView === "duplicates" ? filterDuplicateGroups(groups) : groups;
+  }, [viewItems, shelfView]);
 
   const visibleItemCount = useMemo(
     () =>
-      duplicatesOnly
+      shelfView === "duplicates"
         ? groupedItems.reduce((sum, group) => sum + group.copies.length, 0)
-        : sortedItems.length,
-    [duplicatesOnly, groupedItems, sortedItems.length],
+        : viewItems.length,
+    [shelfView, groupedItems, viewItems.length],
   );
 
   /*
@@ -507,16 +522,9 @@ function ShelfComponent() {
   );
 
   const totalValue = useMemo(() => {
-    if (!shelf?.items) return { total: 0, includesEstimates: false };
-    const items = shelf.items as unknown as ItemWithMetadata[];
-    return summarizeCollectionEstimatedValue(
-      queryCollectionItems(items, {
-        sortBy: "name_asc",
-        shelfType: shelf.type,
-      }),
-      shelf.type,
-    );
-  }, [shelf]);
+    if (!shelf) return { total: 0, includesEstimates: false };
+    return summarizeCollectionEstimatedValue(viewItems, shelf.type);
+  }, [shelf, viewItems]);
 
   const handleModalClose = useCallback(() => {
     setVisibleModal(undefined);
@@ -648,12 +656,18 @@ function ShelfComponent() {
     [selectedItemIds],
   );
 
+  const selectedItems = useMemo(() => {
+    const all = (shelf?.items ?? []) as unknown as ItemWithMetadata[];
+    return all.filter((item) => item.id && selectedItemIds.has(item.id));
+  }, [shelf?.items, selectedItemIds]);
+
   const exitSelectionMode = useCallback(() => {
     setSelectionMode(false);
     setSelectedItemIds(new Set());
     selectionAnchorIdRef.current = null;
     setMoveModalOpen(false);
     setDeleteModalOpen(false);
+    setEditModalOpen(false);
   }, []);
 
   // Escape mirrors the single "close" affordance in the selection bar.
@@ -666,10 +680,14 @@ function ShelfComponent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectionMode, exitSelectionMode]);
 
-  const visibleItemIds = useMemo(
-    () => sortedItems.map((item) => item.id).filter(Boolean) as string[],
-    [sortedItems],
-  );
+  const visibleItemIds = useMemo(() => {
+    if (shelfView === "duplicates") {
+      return groupedItems.flatMap((group) =>
+        group.copies.map((copy) => copy.id).filter(Boolean),
+      ) as string[];
+    }
+    return viewItems.map((item) => item.id).filter(Boolean) as string[];
+  }, [shelfView, groupedItems, viewItems]);
 
   // Single entry point: (re)enter selection and toggle / range-select.
   // Plain click toggles and sets the Shift anchor; Shift+click selects the
@@ -733,6 +751,17 @@ function ShelfComponent() {
   );
 
   const handleBulkDeleteSuccess = useCallback(
+    (result: { count: number; sourceShelfIds: string[] }) => {
+      exitSelectionMode();
+      void invalidateShelfQueries(queryClient, result.sourceShelfIds);
+      queryClient.invalidateQueries({ queryKey: ["shelves"] });
+      queryClient.invalidateQueries({ queryKey: ["collectionItems"] });
+      queryClient.invalidateQueries({ queryKey: ["searchItems"] });
+    },
+    [exitSelectionMode, queryClient],
+  );
+
+  const handleBulkEditSuccess = useCallback(
     (result: { count: number; sourceShelfIds: string[] }) => {
       exitSelectionMode();
       void invalidateShelfQueries(queryClient, result.sourceShelfIds);
@@ -884,6 +913,14 @@ function ShelfComponent() {
             itemIds={selectedItemIdsArray}
             sourceShelfId={resolvedShelfId}
             onSuccess={handleBulkDeleteSuccess}
+          />
+          <BulkEditModal
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            itemIds={selectedItemIdsArray}
+            items={selectedItems}
+            sourceShelfId={resolvedShelfId}
+            onSuccess={handleBulkEditSuccess}
           />
         </>
       )}
@@ -1044,12 +1081,13 @@ function ShelfComponent() {
             </div>
 
             <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">
-              <ItemCollectionDuplicatesFilter
-                value={duplicatesOnly}
+              <ItemCollectionViewFilter
+                value={shelfView}
                 onValueChange={(value) => {
-                  setDuplicatesOnly(value);
+                  setShelfView(value);
                   replaceCollectionParams({
-                    duplicates: value ? "1" : null,
+                    view: value === "active" ? null : value,
+                    duplicates: null,
                   });
                 }}
               />
@@ -1208,6 +1246,19 @@ function ShelfComponent() {
                 )}
                 <span className="hidden sm:inline">
                   {t("items.bulkRefresh.action")}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-xl gap-1.5 px-2.5 sm:px-3"
+                disabled={selectedItemIds.size === 0}
+                onClick={() => setEditModalOpen(true)}
+              >
+                <Pencil className="size-4" />
+                <span className="hidden sm:inline">
+                  {t("items.bulkEdit.action")}
                 </span>
               </Button>
               <Button

@@ -197,7 +197,7 @@ import {
   marketOfferConditionsForItem,
   shelfShowsItemCondition,
 } from "@/core/collect/condition";
-import { isItemOnLoan } from "@/core/collect/itemLoan";
+import { formatAbsenceBadge } from "@/core/collect/itemAbsence";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
 
@@ -2991,26 +2991,44 @@ export default function ItemDetailsPage() {
                         {localizeFinishLabel(resolvedVariant, t)}
                       </Badge>
                     )}
-                    {isItemOnLoan(item ?? {}) && (
-                      <Badge
-                        variant="outline"
-                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold px-2 py-0.5 flex gap-1 items-center"
-                      >
-                        <HandHelping className="size-3" />
-                        {item?.absenceSince
+                    {(() => {
+                      const absence = formatAbsenceBadge(item ?? {});
+                      if (!absence) return null;
+                      const label = t(`items.absence.badge.${absence.labelKey}`, {
+                        ...(absence.name ? { name: absence.name } : {}),
+                        ...(absence.detail ? { detail: absence.detail } : {}),
+                      });
+                      const dated =
+                        absence.labelKey === "loaned_to" &&
+                        item?.absenceSince
                           ? t("items.loan.badgeWithDate", {
-                              name: item.absenceRecipient,
+                              name: absence.name ?? "",
                               date: new Date(
                                 item.absenceSince,
                               ).toLocaleDateString(
                                 locale === "en" ? "en-GB" : "fr-FR",
                               ),
                             })
-                          : t("items.loan.badge", {
-                              name: item?.absenceRecipient,
-                            })}
-                      </Badge>
-                    )}
+                          : label;
+                      const toneClass =
+                        absence.tone === "away"
+                          ? "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                          : absence.tone === "wanted"
+                            ? "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+                            : "border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
+                      return (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "font-semibold px-2 py-0.5 flex gap-1 items-center",
+                            toneClass,
+                          )}
+                        >
+                          <HandHelping className="size-3" />
+                          {dated}
+                        </Badge>
+                      );
+                    })()}
                     {formatGradeBadge(item) ? (
                       <Badge
                         variant="outline"

@@ -27,6 +27,7 @@ import {
   Check,
   LayoutGrid,
   Loader2,
+  Pencil,
   RefreshCw,
   Search,
   Trash2,
@@ -38,6 +39,7 @@ import { ScanFAB } from "@/components/ScanFAB";
 import { ItemCard } from "@/components/ItemCard";
 import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
 import { BulkDeleteModal } from "@/components/modals/BulkDeleteModal";
+import { BulkEditModal } from "@/components/modals/BulkEditModal";
 import { BulkMoveModal } from "@/components/modals/BulkMoveModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -198,6 +200,7 @@ function ItemsPageComponent() {
   const selectionAnchorIdRef = useRef<string | null>(null);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(searchSchema),
@@ -261,6 +264,11 @@ function ItemsPageComponent() {
     [selectedItemIds],
   );
 
+  const selectedItems = useMemo(
+    () => sortedItems.filter((item) => item.id && selectedItemIds.has(item.id)),
+    [sortedItems, selectedItemIds],
+  );
+
   const selectedSourceShelfIds = useMemo(() => {
     const ids = new Set<string>();
     for (const item of sortedItems) {
@@ -276,6 +284,7 @@ function ItemsPageComponent() {
     selectionAnchorIdRef.current = null;
     setMoveModalOpen(false);
     setDeleteModalOpen(false);
+    setEditModalOpen(false);
     // Setters are stable; listing them lets the React Compiler verify the memo
     // instead of bailing out of the whole component.
   }, [
@@ -283,6 +292,7 @@ function ItemsPageComponent() {
     setSelectedItemIds,
     setMoveModalOpen,
     setDeleteModalOpen,
+    setEditModalOpen,
   ]);
 
   useEffect(() => {
@@ -360,6 +370,14 @@ function ItemsPageComponent() {
   );
 
   const handleBulkDeleteSuccess = useCallback(
+    (result: { count: number; sourceShelfIds: string[] }) => {
+      exitSelectionMode();
+      invalidateAfterBulk(result.sourceShelfIds);
+    },
+    [exitSelectionMode, invalidateAfterBulk],
+  );
+
+  const handleBulkEditSuccess = useCallback(
     (result: { count: number; sourceShelfIds: string[] }) => {
       exitSelectionMode();
       invalidateAfterBulk(result.sourceShelfIds);
@@ -449,6 +467,13 @@ function ItemsPageComponent() {
             onClose={() => setDeleteModalOpen(false)}
             itemIds={selectedItemIdsArray}
             onSuccess={handleBulkDeleteSuccess}
+          />
+          <BulkEditModal
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            itemIds={selectedItemIdsArray}
+            items={selectedItems}
+            onSuccess={handleBulkEditSuccess}
           />
         </>
       )}
@@ -662,6 +687,19 @@ function ItemsPageComponent() {
                 )}
                 <span className="hidden sm:inline">
                   {t("items.bulkRefresh.action")}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-xl gap-1.5 px-2.5 sm:px-3"
+                disabled={selectedItemIds.size === 0}
+                onClick={() => setEditModalOpen(true)}
+              >
+                <Pencil className="size-4" />
+                <span className="hidden sm:inline">
+                  {t("items.bulkEdit.action")}
                 </span>
               </Button>
               <Button

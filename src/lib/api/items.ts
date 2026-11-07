@@ -287,6 +287,38 @@ export const deleteItemsBatch = (
     .then((response) => response.data);
 };
 
+export type UpdateItemsLifecycleBatchInput = {
+  itemIds: string[];
+  sourceShelfId?: string;
+  presence?: string | null;
+  absenceReason?: string | null;
+  absenceSince?: string | null;
+  absenceRecipient?: string | null;
+  absenceSource?: string | null;
+  absenceCarrier?: string | null;
+  absenceTracking?: string | null;
+  absenceOrderRef?: string | null;
+  absenceOrderUrl?: string | null;
+  absenceNote?: string | null;
+  absencePriceCents?: number | null;
+  absenceExpectedAt?: string | null;
+  purchasePriceCents?: number | null;
+  purchasedAt?: string | null;
+};
+
+export type UpdateItemsLifecycleBatchResult = {
+  count: number;
+  sourceShelfIds: string[];
+};
+
+export const updateItemsLifecycleBatch = (
+  data: UpdateItemsLifecycleBatchInput,
+): Promise<UpdateItemsLifecycleBatchResult> => {
+  return axios
+    .patch("/api/items/batch/lifecycle", data)
+    .then((response) => response.data);
+};
+
 export const deleteItem = (id: Item["id"]): Promise<void> => {
   if (id == null) {
     throw new Error("Id was not given to deleteItem");

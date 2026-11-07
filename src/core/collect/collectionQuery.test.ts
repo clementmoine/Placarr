@@ -220,7 +220,7 @@ describe("collectionQuery", () => {
       condition: "used",
       ratingMin: 8,
       pricedOnly: true,
-      duplicatesOnly: false,
+      shelfView: "active",
     });
 
     expect(
@@ -238,8 +238,14 @@ describe("collectionQuery", () => {
     expect(
       parseItemCollectionFilters({
         get: (key) => (key === "duplicates" ? "1" : null),
-      }).duplicatesOnly,
-    ).toBe(true);
+      }).shelfView,
+    ).toBe("duplicates");
+
+    expect(
+      parseItemCollectionFilters({
+        get: (key) => (key === "view" ? "past" : null),
+      }).shelfView,
+    ).toBe("past");
   });
 
   it("defaults TCG shelves to print binder order", () => {

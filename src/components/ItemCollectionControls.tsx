@@ -1,8 +1,5 @@
 "use client";
 
-import { Copy } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,7 +9,9 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/shared/utils";
 import {
+  ITEM_COLLECTION_SHELF_VIEWS,
   itemCollectionSortOptions,
+  type ItemCollectionShelfView,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -60,35 +59,43 @@ export function ItemCollectionSortSelect({
   );
 }
 
-type ItemCollectionDuplicatesFilterProps = {
-  value: boolean;
-  onValueChange: (value: boolean) => void;
+type ItemCollectionViewFilterProps = {
+  value: ItemCollectionShelfView;
+  onValueChange: (value: ItemCollectionShelfView) => void;
   className?: string;
 };
 
-/** Toggle: show only tiles that group more than one physical copy. */
-export function ItemCollectionDuplicatesFilter({
+/**
+ * Shelf presence / duplicates view (active, away, past, wanted, all, duplicates).
+ * Replaces the old « Doublons seulement » toggle.
+ */
+export function ItemCollectionViewFilter({
   value,
   onValueChange,
   className,
-}: ItemCollectionDuplicatesFilterProps) {
+}: ItemCollectionViewFilterProps) {
   const { t } = useLocale();
 
   return (
-    <Button
-      type="button"
-      variant={value ? "default" : "outline"}
-      aria-pressed={value}
-      onClick={() => onValueChange(!value)}
-      className={cn(
-        "h-11 shrink-0 rounded-2xl border-border/80 dark:border-zinc-800/80 px-3.5",
-        !value &&
-          "bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md hover:bg-zinc-50/10",
-        className,
-      )}
+    <Select
+      value={value}
+      onValueChange={(next) => onValueChange(next as ItemCollectionShelfView)}
     >
-      <Copy className="size-4" />
-      {t("filters.duplicatesOnly")}
-    </Button>
+      <SelectTrigger
+        className={cn(
+          "w-full sm:w-[220px] bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 data-[size=default]:h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 cursor-pointer",
+          className,
+        )}
+      >
+        <SelectValue placeholder={t("filters.view")} />
+      </SelectTrigger>
+      <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
+        {ITEM_COLLECTION_SHELF_VIEWS.map((option) => (
+          <SelectItem key={option} value={option} className="cursor-pointer">
+            {t(`filters.view.${option}`)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

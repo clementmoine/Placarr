@@ -11,7 +11,14 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Flashlight, FlashlightOff, ImageIcon, Plus } from "lucide-react";
+import {
+  Bug,
+  Flashlight,
+  FlashlightOff,
+  ImageIcon,
+  Plus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
@@ -388,6 +395,7 @@ export function UnifiedScanCapture({
   pathname,
   onCommitAdd,
   onOpenOwned,
+  onClose,
   cameraClassName,
 }: {
   active?: boolean;
@@ -397,6 +405,8 @@ export function UnifiedScanCapture({
   onCommitAdd: (prefill: ScanAddPrefill) => void;
   /** Navigate to an already-owned item. */
   onOpenOwned: (path: string) => void;
+  /** Close the scanner shell (same chrome as torch / gallery). */
+  onClose?: () => void;
   cameraClassName?: string;
 }) {
   const { t, locale } = useLocale();
@@ -721,15 +731,29 @@ export function UnifiedScanCapture({
   );
 
   const undoSessionLock = useCallback((id: string) => {
+    const before = sessionRef.current.list();
+    const removedAt = before.findIndex((row) => row.id === id);
     hydrateAbortRef.current.get(id)?.abort();
     hydrateAbortRef.current.delete(id);
     if (!sessionRef.current.remove(id)) return;
-    setSessionLocks([...sessionRef.current.list()]);
+    const remaining = [...sessionRef.current.list()];
+    setSessionLocks(remaining);
     setHydrations((prev) => {
       const next = { ...prev };
       delete next[id];
       return next;
     });
+    if (remaining.length === 0) {
+      setReviewIndex(0);
+      setPanel((panel) => (panel === "review" ? "camera" : panel));
+      setPhase("looking");
+    } else if (removedAt >= 0) {
+      setReviewIndex((idx) => {
+        if (idx > removedAt) return idx - 1;
+        if (idx >= remaining.length) return remaining.length - 1;
+        return idx;
+      });
+    }
     hapticShort();
   }, []);
 
@@ -1670,7 +1694,7 @@ export function UnifiedScanCapture({
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-black text-white">
+    <div className="relative flex flex-col h-full min-h-0 bg-black text-white">
       {showCamera ? (
         <div
           ref={cameraShellRef}
@@ -1747,6 +1771,7 @@ export function UnifiedScanCapture({
               quadNorm={quadNorm}
               secondaryQuadsNorm={secondaryQuadsNorm}
               sampling={sampling}
+              zoom={zoom}
               onTapAt={(nx, ny) => {
                 const hit = pickSubjectAtNorm(subjectsRef.current, nx, ny);
                 if (!hit) return false;
@@ -1763,61 +1788,83 @@ export function UnifiedScanCapture({
             />
           ) : null}
 
-          {/*
-            Leave the top-right clear for the Dialog close (≈2.75rem). Gallery
-            sits just left of that slot so the two never stack.
-          */}
           <div
-            className="absolute left-3 z-30 flex items-start justify-between gap-2 pointer-events-none top-[max(0.75rem,env(safe-area-inset-top))] right-[max(3.25rem,calc(env(safe-area-inset-right)+2.75rem))]"
+            className="absolute inset-x-3 z-30 flex items-start justify-between gap-2 pointer-events-none top-[max(0.75rem,env(safe-area-inset-top))]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pointer-events-auto flex gap-2 min-w-0">
-              {caps.torch ? (
+            <button
+              type="button"
+              onClick={() => {
+                setScanDebugEnabled(!isScanDebugEnabled());
+                hapticShort();
+              }}
+              className={cn(
+                "pointer-events-auto size-9 shrink-0 rounded-full backdrop-blur-sm flex items-center justify-center cursor-pointer",
+                debugEnabled
+                  ? "bg-emerald-500/80 text-white"
+                  : "bg-black/40 text-white",
+              )}
+              aria-label={t("scanner.debug")}
+              aria-pressed={debugEnabled}
+            >
+              <Bug className="size-4" />
+            </button>
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="pointer-events-auto size-9 shrink-0 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer"
+                aria-label={t("common.close")}
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </div>
+
+          {!manualOpen && panel === "camera" ? (
+            <div className="absolute inset-x-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center pointer-events-none px-6 bottom-[max(1.25rem,env(safe-area-inset-bottom))]">
+              <div className="pointer-events-none flex justify-end pr-3">
                 <button
                   type="button"
                   onClick={() => void toggleTorch()}
-                  className="size-9 shrink-0 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer"
+                  disabled={!caps.torch}
+                  className="pointer-events-auto size-11 shrink-0 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed"
                   aria-label={t("scanner.torch")}
+                  aria-pressed={torchOn}
+                  aria-disabled={!caps.torch}
                 >
                   {torchOn ? (
-                    <Flashlight className="size-4" />
+                    <Flashlight className="size-5" />
                   ) : (
-                    <FlashlightOff className="size-4" />
+                    <FlashlightOff className="size-5" />
                   )}
                 </button>
-              ) : null}
-              {!identifyMiss ? (
-                <button
-                  type="button"
-                  onClick={() => setManualOpen(true)}
-                  className="h-9 px-3 rounded-full bg-black/40 backdrop-blur-sm text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer"
-                  aria-label={t("scanner.unrecognizedTitle")}
-                >
-                  <Plus className="size-3.5" />
-                  {t("scanner.addManually")}
-                </button>
-              ) : null}
-            </div>
-            <label className="pointer-events-auto size-9 shrink-0 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-pointer">
-              <ImageIcon className="size-4 text-white/90" />
-              <span className="sr-only">{t("scanner.cardPickPhoto")}</span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null;
-                  event.target.value = "";
-                  if (file) void identifyFile(file);
-                }}
-              />
-            </label>
-          </div>
-
-          {debugEnabled ? (
-            <div className="absolute top-14 left-3 z-30 text-[9px] font-mono text-emerald-300/90 pointer-events-none">
-              z={zoom.toFixed(2)}
+              </div>
+              <button
+                type="button"
+                onClick={() => setManualOpen(true)}
+                className="pointer-events-auto size-16 rounded-full bg-white text-zinc-950 shadow-lg flex items-center justify-center cursor-pointer"
+                aria-label={t("scanner.addManually")}
+              >
+                <Plus className="size-8" strokeWidth={2.25} />
+              </button>
+              <div className="pointer-events-none flex justify-start pl-3">
+                <label className="pointer-events-auto size-11 shrink-0 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-pointer">
+                  <ImageIcon className="size-5 text-white/90" />
+                  <span className="sr-only">{t("scanner.cardPickPhoto")}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      event.target.value = "";
+                      if (file) void identifyFile(file);
+                    }}
+                  />
+                </label>
+              </div>
             </div>
           ) : null}
         </div>
@@ -1826,18 +1873,6 @@ export function UnifiedScanCapture({
           {t("scanner.error")}
         </div>
       )}
-
-      {identifyMiss && panel === "camera" && !manualOpen ? (
-        <div className="shrink-0 mx-4 mt-2 mb-1 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setManualOpen(true)}
-            className="h-10 px-4 rounded-full bg-white text-zinc-950 text-xs font-bold cursor-pointer"
-          >
-            {t("scanner.addAnyway")}
-          </button>
-        </div>
-      ) : null}
 
       {hasCardMatches && panel === "camera" ? (
         <button
@@ -1949,8 +1984,10 @@ export function UnifiedScanCapture({
                   label={lock.label}
                   faceUrl={lock.faceUrl}
                   ownedLabel={t("scanner.owned")}
+                  removeLabel={t("scanner.sessionUndo")}
                   selected={index === reviewIndex}
                   onClick={() => setReviewIndex(index)}
+                  onRemove={() => undoSessionLock(lock.id)}
                 />
               ))}
             </div>
@@ -2092,7 +2129,8 @@ export function UnifiedScanCapture({
                 label={lock.label}
                 faceUrl={lock.faceUrl}
                 ownedLabel={t("scanner.owned")}
-                onClick={() => undoSessionLock(lock.id)}
+                removeLabel={t("scanner.sessionUndo")}
+                onRemove={() => undoSessionLock(lock.id)}
               />
             ))}
           </div>

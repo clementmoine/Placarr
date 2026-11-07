@@ -1,7 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prefillFromHydrated } from "@/lib/client/scan/hydrateScanLock";
+import {
+  hydrateScanLock,
+  prefillFromHydrated,
+} from "@/lib/client/scan/hydrateScanLock";
 import type { HydratedScanLock } from "@/lib/client/scan/hydrateScanLock";
+import { getMetadataPreview } from "@/lib/api/metadata";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(async () => ({ data: [] })),
+  },
+}));
+
+vi.mock("@/lib/api/metadata", () => ({
+  getMetadataPreview: vi.fn(async () => null),
+}));
 
 function base(partial: Partial<HydratedScanLock> = {}): HydratedScanLock {
   return {
@@ -30,6 +44,67 @@ function base(partial: Partial<HydratedScanLock> = {}): HydratedScanLock {
     ...partial,
   };
 }
+
+describe("hydrateScanLock manual", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("keeps the typed title for manual:timestamp keys (not Objet + digits)", async () => {
+    const hydrated = await hydrateScanLock(
+      {
+        id: "manual:1",
+        kind: "manual",
+        key: "manual:1794070479699",
+        label: "Mario 64",
+        note: "Mario 64",
+        faceUrl: null,
+        lockedAt: Date.now(),
+      },
+      { shelves: [] },
+    );
+    expect(hydrated.title).toBe("Mario 64");
+    expect(hydrated.status).toBe("ready");
+    expect(hydrated.imageUrl).toBeNull();
+    expect(getMetadataPreview).not.toHaveBeenCalled();
+  });
+
+  it("fetches a cover from metadata when a shelf type is known", async () => {
+    vi.mocked(getMetadataPreview).mockResolvedValueOnce({
+      title: "Super Mario 64",
+      imageUrl: "https://cdn.example/mario64.jpg",
+      attachments: [],
+    } as never);
+
+    const hydrated = await hydrateScanLock(
+      {
+        id: "manual:2",
+        kind: "manual",
+        key: "manual:100",
+        label: "Mario 64",
+        note: "Mario 64",
+        faceUrl: null,
+        lockedAt: Date.now(),
+      },
+      {
+        shelves: [{ id: "n64", name: "Nintendo 64", type: "games" }],
+        preferredShelfId: "n64",
+      },
+    );
+
+    expect(getMetadataPreview).toHaveBeenCalledWith(
+      "Mario 64",
+      "games",
+      null,
+      null,
+      "Nintendo 64",
+    );
+    expect(hydrated.title).toBe("Super Mario 64");
+    expect(hydrated.imageUrl).toBe("https://cdn.example/mario64.jpg");
+    expect(hydrated.shelfType).toBe("games");
+    expect(hydrated.status).toBe("ready");
+  });
+});
 
 describe("prefillFromHydrated", () => {
   it("maps a card lock to ItemModal printKey prefill", () => {

@@ -172,8 +172,8 @@ export function ScanFAB() {
 
       <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
         <DialogContent
-          showClose
-          className="flex flex-col p-0 overflow-hidden gap-0 border-0 bg-black text-white shadow-2xl w-[100vw] max-w-none h-[100dvh] max-h-[100dvh] rounded-none top-0 left-0 translate-x-0 translate-y-0 sm:w-[min(100vw,28rem)] sm:h-[min(96dvh,52rem)] sm:max-h-[96dvh] sm:rounded-2xl sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:border sm:border-zinc-800 [&>button]:text-white/70 [&>button]:hover:text-white [&>button]:opacity-100 [&>button]:z-50 [&>button]:top-[max(1rem,env(safe-area-inset-top))] [&>button]:right-[max(1rem,env(safe-area-inset-right))]"
+          showClose={false}
+          className="flex flex-col p-0 overflow-hidden gap-0 border-0 bg-black text-white shadow-2xl w-[100vw] max-w-none h-[100dvh] max-h-[100dvh] rounded-none top-0 left-0 translate-x-0 translate-y-0 sm:w-[min(100vw,28rem)] sm:h-[min(96dvh,52rem)] sm:max-h-[96dvh] sm:rounded-2xl sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:border sm:border-zinc-800"
         >
           <DialogTitle className="sr-only">
             {t("scanner.title") || "Item scan"}
@@ -185,6 +185,7 @@ export function ScanFAB() {
               pathname={pathname}
               onCommitAdd={handleCommitAdd}
               onOpenOwned={handleOpenOwned}
+              onClose={() => setIsScannerOpen(false)}
             />
           </div>
         </DialogContent>

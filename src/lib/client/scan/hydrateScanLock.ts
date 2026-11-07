@@ -436,12 +436,13 @@ async function hydrateManualLock(
   ctx: HydrateScanContext,
 ): Promise<HydratedScanLock> {
   const code = lock.key.trim();
-  const looksLikeBarcode = /^\d{8,14}$/.test(code.replace(/\D/g, "")) &&
-    code.replace(/\D/g, "").length >= 8;
+  // Key must *be* a barcode — not `manual:1739…` (digits after stripping
+  // the prefix look like an EAN and used to become « Objet 1739… »).
+  const looksLikeBarcode = /^\d{8,14}$/.test(code);
 
   if (looksLikeBarcode) {
     return hydrateBarcodeLock(
-      { ...lock, kind: "barcode", key: code.replace(/\D/g, "") || code },
+      { ...lock, kind: "barcode", key: code },
       ctx,
     );
   }
@@ -453,26 +454,84 @@ async function hydrateManualLock(
     preferredShelfId: ctx.preferredShelfId,
     searchNames: [title],
   });
+  const guessedShelf = ctx.shelves.find((s) => s.id === suggestion.shelfId);
+  const shelfType = guessedShelf?.type ?? null;
 
   const ownedTitle = await fetchOwnedByQuery(title, ctx.signal).catch(() => []);
+  const owned = pickOwned([], ownedTitle, null);
 
-  return {
+  let imageUrl = lock.faceUrl ?? owned?.imageUrl ?? null;
+  let imageSource: HydrateHit["imageSource"] = lock.faceUrl
+    ? "face"
+    : owned?.imageUrl
+      ? "metadata"
+      : "none";
+  let metadataPreview: MetadataResult | null = null;
+  let displayTitle = title;
+
+  let current: HydratedScanLock = {
     ...emptyHydrated(lock),
-    title,
-    imageUrl: lock.faceUrl ?? null,
+    title: displayTitle,
+    imageUrl,
+    shelfType,
     suggestedShelfId: suggestion.shelfId,
     shelfSure: suggestion.confidence === "sure",
-    owned: pickOwned([], ownedTitle, null),
+    owned,
     hits: [
       {
-        title,
-        imageUrl: lock.faceUrl ?? null,
-        imageSource: lock.faceUrl ? "face" : "none",
+        title: displayTitle,
+        imageUrl,
+        imageSource,
         metadataPreview: null,
+      },
+    ],
+    status: "loading",
+  };
+  ctx.onProgress?.(current);
+
+  // Title-only manual add: no barcode/face — ask metadata for a cover when we
+  // have a shelf type (pathname / preferred / name score). Honest miss stays empty.
+  if (shelfType && !ctx.signal?.aborted) {
+    try {
+      const metadata = await getMetadataPreview(
+        title,
+        shelfType,
+        null,
+        null,
+        guessedShelf?.name ?? null,
+      );
+      if (!ctx.signal?.aborted && metadata) {
+        metadataPreview = metadata;
+        const cover = getCoverImage({ metadata });
+        if (cover) {
+          imageUrl = cover;
+          imageSource = "metadata";
+        }
+        const metaTitle =
+          typeof metadata.title === "string" ? metadata.title.trim() : "";
+        if (metaTitle) displayTitle = metaTitle;
+      }
+    } catch {
+      // Best-effort preview — keep typed title / owned cover.
+    }
+  }
+
+  current = {
+    ...current,
+    title: displayTitle,
+    imageUrl,
+    metadataPreview,
+    hits: [
+      {
+        title: displayTitle,
+        imageUrl,
+        imageSource,
+        metadataPreview,
       },
     ],
     status: "ready",
   };
+  return current;
 }
 
 /** Hydrate one session lock. Ignores results after abort / undo via signal. */

@@ -33,6 +33,8 @@ export type ScanOverlayProps = {
   /** Extra usable quads (not focus) — discreet outlines, no dim. */
   secondaryQuadsNorm?: ReadonlyArray<ReadonlyArray<{ x: number; y: number }>>;
   sampling?: boolean;
+  /** Camera zoom factor — shown only in the debug HUD. */
+  zoom?: number;
   /**
    * Tap: `(nx, ny)` in overlay 0..1. Return true if the tap was consumed
    * (e.g. focus promote); otherwise the force-identify `onTap` runs.
@@ -70,6 +72,7 @@ export function ScanOverlay({
   quadNorm,
   secondaryQuadsNorm,
   sampling,
+  zoom,
   onTapAt,
   onTap,
   className,
@@ -163,7 +166,8 @@ export function ScanOverlay({
         </svg>
       ) : null}
 
-      <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center p-4 pointer-events-none">
+      {/* Leave room for the centered manual-add FAB (~4rem) under the hint. */}
+      <div className="absolute inset-x-0 z-20 flex justify-center px-4 pb-4 pointer-events-none bottom-20">
         <p
           className={cn(
             "max-w-[86%] rounded-full px-3.5 py-1.5 text-center text-[12px] leading-snug tracking-[0.01em] text-white/95",
@@ -187,9 +191,9 @@ export function ScanOverlay({
       </div>
 
       {debug ? (
-        <div className="absolute top-2 left-2 right-2 z-30 pointer-events-none">
+        <div className="absolute inset-x-2 z-20 pointer-events-none top-[max(3.5rem,calc(env(safe-area-inset-top)+2.85rem))]">
           <pre className="rounded-lg bg-black/70 text-[9px] leading-tight text-emerald-300/90 p-2 font-mono overflow-hidden max-h-28">
-            {`phase=${debug.phase} fps=${debug.fps.toFixed(1)} gate=${debug.gateHint}
+            {`phase=${debug.phase} fps=${debug.fps.toFixed(1)} gate=${debug.gateHint} z=${zoom?.toFixed(2) ?? "—"}
 blur=${debug.blurVariance.toFixed(0)} lum=${debug.meanLuminance.toFixed(0)} glare=${(debug.glareFraction * 100).toFixed(1)}%
 margin=${debug.margin.toFixed(3)} weight=${debug.runWeight.toFixed(2)} aim=${debug.aimToLockMs ?? "—"}ms
 method=${debug.method} conf=${debug.confidence} quad=${debug.quadSource} crop=${debug.faceCrop}

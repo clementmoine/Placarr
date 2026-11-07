@@ -43,10 +43,12 @@ import {
   buildPresenceEvent,
   normalizeItemAbsenceInput,
   ownedAbsenceState,
+  parsePriceCents,
   type ItemAbsenceFields,
 } from "@/core/collect/itemAbsence";
 import {
   mergeItemGrade,
+  rawGradeState,
   type ItemGradeFields,
 } from "@/core/collect/itemGrade";
 import {
@@ -307,6 +309,11 @@ export async function POST(req: NextRequest) {
         absenceNote: rawAbsenceNote,
         absencePriceCents: rawAbsencePriceCents,
         absenceExpectedAt: rawAbsenceExpectedAt,
+        gradeStatus: rawGradeStatus,
+        gradeHouse: rawGradeHouse,
+        gradeLabel: rawGradeLabel,
+        gradeCertNo: rawGradeCertNo,
+        gradedAt: rawGradedAt,
       } = body;
       if (typeof shelfId !== "string" || !shelfId.trim()) {
         return NextResponse.json(
@@ -512,6 +519,15 @@ export async function POST(req: NextRequest) {
           absenceExpectedAt: rawAbsenceExpectedAt,
         }) ?? ownedAbsenceState();
 
+      const grade: ItemGradeFields =
+        mergeItemGrade(null, {
+          gradeStatus: rawGradeStatus,
+          gradeHouse: rawGradeHouse,
+          gradeLabel: rawGradeLabel,
+          gradeCertNo: rawGradeCertNo,
+          gradedAt: rawGradedAt,
+        }) ?? rawGradeState();
+
       const sealedSnapshot = skuKey
         ? sealedAcquisitionSnapshot({
             skuKey,
@@ -565,6 +581,7 @@ export async function POST(req: NextRequest) {
           purchasePriceCents,
           purchasedAt,
           ...absence,
+          ...grade,
           userId: auth.user.id,
         },
         include: {
@@ -600,6 +617,26 @@ export async function POST(req: NextRequest) {
 
       await writePresenceEvent(acquiredEvent);
       if (departedEvent) await writePresenceEvent(departedEvent);
+      if (grade.gradeStatus !== "raw") {
+        await writePresenceEvent(
+          buildPresenceEvent({
+            from: absence.presence,
+            to: absence.presence,
+            kind:
+              grade.gradeStatus === "submitted"
+                ? "grade_submitted"
+                : "grade_updated",
+            at: grade.gradedAt ?? undefined,
+            extraSnapshot: {
+              gradeStatus: grade.gradeStatus,
+              gradeHouse: grade.gradeHouse,
+              gradeLabel: grade.gradeLabel,
+              gradeCertNo: grade.gradeCertNo,
+              gradedAt: grade.gradedAt?.toISOString() ?? null,
+            },
+          }),
+        );
+      }
 
       // Scan/modal already fetched a rich preview — seed it so the item page
       // is not empty while the background worker deepens enrichment.
@@ -697,6 +734,8 @@ export async function PATCH(req: NextRequest) {
         shelfId?: string;
         slug?: string;
         metadataId?: null;
+        purchasePriceCents?: number | null;
+        purchasedAt?: Date | null;
       } & Partial<ItemAbsenceFields> &
         Partial<ItemGradeFields> = {};
 
@@ -748,6 +787,17 @@ export async function PATCH(req: NextRequest) {
       );
       if (absencePatch) {
         Object.assign(data, absencePatch);
+      }
+      if ("purchasePriceCents" in raw) {
+        data.purchasePriceCents = parsePriceCents(raw.purchasePriceCents);
+      }
+      if ("purchasedAt" in raw) {
+        if (raw.purchasedAt == null || raw.purchasedAt === "") {
+          data.purchasedAt = null;
+        } else {
+          const d = new Date(raw.purchasedAt as string | number | Date);
+          data.purchasedAt = Number.isNaN(d.getTime()) ? null : d;
+        }
       }
       // Grade patch applied after load (needs current fields) — see below.
       if (typeof raw.shelfId === "string") {

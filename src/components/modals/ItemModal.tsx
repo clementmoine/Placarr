@@ -65,6 +65,16 @@ import {
   itemConditionsForShelfType,
   shelfShowsItemCondition,
 } from "@/core/collect/condition";
+import {
+  ITEM_PRESENCES,
+  parsePriceCents,
+} from "@/core/collect/itemAbsence";
+import { GRADE_STATUSES } from "@/core/collect/itemGrade";
+import {
+  ItemModalLifecycleFields,
+  type ItemModalLifecycleFormSlice,
+} from "@/components/modals/ItemModalLifecycleFields";
+import type { Control, UseFormSetValue } from "react-hook-form";
 
 import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -227,8 +237,25 @@ export function ItemModal({
 
     condition: z.nativeEnum(Condition),
 
-    loanedTo: z.string().trim().optional(),
-    loanedAt: z.string().trim().optional(),
+    presence: z.enum(ITEM_PRESENCES),
+    absenceReason: z.string().trim().optional(),
+    absenceSince: z.string().trim().optional(),
+    absenceRecipient: z.string().trim().optional(),
+    absenceSource: z.string().trim().optional(),
+    absenceCarrier: z.string().trim().optional(),
+    absenceTracking: z.string().trim().optional(),
+    absenceOrderRef: z.string().trim().optional(),
+    absenceOrderUrl: z.string().trim().optional(),
+    absenceNote: z.string().trim().optional(),
+    absencePrice: z.string().trim().optional(),
+    absenceExpectedAt: z.string().trim().optional(),
+    purchasePrice: z.string().trim().optional(),
+    purchasedAt: z.string().trim().optional(),
+    gradeStatus: z.enum(GRADE_STATUSES),
+    gradeHouse: z.string().trim().optional(),
+    gradeLabel: z.string().trim().optional(),
+    gradeCertNo: z.string().trim().optional(),
+    gradedAt: z.string().trim().optional(),
 
     imageUrl: z
       .any()
@@ -275,8 +302,25 @@ export function ItemModal({
       barcode: prefilledValues?.barcode || "",
       variant: null,
       condition: "used",
-      loanedTo: "",
-      loanedAt: "",
+      presence: "owned",
+      absenceReason: "",
+      absenceSince: "",
+      absenceRecipient: "",
+      absenceSource: "",
+      absenceCarrier: "",
+      absenceTracking: "",
+      absenceOrderRef: "",
+      absenceOrderUrl: "",
+      absenceNote: "",
+      absencePrice: "",
+      absenceExpectedAt: "",
+      purchasePrice: "",
+      purchasedAt: "",
+      gradeStatus: "raw",
+      gradeHouse: "",
+      gradeLabel: "",
+      gradeCertNo: "",
+      gradedAt: "",
     }),
     [shelfId, prefilledValues],
   );
@@ -538,10 +582,6 @@ export function ItemModal({
   const watchedCondition = useWatch({
     control: form.control,
     name: "condition",
-  });
-  const watchedLoanedTo = useWatch({
-    control: form.control,
-    name: "loanedTo",
   });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
@@ -1700,16 +1740,54 @@ export function ItemModal({
         { trim: false },
       );
 
+      const {
+        purchasePrice,
+        absencePrice,
+        gradeHouse,
+        gradeLabel,
+        gradeCertNo,
+        gradedAt,
+        absenceReason,
+        absenceSince,
+        absenceRecipient,
+        absenceSource,
+        absenceCarrier,
+        absenceTracking,
+        absenceOrderRef,
+        absenceOrderUrl,
+        absenceNote,
+        absenceExpectedAt,
+        purchasedAt,
+        ...restValues
+      } = values;
+
       // Form payload forwarded to the parent's onSubmit. It carries a scalar
       // `shelfId` (and a raw `id`), which Prisma's *checked* create/update input
       // types don't accept (they expect `shelf: { connect }`); the parent
       // adapts it before hitting Prisma. `any` is load-bearing at that boundary.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedItem: any = {
-        ...values,
+        ...restValues,
         id: item ? item?.id : undefined,
         imageUrl: imageUrl,
         backgroundImageUrl: backgroundImageUrl,
+        purchasePriceCents: parsePriceCents(purchasePrice),
+        purchasedAt: purchasedAt?.trim() || null,
+        absenceReason: absenceReason?.trim() || null,
+        absenceSince: absenceSince?.trim() || null,
+        absenceRecipient: absenceRecipient?.trim() || null,
+        absenceSource: absenceSource?.trim() || null,
+        absenceCarrier: absenceCarrier?.trim() || null,
+        absenceTracking: absenceTracking?.trim() || null,
+        absenceOrderRef: absenceOrderRef?.trim() || null,
+        absenceOrderUrl: absenceOrderUrl?.trim() || null,
+        absenceNote: absenceNote?.trim() || null,
+        absencePriceCents: parsePriceCents(absencePrice),
+        absenceExpectedAt: absenceExpectedAt?.trim() || null,
+        gradeHouse: gradeHouse?.trim() || null,
+        gradeLabel: gradeLabel?.trim() || null,
+        gradeCertNo: gradeCertNo?.trim() || null,
+        gradedAt: gradedAt?.trim() || null,
         // Create-from-scan: persist the preview so the item page keeps gallery /
         // facts while background enrichment runs (otherwise only the chosen cover survives).
         // Print identity must travel with the create (ScanFAB / PrintPicker) —
@@ -2408,75 +2486,15 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Loan note — who has this copy and since when */}
-                    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-zinc-50/40 dark:bg-zinc-950/20 p-3 sm:p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          {t("items.loan.title")}
-                        </p>
-                        {(watchedLoanedTo || "").trim() ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs font-semibold text-muted-foreground"
-                            onClick={() => {
-                              form.setValue("loanedTo", "", {
-                                shouldDirty: true,
-                              });
-                              form.setValue("loanedAt", "", {
-                                shouldDirty: true,
-                              });
-                            }}
-                          >
-                            {t("items.loan.clear")}
-                          </Button>
-                        ) : null}
-                      </div>
-                      <p className="text-[11px] text-muted-foreground leading-snug -mt-1">
-                        {t("items.loan.hint")}
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <FormField
-                          control={form.control}
-                          name="loanedTo"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[11px] font-semibold text-muted-foreground">
-                                {t("items.loan.to")}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder={t("items.loan.toPlaceholder")}
-                                  className="bg-background border-border/80 rounded-xl h-10"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="loanedAt"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[11px] font-semibold text-muted-foreground">
-                                {t("items.loan.since")}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="date"
-                                  className="bg-background border-border/80 rounded-xl h-10"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
+                    <ItemModalLifecycleFields
+                      control={
+                        form.control as unknown as Control<ItemModalLifecycleFormSlice>
+                      }
+                      setValue={
+                        form.setValue as unknown as UseFormSetValue<ItemModalLifecycleFormSlice>
+                      }
+                      t={t}
+                    />
 
                     {/* Condition — hidden for TCG (finish is the copy axis). */}
                     {shelfShowsItemCondition(activeShelfType) && (

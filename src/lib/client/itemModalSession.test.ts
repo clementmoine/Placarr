@@ -73,8 +73,10 @@ describe("itemModalSession", () => {
     });
 
     expect(init.formValues.name).toBe("Black Stories");
-    expect(init.formValues.loanedTo).toBe("Alice");
-    expect(init.formValues.loanedAt).toBe("2026-09-01");
+    expect(init.formValues.presence).toBe("away");
+    expect(init.formValues.absenceReason).toBe("loaned");
+    expect(init.formValues.absenceRecipient).toBe("Alice");
+    expect(init.formValues.absenceSince).toBe("2026-09-01");
     expect(init.suggestions).toContain("Black Stories");
     expect(init.fetchedMetadata?.title).toBe("Black Stories");
     expect(init.asyncInit).toBeNull();

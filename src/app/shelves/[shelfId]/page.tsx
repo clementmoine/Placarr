@@ -125,6 +125,7 @@ import {
   syncShelfQueries,
   invalidateShelfQueries,
 } from "@/core/collect/queryCache";
+import { countsAsOwned } from "@/core/collect/itemAbsence";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
   parseItemCollectionFilters,
@@ -495,7 +496,7 @@ function ShelfComponent() {
   const ownedPrints = useMemo(
     () =>
       ((shelf?.items ?? []) as unknown as ItemWithMetadata[])
-        .filter((item) => item.printKey)
+        .filter((item) => item.printKey && countsAsOwned(item))
         .map((item) => ({
           printKey: item.printKey,
           variant: item.variant,

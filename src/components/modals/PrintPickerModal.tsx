@@ -15,6 +15,10 @@ import {
   printPickerActiveSearchQuery,
   printPickerListLines,
 } from "@/components/modals/printPickerListMode";
+import {
+  isExactOwnedRow,
+  ownedRowKey,
+} from "@/components/modals/printPickerOwned";
 import { CardBackSkeleton } from "@/components/CardBackSkeleton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
@@ -48,6 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
 import { cn } from "@/lib/shared/utils";
@@ -121,30 +126,6 @@ type PrintPickerModalProps = {
    */
   ownedPrints?: readonly OwnedPrintRef[];
 };
-
-/**
- * `s5` + `naruto:cl-0004` + `fr` + `holo` → une clé de comparaison stable.
- *
- * Set-scoped : une copie rangée en S5 ne marque pas la même carte en S1.
- * Sans `setCode` (legacy) la clé laisse le set vide — elle matche toute
- * ligne du même printKey (comportement d'avant).
- *
- * La langue en fait partie depuis le 2026-08-21. Une clé de tirage vaut pour
- * toutes ses localisations — posséder l'Inari française ne marque pas l'イナリ.
- */
-function ownedRowKey(
-  printKey: string,
-  variant: string | null,
-  language: string | null,
-  setCode: string | null,
-): string {
-  return [
-    (setCode ?? "").trim().toLowerCase(),
-    printKey.trim().toLowerCase(),
-    (language ?? "").trim().toLowerCase(),
-    (variant ?? "").trim().toLowerCase(),
-  ].join("|");
-}
 
 /** Une ligne du sélecteur : un tirage et une finition. */
 type PickerFinishRow = ReturnType<
@@ -389,6 +370,11 @@ export function PrintPickerModal({
   /** Guided list step when the search box holds 2+ lines. */
   const [listIndex, setListIndex] = useState(0);
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  /**
+   * Masque les finitions **exactement** déjà possédées. Une autre finition
+   * du même print reste visible (holo manquante alors qu'on a le normal).
+   */
+  const [hideOwned, setHideOwned] = useState(true);
 
   /** Une seule application des défauts par ouverture. */
   const shelfDefaultsApplied = useRef(false);
@@ -435,6 +421,22 @@ export function PrintPickerModal({
       game: games.size === 1 ? [...games][0]! : null,
     };
   }, [ownedPrints]);
+
+  // Dépile la sélection des finitions exactes quand on les masque.
+  useEffect(() => {
+    if (!hideOwned) return;
+    setSelected((current) => {
+      let changed = false;
+      const next = new Map(current);
+      for (const [key, row] of next) {
+        if (isExactOwnedRow(row, owned.exact)) {
+          next.delete(key);
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [hideOwned, owned.exact]);
 
   /** Aborts the previous first-page search so a slow response cannot overwrite a newer one. */
   const searchAbort = useRef<AbortController | null>(null);
@@ -1002,7 +1004,10 @@ export function PrintPickerModal({
             (row) => row.language?.trim().toLowerCase() === activeLanguage,
           );
     // L'extension borne déjà la requête côté serveur : rien à refiltrer ici.
-    const rows = byLanguage;
+    let rows = byLanguage;
+    if (hideOwned) {
+      rows = rows.filter((row) => !isExactOwnedRow(row, owned.exact));
+    }
     if (!owned.game) return rows;
     /*
       La recherche interroge **tous** les jeux de cartes du type `tcg` : sur une
@@ -1019,7 +1024,7 @@ export function PrintPickerModal({
       const bMine = parsePrintKey(b.printKey)?.game === owned.game ? 0 : 1;
       return aMine - bMine;
     });
-  }, [pickerRows, activeLanguage, owned.game]);
+  }, [pickerRows, activeLanguage, owned.game, owned.exact, hideOwned]);
 
   /*
     La sélection, elle, ne dépend **plus** de ce qui est à l'écran : cocher
@@ -1359,27 +1364,40 @@ export function PrintPickerModal({
           </div>
         )}
 
-        {visibleRows.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setSelected((current) => {
-                  const next = new Map(current);
-                  if (allVisibleSelected) {
-                    for (const row of visibleRows) next.delete(row.rowKey);
-                  } else {
-                    for (const row of visibleRows) next.set(row.rowKey, row);
-                  }
-                  return next;
-                })
-              }
-              className="text-xs font-bold text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
-            >
-              {allVisibleSelected
-                ? t("items.printPicker.clearSelection")
-                : t("items.printPicker.selectAll")}
-            </button>
+        {(visibleRows.length > 0 ||
+          (hasSearched && (ownedPrints?.length ?? 0) > 0)) && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {visibleRows.length > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setSelected((current) => {
+                    const next = new Map(current);
+                    if (allVisibleSelected) {
+                      for (const row of visibleRows) next.delete(row.rowKey);
+                    } else {
+                      for (const row of visibleRows) next.set(row.rowKey, row);
+                    }
+                    return next;
+                  })
+                }
+                className="text-xs font-bold text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
+              >
+                {allVisibleSelected
+                  ? t("items.printPicker.clearSelection")
+                  : t("items.printPicker.selectAll")}
+              </button>
+            )}
+            {(ownedPrints?.length ?? 0) > 0 && (
+              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <Checkbox
+                  checked={hideOwned}
+                  onCheckedChange={(value) => setHideOwned(value === true)}
+                  aria-label={t("items.printPicker.hideOwned")}
+                />
+                {t("items.printPicker.hideOwned")}
+              </label>
+            )}
           </div>
         )}
 
@@ -1401,7 +1419,10 @@ export function PrintPickerModal({
         {hasSearched && !isSearching && visibleRows.length === 0 && !error && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {pickerRows.length > 0
-              ? t("items.printPicker.noResultsForLanguage")
+              ? hideOwned &&
+                pickerRows.some((row) => isExactOwnedRow(row, owned.exact))
+                ? t("items.printPicker.allOwnedHidden")
+                : t("items.printPicker.noResultsForLanguage")
               : t("items.printPicker.noResults")}
           </p>
         )}
@@ -1410,18 +1431,14 @@ export function PrintPickerModal({
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {visibleRows.map((row) => {
               const printKey = row.printKey.trim().toLowerCase();
-              const lang = row.language ?? null;
-              const rowSet = row.setCode?.trim().toLowerCase() || null;
-              const hasExact =
-                owned.exact.has(
-                  ownedRowKey(printKey, row.finish, lang, rowSet),
-                ) ||
-                // Legacy : item sans setCode → encore « déjà là » sur tout set.
-                owned.exact.has(ownedRowKey(printKey, row.finish, lang, null));
+              const hasExact = isExactOwnedRow(row, owned.exact);
               const hasOtherFinish =
                 !hasExact &&
                 (owned.anyFinish.has(
-                  [(rowSet ?? "").trim().toLowerCase(), printKey].join("|"),
+                  [
+                    (row.setCode ?? "").trim().toLowerCase(),
+                    printKey,
+                  ].join("|"),
                 ) ||
                   owned.anyFinish.has(["", printKey].join("|")));
               const isChecked = selected.has(row.rowKey);

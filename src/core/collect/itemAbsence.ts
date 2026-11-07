@@ -258,6 +258,15 @@ export function absenceSinceInputValue(
   return `${y}-${m}-${d}`;
 }
 
+/** Euros string for a price `<input>`, or empty when unset. */
+export function priceCentsInputValue(
+  cents: number | null | undefined,
+): string {
+  if (cents == null || !Number.isFinite(cents)) return "";
+  const euros = cents / 100;
+  return Number.isInteger(euros) ? String(euros) : euros.toFixed(2);
+}
+
 /** @deprecated use absenceSinceInputValue */
 export const loanedAtInputValue = absenceSinceInputValue;
 
@@ -282,7 +291,8 @@ function trimToNull(value: unknown): string | null {
   return trimmed ? trimmed : null;
 }
 
-function parsePriceCents(value: unknown): number | null {
+/** Accept euros (`"12.50"`) or integer cents (`"1250"` / number). */
+export function parsePriceCents(value: unknown): number | null {
   if (value == null || value === "") return null;
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.max(0, Math.round(value));

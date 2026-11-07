@@ -9,9 +9,15 @@ import {
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
 import {
   absenceSinceInputValue,
-  loanRecipient,
-  loanSince,
+  isAbsenceReason,
+  isItemPresence,
+  priceCentsInputValue,
+  type ItemPresence,
 } from "@/core/collect/itemAbsence";
+import {
+  isGradeStatus,
+  type GradeStatus,
+} from "@/core/collect/itemGrade";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
@@ -28,10 +34,26 @@ export type ItemModalFormValues = {
    */
   variant?: string | null;
   condition: Condition;
-  /** Who currently has this copy — empty means at home. */
-  loanedTo?: string;
-  /** `yyyy-mm-dd` for the date input, or empty. */
-  loanedAt?: string;
+  presence: ItemPresence;
+  absenceReason: string;
+  absenceSince: string;
+  absenceRecipient: string;
+  absenceSource: string;
+  absenceCarrier: string;
+  absenceTracking: string;
+  absenceOrderRef: string;
+  absenceOrderUrl: string;
+  absenceNote: string;
+  /** Euros string for the form; converted to cents on submit. */
+  absencePrice: string;
+  absenceExpectedAt: string;
+  purchasePrice: string;
+  purchasedAt: string;
+  gradeStatus: GradeStatus;
+  gradeHouse: string;
+  gradeLabel: string;
+  gradeCertNo: string;
+  gradedAt: string;
   imageUrl: string | File | null;
   backgroundImageUrl: string | File | null;
 };
@@ -94,6 +116,33 @@ export function itemModalSessionKey({
   return `new:${prefilledValues?.barcode ?? ""}|${prefilledValues?.printKey ?? ""}|${prefilledValues?.name ?? ""}|${prefilledShelfId}`;
 }
 
+function emptyAbsenceFields() {
+  return {
+    presence: "owned" as const,
+    absenceReason: "",
+    absenceSince: "",
+    absenceRecipient: "",
+    absenceSource: "",
+    absenceCarrier: "",
+    absenceTracking: "",
+    absenceOrderRef: "",
+    absenceOrderUrl: "",
+    absenceNote: "",
+    absencePrice: "",
+    absenceExpectedAt: "",
+  };
+}
+
+function emptyGradeFields() {
+  return {
+    gradeStatus: "raw" as const,
+    gradeHouse: "",
+    gradeLabel: "",
+    gradeCertNo: "",
+    gradedAt: "",
+  };
+}
+
 function defaultFormValues(
   shelfId: string,
   prefilledValues?: ItemModalPrefilledValues,
@@ -107,8 +156,10 @@ function defaultFormValues(
     barcode: prefilledValues?.barcode || "",
     variant: null,
     condition: "used",
-    loanedTo: "",
-    loanedAt: "",
+    purchasePrice: "",
+    purchasedAt: "",
+    ...emptyAbsenceFields(),
+    ...emptyGradeFields(),
   };
 }
 
@@ -146,6 +197,39 @@ function formValuesFromMetadataPreview(
     next.backgroundImageUrl = background;
   }
   return next;
+}
+
+function absenceFieldsFromItem(item: ItemWithMetadata) {
+  const presence = isItemPresence(item.presence) ? item.presence : "owned";
+  if (presence === "owned") return emptyAbsenceFields();
+  return {
+    presence,
+    absenceReason: isAbsenceReason(item.absenceReason)
+      ? item.absenceReason
+      : "",
+    absenceSince: absenceSinceInputValue(item.absenceSince),
+    absenceRecipient: item.absenceRecipient?.trim() || "",
+    absenceSource: item.absenceSource?.trim() || "",
+    absenceCarrier: item.absenceCarrier?.trim() || "",
+    absenceTracking: item.absenceTracking?.trim() || "",
+    absenceOrderRef: item.absenceOrderRef?.trim() || "",
+    absenceOrderUrl: item.absenceOrderUrl?.trim() || "",
+    absenceNote: item.absenceNote?.trim() || "",
+    absencePrice: priceCentsInputValue(item.absencePriceCents),
+    absenceExpectedAt: absenceSinceInputValue(item.absenceExpectedAt),
+  };
+}
+
+function gradeFieldsFromItem(item: ItemWithMetadata) {
+  const status = isGradeStatus(item.gradeStatus) ? item.gradeStatus : "raw";
+  if (status === "raw") return emptyGradeFields();
+  return {
+    gradeStatus: status,
+    gradeHouse: item.gradeHouse?.trim() || "",
+    gradeLabel: item.gradeLabel?.trim() || "",
+    gradeCertNo: item.gradeCertNo?.trim() || "",
+    gradedAt: absenceSinceInputValue(item.gradedAt),
+  };
 }
 
 export function buildItemModalSessionInit(input: {
@@ -193,8 +277,10 @@ export function buildItemModalSessionInit(input: {
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,
-      loanedTo: loanRecipient(item) || "",
-      loanedAt: absenceSinceInputValue(loanSince(item)),
+      purchasePrice: priceCentsInputValue(item.purchasePriceCents),
+      purchasedAt: absenceSinceInputValue(item.purchasedAt),
+      ...absenceFieldsFromItem(item),
+      ...gradeFieldsFromItem(item),
     };
 
     const metadata = filterMetadataForShelfPlatform(

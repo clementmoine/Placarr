@@ -96,7 +96,6 @@ import {
   type AttachmentDisplayLocale,
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
-import { ItemGradeEditor } from "@/components/ItemGradeEditor";
 import { ItemPresenceTimeline } from "@/components/ItemPresenceTimeline";
 import { formatGradeBadge } from "@/core/collect/itemGrade";
 import {
@@ -3606,14 +3605,6 @@ export default function ItemDetailsPage() {
               </div>
             </div>
           )}
-
-          {item?.id && canEdit && !isGuest ? (
-            <ItemGradeEditor
-              itemId={item.id}
-              shelfId={shelfId}
-              grade={item}
-            />
-          ) : null}
 
           {item?.id ? (
             <ItemPresenceTimeline itemId={item.id} shelfId={shelfId} />

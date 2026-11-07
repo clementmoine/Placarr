@@ -92,7 +92,7 @@ Basculement de vue **« en main »** vs **« tout possédé (scellé compris) »
 4. ~~Ouverture known_bundle~~ — `planSealedOpen` + `POST /api/items/:id/open` (transaction, events `opened`/`materialized`, liens, shell optionnel) + bouton fiche.
 5. ~~Statut unifié + bascule en main / tout possédé + filtres virtuels + amont buy~~ — `checklistVirtual` + `presence: virtual` ; prefs `possessionView` / `showVirtual` / `onlyVirtual` ; missing exclut virtuels.
 6. ~~Display / pile / partial / declare~~ — `planSealedOpen` pack_container+mixed+`takeSealedCount` ; `planSealedDeclare` + `POST …/declare`.
-7. ~~Timeline + cost basis + `expected`/`consumed` + slabs/WIP~~ — events fiche ; cost basis rip ; absence élargi ; `GradeStatus` + éditeur fiche (orthogonal à `Condition`).
+7. ~~Timeline + cost basis + `expected`/`consumed` + slabs/WIP~~ — events fiche ; cost basis rip ; absence élargi ; `GradeStatus` + **bloc grade / prix / absence dans ItemModal** (orthogonal à `Condition`).
 
 ## Décisions figées
 

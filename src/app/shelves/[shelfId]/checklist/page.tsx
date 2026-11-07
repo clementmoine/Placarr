@@ -164,6 +164,7 @@ function Advice(props: {
   cards: readonly ChecklistPrint[];
   hideZeroSealedExpectation: boolean;
   hideImputedPrices: boolean;
+  virtualCoveredCount?: number;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return <AdvicePanel {...props} />;

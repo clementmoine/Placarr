@@ -117,8 +117,10 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.metadataRefreshStartedAt === next.metadataRefreshStartedAt &&
     prev.variant === next.variant &&
     prev.printKey === next.printKey &&
-    prev.loanedTo === next.loanedTo &&
-    prev.loanedAt === next.loanedAt &&
+    prev.presence === next.presence &&
+    prev.absenceReason === next.absenceReason &&
+    prev.absenceRecipient === next.absenceRecipient &&
+    prev.absenceSince === next.absenceSince &&
     prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
     prev.metadata?.platformKey === next.metadata?.platformKey &&
@@ -365,7 +367,7 @@ function ItemCardInner(props: ItemCardProps) {
           )}
           {isItemOnLoan(props) && (
             <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-sky-400/35 bg-zinc-950/90 text-sky-200 shadow-sm max-w-[7.5rem] truncate">
-              → {props.loanedTo}
+              → {props.absenceRecipient}
             </span>
           )}
           {condition && shelfShowsItemCondition(shelfType) && (
@@ -455,6 +457,7 @@ function ItemCardInner(props: ItemCardProps) {
                 // Grids stay on CSS foil: WebGL is for the detail hero / fullscreen
                 // only (one context, readable art).
                 backend="css"
+                faceQuarterTurns={displayQuarterTurns}
                 // A wall of tiles each tipping under the cursor reads as the page
                 // squirming. The light still drifts, which is what marks the copy.
                 tilt={false}

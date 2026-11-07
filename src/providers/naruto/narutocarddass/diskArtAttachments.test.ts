@@ -32,11 +32,12 @@ describe("buildNarutoDiskArtAttachments", () => {
 
     expect(attachments).toHaveLength(2);
     expect(
-      attachments.find((a) => a.role === "naruto-face-carddass")
+      attachments.find((a) => a.role === "naruto-face-fr-carddass")
         ?.coverProvenance,
     ).toBe("catalog");
     expect(
-      attachments.find((a) => a.role === "naruto-face-coleka")?.coverProvenance,
+      attachments.find((a) => a.role === "naruto-face-fr-coleka")
+        ?.coverProvenance,
     ).toBe("listing_photo");
     expect(attachments.every((a) => a.source === "narutocarddass")).toBe(true);
     expect(defaultUrl).toBe(
@@ -44,7 +45,7 @@ describe("buildNarutoDiskArtAttachments", () => {
     );
     expect(attachments[0]?.url).toBe(defaultUrl);
     expect(attachments.map((a) => a.role).sort()).toEqual(
-      ["naruto-face-carddass", "naruto-face-coleka"].sort(),
+      ["naruto-face-fr-carddass", "naruto-face-fr-coleka"].sort(),
     );
   });
 
@@ -189,7 +190,7 @@ describe("buildNarutoDiskArtAttachments", () => {
       "/assets/naruto/carddass/cards/fr/promo/pr0093/art.reconstructed.webp",
     );
     expect(attachments).toHaveLength(1);
-    expect(attachments[0]?.role).toBe("naruto-face-reconstructed");
+    expect(attachments[0]?.role).toBe("naruto-face-fr-reconstructed");
     expect(attachments[0]?.coverProvenance).toBe("catalog");
   });
 });

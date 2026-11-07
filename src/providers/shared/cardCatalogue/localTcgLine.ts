@@ -30,6 +30,7 @@ import {
 } from "@/providers/shared/cardCatalogue/sets";
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
 import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
+import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
 import type {
   MetadataAdapterContext,
   PrintCandidate,
@@ -451,13 +452,21 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       defaultArt,
       ...arts.filter((file) => file !== defaultArt),
     ];
+    const faceLang = (faces.diskLang || row.lang?.trim().toLowerCase() || "")
+      .trim()
+      .toLowerCase();
     const attachments: MetadataAttachment[] = ordered.map((file) => {
       const sourceHint = file.replace(/^art\./i, "").replace(/\.[^.]+$/, "");
+      const sourceToken = sourceHint || "art";
       return {
         type: "cover",
         url: assetsCardUrl(spec.packId, diskId, file),
-        title: title.trim() || sourceHint,
-        role: `${spec.printGame}-face-${sourceHint || "art"}`,
+        title: title.trim() || sourceToken,
+        role: tcgFaceAttachmentRole({
+          printGame: spec.printGame,
+          lang: faceLang || null,
+          source: sourceToken,
+        }),
         source: spec.providerId,
         coverProvenance: "catalog",
       };

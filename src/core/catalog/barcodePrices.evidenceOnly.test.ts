@@ -39,6 +39,17 @@ vi.mock("@/core/catalog/registry", () => ({
   ] as unknown as ProviderModule[],
 }));
 
+const listAffinities = vi.fn(async () => [] as const);
+
+vi.mock("@/core/catalog/providerAffinity", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/core/catalog/providerAffinity")>();
+  return {
+    ...actual,
+    listAffinities: (...args: unknown[]) => listAffinities(...args),
+  };
+});
+
 const { collectRefreshBarcodePriceOffers } =
   await import("@/core/catalog/barcodePrices");
 
@@ -69,11 +80,29 @@ describe("collectRefreshBarcodePriceOffers — evidenceOnly", () => {
   beforeEach(() => {
     evidenceAwareRefresh.mockReset();
     httpOnlyRefresh.mockReset();
+    listAffinities.mockReset();
+    listAffinities.mockResolvedValue([]);
     evidenceAwareRefresh.mockResolvedValue([offer]);
     httpOnlyRefresh.mockResolvedValue([]);
   });
 
   it("runs every price module on a normal refresh", async () => {
+    await collectRefreshBarcodePriceOffers(refreshCtx());
+
+    expect(evidenceAwareRefresh).toHaveBeenCalledTimes(1);
+    expect(httpOnlyRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("still runs every price module when affinities are fresh (no consensus gate)", async () => {
+    listAffinities.mockResolvedValue([
+      {
+        providerId: "evidence-aware",
+        successCount: 12,
+        confidence: 0.9,
+        lastAt: new Date(),
+      },
+    ]);
+
     await collectRefreshBarcodePriceOffers(refreshCtx());
 
     expect(evidenceAwareRefresh).toHaveBeenCalledTimes(1);

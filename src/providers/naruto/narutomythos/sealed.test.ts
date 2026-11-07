@@ -117,14 +117,24 @@ import { readLorenzoneProductsLedger } from "./sealed";
         writeFileSync(dest, STAGED_PNG);
       }
       const { ingestMythosSealedProducts } = await import("./sealed");
+      const { MYTHOS_KANA_BORUTO_TBV6_SLUG } = await import("./kanaMangaSealed");
       const report = await ingestMythosSealedProducts({ ledger: partial });
-      expect(report.written).toBe(2);
+      // 2 LorenZone staged + 1 curated Kana Boruto TBV t.6 manga insert
+      expect(report.written).toBe(3);
       const index = loadSealedProductsIndex(NARUTO_MYTHOS_PACK_ID);
-      expect(Object.keys(index.products).length).toBe(2);
+      expect(Object.keys(index.products).length).toBe(3);
       for (const key of Object.keys(index.products)) {
         const entry = index.products[key] as { image: string | null };
         expect(entry.image).toMatch(/^\/assets\/naruto\/mythos\//);
       }
+      const kanaKey = `naruto/mythos::${MYTHOS_KANA_BORUTO_TBV6_SLUG}`;
+      const kana = index.products[kanaKey];
+      expect(kana).toBeDefined();
+      expect(kana!.kind).toBe("special");
+      expect(kana!.name).toMatch(/Boruto/i);
+      expect(kana!.guaranteedPrints?.some((p) => p.printKey === "mythos:ks1promo-0133-vv2")).toBe(
+        true,
+      );
     });
   });
 }

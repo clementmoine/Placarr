@@ -57,8 +57,8 @@ export function ProviderAffinitiesPanel() {
         </CardTitle>
         <CardDescription>
           {fr
-            ? "Succès mémorisés au scope catalogue (un match item → le corpus préfère ce provider)."
-            : "Catalogue-scoped wins (one item success → corpus prefers that provider)."}
+            ? "Succès mémorisés au scope catalogue (preuve / ordre d’appel soft — le consensus reste multi-source)."
+            : "Catalogue-scoped wins (proof / soft call order — consensus stays multi-source)."}
         </CardDescription>
       </CardHeader>
       <CardContent>

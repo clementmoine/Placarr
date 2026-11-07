@@ -8,7 +8,6 @@ import { existsSync, statSync } from "node:fs";
 import { parsePrintKey } from "@/core/identify/printKey";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
-import { assetsCardUrl } from "@/lib/packAssetUrls";
 import "@/effects/pokemon/cardFoilIndex";
 import {
   isPokemonPlainPrintLeaf,
@@ -16,13 +15,9 @@ import {
 import { resolveEffectForPrintKey } from "@/effects/pokemon/resolveEffect";
 import { localPokemonCatalogueArtUrl } from "@/providers/pokemon/tcgdex/disk/paperCardDisk";
 import {
-  tcgdexImageUrl,
-  tcgdexLocalizedImageBase,
-} from "@/providers/pokemon/tcgdex/fetch";
-import {
   listTcgdexCatalogueBrowsePage,
   listTcgdexRowsForLanguage,
-  tcgdexAssetDiskId,
+  lookupTcgdexSearchRow,
   tcgdexDbPath,
   type TcgdexSearchRow,
 } from "@/providers/pokemon/tcgdex/indexStore";
@@ -91,51 +86,33 @@ function rowToCatalogueCard(
     row.printed === 0 || row.printed === false ? false : undefined;
   if (opts?.identityOnly) {
     /*
-      Price overscan: build asset/CDN URLs without existsSync or Live foil
-      resolve (full disk harvest stayed on the hot path ~30s+ on FR).
+      Price overscan: skip existsSync + Live foil (FR was ~30s+ with full
+      resolve). Leave art empty — visible window is hydrated with
+      {@link hydratePokemonCatalogueBrowseRow} (local-only, never CDN).
     */
-    const artBasename = row.art?.trim() || null;
-    const diskId = artBasename ? tcgdexAssetDiskId(row.printKey, lang) : null;
-    const fromAssets =
-      artBasename && diskId
-        ? assetsCardUrl("pokemon", diskId, artBasename)
-        : null;
-    const localizedBase = tcgdexLocalizedImageBase(row.imageBaseUrl, lang);
-    const remote =
-      tcgdexImageUrl(localizedBase, "low") ??
-      tcgdexImageUrl(row.imageBaseUrl, "low");
-    const artUrl = fromAssets ?? remote ?? "";
     return {
       printKey: row.printKey,
       set,
       card,
       lang,
-      artUrl,
+      artUrl: "",
       hasFoil: false,
       label,
       name,
-      missingArt: !artUrl,
+      missingArt: true,
       ...(printed === false ? { printed: false } : {}),
       kind: "face",
     };
   }
-  const artBasename = row.art?.trim() || null;
-  const diskId = artBasename ? tcgdexAssetDiskId(row.printKey, lang) : null;
-  const fromAssets =
-    artBasename && diskId
-      ? assetsCardUrl("pokemon", diskId, artBasename)
-      : null;
-  const local =
-    fromAssets ??
+  /*
+    Local-first: on-disk face only (existsSync via paper/Live resolve).
+    Never invent `/assets/…/{a.art}` from SQLite alone (ghost 404s), and never
+    fall back to assets.tcgdex.net — CDN is Sync input; disk is runtime.
+  */
+  const artUrl =
     localPokemonCatalogueArtUrl(row.printKey, lang, undefined, {
       languages: [lang],
-    }) ??
-    null;
-  const localizedBase = tcgdexLocalizedImageBase(row.imageBaseUrl, lang);
-  const remote =
-    tcgdexImageUrl(localizedBase, "low") ??
-    tcgdexImageUrl(row.imageBaseUrl, "low");
-  const artUrl = local ?? remote ?? "";
+    }) ?? "";
   return {
     printKey: row.printKey,
     set,
@@ -148,6 +125,28 @@ function rowToCatalogueCard(
     missingArt: !artUrl,
     ...(printed === false ? { printed: false } : {}),
     kind: "face",
+  };
+}
+
+/**
+ * Full local art + foil resolve for a browse tile (after identityOnly
+ * overscan). Preserves price fields already attached on the row.
+ */
+export function hydratePokemonCatalogueBrowseRow(
+  row: CatalogueCardRow,
+): CatalogueCardRow {
+  if (row.kind !== "face") return row;
+  const raw = lookupTcgdexSearchRow(row.printKey, { language: row.lang });
+  if (!raw) {
+    return { ...row, artUrl: "", missingArt: true };
+  }
+  const full = rowToCatalogueCard({ ...raw, lang: row.lang });
+  return {
+    ...full,
+    ...(row.priceCents !== undefined ? { priceCents: row.priceCents } : {}),
+    ...(row.priceDeltaCents !== undefined
+      ? { priceDeltaCents: row.priceDeltaCents }
+      : {}),
   };
 }
 

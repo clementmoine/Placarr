@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { selectOnepieceSteps } from "./extract";
 
 describe("selectOnepieceSteps", () => {
-  it("defaults to seed + faces + products", () => {
-    expect(selectOnepieceSteps([])).toEqual(["seed", "faces", "products"]);
+  it("defaults to seed + faces + products + documents", () => {
+    expect(selectOnepieceSteps([])).toEqual([
+      "seed",
+      "faces",
+      "products",
+      "documents",
+    ]);
   });
 
   it("honours --only and --skip", () => {
@@ -12,10 +17,11 @@ describe("selectOnepieceSteps", () => {
     expect(selectOnepieceSteps(["--skip", "faces"])).toEqual([
       "seed",
       "products",
+      "documents",
     ]);
   });
 
-  it("keeps all steps under --offline (harvest gated separately)", () => {
+  it("drops online documents under --offline", () => {
     expect(selectOnepieceSteps(["--offline"])).toEqual([
       "seed",
       "faces",

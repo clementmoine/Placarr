@@ -5,6 +5,7 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
 import {
   lookupLorcanaTcgSearchRow,
   type LorcanaTcgSearchRow,
@@ -105,7 +106,11 @@ function buildAttachments(
         type: "cover",
         url: card.imageUrl,
         title: card.fullName,
-        role: card.language,
+        role: tcgFaceAttachmentRole({
+          printGame: LORCANA_GAME,
+          lang: card.language,
+          source: "art",
+        }),
         source: PROVIDER_ID,
       });
     }

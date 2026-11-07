@@ -14,8 +14,6 @@ import {
   listDbsCgRowsForLanguage,
   type DbsCgBrowseRow,
 } from "@/providers/dragonball/dbscg/indexStore";
-import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
-
 type Cache = { mtimeMs: number; rows: CatalogueCardRow[] };
 let cache: Cache | null = null;
 
@@ -37,23 +35,14 @@ function rowToCatalogueCard(row: DbsCgBrowseRow): CatalogueCardRow {
     grouping: row.grouping,
   });
   /*
-    Browse must not readdir per print (`dbsCgLocalArtFilename`). Prefer the
-    sqlite art basename / durable CDN URL; Sync faces pass fills assets.
+    Admin grid = local `/assets/…` only. Sqlite may still hold CDN URLs for
+    ingest; Sync faces densify disk. Basename → assets URL when present.
   */
   const raw = row.imageUrl?.trim() || "";
-  const remote =
-    raw &&
-    (catalogUrlMayStayRemote(raw) || /^https?:\/\//i.test(raw))
-      ? raw
-      : null;
-  const localFile =
-    raw && !remote && !raw.includes("/")
-      ? raw
-      : null;
-  const local = localFile
+  const localFile = raw && !raw.includes("/") ? raw : null;
+  const artUrl = localFile
     ? assetsCardUrl(DBS_CG_PACK_ID, { set, lang, card }, localFile)
-    : null;
-  const artUrl = local ?? remote ?? "";
+    : "";
   const name = row.fullName?.trim() || undefined;
   const label = name ? `${set}-${card} — ${name}` : `${set}-${card}`;
   return {

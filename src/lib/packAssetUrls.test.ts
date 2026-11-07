@@ -5,6 +5,7 @@ import {
   assetsPrintFaceUrl,
   identifyMatchDisplayUrl,
   identifyMatchFaceUrl,
+  pokemonCardTextureUrl,
   pokemonFaceFileFromTex,
   rewriteAssetPackUrl,
   rewriteAssetUrlForPrintKeyChange,
@@ -190,5 +191,21 @@ describe("pokemonFaceFileFromTex — the role decides, not the spelling", () => 
     expect(pokemonFaceFileFromTex("xy1_fr_001", "xy1_fr_001", "mask")).toBe(
       "art.webp",
     );
+  });
+
+  it("pokemonCardTextureUrl with role mask never returns art.webp for _foil_ stems", () => {
+    // Stamped (smbsp) + Rainbow Amplify (bwbsp) — same promo naming trap.
+    for (const [bundle, tex] of [
+      ["smbsp_fr_078", "smbsp_foil_fr_078"],
+      ["svbsp_fr_045", "svbsp_foil_fr_045"],
+      ["bwbsp_fr_050", "bwbsp_foil_fr_050"],
+    ] as const) {
+      expect(pokemonCardTextureUrl(bundle, tex, "mask")).toMatch(/\/mask\.webp$/);
+      expect(pokemonCardTextureUrl(bundle, tex, "mask")).not.toMatch(
+        /\/art\.webp$/,
+      );
+      // Default role still means "not a claimed mask" → art fallback.
+      expect(pokemonCardTextureUrl(bundle, tex)).toMatch(/\/art\.webp$/);
+    }
   });
 });

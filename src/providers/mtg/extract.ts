@@ -6,7 +6,7 @@
  * 3. Classic card back → curated/cards/back.webp
  * 4. mtgcards.fr sealed SKUs + optional FR shop faces (TCG Cards family)
  *
- * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products`.
+ * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products` · `documents`.
  * Faces stay off by default (opt-in `--mtgcards-faces` or `--only …,faces`).
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -39,11 +39,11 @@ const MAGIC_CARD_BACK_URL =
 
 const BULK_TYPE = "all_cards" as const;
 
-export const MTG_STEPS = ["seed", "faces", "products"] as const;
+export const MTG_STEPS = ["seed", "faces", "products", "documents"] as const;
 export type MtgStep = (typeof MTG_STEPS)[number];
 
 /** Network harvest only — Scryfall seed still runs from staging under `--offline`. */
-const MTG_ONLINE = new Set<MtgStep>(["faces", "products"]);
+const MTG_ONLINE = new Set<MtgStep>(["faces", "products", "documents"]);
 /** Shop faces remain opt-in (same as former `--mtgcards-faces`). */
 const MTG_OFF_BY_DEFAULT = new Set<MtgStep>(["faces"]);
 
@@ -120,6 +120,31 @@ export async function runMtgPackPipeline(
   console.log(
     `── Magic: The Gathering — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+
+  if (steps.includes("documents")) {
+    try {
+      const { loadMtgCuratedDocuments } = await import(
+        "@/providers/mtg/curated/documents"
+      );
+      const { harvestPackDocuments } = await import(
+        "@/providers/shared/documents/harvestPackDocuments"
+      );
+      const docs = await harvestPackDocuments({
+        packId: MTG_PACK_ID,
+        curated: loadMtgCuratedDocuments(),
+        force,
+      });
+      console.log(
+        `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+          `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── documents — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+    if (steps.length === 1) return { cards: 0, products: 0 };
+  }
 
   const skipBacks =
     argv.includes("--skip-backs") || skipToken(argv, "backs");

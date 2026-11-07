@@ -1,6 +1,7 @@
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { withPackCardUrls } from "@/effects/lorcana/packAssets";
+import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
 import type {
   MetadataResult,
   MetadataAttachment,
@@ -23,6 +24,7 @@ import {
   fetchLorcanaCardByPrintKey,
   isLorcanaLanguage,
   listLorcanaPrintSets,
+  LORCANA_GAME,
   searchLorcanaCards,
 } from "@/providers/lorcana/lorcanajson/fetch";
 import lorcanaBoosterComposition from "@/providers/lorcana/lorcanajson/curated/booster-composition.json";
@@ -88,7 +90,11 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
       type: "cover",
       url: withUrls.imageUrl,
       title: title.fullName,
-      role: "lorcanatcg-art",
+      role: tcgFaceAttachmentRole({
+        printGame: LORCANA_GAME,
+        lang: title.lang,
+        source: "art",
+      }),
       source: PROVIDER_ID,
     });
   }

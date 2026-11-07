@@ -254,6 +254,8 @@ const surugaDataCarddass = readNarutoCarddassSyncedSource("suruga-ya-data-cardda
       ).toEqual([
         "booster-composition.json",
         "cards",
+        "documents.json",
+        "documents.ts",
         "products",
         "products-contents.json",
         "sources",

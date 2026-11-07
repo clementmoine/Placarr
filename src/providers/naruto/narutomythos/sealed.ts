@@ -6,11 +6,14 @@ import path from "node:path";
 
 import { packSealedProductsDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
+import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
+import { buildMythosKanaBorutoTbv6SealedWrite } from "./kanaMangaSealed";
 import {
   NARUTO_MYTHOS_PACK_ID,
+  narutoMythosCuratedDir,
   narutoMythosSourcePath,
 } from "./pack";
 
@@ -139,6 +142,18 @@ export async function ingestMythosSealedProducts(opts: {
     ];
   });
 
+  // Curated contents (Boruto TBV t.6 → guaranteed VV2 promo) before write so
+  // mergeCuratedSealedContents densifies the SKU.
+  installProviderProductsContents(
+    NARUTO_MYTHOS_PACK_ID,
+    path.join(narutoMythosCuratedDir(), "products-contents.json"),
+  );
+
+  const kana = await buildMythosKanaBorutoTbv6SealedWrite({
+    force: opts.force,
+  });
+  if (kana.product) products.push(kana.product);
+
   if (!products.length) {
     return { written: 0, skipped: ledger.products.length, file: "" };
   }
@@ -148,9 +163,11 @@ export async function ingestMythosSealedProducts(opts: {
     source: "lorenzone",
     products,
   });
+  const lorenzoneAttempted = ledger.products.length;
+  const lorenzoneLanded = products.filter((p) => p.source !== "kana").length;
   return {
     written: result.written,
-    skipped: result.skipped + (ledger.products.length - products.length),
+    skipped: result.skipped + (lorenzoneAttempted - lorenzoneLanded),
     file: result.file,
   };
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   foilLeanAmplitude,
   foilScrollModeForInteraction,
+  liveWebglTiltFromLight,
   tiltFromLightPercent,
 } from "@/components/FoilCardImage";
 
@@ -16,6 +17,17 @@ describe("tiltFromLightPercent", () => {
     expect(tiltFromLightPercent(100, 0.4)).toBeCloseTo(0.4);
     expect(tiltFromLightPercent(0, 0.33)).toBeCloseTo(-0.33);
     expect(tiltFromLightPercent(100, 1)).toBeCloseTo(1);
+  });
+});
+
+describe("liveWebglTiltFromLight", () => {
+  it("maps pointer-bottom to +lean.y (N tips toward card top / +Z)", () => {
+    // VS local.z = uv.y - 0.5 → top = +Z; CSS dip at bottom raises top → +N·Z.
+    expect(liveWebglTiltFromLight(50, 100, 1)[0]).toBeCloseTo(0);
+    expect(liveWebglTiltFromLight(50, 100, 1)[1]).toBeCloseTo(1);
+    expect(liveWebglTiltFromLight(50, 0, 1)[1]).toBeCloseTo(-1);
+    expect(liveWebglTiltFromLight(50, 50, 1)[1]).toBeCloseTo(0);
+    expect(liveWebglTiltFromLight(100, 50, 1)[0]).toBeCloseTo(1);
   });
 });
 

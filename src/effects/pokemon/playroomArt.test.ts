@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import "./cardFoilIndex";
 
 import { POKEMON_FOIL_NAMES } from "./foilNames";
+import { listPokemonMaterialNames } from "./materials";
 import {
   listDumpedBundlesForShader,
   listPlayroomArtsForMaterial,
@@ -115,6 +116,26 @@ describe("playroomArtForMaterial", () => {
     expect(art?.liveOwned).toBe(true);
   });
 
+  it("SunLava → owned Lugulabre (sm2) first; dumps ship mask, no etch", () => {
+    // std = SunLava, ph = SunBeam — pickFromLookup must keep the lava print.
+    const dumped = pickDumpedBundleForShader("SunLava");
+    expect(dumped?.bundleId).toBe("sm2_fr_013");
+    expect(dumped?.variant).toBe("std");
+    expect(dumped?.etchTex).toBeFalsy();
+    const arts = listPlayroomArtsForMaterial("SunLava", 4);
+    expect(arts[0]?.liveOwned).toBe(true);
+    expect(arts[0]?.bundleId).toBe("sm2_fr_013");
+    expect(arts[0]?.imageUrl).toBe(
+      "/assets/pokemon/cards/fr/sm2/013/art.webp",
+    );
+    expect(arts[0]?.maskUrl).toBe(
+      "/assets/pokemon/cards/fr/sm2/013/mask.webp",
+    );
+    // Empty etch TexEnv → white varnishMask fallback in the renderer.
+    expect(arts[0]?.varnishMaskUrl ?? null).toBeNull();
+    expect(arts.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("Squares BREAK seed → faceQuarterTurns 1", () => {
     const dumped = pickDumpedBundleForShader("Squares");
     expect(dumped?.bundleId).toBe("xy10_fr_014");
@@ -204,6 +225,37 @@ describe("listPlayroomArtsForMaterial", () => {
         expect(art.imageUrl).not.toContain("/ecard/ecard1/36/");
       }
     }
+  });
+
+  it("no playroom face binds art.webp as the foil whiteplate", () => {
+    /*
+      Promo `*_foil_*` mask stems need role `"mask"` or they resolve to the
+      card's own art — full-card Stamped/Rainbow bars. Lock every leaf, not
+      only Stamped: bwbsp Rainbow Amplify uses the same naming.
+    */
+    let faces = 0;
+    let foilNamed = 0;
+    for (const name of listPokemonMaterialNames()) {
+      const arts = listPlayroomArtsForMaterial(
+        name,
+        PLAYROOM_FACES_PER_MATERIAL,
+      );
+      for (const art of arts) {
+        if (!art.maskUrl) continue;
+        faces += 1;
+        expect(art.maskUrl, `${name} ${art.bundleId}`).not.toMatch(
+          /\/art\.webp$/i,
+        );
+        expect(art.maskUrl, `${name} ${art.bundleId}`).toMatch(
+          /\/mask(-ph|-mph|-sph)?\.webp$/i,
+        );
+        if (/_foil_/i.test(art.bundleId ?? "") || /bsp_/i.test(art.bundleId ?? "")) {
+          foilNamed += 1;
+        }
+      }
+    }
+    expect(faces).toBeGreaterThan(10);
+    expect(foilNamed).toBeGreaterThan(0);
   });
 
   it("listDumpedBundlesForShader prefers the seed then FR", () => {

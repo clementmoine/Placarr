@@ -50,13 +50,21 @@ describe("pokemon materials shared motifs", () => {
     expect(slots).toBeGreaterThan(40);
   });
 
-  it("keeps art + foilMask roles on every leaf", () => {
+  it("keeps art + foilMask + etch/cold roles on every leaf", () => {
     for (const name of POKEMON_FOIL_NAMES) {
       const m = paperMaterial(name)!;
       expect(m.textures._CardColorDiffuse?.role).toBe("art");
       if (name !== "NonFoil") {
         expect(m.textures._CardWhitePlateMask?.role).toBe("foilMask");
+        // Every HoloFoil frag samples `_CardEtch` as a multiply plate. The
+        // WebGL role must stay `varnishMask` so unbound → Unity white, not
+        // the transparent CC fallback (see ROLE_TEXTURE_FALLBACK).
+        expect(m.textures._CardEtch?.role).toBe("varnishMask");
+        expect(m.textures._CardColdFoilMask?.role).toBe("secondVarnishMask");
         expect(m.webgl).not.toBe(false);
+        // Live Linear: sRGB decode + OETF (Gamma×17.5 neon-clamped SunLava).
+        expect(m.linearOutput).toBe(true);
+        expect(m.textures._CardColorDiffuse?.srgb).toBe(true);
       }
     }
   });
@@ -73,10 +81,13 @@ describe("pokemon materials shared motifs", () => {
     expect(listPokemonMaterialNames()).not.toContain("NonFoil");
   });
 
-  it("SolidColor: motifs + animation malgré le sheet FoilAnimation=0", () => {
+  it("SolidColor: dump spectrum + animation malgré le sheet FoilAnimation=0", () => {
     const m = paperMaterial("SolidColor")!;
     expect(m.textures._SpectrumTexture?.file).toContain(
-      "FX_T_Spectrum_Bands_DesaturateOneSide",
+      "FX_T_Spectrum_Bands_Vertical",
+    );
+    expect(m.textures._SpectrumTexture?.file).not.toContain(
+      "DesaturateOneSide",
     );
     expect(m.textures._barstexture?.file).toContain("T_HoloFoil_Bars_Mask");
     expect(m.textures._TextureLightSheen?.file).toContain(
@@ -100,6 +111,26 @@ describe("pokemon materials shared motifs", () => {
     expect(galaxy.textures._StarsTexture?.mipmaps).toBe(false);
     const cosmos = paperMaterial("Cosmos")!;
     expect(cosmos.textures._StarsTexture?.filter).toBe("point");
+  });
+
+  it("CrackedIce: dump spectrum Bands_Vertical (not DesaturateOneSide wash)", () => {
+    /*
+      shared-motifs binds FX_T_Spectrum_Bands_Vertical. An override to
+      DesaturateOneSide made the ice gray/fade vs Live — keep dump plate.
+    */
+    const m = paperMaterial("CrackedIce")!;
+    expect(m.textures._HolofoilSpectrumTexture?.file).toContain(
+      "FX_T_Spectrum_Bands_Vertical",
+    );
+    expect(m.textures._HolofoilSpectrumTexture?.file).not.toContain(
+      "DesaturateOneSide",
+    );
+    expect(m.textures._Texture_Shine?.file).toContain(
+      "FX_T_Spectrum_Sunpillar3",
+    );
+    expect(m.textures._StarsTexture?.file).toContain(
+      "T_Holofoil_Mask_Cracked_Ice_RGB",
+    );
   });
 
   it("SunPillar: Northern Cross lié, UseCCFoil off jusqu'au foil_mask", () => {
@@ -156,15 +187,40 @@ describe("pokemon materials shared motifs", () => {
     expect(m.textures._Tex_Glitter?.file).toContain("T_Holofoil_Noise_Pixel");
   });
 
-  it("Stamped: noise sampler + lighting floats so WebGL is not crushed", () => {
+  it("Stamped: dump lighting floats + +Z sheet light (no WebGL float hack)", () => {
     expect(sharedMotifStems("Stamped")._Sampler5868).toBe("FX_T_Noise_Dim");
     const m = paperMaterial("Stamped")!;
     expect(m.fragment).toBe("Stamped.frag");
     expect(m.textures._Sampler5868?.file).toContain("FX_T_Noise_Dim");
     expect(m.textures._Highlight?.file).toContain("T_Stamped_HighlightPan");
-    // Dump sheet is 0.3 + UseVertexNormal — overrides keep the face readable.
-    expect(m.floats._ShadowDarknessLimit).toBe(0.7);
-    expect(m.floats._UseVertexNomal_On).toBe(0);
+    // MAT dump — UseVertexNomal remaps lit N to +Z; light rest must match.
+    expect(m.floats._ShadowDarknessLimit).toBe(0.3);
+    expect(m.floats._UseVertexNomal_On).toBe(1);
+    expect(m.colors._LightDirection?.slice(0, 3)).toEqual([0, 0, 1]);
+  });
+
+  it("SunLava binds GLES SpectrumBright + DirectionTexture (not legacy _Spectrum)", () => {
+    // Wrong override names left `_SpectrumBright` unbound → transparent
+    // spectrum × art → muddy/dark foil despite white etch + correct light.
+    // Dump frag hardcodes spectrum × 17.538 + N·L floor ~0.959 — no SDL uniforms.
+    const stems = sharedMotifStems("SunLava");
+    expect(stems._SpectrumBright).toBe("FX_T_Spectrum_SunLava");
+    expect(stems._DirectionTexture).toBe("T_SunLava_Distortion_1");
+    const m = paperMaterial("SunLava")!;
+    expect(m.textures._SpectrumBright?.file).toContain("FX_T_Spectrum_SunLava");
+    expect(m.textures._DirectionTexture?.file).toContain("T_SunLava_Distortion_1");
+    expect(m.textures._Spectrum).toBeUndefined();
+    // No etch TexEnv — unbound varnishMask must stay Unity-white (not black).
+    expect(m.textures._CardEtch?.role).toBe("varnishMask");
+    expect(m.textures._CardEtch?.file).toBeUndefined();
+    expect(m.linearOutput).toBe(true);
+    expect(m.textures._SpectrumBright?.srgb).toBe(true);
+    // Dump flags Direction sRGB — Linear decode softens UV (avoids burnt chroma).
+    expect(m.textures._DirectionTexture?.srgb).toBe(true);
+    expect(m.floats._OverallBrightness).toBe(1);
+    expect(m.floats._CardLighting_On).toBe(1);
+    expect(m.floats._UseVertexNomal_On).toBe(1);
+    expect(m.colors._LightDirection?.slice(0, 3)).toEqual([0, 0, 1]);
   });
 
   it("SvHolo / SvUltraScodix: samplers HLSLcc anonymes reliés", () => {

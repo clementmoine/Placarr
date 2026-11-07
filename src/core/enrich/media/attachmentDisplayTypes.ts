@@ -127,6 +127,7 @@ export function attachmentSemantics(attachment: ScoredAttachmentInput) {
     type: attachment.type,
     role: attachment.role,
     title: attachment.title,
+    url: attachment.url,
     source: attachment.source,
   });
 }

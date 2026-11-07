@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
@@ -20,6 +23,7 @@ import {
   catalogArtefactIsFresh,
   emptyCatalogIngestLedger,
 } from "@/providers/shared/catalogIngestLedger";
+import { narutoMythosCuratedDir } from "../pack";
 
 // —— scanflipFaces ——
 {
@@ -344,5 +348,21 @@ describe("mythosFaceToWebp", () => {
     expect(meta.format).toBe("webp");
     expect(meta.width).toBe(100);
     expect(meta.height).toBe(140);
+  });
+
+  it("trims the white gutter on curated CICABOOM promo stamps (0133 EN)", async () => {
+    const sourcePath = path.join(
+      narutoMythosCuratedDir(),
+      "sources",
+      "official-events-media",
+      "ks1promo-0133-promo.source.webp",
+    );
+    expect(existsSync(sourcePath)).toBe(true);
+    const source = readFileSync(sourcePath);
+    const before = await sharp(source).metadata();
+    const out = await mythosFaceToWebp(source);
+    const after = await sharp(out).metadata();
+    expect(after.width!).toBeLessThan(before.width!);
+    expect(after.height!).toBeLessThan(before.height!);
   });
 });

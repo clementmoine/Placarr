@@ -7,7 +7,11 @@ import {
   isExplicitUserCoverOverride,
 } from "@/core/collect/media";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
-import { loanedAtInputValue } from "@/core/collect/itemLoan";
+import {
+  absenceSinceInputValue,
+  loanRecipient,
+  loanSince,
+} from "@/core/collect/itemAbsence";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
@@ -189,8 +193,8 @@ export function buildItemModalSessionInit(input: {
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,
-      loanedTo: item.loanedTo?.trim() || "",
-      loanedAt: loanedAtInputValue(item.loanedAt),
+      loanedTo: loanRecipient(item) || "",
+      loanedAt: absenceSinceInputValue(loanSince(item)),
     };
 
     const metadata = filterMetadataForShelfPlatform(

@@ -67,7 +67,7 @@ function maskPath(bundleId: string, maskTex: string): string | null {
     .toLowerCase()
     .replace(/\.(webp|png)$/i, "");
   const candidates = [
-    path.join(cardDir, pokemonFaceFileFromTex(bundleId, maskTex)),
+    path.join(cardDir, pokemonFaceFileFromTex(bundleId, maskTex, "mask")),
     path.join(cardDir, `extra-${stem}.webp`),
   ];
   const crossId = cardDiskIdFromBundleStem(stem);
@@ -78,7 +78,7 @@ function maskPath(bundleId: string, maskTex: string): string | null {
         crossId.set,
         crossId.lang,
         crossId.card,
-        pokemonFaceFileFromTex(bundleId, maskTex),
+        pokemonFaceFileFromTex(bundleId, maskTex, "mask"),
       ),
       path.join(
         CARDS_ROOT,

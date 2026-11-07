@@ -46,7 +46,7 @@ const built = createEmptyLocalTcgProvider({
       return listOnepieceRemoteSets();
     },
     notes:
-      "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
+      "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; DON!! via don-cardlist.pdf (`art.don-cardlist.webp`) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
   },
   runPipeline: async (argv) => {
     const { withCardnexusPackFacesStep } = await import(

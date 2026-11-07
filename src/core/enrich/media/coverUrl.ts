@@ -1,3 +1,8 @@
+import {
+  isPromoFlyerKind,
+  resolveAttachmentDisplayKind,
+} from "@/core/enrich/media/attachmentDisplayLabels";
+
 /** Normalizes a localized cover path so edited derivatives match their source. */
 /**
  * The original a derived edit came from.
@@ -107,12 +112,30 @@ export function findAttachmentForUrl<
   return catalog ?? matches[0];
 }
 
-/** Backgrounds/logos must not become the pinned default cover. */
+/** Backgrounds/logos/flyers must not become the pinned default cover. */
 export function isUrlEligibleDefaultCover<
-  T extends { type?: string | null; url?: string | null },
+  T extends {
+    type?: string | null;
+    url?: string | null;
+    role?: string | null;
+    title?: string | null;
+  },
 >(url: string | null | undefined, attachments: readonly T[]): boolean {
   if (!url) return false;
   const match = findAttachmentForUrl(attachments, url);
   if (!match) return true;
-  return isCoverEligibleAttachmentType(match.type);
+  if (!isCoverEligibleAttachmentType(match.type)) return false;
+  if (
+    isPromoFlyerKind(
+      resolveAttachmentDisplayKind({
+        type: match.type || "cover",
+        role: match.role,
+        title: match.title,
+        url: match.url ?? url,
+      }),
+    )
+  ) {
+    return false;
+  }
+  return true;
 }

@@ -134,8 +134,18 @@ describe("Live HoloFoil tilt drivers", () => {
     const src = readFileSync(RENDERER_PATH, "utf8");
     expect(src).toMatch(/uniform vec2 u_CardLean/);
     expect(src).toMatch(/cardLeanLoc/);
-    expect(src).toMatch(/meshLeanFromTilt/);
+    expect(src).toMatch(/meshLeanWithRestBias/);
     expect(src).toMatch(/uniform2f\(active\.cardLeanLoc/);
+  });
+
+  it("VS card height is +Z toward UV top at Live card scale", () => {
+    // Unity Card: width=X, height=Y, face=+Z. Remap face→+Y, height→+Z with
+    // uv.y - 0.5 (not 0.5 - uv.y). halfH sizes absolute view gates; SunLava
+    // spectrum UV is scale-invariant (normalize of dFdx×dFdy).
+    const src = readFileSync(RENDERER_PATH, "utf8");
+    expect(src).toMatch(/LIVE_CARD_HALF_HEIGHT/);
+    expect(src).toMatch(/\(uv\.y - 0\.5\) \* 2\.0 \* halfH/);
+    expect(src).not.toMatch(/\(0\.5 - uv\.y\) \* 1\.0/);
   });
 });
 

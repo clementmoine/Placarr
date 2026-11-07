@@ -4,6 +4,8 @@
  * Identité alignée sur narutomarket (`demo` / `promo` / `premium00` / `preview`)
  * pour fusionner les faces, pas pour inventer un second corpus.
  */
+import { canonicalNarutoCardgameCollector } from "./canonicalCollector";
+
 export type NarutoTcgCardsEntry = {
   slug: string;
   name: string;
@@ -126,7 +128,9 @@ export function parseNarutoTcgCardsDetail(
 function normalizePrintedRef(raw: string): string | null {
   const m = raw.trim().toUpperCase().match(/^([A-Z]{1,3})-?(\d{1,4})$/);
   if (!m) return null;
-  return `${m[1]!.toLowerCase()}${m[2]!.padStart(3, "0")}`;
+  return canonicalNarutoCardgameCollector(
+    `${m[1]!.toLowerCase()}${m[2]!.padStart(3, "0")}`,
+  );
 }
 
 export function narutoTcgCardsIdentity(
@@ -166,7 +170,11 @@ export function narutoTcgCardsIdentity(
   }
 
   const mapped = DEMO_SLUG_TO_REF[s];
-  if (mapped) return { setCode: "demo", number: mapped };
+  if (mapped) {
+    const number = canonicalNarutoCardgameCollector(mapped);
+    if (!number) return null;
+    return { setCode: "demo", number };
+  }
 
   return null;
 }

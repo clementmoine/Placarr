@@ -11,9 +11,17 @@ import { NARUTO_PACK_ID } from "./identity";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import productsContentsLedger from "./curated/products-contents.json";
 
+/** 1×1 GIF89a — `pickBestNarutoProductDump` skips unmeasurable (0×0) dumps. */
+const MEASURABLE_IMAGE = Buffer.from([
+  0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+  0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44,
+  0x01, 0x00, 0x3b,
+]);
+
 // —— sealedProducts ——
 {
   const roots: string[] = [];
+
 
   function tmpPack(): string {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "naruto-sealed-"));
@@ -454,12 +462,9 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(path.join(packshots, "logos_series"), { recursive: true });
-      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), "gif");
-      fs.writeFileSync(path.join(packshots, "starter_hokage_s1.gif"), "gif");
-      fs.writeFileSync(
-        path.join(packshots, "logos_series", "logo_s1.gif"),
-        "logo",
-      );
+      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(packshots, "starter_hokage_s1.gif"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(packshots, "logos_series", "logo_s1.gif"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(
@@ -529,22 +534,16 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(packshots, { recursive: true });
-      fs.writeFileSync(path.join(packshots, "starter_hokage_s1.gif"), "gif");
-      fs.writeFileSync(path.join(packshots, "starter_vent_s1.gif"), "gif");
+      fs.writeFileSync(path.join(packshots, "starter_hokage_s1.gif"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(packshots, "starter_vent_s1.gif"), MEASURABLE_IMAGE);
       const shop = path.join(root, "staging", "vialudibunda");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(
-        path.join(shop, "naruto-serie-1-deck-pays-du-vent.jpg"),
-        "vl",
-      );
-      fs.writeFileSync(
-        path.join(shop, "starter-naruto-serie-1-maitre-hokage.jpg"),
-        "vl-hokage",
-      );
+      fs.writeFileSync(path.join(shop, "naruto-serie-1-deck-pays-du-vent.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(shop, "starter-naruto-serie-1-maitre-hokage.jpg"), MEASURABLE_IMAGE);
       const tt = path.join(root, "staging", "trictrac");
       fs.mkdirSync(tt, { recursive: true });
-      fs.writeFileSync(path.join(tt, "starter-pays-du-vent.jpeg"), "tt-vent");
-      fs.writeFileSync(path.join(tt, "starter-maitre-hokage.jpeg"), "tt-hokage");
+      fs.writeFileSync(path.join(tt, "starter-pays-du-vent.jpeg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(tt, "starter-maitre-hokage.jpeg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(
@@ -609,7 +608,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const shop = path.join(root, "staging", "scifi-universe", "images");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(path.join(shop, "11650-maitre-hokage.jpg"), "scifi");
+      fs.writeFileSync(path.join(shop, "11650-maitre-hokage.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(
@@ -661,14 +660,11 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(packshots, { recursive: true });
-      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), "gif");
+      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), MEASURABLE_IMAGE);
       const shop = path.join(root, "staging", "vialudibunda");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(path.join(shop, "naruto-serie-1-booster.jpg"), "jpeg");
-      fs.writeFileSync(
-        path.join(shop, "naruto-serie-1-deck-pays-du-vent.jpg"),
-        "jpeg",
-      );
+      fs.writeFileSync(path.join(shop, "naruto-serie-1-booster.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(shop, "naruto-serie-1-deck-pays-du-vent.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(
@@ -749,15 +745,15 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(packshots, { recursive: true });
-      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), "gif");
-      fs.writeFileSync(path.join(packshots, "booster_s3.gif"), "gif");
+      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(packshots, "booster_s3.gif"), MEASURABLE_IMAGE);
       const shop = path.join(root, "staging", "vialudibunda");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(path.join(shop, "naruto-serie-1-booster.jpg"), "jpeg");
+      fs.writeFileSync(path.join(shop, "naruto-serie-1-booster.jpg"), MEASURABLE_IMAGE);
       const mn = path.join(root, "staging", "manga-news", "images");
       fs.mkdirSync(mn, { recursive: true });
-      fs.writeFileSync(path.join(mn, "tcg-naruto-deck-serie-1.jpg"), "mn1");
-      fs.writeFileSync(path.join(mn, "tcg-naruto-deck-serie-3.jpg"), "mn3");
+      fs.writeFileSync(path.join(mn, "tcg-naruto-deck-serie-1.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(mn, "tcg-naruto-deck-serie-3.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(2));
@@ -779,7 +775,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const coverDir = path.join(root, "staging", "coleka-s28");
       fs.mkdirSync(coverDir, { recursive: true });
-      fs.writeFileSync(path.join(coverDir, "set-cover.webp"), "cover");
+      fs.writeFileSync(path.join(coverDir, "set-cover.webp"), MEASURABLE_IMAGE);
 
     // Face catalogue = wrappers/display-s28.png (CURATED_ALWAYS) ; Coleka reste dump.
       const result = await ingestNarutoSealedProducts({ enPackRoot: root });
@@ -857,8 +853,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const coverDir = path.join(root, "staging", "coleka-en-covers");
       fs.mkdirSync(coverDir, { recursive: true });
-      fs.writeFileSync(path.join(coverDir, "s13.webp"), "s13");
-      fs.writeFileSync(path.join(coverDir, "s26.webp"), "s26");
+      fs.writeFileSync(path.join(coverDir, "s13.webp"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(coverDir, "s26.webp"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ enPackRoot: root });
       expect(result.written).toBe(writtenFromStaging(2));
@@ -890,8 +886,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const shop = path.join(root, "staging", "cardgameclub");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(path.join(shop, "booster-s1-it.png"), "png");
-      fs.writeFileSync(path.join(shop, "display-s1-it.png"), "png");
+      fs.writeFileSync(path.join(shop, "booster-s1-it.png"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(shop, "display-s1-it.png"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       // IT staged but not catalogued — only attested JA/FR/EN + curated.
@@ -910,17 +906,11 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const shop = path.join(root, "staging", "martina");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(path.join(shop, "starter-il-fascino-del-male.jpg"), "jpg");
+      fs.writeFileSync(path.join(shop, "starter-il-fascino-del-male.jpg"), MEASURABLE_IMAGE);
       const vinted = path.join(root, "staging", "vinted");
       fs.mkdirSync(vinted, { recursive: true });
-      fs.writeFileSync(
-        path.join(vinted, "starter-il-fascino-del-male-01.webp"),
-        "webp",
-      );
-      fs.writeFileSync(
-        path.join(vinted, "starter-il-fascino-del-male-02.webp"),
-        "webp-back",
-      );
+      fs.writeFileSync(path.join(vinted, "starter-il-fascino-del-male-01.webp"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(vinted, "starter-il-fascino-del-male-02.webp"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -938,7 +928,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const tt = path.join(root, "staging", "trictrac");
       fs.mkdirSync(tt, { recursive: true });
-      fs.writeFileSync(path.join(tt, "tin-box.jpeg"), "tt-tin");
+      fs.writeFileSync(path.join(tt, "tin-box.jpeg"), MEASURABLE_IMAGE);
       const site = path.join(
         root,
         "staging",
@@ -948,11 +938,11 @@ import productsContentsLedger from "./curated/products-contents.json";
       );
       fs.mkdirSync(site, { recursive: true });
       // Archival only — Tin-boxN is not the catalogue face.
-      fs.writeFileSync(path.join(site, "Tin-boxN.jpg"), "site-tin");
+      fs.writeFileSync(path.join(site, "Tin-boxN.jpg"), MEASURABLE_IMAGE);
       const lbc = path.join(root, "staging", "leboncoin");
       fs.mkdirSync(lbc, { recursive: true });
-      fs.writeFileSync(path.join(lbc, "tin-box-01.jpg"), "lbc-front");
-      fs.writeFileSync(path.join(lbc, "tin-box-02.jpg"), "lbc-back");
+      fs.writeFileSync(path.join(lbc, "tin-box-01.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(lbc, "tin-box-02.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       // tin-box + hobby = wrappers curés (CURATED_ALWAYS) ; trictrac/LBC = dumps secondaires.
@@ -994,10 +984,10 @@ import productsContentsLedger from "./curated/products-contents.json";
       );
       fs.mkdirSync(site, { recursive: true });
       // Archival only — Hobby face is curated wrappers/tin-box-hobby.png.
-      fs.writeFileSync(path.join(site, "Tin-box-hobby.jpg"), "site-hobby");
+      fs.writeFileSync(path.join(site, "Tin-box-hobby.jpg"), MEASURABLE_IMAGE);
       const tt = path.join(root, "staging", "trictrac");
       fs.mkdirSync(tt, { recursive: true });
-      fs.writeFileSync(path.join(tt, "tin-box.jpeg"), "tt-tin");
+      fs.writeFileSync(path.join(tt, "tin-box.jpeg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1024,11 +1014,11 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const ebay = path.join(root, "staging", "ebay");
       fs.mkdirSync(ebay, { recursive: true });
-      fs.writeFileSync(path.join(ebay, "duopack-s28.webp"), "ebay-front");
+      fs.writeFileSync(path.join(ebay, "duopack-s28.webp"), MEASURABLE_IMAGE);
       const kinkai = path.join(root, "staging", "kinkai");
       fs.mkdirSync(kinkai, { recursive: true });
-      fs.writeFileSync(path.join(kinkai, "duopack-s28-01.webp"), "kinkai-front");
-      fs.writeFileSync(path.join(kinkai, "duopack-s28-02.webp"), "kinkai-back");
+      fs.writeFileSync(path.join(kinkai, "duopack-s28-01.webp"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(kinkai, "duopack-s28-02.webp"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       // Attested + curated wrappers — eBay/Kinkai dumps stay archival (ingest false).
@@ -1085,8 +1075,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const sunny = path.join(root, "staging", "sunnystore");
       fs.mkdirSync(sunny, { recursive: true });
-      fs.writeFileSync(path.join(sunny, "booster-s28-01.jpg"), "sunny-front");
-      fs.writeFileSync(path.join(sunny, "booster-s28-02.jpg"), "sunny-back");
+      fs.writeFileSync(path.join(sunny, "booster-s28-01.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(sunny, "booster-s28-02.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1114,8 +1104,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const sunny = path.join(root, "staging", "sunnystore");
       fs.mkdirSync(sunny, { recursive: true });
-      fs.writeFileSync(path.join(sunny, "booster-s3-es-01.jpg"), "es-front");
-      fs.writeFileSync(path.join(sunny, "booster-s3-es-02.jpg"), "es-back");
+      fs.writeFileSync(path.join(sunny, "booster-s3-es-01.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(sunny, "booster-s3-es-02.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1132,9 +1122,9 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const sunny = path.join(root, "staging", "sunnystore");
       fs.mkdirSync(sunny, { recursive: true });
-      fs.writeFileSync(path.join(sunny, "booster-tp3-01.jpg"), "tp3-front");
-      fs.writeFileSync(path.join(sunny, "booster-tp3-02.jpg"), "tp3-back");
-      fs.writeFileSync(path.join(sunny, "booster-tp3-display.jpg"), "tp3-box");
+      fs.writeFileSync(path.join(sunny, "booster-tp3-01.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(sunny, "booster-tp3-02.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(sunny, "booster-tp3-display.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1167,8 +1157,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const sunny = path.join(root, "staging", "sunnystore");
       fs.mkdirSync(sunny, { recursive: true });
-      fs.writeFileSync(path.join(sunny, "booster-s5-en-01.jpg"), "s5-front");
-      fs.writeFileSync(path.join(sunny, "booster-s5-en-02.jpg"), "s5-back");
+      fs.writeFileSync(path.join(sunny, "booster-s5-en-01.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(sunny, "booster-s5-en-02.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1213,8 +1203,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const sunny = path.join(root, "staging", "sunnystore");
       fs.mkdirSync(sunny, { recursive: true });
-      fs.writeFileSync(path.join(sunny, "booster-s28-en-01.jpg"), "s28-en-front");
-      fs.writeFileSync(path.join(sunny, "booster-s28-en-02.jpg"), "s28-en-back");
+      fs.writeFileSync(path.join(sunny, "booster-s28-en-01.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(sunny, "booster-s28-en-02.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1263,8 +1253,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const toywiz = path.join(root, "staging", "toywiz");
       fs.mkdirSync(toywiz, { recursive: true });
-      fs.writeFileSync(path.join(toywiz, "booster-s14.jpg"), "s14-face");
-      fs.writeFileSync(path.join(toywiz, "booster-s14-alt.jpg"), "s14-alt");
+      fs.writeFileSync(path.join(toywiz, "booster-s14.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(toywiz, "booster-s14-alt.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(0));
@@ -1309,7 +1299,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const shop = path.join(root, "staging", "gradedcardcenter");
       fs.mkdirSync(shop, { recursive: true });
-      fs.writeFileSync(path.join(shop, "booster-vol5-jp.jpg"), "jpg");
+      fs.writeFileSync(path.join(shop, "booster-vol5-jp.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       expect(result.written).toBe(writtenFromStaging(1));
@@ -1349,9 +1339,9 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const goat = path.join(root, "staging", "goat-en-boxes");
       fs.mkdirSync(goat, { recursive: true });
-      fs.writeFileSync(path.join(goat, "s16.gif"), "s16");
-      fs.writeFileSync(path.join(goat, "s19.jpg"), "s19");
-      fs.writeFileSync(path.join(goat, "s1.jpg"), "not-a-sku");
+      fs.writeFileSync(path.join(goat, "s16.gif"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(goat, "s19.jpg"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(goat, "s1.jpg"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ enPackRoot: root });
       expect(result.written).toBe(writtenFromStaging(2));
@@ -1402,10 +1392,10 @@ import productsContentsLedger from "./curated/products-contents.json";
         "packshots",
       );
       fs.mkdirSync(packshots, { recursive: true });
-      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), "gif");
+      fs.writeFileSync(path.join(packshots, "booster_s1.gif"), MEASURABLE_IMAGE);
       const coverDir = path.join(root, "staging", "coleka-s28");
       fs.mkdirSync(coverDir, { recursive: true });
-      fs.writeFileSync(path.join(coverDir, "set-cover.webp"), "cover");
+      fs.writeFileSync(path.join(coverDir, "set-cover.webp"), MEASURABLE_IMAGE);
 
       const result = await ingestNarutoSealedProducts({ packRoot: root });
       // booster-s1 = staging ; display-s28 = wrappers CURATED_ALWAYS.
@@ -1451,19 +1441,13 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       fs.mkdirSync(path.join(root, "staging", "tv-tokyo"), { recursive: true });
       fs.mkdirSync(path.join(root, "staging", "mercari"), { recursive: true });
-      fs.writeFileSync(
-        path.join(root, "staging", "tv-tokyo", "ps-yoyaku-tokuten.gif"),
-        "gif",
-      );
-      fs.writeFileSync(
-        path.join(
+      fs.writeFileSync(path.join(root, "staging", "tv-tokyo", "ps-yoyaku-tokuten.gif"), MEASURABLE_IMAGE);
+      fs.writeFileSync(path.join(
           root,
           "staging",
           "mercari",
           "ps-yoyaku-tokuten-wrapper-back.jpg",
-        ),
-        "jpg",
-      );
+        ), MEASURABLE_IMAGE);
 
       await ingestNarutoSealedProducts({ packRoot: root });
       const index = JSON.parse(
@@ -1495,10 +1479,7 @@ import productsContentsLedger from "./curated/products-contents.json";
     it("garde le verso curé même quand le pack ne contient rien", async () => {
       const root = tmpPack();
       fs.mkdirSync(path.join(root, "staging", "tv-tokyo"), { recursive: true });
-      fs.writeFileSync(
-        path.join(root, "staging", "tv-tokyo", "ps-yoyaku-tokuten.gif"),
-        "gif",
-      );
+      fs.writeFileSync(path.join(root, "staging", "tv-tokyo", "ps-yoyaku-tokuten.gif"), MEASURABLE_IMAGE);
 
       await ingestNarutoSealedProducts({ packRoot: root });
       const index = JSON.parse(
@@ -1618,12 +1599,12 @@ import productsContentsLedger from "./curated/products-contents.json";
         "product",
       );
       fs.mkdirSync(staging, { recursive: true });
-      fs.writeFileSync(path.join(staging, "4nd.gif"), "gif");
+      fs.writeFileSync(path.join(staging, "4nd.gif"), MEASURABLE_IMAGE);
 
       // Ce que la moisson précédente avait posé, du temps où la fiche servait.
       const dest = path.join(root, "products", "booster-vol4-jp", "ja");
       fs.mkdirSync(dest, { recursive: true });
-      fs.writeFileSync(path.join(dest, "art.carddassofficial.jpg"), "jpg");
+      fs.writeFileSync(path.join(dest, "art.carddassofficial.jpg"), MEASURABLE_IMAGE);
 
       await ingestNarutoSealedProducts({ packRoot: root });
 
@@ -1642,7 +1623,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const dest = path.join(root, "products", "booster-vol4-jp", "ja");
       fs.mkdirSync(dest, { recursive: true });
-      fs.writeFileSync(path.join(dest, "art.carddassofficial.jpg"), "jpg");
+      fs.writeFileSync(path.join(dest, "art.carddassofficial.jpg"), MEASURABLE_IMAGE);
 
       await ingestNarutoSealedProducts({ packRoot: root });
 
@@ -2369,8 +2350,8 @@ import productsContentsLedger from "./curated/products-contents.json";
       fs.mkdirSync(medDir, { recursive: true });
       fs.mkdirSync(retailDir, { recursive: true });
       fs.mkdirSync(promoDir, { recursive: true });
-      fs.writeFileSync(path.join(retailDir, "art.jpg"), "retail-art");
-      fs.writeFileSync(path.join(promoDir, "art.jpg"), "promo-art");
+      fs.writeFileSync(path.join(retailDir, "art.jpg"), "art");
+      fs.writeFileSync(path.join(promoDir, "art.jpg"), "art");
       fs.writeFileSync(path.join(medDir, "NINJA-095_med.jpg"), "shared-med");
 
       const prints: NarutoPrintRow[] = [
@@ -2414,7 +2395,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       fs.mkdirSync(medDir, { recursive: true });
       fs.mkdirSync(cardDir, { recursive: true });
       fs.writeFileSync(path.join(cardDir, "thumb.jpg"), "existing-thumb");
-      fs.writeFileSync(path.join(medDir, "NINJA-001_med.jpg"), "new-med");
+      fs.writeFileSync(path.join(medDir, "NINJA-001_med.jpg"), "med-bytes");
 
       const prints: NarutoPrintRow[] = [
         {
@@ -2441,7 +2422,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       const root = tmpPack();
       const cardDir = path.join(root, "cards", "fr", "s2", "ta091");
       fs.mkdirSync(cardDir, { recursive: true });
-      fs.writeFileSync(path.join(cardDir, "thumb.jpg"), "t");
+      fs.writeFileSync(path.join(cardDir, "thumb.jpg"), MEASURABLE_IMAGE);
       expect([...collectorNumbersWithThumb(root)]).toEqual(["ta091"]);
     });
 
@@ -2475,10 +2456,7 @@ import productsContentsLedger from "./curated/products-contents.json";
       );
       fs.mkdirSync(path.dirname(art16), { recursive: true });
       fs.writeFileSync(art16, "pr016-art");
-      fs.writeFileSync(
-        path.join(staging, "images/packshots/carte-promo-tb-N1.jpg"),
-        "pr016-thumb",
-      );
+      fs.writeFileSync(path.join(staging, "images/packshots/carte-promo-tb-N1.jpg"), MEASURABLE_IMAGE);
 
       const { installed } = materializeTinBoxPromos(root);
       expect(installed).toEqual(["pr011", "pr016"]);

@@ -1,6 +1,6 @@
 /**
- * Admin Catalogue browse for Magic — sqlite titles + local faces, with
- * Scryfall CDN fallback from curated/art-urls.json (same ledger as seed).
+ * Admin Catalogue browse for Magic — sqlite titles + local faces only
+ * (no Scryfall CDN in the grid; densify via Sync / seed).
  */
 import { existsSync, statSync } from "node:fs";
 
@@ -9,18 +9,12 @@ import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCatalogDb } from "@/lib/packPaths";
-import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
 import {
   createLocalPrintsIndex,
   type LocalPrintSearchRow,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import {
-  artUrlsMtimeMs,
-  clearMtgArtUrlCache,
-  loadMtgArtUrlMap,
-  resolveMtgArtUrl,
-} from "./artUrls";
+import { clearMtgArtUrlCache } from "./artUrls";
 import { MTG_PACK_ID } from "./pack";
 
 type Cache = { stamp: string; rows: CatalogueCardRow[] };
@@ -37,26 +31,11 @@ function sqliteMtimeMs(): number {
 }
 
 function cacheStamp(): string {
-  return `${sqliteMtimeMs()}:${artUrlsMtimeMs()}`;
+  return String(sqliteMtimeMs());
 }
 
 function diskCardOf(row: LocalPrintSearchRow): string {
   return row.grouping ? `${row.number}-${row.grouping}` : row.number;
-}
-
-function remoteArtUrl(
-  printKey: string,
-  lang: string,
-): { url: string; artLang: string } | null {
-  const hit = resolveMtgArtUrl(loadMtgArtUrlMap(), printKey, lang);
-  if (!hit) return null;
-  if (
-    catalogUrlMayStayRemote(hit.url) ||
-    /^https?:\/\//i.test(hit.url)
-  ) {
-    return hit;
-  }
-  return null;
 }
 
 function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
@@ -67,16 +46,14 @@ function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
     row.thumb?.trim() && row.thumb.trim() !== artFile
       ? row.thumb.trim()
       : "";
-  const local = artFile
+  const artUrl = artFile
     ? assetsCardUrl(
         MTG_PACK_ID,
         { set, lang: row.lang, card: diskCard },
         artFile,
       )
     : "";
-  const remote = local ? null : remoteArtUrl(row.printKey, row.lang);
-  const artUrl = local || remote?.url || "";
-  const artLang = local ? row.lang : remote?.artLang ?? row.lang;
+  const artLang = row.lang;
   const name = row.fullName?.trim() || undefined;
   const label = name
     ? `${set} · ${diskCard} — ${name}`
@@ -168,32 +145,13 @@ function listMtgCatalogueBrowsePageSql(
 }
 
 /**
- * `print_assets.art` is empty for nearly the whole MTG corpus — faces come from
- * `curated/art-urls.json` (Scryfall). SQL `a.art IS NULL` therefore matches
- * everything and must not drive `incompleteOnly` / `missingArtOnly`.
- *
- * - `incompleteOnly`: name gaps stay SQL (`missingNameOnly`); rare post-join
- *   art gaps are dropped if Scryfall filled them (ledger covers the corpus).
- * - `missingArtOnly`: overscan + keep only tiles still missing after Scryfall.
+ * Admin grid is local `/assets` only (no Scryfall CDN). Audit filters therefore
+ * overscan identity rows and keep tiles still missing a local face / name —
+ * Sync densify debt, not SQL `a.art IS NULL` alone (almost the whole corpus).
  */
 function listMtgCatalogueBrowseAuditPage(
   input: MtgCatalogueBrowsePageInput,
 ): { rows: CatalogueCardRow[]; total: number } {
-  if (input.incompleteOnly && !input.missingArtOnly) {
-    const page = listMtgCatalogueBrowsePageSql({
-      langs: input.langs,
-      q: input.q,
-      offset: input.offset,
-      limit: input.limit,
-      missingNameOnly: true,
-    });
-    // Scryfall join never invents a title — SQL name gaps stay incomplete.
-    const rows = page.rows.filter(
-      (row) => row.missingArt || !row.name?.trim(),
-    );
-    return { rows, total: page.total };
-  }
-
   return overscanFilterPage({
     offset: input.offset,
     limit: input.limit,
@@ -208,6 +166,9 @@ function listMtgCatalogueBrowseAuditPage(
         missingNameOnly: input.missingNameOnly || undefined,
       }),
     keep: (row) => {
+      if (input.incompleteOnly) {
+        return row.missingArt || !row.name?.trim();
+      }
       if (input.missingArtOnly && !row.missingArt) return false;
       if (input.missingNameOnly && row.name?.trim()) return false;
       return true;

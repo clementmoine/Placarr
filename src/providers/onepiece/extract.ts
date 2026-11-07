@@ -2,10 +2,11 @@
  * One Piece Card Game pack extract — Catalogue Sync / worker (in-process).
  *
  * 1. punk-records (JA original + FR + EN) → titres + printKeys
- * 2. faces Bandai (img_url) → art.bandai.webp ; opecards.fr → art.opecards.webp
- * 3. opecards.fr → produits scellés
+ * 2. don-cardlist.pdf extract → DON!! printKeys + art.don-cardlist.webp
+ * 3. faces Bandai (img_url) → art.bandai.webp ; opecards.fr → art.opecards.webp
+ * 4. opecards.fr → produits scellés
  *
- * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products`.
+ * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products` · `documents`.
  */
 import { scrapeTcgCardsProducts } from "@/providers/shared/tcgcards/scrapeProducts";
 import { selectCatalogueSteps } from "@/providers/shared/cardCatalogue/catalogueSteps";
@@ -19,6 +20,10 @@ import {
 } from "@/providers/shared/tcgcards/scrapeList";
 import path from "node:path";
 
+import {
+  installOnepieceDonCardlistFaces,
+  seedOnepieceDonFromCardlist,
+} from "./donCardlist";
 import { harvestOpecardsDistinctBacks } from "./opecardsBacks";
 import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
 import {
@@ -33,16 +38,22 @@ const ONEPIECE_PRODUCTS_CONTENTS = path.join(
   "products-contents.json",
 );
 
-export const ONEPIECE_STEPS = ["seed", "faces", "products"] as const;
+export const ONEPIECE_STEPS = [
+  "seed",
+  "faces",
+  "products",
+  "documents",
+] as const;
 export type OnepieceStep = (typeof ONEPIECE_STEPS)[number];
 /*
-  No step is marked online: `--offline` only skips the punk-records / backs
-  network harvest (gated below). Seed from local staging, Bandai install, and
-  products (`offline: true`) still run — same as before STEPS wiring.
+  Documents need the network. `--offline` skips punk-records / backs harvest
+  (gated below) and documents; seed from local staging, Bandai install, and
+  products (`offline: true`) still run.
 */
+const ONEPIECE_ONLINE = new Set<OnepieceStep>(["documents"]);
 
 export function selectOnepieceSteps(argv: readonly string[]): OnepieceStep[] {
-  return selectCatalogueSteps(argv, ONEPIECE_STEPS);
+  return selectCatalogueSteps(argv, ONEPIECE_STEPS, { online: ONEPIECE_ONLINE });
 }
 
 export async function runOnepiecePackPipeline(
@@ -54,6 +65,31 @@ export async function runOnepiecePackPipeline(
   console.log(
     `── One Piece Card Game — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+
+  if (steps.includes("documents")) {
+    try {
+      const { loadOnepieceCuratedDocuments } = await import(
+        "@/providers/onepiece/curated/documents"
+      );
+      const { harvestPackDocuments } = await import(
+        "@/providers/shared/documents/harvestPackDocuments"
+      );
+      const docs = await harvestPackDocuments({
+        packId: ONEPIECE_PACK_ID,
+        curated: loadOnepieceCuratedDocuments(),
+        force,
+      });
+      console.log(
+        `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+          `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── documents — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+    if (steps.length === 1) return { cards: 0, products: 0 };
+  }
 
   const skipBacks =
     argv.includes("--skip-backs") || skipToken(argv, "backs");
@@ -98,6 +134,20 @@ export async function runOnepiecePackPipeline(
             console.log("── punk-records staging — purgé (indexes → logs/)");
           }
         }
+        const don = seedOnepieceDonFromCardlist(index);
+        if (don.skipped) {
+          console.log(
+            "── don-cardlist seed — skip (pas d'extract staging/don-cardlist-extract)",
+          );
+        } else {
+          console.log(
+            `── don-cardlist seed — ${don.prints} tirage${don.prints === 1 ? "" : "s"}, ${don.titles} titre${don.titles === 1 ? "" : "s"}`,
+          );
+          seeded = {
+            prints: seeded.prints + don.prints,
+            titles: seeded.titles + don.titles,
+          };
+        }
         if (!skipOpecardsList && !offline) {
           const list = await ensureCardsFrListDump({
             packId: ONEPIECE_PACK_ID,
@@ -121,6 +171,12 @@ export async function runOnepiecePackPipeline(
         });
         console.log(
           `── faces Bandai — ${faces.faces} écrites, ${faces.skip} déjà là, ${faces.fail} manquée${faces.fail === 1 ? "" : "s"}`,
+        );
+        const donFaces = await installOnepieceDonCardlistFaces(index, {
+          force,
+        });
+        console.log(
+          `── faces don-cardlist — ${donFaces.faces} écrites, ${donFaces.skip} déjà là, ${donFaces.fail} manquée${donFaces.fail === 1 ? "" : "s"}`,
         );
         if (!offline) {
           const shop = await fillOpecardsFaces({

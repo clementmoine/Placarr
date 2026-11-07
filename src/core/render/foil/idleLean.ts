@@ -7,10 +7,19 @@ import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 export const IDLE_RELEASE_MS = 420;
 
 /**
- * Idle tilt as a fraction of interactive maxTilt.
+ * Idle CSS tip as a fraction of interactive maxTilt.
  * Old `holo-breathe` peaked near ±2.5° / ±5° vs interactive ±18°.
  */
 export const IDLE_LEAN_FACTOR = 0.35;
+
+/**
+ * Idle fake-pointer → WebGL `lightX/Y` shrink (separate from CSS tip).
+ *
+ * {@link IDLE_LEAN_FACTOR} alone left Live foil almost static at rest (±0.2
+ * lean) while hover still swung ±1. Keep tip soft for shelves, but let the
+ * light/TBN orbit enough that idle shimmer reads again (~±0.4).
+ */
+export const IDLE_LIGHT_FACTOR = 0.6;
 
 /**
  * Idle light as a fake pointer, locked to WebGL Time mode's driver.
@@ -52,10 +61,23 @@ export function idlePointerFromSeconds(seconds: number): {
   };
 }
 
-/** Lean a resting card would take under {@link idlePointerFromSeconds}. */
+/**
+ * Lean a resting card would take under {@link idlePointerFromSeconds}.
+ *
+ * `leanFromPointer` scales CSS tip degrees by {@link IDLE_LEAN_FACTOR}.
+ * `lightX`/`lightY` use {@link IDLE_LIGHT_FACTOR} — Live WebGL maps those
+ * through ±1 `_LightDirection` / `u_CardLean` (see `foilLeanAmplitude`). Full
+ * fake-pointer (±28%) was hover-hot on SunLava; matching tip factor (0.35)
+ * made idle foil look frozen. Light stays a bit livelier than the tip.
+ */
 export function idleLeanFromSeconds(seconds: number, maxTilt: number): Lean {
   const { x, y } = idlePointerFromSeconds(seconds);
-  return leanFromPointer(x, y, maxTilt * IDLE_LEAN_FACTOR);
+  const lean = leanFromPointer(x, y, maxTilt * IDLE_LEAN_FACTOR);
+  return {
+    ...lean,
+    lightX: IDLE_POINTER_CENTER + (x - IDLE_POINTER_CENTER) * IDLE_LIGHT_FACTOR,
+    lightY: IDLE_POINTER_CENTER + (y - IDLE_POINTER_CENTER) * IDLE_LIGHT_FACTOR,
+  };
 }
 
 /** Ease-out cubic — quick leave, soft settle into idle. */

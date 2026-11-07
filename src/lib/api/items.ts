@@ -248,3 +248,27 @@ export const refreshItemMetadata = (
     .post(url.toString(), lookupQuery ? { lookupQuery } : {})
     .then((res) => res.data);
 };
+
+export type RemoveItemMediaImageResponse = {
+  removedAttachmentIds: string[];
+  clearedCover: boolean;
+  clearedBackground: boolean;
+  nextImageUrl: string | null;
+  nextBackgroundImageUrl: string | null;
+  item: ItemWithMetadata | null;
+};
+
+/** Drop one gallery image; catalogue sync may recreate provider rows later. */
+export const removeItemMediaImage = (
+  itemId: string,
+  imageUrl: string,
+  shelfId?: string | null,
+): Promise<RemoveItemMediaImageResponse> => {
+  const url = new URL(`/api/items/${itemId}/media`, window.location.origin);
+  if (shelfId) {
+    url.searchParams.set("shelfId", shelfId);
+  }
+  return axios
+    .delete(url.toString(), { data: { url: imageUrl } })
+    .then((res) => res.data);
+};

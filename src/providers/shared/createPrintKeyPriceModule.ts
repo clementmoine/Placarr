@@ -175,6 +175,12 @@ export function createPrintKeyPriceModule<TCard>(
   const refresh = createPrintKeyPriceRefresh(spec);
   const probeKey = spec.mappingProbe.context.printKey;
 
+  const priceSourceAlias =
+    spec.priceSource.trim() &&
+    spec.priceSource.trim().toLowerCase() !== spec.providerId.trim().toLowerCase()
+      ? [spec.priceSource.trim()]
+      : [];
+
   return {
     info: {
       id: spec.providerId,
@@ -189,6 +195,10 @@ export function createPrintKeyPriceModule<TCard>(
       ...(spec.referencePriceSource ? { referencePriceSource: true } : {}),
       ...(spec.evidenceOnlyPriceRefresh
         ? { evidenceOnlyPriceRefresh: true }
+        : {}),
+      // Map offer.source (`pkmcards`) → module id for affinity / evidence chips.
+      ...(priceSourceAlias.length > 0
+        ? { sourceAliases: priceSourceAlias }
         : {}),
     },
     mappingProbe: {

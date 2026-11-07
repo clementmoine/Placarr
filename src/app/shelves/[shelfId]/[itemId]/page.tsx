@@ -25,6 +25,7 @@ import {
   Loader2,
   Sparkles,
   HandHelping,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -74,6 +75,7 @@ import {
   getItem,
   saveItem,
   refreshItemMetadata,
+  removeItemMediaImage,
   getItemSealedContainment,
   type ItemPrices,
   type SealedContainmentSourceDto,
@@ -1682,6 +1684,32 @@ export default function ItemDetailsPage() {
     cancelMetadataRefresh();
   }, [cancelMetadataRefresh, item?.id]);
 
+  const {
+    mutate: removeGalleryImage,
+    isPending: isRemovingGalleryImage,
+    variables: removingGalleryImageUrl,
+  } = useMutation({
+    mutationFn: (url: string) =>
+      removeItemMediaImage(item!.id, url, item?.shelfId || shelfId),
+    onSuccess: (response) => {
+      if (response.item) {
+        void syncItemQueries(queryClient, response.item, [
+          shelfId,
+          item?.shelfId,
+        ]);
+      } else {
+        void invalidateItemQueries(queryClient, item!.id, [
+          shelfId,
+          item?.shelfId,
+        ]);
+      }
+      toast.success(t("items.editTabs.removeImageSuccess"));
+    },
+    onError: () => {
+      toast.error(t("items.editTabs.removeImageFailed"));
+    },
+  });
+
   const isMetadataRefreshing =
     isItemMetadataRefreshing(item) || isRefreshingMetadata;
   const isEnrichingOnly = isMetadataBusy && !isMetadataRefreshing;
@@ -2083,6 +2111,7 @@ export default function ItemDetailsPage() {
             type: img.type,
             role: img.role,
             title: img.title,
+            url: img.url,
             source: img.source,
             providerLabel: img.providerLabel,
             sourceNames: img.sourceNames,
@@ -2797,6 +2826,7 @@ export default function ItemDetailsPage() {
                           varnishColor={variantView.varnishColor}
                           secondVarnishMaskUrl={secondVarnishMaskUrl}
                           secondVarnishColor={variantView.secondVarnishColor}
+                          faceQuarterTurns={displayQuarterTurns}
                           /**
                            * Flat here, exactly as in the grid. This cover sits in
                            * a page of text, and a card that tips whenever the
@@ -2948,14 +2978,18 @@ export default function ItemDetailsPage() {
                         className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold px-2 py-0.5 flex gap-1 items-center"
                       >
                         <HandHelping className="size-3" />
-                        {item?.loanedAt
+                        {item?.absenceSince
                           ? t("items.loan.badgeWithDate", {
-                              name: item.loanedTo,
-                              date: new Date(item.loanedAt).toLocaleDateString(
+                              name: item.absenceRecipient,
+                              date: new Date(
+                                item.absenceSince,
+                              ).toLocaleDateString(
                                 locale === "en" ? "en-GB" : "fr-FR",
                               ),
                             })
-                          : t("items.loan.badge", { name: item?.loanedTo })}
+                          : t("items.loan.badge", {
+                              name: item?.absenceRecipient,
+                            })}
                       </Badge>
                     )}
                     {shelf?.type && (
@@ -3285,6 +3319,26 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      title={t("items.editTabs.removeImage")}
+                      disabled={
+                        isRemovingGalleryImage &&
+                        removingGalleryImageUrl === img.url
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeGalleryImage(img.url);
+                      }}
+                      className="absolute bottom-2 right-2 z-30 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-2 rounded-lg border border-white/10 shadow-md opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/gallery:opacity-100 transition-all disabled:opacity-50"
+                    >
+                      {isRemovingGalleryImage &&
+                      removingGalleryImageUrl === img.url ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                    </button>
                     <div
                       className="absolute top-2 right-2 z-30"
                       onClick={(event) => event.stopPropagation()}
@@ -3435,6 +3489,7 @@ export default function ItemDetailsPage() {
                       lenticularGrid={variantView.lenticularGrid}
                       lenticularCropProfile={variantView.lenticularCropProfile}
                       scanCrop={variantView.scanCrop}
+                      faceQuarterTurns={displayQuarterTurns}
                       /* Pointer still tips the wrapper so the back turns with
                          it. Device tilt does not: the plane stays square and
                          only the light on this surface follows the phone. */

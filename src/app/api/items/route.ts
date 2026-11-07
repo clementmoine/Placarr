@@ -39,7 +39,12 @@ import { lookupPrintCandidate, supportsPrintSearch } from "@/core/identify/print
 import { isPrintKeyPlaceholderItemName } from "@/core/collect/adoptMetadataTitle";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
-import { normalizeItemLoanInput } from "@/core/collect/itemLoan";
+import {
+  buildPresenceEvent,
+  normalizeItemAbsenceInput,
+  ownedAbsenceState,
+  type ItemAbsenceFields,
+} from "@/core/collect/itemAbsence";
 import {
   buildExactBarcodeSearchCondition,
   buildItemSearchConditions,
@@ -275,6 +280,18 @@ export async function POST(req: NextRequest) {
         metadataPreview,
         loanedTo: rawLoanedTo,
         loanedAt: rawLoanedAt,
+        presence: rawPresence,
+        absenceReason: rawAbsenceReason,
+        absenceSince: rawAbsenceSince,
+        absenceRecipient: rawAbsenceRecipient,
+        absenceSource: rawAbsenceSource,
+        absenceCarrier: rawAbsenceCarrier,
+        absenceTracking: rawAbsenceTracking,
+        absenceOrderRef: rawAbsenceOrderRef,
+        absenceOrderUrl: rawAbsenceOrderUrl,
+        absenceNote: rawAbsenceNote,
+        absencePriceCents: rawAbsencePriceCents,
+        absenceExpectedAt: rawAbsenceExpectedAt,
       } = body;
       if (typeof shelfId !== "string" || !shelfId.trim()) {
         return NextResponse.json(
@@ -408,11 +425,34 @@ export async function POST(req: NextRequest) {
         { print: { printKey, variant, language, setCode } },
       );
 
-      const loan =
-        normalizeItemLoanInput({
+      const absence: ItemAbsenceFields =
+        normalizeItemAbsenceInput({
           loanedTo: rawLoanedTo,
           loanedAt: rawLoanedAt,
-        }) ?? { loanedTo: null, loanedAt: null };
+          presence: rawPresence,
+          absenceReason: rawAbsenceReason,
+          absenceSince: rawAbsenceSince,
+          absenceRecipient: rawAbsenceRecipient,
+          absenceSource: rawAbsenceSource,
+          absenceCarrier: rawAbsenceCarrier,
+          absenceTracking: rawAbsenceTracking,
+          absenceOrderRef: rawAbsenceOrderRef,
+          absenceOrderUrl: rawAbsenceOrderUrl,
+          absenceNote: rawAbsenceNote,
+          absencePriceCents: rawAbsencePriceCents,
+          absenceExpectedAt: rawAbsenceExpectedAt,
+        }) ?? ownedAbsenceState();
+
+      const departedEvent =
+        absence.presence !== "owned"
+          ? buildPresenceEvent({
+              from: "owned",
+              to: absence.presence,
+              reason: absence.absenceReason,
+              at: absence.absenceSince ?? undefined,
+              fields: absence,
+            })
+          : null;
 
       const item = await prisma.item.create({
         data: {
@@ -428,8 +468,7 @@ export async function POST(req: NextRequest) {
           variant,
           language,
           condition: resolvedCondition,
-          loanedTo: loan.loanedTo,
-          loanedAt: loan.loanedAt,
+          ...absence,
           userId: auth.user.id,
         },
         include: {
@@ -443,6 +482,23 @@ export async function POST(req: NextRequest) {
           },
         },
       });
+
+      if (departedEvent) {
+        await prisma.itemPresenceEvent.create({
+          data: {
+            itemId: item.id,
+            at: departedEvent.at,
+            fromPresence: departedEvent.fromPresence,
+            toPresence: departedEvent.toPresence,
+            reason: departedEvent.reason,
+            kind: departedEvent.kind,
+            snapshot:
+              departedEvent.snapshot == null
+                ? Prisma.JsonNull
+                : (departedEvent.snapshot as Prisma.InputJsonValue),
+          },
+        });
+      }
 
       // Scan/modal already fetched a rich preview — seed it so the item page
       // is not empty while the background worker deepens enrichment.
@@ -540,9 +596,7 @@ export async function PATCH(req: NextRequest) {
         shelfId?: string;
         slug?: string;
         metadataId?: null;
-        loanedTo?: string | null;
-        loanedAt?: Date | null;
-      } = {};
+      } & Partial<ItemAbsenceFields> = {};
 
       if (typeof raw.name === "string") data.name = raw.name;
       if ("variant" in raw) {
@@ -587,10 +641,11 @@ export async function PATCH(req: NextRequest) {
         }
         data.condition = resolvedCondition;
       }
-      const loan = normalizeItemLoanInput(raw);
-      if (loan) {
-        data.loanedTo = loan.loanedTo;
-        data.loanedAt = loan.loanedAt;
+      const absencePatch = normalizeItemAbsenceInput(
+        raw as Record<string, unknown>,
+      );
+      if (absencePatch) {
+        Object.assign(data, absencePatch);
       }
       if (typeof raw.shelfId === "string") {
         data.shelfId = await resolveShelfId(raw.shelfId, auth.user.id);
@@ -607,6 +662,18 @@ export async function PATCH(req: NextRequest) {
         where: { id: resolvedId },
         select: {
           userId: true,
+          presence: true,
+          absenceReason: true,
+          absenceSince: true,
+          absenceRecipient: true,
+          absenceSource: true,
+          absenceCarrier: true,
+          absenceTracking: true,
+          absenceOrderRef: true,
+          absenceOrderUrl: true,
+          absenceNote: true,
+          absencePriceCents: true,
+          absenceExpectedAt: true,
           shelfId: true,
           metadataId: true,
           name: true,
@@ -670,6 +737,21 @@ export async function PATCH(req: NextRequest) {
         );
       }
 
+      const presenceChanged =
+        absencePatch != null &&
+        (absencePatch.presence !== item.presence ||
+          absencePatch.absenceReason !== item.absenceReason);
+
+      const presenceEvent = presenceChanged
+        ? buildPresenceEvent({
+            from: item.presence,
+            to: absencePatch.presence,
+            reason: absencePatch.absenceReason,
+            at: absencePatch.absenceSince ?? undefined,
+            fields: absencePatch,
+          })
+        : null;
+
       const updatedItem = await prisma.item.update({
         where: { id: resolvedId },
         data,
@@ -684,6 +766,23 @@ export async function PATCH(req: NextRequest) {
           },
         },
       });
+
+      if (presenceEvent) {
+        await prisma.itemPresenceEvent.create({
+          data: {
+            itemId: updatedItem.id,
+            at: presenceEvent.at,
+            fromPresence: presenceEvent.fromPresence,
+            toPresence: presenceEvent.toPresence,
+            reason: presenceEvent.reason,
+            kind: presenceEvent.kind,
+            snapshot:
+              presenceEvent.snapshot == null
+                ? Prisma.JsonNull
+                : (presenceEvent.snapshot as Prisma.InputJsonValue),
+          },
+        });
+      }
 
       if (typeof data.name === "string" && updatedItem.metadataId) {
         await prisma.metadata.update({

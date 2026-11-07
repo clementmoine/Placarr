@@ -18,10 +18,23 @@ import { ensureDbsFwCuratedAssets } from "./install/curated";
 import { scrapeDbsFwCardDetails } from "./scrape/cardDetails";
 import { scrapeDbsFwCardlist } from "./scrape/cardlist";
 
-const STEPS = ["scrape", "dbscards", "products", "faces", "details"] as const;
+const STEPS = [
+  "scrape",
+  "dbscards",
+  "products",
+  "faces",
+  "details",
+  "documents",
+] as const;
 type Step = (typeof STEPS)[number];
 /** Everything but a local re-range needs the network. */
-const ONLINE = new Set<Step>(["scrape", "dbscards", "faces", "details"]);
+const ONLINE = new Set<Step>([
+  "scrape",
+  "dbscards",
+  "faces",
+  "details",
+  "documents",
+]);
 
 export function selectDbsFwSteps(argv: readonly string[]): Step[] {
   return selectCatalogueSteps(argv, STEPS, { online: ONLINE });
@@ -45,6 +58,31 @@ export async function runDbsFwPackPipeline(
   );
 
   for (const step of steps) {
+    if (step === "documents") {
+      try {
+        const { loadDbsFwCuratedDocuments } = await import(
+          "@/providers/dragonball/dbsfw/curated/documents"
+        );
+        const { harvestPackDocuments } = await import(
+          "@/providers/shared/documents/harvestPackDocuments"
+        );
+        const docs = await harvestPackDocuments({
+          packId: DBS_FW_PACK_ID,
+          curated: loadDbsFwCuratedDocuments(),
+          force,
+        });
+        console.log(
+          `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+            `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+        );
+      } catch (err) {
+        console.warn(
+          `── documents — ${err instanceof Error ? err.message : err}`,
+        );
+      }
+      logCatalogueCheckpoint(step);
+      continue;
+    }
     if (step === "dbscards") {
       /*
         Fusion World lives on `fw.dbscards.fr`, same software as Masters. One

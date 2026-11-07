@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   gravityFromOrientation,
+  leanForFaceQuarterTurns,
   leanFromPointer,
   leanFromGravity,
   deviceCanProvideOrientationTilt,
@@ -219,5 +220,37 @@ describe("leanFromPointer", () => {
   it("never leans past the maximum, however far outside the card", () => {
     expect(leanFromPointer(400, -400, 18).tiltY).toBeCloseTo(18, 6);
     expect(leanFromPointer(400, -400, 18).tiltX).toBeCloseTo(18, 6);
+  });
+});
+
+describe("leanForFaceQuarterTurns", () => {
+  it("is a no-op for upright faces", () => {
+    const lean = leanFromPointer(100, 50, 18);
+    expect(leanForFaceQuarterTurns(lean, 0)).toEqual(lean);
+    expect(leanForFaceQuarterTurns(lean, null)).toEqual(lean);
+  });
+
+  it("maps screen-right to card-top after one quarter turn (BREAK)", () => {
+    // Display rotate(+90°): card UV top sits at screen right. Pointer on the
+    // right edge must tip toward UV top (lightY→0), not card-right (lightX→100).
+    const right = leanForFaceQuarterTurns(leanFromPointer(100, 50, 18), 1);
+    expect(right.lightX).toBeCloseTo(50, 6);
+    expect(right.lightY).toBeCloseTo(0, 6);
+    expect(right.tiltX).toBeCloseTo(18, 6);
+    expect(right.tiltY).toBeCloseTo(0, 6);
+  });
+
+  it("maps screen-bottom to card-right after one quarter turn", () => {
+    const bottom = leanForFaceQuarterTurns(leanFromPointer(50, 100, 18), 1);
+    expect(bottom.lightX).toBeCloseTo(100, 6);
+    expect(bottom.lightY).toBeCloseTo(50, 6);
+    expect(bottom.tiltY).toBeCloseTo(18, 6);
+    expect(bottom.tiltX).toBeCloseTo(0, 6);
+  });
+
+  it("two quarter turns flips both axes", () => {
+    const right = leanForFaceQuarterTurns(leanFromPointer(100, 50, 18), 2);
+    expect(right.lightX).toBeCloseTo(0, 6);
+    expect(right.lightY).toBeCloseTo(50, 6);
   });
 });

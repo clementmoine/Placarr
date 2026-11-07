@@ -7,7 +7,10 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { restoreOpaqueFoilOutput } from "@/core/render/foil/webgl/renderer";
+import {
+  restoreOpaqueFoilOutput,
+  ROLE_TEXTURE_FALLBACK,
+} from "@/core/render/foil/webgl/renderer";
 import { foilTextureFile } from "@/effects/foilTextureFile";
 import "@/lib/foilMetaLoad.server";
 import {
@@ -202,4 +205,26 @@ describe("pokemon foil layer audit", () => {
       expect(POKEMON_MATERIAL_NAMES).toContain(alias);
     }
   });
+
+  it.skipIf(!hasDump)(
+    "every frag that samples _CardEtch keeps varnishMask → Unity-white unbound",
+    () => {
+      /*
+        Systemic lock for the Stamped gold crush: black varnishMask fallback
+        zeroed etch*etch on every HoloFoil leaf. Materials must declare the
+        role; ROLE_TEXTURE_FALLBACK must stay white.
+      */
+      expect(ROLE_TEXTURE_FALLBACK.varnishMask).toEqual([255, 255, 255, 255]);
+      const samplerRe =
+        /uniform\s+(?:mediump\s+)?sampler2D\s+_CardEtch\s*;/;
+      for (const name of POKEMON_MATERIAL_NAMES) {
+        const mat = paperMaterial(name);
+        if (!mat?.fragment || mat.webgl === false) continue;
+        const fragPath = path.join(SHADERS_DIR, mat.fragment);
+        if (!existsSync(fragPath)) continue;
+        if (!samplerRe.test(readFileSync(fragPath, "utf8"))) continue;
+        expect(mat.textures._CardEtch?.role, name).toBe("varnishMask");
+      }
+    },
+  );
 });

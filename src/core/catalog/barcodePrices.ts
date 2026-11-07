@@ -12,7 +12,6 @@ import {
 import {
   affinityScopePackFromPrintKey,
   affinityScopeType,
-  applyAffinityExploration,
   listAffinities,
   orderByAffinity,
 } from "./providerAffinity";
@@ -102,8 +101,10 @@ export async function collectRefreshBarcodePriceOffers(
     scopeKeys: affinityScopes,
     capability: "price",
   });
-  const orderedModules = applyAffinityExploration(
-    orderByAffinity(modules, (module) => module.info.id, affinities),
+  // Affinity only soft-schedules under concurrency (known-good start first).
+  // Never drop providers — consensus stays multi-source / agnostic.
+  const orderedModules = orderByAffinity(
+    modules,
     (module) => module.info.id,
     affinities,
   );

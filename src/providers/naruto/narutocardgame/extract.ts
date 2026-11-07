@@ -1,6 +1,6 @@
 /**
  * Naruto Card Game (Bandai 2027) — Catalogue Sync.
- * STEPS : `seed` · `market` (FR+JA) · `tcghub` · `guide` · `sim` · `fest` · `products`.
+ * STEPS : `seed` · `market` (FR+JA) · `tcghub` · `guide` · `sim` · `nindo` · `fest` · `products`.
  */
 import { selectCatalogueSteps } from "@/providers/shared/cardCatalogue/catalogueSteps";
 import { runLocalTcgPipeline } from "@/providers/shared/cardCatalogue/localTcgLinePipeline";
@@ -26,6 +26,11 @@ import {
   installNarutoMarketSim,
 } from "./sources/narutomarketSim";
 import {
+  harvestNarutoNindo,
+  installNarutoNindo,
+  pruneMisreadKakashiK039,
+} from "./sources/nindo";
+import {
   harvestNarutoTcgCards,
   installNarutoTcgCards,
 } from "./sources/narutotcgcards";
@@ -36,18 +41,20 @@ export const NARUTO_CARDGAME_STEPS = [
   "tcghub",
   "guide",
   "sim",
+  "nindo",
   "fest",
   "products",
 ] as const;
 export type NarutoCardgameStep = (typeof NARUTO_CARDGAME_STEPS)[number];
 
-/** CDN Bandai + narutomarket + narutotcgcards + narutocardguide + sim + Fest. */
+/** CDN Bandai + narutomarket + hubs + nindodb + Fest. */
 const NARUTO_CARDGAME_ONLINE = new Set<NarutoCardgameStep>([
   "seed",
   "market",
   "tcghub",
   "guide",
   "sim",
+  "nindo",
   "fest",
 ]);
 
@@ -150,6 +157,22 @@ export async function runNarutoCardgamePackPipeline(
         titles += sim.titles;
       }
 
+      if (steps.includes("nindo")) {
+        const harvested = await harvestNarutoNindo({});
+        const parts = Object.entries(harvested.locales)
+          .map(([loc, s]) => `${loc}:${s.listed}/${s.details}`)
+          .join(" ");
+        console.log(`── nindodb — ${parts}`);
+        const nindo = await installNarutoNindo(index, {
+          downloadFaces: true,
+        });
+        console.log(
+          `── nindodb — ${nindo.prints} prints, ${nindo.titles} titres, ${nindo.faces} faces (skip ${nindo.skipped}, prune k039 ${nindo.pruned})`,
+        );
+        prints += nindo.prints;
+        titles += nindo.titles;
+      }
+
       if (steps.includes("fest")) {
         const fest = await installBandaiFestPremiumVol00(index, {
           downloadFaces: true,
@@ -163,6 +186,12 @@ export async function runNarutoCardgamePackPipeline(
         if (packshot) {
           console.log(`── bandai fest — packshot → ${packshot}`);
         }
+      }
+
+      // Toujours : K-039 mal-lu → N-009 (même si step nindo off).
+      const pruned = pruneMisreadKakashiK039(index);
+      if (pruned > 0) {
+        console.log(`── remap Kakashi — prune demo-k039 (${pruned})`);
       }
 
       return { prints, titles };

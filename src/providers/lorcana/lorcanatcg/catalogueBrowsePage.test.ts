@@ -39,7 +39,7 @@ describe.skipIf(!hasDb)("lorcana catalogue SQL browse page", () => {
     expect(second.rows[0]?.printKey).not.toBe(first.rows[0]?.printKey);
   });
 
-  it("prefers sqlite art / remote CDN before disk existsSync", async () => {
+  it("serves local /assets only — never CDN in the admin grid", async () => {
     const { resolveLorcanaCatalogueArtUrl } = await import(
       "@/providers/lorcana/lorcanatcg/catalogueBrowse"
     );
@@ -53,6 +53,7 @@ describe.skipIf(!hasDb)("lorcana catalogue SQL browse page", () => {
         fullFoilUrl: null,
       }),
     ).toMatch(/^\/assets\/lorcana\/cards\//);
+    // Remote foil / image URLs are Sync densify inputs, not catalogue tiles.
     expect(
       resolveLorcanaCatalogueArtUrl({
         printKey: "lorcana:1-2",
@@ -62,7 +63,7 @@ describe.skipIf(!hasDb)("lorcana catalogue SQL browse page", () => {
         thumbnailUrl: null,
         fullFoilUrl: "https://cdn.example/foil.png",
       }),
-    ).toBe("https://cdn.example/foil.png");
+    ).not.toMatch(/^https?:\/\//i);
   });
 
   it("listCatalogueCards uses SQL page for lorcana", async () => {

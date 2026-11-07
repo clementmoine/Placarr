@@ -24,13 +24,15 @@ import {
  * (property → Texture2D under `textures/`).
  */
 const BASE_TEXTURES: FoilMaterial["textures"] = {
-  // Every per-card texture — masks and plates included — ships
-  // `m_ColorSpace = sRGB` (checked in the card bundles), so the app's Linear
-  // pipeline linearises them all on sample.
+  // Per-card plates ship `m_ColorSpace = sRGB` in the card bundles — Live's
+  // Linear pipeline linearises them on sample. Gamma byte×17.5 on spectrum
+  // clamps ~96% of SunLava to neon; Linear decode softens chroma toward the app.
   _CardColorDiffuse: { role: "art", srgb: true },
   _CardWhitePlateMask: { role: "foilMask", srgb: true },
-  // Live per-card plates ride the generic per-print mask roles; their black
-  // fallback is the correct "no plate" neutral for cards without a dump.
+  // Live per-card plates ride the generic per-print mask roles. Unbound
+  // `_CardEtch` must sample Unity-white (see ROLE_TEXTURE_FALLBACK.varnishMask)
+  // — HoloFoil multiplies foil by shine*0.35+etch²; opaque black crushed gold.
+  // Cold-foil stays black when missing so the second plate stays off.
   _CardEtch: { role: "varnishMask", srgb: true },
   _CardColdFoilMask: { role: "secondVarnishMask", srgb: true },
 };
@@ -70,11 +72,6 @@ function materialSheets(): Record<
   >;
 }
 
-/** Per-texture `m_ColorSpace` — `data/pokemon/foil/textureFlags.json`. */
-function textureFlags(): Record<string, { srgb?: boolean } | undefined> {
-  return loadTextureFlags() as Record<string, { srgb?: boolean } | undefined>;
-}
-
 /**
  * MAT leaves that reuse a dumped `.frag` but ship their own sheet / TexEnvs.
  * Live `foil_effect` never names these; playroom still lists them for parity.
@@ -87,12 +84,17 @@ export const POKEMON_MAT_ALIASES = {
 
 export type PokemonMatAliasName = keyof typeof POKEMON_MAT_ALIASES;
 
+/** Per-texture `m_ColorSpace` — `data/pokemon/foil/textureFlags.json`. */
+function textureFlags(): Record<string, { srgb?: boolean } | undefined> {
+  return loadTextureFlags() as Record<string, { srgb?: boolean } | undefined>;
+}
+
 /** Shared motif under `/assets/pokemon/textures/`. */
 function shared(stem: string): FoilTextureBinding {
   return {
     file: foilTextureFile(stem),
     // Colour motifs are sRGB-authored; data maps (normals / direction /
-    // noise) are flagged raw in the dump. Unknown stems read as colour —
+    // noise) are flagged raw in the dump. Unknown stems default to colour —
     // that is the overwhelming default in the bundle.
     srgb: textureFlags()[stem]?.srgb ?? true,
     // 1px crosses / channel sparkles (Galaxy Stars, Cosmos dots, …) vanish
@@ -122,25 +124,8 @@ const POINT_FILTER_SPARKLE_STEMS = new Set([
  * @see docs/foil_apk_sources.md
  */
 const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
-  Celebrations: {
-    _FoilShineTexture: "FX_T_Highlight_Over",
-    _SpectrumTex: "FX_T_Spectrum_Celebration",
-    _TexDistort: "T_CloudNoise",
-    _TexDots: "FX_T_Celeb_Confetti",
-  },
-  /** @deprecated dump stem — same motifs as Celebrations */
-  "25thConfetti": {
-    _FoilShineTexture: "FX_T_Highlight_Over",
-    _SpectrumTex: "FX_T_Spectrum_Celebration",
-    _TexDistort: "T_CloudNoise",
-    _TexDots: "FX_T_Celeb_Confetti",
-  },
-  AceFoil: {
-    _CrossTexture: "T_Holofoil_Mask_RadiantHolo_RG_X_Grad_5",
-    _FoilShineTexture: "FX_T_Gradient_Shine",
-    _T_Holofoil_Mask_Bar_Thin_Single: "T_Holofoil_Mask_Bar_Thin_Single",
-    _speccyspect: "FX_T_Spectrum_BlackSide",
-  },
+  // Celebrations / AceFoil / Rainbow: dump shared-motifs is complete — no
+  // override. Prior Celebration / Desaturate / wrong-slot plates washed foils.
   /**
    * me5-5 PikachuFoil — CC plate is StitchedRings, never TEX_CC_PB.
    * A bad pathid resolve once wrote Poké Ball laminate into shared-motifs;
@@ -171,14 +156,13 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _T_noise_dots: "T_CloudNoise",
   },
   CrackedIce: {
+    // Spectrum / shine / stars come from shared-motifs (Bands_Vertical +
+    // `_Texture_Shine`). A prior DesaturateOneSide override washed the ice
+    // gray vs Live — do not reintroduce it. Hash-seed samplers only.
     _Sampler5779: "FX_T_Noise_Dim",
     _Sampler5781: "FX_T_Noise_Dim",
     _Sampler5783: "FX_T_Noise_Dim",
     _Sampler5785: "FX_T_Noise_Dim",
-    _HolofoilSpectrumTexture: "FX_T_Spectrum_Bands_DesaturateOneSide",
-    _StarsTexture: "T_Holofoil_Mask_Cracked_Ice_RGB",
-    _T_noise_dots: "T_CloudNoise_Bright",
-    _TextureLightSheen: "T_Holofoil_Mask_Gradient_LightSheen",
   },
   FlatSilver: {
     // MAT leaves CC pattern unbound (pathid 0). The frag still *samples*
@@ -227,19 +211,14 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _Sampler5483: "FX_T_Noise_Dim",
     _Sampler5510: "FX_T_Noise_Dim",
   },
-  Rainbow: {
-    _DirectionTexture: "FX_T_Distort",
-    _SpectrumBright: "FX_T_Highlight_Over",
-    _SpectrumTexture: "FX_T_Spectrum_Rainbow",
-  },
   Rainbow02: {
-    _DirectionTexture: "FX_T_Distort",
-    _SpectrumBright: "FX_T_Highlight_Over",
+    // Alias reuses Rainbow.frag; dump has no Rainbow02 row — keep a vivid plate.
     _SpectrumTexture: "FX_T_Spectrum",
   },
   SolidColor: {
-    _SpectrumTexture: "FX_T_Spectrum_Bands_DesaturateOneSide",
-    // Frag sampler is `_TextureLightSheen` (not the MAT `…Sheen1` typo).
+    // Spectrum from dump (`Bands_Vertical`). DesaturateOneSide washed like
+    // CrackedIce — do not reintroduce. Frag sampler is `_TextureLightSheen`
+    // (not the MAT `…Sheen1` typo); bars plate is unbound in dump.
     _TextureLightSheen: "T_Holofoil_Mask_Gradient_LightSheen",
     _barstexture: "T_HoloFoil_Bars_Mask",
   },
@@ -260,9 +239,10 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _SpectrumTexture: "FX_T_Spectrum_Sunbeam",
   },
   SunLava: {
-    _FoilShineTexture: "FX_T_Gradient_Shine",
-    _Spectrum: "FX_T_Spectrum_Bands_Rainbow",
-    _T_Holofoil_Distortion_3: "T_Holofoil_Distortion_1",
+    // GLES samples `_DirectionTexture` + `_SpectrumBright` (not `_Spectrum` /
+    // `_FoilShineTexture`). Keep dump shared-motifs; only fill if extract gap.
+    _DirectionTexture: "T_SunLava_Distortion_1",
+    _SpectrumBright: "FX_T_Spectrum_SunLava",
   },
   SunPillar: {
     // Northern Cross is on the MAT, but `_UseCCFoil` defaults to 0 — CastAndCure
@@ -310,13 +290,10 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
     _SpectrumTexture: "FX_T_Spectrum_Bands_Vertical",
     _T_Holofoil_Mask_BWBars: "T_Holofoil_Mask_BWBars",
   },
-  SwSecret: {
-    _NoiseTexture: "T_Noise_Random",
-    _Spectrum: "FX_T_Spectrum",
-  },
   SwSecreT02: {
+    // Alias of SwSecret.frag — dump has no SwSecreT02 row.
     _NoiseTexture: "T_Noise_Random",
-    _Spectrum: "FX_T_Spectrum",
+    _Spectrum: "FX_T_Spectrum_Bands_Vertical",
   },
   Thatch: {
     _RedGreenDistortion: "T_Direction_RGB_Random_3",
@@ -341,17 +318,8 @@ const SHARED_MOTIF_OVERRIDES: Record<string, Record<string, string>> = {
  */
 const SHARED_FLOAT_OVERRIDES: Record<string, Record<string, number>> = {
   FlatSilver_CC: { _UseCCFoil: 1 },
-  /**
-   * Stamped MAT ships `_ShadowDarknessLimit = 0.3` + `_UseVertexNomal_On = 1`.
-   * On our flat Y-up card the vertex-normal remap drives N·L ≈ 0, so the 0.3
-   * floor crushes the whole face (compare Unity column nearly black). Live's
-   * mesh/light setup keeps stamped readable; match other leaves' 0.7 floor and
-   * skip the vertex-normal path.
-   */
-  Stamped: {
-    _ShadowDarknessLimit: 0.7,
-    _UseVertexNomal_On: 0,
-  },
+  // Stamped keeps dump floats (SDL 0.3 + UseVertexNomal). WebGL light must
+  // orbit the sheet rest `(0,0,1)` — see `restLightFromSheet` / lean contract.
 };
 
 /**
@@ -467,8 +435,8 @@ function materialForSheet(
     graph: `TPCi/Cards3D/${isNonFoil ? "Standard" : "HoloFoil"}/${sheetName}`,
     keywords: [],
     fragment: `${fragStem}.frag`,
-    // TCG Live renders in Unity's Linear colour space (sRGB-flagged textures,
-    // raw-flagged data maps): sample through sRGB decode, encode on output.
+    // Linear pipeline: sRGB plates decode on sample, OETF on output.
+    // (Gamma byte×17.5 clamped → neon burn on SunLava; Linear softens chroma.)
     linearOutput: true,
     // NonFoil = plain print. CSS already resolves to null shaders; WebGL would
     // only re-blit art through Standard lighting (SDL=1 noop) and fake a gap.

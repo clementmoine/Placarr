@@ -3,17 +3,20 @@ import { describe, expect, it } from "vitest";
 import { selectMtgSteps } from "./extract";
 
 describe("selectMtgSteps", () => {
-  it("defaults to seed + products (faces opt-in)", () => {
-    expect(selectMtgSteps([])).toEqual(["seed", "products"]);
+  it("defaults to seed + products + documents (faces opt-in)", () => {
+    expect(selectMtgSteps([])).toEqual(["seed", "products", "documents"]);
   });
 
   it("honours --only and --skip", () => {
     expect(selectMtgSteps(["--only", "seed"])).toEqual(["seed"]);
     expect(selectMtgSteps(["--only", "products"])).toEqual(["products"]);
-    expect(selectMtgSteps(["--skip", "products"])).toEqual(["seed"]);
+    expect(selectMtgSteps(["--skip", "products"])).toEqual([
+      "seed",
+      "documents",
+    ]);
   });
 
-  it("drops online faces/products under --offline", () => {
+  it("drops online faces/products/documents under --offline", () => {
     expect(selectMtgSteps(["--offline"])).toEqual(["seed"]);
   });
 
@@ -21,6 +24,7 @@ describe("selectMtgSteps", () => {
     expect(selectMtgSteps(["--mtgcards-faces"])).toEqual([
       "seed",
       "products",
+      "documents",
       "faces",
     ]);
   });

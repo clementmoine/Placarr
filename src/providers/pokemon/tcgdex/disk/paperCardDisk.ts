@@ -15,6 +15,7 @@ import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
 import { remapCollectorNumberForLive } from "@/effects/pokemon/liveJoin";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
+import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import {
@@ -238,7 +239,11 @@ export function buildPokemonDiskArtAttachments(opts: {
         type: "cover",
         url: assetsCardUrl("pokemon", diskId, file),
         title: opts.title?.trim() || faceSource,
-        role: `pokemon-face-${faceSource}`,
+        role: tcgFaceAttachmentRole({
+          printGame: POKEMON_GAME,
+          lang,
+          source: faceSource,
+        }),
         source: opts.source,
         coverProvenance: "catalog",
       };

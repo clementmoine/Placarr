@@ -4,6 +4,8 @@
  * Les aperçus d’illustration (`artwork: true`) doublonnent la galerie Bandai
  * (`preview/g01…g12`) : on les ignore ici.
  */
+import { canonicalNarutoCardgameCollector } from "./canonicalCollector";
+
 export type NarutoMarketCard = {
   slug: string;
   name: string;
@@ -33,7 +35,9 @@ export function normalizeNarutoMarketRef(ref: string): string | null {
   if (!raw) return null;
   const m = raw.match(/^([A-Z]{1,3})-?(\d{1,4})$/);
   if (!m) return null;
-  return `${m[1].toLowerCase()}${m[2].padStart(3, "0")}`;
+  return canonicalNarutoCardgameCollector(
+    `${m[1].toLowerCase()}${m[2].padStart(3, "0")}`,
+  );
 }
 
 /**

@@ -1,7 +1,4 @@
-import {
-  tcgdexAssetDiskId,
-  type TcgdexSearchRow,
-} from "./indexStore";
+import { type TcgdexSearchRow } from "./indexStore";
 import { tcgdexCatalog } from "./catalog";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
@@ -10,6 +7,7 @@ import {
   observationsFromMetadataResult,
 } from "@/core/enrich/observations";
 import { parsePrintKey } from "@/core/identify/printKey";
+import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import {
   mappingRawKeysFromFetch,
@@ -27,7 +25,6 @@ import {
   faceQuarterTurnsForPokemonPrint,
   joinLiveForPrint,
 } from "@/effects/pokemon/liveJoin";
-import { assetsCardUrl } from "@/lib/packAssetUrls";
 import {
   localPokemonCatalogueArtUrl,
   buildPokemonDiskArtAttachments,
@@ -153,7 +150,11 @@ function buildAttachments(card: TcgdexCard): MetadataAttachment[] | undefined {
         type: "cover",
         url: liveFront,
         title: card.name,
-        role: "pokemon-face-live",
+        role: tcgFaceAttachmentRole({
+          printGame: POKEMON_GAME,
+          lang: card.language,
+          source: "live",
+        }),
         source: PROVIDER_ID,
         coverProvenance: "catalog",
       });
@@ -641,19 +642,15 @@ export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
     : "fr") as TcgdexCard["language"];
   const imageBaseUrl = tcgdexLocalizedImageBase(row.imageBaseUrl, language);
   /*
-    Indexed local face (`print_assets.art`) wins over CDN. Basename →
-    `/assets/pokemon/cards/{lang}/{set}/{num}/{art}`; without it, TCGdex
-    high/low URLs from `image_base_url` (unchanged harvest contract).
+    Local-first (same gate as catalogue browse): existsSync via
+    {@link localPokemonCatalogueArtUrl}. Never invent `/assets/…` from a
+    stale `print_assets.art` basename, and never expose CDN as runtime art —
+    Sync densifies CDN → disk; picker / CLIP need local bytes.
   */
-  const artBasename = row.art?.trim() || null;
-  const diskId =
-    artBasename != null
-      ? tcgdexAssetDiskId(row.printKey, language)
-      : null;
   const localArtUrl =
-    artBasename && diskId
-      ? assetsCardUrl("pokemon", diskId, artBasename)
-      : null;
+    localPokemonCatalogueArtUrl(row.printKey, language, undefined, {
+      languages: [language],
+    }) ?? null;
   return {
     providerId: row.providerId,
     printKey: row.printKey,
@@ -679,8 +676,8 @@ export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
     illustrator: null,
     finishes: [],
     imageBaseUrl,
-    imageUrl: localArtUrl ?? tcgdexImageUrl(imageBaseUrl, "high"),
-    thumbnailUrl: localArtUrl ?? tcgdexImageUrl(imageBaseUrl, "low"),
+    imageUrl: localArtUrl,
+    thumbnailUrl: localArtUrl,
     cmPriceCents: null,
     cmFoilPriceCents: null,
     cardmarketProductId: null,

@@ -24,6 +24,7 @@ import {
   installMythosFaces,
   installMythosNarutomythosSiteFaces,
   installMythosNarutopiaFaces,
+  installMythosOfficialStampFaces,
   installMythosScanflipFaces,
   installOfficialMythosFaces,
 } from "./sources/faces";
@@ -193,6 +194,10 @@ export async function runNarutoMythosPackPipeline(
           const faces = await installOfficialMythosFaces(index);
           console.log(
             `── Faces — official ${faces.faces}${faces.missing.length ? `, manquant(s) ${faces.missing.length}` : ""}`,
+          );
+          const stamps = await installMythosOfficialStampFaces(index);
+          console.log(
+            `── Faces — event stamps ${stamps.faces}${stamps.missing.length ? `, manquant(s) ${stamps.missing.length}` : ""}`,
           );
         }
         if (!skipLorenzone) {

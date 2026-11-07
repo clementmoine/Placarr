@@ -197,7 +197,7 @@
       "observed": "2026-10-04",
       "sheet": {
         "url": "https://docs.google.com/spreadsheets/d/1J7bs4XCjI3NOYWobsoDzsy7UuPwebwprr1jQrBltYlw/edit?usp=sharing",
-        "access": "comment-only (download pending community vetting)",
+        "access": "anyone-with-link read; File→Download 401; gviz CSV OK (2026-11-06 mirror under staging/community-sheets/inventory/)",
         "rowsClaimed": 17800,
         "covers": [
           "28 booster sets",
@@ -214,7 +214,7 @@
       ],
       "correctionForm": "https://forms.gle/ohG5Co2PbXN5buHx5",
       "discordPointer": "https://discord.gg/JpmuA3zmxb (ccgtrader / community pooling)",
-      "note": "Bandai USA CCG (N/J/M) — not Kayou, not Carddass FR NI/TE/TA. Distinct from sheets-naruto-cards-complete.json (~360 chase rows). Do not crawl; comment-only until OP releases download. Useful later for EN finish master-set / missing PR holes — never invent FR Carddass from it.",
+      "note": "Bandai USA CCG (N/J/M) — not Kayou, not Carddass FR NI/TE/TA. Distinct from sheets-naruto-cards-complete.json (~360 chase rows). Share-link readable; CSV mirrored via gviz 2026-11-06. Useful later for EN finish master-set / missing PR holes — never invent FR Carddass from it.",
       "ingestPhoto": false,
       "ingestSheet": false
     }

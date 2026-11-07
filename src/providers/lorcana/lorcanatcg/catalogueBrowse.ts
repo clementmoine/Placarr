@@ -2,6 +2,7 @@
  * Admin Catalogue browse rows from Lorcana identity store (`catalog.sqlite`).
  *
  * Same corpus as checklist / searchPrints — anti-désync contrat catalogue.
+ * Tiles serve **local** `/assets/…` only (no Ravensburger CDN in the grid).
  */
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
@@ -15,7 +16,6 @@ import {
   lorcanaTcgDbPath,
   type LorcanaTcgSearchRow,
 } from "@/providers/lorcana/lorcanatcg/indexStore";
-import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
 
 /** Locales admin / checklist (EN pivot + FR). */
 export const LORCANA_CATALOGUE_BROWSE_LOCALES = ["en", "fr"] as const;
@@ -52,23 +52,8 @@ function localLorcanaArtUrl(
   return null;
 }
 
-function remoteArtUrl(row: LorcanaTcgSearchRow): string | null {
-  const candidates = [
-    row.fullFoilUrl,
-    row.imageUrl,
-    row.thumbnailUrl,
-  ].filter((u): u is string => Boolean(u?.trim()));
-  for (const url of candidates) {
-    if (catalogUrlMayStayRemote(url) || /^https?:\/\//i.test(url)) {
-      return url;
-    }
-  }
-  return null;
-}
-
 /**
- * Prefer sqlite art basename / remote CDN — `existsSync` only as last resort
- * (cold browse was ~3 stats × every title).
+ * Local `/assets/…` face only — never CDN in the admin catalogue grid.
  */
 export function resolveLorcanaCatalogueArtUrl(
   row: Pick<
@@ -86,12 +71,15 @@ export function resolveLorcanaCatalogueArtUrl(
   const diskId = artBasename
     ? cardDiskIdFromPrintKey(row.printKey, lang)
     : null;
-  const fromAssets =
-    artBasename && diskId
-      ? assetsCardUrl("lorcana", diskId, artBasename)
-      : null;
-  const remote = remoteArtUrl(row as LorcanaTcgSearchRow);
-  return fromAssets ?? remote ?? localLorcanaArtUrl(row.printKey, lang) ?? "";
+  if (artBasename && diskId) {
+    const abs = path.join(packCardDir("lorcana", diskId), artBasename);
+    try {
+      if (existsSync(abs)) return assetsCardUrl("lorcana", diskId, artBasename);
+    } catch {
+      /* fall through */
+    }
+  }
+  return localLorcanaArtUrl(row.printKey, lang) ?? "";
 }
 
 function rowToCatalogueCard(row: LorcanaTcgSearchRow): CatalogueCardRow {

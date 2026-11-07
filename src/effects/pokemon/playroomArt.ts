@@ -281,6 +281,11 @@ export type PlayroomArt = {
 
 const DUMPED_BUNDLE_LIST_CACHE = new Map<string, BundlePick[]>();
 
+/** Drop dump-face cache after `liveOwned.json` changes (carddex sync / hand edit). */
+export function invalidateDumpedBundleListCache(): void {
+  DUMPED_BUNDLE_LIST_CACHE.clear();
+}
+
 function highPng(imageBase: string): string {
   return `${imageBase.replace(/\/+$/, "")}/high.png`;
 }
@@ -302,7 +307,14 @@ function liveArtUrl(pick: BundlePick | null): string | null {
 
 function liveMaskUrl(pick: BundlePick | null): string | null {
   if (!pick?.bundleId) return null;
-  if (pick.maskTex?.trim()) return textureUrlFor(pick, pick.maskTex);
+  /*
+    Promo `bsp` masks are often `<set>_foil_<lang>_<num>` with no `_wp_`.
+    Without role `"mask"`, `pokemonFaceFileFromTex` falls through to
+    `art.webp` — art bound as whiteplate → full-card Stamped bars/green.
+  */
+  if (pick.maskTex?.trim()) {
+    return pokemonCardTextureUrl(pick.bundleId, pick.maskTex, "mask");
+  }
   const stem =
     pick.variant === "ph"
       ? `${pick.bundleId}_wp_ph`
@@ -393,12 +405,20 @@ export function listDumpedBundlesForShader(
 ): BundlePick[] {
   if (limit <= 0) return [];
 
-  let full = DUMPED_BUNDLE_LIST_CACHE.get(shader);
+  const frag = inventoryFragStem(shader);
+  // Owned list is part of the key — a liveOwned edit must not keep Sovkipou
+  // ahead of Lugulabre until the Next process restarts.
+  const owned = [
+    ...ownedBundlesForShader(shader),
+    ...(frag !== shader ? ownedBundlesForShader(frag) : []),
+  ];
+  const cacheKey = `${shader}::${owned.join(",")}`;
+
+  let full = DUMPED_BUNDLE_LIST_CACHE.get(cacheKey);
   if (!full) {
     const out: BundlePick[] = [];
     const seenBundle = new Set<string>();
     const seenSet = new Set<string>();
-    const frag = inventoryFragStem(shader);
 
     const push = (pick: BundlePick) => {
       if (seenBundle.has(pick.bundleId)) return;
@@ -413,10 +433,6 @@ export function listDumpedBundlesForShader(
     // Confirmed owned in Live → prefer for 1:1 playroom ↔ MuMu compare.
     // Order: FOIL_SEED hero (if owned), other Pokémon faces, then energy `ec_*`.
     const preferred = seedFor(shader).bundleId;
-    const owned = [
-      ...ownedBundlesForShader(shader),
-      ...(frag !== shader ? ownedBundlesForShader(frag) : []),
-    ];
     const ownedRank = (id: string) => {
       if (preferred && id === preferred) return 0;
       if (/^ec_/i.test(id)) return 2;
@@ -460,7 +476,7 @@ export function listDumpedBundlesForShader(
     }
 
     full = out;
-    DUMPED_BUNDLE_LIST_CACHE.set(shader, full);
+    DUMPED_BUNDLE_LIST_CACHE.set(cacheKey, full);
   }
 
   return full.slice(0, limit);
@@ -469,9 +485,10 @@ export function listDumpedBundlesForShader(
 function textureUrlFor(
   pick: BundlePick | null,
   stem: string | undefined,
+  role: "art" | "mask" = "art",
 ): string | null {
   if (!pick || !stem) return null;
-  return pokemonCardTextureUrl(pick.bundleId, stem);
+  return pokemonCardTextureUrl(pick.bundleId, stem, role);
 }
 
 function resolveShaderName(name: string): PokemonPaperFoilName | null {

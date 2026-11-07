@@ -7,7 +7,7 @@
  * - ygocards.fr — pack sleeve (`cards/original/back.webp`), sealed SKUs,
  *   optional FR shop faces (`--ygocards-faces`)
  *
- * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products`.
+ * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products` · `documents`.
  * `--skip-faces` remains an alias for `--skip faces`. Shop faces stay opt-in
  * via `--ygocards-faces`. Konami Neuron has no public API.
  */
@@ -37,10 +37,15 @@ import {
   installYugiohYgoprodeck,
 } from "./ygoprodeck";
 
-export const YUGIOH_STEPS = ["seed", "faces", "products"] as const;
+export const YUGIOH_STEPS = [
+  "seed",
+  "faces",
+  "products",
+  "documents",
+] as const;
 export type YugiohStep = (typeof YUGIOH_STEPS)[number];
-/** Seed harvest + face CDN need the network; products accept `--offline`. */
-const YUGIOH_ONLINE = new Set<YugiohStep>(["seed", "faces"]);
+/** Seed harvest + face CDN + documents need the network; products accept `--offline`. */
+const YUGIOH_ONLINE = new Set<YugiohStep>(["seed", "faces", "documents"]);
 
 export function selectYugiohSteps(argv: readonly string[]): YugiohStep[] {
   const effective = withSkipFacesAlias(argv);
@@ -98,6 +103,31 @@ export async function runYugiohPackPipeline(
   console.log(
     `── Yu-Gi-Oh! — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+
+  if (steps.includes("documents")) {
+    try {
+      const { loadYugiohCuratedDocuments } = await import(
+        "@/providers/yugioh/curated/documents"
+      );
+      const { harvestPackDocuments } = await import(
+        "@/providers/shared/documents/harvestPackDocuments"
+      );
+      const docs = await harvestPackDocuments({
+        packId: YUGIOH_PACK_ID,
+        curated: loadYugiohCuratedDocuments(),
+        force,
+      });
+      console.log(
+        `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+          `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── documents — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+    if (steps.length === 1) return { cards: 0, products: 0 };
+  }
 
   const skipScanflip = argv.includes("--skip-scanflip");
   const skipYgoprodeck = argv.includes("--skip-ygoprodeck");

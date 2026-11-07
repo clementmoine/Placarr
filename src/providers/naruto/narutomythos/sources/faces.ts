@@ -71,6 +71,7 @@ import {
   NARUTO_MYTHOS_SS2_SET_CODE,
   mythosPrintKey,
 } from "../printKey";
+import { loadMythosOfficialEventsDig } from "./officialEvents";
 
 /** Shared Safari UA for CICABOOM / narutomythos.com / Narutopia harvests. */
 const MYTHOS_HARVEST_UA =
@@ -1581,6 +1582,80 @@ export async function installMythosFaces(
   }
 
   return { faces: assets.length, missing };
+}
+
+/**
+ * Event-stamp faces from the curated official-events dig (`stampFaces`).
+ *
+ * Must go through {@link mythosFaceToWebp}: CDN stamps ship a white/transparent
+ * gutter; copying the source as `art.promo.webp` left the shelf letterboxed
+ * (ks1promo-0133-vv2 EN).
+ */
+export async function installMythosOfficialStampFaces(
+  index: LocalPrintsIndex,
+): Promise<{ faces: number; missing: string[] }> {
+  const dig = loadMythosOfficialEventsDig();
+  const stamps = dig?.stampFaces?.faces ?? [];
+  if (stamps.length === 0) {
+    return { faces: 0, missing: [] };
+  }
+
+  const sourcesRoot = path.join(narutoMythosCuratedDir(), "sources");
+  const assets: LocalPrintAssetWrite[] = [];
+  const missing: string[] = [];
+  let faces = 0;
+
+  for (const stamp of stamps) {
+    const identity = parsePrintKey(stamp.printKey);
+    if (!identity || identity.game !== "mythos") {
+      missing.push(`${stamp.printKey}:${stamp.lang}:${stamp.art}`);
+      continue;
+    }
+
+    const local = stamp.local?.trim().replace(/^\/+/, "") ?? "";
+    if (!local || local.includes("..")) {
+      missing.push(`${stamp.printKey}:${stamp.lang}:${stamp.art}`);
+      continue;
+    }
+    const from = path.join(sourcesRoot, local);
+    if (!existsSync(from)) {
+      missing.push(`${stamp.printKey}:${stamp.lang}:${stamp.art}`);
+      continue;
+    }
+
+    const art = stamp.art?.trim() || "art.promo.webp";
+    if (!/^art\.[a-z0-9_-]+\.webp$/i.test(art)) {
+      missing.push(`${stamp.printKey}:${stamp.lang}:${stamp.art}`);
+      continue;
+    }
+
+    const card = identity.grouping
+      ? `${identity.number}-${identity.grouping}`
+      : identity.number;
+    const destDir = packCardDir(NARUTO_MYTHOS_PACK_ID, {
+      lang: stamp.lang.trim().toLowerCase() || "fr",
+      set: identity.set,
+      card,
+    });
+    mkdirSync(destDir, { recursive: true });
+    // Always re-encode + trim — CDN stamps carry a gutter like official faces.
+    writeFileSync(
+      path.join(destDir, art),
+      await mythosFaceToWebp(readFileSync(from)),
+    );
+    faces += 1;
+    assets.push({
+      printKey: stamp.printKey,
+      lang: stamp.lang,
+      art,
+      sourceUrl: stamp.cdn
+        ? `${dig?.stampFaces?.cdnBase ?? ""}${stamp.cdn}`
+        : stamp.local,
+    });
+  }
+
+  if (assets.length) index.writeAssets(assets);
+  return { faces, missing };
 }
 
 /**

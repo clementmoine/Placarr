@@ -1,0 +1,76 @@
+[
+  {
+    "url": "https://www.yugioh-card.com/en/downloads/rulebook/SD_RuleBook_EN_10.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Official Rulebook Version 10 (EN)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/eu/wp-content/uploads/2022/07/Rulebook_v9_fr.pdf",
+    "lang": "fr",
+    "kind": "rulebook",
+    "title": "Livret de règles officiel Version 9 (FR)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/en/downloads/rulebook/YS17_BG_EN.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Beginner's Guide (EN)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/en/downloads/rulebook/Speed_Duel_Guide_EN.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Speed Duel Guide (EN)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/eu/wp-content/uploads/2025/09/Official-KDE-E-Yu-Gi-Oh-TRADING-CARD-GAME-Tournament-Policy-Version-2.5.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "KDE-E Tournament Policy v2.5 (EU)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/eu/wp-content/uploads/2025/09/Official-KDE-E-Tournament-Infractions-and-Penalties-Policy-Ver-2.3.pdf",
+    "lang": "en",
+    "kind": "penalty",
+    "title": "KDE-E Infractions & Penalties v2.3 (EU)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/eu/wp-content/uploads/2022/07/Official-KDE-E-Yu-Gi-Oh-TRADING-CARD-GAME-Tournament-Policy-Speed-Duel-Addendum.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "KDE-E Speed Duel Policy Addendum (EU)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/eu/wp-content/uploads/2022/07/Official-KDE-E-Yu-Gi-Oh-TRADING-CARD-GAME-Tournament-Policy-Remote-Duel-Addendum.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "KDE-E Remote Duel Policy Addendum (EU)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/en/downloads/penalty_guide/YGOTCG_Tournament_Policy_v_2_5.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "KDE-US Tournament Policy v2.5"
+  },
+  {
+    "url": "https://www.yugioh-card.com/en/downloads/penalty_guide/Penalty_Guidelines_v_2_3.pdf",
+    "lang": "en",
+    "kind": "penalty",
+    "title": "KDE-US Infractions & Penalties v2.3"
+  },
+  {
+    "url": "https://www.yugioh-card.com/en/rulebook/",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Official Rulebook hub (EN)"
+  },
+  {
+    "url": "https://www.yugioh-card.com/eu/fr/play/policy-documents/",
+    "download": false,
+    "lang": "fr",
+    "kind": "brand",
+    "title": "Documents de politique (EU FR)"
+  }
+]

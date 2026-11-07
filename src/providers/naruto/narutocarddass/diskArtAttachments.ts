@@ -8,6 +8,7 @@ import path from "node:path";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { packCardsDir } from "@/lib/packPaths";
+import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import { narutoRetailDiskNumber } from "./identity";
@@ -308,13 +309,18 @@ export function buildNarutoDiskArtAttachments(opts: {
     ? [defaultArt, ...arts.filter((a) => a !== defaultArt)]
     : arts;
 
+  const faceLang = opts.lang.trim().toLowerCase();
   const attachments: MetadataAttachment[] = ordered.map((file) => {
     const faceSource = faceRoleOf(file);
     return {
       type: "cover",
       url: narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, file),
       title: opts.title?.trim() || faceSource,
-      role: `naruto-face-${faceSource}`,
+      role: tcgFaceAttachmentRole({
+        printGame: "naruto",
+        lang: faceLang,
+        source: faceSource,
+      }),
       source: opts.source,
       coverProvenance: faceProvenanceOf(file),
     };

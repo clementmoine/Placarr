@@ -13,7 +13,7 @@ describe("normalizeNarutoMarketRef", () => {
     ["N-001", "n001"],
     ["CP-001", "cp001"],
     ["C-001", "c001"],
-    ["K-039", "k039"],
+    ["K-039", "n009"],
     ["S-001", "s001"],
     ["", null],
   ] as const)("%s → %s", (ref, expected) => {
@@ -42,6 +42,17 @@ describe("narutoMarketIdentity", () => {
         artwork: false,
       }),
     ).toEqual({ setCode: "demo", number: "n001" });
+  });
+
+  it("remaps misread K-039 Kakashi → N-009", () => {
+    expect(
+      narutoMarketIdentity({
+        slug: "kakashi-hatake-k-039",
+        ref: "K-039",
+        edition: "Gen Con 2026",
+        artwork: false,
+      }),
+    ).toEqual({ setCode: "demo", number: "n009" });
   });
 
   it("uses grouping for Yankees / Gen Con / event CP variants under promo", () => {

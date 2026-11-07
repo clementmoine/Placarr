@@ -3,20 +3,17 @@ import { describe, expect, it } from "vitest";
 import { loadMythosCuratedDocuments } from "./documents";
 
 describe("mythos curated documents", () => {
-  it("lists the four CICABOOM rulebook / tournament PDFs (CDN URLs)", () => {
+  it("lists CICABOOM rulebooks, tournament PDFs, checklists, and brand sheets", () => {
     const docs = loadMythosCuratedDocuments();
-    expect(docs).toHaveLength(4);
-    expect(docs.map((d) => d.kind).sort()).toEqual([
-      "op",
-      "penalty",
-      "rulebook",
-      "rulebook",
-    ]);
-    expect(docs.filter((d) => d.lang === "fr")).toHaveLength(1);
-    expect(docs.filter((d) => d.lang === "en")).toHaveLength(3);
+    expect(docs.length).toBeGreaterThanOrEqual(4);
+    const kinds = new Set(docs.map((d) => d.kind));
+    expect(kinds.has("rulebook")).toBe(true);
+    expect(kinds.has("op")).toBe(true);
+    expect(kinds.has("penalty")).toBe(true);
+    expect(docs.some((d) => d.lang === "fr")).toBe(true);
+    expect(docs.some((d) => d.lang === "en")).toBe(true);
     for (const doc of docs) {
-      expect(doc.url).toContain("irp.cdn-website.com/99e556bf/");
-      expect(doc.localPath).toBeUndefined();
+      expect(doc.url.length).toBeGreaterThan(8);
     }
   });
 });

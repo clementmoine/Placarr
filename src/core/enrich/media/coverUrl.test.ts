@@ -214,6 +214,27 @@ describe("coverUrl eligibility", () => {
       true,
     );
   });
+
+  it("rejects promo flyers as the default cover", () => {
+    const attachments = [
+      {
+        type: "cover" as const,
+        role: "mythos-proof-flyer-fr",
+        title: "Annonce promo Mythos (flyer FR)",
+        url: "/assets/naruto/mythos/cards/fr/ks1promo/0133-vv2/proof.french.twitter.webp",
+      },
+      {
+        type: "cover" as const,
+        url: "/assets/naruto/mythos/prints/ks1promo-0133-vv2-fr/face",
+      },
+    ];
+    expect(
+      isUrlEligibleDefaultCover(attachments[0]!.url, attachments),
+    ).toBe(false);
+    expect(
+      isUrlEligibleDefaultCover(attachments[1]!.url, attachments),
+    ).toBe(true);
+  });
 });
 
 describe("findAttachmentForUrl", () => {

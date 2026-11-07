@@ -14,8 +14,6 @@ import {
   listDbsFwRowsForLanguage,
   type DbsFwBrowseRow,
 } from "@/providers/dragonball/dbsfw/indexStore";
-import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
-
 type Cache = { mtimeMs: number; rows: CatalogueCardRow[] };
 let cache: Cache | null = null;
 
@@ -36,20 +34,12 @@ function rowToCatalogueCard(row: DbsFwBrowseRow): CatalogueCardRow {
     number: row.number,
     grouping: row.grouping,
   });
+  // Admin grid = local `/assets/…` only (no dbscards CDN).
   const raw = row.imageUrl?.trim() || "";
-  const remote =
-    raw &&
-    (catalogUrlMayStayRemote(raw) || /^https?:\/\//i.test(raw))
-      ? raw
-      : null;
-  const localFile =
-    raw && !remote && !raw.includes("/")
-      ? raw
-      : null;
-  const local = localFile
+  const localFile = raw && !raw.includes("/") ? raw : null;
+  const artUrl = localFile
     ? assetsCardUrl(DBS_FW_PACK_ID, { set, lang, card }, localFile)
-    : null;
-  const artUrl = local ?? remote ?? "";
+    : "";
   const name = row.fullName?.trim() || undefined;
   const label = name ? `${set}-${card} — ${name}` : `${set}-${card}`;
   return {

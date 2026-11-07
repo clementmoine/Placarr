@@ -54,10 +54,38 @@ async function defaultFetchBytes(
   return Buffer.from(res.data);
 }
 
+function looksLikePdfPath(value: string): boolean {
+  return /\.pdf([?#]|$)/i.test(value.trim());
+}
+
+/**
+ * Reject truncated Wayback / mid-stream dumps.
+ * Linearized captures often embed an early `%%EOF` then cut off — require the
+ * file to *end* with `%%EOF` (whitespace after OK).
+ */
+export function isCompletePdfBytes(bytes: Buffer): boolean {
+  if (bytes.length < 16) return false;
+  if (bytes.subarray(0, 5).toString("latin1") !== "%PDF-") return false;
+  let end = bytes.length;
+  while (
+    end > 0 &&
+    (bytes[end - 1] === 0x00 ||
+      bytes[end - 1] === 0x09 ||
+      bytes[end - 1] === 0x0a ||
+      bytes[end - 1] === 0x0d ||
+      bytes[end - 1] === 0x20)
+  ) {
+    end -= 1;
+  }
+  if (end < 5) return false;
+  return bytes.subarray(end - 5, end).equals(Buffer.from("%%EOF"));
+}
+
 function shouldDownload(entry: CuratedPackDocument): boolean {
+  // Explicit opt-out wins over waybackUrl / localPath.
+  if (entry.download === false) return false;
   if (entry.localPath?.trim()) return true;
   if (entry.waybackUrl?.trim()) return true;
-  if (entry.download === false) return false;
   try {
     const u = new URL(entry.url);
     if (u.protocol !== "http:" && u.protocol !== "https:") return false;
@@ -146,28 +174,51 @@ export async function harvestPackDocuments(
     const abs = path.join(packDocumentsDir(packId), relativePath);
     const existing = index.documents.find((d) => d.id === classified.id);
 
+    const expectPdf =
+      looksLikePdfPath(classified.filename) || looksLikePdfPath(url);
+
     if (
       !force &&
       existing?.relativePath === relativePath &&
       existing.sha256 &&
       existsSync(abs)
     ) {
-      result.skipped += 1;
-      continue;
+      const onDisk = readFileSync(abs);
+      if (!expectPdf || isCompletePdfBytes(onDisk)) {
+        result.skipped += 1;
+        continue;
+      }
+      // Truncated on-disk PDF — fall through to re-fetch / replace.
     }
 
     try {
-      let bytes: Buffer;
+      let bytes: Buffer | null = null;
       const localAbs = curatedRow.localPath
         ? resolveCuratedLocalPath(packId, curatedRow.localPath)
         : null;
+      const wayback = curatedRow.waybackUrl?.trim() || "";
       if (localAbs) {
-        bytes = readFileSync(localAbs);
-      } else if (curatedRow.localPath) {
+        const localBytes = readFileSync(localAbs);
+        if (!expectPdf || isCompletePdfBytes(localBytes)) {
+          bytes = localBytes;
+        } else if (!wayback) {
+          throw new Error(
+            `truncated PDF at localPath (${localBytes.byteLength} bytes, missing %%EOF): ${curatedRow.localPath}`,
+          );
+        }
+        // Incomplete staging + waybackUrl → prefer network capture.
+      } else if (curatedRow.localPath && !wayback) {
         throw new Error(`localPath missing: ${curatedRow.localPath}`);
-      } else {
-        const fetchUrl = curatedRow.waybackUrl?.trim() || url;
+      }
+      if (!bytes) {
+        const fetchUrl = wayback || url;
         bytes = await fetchBytes(fetchUrl, signal);
+      }
+      if (expectPdf && !isCompletePdfBytes(bytes)) {
+        // Keep bytes for « Ouvrir » — thumbs may still recover via embeds.
+        console.warn(
+          `[documents] truncated PDF kept (${bytes.byteLength} bytes, no trailing %%EOF): ${relativePath}`,
+        );
       }
       const sha256 = createHash("sha256").update(bytes).digest("hex");
       if (
@@ -176,8 +227,14 @@ export async function harvestPackDocuments(
         existing.relativePath &&
         existsSync(path.join(packDocumentsDir(packId), existing.relativePath))
       ) {
-        result.skipped += 1;
-        continue;
+        const existingAbs = path.join(
+          packDocumentsDir(packId),
+          existing.relativePath,
+        );
+        if (!expectPdf || isCompletePdfBytes(readFileSync(existingAbs))) {
+          result.skipped += 1;
+          continue;
+        }
       }
       mkdirSync(path.dirname(abs), { recursive: true });
       writeFileSync(abs, bytes);

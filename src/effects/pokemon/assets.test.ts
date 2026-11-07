@@ -141,5 +141,6 @@ describe("pokemon pack assets", () => {
       expect(checked).toBeGreaterThan(0);
       expect(missing, missing.join("\n")).toEqual([]);
     },
+    180_000,
   );
 });

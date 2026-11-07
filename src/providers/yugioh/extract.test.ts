@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { selectYugiohSteps } from "./extract";
 
 describe("selectYugiohSteps", () => {
-  it("defaults to seed + faces + products", () => {
-    expect(selectYugiohSteps([])).toEqual(["seed", "faces", "products"]);
+  it("defaults to seed + faces + products + documents", () => {
+    expect(selectYugiohSteps([])).toEqual([
+      "seed",
+      "faces",
+      "products",
+      "documents",
+    ]);
   });
 
   it("honours --only and --skip", () => {
@@ -12,6 +17,7 @@ describe("selectYugiohSteps", () => {
     expect(selectYugiohSteps(["--skip", "faces"])).toEqual([
       "seed",
       "products",
+      "documents",
     ]);
   });
 
@@ -19,10 +25,11 @@ describe("selectYugiohSteps", () => {
     expect(selectYugiohSteps(["--skip-faces"])).toEqual([
       "seed",
       "products",
+      "documents",
     ]);
   });
 
-  it("keeps products under --offline; drops seed/faces", () => {
+  it("keeps products under --offline; drops seed/faces/documents", () => {
     expect(selectYugiohSteps(["--offline"])).toEqual(["products"]);
   });
 });

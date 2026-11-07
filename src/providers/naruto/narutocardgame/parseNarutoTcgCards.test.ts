@@ -10,7 +10,7 @@ import {
 describe("narutoTcgCardsIdentity", () => {
   it.each([
     ["demo-decks-n-001-naruto-uzumaki", { setCode: "demo", number: "n001" }],
-    ["demo-decks-k-039-kakashi-hatake", { setCode: "demo", number: "k039" }],
+    ["demo-decks-k-039-kakashi-hatake", { setCode: "demo", number: "n009" }],
     ["demo-decks-orochimaru", { setCode: "demo", number: "n017" }],
     ["demo-decks-choji-akimichi", { setCode: "demo", number: "n002" }],
     [

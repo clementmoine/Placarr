@@ -10,6 +10,7 @@ describe("selectDbsFwSteps", () => {
       "products",
       "faces",
       "details",
+      "documents",
     ]);
   });
 
@@ -21,6 +22,7 @@ describe("selectDbsFwSteps", () => {
       // `details` reste du tour horaire : la récolte est incrémentale, elle ne
       // relit que les numéros que `facts.json` n'a pas encore.
       "details",
+      "documents",
     ]);
   });
 

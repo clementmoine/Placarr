@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { foilCosTime } from "./webgl/renderer";
 import {
   IDLE_LEAN_FACTOR,
+  IDLE_LIGHT_FACTOR,
   blendLean,
   easeOutCubic,
   idleLeanFromSeconds,
@@ -40,12 +41,15 @@ describe("idlePointerFromSeconds", () => {
 });
 
 describe("idleLeanFromSeconds", () => {
-  it("is the pointer lean at a soft idle fraction of maxTilt", () => {
+  it("keeps CSS tip soft but light livelier for WebGL idle shimmer", () => {
     const lean = idleLeanFromSeconds(1.25, 18);
     const { x, y } = idlePointerFromSeconds(1.25);
-    expect(lean.lightX).toBeCloseTo(x);
-    expect(lean.lightY).toBeCloseTo(y);
-    // Interactive ±18°; idle ~±6° so shelves don't rock like a hover.
+    expect(IDLE_LIGHT_FACTOR).toBeGreaterThan(IDLE_LEAN_FACTOR);
+    expect(IDLE_LIGHT_FACTOR).toBeLessThan(1);
+    // Light → WebGL setTilt; tip factor alone (~0.35) looked frozen vs hover.
+    expect(lean.lightX).toBeCloseTo(50 + (x - 50) * IDLE_LIGHT_FACTOR);
+    expect(lean.lightY).toBeCloseTo(50 + (y - 50) * IDLE_LIGHT_FACTOR);
+    // Interactive ±18°; idle tip ~±6° so shelves don't rock like a hover.
     expect(lean.tiltY).toBeCloseTo(((x - 50) / 50) * 18 * IDLE_LEAN_FACTOR);
   });
 });

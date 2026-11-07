@@ -144,6 +144,16 @@ describe("resolveEffectForPrintKey", () => {
     );
   });
 
+  it("paperMaskUrl forces role mask for promo _foil_ stems (product path)", () => {
+    // Same trap as playroom: tcgdex/catalogue use paperMaskUrl, not liveMaskUrl.
+    expect(paperMaskUrl("smbsp_fr_078", "smbsp_foil_fr_078")).toBe(
+      "/assets/pokemon/cards/fr/smbsp/078/mask.webp",
+    );
+    expect(paperMaskUrl("bwbsp_fr_050", "bwbsp_foil_fr_050")).toBe(
+      "/assets/pokemon/cards/fr/bwbsp/050/mask.webp",
+    );
+  });
+
   it("resolves 30ᵉ Anniversaire #23 to PikachuFoil (not AceFoil stand-in)", () => {
     const r = resolveEffectForPrintKey("pokemon:me05.5-023", "live-std", "fr");
     expect(r).toMatchObject({

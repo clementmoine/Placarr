@@ -182,3 +182,43 @@ export function leanFromPointer(x: number, y: number, maxTilt: number): Lean {
     lightY: py,
   };
 }
+
+/**
+ * Remap screen-space lean into card-local lean when the face is CSS-rotated by
+ * `faceQuarterTurns * 90°` (BREAK / TURBO / Location). WebGL UVs stay portrait;
+ * the oriented media rotator spins the canvas. Without this, pointer axes tip
+ * the wrong card edges and landscape foils feel renversés.
+ *
+ * Rotates light offsets and crossed tilt degrees by −turns·90° (inverse of the
+ * display rotate).
+ */
+export function leanForFaceQuarterTurns(
+  lean: Lean,
+  faceQuarterTurns: number | null | undefined = 0,
+): Lean {
+  const turns = ((Math.round(faceQuarterTurns ?? 0) % 4) + 4) % 4;
+  if (turns === 0) return lean;
+
+  let lx = lean.lightX - 50;
+  let ly = lean.lightY - 50;
+  let tiltX = lean.tiltX;
+  let tiltY = lean.tiltY;
+  for (let i = 0; i < turns; i++) {
+    // Light offset −90°: (x, y) → (y, −x).
+    const nextLx = ly;
+    const nextLy = -lx;
+    lx = nextLx;
+    ly = nextLy;
+    // Gesture tip (tiltY, −tiltX) rotates the same way → (tiltX', tiltY').
+    const nextTiltX = tiltY;
+    const nextTiltY = -tiltX;
+    tiltX = nextTiltX;
+    tiltY = nextTiltY;
+  }
+  return {
+    lightX: lx + 50,
+    lightY: ly + 50,
+    tiltX,
+    tiltY,
+  };
+}

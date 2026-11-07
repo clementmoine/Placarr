@@ -506,13 +506,18 @@ export async function installOnepieceBandaiFaces(
     delayMs?: number;
     /** Restrict to these locale codes (`ja`, `fr`, `en`). */
     langs?: readonly string[];
+    /** Restrict to these set codes (`eb05`, `op01`, …). */
+    sets?: readonly string[];
   } = {},
 ): Promise<OnepieceFacesInstall> {
   const locales = loadPunkRecordsLocales(
-    opts.stagingDir ?? onepiecePunkStagingDir(),
+    opts.stagingDir ?? resolvePunkRecordsDir(),
   );
   const langFilter = opts.langs?.length
     ? new Set(opts.langs.map((l) => l.trim().toLowerCase()).filter(Boolean))
+    : null;
+  const setFilter = opts.sets?.length
+    ? new Set(opts.sets.map((s) => s.trim().toLowerCase()).filter(Boolean))
     : null;
   const byKeyLang = new Map<string, PunkRecordsCard>();
   for (const locale of locales) {
@@ -523,7 +528,9 @@ export async function installOnepieceBandaiFaces(
     }
   }
 
-  const writes = buildOnepiecePrintWrites(locales);
+  const writes = buildOnepiecePrintWrites(locales).filter(
+    (row) => !setFilter || setFilter.has(row.setCode.toLowerCase()),
+  );
   let faces = 0;
   let skip = 0;
   let fail = 0;
@@ -538,8 +545,9 @@ export async function installOnepieceBandaiFaces(
   const total = titleSlots.length;
   console.log(`   faces — ${total} slot${total === 1 ? "" : "s"} (tirages × langues)`);
 
+  const progressEvery = total <= 250 ? 25 : 250;
   const maybeProgress = () => {
-    if (processed === total || processed % 250 === 0) {
+    if (processed === total || processed % progressEvery === 0) {
       console.log(
         `   faces ${processed}/${total} — ok=${faces} skip=${skip} fail=${fail}`,
       );

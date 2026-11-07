@@ -60,8 +60,10 @@ describe("itemModalSession", () => {
         storedName: "0721450083770",
         barcode: "0721450083770",
         condition: "used",
-        loanedTo: "Alice",
-        loanedAt: new Date(2026, 8, 1),
+        presence: "away",
+        absenceReason: "loaned",
+        absenceRecipient: "Alice",
+        absenceSince: new Date(2026, 8, 1),
         metadata: {
           title: "Black Stories",
           aliases: "Black Stories",

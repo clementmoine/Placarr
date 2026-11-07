@@ -283,6 +283,7 @@ function PrintPickerTileArt({
         varnishColor={view.varnishColor}
         secondVarnishMaskUrl={view.secondVarnishMaskUrl}
         secondVarnishColor={view.secondVarnishColor}
+        faceQuarterTurns={candidate.faceQuarterTurns}
         fit="cover"
         backend="css"
         tilt={false}

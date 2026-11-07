@@ -51,10 +51,10 @@ const built = createEmptyLocalTcgProvider({
     probePrintKey:
       narutoCardgamePrintKey("preview", "g01") ?? "narutocardgame:preview-g01",
     syncHint:
-      "Catalogue Sync — galerie Bandai EN+JP + narutomarket FR/JA + play#sim + narutocardguide + Fest Premium + display FR",
+      "Catalogue Sync — galerie Bandai EN+JP + narutomarket FR/JA + play#sim + narutocardguide + nindodb + Fest Premium + display FR",
     websiteUrl: "https://www.naruto-cardgame.com/en/welcome/",
     notes:
-      "Bandai Card Games + Asmodee EU — TCG mondial (été 2027) → `data/naruto/cardgame/`. Galerie SAMPLE officielle EN+JP ; checklist FR/JA via narutomarket.com ; simulateur `/play#sim` (NM_SIM_CARDS, noms JA) ; hubs narutotcgcards.com + narutocardguide.com/cards-list/ ; Premium vol.00 JP (BANDAI CARD GAMES Fest) ; displays launch FR/EN (Pixel Heart) + Display/Case JP (Deck Dynastie). Portail CN : naruto-ncg.cn (SPA, pas encore de dump cartes).",
+      "Bandai Card Games + Asmodee EU — TCG mondial (été 2027) → `data/naruto/cardgame/`. Galerie SAMPLE officielle EN+JP ; checklist FR/JA via narutomarket.com ; simulateur `/play#sim` (NM_SIM_CARDS, noms JA) ; hubs narutotcgcards.com + narutocardguide.com/cards-list/ + nindodb.com (stats/couleur/illustrateur, Kakashi = N-009) ; Premium vol.00 JP (BANDAI CARD GAMES Fest) ; displays launch FR/EN (Pixel Heart) + Display/Case JP (Deck Dynastie). Portail CN : naruto-ncg.cn (SPA, pas encore de dump cartes).",
   },
   runPipeline: async (argv) => {
     const { runNarutoCardgamePackPipeline } = await import(

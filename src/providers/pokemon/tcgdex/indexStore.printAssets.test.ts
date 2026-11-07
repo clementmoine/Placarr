@@ -14,6 +14,12 @@ import {
   writeTcgdexSet,
 } from "./indexStore";
 
+/** 1×1 PNG — faceChoice needs probeable dims (not bare text stubs). */
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 const roots: string[] = [];
 afterEach(() => {
   resetTcgdexIndexCache();
@@ -32,12 +38,15 @@ function tmpPokemonData(): { dataRoot: string; cardsRoot: string } {
   return { dataRoot, cardsRoot };
 }
 
+function writeFace(cardDir: string, filename: string): void {
+  mkdirSync(cardDir, { recursive: true });
+  writeFileSync(path.join(cardDir, filename), PNG_1X1);
+}
+
 describe("tcgdex print_assets", () => {
   it("writes source_url from CDN and joins art when disk has a face", () => {
     const { cardsRoot } = tmpPokemonData();
-    const cardDir = path.join(cardsRoot, "fr", "swsh3", "001");
-    mkdirSync(cardDir, { recursive: true });
-    writeFileSync(path.join(cardDir, "art.coleka.webp"), "face");
+    writeFace(path.join(cardsRoot, "fr", "swsh3", "001"), "art.coleka.png");
 
     const written = writeTcgdexSet({
       cardsRoot,
@@ -73,19 +82,19 @@ describe("tcgdex print_assets", () => {
     expect(written.assetsFromDisk).toBe(1);
 
     const row = lookupTcgdexSearchRow("pokemon:swsh3-1", { language: "fr" });
-    expect(row?.art).toBe("art.coleka.webp");
+    expect(row?.art).toBe("art.coleka.png");
     expect(row?.imageBaseUrl).toBe(
       "https://assets.tcgdex.net/fr/swsh/swsh3/1",
     );
 
     const card = cardFromLocalRow(row!);
     expect(card.imageUrl).toBe(
-      "/assets/pokemon/cards/fr/swsh3/001/art.coleka.webp",
+      "/assets/pokemon/cards/fr/swsh3/001/art.coleka.png",
     );
     expect(card.thumbnailUrl).toBe(card.imageUrl);
   });
 
-  it("falls back to CDN when print_assets.art is empty", () => {
+  it("exposes no runtime art when disk face is absent (CDN is Sync-only)", () => {
     tmpPokemonData();
     writeTcgdexSet({
       set: {
@@ -119,9 +128,15 @@ describe("tcgdex print_assets", () => {
 
     const row = lookupTcgdexSearchRow("pokemon:swsh3-1", { language: "fr" });
     expect(row?.art).toBeNull();
+    expect(row?.imageBaseUrl).toBe(
+      "https://assets.tcgdex.net/fr/swsh/swsh3/1",
+    );
     const card = cardFromLocalRow(row!);
-    expect(card.imageUrl).toContain("assets.tcgdex.net");
-    expect(card.imageUrl).toContain("/high.webp");
+    expect(card.imageUrl).toBeNull();
+    expect(card.thumbnailUrl).toBeNull();
+    expect(card.imageBaseUrl).toBe(
+      "https://assets.tcgdex.net/fr/swsh/swsh3/1",
+    );
   });
 
   it("backfills art onto an existing row via syncTcgdexPrintAssetsFromDisk", () => {
@@ -160,9 +175,7 @@ describe("tcgdex print_assets", () => {
       lookupTcgdexSearchRow("pokemon:base1-4", { language: "fr" })?.art,
     ).toBeNull();
 
-    const cardDir = path.join(cardsRoot, "fr", "base1", "004");
-    mkdirSync(cardDir, { recursive: true });
-    writeFileSync(path.join(cardDir, "art.tcgdex.webp"), "cdn");
+    writeFace(path.join(cardsRoot, "fr", "base1", "004"), "art.tcgdex.png");
 
     const synced = syncTcgdexPrintAssetsFromDisk({
       cardsRoot,
@@ -172,6 +185,64 @@ describe("tcgdex print_assets", () => {
     expect(synced).toBe(1);
     expect(
       lookupTcgdexSearchRow("pokemon:base1-4", { language: "fr" })?.art,
-    ).toBe("art.tcgdex.webp");
+    ).toBe("art.tcgdex.png");
+  });
+
+  it("clears ghost print_assets.art when the face file is missing", () => {
+    const { cardsRoot } = tmpPokemonData();
+    const cardDir = path.join(cardsRoot, "fr", "bw2", "024");
+    writeFace(cardDir, "art.pokecardex.png");
+
+    writeTcgdexSet({
+      cardsRoot,
+      set: {
+        setId: "bw2",
+        lang: "fr",
+        name: "Émeraude Noire",
+        serieName: null,
+        releasedAt: null,
+        totalCount: 1,
+        officialCount: 1,
+      },
+      prints: [
+        {
+          printKey: "pokemon:bw2-24",
+          setId: "bw2",
+          localId: "24",
+          providerId: "bw2-24",
+          imageBaseUrl: "https://assets.tcgdex.net/fr/bw/bw2/24",
+        },
+      ],
+      titles: [
+        {
+          printKey: "pokemon:bw2-24",
+          lang: "fr",
+          name: "Feuillajou",
+          setName: "Émeraude Noire",
+          serieName: null,
+        },
+      ],
+    });
+    expect(
+      lookupTcgdexSearchRow("pokemon:bw2-24", { language: "fr" })?.art,
+    ).toBe("art.pokecardex.png");
+
+    rmSync(cardDir, { recursive: true, force: true });
+
+    const synced = syncTcgdexPrintAssetsFromDisk({
+      cardsRoot,
+      printKeys: ["pokemon:bw2-24"],
+      languages: ["fr"],
+    });
+    expect(synced).toBe(1);
+    expect(
+      lookupTcgdexSearchRow("pokemon:bw2-24", { language: "fr" })?.art,
+    ).toBeNull();
+
+    const card = cardFromLocalRow(
+      lookupTcgdexSearchRow("pokemon:bw2-24", { language: "fr" })!,
+    );
+    expect(card.imageUrl).toBeNull();
+    expect(card.thumbnailUrl).toBeNull();
   });
 });

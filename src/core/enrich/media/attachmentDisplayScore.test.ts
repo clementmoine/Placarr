@@ -655,6 +655,24 @@ describe("attachmentDisplayScore", () => {
     ).toEqual([frCover.url, marketplaceCover.url]);
   });
 
+  it("classe une face TCG devant un flyer promo (jamais défaut flyer)", () => {
+    const flyer = {
+      type: "cover" as const,
+      role: "mythos-proof-flyer-fr",
+      title: "Annonce promo Mythos (flyer FR)",
+      url: "/assets/naruto/mythos/cards/fr/ks1promo/0133-vv2/proof.french.twitter.webp",
+      source: "narutomythos",
+    };
+    const face = {
+      type: "cover" as const,
+      url: "/assets/naruto/mythos/prints/ks1promo-0133-vv2-fr/face",
+      source: "narutomythos",
+    };
+    expect(
+      rankCoverGalleryAttachments([flyer, face]).map((a) => a.url),
+    ).toEqual([face.url, flyer.url]);
+  });
+
   it("garde une jaquette FR remote plutôt qu'une photo marketplace localisée", () => {
     const frRemote = {
       type: "cover" as const,

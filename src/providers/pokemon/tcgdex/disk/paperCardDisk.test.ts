@@ -107,7 +107,11 @@ describe("buildPokemonDiskArtAttachments", () => {
     expect(
       attachments.map((a) => a.role).sort(),
     ).toEqual(
-      ["pokemon-face-coleka", "pokemon-face-live", "pokemon-face-mcdn"].sort(),
+      [
+        "pokemon-face-fr-coleka",
+        "pokemon-face-fr-live",
+        "pokemon-face-fr-mcdn",
+      ].sort(),
     );
   });
 });

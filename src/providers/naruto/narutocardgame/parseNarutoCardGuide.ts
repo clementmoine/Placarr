@@ -5,6 +5,8 @@
  * `premium00`) pour fusionner les faces. Les SAMPLE sans n° collector
  * (starter / first set) restent observés sous set `n01`.
  */
+import { canonicalNarutoCardgameCollector } from "./canonicalCollector";
+
 export type NarutoCardGuideCard = {
   id: string;
   name: string;
@@ -84,7 +86,9 @@ export function parseNarutoCardGuideListing(
 function normalizePrintedRef(raw: string): string | null {
   const m = raw.trim().toUpperCase().match(/^([A-Z]{1,3})-?(\d{1,4})$/);
   if (!m) return null;
-  return `${m[1]!.toLowerCase()}${m[2]!.padStart(3, "0")}`;
+  return canonicalNarutoCardgameCollector(
+    `${m[1]!.toLowerCase()}${m[2]!.padStart(3, "0")}`,
+  );
 }
 
 /**

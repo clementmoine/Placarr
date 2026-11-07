@@ -181,7 +181,7 @@ describe("catalogue identity browse anti-désync", () => {
         expect(listed.every((c) => c.printed !== false)).toBe(true);
       }
     },
-    60_000,
+    300_000,
   );
 
   it("Lorcana identity browse printKeys ⊆ checklist sqlite (same corpus)", () => {

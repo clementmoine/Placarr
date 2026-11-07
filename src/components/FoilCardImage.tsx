@@ -35,7 +35,11 @@ import {
   foilRenderScale,
 } from "@/core/render/foil";
 import { applyFoilPointerCss } from "@/core/render/foil/pointerCss";
-import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
+import {
+  leanForFaceQuarterTurns,
+  leanFromPointer,
+  type Lean,
+} from "@/core/render/deviceTilt";
 import {
   holoShader,
   varnishShader as varnishShaderFor,
@@ -84,6 +88,23 @@ export function tiltFromLightPercent(
   amplitude: number = LORCANA_TIME_FACTOR,
 ): number {
   return ((lightPercent - 50) / 50) * amplitude;
+}
+
+/**
+ * Pointer light % → Live WebGL `setTilt` XY.
+ *
+ * Vertical matches CSS dip-under-finger once VS height is +Z toward card top
+ * (`local.z = uv.y - 0.5`): pointer-bottom → +lean.y → N tips toward +Z (top).
+ */
+export function liveWebglTiltFromLight(
+  lightX: number,
+  lightY: number,
+  amplitude: number,
+): readonly [number, number] {
+  return [
+    tiltFromLightPercent(lightX, amplitude),
+    tiltFromLightPercent(lightY, amplitude),
+  ];
 }
 
 /**
@@ -178,6 +199,11 @@ type FoilCardImageProps = {
   disableCompass?: boolean;
   /** Simey `--card-glow` (Radiant type colour). */
   cardGlow?: string | null;
+  /**
+   * CSS face rotation in quarter-turns (BREAK / TURBO). Lean is remapped into
+   * card-local axes so WebGL tip matches the oriented face.
+   */
+  faceQuarterTurns?: 0 | 1 | 2 | 3 | null;
   /** Playroom override. Product leaves `auto`. */
   backend?: FoilBackendPreference;
   /** Fired when the artwork finishes loading (for letterbox edge bleed, etc.). */
@@ -356,6 +382,7 @@ export function FoilCardImage({
   idle = true,
   disableCompass = false,
   cardGlow = null,
+  faceQuarterTurns = 0,
   onLoad,
   className,
   children,
@@ -603,10 +630,13 @@ export function FoilCardImage({
 
   const applyLean = useCallback(
     (lean: Lean, opts?: { engageTiltProgram?: boolean; glare?: number }) => {
-      const xy = [
-        tiltFromLightPercent(lean.lightX, leanAmplitude),
-        tiltFromLightPercent(lean.lightY, leanAmplitude),
-      ] as const;
+      // Screen lean → card-local when OrientedMediaRotator spun the face.
+      const local = leanForFaceQuarterTurns(lean, faceQuarterTurns);
+      const xy = liveWebglTiltFromLight(
+        local.lightX,
+        local.lightY,
+        leanAmplitude,
+      );
       tiltUniformRef.current = xy;
       const renderer = rendererRef.current;
       if (renderer) {
@@ -620,23 +650,30 @@ export function FoilCardImage({
       }
       // The same lean as an angle, for the shaders that rotate rather than
       // scroll. `tiltX`/`tiltY` are rotations *about* X and Y, so they land on
-      // the Euler components of the same name.
-      leanDegreesRef.current = [lean.tiltX, lean.tiltY];
-      renderer?.setLeanDegrees(lean.tiltX, lean.tiltY);
+      // the Euler components of the same name. Tip sits *inside* the rotator,
+      // so use remapped degrees (not screen-space).
+      leanDegreesRef.current = [local.tiltX, local.tiltY];
+      renderer?.setLeanDegrees(local.tiltX, local.tiltY);
       const frame = frameRef.current;
       if (frame) {
-        frame.style.setProperty("--rotateX", `${lean.tiltY}deg`);
-        frame.style.setProperty("--rotateY", `${lean.tiltX}deg`);
+        frame.style.setProperty("--rotateX", `${local.tiltY}deg`);
+        frame.style.setProperty("--rotateY", `${local.tiltX}deg`);
         // Foil+bag: one lean drives bag pose and face light (no second idle).
         if (bagged && !packagingOnly) {
           const face = frame.querySelector(`[${HOLO_FACE_ATTR}]`);
           if (face instanceof HTMLElement) {
-            applyFoilPointerCss(face, lean, opts?.glare ?? 0.66);
+            applyFoilPointerCss(face, local, opts?.glare ?? 0.66);
           }
         }
       }
     },
-    [leanAmplitude, hasTimeSibling, bagged, packagingOnly],
+    [
+      leanAmplitude,
+      hasTimeSibling,
+      bagged,
+      packagingOnly,
+      faceQuarterTurns,
+    ],
   );
 
   // Physical lean follows the same `cos(t)` Time mode uses for the foil, with

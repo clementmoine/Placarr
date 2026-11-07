@@ -21,9 +21,16 @@ import {
 
 import { DBS_CG_PACK_ID } from "./indexStore";
 
-const STEPS = ["scrape", "dbscards", "products", "arena", "faces"] as const;
+const STEPS = [
+  "scrape",
+  "dbscards",
+  "products",
+  "arena",
+  "faces",
+  "documents",
+] as const;
 type Step = (typeof STEPS)[number];
-const ONLINE = new Set<Step>(["scrape", "dbscards", "faces"]);
+const ONLINE = new Set<Step>(["scrape", "dbscards", "faces", "documents"]);
 
 export function selectDbsCgSteps(argv: readonly string[]): Step[] {
   return selectCatalogueSteps(argv, STEPS, { online: ONLINE });
@@ -86,6 +93,31 @@ export async function runDbsCgPackPipeline(
   await ensureDbsCgCuratedAssets({ dryRun, force });
 
   for (const step of steps) {
+    if (step === "documents") {
+      try {
+        const { loadDbsCgCuratedDocuments } = await import(
+          "@/providers/dragonball/dbscg/curated/documents"
+        );
+        const { harvestPackDocuments } = await import(
+          "@/providers/shared/documents/harvestPackDocuments"
+        );
+        const docs = await harvestPackDocuments({
+          packId: DBS_CG_PACK_ID,
+          curated: loadDbsCgCuratedDocuments(),
+          force,
+        });
+        console.log(
+          `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+            `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+        );
+      } catch (err) {
+        console.warn(
+          `── documents — ${err instanceof Error ? err.message : err}`,
+        );
+      }
+      logCatalogueCheckpoint(step);
+      continue;
+    }
     if (step === "scrape") {
       await scrapeDbsCgCardlist({
         force,

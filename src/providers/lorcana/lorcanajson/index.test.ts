@@ -60,7 +60,7 @@ describe("mapLorcanaMetadata language variants", () => {
       mapped?.attachments
         ?.filter((row) => row.type === "cover")
         .map((row) => row.role),
-    ).toEqual(["fr", "en"]);
+    ).toEqual(["lorcana-face-fr-art", "lorcana-face-en-art"]);
     expect(
       mapped?.attachments
         ?.filter((row) => row.type === "foilMask")
@@ -79,7 +79,7 @@ describe("mapLorcanaMetadata language variants", () => {
     expect(mapped?.imageUrl).toBe("https://example.test/en-tempest.jpg");
     expect(mapped?.attachments?.filter((row) => row.type === "cover")).toEqual([
       expect.objectContaining({
-        role: "en",
+        role: "lorcana-face-en-art",
         url: "https://example.test/en-tempest.jpg",
       }),
     ]);

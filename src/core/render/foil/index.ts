@@ -62,6 +62,7 @@ export { foilRenderScale, FOIL_SHARP_WIDTH_PX } from "./capabilities";
 export { subscribeFoilFrame, foilClockSeconds } from "./clock";
 export {
   IDLE_LEAN_FACTOR,
+  IDLE_LIGHT_FACTOR,
   IDLE_RELEASE_MS,
   blendGlare,
   blendLean,

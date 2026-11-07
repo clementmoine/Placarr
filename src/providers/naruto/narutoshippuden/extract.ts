@@ -39,6 +39,30 @@ export async function runNarutoShippudenPackPipeline(
       );
     }
   }
+  if (!argv.includes("--skip-documents")) {
+    try {
+      const { loadShippudenCuratedDocuments } = await import(
+        "@/providers/naruto/narutoshippuden/curated/documents"
+      );
+      const { harvestPackDocuments } = await import(
+        "@/providers/shared/documents/harvestPackDocuments"
+      );
+      const docs = await harvestPackDocuments({
+        packId: "naruto/shippuden",
+        curated: loadShippudenCuratedDocuments(),
+        force: argv.includes("--force"),
+      });
+      console.log(
+        `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+          `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── documents — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+
   const summary = await refreshNarutoShippudenCatalog();
   console.log(`── Naruto Shippuden — catalogue rafraîchi`, summary);
 }

@@ -90,7 +90,14 @@ import { narutoShippudenAssetsCardUrl, narutoShippudenCuratedDir, normalizeShipp
         readdirSync(narutoShippudenCuratedDir())
           .filter((name) => !name.startsWith("."))
           .sort(),
-      ).toEqual(["BACK.md", "cards", "faces", "sources"]);
+      ).toEqual([
+        "BACK.md",
+        "cards",
+        "documents.json",
+        "documents.ts",
+        "faces",
+        "sources",
+      ]);
     });
   });
 }

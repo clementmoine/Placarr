@@ -30,9 +30,9 @@ export function fetchFragmentSource(url: string): Promise<string> {
  * `ImageBitmap` sources, and Unity's UV origin is bottom-left where the
  * browser decodes top-left — without the flip every effect is upside down.
  *
- * `colorSpaceConversion: "none"`: the app runs in gamma and samples texture
- * bytes as authored. The browser's default conversion pulls JPEGs into the
- * display space and washes the foil against what the phone shows.
+ * `colorSpaceConversion: "none"`: keep authored bytes. The browser's default
+ * conversion pulls JPEGs into display space and washes foil vs the phone;
+ * Linear materials then upload flagged plates as SRGB8 for GPU decode.
  *
  * Absolute `https://` URLs that CDNs block from anonymous `fetch` (CORS) are
  * rewritten through `/_next/image` when the host is allowlisted — same-origin

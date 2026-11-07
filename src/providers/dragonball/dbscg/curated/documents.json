@@ -1,0 +1,69 @@
+[
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/rulemanual.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Masters Official Rule Manual"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/playmanual.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Masters Play Manual"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/event/tournament-rules-manual.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "Tournament Rules Manual"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/booster-draft_rule.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Booster Draft Rules"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/unison_flowchart.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Unison Flowchart"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/energy-marker.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Energy Marker Sheet"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/example_battle-battle.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Example Battle — Battle"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/example_battle-battle02.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Example Battle — Battle 02"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/example_battle-extra.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Example Battle — Extra"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/pdf/example_battleandextra.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Example Battle and Extra"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/europe-en/rule/index.php",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Official Rules hub (EN)"
+  }
+]

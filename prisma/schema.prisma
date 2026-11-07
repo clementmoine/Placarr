@@ -45,6 +45,30 @@ enum AttachmentType {
   foilMask
 }
 
+/// Physical presence of a shelf copy relative to the active collection.
+/// `past` = left the everyday shelf (sold, discarded, …) but always recoverable.
+enum ItemPresence {
+  owned
+  away
+  wanted
+  past
+}
+
+/// Why a copy is not on the shelf. Temporary reasons map to `away`;
+/// definitive reasons map to `past` (still recoverable via « Récupéré »).
+enum AbsenceReason {
+  loaned
+  ordered
+  repair
+  rental
+  sold
+  exchanged
+  gifted
+  discarded
+  lost
+  stolen
+}
+
 model Attachment {
   id              String         @id @default(cuid())
   type            AttachmentType
@@ -247,15 +271,29 @@ model Item {
   backgroundImageUrl        String?
   metadataRefreshStartedAt  DateTime?
   metadataRefreshGeneration Int             @default(0)
-  // Personal loan note — who has this copy and since when. Both null = at home.
-  // Replaces the old multi-user LoanRequest flow on a mono-user instance.
-  loanedTo                  String?
-  loanedAt                  DateTime?
+  // Shelf presence — replaces the old loanedTo/loanedAt personal-loan note.
+  // See core/collect/itemAbsence.ts.
+  presence                  ItemPresence    @default(owned)
+  absenceReason             AbsenceReason?
+  absenceSince              DateTime?
+  absenceRecipient          String?
+  absenceSource             String?
+  absenceCarrier            String?
+  absenceTracking           String?
+  absenceOrderRef           String?
+  absenceOrderUrl           String?
+  absenceNote               String?
+  /// Sale price in integer cents (null when unset / non-sale reasons).
+  absencePriceCents         Int?
+  absenceExpectedAt         DateTime?
   user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   shelf                     Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   metadata                  Metadata?       @relation(fields: [metadataId], references: [id])
   fieldEvidence             FieldEvidence[]
   priceOffers               PriceOffer[]
+  presenceEvents            ItemPresenceEvent[]
+  tradeLinksOut             ItemTradeLink[] @relation("TradeOut")
+  tradeLinksIn              ItemTradeLink[] @relation("TradeIn")
 
   @@index([shelfId])
   @@index([userId])
@@ -265,7 +303,42 @@ model Item {
   @@index([printKey, setCode, variant, language])
   @@index([printKey, variant, language])
   @@index([slug])
-  @@index([loanedTo])
+  @@index([presence])
+  @@index([presence, absenceReason])
+  @@index([absenceRecipient])
+}
+
+/// Lifecycle trace for shelf presence (acquired → departed → returned / recovered…).
+model ItemPresenceEvent {
+  id           String         @id @default(cuid())
+  itemId       String
+  at           DateTime       @default(now())
+  fromPresence ItemPresence
+  toPresence   ItemPresence
+  reason       AbsenceReason?
+  /// acquired | departed | returned | cancelled_to_wanted | received_from_order | recovered
+  kind         String
+  snapshot     Json?
+  item         Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, at])
+  @@index([kind, at])
+}
+
+/// Bidirectional exchange edge between two shelf items (troc).
+model ItemTradeLink {
+  id        String   @id @default(cuid())
+  itemOutId String
+  itemInId  String
+  note      String?
+  eventId   String?
+  createdAt DateTime @default(now())
+  itemOut   Item     @relation("TradeOut", fields: [itemOutId], references: [id], onDelete: Cascade)
+  itemIn    Item     @relation("TradeIn", fields: [itemInId], references: [id], onDelete: Cascade)
+
+  @@unique([itemOutId, itemInId])
+  @@index([itemOutId])
+  @@index([itemInId])
 }
 
 model RawName {

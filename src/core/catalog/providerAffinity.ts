@@ -2,9 +2,11 @@
  * Provider affinity memory — learn catalogue-scoped successes from shelf wins.
  *
  * One successful price/cover/face on an item generalizes to the **catalogue**
- * scope (`type:…` / `pack:…`), not the item id. Sync / refresh then prefer
- * those providers; others stay in rare exploration.
+ * scope (`type:…` / `pack:…`), not the item id. Memory is for admin + soft
+ * call ordering under concurrency — never a consensus gate: every capable
+ * provider still runs; merge / trim stays multi-source and agnostic.
  */
+import { providerIdForSourceToken } from "@/core/catalog/catalog";
 import { prisma } from "@/lib/db/prisma";
 
 export const PROVIDER_AFFINITY_CAPABILITIES = [
@@ -94,9 +96,12 @@ export async function recordPriceAffinityFromOffers(input: {
   printKey?: string | null;
   providerIds: readonly string[];
 }): Promise<void> {
+  // Offers carry display/source tokens (`pkmcards`); affinity keys are module ids.
   const ids = [
     ...new Set(
-      input.providerIds.map((id) => id.trim()).filter(Boolean),
+      input.providerIds
+        .map((id) => providerIdForSourceToken(id.trim()))
+        .filter(Boolean),
     ),
   ];
   if (ids.length === 0) return;
@@ -173,7 +178,8 @@ export async function listAffinities(input: {
 
 /**
  * Stable reorder: affine providers first (by successCount), then the rest
- * in original order.
+ * in original order. Scheduling hint only — callers must still invoke every
+ * capable provider; never use this to drop sources from consensus.
  */
 export function orderByAffinity<T>(
   items: readonly T[],
@@ -192,30 +198,4 @@ export function orderByAffinity<T>(
     if (bRank == null) return -1;
     return aRank - bRank;
   });
-}
-
-/** Re-explore non-affine providers when the newest success is older than this. */
-export const AFFINITY_EXPLORATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-/**
- * After ordering: keep affine providers always; keep non-affine only when
- * exploration is due (no affinity yet, or newest success older than TTL).
- */
-export function applyAffinityExploration<T>(
-  ordered: readonly T[],
-  providerIdOf: (item: T) => string,
-  affinities: readonly AffinityRow[],
-  opts?: { now?: Date; explorationTtlMs?: number },
-): T[] {
-  if (affinities.length === 0 || ordered.length <= 1) return [...ordered];
-  const affineIds = new Set(affinities.map((row) => row.providerId));
-  const affine = ordered.filter((item) => affineIds.has(providerIdOf(item)));
-  if (affine.length === 0) return [...ordered];
-
-  const now = opts?.now?.getTime() ?? Date.now();
-  const ttl = opts?.explorationTtlMs ?? AFFINITY_EXPLORATION_TTL_MS;
-  const newest = Math.max(...affinities.map((row) => row.lastAt.getTime()));
-  const explorationDue = now - newest >= ttl;
-  if (explorationDue) return [...ordered];
-  return affine;
 }

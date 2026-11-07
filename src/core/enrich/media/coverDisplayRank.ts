@@ -1,6 +1,8 @@
 import {
   isCoverCandidateKind,
   isPhysicalNonCoverKind,
+  isPromoFlyerKind,
+  resolveAttachmentDisplayKind,
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import {
   coverProvenanceRank,
@@ -59,14 +61,15 @@ export function coverDisplayTypeRank(
   if (options?.preferDiscCover || options?.preferSystemOnlyCover) {
     if (semantics.kind === "cover3d") return 3;
     if (attachment.isFullWrapCoverSource === true) return 4;
-    if (semantics.kind === "cover") return 2;
+    if (semantics.kind === "face" || semantics.kind === "cover") return 2;
     return 3;
   }
   if (semantics.kind === "grid") return 3;
   if (semantics.kind === "grid3d") return 4;
   if (semantics.kind === "cover3d") return 1;
   if (attachment.isFullWrapCoverSource === true) return 2;
-  if (semantics.kind === "cover") return 0;
+  // TCG card face shares the front-cover tier (never below a box jaquette).
+  if (semantics.kind === "face" || semantics.kind === "cover") return 0;
   return 3;
 }
 
@@ -83,17 +86,31 @@ export function isMarketplaceCoverRole(role?: string | null): boolean {
 }
 
 /**
- * Weak display cover for metadata-pin demotion: marketplace *role* or
- * `coverProvenance: listing_photo`. Prefer the provenance signal when providers
- * stamp seller photos with a domain role (`naruto-face-ebay`, …).
+ * Weak display cover for metadata-pin demotion: marketplace *role*,
+ * `coverProvenance: listing_photo`, or a promo flyer/annonce (never the card
+ * face). Prefer the provenance signal when providers stamp seller photos with a
+ * domain role (`naruto-face-ebay`, …).
  */
 export function isWeakDisplayCoverPin(attachment: {
+  type?: string | null;
   role?: string | null;
+  title?: string | null;
+  url?: string | null;
   coverProvenance?: string | null;
 }): boolean {
-  return (
+  if (
     isMarketplaceCoverRole(attachment.role) ||
     isListingPhotoCoverProvenance(attachment.coverProvenance)
+  ) {
+    return true;
+  }
+  return isPromoFlyerKind(
+    resolveAttachmentDisplayKind({
+      type: attachment.type || "cover",
+      role: attachment.role,
+      title: attachment.title,
+      url: attachment.url,
+    }),
   );
 }
 

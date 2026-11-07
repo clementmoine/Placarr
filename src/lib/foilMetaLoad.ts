@@ -171,6 +171,12 @@ export function loadLiveFoilMasks() {
 }
 
 export function loadLiveOwned() {
+  /*
+    Always re-read: carddex sync and hand edits write the JSON on disk outside
+    `writeDataJsonSync`, so a sticky meta cache kept Sovkipou as the SunLava
+    hero after `byEffect` already pointed at Lugulabre.
+  */
+  delete cache()[FOIL_META_KEYS.liveOwned];
   return readDataJsonSync<unknown>(FOIL_META_KEYS.liveOwned, {
     bundles: [],
   });

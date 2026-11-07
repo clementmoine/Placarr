@@ -6,6 +6,7 @@
  */
 import { lenticularTravelOffset } from "./lenticularStripPaths";
 import {
+  IDLE_LIGHT_FACTOR,
   IDLE_POINTER_CENTER,
   IDLE_POINTER_X_AMP,
   IDLE_POINTER_Y_AMP,
@@ -1012,6 +1013,9 @@ export function lenticularNormFromLean(
 /**
  * Idle lean → full 0–1 scrub on each axis (no travel padding).
  * Maps the fake pointer swing from {@link idlePointerFromSeconds} edge to edge.
+ *
+ * Idle `lean.lightX/Y` are soft ({@link IDLE_LIGHT_FACTOR}) for Live WebGL —
+ * invert that shrink so lenticular still flips the full strip.
  */
 export function lenticularNormFromIdleLean(
   grid: LenticularGrid,
@@ -1022,12 +1026,19 @@ export function lenticularNormFromIdleLean(
   const rows = Math.max(1, grid.rows);
   const clamp01 = (value: number) =>
     value < 0 ? 0 : value > 1 ? 1 : value;
+  // Expand soft idle light back to the full fake-pointer range.
+  const fullX =
+    IDLE_POINTER_CENTER +
+    (lean.lightX - IDLE_POINTER_CENTER) / IDLE_LIGHT_FACTOR;
+  const fullY =
+    IDLE_POINTER_CENTER +
+    (lean.lightY - IDLE_POINTER_CENTER) / IDLE_LIGHT_FACTOR;
   const nx = clamp01(
-    (lean.lightX - (IDLE_POINTER_CENTER - IDLE_POINTER_X_AMP)) /
+    (fullX - (IDLE_POINTER_CENTER - IDLE_POINTER_X_AMP)) /
       (IDLE_POINTER_X_AMP * 2),
   );
   const ny = clamp01(
-    (lean.lightY - (IDLE_POINTER_CENTER - IDLE_POINTER_Y_AMP)) /
+    (fullY - (IDLE_POINTER_CENTER - IDLE_POINTER_Y_AMP)) /
       (IDLE_POINTER_Y_AMP * 2),
   );
   if (cols === 1 && rows > 1) return { x: idle.x, y: ny };

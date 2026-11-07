@@ -57,6 +57,7 @@ import {
 import { catalogueCardPriceQuoteByPrintKey } from "@/lib/admin/catalogueCardPrices";
 import { overscanFilterPageAsync } from "@/lib/admin/catalogueOverscan";
 import {
+  hydratePokemonCatalogueBrowseRow,
   listPokemonCatalogueBrowsePage,
   POKEMON_CATALOGUE_BROWSE_LOCALES,
 } from "@/providers/pokemon/tcgdex/catalogueBrowse";
@@ -2014,8 +2015,12 @@ async function listMissingPriceCataloguePage(
   });
 
   let cards = overscan.rows;
+  if (input.pack === POKEMON_PACK_ID) {
+    // identityOnly overscan skipped existsSync — resolve real art for the window.
+    cards = cards.map((row) => hydratePokemonCatalogueBrowseRow(row));
+  }
   if (offset === 0) {
-    cards = withCatalogueBackRows(input.pack, overscan.rows);
+    cards = withCatalogueBackRows(input.pack, cards);
   }
   return {
     pack: input.pack,

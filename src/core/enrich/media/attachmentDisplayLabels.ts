@@ -7,6 +7,7 @@ export type AttachmentDisplayLocale = "fr" | "en";
 
 export type AttachmentDisplayKind =
   | "cover"
+  | "face"
   | "back"
   | "disc"
   | "spine"
@@ -18,6 +19,7 @@ export type AttachmentDisplayKind =
   | "logo"
   | "artwork"
   | "banner"
+  | "flyer"
   | "image"
   | "barcode";
 
@@ -26,6 +28,11 @@ export type AttachmentLabelInput = {
   role?: string | null;
   title?: string | null;
   source?: string | null;
+  /**
+   * Asset URL — used when role is missing to recover a print language from
+   * `/assets/…/prints/{stem}-{lang}/face` (TCG live face roles).
+   */
+  url?: string | null;
   /**
    * Provider display label (registry `info.label`) stamped onto the attachment
    * server-side (see `@/core/catalog/sourceTraits`). The chip label reads
@@ -59,6 +66,7 @@ const KIND_LABELS: Record<
 > = {
   fr: {
     cover: "Jaquette",
+    face: "Face",
     back: "Dos",
     disc: "Disque",
     spine: "Tranche",
@@ -70,11 +78,13 @@ const KIND_LABELS: Record<
     logo: "Logo",
     artwork: "Artwork",
     banner: "Bannière",
+    flyer: "Flyer",
     image: "Image",
     barcode: "Scan",
   },
   en: {
     cover: "Cover",
+    face: "Face",
     back: "Back",
     disc: "Disc",
     spine: "Spine",
@@ -86,6 +96,7 @@ const KIND_LABELS: Record<
     logo: "Logo",
     artwork: "Artwork",
     banner: "Banner",
+    flyer: "Flyer",
     image: "Image",
     barcode: "Scan",
   },
@@ -281,6 +292,7 @@ function parseKindFromTitle(
   if (/clear\s*logo/.test(normalized)) return "logo";
   if (/screenshot/.test(normalized)) return "screenshot";
   if (/\bbanner\b/.test(normalized)) return "banner";
+  if (/\bflyer\b|\bannonce\b/.test(normalized)) return "flyer";
   if (/fanart/.test(normalized)) return "artwork";
 
   return null;
@@ -382,7 +394,20 @@ function parseKindFromRole(role?: string | null): AttachmentDisplayKind | null {
     return "artwork";
   }
   if (normalized === "front") return "cover";
+  // TCG promo announcement / proof flyer (`mythos-proof-flyer-fr`, …).
+  if (/(?:^|-)(?:proof-)?flyer(?:-|$)/.test(normalized)) return "flyer";
+  // Catalogue card face (`mythos-face-fr`, `pokemon-face-live`, …).
+  if (/(?:^|-)face(?:-|$)/.test(normalized)) return "face";
 
+  return null;
+}
+
+/** Live print face URL — `/assets/…/prints/{stem}-{lang}/face`. */
+function parseKindFromUrl(url?: string | null): AttachmentDisplayKind | null {
+  const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
+  if (/\/prints\/[^/]+\/(?:face|thumb)(?:\/|$)/i.test(path)) return "face";
+  if (/\bproof\.[^/]*\.(?:twitter|flyer)\./i.test(path)) return "flyer";
+  if (/\/proof\./i.test(path) && /flyer|twitter/i.test(path)) return "flyer";
   return null;
 }
 
@@ -429,6 +454,7 @@ export function resolveAttachmentDisplayKind(
   return (
     parseKindFromTitle(input.title) ||
     parseKindFromRole(input.role) ||
+    parseKindFromUrl(input.url) ||
     parseKindFromType(input.type)
   );
 }
@@ -452,10 +478,16 @@ export function resolveAttachmentSemantics(input: AttachmentLabelInput): {
 export function isCoverCandidateKind(kind: AttachmentDisplayKind): boolean {
   return (
     kind === "cover" ||
+    kind === "face" ||
     kind === "cover3d" ||
     kind === "grid" ||
     kind === "grid3d"
   );
+}
+
+/** Promo announcement / proof flyer — never the shelf default face. */
+export function isPromoFlyerKind(kind: AttachmentDisplayKind): boolean {
+  return kind === "flyer";
 }
 
 export function isPhysicalNonCoverKind(kind: AttachmentDisplayKind): boolean {
@@ -496,19 +528,69 @@ export function formatAttachmentRegionLabel(
   return REGION_LABELS[locale][region];
 }
 
+const PRINT_LANGUAGE_CODES = new Set(Object.keys(LANGUAGE_LABELS.fr));
+
 /**
- * Label for a bare ISO language role (`de`, `en`, …). Returns null when the
- * role is a compound region token (`back-eu`, `au`) or an unknown code.
+ * ISO print language embedded in a TCG face/flyer role
+ * (`mythos-face-fr`, `mythos-proof-flyer-en`, `pokemon-face-fr-live`).
+ * Leaves ScreenScraper region compounds (`back-eu`, `back-fr`) alone.
+ */
+export function parsePrintLanguageCodeFromRole(
+  role?: string | null,
+): string | null {
+  const normalized = normalizeToken(role);
+  if (!normalized) return null;
+  if (!normalized.includes("-")) {
+    return PRINT_LANGUAGE_CODES.has(normalized) ? normalized : null;
+  }
+  // …-face-fr / …-face-fr-kana / …-flyer-en / …-proof-flyer-fr
+  const faceOrFlyer = normalized.match(
+    /(?:^|-)(?:proof-)?(?:face|flyer)-([a-z]{2})(?:-|$)/,
+  );
+  if (faceOrFlyer?.[1] && PRINT_LANGUAGE_CODES.has(faceOrFlyer[1])) {
+    return faceOrFlyer[1];
+  }
+  return null;
+}
+
+/**
+ * Language from a live print face URL: `/assets/…/prints/{stem}-{lang}/face`.
+ */
+export function parsePrintLanguageCodeFromUrl(
+  url?: string | null,
+): string | null {
+  const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
+  const match = path.match(
+    /\/prints\/[^/]+-([a-z]{2})\/(?:face|thumb)(?:\/|$)/i,
+  );
+  const code = match?.[1]?.toLowerCase() ?? "";
+  return PRINT_LANGUAGE_CODES.has(code) ? code : null;
+}
+
+/**
+ * Label for a print language role. Bare ISO (`de`, `en`) or TCG face/flyer
+ * compounds (`mythos-face-fr`). Returns null for region compounds (`back-eu`).
  */
 export function formatAttachmentLanguageLabel(
   role?: string | null,
   locale: AttachmentDisplayLocale = "fr",
+  url?: string | null,
 ): string | null {
+  const code =
+    parsePrintLanguageCodeFromRole(role) ??
+    parsePrintLanguageCodeFromUrl(url);
+  if (!code) return null;
+  return LANGUAGE_LABELS[locale][code] ?? null;
+}
+
+/** Dump source after the language in `…-face-fr-kana` → "Kana". */
+function parseFaceSourceDetail(role?: string | null): string | null {
   const normalized = normalizeToken(role);
   if (!normalized) return null;
-  // Compound ScreenScraper roles are regions, not languages.
-  if (normalized.includes("-")) return null;
-  return LANGUAGE_LABELS[locale][normalized] ?? null;
+  const match = normalized.match(/(?:^|-)face-[a-z]{2}-([a-z0-9]+)$/);
+  const source = match?.[1]?.trim();
+  if (!source || source === "art") return null;
+  return titleCaseSourceToken(source);
 }
 
 export function getAttachmentGalleryLabels(
@@ -523,7 +605,11 @@ export function getAttachmentGalleryLabels(
   caption: string;
 } {
   const kindKey = resolveAttachmentDisplayKind(input);
-  const language = formatAttachmentLanguageLabel(input.role, locale);
+  const language = formatAttachmentLanguageLabel(
+    input.role,
+    locale,
+    input.url,
+  );
   const regionKey = language ? null : resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
   const region = language ?? formatAttachmentRegionLabel(regionKey, locale);
@@ -534,7 +620,13 @@ export function getAttachmentGalleryLabels(
     (kindKey === "grid" || kindKey === "grid3d")
       ? parseSteamGridDbStyleLabel(input.title)
       : null;
-  const detail = [kind, region, styleLabel].filter(Boolean).join(" · ");
+  const faceSource =
+    kindKey === "face" || kindKey === "cover"
+      ? parseFaceSourceDetail(input.role)
+      : null;
+  const detail = [kind, region, styleLabel, faceSource]
+    .filter(Boolean)
+    .join(" · ");
 
   return {
     provider,

@@ -14,6 +14,7 @@ import {
   Maximize2,
   Crop,
   HardDrive,
+  Trash2,
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
@@ -79,7 +80,7 @@ import {
   buildItemModalSessionInit,
   itemModalSessionKey,
 } from "@/lib/client/itemModalSession";
-import { deleteItem, getItem } from "@/lib/api/items";
+import { deleteItem, getItem, removeItemMediaImage } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
@@ -130,7 +131,11 @@ import type {
   MetadataAttachment,
 } from "@/types/metadataProvider";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
-import { invalidateItemQueries } from "@/core/collect/queryCache";
+import {
+  invalidateItemQueries,
+  syncItemQueries,
+} from "@/core/collect/queryCache";
+import { filterAttachmentsRemovingUrl } from "@/core/collect/removeItemMediaImage.shared";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,
@@ -913,6 +918,7 @@ export function ItemModal({
           type: a.type,
           role: a.role,
           title: a.title,
+          url: a.url,
           source: a.source,
           providerLabel: a.providerLabel,
           sourceNames: a.sourceNames,
@@ -1228,6 +1234,7 @@ export function ItemModal({
           type: attachment.type,
           role: attachment.role,
           title: attachment.title,
+          url: attachment.url,
           source: attachment.source,
           providerLabel: attachment.providerLabel,
           sourceNames: attachment.sourceNames,
@@ -1411,6 +1418,7 @@ export function ItemModal({
               type: provenance.type,
               role: provenance.role,
               title: provenance.title,
+              url: provenance.url ?? currentImageUrl,
               source: provenance.source,
               providerLabel: attachmentTraitsOf(provenance).providerLabel,
               gridStyleCoverLabelsSource:
@@ -1418,7 +1426,13 @@ export function ItemModal({
             },
             displayLocale,
           )
-        : null;
+        : getAttachmentGalleryLabels(
+            {
+              type: "cover",
+              url: currentImageUrl,
+            },
+            displayLocale,
+          );
 
       list.unshift({
         url: currentImageUrl,
@@ -1744,6 +1758,131 @@ export function ItemModal({
       setIsDeleting(false);
     }
   };
+
+  const [removingMediaUrl, setRemovingMediaUrl] = useState<string | null>(null);
+
+  const handleRemoveMediaImage = useCallback(
+    async (
+      url: string,
+      field: "imageUrl" | "backgroundImageUrl" = "imageUrl",
+    ) => {
+      const target = url.trim();
+      if (!target || removingMediaUrl) return;
+      setRemovingMediaUrl(target);
+
+      const clearLocalSelection = (nextCover: string | null) => {
+        const current = form.getValues(field);
+        if (
+          typeof current === "string" &&
+          urlsReferToSameLocalizedImage(current, target)
+        ) {
+          form.setValue(field, field === "imageUrl" ? nextCover : null, {
+            shouldDirty: true,
+          });
+        }
+        if (
+          userPickedCoverUrl &&
+          urlsReferToSameLocalizedImage(userPickedCoverUrl, target)
+        ) {
+          setUserPickedCoverUrl(nextCover);
+        }
+      };
+
+      try {
+        if (!itemId) {
+          setFetchedMetadata((previous) => {
+            if (!previous) return previous;
+            const attachments = filterAttachmentsRemovingUrl(
+              previous.attachments ?? [],
+              target,
+            );
+            const nextImageUrl =
+              previous.imageUrl &&
+              urlsReferToSameLocalizedImage(previous.imageUrl, target)
+                ? (attachments.find((attachment) =>
+                    ["cover", "artwork", "image"].includes(attachment.type),
+                  )?.url ?? null)
+                : (previous.imageUrl ?? null);
+            clearLocalSelection(nextImageUrl);
+            return {
+              ...previous,
+              attachments,
+              imageUrl: nextImageUrl ?? undefined,
+            };
+          });
+          toast.success(t("items.editTabs.removeImageSuccess"));
+          return;
+        }
+
+        const response = await removeItemMediaImage(itemId, target, shelfId);
+        if (response.item) {
+          await syncItemQueries(queryClient, response.item, [shelfId]);
+        }
+        if (response.clearedCover || field === "imageUrl") {
+          const current = form.getValues("imageUrl");
+          if (
+            typeof current === "string" &&
+            urlsReferToSameLocalizedImage(current, target)
+          ) {
+            form.setValue("imageUrl", response.nextImageUrl, {
+              shouldDirty: true,
+            });
+          }
+        }
+        if (response.clearedBackground || field === "backgroundImageUrl") {
+          const current = form.getValues("backgroundImageUrl");
+          if (
+            typeof current === "string" &&
+            urlsReferToSameLocalizedImage(current, target)
+          ) {
+            form.setValue(
+              "backgroundImageUrl",
+              response.nextBackgroundImageUrl,
+              { shouldDirty: true },
+            );
+          }
+        }
+        if (
+          userPickedCoverUrl &&
+          urlsReferToSameLocalizedImage(userPickedCoverUrl, target)
+        ) {
+          setUserPickedCoverUrl(response.nextImageUrl);
+        }
+        setFetchedMetadata((previous) => {
+          if (!previous) return previous;
+          return {
+            ...previous,
+            attachments: filterAttachmentsRemovingUrl(
+              previous.attachments ?? [],
+              target,
+            ),
+            imageUrl:
+              previous.imageUrl &&
+              urlsReferToSameLocalizedImage(previous.imageUrl, target)
+                ? (response.nextImageUrl ?? undefined)
+                : previous.imageUrl,
+          };
+        });
+        toast.success(t("items.editTabs.removeImageSuccess"));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("Error removing media image:", error);
+          toast.error(t("items.editTabs.removeImageFailed"));
+        }
+      } finally {
+        setRemovingMediaUrl(null);
+      }
+    },
+    [
+      form,
+      itemId,
+      queryClient,
+      removingMediaUrl,
+      shelfId,
+      t,
+      userPickedCoverUrl,
+    ],
+  );
 
   const handleClose = () => {
     reset();
@@ -2641,6 +2780,26 @@ export function ItemModal({
                                       <Crop className="size-3.5" />
                                     </button>
 
+                                    <button
+                                      type="button"
+                                      title={t("items.editTabs.removeImage")}
+                                      disabled={removingMediaUrl === img.url}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleRemoveMediaImage(
+                                          img.url,
+                                          "imageUrl",
+                                        );
+                                      }}
+                                      className="absolute bottom-20 right-2 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {removingMediaUrl === img.url ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="size-3.5" />
+                                      )}
+                                    </button>
+
                                     {/* Selected overlay checkmark */}
                                     {isSelected && (
                                       <div className="absolute top-1.5 right-1.5 bg-amber-600 dark:bg-amber-500 text-white rounded-full p-1 shadow-md z-20">
@@ -2900,6 +3059,26 @@ export function ItemModal({
                                       className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Crop className="size-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      title={t("items.editTabs.removeImage")}
+                                      disabled={removingMediaUrl === img.url}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleRemoveMediaImage(
+                                          img.url,
+                                          "backgroundImageUrl",
+                                        );
+                                      }}
+                                      className="absolute bottom-20 right-2 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {removingMediaUrl === img.url ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="size-3.5" />
+                                      )}
                                     </button>
 
                                     {/* Selected overlay checkmark */}

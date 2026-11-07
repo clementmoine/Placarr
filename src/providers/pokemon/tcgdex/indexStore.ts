@@ -423,8 +423,9 @@ export function writeTcgdexSet(input: {
  * Index on-disk catalogue faces into `print_assets.art` (basename only).
  *
  * Probes lang-first paper harvest **and** Live set-first dumps — same print,
- * same card. CDN stays on `source_url` / `prints.image_base_url` when no local
- * winner exists.
+ * same card. When no face file exists for `(printKey, lang)`, clears a stale
+ * `art` basename (ghost rows that would invent `/assets/…` 404s). CDN stays
+ * on `source_url` / `prints.image_base_url` as Sync input only.
  */
 export function syncTcgdexPrintAssetsFromDisk(input: {
   dbPath?: string;
@@ -463,6 +464,11 @@ export function syncTcgdexPrintAssetsFromDisk(input: {
       ON CONFLICT(print_key, lang) DO UPDATE SET
         art = COALESCE(excluded.art, print_assets.art)
     `);
+    const clearGhostArt = db.prepare(`
+      UPDATE print_assets
+      SET art = NULL
+      WHERE print_key = ? AND lang = ? AND art IS NOT NULL
+    `);
     const printExists = db.prepare(
       `SELECT 1 AS ok FROM prints WHERE print_key = ? LIMIT 1`,
     );
@@ -494,7 +500,11 @@ export function syncTcgdexPrintAssetsFromDisk(input: {
               if (art) break;
             }
           }
-          if (!art) continue;
+          if (!art) {
+            const cleared = clearGhostArt.run(printKey, lang);
+            if (Number(cleared.changes) > 0) synced += 1;
+            continue;
+          }
           upsert.run(printKey, lang, art);
           synced += 1;
         }
@@ -873,6 +883,9 @@ export function listTcgdexCatalogueBrowsePage(
     where.push("COALESCE(p.printed, 1) != 0");
   }
 
+  // SQL candidate = no indexed art AND no CDN base. Browse post-filter still
+  // drops rows that resolve on disk via `localPokemonCatalogueArtUrl`.
+  // (CDN-only without disk stays Sync debt until paper-faces densify.)
   const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '') AND (p.image_base_url IS NULL OR TRIM(p.image_base_url) = '')`;
   const missingNameSql = `(t.name IS NULL OR TRIM(t.name) = '')`;
   if (opts.incompleteOnly) {

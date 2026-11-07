@@ -9,12 +9,35 @@ import {
   identityMatrixColumns,
   LIVE_CARD_ASPECT,
   restoreOpaqueFoilOutput,
+  ROLE_TEXTURE_FALLBACK,
   UNBOUND_TEXTURE_FALLBACK,
 } from "./renderer";
 
 describe("UNBOUND_TEXTURE_FALLBACK", () => {
   it("reste transparent (α=0) — pas noir opaque qui arme les couches CC", () => {
     expect(UNBOUND_TEXTURE_FALLBACK).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe("ROLE_TEXTURE_FALLBACK", () => {
+  it("CardEtch / varnishMask unbound is Unity white (foil multiply identity)", () => {
+    /*
+      Every Live HoloFoil frag samples `_CardEtch` and multiplies foil by
+      something like `shine*0.35 + etch*etch`. Unity's unbound etch is the
+      builtin white texture. Opaque black zeroed the etch term → foil ×
+      ~0.35×shine only (Stamped gold went dark green; same crush on AceFoil,
+      Rainbow, SunPillar, …).
+    */
+    expect(ROLE_TEXTURE_FALLBACK.varnishMask).toEqual([255, 255, 255, 255]);
+  });
+
+  it("second varnish / cold-foil unbound stays off (opaque black)", () => {
+    expect(ROLE_TEXTURE_FALLBACK.secondVarnishMask).toEqual([0, 0, 0, 255]);
+  });
+
+  it("foilMask unbound stays white (full plate) — never transparent", () => {
+    // Transparent would drop foil; white is the honest "mask unknown → full".
+    expect(ROLE_TEXTURE_FALLBACK.foilMask).toEqual([255, 255, 255, 255]);
   });
 });
 

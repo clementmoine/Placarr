@@ -13,7 +13,7 @@ Collection **générale** : TCG n’est qu’un domaine. Même boucle partout.
 |------|--------|
 | **Étagère ↔ catalogue** | Densités du même objet (item shelf vs ligne corpus). Corpus densifie → items `printKey` / barcode suivent ; succès shelf peut **promouvoir** vers le corpus (confirm admin). |
 | **Providers = modules** | Adaptateurs branchables (`providers/` + registry). Comportement répété → **un** endroit core/shared — un fix s’applique partout. |
-| **Apprendre des réussites** | Un provider qui a alimenté un item (prix, cover, faces…) est mémorisé au **scope catalogue** ; Sync / refresh le préfèrent. Exploration « dans le doute » seulement sans preuve (ou rare si l’affine échoue). |
+| **Apprendre des réussites** | Un provider qui a alimenté un item (prix, cover, faces…) est mémorisé au **scope catalogue** (admin + ordre d’appel soft). Refresh interroge **tous** les capables ; le consensus reste multi-source / agnostique — jamais une gate qui coupe les autres. |
 | **Provenance** | Chaque fait = provider + quand + confiance + **citation ouvrable** (deep link public, ou Wayback du même lien — jamais la homepage). Ranking faces/covers = **critères** (pixels, provenance), pas listes de noms de sources. |
 | **Admin-only** | Sync / refresh / indexes via **admin web + worker**. Zéro CLI utilisateur (CLI = debug dev). |
 

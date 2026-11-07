@@ -692,6 +692,7 @@ function MaterialTile({
           needsSecondVarnishMask ? (own?.secondVarnishColor ?? null) : null
         }
         cardGlow={packArt?.cardGlow ?? null}
+        faceQuarterTurns={faceQuarterTurns}
         backend={backend}
         tilt={tilt}
         trackPointer

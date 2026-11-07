@@ -124,16 +124,18 @@ describe("foilRenderScale", () => {
     expect(foilRenderScale(220, 2)).toBe(2);
   });
 
-  it("caps at 2 even on a denser screen", () => {
-    // Beyond x2 the extra fill buys nothing visible and costs quadratically.
-    expect(foilRenderScale(513, 3)).toBe(2);
-    expect(foilRenderScale(513, 4)).toBe(2);
+  it("allows up to x3 on a denser screen, never above", () => {
+    // Focus foil needs headroom for dFdx-driven spectrum (SunLava); beyond x3
+    // the fill cost outweighs any further grace.
+    expect(foilRenderScale(513, 3)).toBe(3);
+    expect(foilRenderScale(513, 4)).toBe(3);
   });
 
-  it("never goes below 1, whatever the screen claims", () => {
+  it("never goes below 1; focus supersamples even at DPR 1", () => {
     // Sub-sampling a card is visible even in a thumbnail.
     expect(foilRenderScale(107, 0.75)).toBe(1);
-    expect(foilRenderScale(513, 1)).toBe(1);
+    // 280px stack at DPR 1 used to blob SunLava — floor at x2 for sharp cards.
+    expect(foilRenderScale(513, 1)).toBe(2);
   });
 
   it("switches exactly at the threshold, not around it", () => {

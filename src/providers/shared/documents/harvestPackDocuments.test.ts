@@ -23,7 +23,7 @@ describe("harvestPackDocuments", () => {
 
   it("downloads public PDFs under documents/{lang}/{kind}/ and keeps URL-only stubs", async () => {
     const { harvestPackDocuments } = await import("./harvestPackDocuments");
-    const bytes = Buffer.from("%PDF-1.4 fake");
+    const bytes = Buffer.from("%PDF-1.4\n%\n1 0 obj<<>>endobj\ntrailer<<>>\nstartxref\n0\n%%EOF\n");
 
     const result = await harvestPackDocuments({
       packId: "pokemon",
@@ -72,7 +72,10 @@ describe("harvestPackDocuments", () => {
     const staging = path.join(dataDir, "pokemon/staging/docs");
     mkdirSync(staging, { recursive: true });
     const src = path.join(staging, "local-checklist.pdf");
-    writeFileSync(src, Buffer.from("%PDF-1.4 local"));
+    writeFileSync(
+      src,
+      Buffer.from("%PDF-1.4\nlocal\ntrailer<<>>\nstartxref\n0\n%%EOF\n"),
+    );
 
     const { harvestPackDocuments } = await import("./harvestPackDocuments");
     const result = await harvestPackDocuments({
@@ -97,9 +100,71 @@ describe("harvestPackDocuments", () => {
     expect(row?.relativePath).toBe("fr/checklist/local-checklist.pdf");
   });
 
+  it("honours download:false even when waybackUrl is set", async () => {
+    const { harvestPackDocuments } = await import("./harvestPackDocuments");
+    const result = await harvestPackDocuments({
+      packId: "pokemon",
+      curated: [
+        {
+          url: "http://example.test/truncated.pdf",
+          waybackUrl: "https://web.archive.org/web/1id_/http://example.test/truncated.pdf",
+          download: false,
+          lang: "en",
+          kind: "other",
+          title: "truncated-only",
+        },
+      ],
+      fetchBytes: async () => {
+        throw new Error("network should not be used");
+      },
+    });
+    expect(result.urlOnly).toBe(1);
+    expect(result.fetched).toBe(0);
+    expect(result.failed).toBe(0);
+  });
+
+  it("rejects truncated PDFs and falls back from localPath to waybackUrl", async () => {
+    const { writeFileSync, mkdirSync } = await import("node:fs");
+    const staging = path.join(dataDir, "pokemon/staging/docs");
+    mkdirSync(staging, { recursive: true });
+    writeFileSync(
+      path.join(staging, "truncated.pdf"),
+      Buffer.from("%PDF-1.4\ntruncated-no-eof"),
+    );
+    const complete = Buffer.from(
+      "%PDF-1.4\ncomplete\ntrailer<<>>\nstartxref\n0\n%%EOF\n",
+    );
+
+    const { harvestPackDocuments } = await import("./harvestPackDocuments");
+    const result = await harvestPackDocuments({
+      packId: "pokemon",
+      curated: [
+        {
+          url: "https://example.test/truncated.pdf",
+          localPath: "staging/docs/truncated.pdf",
+          waybackUrl: "https://web.archive.org/web/1id_/https://example.test/truncated.pdf",
+          lang: "en",
+          kind: "other",
+        },
+      ],
+      fetchBytes: async () => complete,
+    });
+
+    expect(result.fetched).toBe(1);
+    expect(result.failed).toBe(0);
+    const index = readPackDocumentsIndex("pokemon");
+    const row = index.documents.find((d) => d.id.includes("truncated"));
+    expect(row?.bytes).toBe(complete.byteLength);
+    expect(
+      readFileSync(
+        path.join(dataDir, "pokemon/documents", row!.relativePath!),
+      ),
+    ).toEqual(complete);
+  });
+
   it("skips re-download when sha256 matches (idempotent)", async () => {
     const { harvestPackDocuments } = await import("./harvestPackDocuments");
-    const bytes = Buffer.from("%PDF-1.4 again");
+    const bytes = Buffer.from("%PDF-1.4\nagain\ntrailer<<>>\nstartxref\n0\n%%EOF\n");
     let fetches = 0;
     const fetchBytes = async () => {
       fetches += 1;

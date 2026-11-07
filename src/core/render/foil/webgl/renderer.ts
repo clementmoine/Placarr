@@ -20,7 +20,8 @@ import { hotFoilStampUniforms } from "@/core/render/foil/backend";
 import {
   cameraPosFromTilt,
   lightDirectionFromTilt,
-  meshLeanFromTilt,
+  meshLeanWithRestBias,
+  restLightFromSheet,
 } from "./lightDirection";
 
 import type {
@@ -54,6 +55,18 @@ export type {
  * UVs are not isometric: equal Δu/Δv map to unequal millimetres.
  */
 export const LIVE_CARD_ASPECT = 0.7187859711391763;
+
+/**
+ * Half-height of the Live Card in the same world units as
+ * `_WorldSpaceCameraPos` `(0, 1.7, 1.3)`.
+ *
+ * Absolute view factors (FlatSilver `B·V`, AceFoil etch, …) need a
+ * card-sized quad under that camera — unit height exaggerates edge gates.
+ * SunLava's spectrum UV, however, `normalize(cross(dFdx,dFdy))`s the
+ * worldPos field, so this scale does **not** change its rest chroma; the
+ * soft “lean bottom” look is mesh tip + light orbit, not halfH.
+ */
+export const LIVE_CARD_HALF_HEIGHT = 0.12;
 
 /**
  * Full-screen quad → UVs, plus Unity card varyings.
@@ -94,7 +107,12 @@ void main() {
   float tLen = length(T);
   T = tLen > 1e-4 ? T / tLen : normalize(cross(vec3(0.0, 0.0, 1.0), N));
   vec3 B = cross(T, N);
-  vec3 local = vec3((uv.x - 0.5) * ${LIVE_CARD_ASPECT}, 0.0, (0.5 - uv.y) * 1.0);
+  // Live Card mesh: width=X, height=Y, face=+Z (see cardQuadFromObjText).
+  // Remap face→+Y, height→+Z; uv.y grows toward clip/card top. Scale to
+  // {@link LIVE_CARD_HALF_HEIGHT} so camera (0,1.7,1.3) sees card-sized
+  // parallax (unit height blew out SunLava at rest).
+  float halfH = ${LIVE_CARD_HALF_HEIGHT};
+  vec3 local = vec3((uv.x - 0.5) * ${LIVE_CARD_ASPECT} * 2.0 * halfH, 0.0, (uv.y - 0.5) * 2.0 * halfH);
   vec3 worldPos = T * local.x + B * local.z;
   vs_TEXCOORD1 = vec4(T.x, B.x, N.x, worldPos.x);
   vs_TEXCOORD2 = vec4(T.y, B.y, N.y, worldPos.y);
@@ -394,13 +412,27 @@ function magFilter(
   return filter === "point" ? gl.NEAREST : gl.LINEAR;
 }
 
-const ROLE_FALLBACK: Record<string, [number, number, number, number]> = {
+/**
+ * Role defaults when the surface URL is missing.
+ *
+ * `varnishMask` (`_CardEtch`) must be **white**, not black: Live HoloFoil
+ * multiplies foil by `shine*0.35 + etch*etch` (Stamped, AceFoil, …). Unity's
+ * unbound etch is the builtin white texture — opaque black crushed gold into
+ * a dark green mud (etch term 0 → foil × ~0.35×shine only). Cold-foil /
+ * second varnish stays black so a missing plate stays off.
+ */
+export const ROLE_TEXTURE_FALLBACK: Record<
+  string,
+  [number, number, number, number]
+> = {
   art: [128, 128, 128, 255],
   foilMask: [255, 255, 255, 255],
-  varnishMask: [0, 0, 0, 255],
+  varnishMask: [255, 255, 255, 255],
   secondVarnishMask: [0, 0, 0, 255],
   normals: [128, 128, 255, 255],
 };
+
+const ROLE_FALLBACK = ROLE_TEXTURE_FALLBACK;
 
 /**
  * Unbound motif / optional slots (Unity pathid 0) must sample as transparent.
@@ -600,9 +632,10 @@ export function createWebglFoilRenderer(
     gl!.texImage2D(
       gl!.TEXTURE_2D,
       0,
-      // sRGB-authored textures decode to linear on sample (filtering included),
-      // matching how the app's Linear pipeline reads them.
-      binding?.srgb ? gl!.SRGB8_ALPHA8 : gl!.RGBA,
+      // Linear apps (Pokémon Live): sRGB→linear on sample. Raw RGBA keeps
+      // authored bytes (Gamma / data maps). Spectrum ×17.5 needs the decode
+      // or SunLava neon-clamps; Direction sRGB softens UV the same way.
+      binding?.srgb && material.linearOutput ? gl!.SRGB8_ALPHA8 : gl!.RGBA,
       gl!.RGBA,
       gl!.UNSIGNED_BYTE,
       image,
@@ -852,13 +885,15 @@ export function createWebglFoilRenderer(
     gl!.useProgram(active.program);
 
     if (active.tiltLoc) gl!.uniform2f(active.tiltLoc, tilt[0], tilt[1]);
+    // Orbit MAT sheet rest (Stamped +Z, AceFoil +Y) — not a forced +Y.
+    const restLight = restLightFromSheet(material.colors._LightDirection);
     if (active.cardLeanLoc) {
-      // Mesh tip matches CSS ±18° — not full ±1 light lean (SunPillar N·V gate).
-      const mesh = meshLeanFromTilt(tilt[0], tilt[1]);
+      // Mesh tip matches CSS ±18°, plus Z-rest bias (SunLava soft / SunPillar).
+      const mesh = meshLeanWithRestBias(tilt[0], tilt[1], restLight);
       gl!.uniform2f(active.cardLeanLoc, mesh[0], mesh[1]);
     }
     if (active.lightDirLoc) {
-      const dir = lightDirectionFromTilt(tilt[0], tilt[1]);
+      const dir = lightDirectionFromTilt(tilt[0], tilt[1], restLight);
       if (active.lightDirSize === 4) {
         gl!.uniform4f(active.lightDirLoc, dir[0], dir[1], dir[2], 0);
       } else {

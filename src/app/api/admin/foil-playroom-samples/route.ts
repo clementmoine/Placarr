@@ -8,7 +8,10 @@ import { listEffectPacks } from "@/effects";
 // Server-side: installs the SQLite lookups the packs read Live faces from.
 import "@/effects/pokemon/cardFoilIndex";
 import "@/lib/foilMetaLoad.server";
-import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
+import {
+  invalidateDumpedBundleListCache,
+  type PlayroomArt,
+} from "@/effects/pokemon/playroomArt";
 import { runWithConcurrency } from "@/lib/async";
 import type { FoilPlayroomNeed } from "@/types/providerModule";
 
@@ -77,6 +80,9 @@ export async function GET(req: Request) {
     consumers need: the first face for a tile, the whole list for focus and
     compare, and `liveOwned` for the ordering.
   */
+  // Fresh liveOwned + dump order (owned edits must not stick until restart).
+  invalidateDumpedBundleListCache();
+
   const packArts: Record<string, Record<string, PlayroomArt[]>> = {};
   for (const pack of listEffectPacks()) {
     const forPack: Record<string, PlayroomArt[]> = {};

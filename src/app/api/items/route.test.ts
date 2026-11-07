@@ -10,6 +10,9 @@ const h = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
+  itemPresenceEvent: {
+    create: vi.fn(),
+  },
   shelf: { findUnique: vi.fn() },
   metadata: { update: vi.fn() },
   resolveShelfId: vi.fn(),
@@ -43,6 +46,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     item: h.item,
+    itemPresenceEvent: h.itemPresenceEvent,
     shelf: h.shelf,
     metadata: h.metadata,
     backgroundWorkJob: {
@@ -147,6 +151,7 @@ beforeEach(() => {
     h.item.create,
     h.item.update,
     h.item.delete,
+    h.itemPresenceEvent.create,
     h.shelf.findUnique,
     h.resolveShelfId,
     h.resolveItemId,
@@ -472,11 +477,13 @@ describe("PATCH /api/items — autorisation", () => {
     expect(h.item.update).not.toHaveBeenCalled();
   });
 
-  it("enregistre une note de prêt (à qui + quand)", async () => {
+  it("enregistre une note de prêt (à qui + quand) via le modèle absence", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findUnique.mockResolvedValue({
       userId: "u1",
       shelfId: "s1",
+      presence: "owned",
+      absenceReason: null,
       shelf: { type: "games" },
     });
     h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
@@ -491,16 +498,29 @@ describe("PATCH /api/items — autorisation", () => {
 
     expect(res.status).toBe(200);
     expect(h.item.update.mock.calls[0][0].data).toMatchObject({
-      loanedTo: "Alice",
-      loanedAt: expect.any(Date),
+      presence: "away",
+      absenceReason: "loaned",
+      absenceRecipient: "Alice",
+      absenceSince: expect.any(Date),
+    });
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        itemId: "i1",
+        kind: "departed",
+        toPresence: "away",
+        reason: "loaned",
+      }),
     });
   });
 
-  it("efface la note de prêt quand le destinataire est vide", async () => {
+  it("efface l'absence quand le destinataire de prêt est vide", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findUnique.mockResolvedValue({
       userId: "u1",
       shelfId: "s1",
+      presence: "away",
+      absenceReason: "loaned",
+      absenceRecipient: "Alice",
       shelf: { type: "games" },
     });
     h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
@@ -511,8 +531,18 @@ describe("PATCH /api/items — autorisation", () => {
 
     expect(res.status).toBe(200);
     expect(h.item.update.mock.calls[0][0].data).toMatchObject({
-      loanedTo: null,
-      loanedAt: null,
+      presence: "owned",
+      absenceReason: null,
+      absenceRecipient: null,
+      absenceSince: null,
+    });
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        itemId: "i1",
+        kind: "returned",
+        fromPresence: "away",
+        toPresence: "owned",
+      }),
     });
   });
 

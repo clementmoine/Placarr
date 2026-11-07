@@ -14,7 +14,7 @@ describe("narutoCardgameBackTierFromPrintKey", () => {
     ["narutocardgame:demo-n005", null],
     ["narutocardgame:preview-g01", null],
     ["narutocardgame:n01-sample19", null],
-    ["narutocardgame:demo-k039", null],
+    ["narutocardgame:demo-n009", null],
     ["lorcana:6-48", null],
     ["", null],
   ] as const)("%s → %s", (printKey, tier) => {

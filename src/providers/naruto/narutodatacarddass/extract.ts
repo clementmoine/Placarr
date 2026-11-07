@@ -1,7 +1,7 @@
 /**
  * Naruto Data Carddass pack extract — Catalogue Sync / worker (in-process).
  *
- * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products`.
+ * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products` · `documents`.
  * Opt-in crawls (`--crawl-chito`, `--crawl-suruga`) stay explicit.
  */
 import path from "node:path";
@@ -44,6 +44,7 @@ export const NARUTO_DATA_CARDDASS_STEPS = [
   "seed",
   "faces",
   "products",
+  "documents",
 ] as const;
 export type NarutoDataCarddassStep =
   (typeof NARUTO_DATA_CARDDASS_STEPS)[number];
@@ -289,6 +290,30 @@ export async function runNarutoDataCarddassPackPipeline(
       ? async () => ingestDataCarddassSealedProducts()
       : undefined,
   });
+
+  if (steps.includes("documents")) {
+    try {
+      const { loadDataCarddassCuratedDocuments } = await import(
+        "@/providers/naruto/narutodatacarddass/curated/documents"
+      );
+      const { harvestPackDocuments } = await import(
+        "@/providers/shared/documents/harvestPackDocuments"
+      );
+      const docs = await harvestPackDocuments({
+        packId: NARUTO_DATA_CARDDASS_PACK_ID,
+        curated: loadDataCarddassCuratedDocuments(),
+        force,
+      });
+      console.log(
+        `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
+          `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── documents — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
 }
 
 const isDirectCli =

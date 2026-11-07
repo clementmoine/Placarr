@@ -6,8 +6,11 @@ import {
   flatEtchViewFactor,
   lightDirectionFromTilt,
   LIVE_MESH_LEAN_SCALE,
+  LIVE_REST_MESH_LEAN,
   liveCardTbnFromLean,
   meshLeanFromTilt,
+  meshLeanWithRestBias,
+  restLightFromSheet,
 } from "./lightDirection";
 
 describe("lightDirectionFromTilt", () => {
@@ -28,6 +31,26 @@ describe("lightDirectionFromTilt", () => {
     const [x2, , z2] = lightDirectionFromTilt(0, 1);
     expect(x2).toBe(0);
     expect(z2).toBeGreaterThan(0);
+  });
+
+  it("Stamped-class +Z rest stays on +Z at idle and leans in XY", () => {
+    expect(lightDirectionFromTilt(0, 0, [0, 0, 1])).toEqual([0, 0, 1]);
+    const [x, y, z] = lightDirectionFromTilt(1, 0, [0, 0, 1]);
+    expect(z).toBeGreaterThan(0);
+    expect(x).toBeGreaterThan(0);
+    expect(y).toBeCloseTo(0, 6);
+    expect(Math.hypot(x, y, z)).toBeCloseTo(1, 6);
+  });
+
+  it("SunPillar-class −Z rest stays on −Z at idle", () => {
+    expect(lightDirectionFromTilt(0, 0, [0, 0, -1])).toEqual([0, 0, -1]);
+  });
+});
+
+describe("restLightFromSheet", () => {
+  it("defaults to +Y and unitizes MAT RGB", () => {
+    expect(restLightFromSheet(null)).toEqual([0, 1, 0]);
+    expect(restLightFromSheet([0, 0, 2, 0])).toEqual([0, 0, 1]);
   });
 });
 
@@ -62,21 +85,21 @@ describe("aceFoilNormalLatticeOffset", () => {
 });
 
 describe("cameraPosFromTilt", () => {
-  it("rests at balanced elevation/frontal (0, 1.5, 1.5)", () => {
-    expect(cameraPosFromTilt(0, 0)).toEqual([0, 1.5, 1.5]);
+  it("rests at elevated-frontal (0, 1.7, 1.3)", () => {
+    expect(cameraPosFromTilt(0, 0)).toEqual([0, 1.7, 1.3]);
+    expect(cameraPosFromTilt(0.4, -0.3)).toEqual([0, 1.7, 1.3]);
   });
 
   it("ignores lean — Live camera is rest-fixed (mesh tip is u_CardLean)", () => {
-    expect(cameraPosFromTilt(0.4, -0.3)).toEqual([0, 1.5, 1.5]);
-    expect(cameraPosFromTilt(1, 0)).toEqual([0, 1.5, 1.5]);
-    expect(cameraPosFromTilt(-1, 1)).toEqual([0, 1.5, 1.5]);
+    expect(cameraPosFromTilt(1, 0)).toEqual([0, 1.7, 1.3]);
+    expect(cameraPosFromTilt(-1, 1)).toEqual([0, 1.7, 1.3]);
   });
 
-  it("AceFoil-class face N·V (flat etch ≈ +Y) stays bright enough at rest", () => {
+  it("AceFoil/Squares-class face N·V (flat etch ≈ +Y) stays bright enough at rest", () => {
     const cam = cameraPosFromTilt(0, 0);
     const len = Math.hypot(cam[0], cam[1], cam[2]) || 1;
-    // albedo *= N·V — (0,1,2) was ~0.45 (muddy); keep ≥ ~1/√2.
-    expect(cam[1] / len).toBeGreaterThanOrEqual(0.7);
+    // albedo *= N·V (Squares twice) — (0,1,2) was ~0.45; keep ≥ ~0.75.
+    expect(cam[1] / len).toBeGreaterThanOrEqual(0.75);
   });
 });
 
@@ -119,14 +142,41 @@ describe("meshLeanFromTilt", () => {
   });
 });
 
+describe("meshLeanWithRestBias", () => {
+  it("rest bias equals one full CSS +Y tip (soft SunLava spectrum pose)", () => {
+    expect(LIVE_REST_MESH_LEAN).toEqual([0, LIVE_MESH_LEAN_SCALE]);
+  });
+
+  it("biases Z-rest leaves (SunLava +Z / SunPillar −Z) at idle", () => {
+    expect(meshLeanWithRestBias(0, 0, [0, 0, 1])).toEqual(LIVE_REST_MESH_LEAN);
+    expect(meshLeanWithRestBias(0, 0, [0, 0, -1])).toEqual(LIVE_REST_MESH_LEAN);
+  });
+
+  it("leaves Y-rest leaves (AceFoil) unbiased so lattice rests flat", () => {
+    expect(meshLeanWithRestBias(0, 0, [0, 1, 0])).toEqual([0, 0]);
+    expect(meshLeanWithRestBias(1, -1, [0, 1, 0])).toEqual(
+      meshLeanFromTilt(1, -1),
+    );
+  });
+
+  it("adds bias on top of pointer tip for Z-rest", () => {
+    const tip = meshLeanFromTilt(0, 1);
+    expect(meshLeanWithRestBias(0, 1, [0, 0, 1])).toEqual([
+      tip[0] + LIVE_REST_MESH_LEAN[0],
+      tip[1] + LIVE_REST_MESH_LEAN[1],
+    ]);
+  });
+});
+
 describe("SunPillar mesh-N etch gate", () => {
   it("top-center light lean does not zero clamp(N·V+0.16) under mesh tip", () => {
     /*
       SunPillar multiplies whole albedo by clamp(meshN·V + 0.16).
       Full ±1 into u_CardLean → N·V≈-0.32 → black card; mesh scale stays >0.
+      Pointer-top → liveWebglTiltFromLight y=−1 (N tips toward card bottom / −Z).
     */
     const cam = cameraPosFromTilt(0, 0);
-    const mesh = meshLeanFromTilt(0, -1); // top-center → setTilt(0,-1)
+    const mesh = meshLeanFromTilt(0, -1); // top-center → setTilt(0,−1)
     const { N } = liveCardTbnFromLean(mesh[0], mesh[1]);
     const len = Math.hypot(cam[0], cam[1], cam[2]) || 1;
     const nDotV = (N[0] * cam[0] + N[1] * cam[1] + N[2] * cam[2]) / len;

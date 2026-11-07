@@ -95,10 +95,14 @@ function langFilesFromDir(
     if (source) langFiles.coverProvenance = pokemonFaceCoverProvenance(source);
   }
 
+  const isLiveArt = (name: string) => /^art\.(webp|png|jpe?g)$/i.test(name);
   for (const file of listFiles(cardDir)) {
     const low = file.toLowerCase();
     if (low.startsWith("art.")) {
+      // Prefer bare live `art.webp` over `art.<source>.*` when ranking failed
+      // (tiny fixture files have no probeable dimensions).
       if (!langFiles.art) langFiles.art = file;
+      else if (isLiveArt(file) && !isLiveArt(langFiles.art)) langFiles.art = file;
     } else if (low === "mask.webp" || low === "mask.png") langFiles.mask = file;
     else if (low.startsWith("mask-ph.")) {
       variants.ph = { ...(variants.ph ?? {}), mask: file };

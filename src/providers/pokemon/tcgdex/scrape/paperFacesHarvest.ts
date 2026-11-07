@@ -1,17 +1,19 @@
 /**
- * Paper-face harvest for Pokémon (mcdn encyclopédie + McDo tiles + PokéCardex
- * scans + Coleka + TCGPlayer + pokemontcg.io + pkmcards.fr + Trainers JA +
- * Limitless JA + Dittobase JA + Alamedyang vintage JA + Pokéllector JA-order +
- * CardNexus catalogue CDN).
+ * Paper-face harvest for Pokémon (TCGdex CDN → disk + mcdn encyclopédie +
+ * McDo tiles + PokéCardex scans + Coleka + TCGPlayer + pokemontcg.io +
+ * pkmcards.fr + Trainers JA + Limitless JA + Dittobase JA + Alamedyang
+ * vintage JA + Pokéllector JA-order + CardNexus catalogue CDN).
  *
- * Bulk TCGdex CDN dump (`art.tcgdex.*`) is **opt-in** (`tcgdexCatalogue: true`):
- * assets.tcgdex.net is a reliable remote fallback for the paper catalogue —
- * scraping ~20k highs is optional disk/offline insurance, not required for Sync.
+ * **Local-first contract:** CDN (`assets.tcgdex.net`) is Sync *input* only.
+ * Runtime grid / picker / CLIP read disk under `data/pokemon/cards/` (served
+ * `/assets/`). Bulk TCGdex dump (`art.tcgdex.*`) runs by default; pass
+ * `tcgdexCatalogue: false` for a light specialized-sources-only run.
  *
- * Catalogue Sync / CLI — take every available *specialized* source face;
- * faceChoice ranks which one the UI shows.
+ * Catalogue Sync / CLI — take every available source face; faceChoice ranks
+ * which one the UI shows.
  */
 import { rebuildPokemonCardsIndex } from "@/providers/pokemon/live/pipeline/rebuildCardsIndex";
+import { syncTcgdexPrintAssetsFromDisk } from "@/providers/pokemon/tcgdex/indexStore";
 
 import { harvestColekaMcdoFaces } from "./coleka/scrapeColekaPokemonFaces";
 import { harvestColekaMcdoPrices } from "./coleka/colekaPrices";
@@ -59,9 +61,9 @@ export async function runPokemonPaperFacesHarvest(
     /** Default true for standalone harvest; extract runner rebuilds once after. */
     rebuildIndex?: boolean;
     /**
-     * Bulk-download TCGdex catalogue CDN → `art.tcgdex.*`.
-     * Default **false** — remote CDN is the normal fallback; enable for offline
-     * / mirror. Specialized sources (mcdn, McDo, …) always run.
+     * Bulk-download TCGdex catalogue CDN → `art.tcgdex.*` (Sync densify).
+     * Default **true** — CDN is Sync input; disk is runtime. Pass `false` to
+     * skip the bulk mirror (specialized sources still run).
      */
     tcgdexCatalogue?: boolean;
   } = {},
@@ -75,14 +77,15 @@ export async function runPokemonPaperFacesHarvest(
     failed: 0,
   };
 
-  if (opts.tcgdexCatalogue) {
-    console.log("── Pokémon paper faces — TCGdex catalogue CDN");
+  const runTcgdexCatalogue = opts.tcgdexCatalogue !== false;
+  if (runTcgdexCatalogue) {
+    console.log("── Pokémon paper faces — TCGdex catalogue CDN → disk");
     let lastLog = 0;
     tcgdex = await fillTcgdexCatalogueFaces({
       force: opts.force,
       cardsRoot: opts.cardsRoot,
-      // Mirror FR+EN+JA when opted in — JA catalogue gaps are mostly empty
-      // `print_assets` despite TCGdex `/ja/` CDN existing for shared sets.
+      // Mirror FR+EN+JA — JA catalogue gaps are mostly empty `print_assets`
+      // despite TCGdex `/ja/` CDN existing for shared sets.
       langs: ["fr", "en", "ja"],
       onProgress: (done, total) => {
         if (done - lastLog < 500 && done !== total) return;
@@ -95,7 +98,7 @@ export async function runPokemonPaperFacesHarvest(
     );
   } else {
     console.log(
-      "── Pokémon paper faces — TCGdex catalogue skipped (CDN fallback; pass tcgdexCatalogue: true to mirror)",
+      "── Pokémon paper faces — TCGdex catalogue skipped (tcgdexCatalogue: false)",
     );
   }
 
@@ -291,6 +294,13 @@ export async function runPokemonPaperFacesHarvest(
   console.log(
     `   cardnexus: ${cardnexus.written} écrites / ${cardnexus.skipped} skip / ${cardnexus.unmapped} hors map / ${cardnexus.failed} fail (${cardnexus.prints} cibles → assets ${cardnexus.assetsSynced})`,
   );
+
+  // Index new faces + clear ghost `print_assets.art` (basename without file).
+  const assetsSynced = syncTcgdexPrintAssetsFromDisk({
+    cardsRoot: opts.cardsRoot,
+    languages: ["fr", "en", "ja"],
+  });
+  console.log(`── print_assets sync-from-disk — ${assetsSynced} rows`);
 
   // Rebuild only the live data root index (custom cardsRoot = tests).
   const shouldRebuild = opts.rebuildIndex !== false && !opts.cardsRoot;

@@ -15,6 +15,7 @@ describe("selectDbsCgSteps", () => {
       "products",
       "arena",
       "faces",
+      "documents",
     ]);
   });
 
@@ -24,6 +25,7 @@ describe("selectDbsCgSteps", () => {
       "dbscards",
       "arena",
       "faces",
+      "documents",
     ]);
   });
 
@@ -45,6 +47,7 @@ describe("selectDbsCgSteps", () => {
       "dbscards",
       "products",
       "arena",
+      "documents",
     ]);
     expect(selectDbsCgSteps(["--only", "faces", "--offline"])).toEqual([]);
   });

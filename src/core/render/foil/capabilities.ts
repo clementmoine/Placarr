@@ -111,6 +111,11 @@ export function foilRenderScale(
   devicePixelRatio: number,
 ): number {
   // Never below 1: sub-sampling a card is visible even in a thumbnail.
-  const cap = cssWidth >= FOIL_SHARP_WIDTH_PX ? 2 : 1;
-  return Math.max(1, Math.min(devicePixelRatio, cap));
+  // Focus/stack cards supersample at least ×2 even when DPR is 1 — Live
+  // HoloFoil frags (SunLava) drive spectrum UVs from dFdx/dFdy; a 280px
+  // buffer turns the lava into thick blobs.
+  if (cssWidth >= FOIL_SHARP_WIDTH_PX) {
+    return Math.max(2, Math.min(devicePixelRatio, 3));
+  }
+  return Math.max(1, Math.min(devicePixelRatio, 1));
 }

@@ -1,5 +1,5 @@
 import { cleanCode } from "@/core/identify/query";
-import { VIDEO_GAME_PLATFORM_TERMS } from "@/core/identify/platforms/platforms";
+import { VIDEO_GAME_PLATFORM_TERMS } from "@/core/identify/platforms/platformList";
 import { cleanSearchQuery } from "@/core/enrich/search/query";
 import { prisma } from "@/lib/db/prisma";
 

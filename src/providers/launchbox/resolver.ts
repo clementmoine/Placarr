@@ -469,7 +469,7 @@ export async function fetchFromLaunchBox(
   const db = await ensureLaunchBoxIndex();
   if (!db) {
     console.info(
-      "[LaunchBox] Index unavailable — run `pnpm launchbox:build-index` (Metadata.zip → SQLite in .cache/launchbox)",
+      "[LaunchBox] Index unavailable — sync LaunchBox from admin Local indexes (Metadata.zip → SQLite in data/launchbox)",
     );
     return null;
   }

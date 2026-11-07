@@ -130,9 +130,7 @@ describe("abebooks fetch", () => {
 
   it("sépare l'auteur du titre pour l'alignement (Naruto Tome N)", () => {
     expect(
-      splitAbeBooksTitleAndAuthor(
-        "Naruto - Tome 26 - Masashi Kishimoto",
-      ),
+      splitAbeBooksTitleAndAuthor("Naruto - Tome 26 - Masashi Kishimoto"),
     ).toEqual({
       title: "Naruto - Tome 26",
       author: "Masashi Kishimoto",

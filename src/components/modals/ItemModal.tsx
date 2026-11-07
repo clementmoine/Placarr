@@ -12,11 +12,20 @@ import {
   Settings,
   Image as ImageIcon,
   Maximize2,
+  Crop,
   HardDrive,
+  Trash2,
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -41,10 +50,21 @@ import {
 } from "@/components/ui/dialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
+import { ImageCropModal } from "@/components/modals/ImageCropModal";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { usePrintVariant } from "@/lib/client/hooks/usePrintVariant";
+import { normalizeVariantOptions } from "@/core/enrich/variants";
+import { isServedLocalPath } from "@/lib/media/servedLocalPaths";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
+import {
+  ConditionIcon,
+  conditionToggleActiveClass,
+} from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { itemConditionsForShelfType } from "@/core/collect/condition";
+import {
+  itemConditionsForShelfType,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
 
 import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -60,15 +80,19 @@ import {
   buildItemModalSessionInit,
   itemModalSessionKey,
 } from "@/lib/client/itemModalSession";
-import { deleteItem, getItem } from "@/lib/api/items";
+import { deleteItem, getItem, removeItemMediaImage } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
 } from "@/core/identify/shelfLabels";
-import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
+import {
+  guessShelfFromBarcodeLookup,
+  shelfSearchHintsFromBarcodePayload,
+} from "@/core/identify/query";
 import { isAbortError } from "@/lib/http/abort";
 import { shelfPath } from "@/lib/routing/slugs";
 
@@ -78,16 +102,18 @@ import {
   type Item,
   type Shelf,
   Condition,
-} from "@prisma/client";
+} from "@/generated/prisma/browser";
 import {
   mergeCoverAttachmentsForPicker,
   getCoverImage,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
 } from "@/core/collect/media";
+import { metadataForPrintKeyImagePicker } from "@/core/collect/printKeyGallery";
 import {
   findAttachmentForUrl,
-  stripCropSuffixFromUrl,
+  isEditDerivativeUrl,
+  stripEditSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
@@ -105,7 +131,11 @@ import type {
   MetadataAttachment,
 } from "@/types/metadataProvider";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
-import { invalidateItemQueries } from "@/core/collect/queryCache";
+import {
+  invalidateItemQueries,
+  syncItemQueries,
+} from "@/core/collect/queryCache";
+import { filterAttachmentsRemovingUrl } from "@/core/collect/removeItemMediaImage.shared";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,
@@ -169,6 +199,11 @@ export function ItemModal({
     barcode?: string;
     imageUrl?: string | null;
     shelfId?: string;
+    printKey?: string | null;
+    language?: string | null;
+    setCode?: string | null;
+    /** When true, prefer / lock the prefilled shelfId as a sure guess. */
+    shelfSure?: boolean;
     metadataPreview?: MetadataResult | null;
   };
 }) {
@@ -185,9 +220,15 @@ export function ItemModal({
 
     barcode: z.string().trim().optional(),
 
+    /** Free text: the vocabulary belongs to the provider, not to a local enum. */
+    variant: z.string().nullable().optional(),
+
     description: z.string().trim().optional(),
 
     condition: z.nativeEnum(Condition),
+
+    loanedTo: z.string().trim().optional(),
+    loanedAt: z.string().trim().optional(),
 
     imageUrl: z
       .any()
@@ -195,7 +236,10 @@ export function ItemModal({
         (url) =>
           url == null ||
           url instanceof File ||
-          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          // Every path this app serves, not just `/uploads/`: a card from a
+          // local pack lives under `/assets/`, and rejecting it failed the
+          // whole form from a hidden tab — Enregistrer looked inert.
+          (typeof url === "string" && isServedLocalPath(url)) ||
           isUrl(url) ||
           /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
         t("items.invalidImage"),
@@ -208,7 +252,10 @@ export function ItemModal({
         (url) =>
           url == null ||
           url instanceof File ||
-          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          // Every path this app serves, not just `/uploads/`: a card from a
+          // local pack lives under `/assets/`, and rejecting it failed the
+          // whole form from a hidden tab — Enregistrer looked inert.
+          (typeof url === "string" && isServedLocalPath(url)) ||
           isUrl(url) ||
           /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
         t("items.invalidImage"),
@@ -226,7 +273,10 @@ export function ItemModal({
       backgroundImageUrl: null,
       description: "",
       barcode: prefilledValues?.barcode || "",
+      variant: null,
       condition: "used",
+      loanedTo: "",
+      loanedAt: "",
     }),
     [shelfId, prefilledValues],
   );
@@ -287,10 +337,13 @@ export function ItemModal({
 
   // Radix SelectValue stays blank until a matching SelectItem exists — seed the
   // current shelf so the trigger never flashes empty while the list loads.
+  // When the scan knows a shelf type, keep the picker on compatible shelves.
   const shelfOptions = useMemo(() => {
     type Opt = { id: string; name: string; type?: Shelf["type"] | null };
     const byId = new Map<string, Opt>();
+    const typeFilter = shelfType ?? null;
     for (const entry of shelves ?? []) {
+      if (typeFilter && entry.type && entry.type !== typeFilter) continue;
       byId.set(entry.id, {
         id: entry.id,
         name: entry.name,
@@ -325,6 +378,9 @@ export function ItemModal({
       shelf?.type ?? cachedCurrent?.type ?? shelfType,
     );
     seed(item?.shelfId, item?.shelf?.name, item?.shelf?.type);
+    // Always keep the currently selected / prefilled shelf visible even if
+    // type filter would hide it (user can still change type via that shelf).
+    seed(prefilledValues?.shelfId, null, typeFilter);
     return Array.from(byId.values()).sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );
@@ -334,6 +390,7 @@ export function ItemModal({
     shelf?.name,
     shelf?.type,
     shelfType,
+    prefilledValues?.shelfId,
     currentShelfId,
     item?.shelfId,
     item?.shelf?.name,
@@ -356,12 +413,21 @@ export function ItemModal({
         shelf?.name ??
         currentShelfId ??
         shelfId,
+      // Cover Affiche ranking targets this frame (square LD/vinyl vs DVD portrait).
+      cardFormat:
+        activeShelf?.cardFormat ??
+        item?.shelf?.cardFormat ??
+        shelf?.cardFormat ??
+        null,
     }),
     [
+      activeShelf?.cardFormat,
       activeShelf?.name,
       activeShelfType,
       currentShelfId,
+      item?.shelf?.cardFormat,
       item?.shelf?.name,
+      shelf?.cardFormat,
       shelf?.name,
       shelfId,
       shelves,
@@ -380,10 +446,103 @@ export function ItemModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
+  const [guessedShelfId, setGuessedShelfId] = useState<string | null>(
+    prefilledValues?.shelfSure ? prefilledValues.shelfId || null : null,
+  );
+
+  // Sure shelf from scan hydrate / barcode guess — apply once when empty.
+  useEffect(() => {
+    if (!isOpen || item) return;
+    const sureId =
+      (prefilledValues?.shelfSure && prefilledValues.shelfId) ||
+      guessedShelfId ||
+      null;
+    if (!sureId) return;
+    const current = form.getValues("shelfId");
+    if (current && current === sureId) return;
+    if (current && current !== (prefilledValues?.shelfId || "") && current !== shelfId) {
+      return;
+    }
+    form.setValue("shelfId", sureId, { shouldDirty: false });
+  }, [
+    form,
+    guessedShelfId,
+    isOpen,
+    item,
+    prefilledValues?.shelfId,
+    prefilledValues?.shelfSure,
+    shelfId,
+  ]);
+
+  // Bootstrap catalogue title when the form still shows a raw printKey.
+  useEffect(() => {
+    if (!isOpen || item) return;
+    const printKey = prefilledValues?.printKey?.trim();
+    if (!printKey) return;
+    const currentName = (form.getValues("name") || "").trim();
+    const looksLikeKey =
+      !currentName ||
+      currentName.toLowerCase() === printKey.toLowerCase();
+    if (!looksLikeKey) return;
+    // Hydrate already resolved a human title — keep it.
+    if (
+      prefilledValues?.name &&
+      prefilledValues.name.trim().toLowerCase() !== printKey.toLowerCase()
+    ) {
+      if (currentName.toLowerCase() === printKey.toLowerCase()) {
+        form.setValue("name", prefilledValues.name, { shouldDirty: false });
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const type = shelfType || "tcg";
+    const params = new URLSearchParams({ printKey, type });
+    if (prefilledValues?.language) {
+      params.set("language", prefilledValues.language);
+    }
+    void axios
+      .get(`/api/prints?${params.toString()}`)
+      .then((res) => {
+        if (cancelled) return;
+        const candidate = res.data?.candidate as
+          | { name?: string; title?: string }
+          | null
+          | undefined;
+        const title =
+          candidate?.name?.trim() || candidate?.title?.trim() || "";
+        if (!title) return;
+        const stillKey =
+          (form.getValues("name") || "").trim().toLowerCase() ===
+            printKey.toLowerCase() ||
+          !(form.getValues("name") || "").trim();
+        if (stillKey) {
+          form.setValue("name", title, { shouldDirty: false });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    form,
+    isOpen,
+    item,
+    prefilledValues?.language,
+    prefilledValues?.name,
+    prefilledValues?.printKey,
+    shelfType,
+  ]);
 
   const watchedName = useWatch({ control: form.control, name: "name" });
-  const watchedCondition = useWatch({ control: form.control, name: "condition" });
+  const watchedCondition = useWatch({
+    control: form.control,
+    name: "condition",
+  });
+  const watchedLoanedTo = useWatch({
+    control: form.control,
+    name: "loanedTo",
+  });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
     const val = (watchedName || "").trim().toLowerCase();
@@ -431,6 +590,13 @@ export function ItemModal({
     key: string;
     init: ReturnType<typeof buildItemModalSessionInit>;
   } | null>(null);
+  /**
+   * Affiche tile / file pick in this modal session only. Enrichment must not
+   * mark `imageUrl` dirty (that stuck SensCritique as "selected" after refresh).
+   */
+  const [userPickedCoverUrl, setUserPickedCoverUrl] = useState<string | null>(
+    null,
+  );
   if (sessionKey !== sessionState?.key) {
     if (sessionKey) {
       const init = buildItemModalSessionInit({
@@ -438,8 +604,10 @@ export function ItemModal({
         prefilledValues,
         shelfId,
         activeShelfForMedia,
+        uiLocale: locale,
       });
       setSessionState({ key: sessionKey, init });
+      setUserPickedCoverUrl(null);
       setSuggestions(init.suggestions);
       setNameSuggestion(init.nameSuggestion);
       setActiveTab(defaultTab || "general");
@@ -451,10 +619,66 @@ export function ItemModal({
       setBgPage(1);
     } else if (!isOpen && sessionState !== null) {
       setSessionState(null);
+      setUserPickedCoverUrl(null);
     }
   }
 
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  /**
+   * Which image is being reframed, and which field it belongs to. The field
+   * matters: the same artwork can be both the cover and the background, and
+   * writing the result to `imageUrl` regardless meant cropping the background
+   * silently replaced the cover.
+   */
+  const [cropTarget, setCropTarget] = useState<{
+    url: string;
+    field: "imageUrl" | "backgroundImageUrl";
+  } | null>(null);
+
+  /**
+   * Whether the dedicated cover tab is available. When it is, the General tab
+   * must not offer a second cover picker: the two disagreed — the inline one
+   * showed the provider's remote original rather than the crop actually in
+   * force, and listed the same image twice (remote + localized), so touching it
+   * silently discarded the collector's framing. On a bare manual creation there
+   * are no tabs at all, and then it is the only picker there is.
+   */
+  /**
+   * Variants this object exists in, asked of the provider that owns the print.
+   *
+   * Not read from stored facts: `Metadata.facts` is rebuilt from field evidence
+   * after every store, so a structured fact would have to survive two separate
+   * allow-lists to reach the client — and it would be a copy that drifts. What a
+   * print exists as belongs to the provider.
+   *
+   * Rendered next to `condition` because the two are easy to confuse and must
+   * not be: the variant says *which* thing this is, the condition says how it
+   * has aged.
+   */
+  const printVariant = usePrintVariant(
+    isOpen ? item?.printKey : null,
+    item?.shelf?.type ?? shelfType,
+  );
+  const variantOptions = normalizeVariantOptions(printVariant?.finishes);
+
+  const hasCoverTab = Boolean(
+    item ||
+    fetchedMetadata ||
+    prefilledValues?.imageUrl ||
+    prefilledValues?.barcode,
+  );
+  /**
+   * When the crop on screen was applied. Re-cropping overwrites the same
+   * filename, so without a changing URL the browser and next/image keep serving
+   * the previous version — the thumbnail only refreshed on a full page reload.
+   *
+   * A timestamp, not a counter. A counter restarts at 1 in every modal, so the
+   * first crop of each session asked for `?v=1` again — the one URL already in
+   * the browser's cache from the session before, which is exactly when a
+   * collector re-crops. That made cropping look broken while the file on disk
+   * was perfectly correct.
+   */
+  const [cropVersion, setCropVersion] = useState(0);
 
   const applyMetadataPreviewToForm = useCallback(
     (
@@ -467,10 +691,10 @@ export function ItemModal({
       const forceOverwrite = options.forceOverwrite ?? false;
       const barcodeContext = options.barcodeContext;
 
-      setFetchedMetadata(
+      const filteredMetadata =
         filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ??
-          metadata,
-      );
+        metadata;
+      setFetchedMetadata(filteredMetadata);
 
       const currentBarcode = (
         barcodeContext ||
@@ -501,17 +725,39 @@ export function ItemModal({
         }
       }
 
-      if (metadata.imageUrl) {
+      // Seed Affiche from the same ranking as the fiche — include item.imageUrl
+      // so honored user pins win; otherwise follow dynamic ranking / metadata.
+      const rankedCover = getCoverImage(
+        {
+          imageUrl: item?.imageUrl ?? null,
+          updatedAt: item?.updatedAt,
+          condition: item?.condition ?? null,
+          metadata: filteredMetadata,
+          shelf: activeShelfForMedia,
+        },
+        locale,
+      );
+      const coverCandidate = rankedCover || filteredMetadata.imageUrl;
+      if (coverCandidate) {
         const currentImageUrl = form.getValues("imageUrl");
         const canReplaceScanImage =
           activeShelfType === "games" &&
           hasPrefilledScanImage &&
           typeof currentImageUrl === "string" &&
           currentImageUrl.trim() === prefilledScanImageUrl;
-
-        if (forceOverwrite || !currentImageUrl || canReplaceScanImage) {
-          form.setValue("imageUrl", metadata.imageUrl, {
-            shouldDirty: true,
+        // Keep an in-session Affiche click; otherwise follow ranked cover without
+        // dirtying the field (dirty metadata pins stuck SensCritique as selected).
+        if (
+          userPickedCoverUrl &&
+          !forceOverwrite &&
+          !canReplaceScanImage &&
+          currentImageUrl
+        ) {
+          // user pick wins
+        } else {
+          setUserPickedCoverUrl(null);
+          form.setValue("imageUrl", coverCandidate, {
+            shouldDirty: Boolean(forceOverwrite || canReplaceScanImage),
           });
         }
       }
@@ -533,7 +779,12 @@ export function ItemModal({
       activeShelfType,
       form,
       hasPrefilledScanImage,
+      item?.condition,
+      item?.imageUrl,
+      item?.updatedAt,
+      locale,
       prefilledScanImageUrl,
+      userPickedCoverUrl,
     ],
   );
 
@@ -545,6 +796,7 @@ export function ItemModal({
   } = useItemModalMetadataMutations({
     activeShelfType,
     activeShelfName: activeShelf?.name ?? null,
+    printKey: item?.printKey ?? prefilledValues?.printKey ?? null,
     applyMetadataPreviewToForm,
     onSuggestionsLoaded: (cleanSuggestions, primary) => {
       setSuggestions(cleanSuggestions);
@@ -636,6 +888,11 @@ export function ItemModal({
 
     const urls = new Set<string>();
     const list: {
+      /**
+       * The URL the form stores. Never carries a query: what the thumbnail
+       * loads is {@link displayUrlFor} of this, applied at render time, and a
+       * cache-busting `?v=` reaching `url` would be persisted by a save.
+       */
       url: string;
       type: string;
       label: string;
@@ -661,6 +918,7 @@ export function ItemModal({
           type: a.type,
           role: a.role,
           title: a.title,
+          url: a.url,
           source: a.source,
           providerLabel: a.providerLabel,
           sourceNames: a.sourceNames,
@@ -688,19 +946,48 @@ export function ItemModal({
     name: "backgroundImageUrl",
   });
 
+  /**
+   * Re-cropping rewrites the same filename, so the URL alone tells the browser
+   * nothing changed and the thumbnail stays stale until a reload. Display only —
+   * the form keeps the clean URL, and every comparison goes through
+   * `urlsReferToSameLocalizedImage`, which drops the query.
+   *
+   * Applied to **every** tile, at the point it is rendered. Stamping it only on
+   * the row whose URL had just changed meant a crop refreshed the thumbnail
+   * exactly once: as soon as one was saved, the stored attachment *was* the
+   * `_edited` file, so every later re-crop left the row's URL untouched and the
+   * gallery kept showing the first framing.
+   */
+  const displayUrlFor = useCallback(
+    (url: string): string =>
+      cropVersion && isEditDerivativeUrl(url) ? `${url}?v=${cropVersion}` : url,
+    [cropVersion],
+  );
+
   const finalBackgrounds = useMemo(() => {
     const list = [...availableBackgrounds];
 
-    if (
-      currentBackgroundUrl &&
-      typeof currentBackgroundUrl === "string" &&
-      !availableBackgrounds.some((img) => img.url === currentBackgroundUrl)
-    ) {
-      list.unshift({
-        url: currentBackgroundUrl,
-        type: "custom",
-        label: t("items.editTabs.chooseImage"),
-      });
+    if (currentBackgroundUrl && typeof currentBackgroundUrl === "string") {
+      /**
+       * A crop and the file it came from are one gallery row, not two. Matching
+       * on the exact URL made cropping a background add a second, unlabelled
+       * tile beside the original instead of re-framing it in place — the same
+       * twin-matching the poster tab already does.
+       */
+      const rowIndex = list.findIndex((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentBackgroundUrl),
+      );
+      if (rowIndex >= 0) {
+        if (list[rowIndex]!.url !== currentBackgroundUrl) {
+          list[rowIndex] = { ...list[rowIndex]!, url: currentBackgroundUrl };
+        }
+      } else {
+        list.unshift({
+          url: currentBackgroundUrl,
+          type: "custom",
+          label: t("items.editTabs.chooseImage"),
+        });
+      }
     }
 
     return list;
@@ -716,8 +1003,14 @@ export function ItemModal({
   );
 
   const availableImages = useMemo(() => {
-    const rawMetadata =
-      itemId && item?.metadata
+    const printKey = item?.printKey ?? null;
+    const rawMetadata = printKey
+      ? metadataForPrintKeyImagePicker(
+          item?.metadata,
+          fetchedMetadata,
+          printKey,
+        )
+      : itemId && item?.metadata
         ? item.metadata
         : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
@@ -821,11 +1114,11 @@ export function ItemModal({
       if (attachment.url) metadataImageUrls.add(attachment.url);
     }
 
-    // The stored cover is cropped to a new "_crop" file, so its URL no longer
+    // The stored cover is cropped to a new "_edited" file, so its URL no longer
     // matches the gallery attachment it was derived from. Index attachments by
     // their crop-normalized URL so the cover still inherits its real provenance
     // (source + region role) instead of looking like an orphan.
-    const stripCrop = stripCropSuffixFromUrl;
+    const stripCrop = stripEditSuffixFromUrl;
     const attachmentByNormalizedUrl = new Map<string, MetadataAttachment>();
     for (const attachment of metadata?.attachments || []) {
       if (attachment.url) {
@@ -941,6 +1234,7 @@ export function ItemModal({
           type: attachment.type,
           role: attachment.role,
           title: attachment.title,
+          url: attachment.url,
           source: attachment.source,
           providerLabel: attachment.providerLabel,
           sourceNames: attachment.sourceNames,
@@ -982,23 +1276,87 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
-  const [pendingUploadPreviewUrl, setPendingUploadPreviewUrl] = useState<
-    string | null
-  >(null);
+  // Checkmark = in-session Affiche pick, else the same cover as the fiche.
+  const afficheSelectedCoverUrl = useMemo(() => {
+    if (currentImageUrl instanceof File) return null;
+    if (userPickedCoverUrl) return userPickedCoverUrl;
+    return (
+      getCoverImage(
+        {
+          imageUrl: item?.imageUrl ?? null,
+          updatedAt: item?.updatedAt,
+          condition: watchedCondition ?? item?.condition ?? null,
+          metadata: item?.metadata ?? fetchedMetadata ?? null,
+          shelf: activeShelfForMedia,
+        },
+        locale,
+      ) ||
+      (typeof currentImageUrl === "string" ? currentImageUrl : null)
+    );
+  }, [
+    activeShelfForMedia,
+    currentImageUrl,
+    fetchedMetadata,
+    item?.condition,
+    item?.imageUrl,
+    item?.metadata,
+    item?.updatedAt,
+    locale,
+    userPickedCoverUrl,
+    watchedCondition,
+  ]);
 
+  // Keep form.imageUrl aligned with the fiche when the user has not picked
+  // a cover in this session (clears enrichment-dirtied SensCritique pins).
   useEffect(() => {
-    if (!(currentImageUrl instanceof File)) {
-      setPendingUploadPreviewUrl(null);
+    if (!isOpen || userPickedCoverUrl) return;
+    if (currentImageUrl instanceof File) return;
+    if (
+      typeof afficheSelectedCoverUrl !== "string" ||
+      !afficheSelectedCoverUrl
+    ) {
       return;
     }
-    const previewUrl = URL.createObjectURL(currentImageUrl);
-    setPendingUploadPreviewUrl(previewUrl);
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [currentImageUrl]);
+    if (
+      typeof currentImageUrl === "string" &&
+      urlsReferToSameLocalizedImage(currentImageUrl, afficheSelectedCoverUrl)
+    ) {
+      return;
+    }
+    form.setValue("imageUrl", afficheSelectedCoverUrl, { shouldDirty: false });
+  }, [
+    afficheSelectedCoverUrl,
+    currentImageUrl,
+    form,
+    isOpen,
+    userPickedCoverUrl,
+  ]);
+  // Preview URL for a freshly picked file. Derived from the File rather than
+  // pushed through setState from an effect, so choosing an image costs one
+  // render instead of two; the effect owns the revoke, and each URL it sees
+  // gets its own cleanup when the File changes.
+  const pendingUploadPreviewUrl = useMemo(
+    () =>
+      currentImageUrl instanceof File
+        ? URL.createObjectURL(currentImageUrl)
+        : null,
+    [currentImageUrl],
+  );
+
+  useEffect(() => {
+    if (!pendingUploadPreviewUrl) return;
+    return () => URL.revokeObjectURL(pendingUploadPreviewUrl);
+  }, [pendingUploadPreviewUrl]);
 
   const finalImages = useMemo(() => {
-    const rawMetadata =
-      itemId && item?.metadata
+    const printKey = item?.printKey ?? null;
+    const rawMetadata = printKey
+      ? metadataForPrintKeyImagePicker(
+          item?.metadata,
+          fetchedMetadata,
+          printKey,
+        )
+      : itemId && item?.metadata
         ? item.metadata
         : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
@@ -1008,6 +1366,26 @@ export function ItemModal({
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
     const list = [...availableImages];
+
+    /**
+     * A crop and the file it came from are the same gallery row, so twin-matching
+     * treats one as "already there" and the row keeps whichever URL it happened
+     * to hold. That row must show the *selected* framing, in both directions:
+     * cropping showed no change at all, and reverting kept showing the crop
+     * because saving repoints the stored attachment at the cropped file.
+     * The row keeps its own provenance — only the URL follows the selection.
+     */
+    if (
+      typeof currentImageUrl === "string" &&
+      currentImageUrl.startsWith("/uploads/")
+    ) {
+      const rowIndex = list.findIndex((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentImageUrl),
+      );
+      if (rowIndex >= 0 && list[rowIndex]!.url !== currentImageUrl) {
+        list[rowIndex] = { ...list[rowIndex]!, url: currentImageUrl };
+      }
+    }
 
     if (pendingUploadPreviewUrl) {
       list.unshift({
@@ -1040,6 +1418,7 @@ export function ItemModal({
               type: provenance.type,
               role: provenance.role,
               title: provenance.title,
+              url: provenance.url ?? currentImageUrl,
               source: provenance.source,
               providerLabel: attachmentTraitsOf(provenance).providerLabel,
               gridStyleCoverLabelsSource:
@@ -1047,7 +1426,13 @@ export function ItemModal({
             },
             displayLocale,
           )
-        : null;
+        : getAttachmentGalleryLabels(
+            {
+              type: "cover",
+              url: currentImageUrl,
+            },
+            displayLocale,
+          );
 
       list.unshift({
         url: currentImageUrl,
@@ -1067,7 +1452,7 @@ export function ItemModal({
     currentImageUrl,
     pendingUploadPreviewUrl,
     itemId,
-    item?.metadata,
+    item,
     fetchedMetadata,
     activeShelfForMedia,
     locale,
@@ -1151,7 +1536,20 @@ export function ItemModal({
             preferredShelfId: form.getValues("shelfId") || shelfId || null,
           });
 
-          setGuessedShelfId(shelfGuess?.shelfId ?? null);
+          const nextGuessId = shelfGuess?.shelfId ?? null;
+          setGuessedShelfId(nextGuessId);
+          // Auto-apply barcode shelf guess (QuickScan parity) when the form
+          // still holds the initial / empty shelf.
+          if (nextGuessId && shelfGuess?.isGuessed !== false) {
+            const current = form.getValues("shelfId");
+            if (
+              !current ||
+              current === shelfId ||
+              current === (prefilledValues?.shelfId || "")
+            ) {
+              form.setValue("shelfId", nextGuessId, { shouldDirty: false });
+            }
+          }
         }
 
         if (
@@ -1262,10 +1660,15 @@ export function ItemModal({
     ],
   );
 
+  // Latest-callback refs. Assigned after commit — writing a ref during render
+  // is not allowed — which is early enough: the only readers are post-commit
+  // microtasks in the session-bootstrap effect below.
   const handleBarcodeChangeRef = useRef(handleBarcodeChange);
-  handleBarcodeChangeRef.current = handleBarcodeChange;
   const fetchMetadataPreviewRef = useRef(fetchMetadataPreview);
-  fetchMetadataPreviewRef.current = fetchMetadataPreview;
+  useEffect(() => {
+    handleBarcodeChangeRef.current = handleBarcodeChange;
+    fetchMetadataPreviewRef.current = fetchMetadataPreview;
+  });
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
@@ -1273,13 +1676,17 @@ export function ItemModal({
         if (!file.type.startsWith("image/")) {
           toast.error(t("items.invalidImageFile"));
           form.setValue("imageUrl", null);
+          setUserPickedCoverUrl(null);
           return;
         }
+        setUserPickedCoverUrl(null);
         form.setValue("imageUrl", file);
       } else {
+        setUserPickedCoverUrl(file);
         form.setValue("imageUrl", file);
       }
     } else {
+      setUserPickedCoverUrl(null);
       form.setValue("imageUrl", null);
     }
   };
@@ -1305,9 +1712,23 @@ export function ItemModal({
         backgroundImageUrl: backgroundImageUrl,
         // Create-from-scan: persist the preview so the item page keeps gallery /
         // facts while background enrichment runs (otherwise only the chosen cover survives).
+        // Print identity must travel with the create (ScanFAB / PrintPicker) —
+        // local catalogue adapters resolve only by printKey, never by name.
         ...(item
           ? {}
-          : { metadataPreview: fetchedMetadata ?? prefilledValues?.metadataPreview ?? null }),
+          : {
+              metadataPreview:
+                fetchedMetadata ?? prefilledValues?.metadataPreview ?? null,
+              ...(prefilledValues?.printKey
+                ? { printKey: prefilledValues.printKey }
+                : {}),
+              ...(prefilledValues?.language
+                ? { language: prefilledValues.language }
+                : {}),
+              ...(prefilledValues?.setCode
+                ? { setCode: prefilledValues.setCode }
+                : {}),
+            }),
       };
 
       await onSubmit(updatedItem);
@@ -1337,6 +1758,131 @@ export function ItemModal({
       setIsDeleting(false);
     }
   };
+
+  const [removingMediaUrl, setRemovingMediaUrl] = useState<string | null>(null);
+
+  const handleRemoveMediaImage = useCallback(
+    async (
+      url: string,
+      field: "imageUrl" | "backgroundImageUrl" = "imageUrl",
+    ) => {
+      const target = url.trim();
+      if (!target || removingMediaUrl) return;
+      setRemovingMediaUrl(target);
+
+      const clearLocalSelection = (nextCover: string | null) => {
+        const current = form.getValues(field);
+        if (
+          typeof current === "string" &&
+          urlsReferToSameLocalizedImage(current, target)
+        ) {
+          form.setValue(field, field === "imageUrl" ? nextCover : null, {
+            shouldDirty: true,
+          });
+        }
+        if (
+          userPickedCoverUrl &&
+          urlsReferToSameLocalizedImage(userPickedCoverUrl, target)
+        ) {
+          setUserPickedCoverUrl(nextCover);
+        }
+      };
+
+      try {
+        if (!itemId) {
+          setFetchedMetadata((previous) => {
+            if (!previous) return previous;
+            const attachments = filterAttachmentsRemovingUrl(
+              previous.attachments ?? [],
+              target,
+            );
+            const nextImageUrl =
+              previous.imageUrl &&
+              urlsReferToSameLocalizedImage(previous.imageUrl, target)
+                ? (attachments.find((attachment) =>
+                    ["cover", "artwork", "image"].includes(attachment.type),
+                  )?.url ?? null)
+                : (previous.imageUrl ?? null);
+            clearLocalSelection(nextImageUrl);
+            return {
+              ...previous,
+              attachments,
+              imageUrl: nextImageUrl ?? undefined,
+            };
+          });
+          toast.success(t("items.editTabs.removeImageSuccess"));
+          return;
+        }
+
+        const response = await removeItemMediaImage(itemId, target, shelfId);
+        if (response.item) {
+          await syncItemQueries(queryClient, response.item, [shelfId]);
+        }
+        if (response.clearedCover || field === "imageUrl") {
+          const current = form.getValues("imageUrl");
+          if (
+            typeof current === "string" &&
+            urlsReferToSameLocalizedImage(current, target)
+          ) {
+            form.setValue("imageUrl", response.nextImageUrl, {
+              shouldDirty: true,
+            });
+          }
+        }
+        if (response.clearedBackground || field === "backgroundImageUrl") {
+          const current = form.getValues("backgroundImageUrl");
+          if (
+            typeof current === "string" &&
+            urlsReferToSameLocalizedImage(current, target)
+          ) {
+            form.setValue(
+              "backgroundImageUrl",
+              response.nextBackgroundImageUrl,
+              { shouldDirty: true },
+            );
+          }
+        }
+        if (
+          userPickedCoverUrl &&
+          urlsReferToSameLocalizedImage(userPickedCoverUrl, target)
+        ) {
+          setUserPickedCoverUrl(response.nextImageUrl);
+        }
+        setFetchedMetadata((previous) => {
+          if (!previous) return previous;
+          return {
+            ...previous,
+            attachments: filterAttachmentsRemovingUrl(
+              previous.attachments ?? [],
+              target,
+            ),
+            imageUrl:
+              previous.imageUrl &&
+              urlsReferToSameLocalizedImage(previous.imageUrl, target)
+                ? (response.nextImageUrl ?? undefined)
+                : previous.imageUrl,
+          };
+        });
+        toast.success(t("items.editTabs.removeImageSuccess"));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("Error removing media image:", error);
+          toast.error(t("items.editTabs.removeImageFailed"));
+        }
+      } finally {
+        setRemovingMediaUrl(null);
+      }
+    },
+    [
+      form,
+      itemId,
+      queryClient,
+      removingMediaUrl,
+      shelfId,
+      t,
+      userPickedCoverUrl,
+    ],
+  );
 
   const handleClose = () => {
     reset();
@@ -1453,10 +1999,7 @@ export function ItemModal({
           >
             <div className="flex flex-1 overflow-hidden flex-col min-h-0">
               {/* Sidebar for tabs (when editing, when metadata available, or when coming from a scan) */}
-              {(item ||
-                fetchedMetadata ||
-                prefilledValues?.imageUrl ||
-                prefilledValues?.barcode) && (
+              {hasCoverTab && (
                 <div className="w-[calc(100%-2rem)] mx-auto mt-3 bg-zinc-200/50 dark:bg-zinc-900/60 border border-border/60 p-1 flex gap-1 rounded-xl shrink-0 overflow-x-auto backdrop-blur-md">
                   <button
                     type="button"
@@ -1464,7 +2007,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "general"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1487,7 +2030,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "poster"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1510,7 +2053,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "background"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1605,94 +2148,97 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Barcode */}
-                    <FormField
-                      control={form.control}
-                      name="barcode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t(itemsBarcodeLabelKey(shelfType))}
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex relative items-center">
-                              <Input
-                                type="text"
-                                className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
-                                placeholder={t(
-                                  itemsBarcodePlaceholderKey(shelfType),
-                                )}
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  debounce(() =>
-                                    handleBarcodeChange(e.target.value),
-                                  );
-                                }}
-                              />
-                              <ScannerButton
-                                className="absolute right-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-                                onScan={(barcode) => {
-                                  form.setValue("barcode", barcode);
-                                  handleBarcodeChange(barcode);
-                                }}
-                              />
-                            </div>
-                          </FormControl>
-                          {matches.length > 1 && (
-                            <div className="mt-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-fade-in shadow-xs">
-                              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-2">
-                                <SparklesIcon className="size-3.5" />
-                                {t("items.multipleMatchesTitle")}
-                              </span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {matches.map((m) => (
-                                  <Button
-                                    key={m.name}
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(
-                                      "text-xs px-3 py-1.5 h-auto rounded-lg font-semibold transition-all border select-none cursor-pointer",
-                                      selectedMatch?.name === m.name
-                                        ? "bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700 hover:text-white dark:bg-amber-500 dark:border-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:hover:border-amber-400 dark:hover:text-zinc-950"
-                                        : "bg-background border-border hover:bg-accent text-muted-foreground hover:text-foreground",
-                                    )}
-                                    onClick={() => {
-                                      setSelectedMatch(m);
-                                      setSuggestions(m.suggestions);
-                                      setNameSuggestion(m.name);
-                                      form.setValue("name", m.name);
-
-                                      // Overwrite cover and background for the new match selection
-                                      form.setValue(
-                                        "imageUrl",
-                                        m.coverUrl || null,
-                                        { shouldDirty: true },
-                                      );
-                                      form.setValue(
-                                        "backgroundImageUrl",
-                                        null,
-                                        { shouldDirty: true },
-                                      );
-
-                                      fetchMetadataPreview(
-                                        m.name,
-                                        form.getValues("barcode") || "",
-                                        true,
-                                      );
-                                    }}
-                                  >
-                                    {m.name}
-                                  </Button>
-                                ))}
+                    {/* Nothing on this shelf carries a barcode: the field, and the
+                        scanner inside it, would only ever come up empty. */}
+                    {!usesPrintSearch(shelfType) && (
+                      <FormField
+                        control={form.control}
+                        name="barcode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t(itemsBarcodeLabelKey(shelfType))}
+                            </FormLabel>
+                            <FormControl>
+                              <div className="flex relative items-center">
+                                <Input
+                                  type="text"
+                                  className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
+                                  placeholder={t(
+                                    itemsBarcodePlaceholderKey(shelfType),
+                                  )}
+                                  {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    debounce(() =>
+                                      handleBarcodeChange(e.target.value),
+                                    );
+                                  }}
+                                />
+                                <ScannerButton
+                                  className="absolute right-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                                  onScan={(barcode) => {
+                                    form.setValue("barcode", barcode);
+                                    handleBarcodeChange(barcode);
+                                  }}
+                                />
                               </div>
-                            </div>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            </FormControl>
+                            {matches.length > 1 && (
+                              <div className="mt-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-fade-in shadow-xs">
+                                <span className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-2">
+                                  <SparklesIcon className="size-3.5" />
+                                  {t("items.multipleMatchesTitle")}
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {matches.map((m) => (
+                                    <Button
+                                      key={m.name}
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className={cn(
+                                        "text-xs px-3 py-1.5 h-auto rounded-lg font-semibold transition-all border select-none cursor-pointer",
+                                        selectedMatch?.name === m.name
+                                          ? "bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700 hover:text-white dark:bg-amber-500 dark:border-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:hover:border-amber-400 dark:hover:text-zinc-950"
+                                          : "bg-background border-border hover:bg-accent text-muted-foreground hover:text-foreground",
+                                      )}
+                                      onClick={() => {
+                                        setSelectedMatch(m);
+                                        setSuggestions(m.suggestions);
+                                        setNameSuggestion(m.name);
+                                        form.setValue("name", m.name);
+
+                                        // Overwrite cover and background for the new match selection
+                                        form.setValue(
+                                          "imageUrl",
+                                          m.coverUrl || null,
+                                          { shouldDirty: true },
+                                        );
+                                        form.setValue(
+                                          "backgroundImageUrl",
+                                          null,
+                                          { shouldDirty: true },
+                                        );
+
+                                        fetchMetadataPreview(
+                                          m.name,
+                                          form.getValues("barcode") || "",
+                                          true,
+                                        );
+                                      }}
+                                    >
+                                      {m.name}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     {/* Name */}
                     <FormField
@@ -1862,82 +2408,199 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Condition */}
-                    <FormField
-                      control={form.control}
-                      name="condition"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t("items.condition")}
-                          </FormLabel>
-                          <FormControl>
-                            <ToggleGroup
-                              size="sm"
-                              type="single"
-                              variant="outline"
-                              className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                              value={field.value}
-                              onValueChange={(value) => {
-                                // Radix allows clearing a single toggle — keep one grade selected.
-                                if (value) field.onChange(value);
-                              }}
-                            >
-                              {itemConditionsForShelfType(activeShelfType).map(
-                                (condition) => {
-                                const isActive = field.value === condition;
-                                return (
+                    {/* Loan note — who has this copy and since when */}
+                    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-zinc-50/40 dark:bg-zinc-950/20 p-3 sm:p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                          {t("items.loan.title")}
+                        </p>
+                        {(watchedLoanedTo || "").trim() ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs font-semibold text-muted-foreground"
+                            onClick={() => {
+                              form.setValue("loanedTo", "", {
+                                shouldDirty: true,
+                              });
+                              form.setValue("loanedAt", "", {
+                                shouldDirty: true,
+                              });
+                            }}
+                          >
+                            {t("items.loan.clear")}
+                          </Button>
+                        ) : null}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-snug -mt-1">
+                        {t("items.loan.hint")}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="loanedTo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[11px] font-semibold text-muted-foreground">
+                                {t("items.loan.to")}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder={t("items.loan.toPlaceholder")}
+                                  className="bg-background border-border/80 rounded-xl h-10"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="loanedAt"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[11px] font-semibold text-muted-foreground">
+                                {t("items.loan.since")}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  className="bg-background border-border/80 rounded-xl h-10"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Condition — hidden for TCG (finish is the copy axis). */}
+                    {shelfShowsItemCondition(activeShelfType) && (
+                      <FormField
+                        control={form.control}
+                        name="condition"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t("items.condition")}
+                            </FormLabel>
+                            <FormControl>
+                              <ToggleGroup
+                                size="sm"
+                                type="single"
+                                variant="outline"
+                                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                                value={field.value}
+                                onValueChange={(value) => {
+                                  // Radix allows clearing a single toggle — keep one grade selected.
+                                  if (value) field.onChange(value);
+                                }}
+                              >
+                                {itemConditionsForShelfType(
+                                  activeShelfType,
+                                ).map((condition) => {
+                                  const isActive = field.value === condition;
+                                  return (
+                                    <ToggleGroupItem
+                                      key={condition}
+                                      value={condition}
+                                      aria-label={condition}
+                                      className={cn(
+                                        "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
+                                        isActive
+                                          ? conditionToggleActiveClass(
+                                              condition,
+                                            )
+                                          : "bg-transparent hover:text-foreground",
+                                      )}
+                                    >
+                                      <ConditionIcon condition={condition} />
+                                      <span className="shrink-0 font-medium">
+                                        {t(`items.conditions.${condition}`)}
+                                      </span>
+                                    </ToggleGroupItem>
+                                  );
+                                })}
+                              </ToggleGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* One option is not a choice, so it is not offered. */}
+                    {variantOptions.length > 1 && (
+                      <FormField
+                        control={form.control}
+                        name="variant"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t("items.variant")}
+                            </FormLabel>
+                            <FormControl>
+                              <ToggleGroup
+                                size="sm"
+                                type="single"
+                                variant="outline"
+                                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                                value={field.value ?? ""}
+                                onValueChange={(value) =>
+                                  // Re-clicking the active option clears it, so a
+                                  // variant set by mistake can be taken back.
+                                  field.onChange(value ? value : null)
+                                }
+                              >
+                                {variantOptions.map((option) => (
                                   <ToggleGroupItem
-                                    key={condition}
-                                    value={condition}
-                                    aria-label={condition}
-                                    className={cn(
-                                      "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
-                                      isActive
-                                        ? conditionToggleActiveClass(condition)
-                                        : "bg-transparent hover:text-foreground",
-                                    )}
+                                    key={option}
+                                    value={option}
+                                    className="flex-1 gap-1.5 rounded-lg border-0 text-xs data-[state=on]:bg-white data-[state=on]:text-zinc-950 data-[state=on]:shadow-sm dark:data-[state=on]:bg-zinc-800 dark:data-[state=on]:text-zinc-50"
                                   >
-                                    <ConditionIcon condition={condition} />
                                     <span className="shrink-0 font-medium">
-                                      {t(`items.conditions.${condition}`)}
+                                      {localizeFinishLabel(option, t)}
                                     </span>
                                   </ToggleGroupItem>
-                                );
-                              },
-                              )}
-                            </ToggleGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                                ))}
+                              </ToggleGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
-                    {/* Premium Cover Selector inside General tab */}
-                    <FormField
-                      control={form.control}
-                      name="imageUrl"
-                      render={({ field }) => (
-                        <ImagePickerField
-                          value={field.value}
-                          onChange={field.onChange}
-                          onFileChange={handleLogoChange}
-                          label={t("items.cover")}
-                          placeholder="Pas de couverture"
-                          chooseImageText={t("items.editTabs.chooseImage")}
-                          enterUrlText={t("items.editTabs.enterUrl")}
-                          urlPlaceholderText={t(
-                            "items.editTabs.urlPlaceholder",
-                          )}
-                          suggestedImagesText="Images suggérées"
-                          invalidUrlText={t("items.invalidImage")}
-                          suggestions={finalImages}
-                          onViewMore={() => setActiveTab("poster")}
-                          aspectRatio={itemAspectRatio}
-                          contain={true}
-                        />
-                      )}
-                    />
+                    {/* Only when there is no cover tab to own this. */}
+                    {!hasCoverTab && (
+                      <FormField
+                        control={form.control}
+                        name="imageUrl"
+                        render={({ field }) => (
+                          <ImagePickerField
+                            value={field.value}
+                            onChange={field.onChange}
+                            onFileChange={handleLogoChange}
+                            label={t("items.cover")}
+                            placeholder="Pas de couverture"
+                            chooseImageText={t("items.editTabs.chooseImage")}
+                            enterUrlText={t("items.editTabs.enterUrl")}
+                            urlPlaceholderText={t(
+                              "items.editTabs.urlPlaceholder",
+                            )}
+                            suggestedImagesText="Images suggérées"
+                            invalidUrlText={t("items.invalidImage")}
+                            suggestions={finalImages}
+                            aspectRatio={itemAspectRatio}
+                            contain={true}
+                          />
+                        )}
+                      />
+                    )}
                   </div>
                 )}
 
@@ -1962,6 +2625,7 @@ export function ItemModal({
                                   toast.error(t("items.invalidImageFile"));
                                   return;
                                 }
+                                setUserPickedCoverUrl(null);
                                 form.setValue("imageUrl", file);
                                 toast.success(t("common.success"));
                               }
@@ -2041,31 +2705,33 @@ export function ItemModal({
                                 currentPosterPage * 12,
                               )
                               .map((img, i) => {
-                                const selectedCoverUrl = currentImageUrl;
+                                const selectedCoverUrl =
+                                  pendingUploadPreviewUrl ??
+                                  afficheSelectedCoverUrl;
                                 const isSelected =
-                                  pendingUploadPreviewUrl != null
-                                    ? img.url === pendingUploadPreviewUrl
-                                    : typeof selectedCoverUrl === "string" &&
-                                      urlsReferToSameLocalizedImage(
-                                        selectedCoverUrl,
-                                        img.url,
-                                      );
+                                  typeof selectedCoverUrl === "string" &&
+                                  urlsReferToSameLocalizedImage(
+                                    selectedCoverUrl,
+                                    img.url,
+                                  );
                                 return (
                                   <div
                                     key={i}
                                     role="button"
                                     tabIndex={0}
-                                    onClick={() =>
+                                    onClick={() => {
+                                      setUserPickedCoverUrl(img.url);
                                       form.setValue("imageUrl", img.url, {
                                         shouldDirty: true,
-                                      })
-                                    }
+                                      });
+                                    }}
                                     onKeyDown={(event) => {
                                       if (
                                         event.key === "Enter" ||
                                         event.key === " "
                                       ) {
                                         event.preventDefault();
+                                        setUserPickedCoverUrl(img.url);
                                         form.setValue("imageUrl", img.url, {
                                           shouldDirty: true,
                                         });
@@ -2080,7 +2746,7 @@ export function ItemModal({
                                     style={{ aspectRatio: itemAspectRatio }}
                                   >
                                     <RemoteImage
-                                      src={img.url}
+                                      src={displayUrlFor(img.url)}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
@@ -2093,9 +2759,45 @@ export function ItemModal({
                                         e.stopPropagation();
                                         setZoomImageUrl(img.url);
                                       }}
-                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer"
+                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Maximize2 className="size-3.5" />
+                                    </button>
+
+                                    {/* Hover Crop Button */}
+                                    <button
+                                      type="button"
+                                      title={t("items.cropImage.action")}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCropTarget({
+                                          url: img.url,
+                                          field: "imageUrl",
+                                        });
+                                      }}
+                                      className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
+                                    >
+                                      <Crop className="size-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      title={t("items.editTabs.removeImage")}
+                                      disabled={removingMediaUrl === img.url}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleRemoveMediaImage(
+                                          img.url,
+                                          "imageUrl",
+                                        );
+                                      }}
+                                      className="absolute bottom-20 right-2 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {removingMediaUrl === img.url ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="size-3.5" />
+                                      )}
                                     </button>
 
                                     {/* Selected overlay checkmark */}
@@ -2325,7 +3027,7 @@ export function ItemModal({
                                     )}
                                   >
                                     <RemoteImage
-                                      src={img.url}
+                                      src={displayUrlFor(img.url)}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -2338,9 +3040,45 @@ export function ItemModal({
                                         e.stopPropagation();
                                         setZoomImageUrl(img.url);
                                       }}
-                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer"
+                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Maximize2 className="size-3.5" />
+                                    </button>
+
+                                    {/* Hover Crop Button */}
+                                    <button
+                                      type="button"
+                                      title={t("items.cropImage.action")}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCropTarget({
+                                          url: img.url,
+                                          field: "backgroundImageUrl",
+                                        });
+                                      }}
+                                      className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
+                                    >
+                                      <Crop className="size-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      title={t("items.editTabs.removeImage")}
+                                      disabled={removingMediaUrl === img.url}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleRemoveMediaImage(
+                                          img.url,
+                                          "backgroundImageUrl",
+                                        );
+                                      }}
+                                      className="absolute bottom-20 right-2 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {removingMediaUrl === img.url ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="size-3.5" />
+                                      )}
                                     </button>
 
                                     {/* Selected overlay checkmark */}
@@ -2507,6 +3245,23 @@ export function ItemModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Reframing a gallery image also picks it: you cropped it to use it —
+          for the field it was cropped from, not always the cover. */}
+      <ImageCropModal
+        imageUrl={cropTarget?.url ?? null}
+        isOpen={!!cropTarget}
+        role={
+          cropTarget?.field === "backgroundImageUrl" ? "background" : "cover"
+        }
+        onClose={() => setCropTarget(null)}
+        onCropped={(url) => {
+          form.setValue(cropTarget?.field ?? "imageUrl", url, {
+            shouldDirty: true,
+          });
+          setCropVersion(Date.now());
+        }}
+      />
     </>
   );
 }

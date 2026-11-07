@@ -108,13 +108,7 @@
   {
     "id": 9,
     "type": "Console Portable",
-    "names": [
-      "Game Boy",
-      "gb",
-      "GB",
-      "Nintendo Game Boy",
-      "Nintendo GB"
-    ]
+    "names": ["Game Boy", "gb", "GB", "Nintendo Game Boy", "Nintendo GB"]
   },
   {
     "id": 10,
@@ -173,54 +167,27 @@
   {
     "id": 14,
     "type": "Console",
-    "names": [
-      "n64",
-      "Nintendo 64"
-    ]
+    "names": ["n64", "Nintendo 64"]
   },
   {
     "id": 15,
     "type": "Console Portable",
-    "names": [
-      "DS",
-      "DSi",
-      "nds",
-      "NDS",
-      "NDSi",
-      "Nintendo DS",
-      "Nintendo DSi"
-    ]
+    "names": ["DS", "DSi", "nds", "NDS", "NDSi", "Nintendo DS", "Nintendo DSi"]
   },
   {
     "id": 16,
     "type": "Console",
-    "names": [
-      "Nintendo Wii",
-      "Nintendo WII",
-      "wii",
-      "Wii",
-      "WII"
-    ]
+    "names": ["Nintendo Wii", "Nintendo WII", "wii", "Wii", "WII"]
   },
   {
     "id": 17,
     "type": "Console Portable",
-    "names": [
-      "2DS",
-      "3DS",
-      "Nintendo 3DS"
-    ]
+    "names": ["2DS", "3DS", "Nintendo 3DS"]
   },
   {
     "id": 18,
     "type": "Console",
-    "names": [
-      "Nintendo Wii U",
-      "Nintendo WII-U",
-      "Wii U",
-      "WII-U",
-      "wiiu"
-    ]
+    "names": ["Nintendo Wii U", "Nintendo WII-U", "Wii U", "WII-U", "wiiu"]
   },
   {
     "id": 19,
@@ -242,42 +209,22 @@
   {
     "id": 20,
     "type": "Console",
-    "names": [
-      "Mega-CD",
-      "Sega CD",
-      "segacd"
-    ]
+    "names": ["Mega-CD", "Sega CD", "segacd"]
   },
   {
     "id": 21,
     "type": "Console Portable",
-    "names": [
-      "Game Gear",
-      "gamegear",
-      "GG",
-      "Sega Game Gear",
-      "Sega GG"
-    ]
+    "names": ["Game Gear", "gamegear", "GG", "Sega Game Gear", "Sega GG"]
   },
   {
     "id": 22,
     "type": "Console",
-    "names": [
-      "saturn",
-      "Saturn",
-      "Sega Saturn"
-    ]
+    "names": ["saturn", "Saturn", "Sega Saturn"]
   },
   {
     "id": 23,
     "type": "Console",
-    "names": [
-      "DC",
-      "dreamcast",
-      "Dreamcast",
-      "Sega DC",
-      "Sega Dreamcast"
-    ]
+    "names": ["DC", "dreamcast", "Dreamcast", "Sega DC", "Sega Dreamcast"]
   },
   {
     "id": 25,
@@ -294,33 +241,17 @@
   {
     "id": 26,
     "type": "Console",
-    "names": [
-      "2600",
-      "A2600",
-      "Atari 2600",
-      "atari2600",
-      "Atari2600"
-    ]
+    "names": ["2600", "A2600", "Atari 2600", "atari2600", "Atari2600"]
   },
   {
     "id": 27,
     "type": "Console",
-    "names": [
-      "Atari Jaguar",
-      "atarijaguar",
-      "jaguar",
-      "Jaguar"
-    ]
+    "names": ["Atari Jaguar", "atarijaguar", "jaguar", "Jaguar"]
   },
   {
     "id": 28,
     "type": "Console Portable",
-    "names": [
-      "Atari Lynx",
-      "atarilynx",
-      "lynx",
-      "Lynx"
-    ]
+    "names": ["Atari Lynx", "atarilynx", "lynx", "Lynx"]
   },
   {
     "id": 29,
@@ -336,11 +267,7 @@
   {
     "id": 30,
     "type": "Console Portable",
-    "names": [
-      "N-Gage",
-      "ngage",
-      "Nokia N-Gage"
-    ]
+    "names": ["N-Gage", "ngage", "Nokia N-Gage"]
   },
   {
     "id": 31,
@@ -357,13 +284,7 @@
   {
     "id": 32,
     "type": "Console",
-    "names": [
-      "Microsoft Xbox",
-      "Microsoft XBOX",
-      "xbox",
-      "Xbox",
-      "XBOX"
-    ]
+    "names": ["Microsoft Xbox", "Microsoft XBOX", "xbox", "Xbox", "XBOX"]
   },
   {
     "id": 33,
@@ -388,12 +309,7 @@
   {
     "id": 36,
     "type": "Ordinateur",
-    "names": [
-      "Acorn Atom",
-      "Acorn ATOM",
-      "Atom",
-      "ATOM"
-    ]
+    "names": ["Acorn Atom", "Acorn ATOM", "Atom", "ATOM"]
   },
   {
     "id": 37,
@@ -421,22 +337,12 @@
   {
     "id": 40,
     "type": "Console",
-    "names": [
-      "5200",
-      "A5200",
-      "Atari 5200",
-      "atari5200"
-    ]
+    "names": ["5200", "A5200", "Atari 5200", "atari5200"]
   },
   {
     "id": 41,
     "type": "Console",
-    "names": [
-      "7800",
-      "A7800",
-      "Atari 7800",
-      "atari7800"
-    ]
+    "names": ["7800", "A7800", "Atari 7800", "atari7800"]
   },
   {
     "id": 42,
@@ -481,11 +387,7 @@
   {
     "id": 44,
     "type": "Console",
-    "names": [
-      "astrocade",
-      "Astrocade",
-      "Bally Astrocade"
-    ]
+    "names": ["astrocade", "Astrocade", "Bally Astrocade"]
   },
   {
     "id": 45,
@@ -527,11 +429,7 @@
   {
     "id": 48,
     "type": "Console",
-    "names": [
-      "colecovision",
-      "Colecovision",
-      "ColecoVision"
-    ]
+    "names": ["colecovision", "Colecovision", "ColecoVision"]
   },
   {
     "id": 49,
@@ -729,9 +627,7 @@
   {
     "id": 63,
     "type": "Smartphone",
-    "names": [
-      "Android"
-    ]
+    "names": ["Android"]
   },
   {
     "id": 64,
@@ -811,12 +707,7 @@
   {
     "id": 66,
     "type": "Ordinateur",
-    "names": [
-      "c64",
-      "C64",
-      "Commodore 128",
-      "Commodore 64"
-    ]
+    "names": ["c64", "C64", "Commodore 128", "Commodore 64"]
   },
   {
     "id": 67,
@@ -831,11 +722,7 @@
   {
     "id": 68,
     "type": "Arcade",
-    "names": [
-      "Neo-Geo MVS",
-      "SNK Neo Geo MVS",
-      "SNK Neo-Geo MVS"
-    ]
+    "names": ["Neo-Geo MVS", "SNK Neo Geo MVS", "SNK Neo-Geo MVS"]
   },
   {
     "id": 69,
@@ -869,31 +756,17 @@
   {
     "id": 72,
     "type": "Console",
-    "names": [
-      "NEC PC-FX",
-      "PC-FX",
-      "pcfx"
-    ]
+    "names": ["NEC PC-FX", "PC-FX", "pcfx"]
   },
   {
     "id": 73,
     "type": "Ordinateur",
-    "names": [
-      "c64",
-      "Commodore Vic-20",
-      "Commodore VIC-20",
-      "Vic-20",
-      "vic20"
-    ]
+    "names": ["c64", "Commodore Vic-20", "Commodore VIC-20", "Vic-20", "vic20"]
   },
   {
     "id": 74,
     "type": "Console",
-    "names": [
-      "Casio PV-1000",
-      "PV-1000",
-      "pv1000"
-    ]
+    "names": ["Casio PV-1000", "PV-1000", "pv1000"]
   },
   {
     "id": 75,
@@ -939,32 +812,17 @@
   {
     "id": 77,
     "type": "Ordinateur",
-    "names": [
-      "Sinclair ZX-81",
-      "Sinclair ZX81",
-      "ZX-81",
-      "zx81",
-      "ZX81"
-    ]
+    "names": ["Sinclair ZX-81", "Sinclair ZX81", "ZX-81", "zx81", "ZX81"]
   },
   {
     "id": 78,
     "type": "Console Portable",
-    "names": [
-      "Adventure Vision",
-      "Entex Adventure Vision"
-    ]
+    "names": ["Adventure Vision", "Entex Adventure Vision"]
   },
   {
     "id": 79,
     "type": "Ordinateur",
-    "names": [
-      "Sharp X68000",
-      "Sharp X68k",
-      "x68000",
-      "X68000",
-      "X68k"
-    ]
+    "names": ["Sharp X68000", "Sharp X68k", "x68000", "X68000", "X68k"]
   },
   {
     "id": 80,
@@ -982,11 +840,7 @@
   {
     "id": 81,
     "type": "Console",
-    "names": [
-      "Action Max",
-      "World of Wonder Action Max",
-      "WoW Action Max"
-    ]
+    "names": ["Action Max", "World of Wonder Action Max", "WoW Action Max"]
   },
   {
     "id": 82,
@@ -1006,26 +860,17 @@
   {
     "id": 83,
     "type": "Ordinateur",
-    "names": [
-      "Aamber Pegasus"
-    ]
+    "names": ["Aamber Pegasus"]
   },
   {
     "id": 84,
     "type": "Ordinateur",
-    "names": [
-      "Acorn Archimedes",
-      "archimedes",
-      "Archimedes"
-    ]
+    "names": ["Acorn Archimedes", "archimedes", "Archimedes"]
   },
   {
     "id": 85,
     "type": "Ordinateur",
-    "names": [
-      "Acorn Electron",
-      "Electron"
-    ]
+    "names": ["Acorn Electron", "Electron"]
   },
   {
     "id": 86,
@@ -1079,21 +924,12 @@
   {
     "id": 89,
     "type": "Ordinateur",
-    "names": [
-      "Adam",
-      "Coleco Adam",
-      "Coleco ADAM"
-    ]
+    "names": ["Adam", "Coleco Adam", "Coleco ADAM"]
   },
   {
     "id": 90,
     "type": "Console Portable",
-    "names": [
-      "Cougar Boy",
-      "Creatronic Mega Duck",
-      "Mega Duck",
-      "megaduck"
-    ]
+    "names": ["Cougar Boy", "Creatronic Mega Duck", "Mega Duck", "megaduck"]
   },
   {
     "id": 91,
@@ -1187,19 +1023,12 @@
   {
     "id": 95,
     "type": "Console Portable",
-    "names": [
-      "Epoch Game Pocket Computer",
-      "Game Pocket Computer"
-    ]
+    "names": ["Epoch Game Pocket Computer", "Game Pocket Computer"]
   },
   {
     "id": 96,
     "type": "Ordinateur",
-    "names": [
-      "Exelvision EXL 100",
-      "EXL 100",
-      "exl100"
-    ]
+    "names": ["Exelvision EXL 100", "EXL 100", "exl100"]
   },
   {
     "id": 97,
@@ -1218,11 +1047,7 @@
   {
     "id": 98,
     "type": "Console",
-    "names": [
-      "Casio Loopy",
-      "loopy",
-      "Loopy"
-    ]
+    "names": ["Casio Loopy", "loopy", "Loopy"]
   },
   {
     "id": 99,
@@ -1251,21 +1076,12 @@
   {
     "id": 101,
     "type": "Console Portable",
-    "names": [
-      "Game Park 32",
-      "GamePark 32",
-      "gp32",
-      "GP32"
-    ]
+    "names": ["Game Park 32", "GamePark 32", "gp32", "GP32"]
   },
   {
     "id": 102,
     "type": "Console",
-    "names": [
-      "GCE Vectrex",
-      "vectrex",
-      "Vectrex"
-    ]
+    "names": ["GCE Vectrex", "vectrex", "Vectrex"]
   },
   {
     "id": 103,
@@ -1388,12 +1204,7 @@
   {
     "id": 108,
     "type": "Accessoire",
-    "names": [
-      "Bandai Sufami Turbo",
-      "snes",
-      "sufami",
-      "Sufami Turbo"
-    ]
+    "names": ["Bandai Sufami Turbo", "snes", "sufami", "Sufami Turbo"]
   },
   {
     "id": 109,
@@ -1413,9 +1224,7 @@
   {
     "id": 110,
     "type": "Autres",
-    "names": [
-      "Nintendo Power"
-    ]
+    "names": ["Nintendo Power"]
   },
   {
     "id": 111,
@@ -1453,14 +1262,7 @@
   {
     "id": 113,
     "type": "Ordinateur",
-    "names": [
-      "Microsoft MSX",
-      "Microsoft MSX1",
-      "msx",
-      "MSX",
-      "msx1",
-      "MSX1"
-    ]
+    "names": ["Microsoft MSX", "Microsoft MSX1", "msx", "MSX", "msx1", "MSX1"]
   },
   {
     "id": 114,
@@ -1499,12 +1301,7 @@
   {
     "id": 116,
     "type": "Ordinateur",
-    "names": [
-      "Microsoft MSX2",
-      "msx",
-      "msx2",
-      "MSX2"
-    ]
+    "names": ["Microsoft MSX2", "msx", "msx2", "MSX2"]
   },
   {
     "id": 117,
@@ -1546,19 +1343,12 @@
   {
     "id": 120,
     "type": "Console",
-    "names": [
-      "V.Smile",
-      "vsmile",
-      "VTech V.Smile"
-    ]
+    "names": ["V.Smile", "vsmile", "VTech V.Smile"]
   },
   {
     "id": 121,
     "type": "Console Portable",
-    "names": [
-      "Game.com",
-      "Tiger Game.com"
-    ]
+    "names": ["Game.com", "Tiger Game.com"]
   },
   {
     "id": 122,
@@ -1575,28 +1365,17 @@
   {
     "id": 123,
     "type": "Machine Virtuelle",
-    "names": [
-      "residualvm",
-      "ResidualVM",
-      "scummvm",
-      "ScummVM"
-    ]
+    "names": ["residualvm", "ResidualVM", "scummvm", "ScummVM"]
   },
   {
     "id": 124,
     "type": "Ordinateur",
-    "names": [
-      "Mikrosha",
-      "Mikrosha Computer",
-      "Radio-86RK Mikrosha"
-    ]
+    "names": ["Mikrosha", "Mikrosha Computer", "Radio-86RK Mikrosha"]
   },
   {
     "id": 125,
     "type": "Ordinateur",
-    "names": [
-      "Pecom 64"
-    ]
+    "names": ["Pecom 64"]
   },
   {
     "id": 126,
@@ -1651,12 +1430,7 @@
   {
     "id": 130,
     "type": "Console",
-    "names": [
-      "amiga",
-      "Amiga CD32",
-      "amigacd32",
-      "Commodore Amiga CD32"
-    ]
+    "names": ["amiga", "Amiga CD32", "amigacd32", "Commodore Amiga CD32"]
   },
   {
     "id": 131,
@@ -1683,13 +1457,7 @@
   {
     "id": 133,
     "type": "Console",
-    "names": [
-      "CD-i",
-      "CD-I",
-      "cdi",
-      "Philips CD-i",
-      "Philips CD-I"
-    ]
+    "names": ["CD-i", "CD-I", "cdi", "Philips CD-i", "Philips CD-I"]
   },
   {
     "id": 134,
@@ -1804,12 +1572,7 @@
   {
     "id": 139,
     "type": "Console",
-    "names": [
-      "amiga",
-      "Amiga CD32 (hack)",
-      "amigacd32",
-      "Commodore Amiga CD32"
-    ]
+    "names": ["amiga", "Amiga CD32 (hack)", "amigacd32", "Commodore Amiga CD32"]
   },
   {
     "id": 141,
@@ -1861,9 +1624,7 @@
   {
     "id": 143,
     "type": "Flipper",
-    "names": [
-      "Pinball FX2"
-    ]
+    "names": ["Pinball FX2"]
   },
   {
     "id": 144,
@@ -1882,9 +1643,7 @@
   {
     "id": 145,
     "type": "Ordinateur",
-    "names": [
-      "Linux"
-    ]
+    "names": ["Linux"]
   },
   {
     "id": 146,
@@ -2662,38 +2421,27 @@
   {
     "id": 197,
     "type": "Flipper",
-    "names": [
-      "Flipper",
-      "Pinball"
-    ]
+    "names": ["Flipper", "Pinball"]
   },
   {
     "id": 198,
     "type": "Flipper",
-    "names": [
-      "Visual Pinball"
-    ]
+    "names": ["Visual Pinball"]
   },
   {
     "id": 199,
     "type": "Flipper",
-    "names": [
-      "Future Pinball"
-    ]
+    "names": ["Future Pinball"]
   },
   {
     "id": 200,
     "type": "Flipper",
-    "names": [
-      "the Pinball Arcade"
-    ]
+    "names": ["the Pinball Arcade"]
   },
   {
     "id": 201,
     "type": "Flipper",
-    "names": [
-      "Pinball FX3"
-    ]
+    "names": ["Pinball FX3"]
   },
   {
     "id": 202,
@@ -2732,29 +2480,17 @@
   {
     "id": 206,
     "type": "Machine Virtuelle",
-    "names": [
-      "lutro",
-      "Lutro"
-    ]
+    "names": ["lutro", "Lutro"]
   },
   {
     "id": 207,
     "type": "Console Portable",
-    "names": [
-      "supervision",
-      "Watara Supervision"
-    ]
+    "names": ["supervision", "Watara Supervision"]
   },
   {
     "id": 208,
     "type": "Ordinateur",
-    "names": [
-      "NEC PC-9801",
-      "pc98",
-      "Pc98",
-      "PC98",
-      "PC9801"
-    ]
+    "names": ["NEC PC-9801", "pc98", "Pc98", "PC98", "PC9801"]
   },
   {
     "id": 209,
@@ -2774,121 +2510,72 @@
   {
     "id": 210,
     "type": "Console",
-    "names": [
-      "MSU-1",
-      "SNES MSU-1",
-      "Super Nintendo MSU-1"
-    ]
+    "names": ["MSU-1", "SNES MSU-1", "Super Nintendo MSU-1"]
   },
   {
     "id": 211,
     "type": "Console Portable",
-    "names": [
-      "pokemini",
-      "PokeMini",
-      "Pokemon mini",
-      "Pokemon Mini"
-    ]
+    "names": ["pokemini", "PokeMini", "Pokemon mini", "Pokemon Mini"]
   },
   {
     "id": 213,
     "type": "Ordinateur",
-    "names": [
-      "MGT SAM Coupe",
-      "SAM Coupe",
-      "samcoupe"
-    ]
+    "names": ["MGT SAM Coupe", "SAM Coupe", "samcoupe"]
   },
   {
     "id": 214,
     "type": "Machine Virtuelle",
-    "names": [
-      "openbor",
-      "OpenBOR"
-    ]
+    "names": ["openbor", "OpenBOR"]
   },
   {
     "id": 215,
     "type": "Machine Virtuelle",
-    "names": [
-      "Z-Machine",
-      "zmachine"
-    ]
+    "names": ["Z-Machine", "zmachine"]
   },
   {
     "id": 216,
     "type": "Console",
-    "names": [
-      "uzebox",
-      "Uzebox"
-    ]
+    "names": ["uzebox", "Uzebox"]
   },
   {
     "id": 217,
     "type": "Ordinateur",
-    "names": [
-      "Apple IIGS",
-      "apple2gs",
-      "appleIIgs"
-    ]
+    "names": ["Apple IIGS", "apple2gs", "appleIIgs"]
   },
   {
     "id": 218,
     "type": "Ordinateur",
-    "names": [
-      "spectravideo",
-      "Spectravideo"
-    ]
+    "names": ["spectravideo", "Spectravideo"]
   },
   {
     "id": 219,
     "type": "Ordinateur",
-    "names": [
-      "palm",
-      "Palm OS",
-      "palmos"
-    ]
+    "names": ["palm", "Palm OS", "palmos"]
   },
   {
     "id": 220,
     "type": "Ordinateur",
-    "names": [
-      "Sharp X1",
-      "x1",
-      "X1"
-    ]
+    "names": ["Sharp X1", "x1", "X1"]
   },
   {
     "id": 221,
     "type": "Ordinateur",
-    "names": [
-      "NEC PC-8801",
-      "pc88"
-    ]
+    "names": ["NEC PC-8801", "pc88"]
   },
   {
     "id": 222,
     "type": "Machine Virtuelle",
-    "names": [
-      "TIC-80",
-      "tic80"
-    ]
+    "names": ["TIC-80", "tic80"]
   },
   {
     "id": 223,
     "type": "Machine Virtuelle",
-    "names": [
-      "solarus",
-      "Solarus"
-    ]
+    "names": ["solarus", "Solarus"]
   },
   {
     "id": 225,
     "type": "Console",
-    "names": [
-      "Nintendo Switch",
-      "Switch"
-    ]
+    "names": ["Nintendo Switch", "Switch"]
   },
   {
     "id": 227,
@@ -2926,129 +2613,82 @@
   {
     "id": 231,
     "type": "Machine Virtuelle",
-    "names": [
-      "easyrpg",
-      "EasyRPG"
-    ]
+    "names": ["easyrpg", "EasyRPG"]
   },
   {
     "id": 234,
     "type": "Machine Virtuelle",
-    "names": [
-      "Pico-8",
-      "pico8"
-    ]
+    "names": ["Pico-8", "pico8"]
   },
   {
     "id": 237,
     "type": "Console Portable",
-    "names": [
-      "pcv2",
-      "Pocket Challenge V2"
-    ]
+    "names": ["pcv2", "Pocket Challenge V2"]
   },
   {
     "id": 240,
     "type": "Ordinateur",
-    "names": [
-      "PET"
-    ]
+    "names": ["PET"]
   },
   {
     "id": 241,
     "type": "Console",
-    "names": [
-      "creativision",
-      "CreatiVision",
-      "crvision"
-    ]
+    "names": ["creativision", "CreatiVision", "crvision"]
   },
   {
     "id": 244,
     "type": "Machine Virtuelle",
-    "names": [
-      "LowRes NX",
-      "lowresnx"
-    ]
+    "names": ["LowRes NX", "lowresnx"]
   },
   {
     "id": 250,
     "type": "Console",
-    "names": [
-      "pico",
-      "Sega Pico"
-    ]
+    "names": ["pico", "Sega Pico"]
   },
   {
     "id": 253,
     "type": "Ordinateur",
-    "names": [
-      "FM Towns",
-      "fmtmarty"
-    ]
+    "names": ["FM Towns", "fmtmarty"]
   },
   {
     "id": 258,
     "type": "Arcade",
-    "names": [
-      "Hikaru"
-    ]
+    "names": ["Hikaru"]
   },
   {
     "id": 261,
     "type": "Ordinateur",
-    "names": [
-      "Philips VG 5000",
-      "vg5000"
-    ]
+    "names": ["Philips VG 5000", "vg5000"]
   },
   {
     "id": 262,
     "type": "Machine Virtuelle",
-    "names": [
-      "wasm",
-      "WASM-4",
-      "wasm4"
-    ]
+    "names": ["wasm", "WASM-4", "wasm4"]
   },
   {
     "id": 263,
     "type": "Console Portable",
-    "names": [
-      "arduboy",
-      "Arduboy"
-    ]
+    "names": ["arduboy", "Arduboy"]
   },
   {
     "id": 266,
     "type": "Console Portable",
-    "names": [
-      "Gamate"
-    ]
+    "names": ["Gamate"]
   },
   {
     "id": 269,
     "type": "Emulation Arcade",
-    "names": [
-      "Tekno Parrot",
-      "TeknoParrot"
-    ]
+    "names": ["Tekno Parrot", "TeknoParrot"]
   },
   {
     "id": 272,
     "type": "Machine Virtuelle",
-    "names": [
-      "vircon32",
-      "Vircon32"
-    ]
+    "names": ["vircon32", "Vircon32"]
   },
   {
     "id": 275,
     "type": "Machine Virtuelle",
-    "names": [
-      "voxatron",
-      "Voxatron"
-    ]
+    "names": ["voxatron", "Voxatron"]
   },
   {
     "id": 278,
@@ -3065,10 +2705,7 @@
   {
     "id": 281,
     "type": "Console",
-    "names": [
-      "VC 4000",
-      "Video Computer 4000"
-    ]
+    "names": ["VC 4000", "Video Computer 4000"]
   },
   {
     "id": 284,
@@ -3085,33 +2722,22 @@
   {
     "id": 287,
     "type": "Ordinateur",
-    "names": [
-      "p2000t",
-      "P2000T"
-    ]
+    "names": ["p2000t", "P2000T"]
   },
   {
     "id": 290,
     "type": "Machine Virtuelle",
-    "names": [
-      "Port",
-      "PrBoom"
-    ]
+    "names": ["Port", "PrBoom"]
   },
   {
     "id": 293,
     "type": "Machine Virtuelle",
-    "names": [
-      "b",
-      "Tamagotchi"
-    ]
+    "names": ["b", "Tamagotchi"]
   },
   {
     "id": 296,
     "type": "Console",
-    "names": [
-      "Switch 2"
-    ]
+    "names": ["Switch 2"]
   },
   {
     "id": 299,
@@ -3141,49 +2767,32 @@
   {
     "id": 301,
     "type": "Console",
-    "names": [
-      "MSU-MD"
-    ]
+    "names": ["MSU-MD"]
   },
   {
     "id": 302,
     "type": "Smartphone",
-    "names": [
-      "j2me",
-      "J2ME",
-      "Java 2 MicroEdition"
-    ]
+    "names": ["j2me", "J2ME", "Java 2 MicroEdition"]
   },
   {
     "id": 305,
     "type": "Console",
-    "names": [
-      "My Vision",
-      "myvision"
-    ]
+    "names": ["My Vision", "myvision"]
   },
   {
     "id": 308,
     "type": "Console",
-    "names": [
-      "V.Smile Pro"
-    ]
+    "names": ["V.Smile Pro"]
   },
   {
     "id": 311,
     "type": "Ordinateur",
-    "names": [
-      "alice",
-      "Alice"
-    ]
+    "names": ["alice", "Alice"]
   },
   {
     "id": 314,
     "type": "Ordinateur",
-    "names": [
-      "Sharp MZ",
-      "sharpmz"
-    ]
+    "names": ["Sharp MZ", "sharpmz"]
   },
   {
     "id": 317,
@@ -3200,8 +2809,6 @@
   {
     "id": 320,
     "type": "Ordinateur",
-    "names": [
-      "VZ200 / Laser310"
-    ]
+    "names": ["VZ200 / Laser310"]
   }
 ]

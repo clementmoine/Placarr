@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -39,6 +39,34 @@ enum AttachmentType {
   image
   logo
   audio
+  // Not a picture of the object: the alpha layer saying where a card's
+  // holographic effect applies. Every gallery filters attachments through an
+  // allow-list of display types, so this one stays out of them by construction.
+  foilMask
+}
+
+/// Physical presence of a shelf copy relative to the active collection.
+/// `past` = left the everyday shelf (sold, discarded, …) but always recoverable.
+enum ItemPresence {
+  owned
+  away
+  wanted
+  past
+}
+
+/// Why a copy is not on the shelf. Temporary reasons map to `away`;
+/// definitive reasons map to `past` (still recoverable via « Récupéré »).
+enum AbsenceReason {
+  loaned
+  ordered
+  repair
+  rental
+  sold
+  exchanged
+  gifted
+  discarded
+  lost
+  stolen
 }
 
 model Attachment {
@@ -68,7 +96,9 @@ model Attachment {
   platformKey     String?
   // Image metrics measured once at enrichment (sharp) and persisted so the
   // read-time cover ranking can sort by resolution + exposure without
-  // re-decoding files on every page render. See @/lib/media/attachmentDisplayScore.
+  // re-decoding files on every page render. width/height are the trimmed
+  // content box when neutral margins pad the canvas (not raw file size).
+  // See @/core/enrich/media/imageMetrics + attachmentDisplayScore.
   width           Int?
   height          Int?
   meanLuminance   Float?
@@ -147,8 +177,10 @@ model Shelf {
   imageUrl   String?
   color      String?
   type       Type
-  isPublic   Boolean  @default(true)
   cardFormat String   @default("default")
+  /// Optional catalogue pack scope (`data/<pack>/`) — checklist / Sync affinity
+  /// without inferring solely from item printKeys.
+  dataPack   String?
   userId     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -157,6 +189,7 @@ model Shelf {
 
   @@index([userId])
   @@index([slug])
+  @@index([dataPack])
 }
 
 model Author {
@@ -197,33 +230,115 @@ model Metadata {
 }
 
 model Item {
-  id                 String          @id @default(cuid())
-  name               String
-  slug               String?
-  description        String?
-  imageUrl           String?
-  barcode            String?
-  condition          Condition
-  metadataId         String?
-  shelfId            String
-  userId             String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  backgroundImageUrl String?
-  metadataRefreshStartedAt DateTime?
-  metadataRefreshGeneration Int @default(0)
-  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shelf              Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
-  metadata           Metadata?       @relation(fields: [metadataId], references: [id])
-  fieldEvidence      FieldEvidence[]
-  priceOffers        PriceOffer[]
-  loans              LoanRequest[]
+  id                        String          @id @default(cuid())
+  name                      String
+  slug                      String?
+  description               String?
+  imageUrl                  String?
+  barcode                   String?
+  // Identity anchor for objects that never carry a barcode — a trading card is
+  // identified by what is printed on it (`lorcana:9-1`). Kept separate from
+  // `barcode` on purpose: a column holding something that is not a barcode
+  // costs more in the long run than the extra column. See core/identify/printKey.
+  printKey                  String?
+  // Which expansion this copy was collected as (`s5`, `1`, `part1`). Set-scoped
+  // checklists need it: Naruto reuses one printKey across series, so owning
+  // NI-049 for S5 must not auto-complete S1. Null = legacy / unknown — the
+  // checklist still counts the printKey in every set that lists it.
+  setCode                   String?
+  // Which variant of the object this copy is: a card's finish (foil, reverse),
+  // eventually a game's completeness. Deliberately generic and free text —
+  // every media type has variants and the vocabulary belongs to the provider,
+  // not to an enum here. Distinct from `condition`, which describes the copy's
+  // health rather than which thing it is. Options come from the metadata's
+  // `variant-option` facts. See core/enrich/variants.
+  variant                   String?
+  // Which language this copy is printed in, as a lowercase code (`fr`, `ja`).
+  // Part of what the copy IS, not of the print's identity: providers give one
+  // key per card and several localizations under it — TCGdex answers `2011bw-1`
+  // for both Snivy and Vipélierre. 898 Naruto keys and 19673 Pokémon keys carry
+  // titles in more than one language, and without this column the French and
+  // the Japanese copy of the same number were indistinguishable — same slug,
+  // and the second one got a `-copy-N` suffix claiming it duplicated the first.
+  // Null means unknown, never "the default one".
+  language                  String?
+  condition                 Condition
+  metadataId                String?
+  shelfId                   String
+  userId                    String
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  backgroundImageUrl        String?
+  metadataRefreshStartedAt  DateTime?
+  metadataRefreshGeneration Int             @default(0)
+  // Shelf presence — replaces the old loanedTo/loanedAt personal-loan note.
+  // See core/collect/itemAbsence.ts.
+  presence                  ItemPresence    @default(owned)
+  absenceReason             AbsenceReason?
+  absenceSince              DateTime?
+  absenceRecipient          String?
+  absenceSource             String?
+  absenceCarrier            String?
+  absenceTracking           String?
+  absenceOrderRef           String?
+  absenceOrderUrl           String?
+  absenceNote               String?
+  /// Sale price in integer cents (null when unset / non-sale reasons).
+  absencePriceCents         Int?
+  absenceExpectedAt         DateTime?
+  user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shelf                     Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  metadata                  Metadata?       @relation(fields: [metadataId], references: [id])
+  fieldEvidence             FieldEvidence[]
+  priceOffers               PriceOffer[]
+  presenceEvents            ItemPresenceEvent[]
+  tradeLinksOut             ItemTradeLink[] @relation("TradeOut")
+  tradeLinksIn              ItemTradeLink[] @relation("TradeIn")
 
   @@index([shelfId])
   @@index([userId])
   @@index([metadataId])
   @@index([barcode])
+  @@index([printKey])
+  @@index([printKey, setCode, variant, language])
+  @@index([printKey, variant, language])
   @@index([slug])
+  @@index([presence])
+  @@index([presence, absenceReason])
+  @@index([absenceRecipient])
+}
+
+/// Lifecycle trace for shelf presence (acquired → departed → returned / recovered…).
+model ItemPresenceEvent {
+  id           String         @id @default(cuid())
+  itemId       String
+  at           DateTime       @default(now())
+  fromPresence ItemPresence
+  toPresence   ItemPresence
+  reason       AbsenceReason?
+  /// acquired | departed | returned | cancelled_to_wanted | received_from_order | recovered
+  kind         String
+  snapshot     Json?
+  item         Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, at])
+  @@index([kind, at])
+}
+
+/// Bidirectional exchange edge between two shelf items (troc).
+model ItemTradeLink {
+  id        String   @id @default(cuid())
+  itemOutId String
+  itemInId  String
+  note      String?
+  eventId   String?
+  createdAt DateTime @default(now())
+  itemOut   Item     @relation("TradeOut", fields: [itemOutId], references: [id], onDelete: Cascade)
+  itemIn    Item     @relation("TradeIn", fields: [itemInId], references: [id], onDelete: Cascade)
+
+  @@unique([itemOutId, itemInId])
+  @@index([itemOutId])
+  @@index([itemInId])
 }
 
 model RawName {
@@ -237,30 +352,30 @@ model RawName {
 }
 
 model BarcodeCache {
-  id               Int             @id @default(autoincrement())
-  barcode          String          @unique
-  provider         String
-  platformKey      String?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  shelfType        String?
-  mediaFormat      String?
+  id                       Int             @id @default(autoincrement())
+  barcode                  String          @unique
+  provider                 String
+  platformKey              String?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  shelfType                String?
+  mediaFormat              String?
   // The compile step's final, structured title decision, persisted verbatim so a
   // cache read reuses it instead of lossily re-deriving (which stripped integral
   // edition terms like "Gottlieb Pinball Classics" → "Gottlieb Pinball"). Null on
   // pre-migration rows, which fall back to re-derivation.
-  cleanName        String?
-  displayName      String?
-  edition          String?
-  priceLastUpdated DateTime?
-  priceNew         Int?
-  priceUsed        Int?
-  priceUsedCIB     Int?
-  observations           Json?
+  cleanName                String?
+  displayName              String?
+  edition                  String?
+  priceLastUpdated         DateTime?
+  priceNew                 Int?
+  priceUsed                Int?
+  priceUsedCIB             Int?
+  observations             Json?
   observationSchemaVersion String?
-  rawNames         RawName[]
-  fieldEvidence    FieldEvidence[]
-  priceOffers      PriceOffer[]
+  rawNames                 RawName[]
+  fieldEvidence            FieldEvidence[]
+  priceOffers              PriceOffer[]
 }
 
 model UnresolvedBarcodeScan {
@@ -282,18 +397,16 @@ model UnresolvedBarcodeScan {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  name           String?
-  email          String?       @unique
-  image          String?
-  role           UserRole      @default(guest)
-  password       String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  items          Item[]
-  ownedLoans     LoanRequest[] @relation("OwnedLoans")
-  requestedLoans LoanRequest[] @relation("RequestedLoans")
-  shelves        Shelf[]
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  image     String?
+  role      UserRole @default(guest)
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     Item[]
+  shelves   Shelf[]
 }
 
 model Setting {
@@ -301,25 +414,6 @@ model Setting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model LoanRequest {
-  id          String   @id @default(cuid())
-  itemId      String
-  requesterId String
-  ownerId     String
-  status      String   @default("PENDING")
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  owner       User     @relation("OwnedLoans", fields: [ownerId], references: [id], onDelete: Cascade)
-  requester   User     @relation("RequestedLoans", fields: [requesterId], references: [id], onDelete: Cascade)
-  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@index([ownerId])
-  @@index([requesterId])
-  @@index([status])
 }
 
 /// Out-of-process work queue — claimed by `pnpm worker`, never run inside Next `after()`.
@@ -360,4 +454,45 @@ model ProviderEvidence {
   @@unique([providerId, url])
   @@index([expiresAt])
   @@index([providerId, kind])
+}
+
+/// Learned provider successes at catalogue scope (not per-item).
+/// A price/cover/face win on one shelf item generalizes to the corpus scope.
+model ProviderAffinity {
+  id           String   @id @default(cuid())
+  /// `type:<shelfType>` | `pack:<dataPack>` — never an item id.
+  scopeKey     String
+  /// price | cover | faces | identify | catalogRefresh
+  capability   String
+  providerId   String
+  successCount Int      @default(1)
+  confidence   Float    @default(0.5)
+  lastAt       DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([scopeKey, capability, providerId])
+  @@index([scopeKey, capability, successCount])
+  @@index([providerId, capability])
+}
+
+/// Shelf item proposed for promotion into a local catalogue corpus (admin confirm).
+model CorpusPromoteCandidate {
+  id        String   @id @default(cuid())
+  itemId    String
+  /// Target pack under `data/<pack>/` when known.
+  dataPack  String?
+  printKey  String?
+  barcode   String?
+  title     String?
+  /// pending | accepted | rejected
+  status    String   @default("pending")
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([itemId])
+  @@index([printKey])
+  @@index([barcode])
 }

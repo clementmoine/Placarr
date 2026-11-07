@@ -245,4 +245,3 @@ export function buildHardwareMetadataSearchQueries(name: string): string[] {
 
   return queries;
 }
-

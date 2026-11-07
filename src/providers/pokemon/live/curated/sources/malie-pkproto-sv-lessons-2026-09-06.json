@@ -1,0 +1,48 @@
+{
+  "source": "malie-pkproto-sv-lessons",
+  "observed": "2026-09-06",
+  "kind": "research-dig",
+  "url": "https://malie.io/static/draft/html/pkproto_sv.html",
+  "specVersion": "2024-05-20 draft",
+  "authors": ["nago (malie.io)", "Ben Luelo (tcgcollector.com)"],
+  "question": "What in Malie’s export draft should change how Placarr treats Malie / Pokémon cards?",
+  "verdict": "Useful as interchange ontology + foil taxonomy lessons; not a WebGL/shader source. We already bootstrap from databases/; export JSON is unused for product ingest.",
+  "lessonsApplied": [
+    {
+      "lesson": "Export foil.type SCREAMING_SNAKE ≠ Live PascalCase (pokebox trap)",
+      "action": "malieFoilTaxonomy.ts maps ACE_FOIL→AceFoil, SV_HOLO→SvHolo, …; databases path already stores Live names"
+    },
+    {
+      "lesson": "RAINBOW foil layer ≠ Rainbow Rare (SV = mainly Pokéball/Masterball reverse)",
+      "action": "Encoded in malieFoilTaxonomy + tests; do not map rarity UI from foil.type alone"
+    },
+    {
+      "lesson": "foil.mask export is HOLO|REVERSE|ETCHED|STAMPED — coarser than Live CastAndCure / laminates",
+      "action": "Map export masks for future export ingest; keep Live masks for WebGL/CSS remaps"
+    },
+    {
+      "lesson": "One language + one foil variant = one card object",
+      "action": "Already our model (bundle_stem + variant std/ph/op); keep"
+    },
+    {
+      "lesson": "Printed-as-truth / avoid volatile external links",
+      "action": "Aligned with Placarr data-first; no change"
+    },
+    {
+      "lesson": "BCP-47 langs (en-US, fr-FR, es-419, pt-BR); es-419 out of Live CDN for us",
+      "action": "Documented; la/es-419 stay skipped until CDN ships"
+    },
+    {
+      "lesson": "name_fr column is misnamed (holds LocalizedCardName for non-FR DBs)",
+      "action": "Debt kept — consumers must join on lang; rename needs migration"
+    }
+  ],
+  "stillOpen": [
+    "Optional: enrich catalogue from export/ (rarity.designation, artists, regulation_mark, foil PNG layers) without replacing databases inventory",
+    "Wire MALIE_EXPORT_INDEX_URL into a light sync if we want SV+ display names / abbr beyond audit_tcgdex_map",
+    "Dust / Loc rarity codes unused — consider for faceOrientation density",
+    "Physical foil-layer photo guide (acetone) useful for CSS intention later — not for GLES"
+  ],
+  "credit": "Keep malie.io shout-out (malie.ts header)",
+  "ingest": "code+dig — taxonomy module + this dig; no export bootstrap yet"
+}

@@ -62,6 +62,8 @@ export async function POST(
           clearRemoteCover: Boolean(
             item.imageUrl && item.imageUrl.startsWith("http"),
           ),
+          bypassMetadataCache: true,
+          forceRefresh: true,
         });
 
       const refreshedItem = await prisma.item.findUnique({

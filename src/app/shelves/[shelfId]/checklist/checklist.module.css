@@ -1,0 +1,1120 @@
+/*
+  La check-list se lit à l'écran **et** s'imprime. Le PDF est produit par
+  l'impression du navigateur, ce qui évite d'embarquer un moteur de rendu pour
+  un document qu'il sait déjà faire — mais ça déplace la responsabilité ici : ce
+  qui n'est pas prévu pour le papier n'y sera pas.
+*/
+
+.page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.back:hover {
+  color: var(--foreground);
+}
+
+.topActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.subtitle {
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+}
+
+.totals {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+}
+.totalsPct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 2.75rem;
+  text-align: right;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.select {
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.settingsBtn,
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.settingsBtn:hover,
+.iconBtn:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+.settingsBtn[data-state="open"] {
+  background: var(--accent);
+  color: var(--foreground);
+}
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.search {
+  position: relative;
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.searchInput {
+  width: 100%;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 0.75rem 0 2.25rem;
+  font-size: 0.875rem;
+}
+.searchInput:focus {
+  outline: 2px solid color-mix(in oklab, var(--primary) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.untaggedHint {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  max-width: 42rem;
+}
+
+.suggestMasterSet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 0.75rem;
+  width: 100%;
+  max-width: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+.suggestMasterSetText {
+  flex: 1 1 12rem;
+  color: var(--muted-foreground);
+}
+.suggestMasterSetActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.suggestMasterSetEnable,
+.suggestMasterSetDismiss {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.suggestMasterSetEnable {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+.suggestMasterSetDismiss {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.suggestMasterSetEnable:hover {
+  filter: brightness(1.05);
+}
+.suggestMasterSetDismiss:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.bar {
+  flex: 1;
+  min-width: 4rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--muted);
+  overflow: hidden;
+}
+.barFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--primary);
+}
+
+.group {
+  margin-top: 2rem;
+  break-inside: avoid;
+}
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.75rem;
+}
+.groupCount {
+  border-radius: 9999px;
+  background: var(--muted);
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0;
+}
+
+.setList,
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.plainList {
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.setRow {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.setHead {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+.setHead:disabled {
+  cursor: default;
+}
+.setHead:not(:disabled):hover {
+  background: var(--accent);
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  color: var(--muted-foreground);
+  transition: transform 0.15s ease;
+}
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.setIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  object-fit: contain;
+}
+
+.setLabel {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.setCount {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  flex: none;
+}
+.setPct {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  width: 2.75rem;
+  text-align: right;
+  flex: none;
+}
+.setHead .bar {
+  max-width: 8rem;
+}
+
+/* Repliées à l'écran, dépliées au clic — et toujours ouvertes au papier. */
+.missing {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 1rem 0.75rem;
+  columns: 2;
+  column-gap: 1.5rem;
+}
+.missingOpen {
+  display: block;
+}
+
+.missingRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  break-inside: avoid;
+}
+
+/* Une case à cocher dessinée, pas un input : elle est faite pour un stylo. */
+.checkbox {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 0.1875rem;
+}
+
+.checkboxOn {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--card);
+}
+
+.thumb,
+.thumbPlaceholder {
+  width: 1.75rem;
+  height: 2.45rem;
+  flex: none;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+.thumb {
+  cursor: zoom-in;
+}
+.thumb[data-landscape] {
+  width: 2.45rem;
+  height: 1.75rem;
+}
+.thumbOrientedHost {
+  border-radius: inherit;
+}
+.thumbOrientedImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumbPlaceholder {
+  border: 1px solid var(--border);
+}
+
+/*
+  Aperçu agrandi au survol — rendu en portail (hors colonnes / overflow).
+  Désactivé sans pointeur précis : le tactile n'a pas de hover stable.
+*/
+.thumbPopover {
+  z-index: 60;
+  padding: 0;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 0.28);
+  animation: thumbPopoverIn 0.12s ease-out;
+  /* Le contenu n'attrape jamais le pointeur : quitter la miniature = fermer. */
+  pointer-events: none;
+}
+.thumbPopoverImg {
+  display: block;
+  width: auto;
+  height: 16rem;
+  max-width: min(11.5rem, 72vw);
+  object-fit: contain;
+  background: var(--muted);
+}
+.thumbPopoverOriented {
+  width: min(16rem, 72vw);
+  max-width: min(16rem, 72vw);
+  background: var(--muted);
+}
+.thumbPopoverWide .thumbPopoverOriented {
+  width: min(18rem, 80vw);
+  max-width: min(18rem, 80vw);
+}
+.thumbPopoverOrientedImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.thumbPopoverProduct .thumbPopoverImg {
+  height: 13rem;
+  max-width: min(10rem, 72vw);
+}
+
+@keyframes thumbPopoverIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (hover: none) {
+  .thumbPopover {
+    display: none;
+  }
+}
+
+.missingOwned .name,
+.missingOwned .ref {
+  color: var(--muted-foreground);
+}
+.missingOwned .thumb {
+  opacity: 0.55;
+}
+
+.ref {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  flex: none;
+  /* Une référence ne se coupe pas : « CL-003 » sur deux lignes ne se lit plus. */
+  white-space: nowrap;
+}
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.finish {
+  flex: none;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.2rem;
+  padding: 0.02rem 0.28rem;
+  white-space: nowrap;
+}
+
+/*
+  Meta de ligne : finition, sources scellées, rareté, prix — une colonne
+  visuelle stable à droite.
+*/
+.cardMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  flex: none;
+  min-width: 0;
+}
+
+/*
+  Rareté relative au set, en camembert : ◯ la plus commune … ● la plus rare.
+  `--fill` = position ordinale du palier (0 % … 100 %). Le taux exact
+  (« 1 sachet sur N ») est en infobulle.
+*/
+.cardRarity {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 55%, var(--border));
+  background: conic-gradient(var(--foreground) var(--fill, 0%), var(--muted) 0);
+  opacity: 0.9;
+}
+
+.cardPrice {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+/* Estimation (médiane de rareté) — pas une cote marketplace. */
+.cardPriceImputed {
+  font-style: italic;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+/* Icône seule — le titre porte la liste des produits (tooltip + aria). */
+.cardSources {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted-foreground);
+}
+.cardSourcesIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+.cardSourcesThumbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+.cardSourceThumb {
+  width: 1.1rem;
+  height: 1.5rem;
+  border-radius: 0.15rem;
+  object-fit: cover;
+  background: var(--muted);
+  cursor: zoom-in;
+}
+
+/*
+  Prix + scellés restent visibles sur les cartes possédées : c'est la seule
+  liste centralisée cote / provenance. Le mute porte sur le titre, pas sur
+  ces infos.
+*/
+
+.hint,
+.empty,
+.loading {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+.hint {
+  margin-bottom: 0.5rem;
+}
+
+@media print {
+  /*
+    Le papier n'a ni bouton ni repli : tout ce qui manque doit être là, et rien
+    de ce qui sert à naviguer.
+  */
+  .toolbar,
+  .topActions,
+  .suggestMasterSet,
+  .untaggedHint,
+  .back,
+  .chevron,
+  .thumb,
+  .thumbPlaceholder,
+  .productThumb,
+  .productThumbPlaceholder,
+  .adviceQtyBadge,
+  .cardSourceThumb,
+  .thumbPopover,
+  .cardSources,
+  .search {
+    display: none !important;
+  }
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+  .missing {
+    display: block !important;
+    /*
+      Deux colonnes, pas trois : à trois, la référence et le nom se marchent
+      dessus sur les titres longs — « Doton technique de la décapitation » ne
+      tient pas dans un tiers de page.
+    */
+    columns: 2;
+    font-size: 0.75rem;
+  }
+  .setRow,
+  .group {
+    break-inside: avoid;
+  }
+  .setHead {
+    padding: 0.375rem 0;
+  }
+  /* La barre et le pourcentage restent : c'est l'état de la collection. */
+  .name {
+    white-space: normal;
+  }
+  .setRow {
+    border: none;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0;
+    background: none;
+  }
+  .barFill {
+    background: #666;
+  }
+  .missingRow {
+    align-items: baseline;
+    padding: 0.125rem 0;
+  }
+  /*
+    Les navigateurs sautent souvent les `background` à l'impression : une case
+    « cochée » peinte en primary disparaissait. On dessine une coche en encre
+    (texte / bordure), pas un remplissage.
+  */
+  .checkbox {
+    position: relative;
+    border-color: #000;
+    background: none !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .checkboxOn::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+  }
+}
+
+/* ── Conseil d'achat ─────────────────────────────────────────────────────── */
+
+.advice {
+  border-top: 1px solid var(--border);
+  background: var(--muted);
+  padding: 0.55rem 1rem 0.65rem;
+}
+
+.adviceSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/*
+  Trois pistes dans une barre segmentée : même poids, la conseillée
+  se distingue par un accent. Clic → détail en modale.
+*/
+.adviceStrip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: var(--background);
+}
+
+@media (max-width: 560px) {
+  .adviceStrip {
+    grid-template-columns: 1fr;
+  }
+}
+
+.adviceCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.adviceCell:last-child {
+  border-right: none;
+}
+@media (max-width: 560px) {
+  .adviceCell {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .adviceCell:last-child {
+    border-bottom: none;
+  }
+}
+.adviceCell:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.adviceCell:focus-visible {
+  outline: 2px solid var(--ring, var(--foreground));
+  outline-offset: -2px;
+  z-index: 1;
+}
+.adviceCell:disabled {
+  cursor: default;
+}
+
+.adviceCellRecommended {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  box-shadow: inset 3px 0 0 var(--foreground);
+}
+
+.adviceCellMuted {
+  opacity: 0.65;
+}
+
+.adviceCellSelected {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.adviceCellHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.adviceCellLabel {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.adviceTrackBadge {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--background);
+  background: var(--foreground);
+  border-radius: 9999px;
+  padding: 0.08rem 0.35rem;
+  line-height: 1.2;
+}
+
+.adviceCellPrice {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.adviceCellDetail {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--muted-foreground);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Panier en vignettes sous la barre (voie scellée / mixte conseillée). */
+.adviceCartRow {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.adviceQtyThumb {
+  position: relative;
+  flex: none;
+}
+
+.adviceQtyBadge {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.25rem;
+  z-index: 2;
+  border-radius: 9999px;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.05rem 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  box-shadow: 0 0 0 1px var(--background);
+}
+
+.adviceCartMore {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+
+/* ── Détail ── */
+
+/* Détail d'une voie, en modale : titre = voie + prix, corps défilant. */
+.adviceDialogLabel {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.2rem;
+}
+
+.adviceDialogPrice {
+  display: block;
+  font-size: 1.375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.adviceDialogBody {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.adviceCols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1.25rem;
+}
+@media (max-width: 40rem) {
+  .adviceCols {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.adviceCol {
+  min-width: 0;
+}
+
+.adviceTitle {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.375rem;
+}
+.adviceTitleGap {
+  margin-top: 1rem;
+}
+
+.adviceTotal {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.adviceNote {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  margin-top: 0.125rem;
+}
+
+.adviceLegend {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+  margin-top: 0.4rem;
+}
+
+.adviceFootnotes {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0 0;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+
+.adviceMoreButton {
+  margin-top: 0.4rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.adviceMoreButton:hover {
+  color: var(--foreground);
+}
+
+/* Panier scellé détaillé : ×n nom, prix · cartes espérées. */
+.sealedCart {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sealedCartItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sealedCartBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.sealedCartName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.sealedCartPrice {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+
+/* Grille de cartes à l'unité : vignette, cote. */
+.singlesCart {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.35rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.singlesCartItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  width: 2.75rem;
+}
+
+.singlesCartThumb,
+.singlesCartThumbPlaceholder {
+  width: 2.1rem;
+  height: 2.9rem;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+
+.singlesCartThumb {
+  cursor: zoom-in;
+}
+
+.singlesCartThumb[data-landscape] {
+  width: 2.9rem;
+  height: 2.1rem;
+}
+
+.singlesCartThumbPlaceholder {
+  border: 1px solid var(--border);
+}
+
+.singlesCartPrice {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  line-height: 1.1;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Estimation (médiane de rareté), pas une cote. */
+.singlesCartPriceImputed {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/*
+  Packshot scellé : un peu plus large qu'une face de carte (boîtes / sachets
+  sont souvent moins portrait), même hauteur pour aligner la liste.
+*/
+.productThumb,
+.productThumbPlaceholder {
+  width: 2.1rem;
+  height: 2.7rem;
+  flex: none;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: var(--muted);
+}
+.productThumb {
+  cursor: zoom-in;
+}
+.productThumbPlaceholder {
+  border: 1px solid var(--border);
+}
+
+/* Rendement par produit : une unité achetée seule, depuis l'état courant. */
+.yieldTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+.yieldTable th {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  text-align: left;
+  padding: 0 0.4rem 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.yieldTable td {
+  padding: 0.3rem 0.4rem 0.3rem 0;
+  border-bottom: 1px dashed var(--border);
+  vertical-align: middle;
+}
+.yieldTable tr:last-child td {
+  border-bottom: none;
+}
+.yieldNum {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.yieldProduct {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.yieldName {
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.yieldMuted {
+  opacity: 0.6;
+}
+
+@media print {
+  /* Le conseil suit sur le papier : c'est ce qu'on emporte en boutique. */
+  .advice {
+    background: none;
+    padding: 0.5rem 0;
+    break-inside: avoid;
+  }
+}

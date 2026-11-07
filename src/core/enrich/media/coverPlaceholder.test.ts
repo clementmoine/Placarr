@@ -22,6 +22,19 @@ describe("isMissingArtImageUrl", () => {
     expect(isMissingArtImageUrl("/static/placeholder.jpg")).toBe(true);
   });
 
+  it("rejette les tuiles FR marketplace 'non-dispo' / visuel indisponible", () => {
+    expect(
+      isMissingArtImageUrl(
+        "https://images.chasse-aux-livres.fr/c/images/non-dispo.png",
+      ),
+    ).toBe(true);
+    expect(
+      isMissingArtImageUrl(
+        "https://cdn.example.com/covers/visuel-non-disponible.webp",
+      ),
+    ).toBe(true);
+  });
+
   it("conserve une jaquette localisée", () => {
     expect(isMissingArtImageUrl("/uploads/abc123.jpg")).toBe(false);
     expect(
@@ -132,5 +145,42 @@ describe("filterPlaceholderCoverAttachments", () => {
     expect(filterPlaceholderCoverAttachments([attachment])).toEqual([
       attachment,
     ]);
+  });
+
+  it("drops localized light 'Visuel non disponible' portrait tiles", () => {
+    const attachment = {
+      type: "cover" as const,
+      url: "/uploads/ce32288a3c111c5f797c0276285a3cd8.webp",
+      width: 260,
+      height: 390,
+      meanLuminance: 244.45,
+      darkPixelRatio: 0,
+    };
+    expect(filterPlaceholderCoverAttachments([attachment])).toEqual([]);
+  });
+
+  it("keeps a localized light portrait when metrics were never persisted (cannot guess)", () => {
+    // Without width/luminance the read path cannot tell a 260×390 LD sleeve
+    // from a marketplace filler — enrichment must persist metrics / drop flats.
+    expect(
+      filterPlaceholderCoverAttachments([
+        {
+          type: "cover" as const,
+          url: "/uploads/ce32288a3c111c5f797c0276285a3cd8.webp",
+        },
+      ]),
+    ).toHaveLength(1);
+  });
+
+  it("drops remote non-dispo URLs even without metrics", () => {
+    expect(
+      filterPlaceholderCoverAttachments([
+        {
+          type: "cover" as const,
+          url: "https://images.chasse-aux-livres.fr/c/images/non-dispo.png",
+          role: "fr",
+        },
+      ]),
+    ).toEqual([]);
   });
 });

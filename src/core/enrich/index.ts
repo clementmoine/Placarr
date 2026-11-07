@@ -13,10 +13,17 @@ import {
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/core/enrich/galleries";
+} from "@/core/enrich/media/galleries";
+import { isLightRefreshEligible } from "@/core/enrich/lightRefresh";
 import { resolveGameMetadataPlatform } from "@/core/enrich/platform";
+import { isMediaType } from "@/core/enrich/selection";
 import { filterMetadataForShelfPlatform } from "@/core/collect/media";
 export { filterMetadataForShelfPlatform };
+export {
+  filterMetadataForPrintKey,
+  filterAttachmentsForPrintKey,
+} from "@/core/collect/printKeyGallery.server";
+export { metadataForPrintKeyImagePicker } from "@/core/collect/printKeyGallery";
 import {
   assertRefreshCanPersist,
   type ItemMetadataRefreshSession,
@@ -25,6 +32,7 @@ import { isAbortError } from "@/lib/http/abort";
 import { withProviderAttachmentTraits } from "@/core/catalog/sourceTraits";
 import {
   scrapeProviderIdsFromStoredSources,
+  nonScrapeProviderIdsFromStoredSources,
   externalIdsFromStoredSources,
   providerRecordUrlsFromStoredSources,
 } from "@/core/enrich/scrapePassGate";
@@ -35,7 +43,7 @@ import {
 import type { RomChecksums } from "@/types/providerModule";
 import { parseMetadataFactsJson } from "@/core/enrich/metadataFactsMerge";
 import { prisma } from "@/lib/db/prisma";
-import type { Item, Type } from "@prisma/client";
+import type { Item, Type } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 export {
@@ -91,6 +99,12 @@ function metadataCacheKey(
   barcode?: string | null,
   platform?: string | null,
   shelfName?: string | null,
+  // Load-bearing: cards have no barcode and several prints share a name, so
+  // without this the five "Chiot dalmatien" prints collapse onto one entry and
+  // the second card silently inherits the first one's fiche.
+  printKey?: string | null,
+  /** Set-scoped copy — same printKey can live in several series. */
+  setCode?: string | null,
 ): string {
   const norm = (value?: string | null) =>
     (value ?? "").normalize("NFKC").trim().toLowerCase();
@@ -100,24 +114,41 @@ function metadataCacheKey(
     norm(barcode),
     norm(platform),
     norm(shelfName),
+    norm(printKey),
+    norm(setCode),
   ].join("|");
 }
 
 async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
   scrapeProviderIds: string[];
+  ficheProviderIds: string[];
   externalIds: Record<string, string>;
   providerRecordUrls: Record<string, string>;
   romChecksums?: RomChecksums;
+  priceLastUpdated?: Date | null;
+  printKey?: string | null;
+  setCode?: string | null;
 }> {
   const item = await prisma.item.findUnique({
     where: { id: itemId },
     include: {
       metadata: { include: { attachments: true } },
       fieldEvidence: { select: { source: true, sourceUrl: true } },
+      // Newest observation only — light refresh just needs "how old".
+      priceOffers: {
+        orderBy: { observedAt: "desc" },
+        take: 1,
+        select: { observedAt: true },
+      },
     },
   });
   if (!item) {
-    return { scrapeProviderIds: [], externalIds: {}, providerRecordUrls: {} };
+    return {
+      scrapeProviderIds: [],
+      ficheProviderIds: [],
+      externalIds: {},
+      providerRecordUrls: {},
+    };
   }
 
   const facts = parseMetadataFactsJson(item.metadata?.facts);
@@ -130,13 +161,15 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
     : [];
 
   const fieldEvidence = [...(item.fieldEvidence ?? []), ...metadataEvidence];
+  const sourceInput = {
+    facts,
+    fieldEvidence,
+    attachments: item.metadata?.attachments ?? [],
+  };
 
   return {
-    scrapeProviderIds: scrapeProviderIdsFromStoredSources({
-      facts,
-      fieldEvidence,
-      attachments: item.metadata?.attachments ?? [],
-    }),
+    scrapeProviderIds: scrapeProviderIdsFromStoredSources(sourceInput),
+    ficheProviderIds: nonScrapeProviderIdsFromStoredSources(sourceInput),
     externalIds: externalIdsFromStoredSources({
       facts,
       fieldEvidence,
@@ -146,6 +179,9 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
       fieldEvidence,
     }),
     romChecksums: romChecksumsFromIdentifierFacts(facts),
+    priceLastUpdated: item.priceOffers?.[0]?.observedAt ?? null,
+    printKey: item.printKey,
+    setCode: item.setCode,
   };
 }
 
@@ -163,9 +199,15 @@ export async function getMetadata(
     existingScrapeProviderIds?: readonly string[];
     existingExternalIds?: Record<string, string | null>;
     existingProviderRecordUrls?: Record<string, string>;
+    existingFicheProviderIds?: readonly string[];
     romChecksums?: RomChecksums;
     seededActiveResults?: MetadataResult[];
+    lightRefresh?: boolean;
     onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
+    /** Print identity for barcode-less objects. See `@/core/identify/printKey`. */
+    printKey?: string | null;
+    /** Catalogue set of this copy when the printKey is multi-set. */
+    setCode?: string | null;
   } = {},
 ): Promise<MetadataResult | null> {
   const resolvedPlatform = resolveGameMetadataPlatform(
@@ -179,6 +221,8 @@ export async function getMetadata(
     barcode,
     resolvedPlatform,
     options.shelfName,
+    options.printKey,
+    options.setCode,
   );
   const now = Date.now();
 
@@ -189,6 +233,7 @@ export async function getMetadata(
     !options.signal &&
     !options.onApiPassComplete &&
     !options.existingScrapeProviderIds?.length &&
+    !options.existingFicheProviderIds?.length &&
     !options.existingExternalIds &&
     !options.existingProviderRecordUrls &&
     !options.romChecksums &&
@@ -216,9 +261,13 @@ export async function getMetadata(
           existingScrapeProviderIds: options.existingScrapeProviderIds,
           existingExternalIds: options.existingExternalIds,
           existingProviderRecordUrls: options.existingProviderRecordUrls,
+          existingFicheProviderIds: options.existingFicheProviderIds,
           romChecksums: options.romChecksums,
           seededActiveResults: options.seededActiveResults,
+          lightRefresh: options.lightRefresh,
           onApiPassComplete: options.onApiPassComplete,
+          printKey: options.printKey,
+          setCode: options.setCode,
         },
       );
       return result;
@@ -308,9 +357,13 @@ export async function fetchAndStoreMetadata(
 
   const {
     scrapeProviderIds: existingScrapeProviderIds,
+    ficheProviderIds: existingFicheProviderIds,
     externalIds: existingExternalIds,
     providerRecordUrls: existingProviderRecordUrls,
     romChecksums: storedRomChecksums,
+    priceLastUpdated,
+    printKey: storedPrintKey,
+    setCode: storedSetCode,
   } = await storedProviderMemoryForItem(itemId);
 
   // Even on forceRefresh, seed capability gating from the current fiche so we
@@ -322,6 +375,18 @@ export async function fetchAndStoreMetadata(
       seededActiveResults = [formatMetadataFromStorage(prior)];
     }
   }
+
+  // Fiche already canonical, aligned, complete and priced recently: Tier 0+1
+  // still runs (it is cheap and pinned), the scrape swarm does not.
+  const lightRefresh =
+    isMediaType(type) &&
+    isLightRefreshEligible({
+      type,
+      itemName: name,
+      stored: seededActiveResults?.[0],
+      barcode,
+      priceLastUpdated,
+    });
 
   let progressiveStored = false;
   const persistPartial = async (partial: MetadataResult) => {
@@ -352,15 +417,19 @@ export async function fetchAndStoreMetadata(
       bypassCache: bypassMetadataCache,
       isBackground,
       shelfName,
+      printKey: storedPrintKey,
+      setCode: storedSetCode,
       signal: refreshSession?.signal,
       existingScrapeProviderIds,
       existingExternalIds,
       existingProviderRecordUrls,
+      existingFicheProviderIds,
       romChecksums: mergeRomChecksums(
         storedRomChecksums,
         romChecksumsFromIdentifierFacts(seededActiveResults?.[0]?.facts),
       ),
       seededActiveResults,
+      lightRefresh,
       onApiPassComplete: persistPartial,
     });
   } catch (error) {

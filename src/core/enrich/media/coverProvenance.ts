@@ -59,3 +59,10 @@ export function resolveCoverProvenance(
   }
   return "catalog";
 }
+
+/** Marketplace seller / listing shot — demote behind catalog art when pinning. */
+export function isListingPhotoCoverProvenance(
+  provenance?: string | null,
+): boolean {
+  return (provenance || "").toLowerCase().trim() === "listing_photo";
+}

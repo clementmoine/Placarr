@@ -8,19 +8,21 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { getIGDBDatabaseSuggestions } from "./suggestions";
-import { resolveWithLookupQueries } from "@/core/enrich/searchUtils";
+import { resolveWithLookupQueries } from "@/core/enrich/search/searchUtils";
 import { extractTitleIntentYear } from "@/core/enrich/titles/intentYear";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 export { fetchFromIGDB, getIGDBSuggestions, pingIGDB } from "./fetch";
 
-export const igdbModule: ProviderModule = {
+export const igdbModule = defineProvider({
   info: {
     id: "igdb",
     label: "IGDB",
+    // Documented 4 req/s ceiling.
+    minRequestIntervalMs: 250,
     types: ["games"],
     nameDatabase: true,
     requiresTitleAlignment: true,
@@ -40,6 +42,7 @@ export const igdbModule: ProviderModule = {
       env: ["IGDB_CLIENT_ID", "IGDB_CLIENT_SECRET"],
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     websiteUrl: "https://www.igdb.com/",
@@ -80,13 +83,7 @@ export const igdbModule: ProviderModule = {
       };
     });
   })(),
-  testHandlers: {
-    "igdb-metadata": {
-      label: "IGDB - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromIGDB(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromIGDB(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -103,4 +100,4 @@ export const igdbModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: "Hades" });
     return mappingRawKeysFromFetch(() => fetchFromIGDB(ctx.name));
   },
-};
+});

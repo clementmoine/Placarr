@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 /** Réponse détail OMDb : champs texte souvent "N/A". */
 type OmdbDetails = {
@@ -263,7 +263,7 @@ function buildMetadataFromOmdbDetails(
 }
 
 async function fetchOmdbDetailsByImdbId(apiKey: string, imdbId: string) {
-  const detailsRes = await axios.get("https://www.omdbapi.com/", {
+  const detailsRes = await httpGet<OmdbDetails>("https://www.omdbapi.com/", {
     params: { apikey: apiKey, i: imdbId, plot: "short" },
     timeout: 5000,
   });
@@ -271,7 +271,10 @@ async function fetchOmdbDetailsByImdbId(apiKey: string, imdbId: string) {
 }
 
 async function fetchOmdbDetailsBySearch(apiKey: string, query: string) {
-  const searchRes = await axios.get("https://www.omdbapi.com/", {
+  const searchRes = await httpGet<{
+    Response?: string;
+    Search?: Array<{ imdbID?: string; Title?: string }>;
+  }>("https://www.omdbapi.com/", {
     params: { apikey: apiKey, s: query, type: "movie" },
     timeout: 5000,
   });
@@ -289,7 +292,7 @@ async function fetchOmdbDetailsBySearch(apiKey: string, query: string) {
   const first = search.Search[0];
   if (!first?.imdbID) return null;
 
-  const detailsRes = await axios.get("https://www.omdbapi.com/", {
+  const detailsRes = await httpGet<OmdbDetails>("https://www.omdbapi.com/", {
     params: { apikey: apiKey, i: first.imdbID, plot: "short" },
     timeout: 5000,
   });

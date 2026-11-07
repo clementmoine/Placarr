@@ -2,9 +2,7 @@
  * Franchise lead tokens and parallel-series conflict checks.
  */
 import { titleTokensEquivalent } from "@/core/enrich/titles/tokenEquivalents";
-import {
-  IDENTITY_VOLUME_STOP_WORDS,
-} from "@/core/enrich/titles/identityNoise";
+import { IDENTITY_VOLUME_STOP_WORDS } from "@/core/enrich/titles/identityNoise";
 import { normalizeVolumeTitleText } from "@/core/enrich/titles/volumeNumber";
 import { normalizeMetadataCandidateTitle } from "@/core/enrich/titles/variantIdentity";
 
@@ -37,16 +35,12 @@ export function franchiseLeadsShareRoot(
 ): boolean {
   if (requested.length === 0 || candidate.length === 0) return true;
 
-  const shorter =
-    requested.length <= candidate.length ? requested : candidate;
-  const longer =
-    requested.length <= candidate.length ? candidate : requested;
+  const shorter = requested.length <= candidate.length ? requested : candidate;
+  const longer = requested.length <= candidate.length ? candidate : requested;
 
   // Ordered prefix: "Dragon Ball" ⊆ "Dragon Ball Super".
   if (
-    shorter.every((token, index) =>
-      titleTokensEquivalent(token, longer[index]),
-    )
+    shorter.every((token, index) => titleTokensEquivalent(token, longer[index]))
   ) {
     return true;
   }
@@ -95,4 +89,3 @@ export function franchiseLeadTokensConflict(
     candidateAll.some((other) => titleTokensEquivalent(token, other)),
   );
 }
-

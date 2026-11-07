@@ -1,0 +1,60 @@
+{
+  "source": "s5-starter-qty-web-hunt-pass2",
+  "observed": "2026-10-01",
+  "kind": "research-dig",
+  "parent": "s5-starter-qty-web-hunt-2026-10-01.json",
+  "ingest": "none — no FR qty / shared commons; document traps only",
+  "angles": [
+    "Coleka FR/ES/EN S5 leaves",
+    "DE Amigo / Bandai (Fluch des Sandes, Fuchsungeheuer)",
+    "IT Lealtà / Tradimento (already known sealed)",
+    "JP Shippuden starters (wrong game)",
+    "EN CCG Dream Legacy / Pojo / Wikipedia",
+    "PDF / 05124 livret",
+    "LBC / Vinted sealed opens"
+  ],
+  "newSourcesEvaluated": [
+    {
+      "id": "coleka-s5-leaf-misname",
+      "urls": [
+        "staging/coleka-carddass-fr/s5-listing-*.html",
+        "https://www.coleka.com/…/cartes-naruto-serie-05-un-nouveau-depart"
+      ],
+      "finding": "Coleka names the ENTIRE FR S5 leaf « Un Nouveau Départ / A New Beginning / Un Nuevo Comienzo » — includes booster-only cards (e.g. NI-214 Aniki) not on either poster. Taxonomy trap, not starter membership. No qty.",
+      "doNot": "Treat Coleka S5 set membership as Quête/Nouveau exclusives"
+    },
+    {
+      "id": "amigo-de-serie-5",
+      "urls": [
+        "https://www.blogspiele.de/2007/12/25/naruto-card-game-serie-5-neue-serie-neue-kaempfe-neue-abenteuer/",
+        "http://ludorium.at/SPIELE/bandai/naruto_serie_5_fluch_des_sandes.htm",
+        "https://www.cardport.de/naruto-series-v-starter-de.html"
+      ],
+      "finding": "DE Amigo line = EN CCG Dream Legacy localized (Fluch des Sandes / Fuchsungeheuer). Press: 40 cards with **18** deck-exclusives + 88 booster cards. ≠ FR Carddass (25 exclusives). Art-Nr. 0931729. No card-by-card list found.",
+      "doNot": "Import DE 18-exclusive math or N/J/M IDs into FR starters"
+    },
+    {
+      "id": "en-ccg-dream-legacy",
+      "finding": "Wikipedia/Narutopedia: Dream Legacy = EN set with Naruto/Jiraiya theme deck — parallel story to FR Quête, different product (50-card package / sideboard). Pojo starter lists are early EN sets, not FR Carddass S5.",
+      "doNot": "Mirror EN decklists onto NI/TE/TA"
+    },
+    {
+      "id": "jp-shippuden-starter",
+      "finding": "TV Tokyo / Carddass JP Shippuden constructed starters — 忍伝/術伝 numbering, Data Carddass tie-in. Wrong game for FR CACG S5."
+    },
+    {
+      "id": "05124-pdf",
+      "finding": "No public PDF livret / checklist tied to Bandai ref 05124; search noise = ISBN collisions."
+    },
+    {
+      "id": "marketplaces-2026-10",
+      "finding": "LBC/Vinted hits = Mythos/Kayou noise. joueur.ch still sealed packshots only."
+    }
+  ],
+  "verdict": "Digital FR qty still exhausted. Best remaining paths = physical livret photo or sealed open inventory.",
+  "stillNeeded": [
+    "P0 — Photo livret / verso 40 + qty",
+    "P0 — Sealed open inventaire attesté",
+    "P1 — Demande photo à vendeur sealed (joueur.ch)"
+  ]
+}

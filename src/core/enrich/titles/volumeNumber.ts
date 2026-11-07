@@ -246,14 +246,8 @@ export function hasExplicitVolumeMarker(value: string): boolean {
  */
 export function stripVolumeMarkersKeepingNumber(value: string): string {
   return value
-    .replace(
-      new RegExp(`#\\s*0*(${VOLUME_NUMBER_PATTERN})\\b`, "gi"),
-      "$1",
-    )
-    .replace(
-      new RegExp(`n[°º]\\s*0*(${VOLUME_NUMBER_PATTERN})\\b`, "gi"),
-      "$1",
-    )
+    .replace(new RegExp(`#\\s*0*(${VOLUME_NUMBER_PATTERN})\\b`, "gi"), "$1")
+    .replace(new RegExp(`n[°º]\\s*0*(${VOLUME_NUMBER_PATTERN})\\b`, "gi"), "$1")
     .replace(
       new RegExp(
         `\\b(?:${VOLUME_KEYWORD_PATTERN}|num[eé]ro)\\.?\\s*0*(${VOLUME_NUMBER_PATTERN})\\b`,

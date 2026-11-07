@@ -33,9 +33,7 @@ function isEspritJeuSearchHits(
 }
 
 function isEspritJeuSearchUrl(url: string): boolean {
-  return (
-    url.includes("resultat_recherche.php") && url.includes("keywords=")
-  );
+  return url.includes("resultat_recherche.php") && url.includes("keywords=");
 }
 
 /** Fresh SearchYield hits for a `resultat_recherche.php?keywords=` URL, or null. */
@@ -49,10 +47,7 @@ export async function readEspritJeuSearchEvidence(
     if (!isEspritJeuSearchHits(row.yieldJson)) return null;
     return row.yieldJson;
   } catch (error) {
-    console.warn(
-      "[Esprit Jeu] Failed to read durable search evidence:",
-      error,
-    );
+    console.warn("[Esprit Jeu] Failed to read durable search evidence:", error);
     return null;
   }
 }

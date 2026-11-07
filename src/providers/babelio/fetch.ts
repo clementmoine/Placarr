@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 import { decode as decodeHTMLEntities } from "html-entities";
 
 import {
@@ -21,6 +21,7 @@ import {
   promoteBabelioSearchEvidence,
   readBabelioSearchEvidence,
 } from "./durableEvidence";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const BABELIO_BASE_URL = "https://www.babelio.com";
 const BABELIO_SEARCH_URL = `${BABELIO_BASE_URL}/aj_recherche.php`;
@@ -94,11 +95,9 @@ function decodeBabelioHtml(data: unknown): string {
   if (Buffer.isBuffer(data)) return data.toString("latin1");
   if (data instanceof ArrayBuffer) return Buffer.from(data).toString("latin1");
   if (ArrayBuffer.isView(data)) {
-    return Buffer.from(
-      data.buffer,
-      data.byteOffset,
-      data.byteLength,
-    ).toString("latin1");
+    return Buffer.from(data.buffer, data.byteOffset, data.byteLength).toString(
+      "latin1",
+    );
   }
   return String(data || "");
 }
@@ -111,12 +110,12 @@ export function normalizeBabelioCoverUrl(
   if (!absolute) return undefined;
   try {
     const url = new URL(absolute);
-    if (/amazon\.com$/i.test(url.hostname) || /media-amazon\.com$/i.test(url.hostname)) {
+    if (
+      /amazon\.com$/i.test(url.hostname) ||
+      /media-amazon\.com$/i.test(url.hostname)
+    ) {
       url.protocol = "https:";
-      url.pathname = url.pathname.replace(
-        /\._S[XY]\d+_\./i,
-        "._SX500_.",
-      );
+      url.pathname = url.pathname.replace(/\._S[XY]\d+_\./i, "._SX500_.");
       return url.toString();
     }
     return url.toString();
@@ -213,9 +212,7 @@ function isAjaxTitleTruncated(title: string): boolean {
   return /\.\.\.\s*$/.test(title) || /…\s*$/.test(title);
 }
 
-function mergeBabelioHits(
-  ...groups: BabelioSearchHit[][]
-): BabelioSearchHit[] {
+function mergeBabelioHits(...groups: BabelioSearchHit[][]): BabelioSearchHit[] {
   const merged: BabelioSearchHit[] = [];
   const seen = new Set<string>();
   for (const group of groups) {
@@ -240,15 +237,10 @@ function metaContent(html: string, property: string): string | undefined {
     "i",
   );
   const match2 = html.match(re2);
-  return match2?.[1]
-    ? cleanText(decodeHTMLEntities(match2[1]))
-    : undefined;
+  return match2?.[1] ? cleanText(decodeHTMLEntities(match2[1])) : undefined;
 }
 
-function extractItempropText(
-  html: string,
-  prop: string,
-): string | undefined {
+function extractItempropText(html: string, prop: string): string | undefined {
   const re = new RegExp(
     `itemprop=["']${prop}["'][^>]*>([\\s\\S]*?)</(?:span|div|h1|h2|a|meta)`,
     "i",
@@ -269,16 +261,21 @@ export function parseBabelioBookPage(
   html: string,
   sourceUrl: string,
 ): BabelioBook | null {
-  const idMatch = sourceUrl.match(/\/livres\/[^/]+\/(\d+)/i) ||
+  const idMatch =
+    sourceUrl.match(/\/livres\/[^/]+\/(\d+)/i) ||
     html.match(/\/livres\/[^/"']+\/(\d+)/i);
   const id = idMatch?.[1];
   if (!id) return null;
 
   const title =
-    metaContent(html, "og:title")?.replace(/\s*-\s*Babelio\s*$/i, "").trim() ||
+    metaContent(html, "og:title")
+      ?.replace(/\s*-\s*Babelio\s*$/i, "")
+      .trim() ||
     extractItempropText(html, "name") ||
     cleanText(
-      html.match(/<h1[^>]*class=["'][^"']*livre_header[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1],
+      html.match(
+        /<h1[^>]*class=["'][^"']*livre_header[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i,
+      )?.[1],
     );
   // og:title is often "Title - Author" — strip trailing author segment when present.
   let cleanedTitle = title;
@@ -313,9 +310,7 @@ export function parseBabelioBookPage(
   const seriesUrl = seriesMatch?.[1]
     ? absoluteBabelioUrl(seriesMatch[1])
     : undefined;
-  const positionMatch = html.match(
-    /tome\s+(\d+)\s+sur\s+\d+/i,
-  );
+  const positionMatch = html.match(/tome\s+(\d+)\s+sur\s+\d+/i);
   const seriesPosition = positionMatch?.[1]
     ? Number.parseInt(positionMatch[1], 10)
     : undefined;
@@ -353,9 +348,7 @@ export function parseBabelioBookPage(
   const tags: string[] = [];
   const tagsBlock = html.match(/class=["']tags["'][^>]*>([\s\S]*?)<\/p>/i)?.[1];
   if (tagsBlock) {
-    for (const match of tagsBlock.matchAll(
-      /rel=["']tag["'][^>]*>([^<]+)</gi,
-    )) {
+    for (const match of tagsBlock.matchAll(/rel=["']tag["'][^>]*>([^<]+)</gi)) {
       const tag = cleanText(match[1]);
       if (tag && !tags.includes(tag)) tags.push(tag);
     }
@@ -373,9 +366,7 @@ export function parseBabelioBookPage(
       )?.[1],
     );
   const ratingCount = parseFrNumber(
-    html.match(
-      /itemprop=["']ratingCount["'][^>]*>([^<]+)/i,
-    )?.[1] ||
+    html.match(/itemprop=["']ratingCount["'][^>]*>([^<]+)/i)?.[1] ||
       html.match(/<span\s*>(\d+)<\/span>\s*notes/i)?.[1],
   );
   const reviewCount = parseFrNumber(
@@ -389,8 +380,7 @@ export function parseBabelioBookPage(
       html.match(
         /class=["'][^"']*livre_con[^"']*["'][\s\S]{0,800}?src=["']([^"']+)["']/i,
       )?.[1],
-    ) ||
-    normalizeBabelioCoverUrl(metaContent(html, "og:image"));
+    ) || normalizeBabelioCoverUrl(metaContent(html, "og:image"));
 
   return {
     id,
@@ -450,14 +440,22 @@ function isCandidateAligned(query: string, title: string): boolean {
   const queryIssue = volumeNumberFromTitle(query);
   const titleIssue = volumeNumberFromTitle(title);
   if (queryIssue && titleIssue && queryIssue !== titleIssue) return false;
-  if (isMetadataTitleAligned({ title }, [query], 0.58)) return true;
+  if (isMetadataTitleAligned({ title }, [query], METADATA_TITLE_ALIGN_FLOOR))
+    return true;
   // Name-only queries often omit "tome N" while Babelio titles encode it before
   // the album subtitle — align against that subtitle when present.
   // Skip when the query already names a specific album (Wakfu + Mines…) so a
   // volume-sibling with a different subtitle cannot win via a loose bypass.
   if (albumSpecificDistinctiveTokens(query).length >= 2) return false;
   const subtitle = albumSubtitle(title);
-  if (subtitle && isMetadataTitleAligned({ title: subtitle }, [query], 0.58)) {
+  if (
+    subtitle &&
+    isMetadataTitleAligned(
+      { title: subtitle },
+      [query],
+      METADATA_TITLE_ALIGN_FLOOR,
+    )
+  ) {
     return true;
   }
   return false;
@@ -512,7 +510,7 @@ async function searchBabelioHtmlHits(
       Recherche: trimmed,
       recherche: "",
     });
-    const response = await axios.post(
+    const response = await httpPost(
       `${BABELIO_BASE_URL}/recherche.php`,
       body.toString(),
       {
@@ -551,7 +549,7 @@ export async function searchBabelioHits(
 
   let ajaxHits: BabelioSearchHit[] = [];
   try {
-    const response = await axios.post(
+    const response = await httpPost(
       BABELIO_SEARCH_URL,
       { id_user: "", isMobile: false, term: trimmed },
       {

@@ -7,7 +7,7 @@
  *
  * Nothing here is provider-specific: weights are applied to evidence *roles*
  * (canonical / trusted-retailer / marketplace), and every provider declares its
- * own role and source weight in its module (see `services/providerEvidence.ts`).
+ * own role and source weight in its module (see identify evidence compile).
  * Adding a provider never touches this file.
  */
 

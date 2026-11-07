@@ -12,6 +12,7 @@ import type {
   TitleObservationRole,
 } from "@/types/metadataObservation";
 import type { MetadataResult } from "@/types/metadataProvider";
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 
 export const METADATA_OBSERVATION_SCHEMA_VERSION =
   "metadata-observations/v1" as const;
@@ -112,7 +113,8 @@ function provenanceFromOptions(
     providerId: options.providerId,
     providerLabel: options.providerLabel,
     sourceDocumentRole: options.sourceDocumentRole,
-    sourceUrl: options.sourceUrl,
+    // Homepage / shallow hub must never masquerade as a verifiable citation.
+    sourceUrl: sanitizePublicCitationUrl(options.sourceUrl) ?? undefined,
     sourceId: options.sourceId,
     observedAt: options.observedAt,
     evidenceSignals: options.evidenceSignals,
@@ -155,6 +157,7 @@ function usageForImageRole(
   switch (role) {
     case "cover_front":
     case "cover_back":
+    case "cover_spine":
     case "product_packshot":
     case "background":
     case "screenshot":
@@ -241,7 +244,13 @@ export function observationsFromMetadataResult(
     });
   }
 
-  if (metadata.imageUrl) {
+  const attachmentUrls = new Set(
+    (metadata.attachments || [])
+      .map((attachment) => attachment.url)
+      .filter(Boolean),
+  );
+  // Prefer the richer attachment observation when imageUrl is the same URL.
+  if (metadata.imageUrl && !attachmentUrls.has(metadata.imageUrl)) {
     observations.push({
       kind: "image",
       role: options.imageRole,

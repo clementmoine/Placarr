@@ -19,6 +19,129 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("affiche Face + langue pour les rôles TCG standardisés (pas le seau région)", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "lorcana-face-de-art",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Allemand",
+      detail: "Face · Allemand",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "pokemon-face-en-live",
+        source: "tcgdex",
+        providerLabel: "TCGdex",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Anglais",
+      detail: "Face · Anglais · Live",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "naruto-face-fr-carddass",
+        source: "narutocarddass",
+        providerLabel: "Naruto Carddass",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français · Carddass",
+    });
+  });
+
+  it("garde la langue d'un role ISO nu (legacy Lorcana) hors du seau région Europe", () => {
+    // Older Lorcana rows used bare ISO as role (`de` / `en` / `it`). The region
+    // alias map folds `de`→Europe for German *game boxes*; on a card printing
+    // that would hide the actual language.
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "de",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      kind: "Jaquette",
+      region: "Allemand",
+      detail: "Jaquette · Allemand",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "en",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      region: "Anglais",
+      detail: "Jaquette · Anglais",
+    });
+  });
+
+  it("garde les rôles région composés (back-eu) hors des labels langue", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        role: "back-eu",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({
+      kind: "Dos",
+      region: "Europe",
+      detail: "Dos · Europe",
+    });
+  });
+
+  it("affiche langue + rôle flyer / face TCG (Mythos)", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "mythos-proof-flyer-fr",
+        title: "Annonce promo Mythos (flyer FR)",
+        source: "narutomythos",
+        providerLabel: "Naruto Mythos",
+      }),
+    ).toMatchObject({
+      kind: "Flyer",
+      region: "Français",
+      detail: "Flyer · Français",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "mythos-face-en-promo",
+        source: "narutomythos",
+        providerLabel: "Naruto Mythos",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Anglais",
+      detail: "Face · Anglais · Promo",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        url: "/assets/naruto/mythos/prints/ks1promo-0133-vv2-fr/face",
+        source: "narutomythos",
+        providerLabel: "Naruto Mythos",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+    });
+  });
+
   it("affiche la région d'une jaquette ScreenScraper australienne (au → Europe)", () => {
     // Regression: a `box-2D(au)` cover was stored with role "au" and showed
     // "Jaquette" with no region because the resolver only knew the 6 canonical

@@ -2,10 +2,11 @@
 
 A followable checklist for adding a provider so it is **fully exploited, properly
 tested, and verified against the live source** — never under-used, never a hidden
-bias. Companion to [unbiased_ranking.md](unbiased_ranking.md),
-[word_list_audit.md](word_list_audit.md),
-[provider_agnostic_architecture.md](provider_agnostic_architecture.md). Worked
-example: `src/providers/okkazeo/`.
+bias. Companion to [unbiased_ranking.md](archive/unbiased_ranking.md),
+[archive/word_list_audit.md](archive/word_list_audit.md),
+[provider_agnostic_architecture.md](archive/provider_agnostic_architecture.md),
+[provider_supply_modes.md](provider_supply_modes.md) (catalog / local corpora).
+Worked example: `src/providers/okkazeo/`.
 
 Golden rule: a provider may hardcode what is specific to **its own** API/format;
 it must never inject app-global logic (language, shelf type, provider privilege).
@@ -118,11 +119,36 @@ drop a noisy observation just because today's display engine will rank it low.
         typeless home-page scans get this anchor (parity).
   - [ ] `mappingProbe` + `runMappingProbe` (`metadataProbe`).
 - [ ] **External link** (retailers / comparateurs avec fiche produit) :
-  - [ ] `provenance.sourceUrl` sur observations catalogue / offer ;
-  - [ ] offers prix avec `sourceUrl` ;
+  - [ ] `provenance.sourceUrl` = **deep link public** (fiche / annonce / article / vidéo), jamais homepage ; Wayback si live mort ;
+  - [ ] offers prix avec `sourceUrl` deep link (passé par `sanitizePublicCitationUrl`) ;
   - [ ] `refreshBarcodePriceOffers` lit `ctx.providerProductUrls` avant seek ;
   - [ ] gate EAN si slug URL ou barcode page peut diverger.
   - [ ] Voir [provider_external_links.md](provider_external_links.md).
+
+---
+
+## Voie `defineProvider` (cas commun)
+
+Pour le cas commun (métadonnées par recherche), `index.ts` peut être assemblé
+par `defineProvider(spec)` (`src/providers/shared/defineProvider.ts`, ADR-009)
+au lieu d'écrire le `ProviderModule` à la main :
+
+- `spec.info` est validé par Zod à la création (fail fast : `types` vide,
+  capability inconnue, `auth` incohérent…).
+- `healthCheck` par défaut : ping de `healthCheckUrl` (fallback
+  `info.websiteUrl`) via `createMetadataHealthCheck` — ne plus le réassembler.
+- `metadataSearch` génère le testHandler `<id>-metadata` ; des `testHandlers`
+  explicites priment.
+- La forme `defineProvider((ctx) => spec)` injecte `ctx.http` (ré-export ciblé
+  de `@/lib/http`) : le provider n'importe pas la couche bas niveau.
+- Tout hook avancé (`refreshBarcodePriceOffers`, `mappingProbe`…) passe tel
+  quel dans le spec.
+
+Pilote de référence : `src/providers/bedetheque/`. Cas commun migrés :
+`babelio`, `planetebd`, `bdphile`, `fullset`, `senscritique` (ADR-016).
+Préférer `defineProvider` pour tout nouveau provider metadata search /
+ping health ; réserver le hand-roll aux modules hors défauts (TCG local,
+prix multi-hooks, auth exotique).
 
 ---
 
@@ -204,6 +230,17 @@ Final pass, the point of this whole checklist:
       next best _datum_ — never hard-depends on this provider.
 
 ---
+
+## Catalog / local corpus (when applicable)
+
+See [provider_supply_modes.md](provider_supply_modes.md). Short form:
+
+- [ ] `info.supplyMode` is `local_catalog` or `scrape_cache` (with durable index).
+- [ ] `module.catalog` exposes `dataPack`, `status()`, `refresh()`.
+- [ ] Observations use **this** provider id — no silent attribution to another
+      service (e.g. app dump ≠ community JSON API).
+- [ ] Recoverable → `data/`; curated → `curated/` under the provider folder.
+- [ ] No new provider-id literals in core/admin — Catalogue derives from registry.
 
 ## Anti-checklist (reject the PR if any is true)
 

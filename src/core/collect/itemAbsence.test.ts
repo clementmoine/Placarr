@@ -1,0 +1,242 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  applyAbsenceAction,
+  absenceSinceInputValue,
+  buildPresenceEvent,
+  countsAsOwned,
+  inferPresenceEventKind,
+  isDefinitiveAbsenceReason,
+  isItemOnLoan,
+  isTemporaryAbsenceReason,
+  migrateLoanToAbsence,
+  normalizeItemAbsenceInput,
+  normalizeItemLoanInput,
+  ownedAbsenceState,
+  presenceForReason,
+} from "./itemAbsence";
+
+describe("presenceForReason", () => {
+  it.each([
+    ["loaned", "away"],
+    ["ordered", "away"],
+    ["repair", "away"],
+    ["rental", "away"],
+    ["sold", "past"],
+    ["exchanged", "past"],
+    ["gifted", "past"],
+    ["discarded", "past"],
+    ["lost", "past"],
+    ["stolen", "past"],
+  ] as const)("%s → %s", (reason, presence) => {
+    expect(presenceForReason(reason)).toBe(presence);
+    expect(isTemporaryAbsenceReason(reason)).toBe(presence === "away");
+    expect(isDefinitiveAbsenceReason(reason)).toBe(presence === "past");
+  });
+});
+
+describe("countsAsOwned", () => {
+  it("counts owned and away, not wanted or past", () => {
+    expect(countsAsOwned({ presence: "owned" })).toBe(true);
+    expect(countsAsOwned({ presence: "away" })).toBe(true);
+    expect(countsAsOwned({ presence: "wanted" })).toBe(false);
+    expect(countsAsOwned({ presence: "past" })).toBe(false);
+    expect(countsAsOwned({})).toBe(true);
+  });
+});
+
+describe("isItemOnLoan", () => {
+  it("is true for away+loaned with a recipient", () => {
+    expect(
+      isItemOnLoan({
+        presence: "away",
+        absenceReason: "loaned",
+        absenceRecipient: "Alice",
+      }),
+    ).toBe(true);
+    expect(
+      isItemOnLoan({
+        presence: "away",
+        absenceReason: "loaned",
+        absenceRecipient: "  ",
+      }),
+    ).toBe(false);
+    expect(
+      isItemOnLoan({
+        presence: "away",
+        absenceReason: "ordered",
+        absenceRecipient: null,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("migrateLoanToAbsence", () => {
+  it("maps a loan note to away+loaned", () => {
+    const migrated = migrateLoanToAbsence("Bob", "2026-01-15");
+    expect(migrated.presence).toBe("away");
+    expect(migrated.absenceReason).toBe("loaned");
+    expect(migrated.absenceRecipient).toBe("Bob");
+    expect(absenceSinceInputValue(migrated.absenceSince)).toBe("2026-01-15");
+  });
+
+  it("clears when the borrower is empty", () => {
+    expect(migrateLoanToAbsence("  ", new Date())).toEqual(ownedAbsenceState());
+    expect(migrateLoanToAbsence(null, null)).toEqual(ownedAbsenceState());
+  });
+});
+
+describe("applyAbsenceAction", () => {
+  it("departs to away for temporary reasons", () => {
+    const { fields, event } = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "ordered",
+      carrier: "Chronopost",
+      tracking: "XX",
+      source: "Cardmarket",
+    });
+    expect(fields.presence).toBe("away");
+    expect(fields.absenceReason).toBe("ordered");
+    expect(fields.absenceCarrier).toBe("Chronopost");
+    expect(fields.absenceSource).toBe("Cardmarket");
+    expect(event.kind).toBe("departed");
+    expect(event.toPresence).toBe("away");
+  });
+
+  it("departs to past for sold with optional price", () => {
+    const { fields, event } = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "sold",
+      source: "Vinted",
+      priceCents: "12.50",
+    });
+    expect(fields.presence).toBe("past");
+    expect(fields.absenceReason).toBe("sold");
+    expect(fields.absencePriceCents).toBe(1250);
+    expect(event.kind).toBe("departed");
+  });
+
+  it("returns away → owned", () => {
+    const current = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "loaned",
+      recipient: "Alice",
+    }).fields;
+    const { fields, event } = applyAbsenceAction(current, { type: "return" });
+    expect(fields).toEqual(ownedAbsenceState());
+    expect(event.kind).toBe("returned");
+  });
+
+  it("cancels away → wanted keeping breadcrumbs", () => {
+    const current = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "ordered",
+      orderRef: "CMD-1",
+    }).fields;
+    const { fields, event } = applyAbsenceAction(current, { type: "cancel" });
+    expect(fields.presence).toBe("wanted");
+    expect(fields.absenceReason).toBe("ordered");
+    expect(fields.absenceOrderRef).toBe("CMD-1");
+    expect(event.kind).toBe("cancelled_to_wanted");
+  });
+
+  it("recovers past → owned even after a sale", () => {
+    const current = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "sold",
+      priceCents: 500,
+    }).fields;
+    const { fields, event } = applyAbsenceAction(current, { type: "recover" });
+    expect(fields).toEqual(ownedAbsenceState());
+    expect(event.kind).toBe("recovered");
+    expect(event.fromPresence).toBe("past");
+  });
+
+  it("rejects illegal transitions", () => {
+    expect(() =>
+      applyAbsenceAction(ownedAbsenceState(), { type: "cancel" }),
+    ).toThrow(/cancel/);
+    expect(() =>
+      applyAbsenceAction(ownedAbsenceState(), { type: "recover" }),
+    ).toThrow(/recover/);
+  });
+});
+
+describe("inferPresenceEventKind / buildPresenceEvent", () => {
+  it("classifies recover and cancel", () => {
+    expect(inferPresenceEventKind("past", "owned")).toBe("recovered");
+    expect(inferPresenceEventKind("away", "wanted")).toBe("cancelled_to_wanted");
+    expect(
+      buildPresenceEvent({ from: "owned", to: "away", reason: "loaned" }).kind,
+    ).toBe("departed");
+  });
+});
+
+describe("normalizeItemAbsenceInput", () => {
+  it("returns undefined when neither field is present", () => {
+    expect(normalizeItemAbsenceInput({})).toBeUndefined();
+  });
+
+  it("maps legacy loan payloads", () => {
+    const result = normalizeItemAbsenceInput({
+      loanedTo: "Bob",
+      loanedAt: "2026-01-15",
+    });
+    expect(result?.presence).toBe("away");
+    expect(result?.absenceReason).toBe("loaned");
+    expect(result?.absenceRecipient).toBe("Bob");
+    expect(absenceSinceInputValue(result?.absenceSince)).toBe("2026-01-15");
+  });
+
+  it("clears on empty legacy borrower", () => {
+    expect(
+      normalizeItemAbsenceInput({ loanedTo: "", loanedAt: "2026-09-01" }),
+    ).toEqual(ownedAbsenceState());
+  });
+
+  it("defaults the date when departing without since", () => {
+    const result = normalizeItemAbsenceInput({
+      absenceReason: "repair",
+    });
+    expect(result?.presence).toBe("away");
+    expect(result?.absenceReason).toBe("repair");
+    expect(result?.absenceSince).toBeInstanceOf(Date);
+  });
+
+  it("forces past for definitive reasons even if client sends away", () => {
+    const result = normalizeItemAbsenceInput({
+      presence: "away",
+      absenceReason: "discarded",
+    });
+    expect(result?.presence).toBe("past");
+    expect(result?.absenceReason).toBe("discarded");
+  });
+
+  it("clears when presence is owned", () => {
+    expect(normalizeItemAbsenceInput({ presence: "owned" })).toEqual(
+      ownedAbsenceState(),
+    );
+  });
+
+  it("parses sold price in euros", () => {
+    const result = normalizeItemAbsenceInput({
+      absenceReason: "sold",
+      absencePriceCents: "9.99",
+      absenceSource: "Leboncoin",
+    });
+    expect(result?.absencePriceCents).toBe(999);
+    expect(result?.absenceSource).toBe("Leboncoin");
+  });
+});
+
+describe("normalizeItemLoanInput (compat)", () => {
+  it("keeps the old loan-shaped result", () => {
+    expect(normalizeItemLoanInput({})).toBeUndefined();
+    expect(
+      normalizeItemLoanInput({ loanedTo: "", loanedAt: "2026-09-01" }),
+    ).toEqual({ loanedTo: null, loanedAt: null });
+    const result = normalizeItemLoanInput({ loanedTo: "Bob" });
+    expect(result?.loanedTo).toBe("Bob");
+    expect(result?.loanedAt).toBeInstanceOf(Date);
+  });
+});

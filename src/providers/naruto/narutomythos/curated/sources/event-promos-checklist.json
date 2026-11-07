@@ -1,0 +1,49 @@
+{
+  "source": "narutotcgmythos.com — pages Événements / Events (CDN faces)",
+  "url": "https://www.narutotcgmythos.com/fr/evenements",
+  "observed": "2026-11-06",
+  "set": {
+    "code": "ss2",
+    "label": "Shinobi Shiren — event / Shippuden preview promos",
+    "denominator": 140
+  },
+  "note": "Promos salon attestées sur le calendrier officiel, absentes de l’API CICABOOM. Lucca vs MGW = mêmes printKeys, arts tamponnés distincts.",
+  "cards": [
+    {
+      "printed": "SP 7/140 V",
+      "number": "0007",
+      "grouping": "sp",
+      "name": "Naruto — Rasen Shuriken",
+      "titles": [
+        { "lang": "en", "fullName": "Naruto — Rasen Shuriken" }
+      ],
+      "rarity": "SP",
+      "faceUrl": "https://irp.cdn-website.com/99e556bf/dms3rep/multi/opt/07_SP_MGW_Shippuden-1920w.png",
+      "note": "Première carte Mythos Shippuden TCG — démo MGW / Lucca (tampons art.mgw / art.lucca)."
+    },
+    {
+      "printed": "SP 147/140 V",
+      "number": "0147",
+      "grouping": "sp",
+      "name": "Naruto — The Final Valley",
+      "titles": [
+        { "lang": "en", "fullName": "Naruto — The Final Valley" }
+      ],
+      "rarity": "SP",
+      "faceUrl": "https://irp.cdn-website.com/99e556bf/dms3rep/multi/opt/147_SP_Naruto_MGW-1920w.png",
+      "note": "Promo exclusive Lucca / Milan Games Week (tampons art.lucca / art.mgw)."
+    },
+    {
+      "printed": "SP 148/140 V",
+      "number": "0148",
+      "grouping": "sp",
+      "name": "Sasuke — The Final Valley",
+      "titles": [
+        { "lang": "en", "fullName": "Sasuke — The Final Valley" }
+      ],
+      "rarity": "SP",
+      "faceUrl": "https://irp.cdn-website.com/99e556bf/dms3rep/multi/opt/148_SP_Sasuke_MGW-1920w.png",
+      "note": "Promo exclusive Lucca / Milan Games Week (tampons art.lucca / art.mgw)."
+    }
+  ]
+}

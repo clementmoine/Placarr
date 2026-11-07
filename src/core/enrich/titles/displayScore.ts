@@ -12,7 +12,7 @@ import {
 import {
   createVideoGamePlatformMatcher,
   VIDEO_GAME_PLATFORM_TERMS,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 
 const DISPLAY_MARKETPLACE_NOISE = createDisplayTitleNoiseMatcher();
 const DISPLAY_SUFFIX_NOISE = createDisplayTitleSuffixNoiseMatcher();

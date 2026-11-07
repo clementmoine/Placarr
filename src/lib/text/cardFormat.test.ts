@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   coerceCardFormatForType,
+  expectedCoverAspectRatioForShelf,
+  faceDisplayAspect,
+  faceRotateDeg,
   getCardFormatsForPicker,
   getDefaultCardFormatAlias,
+  normalizeFaceQuarterTurns,
+  orientAspectRatio,
+  parseAspectRatioNumber,
 } from "@/lib/text/cardFormat";
 
 describe("getDefaultCardFormatAlias", () => {
@@ -32,6 +38,43 @@ describe("getCardFormatsForPicker", () => {
   });
 });
 
+describe("parseAspectRatioNumber", () => {
+  it.each([
+    ["1 / 1", 1],
+    ["5 / 7", 5 / 7],
+    ["1 / 1.414", 1 / 1.414],
+    ["16 / 9", 16 / 9],
+  ] as const)("parses %s", (aspect, expected) => {
+    expect(parseAspectRatioNumber(aspect)).toBeCloseTo(expected, 5);
+  });
+
+  it("returns undefined for garbage", () => {
+    expect(parseAspectRatioNumber("")).toBeUndefined();
+    expect(parseAspectRatioNumber("square")).toBeUndefined();
+  });
+});
+
+describe("expectedCoverAspectRatioForShelf", () => {
+  it("uses square for musics / explicit square movies (LaserDisc)", () => {
+    expect(expectedCoverAspectRatioForShelf(null, "musics")).toBeCloseTo(1, 5);
+    expect(expectedCoverAspectRatioForShelf("square", "movies")).toBeCloseTo(
+      1,
+      5,
+    );
+  });
+
+  it("defaults movies/games to DVD portrait", () => {
+    expect(expectedCoverAspectRatioForShelf(null, "movies")).toBeCloseTo(
+      1 / 1.414,
+      3,
+    );
+    expect(expectedCoverAspectRatioForShelf("default", "games")).toBeCloseTo(
+      1 / 1.414,
+      3,
+    );
+  });
+});
+
 describe("coerceCardFormatForType", () => {
   it("collapses the alias into default", () => {
     expect(coerceCardFormatForType("square", "musics")).toBe("default");
@@ -43,5 +86,49 @@ describe("coerceCardFormatForType", () => {
     expect(coerceCardFormatForType("vhs", "musics")).toBe("vhs");
     expect(coerceCardFormatForType("square", "movies")).toBe("square");
     expect(coerceCardFormatForType("tcg", "games")).toBe("tcg");
+  });
+});
+
+describe("face orientation", () => {
+  it.each([
+    [0, 0],
+    [1, 1],
+    [2, 2],
+    [3, 3],
+    [4, 0],
+    [-1, 3],
+    [null, 0],
+    [undefined, 0],
+  ] as const)("normalizeFaceQuarterTurns(%s) → %s", (input, expected) => {
+    expect(normalizeFaceQuarterTurns(input)).toBe(expected);
+  });
+
+  it.each([
+    ["5 / 7", 0, "5 / 7"],
+    ["5 / 7", 1, "7 / 5"],
+    ["5 / 7", 2, "5 / 7"],
+    ["5 / 7", 3, "7 / 5"],
+    ["1 / 1", 1, "1 / 1"],
+    ["16 / 9", 1, "9 / 16"],
+  ] as const)("orientAspectRatio(%s, %s) → %s", (aspect, turns, expected) => {
+    expect(orientAspectRatio(aspect, turns)).toBe(expected);
+  });
+
+  it.each([
+    ["5 / 7", { landscapeFace: true }, "7 / 5"],
+    ["5 / 7", { faceQuarterTurns: 1 }, "7 / 5"],
+    ["5 / 7", { faceQuarterTurns: 1, landscapeFace: true }, "7 / 5"],
+    ["5 / 7", {}, "5 / 7"],
+  ] as const)("faceDisplayAspect(%s, %j) → %s", (aspect, opts, expected) => {
+    expect(faceDisplayAspect(aspect, opts)).toBe(expected);
+  });
+
+  it.each([
+    [0, 0],
+    [1, 90],
+    [2, 180],
+    [3, 270],
+  ] as const)("faceRotateDeg(%s) → %s", (turns, deg) => {
+    expect(faceRotateDeg(turns)).toBe(deg);
   });
 });

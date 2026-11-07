@@ -1,13 +1,22 @@
 /**
  * Out-of-band No-Intro DAT pack sync — local zip (or opt-in URL download).
  * Scan path never calls this; index build still requires extracted `.dat`/`.xml`.
+ *
+ * Sync skips unzip when remote ETag / local size:mtime still matches the prior
+ * pack-source meta and DAT files are already on disk.
  */
 import { spawn } from "node:child_process";
 import { existsSync, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import axios from "axios";
+import {
+  downloadRemoteArtifactIfChanged,
+  localArtifactUnchanged,
+  readArtifactSourceMeta,
+  recordLocalArtifactMeta,
+  type ArtifactSourceMeta,
+} from "@/providers/shared/remoteArtifactFreshness";
 
 const DAT_FILE_RE = /\.(dat|xml)$/i;
 
@@ -18,25 +27,37 @@ export type NoIntroDatSyncOptions = {
   packUrl?: string;
   /** Destination directory for extracted `.dat`/`.xml` (flat copy by basename). */
   destDir?: string;
-  /** Intentional prebuild (`pnpm nointro:sync`) — may download. */
+  /** Intentional prebuild / tooling — may download. */
   allowDownload?: boolean;
+  /** Re-extract even when pack validators match. */
+  force?: boolean;
 };
 
 export type NoIntroDatPackSource =
-  | { kind: "local"; path: string }
-  | { kind: "url"; url: string };
+  { kind: "local"; path: string } | { kind: "url"; url: string };
 
 export type NoIntroDatSyncResult = {
   destDir: string;
   files: string[];
   source: NoIntroDatPackSource;
+  /** False when pack validators matched and existing DATs were reused. */
+  changed: boolean;
+  packMeta: ArtifactSourceMeta;
 };
 
 function cacheDir(): string {
   return (
     process.env.NOINTRO_CACHE_DIR?.trim() ||
-    path.join(process.cwd(), ".cache", "nointro")
+    path.join(process.cwd(), "data", "nointro")
   );
+}
+
+function packSourceMetaPath(): string {
+  return path.join(cacheDir(), "pack-source-meta.json");
+}
+
+function cachedPackZipPath(): string {
+  return path.join(cacheDir(), "nointro-dat-pack.zip");
 }
 
 /** Opt-in network fetch of a DAT pack zip. Default: off (scan-safe). */
@@ -51,7 +72,8 @@ export function isNoIntroDownloadAllowed(
 export function resolveNoIntroDatDestDir(
   options?: Pick<NoIntroDatSyncOptions, "destDir">,
 ): string {
-  const explicit = options?.destDir?.trim() || process.env.NOINTRO_DAT_PATH?.trim();
+  const explicit =
+    options?.destDir?.trim() || process.env.NOINTRO_DAT_PATH?.trim();
   if (explicit) return explicit;
   return path.join(cacheDir(), "dats");
 }
@@ -76,29 +98,29 @@ export function resolveNoIntroDatPackSource(
   return { kind: "url", url };
 }
 
+/**
+ * True when a DAT path or pack (local zip / allowed URL) is configured —
+ * used so catalogue auto-sync does not treat an empty index as forever-stale.
+ */
+export function isNoIntroDatSourceConfigured(
+  options?: NoIntroDatSyncOptions,
+): boolean {
+  if (process.env.NOINTRO_DAT_PATH?.trim()) return true;
+  return (
+    resolveNoIntroDatPackSource({
+      ...options,
+      // Catalogue refresh passes allowDownload; status should match that path.
+      allowDownload: options?.allowDownload ?? true,
+    }) != null
+  );
+}
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
     return true;
   } catch {
     return false;
-  }
-}
-
-async function downloadDatPackZip(url: string): Promise<string | null> {
-  await fs.mkdir(cacheDir(), { recursive: true });
-  const zipPath = path.join(cacheDir(), "nointro-dat-pack.zip");
-  try {
-    const response = await axios.get<ArrayBuffer>(url, {
-      responseType: "arraybuffer",
-      timeout: 10 * 60_000,
-      maxContentLength: 512 * 1024 * 1024,
-    });
-    await fs.writeFile(zipPath, Buffer.from(response.data));
-    return zipPath;
-  } catch (error) {
-    console.warn("[No-Intro] Failed to download DAT pack zip", error);
-    return null;
   }
 }
 
@@ -154,8 +176,34 @@ async function flattenDatFilesInto(
   return written.sort((a, b) => a.localeCompare(b, "en"));
 }
 
+async function listExistingDestDats(destDir: string): Promise<string[]> {
+  if (!(await fileExists(destDir))) return [];
+  return collectDatFiles(destDir);
+}
+
+async function extractPackZip(
+  zipPath: string,
+  destDir: string,
+): Promise<string[] | null> {
+  const extractRoot = await fs.mkdtemp(
+    path.join(os.tmpdir(), "placarr-nointro-pack-"),
+  );
+  try {
+    await unzipToDir(zipPath, extractRoot);
+    const nested = await collectDatFiles(extractRoot);
+    if (nested.length === 0) {
+      console.warn(`[No-Intro] No .dat/.xml files inside pack ${zipPath}`);
+      return null;
+    }
+    return flattenDatFilesInto(nested, destDir);
+  } finally {
+    await fs.rm(extractRoot, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 /**
  * Sync a DAT pack into the local DAT directory. Never used by scan/enrich.
+ * Returns `changed: false` when pack validators match and DATs already exist.
  */
 export async function syncNoIntroDatPack(
   options?: NoIntroDatSyncOptions,
@@ -163,52 +211,96 @@ export async function syncNoIntroDatPack(
   const source = resolveNoIntroDatPackSource(options);
   if (!source) {
     console.warn(
-      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL with NOINTRO_ALLOW_DOWNLOAD=1",
+      "[No-Intro] No DAT pack — set NOINTRO_DAT_PACK (local zip) or NOINTRO_DAT_PACK_URL, then admin Local indexes",
     );
     return null;
   }
 
+  const destDir = resolveNoIntroDatDestDir(options);
+  const metaPath = packSourceMetaPath();
+  const prior = readArtifactSourceMeta(metaPath);
+  const existing = await listExistingDestDats(destDir);
+
   let zipPath: string;
+  let packMeta: ArtifactSourceMeta;
+  let packChanged: boolean;
+
   if (source.kind === "local") {
     if (!(await fileExists(source.path))) {
       console.warn(`[No-Intro] DAT pack not found: ${source.path}`);
       return null;
     }
     zipPath = source.path;
-  } else {
-    const downloaded = await downloadDatPackZip(source.url);
-    if (!downloaded) return null;
-    zipPath = downloaded;
-  }
-
-  const destDir = resolveNoIntroDatDestDir(options);
-  const extractRoot = await fs.mkdtemp(
-    path.join(os.tmpdir(), "placarr-nointro-pack-"),
-  );
-
-  try {
-    await unzipToDir(zipPath, extractRoot);
-    const nested = await collectDatFiles(extractRoot);
-    if (nested.length === 0) {
-      console.warn(
-        `[No-Intro] No .dat/.xml files inside pack ${zipPath}`,
+    const unchanged =
+      !options?.force &&
+      existing.length > 0 &&
+      (await localArtifactUnchanged(zipPath, prior));
+    if (unchanged && prior) {
+      console.info(
+        `[No-Intro] DAT pack unchanged — reusing ${existing.length} DAT file(s)`,
       );
-      return null;
+      return {
+        destDir,
+        files: existing,
+        source,
+        changed: false,
+        packMeta: prior,
+      };
     }
-    const files = await flattenDatFilesInto(nested, destDir);
-    console.info(
-      `[No-Intro] Synced ${files.length} DAT file(s) → ${destDir}`,
-    );
-    return { destDir, files, source };
-  } finally {
-    await fs.rm(extractRoot, { recursive: true, force: true }).catch(() => {});
+    const recorded = await recordLocalArtifactMeta({
+      absPath: zipPath,
+      metaPath,
+    });
+    if (!recorded) return null;
+    packMeta = recorded;
+    packChanged = true;
+  } else {
+    const downloaded = await downloadRemoteArtifactIfChanged({
+      url: source.url,
+      destPath: cachedPackZipPath(),
+      metaPath,
+      timeoutMs: 10 * 60_000,
+      maxContentLength: 512 * 1024 * 1024,
+    });
+    if (!downloaded) return null;
+    zipPath = downloaded.path;
+    packMeta = downloaded.meta;
+    packChanged = downloaded.changed || options?.force === true;
+    if (
+      !packChanged &&
+      existing.length > 0 &&
+      !options?.force
+    ) {
+      console.info(
+        `[No-Intro] Remote DAT pack unchanged — reusing ${existing.length} DAT file(s)`,
+      );
+      return {
+        destDir,
+        files: existing,
+        source,
+        changed: false,
+        packMeta,
+      };
+    }
   }
+
+  const files = await extractPackZip(zipPath, destDir);
+  if (!files) return null;
+  console.info(`[No-Intro] Synced ${files.length} DAT file(s) → ${destDir}`);
+  return {
+    destDir,
+    files,
+    source,
+    changed: packChanged || existing.length === 0,
+    packMeta,
+  };
 }
 
 export function __noIntroSyncPathsForTests() {
   return {
     cacheDir: cacheDir(),
     destDir: resolveNoIntroDatDestDir(),
+    packSourceMetaPath: packSourceMetaPath(),
     exists: existsSync,
   };
 }

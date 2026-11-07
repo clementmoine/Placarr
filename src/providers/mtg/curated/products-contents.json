@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "pack": "mtg",
+  "updatedAt": "2026-09-19",
+  "byKind": {
+    "deck": {
+      "source": "mtgcards.fr commander-decks",
+      "verifiedAt": "2026-09-19",
+      "randomPoolScope": "none",
+      "behavior": "known_bundle",
+      "contentsKnown": false,
+      "notes": "Contenu deck listé côté Wizards — pas encore joint SKU→printKeys."
+    },
+    "prerelease": {
+      "source": "mtgcards.fr prerelease-packs",
+      "verifiedAt": "2026-09-19",
+      "randomPoolScope": "none",
+      "behavior": "mixed_bundle",
+      "contentsKnown": false,
+      "notes": "Boosters + stamped — shop mtgcards.fr n'a pas de catégorie boosters/displays (2026-09)."
+    }
+  },
+  "skus": {}
+}

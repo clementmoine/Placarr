@@ -46,18 +46,6 @@ export default function Header(props: HeaderProps) {
             >
               {t("navigation.items")}
             </Link>
-            <Link
-              href="/explore"
-              className="hover:text-foreground transition-colors"
-            >
-              {t("navigation.explore")}
-            </Link>
-            <Link
-              href="/loans"
-              className="hover:text-foreground transition-colors"
-            >
-              {t("navigation.loans")}
-            </Link>
           </nav>
         </div>
 

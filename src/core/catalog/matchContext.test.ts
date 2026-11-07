@@ -97,16 +97,9 @@ describe("buildMatchContext", () => {
     ]);
 
     expect(contributed.titles).toEqual(
-      expect.arrayContaining([
-        "FIFA 17",
-        "Fifa Football 17",
-        "FIFA Soccer 17",
-      ]),
+      expect.arrayContaining(["FIFA 17", "Fifa Football 17", "FIFA Soccer 17"]),
     );
-    expect(contributed.barcodes).toEqual([
-      "0711719504120",
-      "711719504120",
-    ]);
+    expect(contributed.barcodes).toEqual(["0711719504120", "711719504120"]);
     expect(contributed.releaseDate).toBe("2016-09-27");
     expect(contributed.externalIds).toEqual({
       igdb: "123",
@@ -131,13 +124,8 @@ describe("toBarcodePriceRefreshContext", () => {
     expect(ctx.cleanedBarcode).toBe("711719423803");
     expect(ctx.primaryName).toBe("Tony Hawk's Pro Skater 4");
     // Soft titles stay aliases — expansions live in fallbackNames only.
-    expect(ctx.titles).toEqual([
-      "Tony Hawk's Pro Skater 4",
-      "Tony Hawk 4",
-    ]);
-    expect(ctx.fallbackNames).toEqual(
-      expect.arrayContaining(["Tony Hawk 4"]),
-    );
+    expect(ctx.titles).toEqual(["Tony Hawk's Pro Skater 4", "Tony Hawk 4"]);
+    expect(ctx.fallbackNames).toEqual(expect.arrayContaining(["Tony Hawk 4"]));
     expect(ctx.leDenicheurQueries[0]).toBe("711719423803");
     expect(ctx.releaseDate).toBeNull();
   });

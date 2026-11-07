@@ -81,9 +81,10 @@ describe("No-Intro DAT pack sync", () => {
 
   it("allows download when options or env opt in", () => {
     process.env.NOINTRO_DAT_PACK_URL = "https://example.test/pack.zip";
-    expect(
-      resolveNoIntroDatPackSource({ allowDownload: true }),
-    ).toEqual({ kind: "url", url: "https://example.test/pack.zip" });
+    expect(resolveNoIntroDatPackSource({ allowDownload: true })).toEqual({
+      kind: "url",
+      url: "https://example.test/pack.zip",
+    });
 
     process.env.NOINTRO_ALLOW_DOWNLOAD = "1";
     expect(isNoIntroDownloadAllowed()).toBe(true);
@@ -117,12 +118,25 @@ describe("No-Intro DAT pack sync", () => {
       destDir,
     });
     expect(result).not.toBeNull();
+    expect(result!.changed).toBe(true);
     expect(result!.files).toHaveLength(1);
     expect(result!.files[0]).toBe(
       path.join(destDir, "Nintendo - Game Boy.dat"),
     );
     const xml = await fs.readFile(result!.files[0]!, "utf8");
     expect(xml).toContain("Tetris (World)");
+  });
+
+  it("skips re-extract when local pack fingerprint is unchanged", async () => {
+    const zipPath = await makeZipWithNestedDat(tmpRoot);
+    const destDir = path.join(tmpRoot, "dats");
+    const first = await syncNoIntroDatPack({ packPath: zipPath, destDir });
+    expect(first?.changed).toBe(true);
+
+    const second = await syncNoIntroDatPack({ packPath: zipPath, destDir });
+    expect(second).not.toBeNull();
+    expect(second!.changed).toBe(false);
+    expect(second!.files).toEqual(first!.files);
   });
 
   it("returns null when local pack is missing", async () => {

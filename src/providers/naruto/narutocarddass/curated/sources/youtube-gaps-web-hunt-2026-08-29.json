@@ -1,0 +1,94 @@
+{
+  "source": "youtube-gaps-web-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "sets.json S2 checklistGhost cleared ; tin-box press corroboration ; pack-decouverte text already attested ; tin-box-hobby minted from contenu-tin-box.jpg",
+  "scope": "Pack Découverte / displays FR / tin Hobby / Supplication / starters S5 — Reddit, forums, presse, Coleka, SciFi-Universe, Manga Sanctuary, Wayback",
+  "findings": [
+    {
+      "id": "supplication-not-s2-ghost",
+      "status": "resolved",
+      "claimWas": "YT Collection Naruto : « Supplication » sur card list S2 jamais imprimée",
+      "reality": "TA-108 Supplication = Série 3 (Puissances Cachées). Sur checklist imprimée Carddass, Coleka i203175, cards-index naruto:ta-0108 (langs fr+ja), HTML ref images/cartes/3/TACTIQUE-108.jpg.",
+      "action": "Retirer checklistGhost S2 dans sets.json. Ne pas inventer de printKey fantôme."
+    },
+    {
+      "id": "pack-decouverte-press-text",
+      "status": "corroborated-no-packshot",
+      "url": "https://www.manga-sanctuary.com/news/7397/naruto-jcc.html",
+      "claim": "Fin 2008 : Pack Découverte = starter Pays du Vent + Maître Hokage + 2 boosters S1 ; PPC 20–30 €.",
+      "imagesOnPage": ["S5 starters", "S5 booster", "logos — pas de visuel Pack Découverte"],
+      "action": "SKU déjà attested ; attendre photo LBC/Vinted/YT screenshot pour art."
+    },
+    {
+      "id": "tin-box-sfu-noel-2007",
+      "status": "corroborates-tin-box-not-hobby",
+      "url": "https://www.scifi-universe.com/actualites/6159/quand-bandai-fete-noel",
+      "date": "2007-12-14",
+      "claim": "Tin Box Collector Naruto Noël : règle + tapis + deck dernière série + boosters (+50 cartes) + poster + jetons ; ~25 €.",
+      "mapsTo": "tin-box (Invocation 05129) — pas tin-box-hobby (5 boosters S1–S5 + 2 promos).",
+      "image": "https://s.scifi-universe.com/actualites/images-old/2007/bandai.jpg — hotlink/CDN mort au dig (pas staged)."
+    },
+    {
+      "id": "scifi-universe-gamme-incomplete",
+      "status": "dead-end",
+      "url": "https://www.scifi-universe.com/jeux/10095/naruto-jcc/gamme",
+      "note": "Gamme s'arrête S1–S4 starters/boosters. Pas Pack Découverte, pas display 24, pas S5, pas tin."
+    },
+    {
+      "id": "displays-fr-s1-s5",
+      "status": "no-hit",
+      "tried": [
+        "Reddit (queries FR display/boîte 24)",
+        "forum.animecollection.fr t=445 (déjà curé — Data Carddass / IT, pas display Carddass FR)",
+        "DDG forums hardware.fr / jeuxvideo.com",
+        "Wayback carddass.fr packshots filter (peu de hits utiles)"
+      ],
+      "action": "Toujours : packshot physique / screenshot YT avant mint display-s1…s5 / display-deck-*"
+    },
+    {
+      "id": "tin-box-hobby",
+      "status": "minted",
+      "renamedFrom": "tin-box-obi",
+      "renameNote": "ASR YouTube « Obi » = lecture erronée de l'étiquette à l'écran « Tin Box Hobby » (Collection Naruto).",
+      "official": {
+        "url": "https://web.archive.org/web/20081118125752/http://www.carddass.fr/naruto/news.htm",
+        "headline": "Jeudi 15 novembre TIN BOX HOBBY NARUTO",
+        "channel": "version hobby (magasins spécialisés) — news 6 nov présente Orochimaru promo hobby",
+        "contents": [
+          "1 booster série 1",
+          "1 booster série 2",
+          "1 booster série 3",
+          "1 booster série 4",
+          "1 booster série 5",
+          "Naruto [NI-PR16]",
+          "Orochimaru [NI-PR11]"
+        ],
+        "packshot": "staging/carddass-fr/images/cartes/promo/contenu-tin-box.jpg → packshots/Tin-box-hobby.jpg"
+      },
+      "sku": "tin-box-hobby",
+      "distinctFrom": "tin-box Invocation (deck S4 + boosters S1/S2 + 1 promo holo + accessories)"
+    },
+    {
+      "id": "s5-starter-composition",
+      "status": "no-hit",
+      "note": "Toujours marqueurs * /** seulement. Ultrajeux / manga-news / forums : pas de liste 40."
+    },
+    {
+      "id": "search-noise",
+      "status": "noise",
+      "note": "Résultats web 2026 dominés par Naruto Mythos TCG + Bandai Card Game 2027 — filtrer « Carddass / JCC 2006–2008 »."
+    }
+  ],
+  "stillBlockedOnPackshot": [
+    "display-s1…s5",
+    "display-deck-s1…s3",
+    "dvd-promo-*"
+  ],
+  "doNot": [
+    "Minter displays FR sans packshot",
+    "Réintroduire ghost Supplication S2",
+    "Fusionner tin Hobby avec tin-box 05129",
+    "Réintroduire le slug tin-box-obi (ASR)"
+  ]
+}

@@ -1,18 +1,18 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import {
   createMetadataHealthCheck,
   fetchWithTimeout,
 } from "@/core/catalog/healthUtils";
 import { fetchFromSteam } from "./fetch";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 
 export { fetchFromSteam } from "./fetch";
 
-export const steamModule: ProviderModule = {
+export const steamModule = defineProvider({
   info: {
     id: "steam",
     label: "Steam",
@@ -27,6 +27,7 @@ export const steamModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     // PC capsule/header art, not the physical console box being scanned.
@@ -45,7 +46,7 @@ export const steamModule: ProviderModule = {
     const start = Date.now();
     try {
       await fetchWithTimeout(
-        axios.get("https://store.steampowered.com/api/storesearch/", {
+        httpGet("https://store.steampowered.com/api/storesearch/", {
           params: { term: "Hades", cc: "fr", l: "french" },
           timeout: 4000,
         }),
@@ -64,13 +65,7 @@ export const steamModule: ProviderModule = {
       };
     }
   }),
-  testHandlers: {
-    "steam-metadata": {
-      label: "Steam - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromSteam(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromSteam(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -86,7 +81,7 @@ export const steamModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const search = await axios.get(
+      const search = await httpGet<{ items?: Array<{ id?: number }> }>(
         "https://store.steampowered.com/api/storesearch/",
         {
           params: { term: "Hades", cc: "fr", l: "french" },
@@ -95,7 +90,7 @@ export const steamModule: ProviderModule = {
       );
       const id = search.data?.items?.[0]?.id;
       if (!id) return Object.keys(search.data?.items?.[0] || {});
-      const details = await axios.get(
+      const details = await httpGet<Record<string, { data?: JsonObject }>>(
         "https://store.steampowered.com/api/appdetails",
         {
           params: { appids: id, cc: "fr", l: "french" },
@@ -107,4 +102,4 @@ export const steamModule: ProviderModule = {
       return [];
     }
   },
-};
+});

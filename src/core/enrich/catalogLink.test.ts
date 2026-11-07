@@ -83,6 +83,7 @@ describe("presentItem referenceCatalogLink", () => {
             kind: "external-link",
             source: "PriceCharting",
             label: "PriceCharting",
+            value: "Voir la fiche",
             url: "https://www.pricecharting.com/game/pal-playstation/tony-hawk-4",
           },
         ],
@@ -111,9 +112,9 @@ describe("presentItemFromStorage PriceCharting chip", () => {
         releaseDate: null,
         imageUrl: null,
         heroImageUrl: null,
-        sourceType: null,
-        sourceQuery: null,
-        lastFetched: null,
+        sourceType: "games",
+        sourceQuery: "",
+        lastFetched: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
         aliases: null,
@@ -139,7 +140,8 @@ describe("presentItemFromStorage PriceCharting chip", () => {
         ],
       },
     });
-    const links = (presented.metadata?.facts || []).filter(
+    const facts = presented.metadata?.facts;
+    const links = (Array.isArray(facts) ? facts : []).filter(
       (fact) => fact.kind === "external-link",
     );
     const priceCharting = links.find(
@@ -168,9 +170,9 @@ describe("presentItemFromStorage PriceCharting chip", () => {
         imageUrl:
           "https://storage.googleapis.com/images.pricecharting.com/pc-md.jpg",
         heroImageUrl: null,
-        sourceType: null,
-        sourceQuery: null,
-        lastFetched: null,
+        sourceType: "games",
+        sourceQuery: "",
+        lastFetched: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
         aliases: null,

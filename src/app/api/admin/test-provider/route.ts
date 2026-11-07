@@ -8,7 +8,7 @@ import {
   getDatabaseSuggestions,
   type MetadataResult,
 } from "@/core/enrich";
-import { testProviderHandlers } from "@/core/catalog/runtime";
+import { testProviderHandlers } from "@/core/catalog/catalog";
 
 async function processScrapedNames(
   rawNames: string[] | undefined,

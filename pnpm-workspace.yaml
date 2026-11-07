@@ -1,0 +1,32 @@
+# Single-package repo. pnpm ≥10 settings (incl. patchedDependencies) live here.
+packages:
+  - "."
+
+# pnpm 11: explicit allowlist for packages that run install scripts.
+allowBuilds:
+  "@parcel/watcher": true
+  "@prisma/engines": true
+  esbuild: true
+  onnxruntime-node: true
+  prisma: true
+  protobufjs: true
+  tesseract.js: true
+  unrs-resolver: true
+
+# Avoid interactive purge prompt when switching pnpm major (CI / agent installs).
+confirmModulesPurge: false
+
+# Default is 1440 (24h). Disable while we depend on a freshly published unityfs-js
+# that we patch locally; re-enable once the package is past the cooling window.
+minimumReleaseAge: 0
+
+patchedDependencies:
+  unityfs-js@0.2.8: patches/unityfs-js@0.2.8.patch
+
+# One ONNX Runtime Web instance in the browser. transformers.js pins a 1.31
+# dev build of the same runtime; without this override the scan page shipped
+# two runtimes (two ~30 MB WASM downloads, two `env` objects, so the WASM
+# paths / thread settings set in `src/lib/client/scan/ortRuntime.ts` only
+# reached one of them).
+overrides:
+  onnxruntime-web: 1.31.1

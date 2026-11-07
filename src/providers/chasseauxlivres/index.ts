@@ -9,10 +9,6 @@ import {
 } from "@/core/commerce/retailer/productUrl";
 import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { throwIfAborted } from "@/lib/http/abort";
-import {
-  CHASSE_AUX_LIVRES_CATALOG_BY_TYPE,
-  catalogForShelfType,
-} from "@/core/catalog/shelfCatalogSlug";
 import { isNameOnlyRetailerTitleMatch } from "@/core/commerce/retailer/titleMatch";
 import { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 import {
@@ -28,12 +24,33 @@ import {
 import { createTeardownBarcodeTask } from "@/lib/dev/teardownUtils";
 import { scopedContribution } from "@/core/identify/lookup/sourceContribution";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
+import { isMissingArtImageUrl } from "@/core/enrich/media/coverPlaceholder";
+
+/** Shelf type -> Chasse aux Livres catalog slug. */
+export const CHASSE_AUX_LIVRES_CATALOG_BY_TYPE = {
+  books: "fr",
+  movies: "dvd",
+  musics: "music",
+  games: "videogames",
+  /** Consoles / manettes live in the same CAL videogames catalog as games. */
+  hardware: "videogames",
+  boardgames: "toys",
+} as const;
+
+export function catalogForShelfType(type: string | null): string {
+  return (
+    CHASSE_AUX_LIVRES_CATALOG_BY_TYPE[
+      type as keyof typeof CHASSE_AUX_LIVRES_CATALOG_BY_TYPE
+    ] ?? "fr"
+  );
+}
 import { pricedOffers } from "@/core/catalog/priceOffers";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 
 export { catalogTitleAlignedWithItem as isChasseTitleAligned } from "@/core/commerce/retailer/catalogTitleAlignment";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { BarcodePriceRefreshContext } from "@/types/providerModule";
 import { matchPriceSeekQueries } from "@/core/catalog/matchContext";
 import {
@@ -278,8 +295,9 @@ function buildChasseAuxLivresAttachments(
   >,
 ): MetadataAttachment[] | undefined {
   const images = product.images ?? [];
-  const urls =
-    images.length > 0 ? images : product.coverUrl ? [product.coverUrl] : [];
+  const urls = (
+    images.length > 0 ? images : product.coverUrl ? [product.coverUrl] : []
+  ).filter((url) => !isMissingArtImageUrl(url));
   if (urls.length === 0) return undefined;
 
   return urls.map((url, index) => ({
@@ -430,7 +448,10 @@ function mapChasseAuxLivresMetadata(
     authors: product.authors?.map((name) => ({ name })),
     publishers: product.publisher ? [{ name: product.publisher }] : undefined,
     description: product.description,
-    imageUrl: product.coverUrl,
+    imageUrl:
+      product.coverUrl && !isMissingArtImageUrl(product.coverUrl)
+        ? product.coverUrl
+        : undefined,
     regionalTitles: [{ region: "fr", text: product.name }],
     attachments: buildChasseAuxLivresAttachments(product),
     facts: facts.length > 0 ? facts : undefined,
@@ -490,7 +511,7 @@ async function resolveChasseAuxLivresMetadata(
   return null;
 }
 
-export const chasseauxlivresModule: ProviderModule = {
+export const chasseauxlivresModule = defineProvider({
   info: {
     id: "chasseauxlivres",
     label: "Chasse aux Livres",
@@ -511,6 +532,7 @@ export const chasseauxlivresModule: ProviderModule = {
       "people",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     defaultLanguage: "fr",
@@ -692,4 +714,4 @@ export const chasseauxlivresModule: ProviderModule = {
   extractScanPriceOffers: extractChasseScanOffers,
   refreshBarcodePriceOffers: refreshChasseAuxLivresOffers,
   expandCoverDownloadCandidates: chasseCoverDownloadCandidates,
-};
+});

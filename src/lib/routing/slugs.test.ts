@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  itemLookupSlugs,
   itemPath,
   itemMatchesVolumeItemSlug,
   itemSlugLookupVariants,

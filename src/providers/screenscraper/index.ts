@@ -2,14 +2,14 @@ import {
   createMetadataHealthCheck,
   createUnconfiguredHealthCheck,
 } from "@/core/catalog/healthUtils";
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 import type { SourceProduct } from "@/core/identify/evidence/types";
 import type { BarcodeLookupPayload } from "@/core/identify/lookup/payload";
-import { formatScore } from "@/core/enrich/searchUtils";
-import { cleanSearchQuery } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
+import { cleanSearchQuery } from "@/core/enrich/search/searchUtils";
 import {
   createScreenScraperResolver,
   rewriteScreenScraperGameInfoUrl,
@@ -88,7 +88,7 @@ function buildScreenScraperProducts(
   return products;
 }
 
-export const screenscraperModule: ProviderModule = {
+export const screenscraperModule = defineProvider({
   info: {
     id: "screenscraper",
     label: "ScreenScraper",
@@ -96,6 +96,8 @@ export const screenscraperModule: ProviderModule = {
     coverUrlHost: "screenscraper.fr",
     types: ["games"],
     rateLimited: true,
+    // API terms: ~1 call/s per user — keep a margin.
+    minRequestIntervalMs: 1_100,
     capabilities: [
       "identify",
       "cover",
@@ -112,6 +114,7 @@ export const screenscraperModule: ProviderModule = {
       env: SCREEN_SCRAPER_ENV_NAMES,
       free: true,
     },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -168,7 +171,7 @@ export const screenscraperModule: ProviderModule = {
       async () => {
         const start = Date.now();
         try {
-          const response = await axios.get(
+          const response = await httpGet<{ response?: { error?: unknown } }>(
             "https://api.screenscraper.fr/api2/jeuRecherche.php",
             {
               params: {
@@ -308,7 +311,7 @@ export const screenscraperModule: ProviderModule = {
       source: "screenscraper",
     };
   },
-};
+});
 
 export { createScreenScraperResolver, pickSSCover } from "./resolver";
 export type { SSMedia } from "./resolver";

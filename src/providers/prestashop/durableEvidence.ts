@@ -32,7 +32,7 @@ function isPrestashopSearchUrl(url: string): boolean {
     const parsed = new URL(url);
     return Boolean(
       parsed.searchParams.get("search_query")?.trim() ||
-        parsed.searchParams.get("s")?.trim(),
+      parsed.searchParams.get("s")?.trim(),
     );
   } catch {
     return url.includes("search_query=") || /(?:\?|&)s=/.test(url);

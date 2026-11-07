@@ -121,4 +121,77 @@ describe("getItemValueEstimate", () => {
       getItemValueEstimate({ condition: "used", shelfType: "books" }),
     ).toBeNull();
   });
+
+  it("TCG Ariel-like: foil variant reads foil FX, not normal", () => {
+    // Lorcast USD 0.07 new / 0.63 foil → FX buckets after convert.
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        variant: "Silver",
+        plainFinishes: ["None"],
+        priceNew: null,
+        priceFoil: null,
+        priceEstimated: 6,
+        priceEstimatedFoil: 54,
+      }),
+    ).toEqual({ cents: 54, isEstimate: true });
+
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        variant: "None",
+        plainFinishes: ["None"],
+        priceNew: null,
+        priceEstimated: 6,
+        priceEstimatedFoil: 54,
+      }),
+    ).toEqual({ cents: 6, isEstimate: true });
+  });
+
+  it("TCG prefers EUR foil average over FX when present", () => {
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        variant: "Silver",
+        priceFoil: 75,
+        priceEstimatedFoil: 54,
+      }),
+    ).toEqual({ cents: 75, isEstimate: false });
+  });
+
+  it("TCG foil finish falls back to new when CM only stamped the non-foil bucket", () => {
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        variant: "live-std",
+        plainFinishes: ["normal"],
+        priceNew: 9588,
+        priceFoil: null,
+      }),
+    ).toEqual({ cents: 9588, isEstimate: false });
+  });
+
+  it("TCG foil-only Enchanted: falls back to sole priceEstimated", () => {
+    // Stale Lorcast row tagged `new` → FX only filled priceEstimated.
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        variant: "Lore",
+        plainFinishes: ["None"],
+        priceNew: null,
+        priceFoil: null,
+        priceEstimated: 204733,
+        priceEstimatedFoil: null,
+      }),
+    ).toEqual({ cents: 204733, isEstimate: true });
+  });
+
+  it("TCG does not require item condition for a value", () => {
+    expect(
+      getItemValueEstimate({
+        shelfType: "tcg",
+        priceNew: 25,
+      }),
+    ).toEqual({ cents: 25, isEstimate: false });
+  });
 });

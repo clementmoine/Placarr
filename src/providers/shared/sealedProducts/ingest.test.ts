@@ -1,0 +1,849 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  sealedBehaviorForKind,
+  sealedContentsKnown,
+  sealedKindForCategory,
+  sealedKindLabel,
+  sealedProductDisplayName,
+  refineSealedKind,
+  withRefinedSealedKind,
+} from "./kinds";
+import {
+  backfillPacksBySetFromGuaranteedProducts,
+  printKeyFromCollectorRef,
+  sealedPriceCentsFromShop,
+  sealedProductFromStaging,
+} from "./ingest";
+import { sealedProductKey, type SealedProductEntry } from "./indexFormat";
+import {
+  inferSealedLangFromSlug,
+  normalizeSealedLang,
+  resolveSealedLang,
+} from "./lang";
+
+describe("sealedPriceCentsFromShop", () => {
+  it("converts EUR shop strings to cents", () => {
+    expect(sealedPriceCentsFromShop({ price: "3.88", currency: "EUR" })).toBe(
+      388,
+    );
+    expect(sealedPriceCentsFromShop({ price: 4.9, currency: "EUR" })).toBe(490);
+  });
+
+  it("ignores non-EUR and empty prices", () => {
+    expect(sealedPriceCentsFromShop({ price: "4.90", currency: "USD" })).toBeNull();
+    expect(sealedPriceCentsFromShop({ price: null, currency: "EUR" })).toBeNull();
+    expect(sealedPriceCentsFromShop({ price: "0", currency: "EUR" })).toBeNull();
+  });
+});
+
+describe("sealedProductDisplayName", () => {
+  it("prefixes kind when the boutique title is only the set name", () => {
+    expect(
+      sealedProductDisplayName({
+        name: "Premier Chapitre",
+        kind: "trove",
+        slug: "the-first-chapter-trove",
+        packsInContainer: 8,
+        locale: "fr",
+      }),
+    ).toBe("Trésor (8 boosters) — Premier Chapitre");
+    expect(
+      sealedProductDisplayName({
+        name: "Premier Chapitre",
+        kind: "trove",
+        packsInContainer: 8,
+        locale: "en",
+      }),
+    ).toBe("Trove (8 boosters) — Premier Chapitre");
+  });
+
+  it("leaves titles that already name the product family", () => {
+    expect(
+      sealedProductDisplayName({
+        name: "Boîte de 24 boosters - Premier Chapitre",
+        kind: "display",
+        locale: "fr",
+      }),
+    ).toBe("Boîte de 24 boosters - Premier Chapitre");
+    expect(
+      sealedProductDisplayName({
+        name: "Coffret Quête des Illumineurs - Équipe Miel à la Rescousse",
+        kind: "quest",
+        locale: "fr",
+      }),
+    ).toBe("Coffret Quête des Illumineurs - Équipe Miel à la Rescousse");
+    expect(sealedKindLabel("trove", "fr")).toBe("Trésor");
+  });
+});
+
+describe("sealed kinds", () => {
+  it("maps host categories onto catalogue kinds", () => {
+    expect(sealedKindForCategory("boosters")).toBe("booster");
+    expect(sealedKindForCategory("boosters-blister")).toBe("blister");
+    expect(sealedKindForCategory("displays")).toBe("display");
+    expect(sealedKindForCategory("decks")).toBe("deck");
+    expect(sealedKindForCategory("commander-decks")).toBe("deck");
+    expect(sealedKindForCategory("elite-trainer")).toBe("etb");
+    expect(sealedKindForCategory("trove-packs")).toBe("trove");
+    expect(sealedKindForCategory("illumineers-quest")).toBe("quest");
+    expect(sealedKindForCategory("double-packs")).toBe("multipack");
+    expect(sealedKindForCategory("tripacks")).toBe("multipack");
+    expect(sealedKindForCategory("tins")).toBe("tin");
+    expect(sealedKindForCategory("minitins")).toBe("tin");
+    expect(sealedKindForCategory("pokebox")).toBe("collector_box");
+    expect(sealedKindForCategory("prerelease-packs")).toBe("prerelease");
+    expect(sealedKindForCategory("special-packs")).toBe("special");
+    expect(sealedKindForCategory("puzzles")).toBe("puzzle");
+    expect(sealedKindForCategory("playmats")).toBeNull();
+    expect(sealedBehaviorForKind("booster")).toBe("random_pack");
+    expect(sealedBehaviorForKind("blister")).toBe("pack_container");
+    expect(sealedBehaviorForKind("display")).toBe("pack_container");
+    expect(sealedBehaviorForKind("puzzle")).toBe("known_bundle");
+    expect(sealedBehaviorForKind("case")).toBe("pack_container");
+    expect(sealedBehaviorForKind("blister_case")).toBe("pack_container");
+    expect(sealedBehaviorForKind("deck")).toBe("known_bundle");
+    expect(sealedBehaviorForKind("deck_bundle")).toBe("mixed_bundle");
+    expect(sealedBehaviorForKind("multipack")).toBe("mixed_bundle");
+    expect(sealedBehaviorForKind("trove")).toBe("mixed_bundle");
+    expect(sealedBehaviorForKind("coffret")).toBe("mixed_bundle");
+  });
+
+  it("refines blister cartons, duopacks and multi-deck packs", () => {
+    // FR retail « blister carton » = sleeved single, not a 24-pack case.
+    expect(
+      refineSealedKind({
+        category: "boosters-blister",
+        slug: "booster-blister-carton-set-12-woody",
+        name: "Booster Blister Carton Set 12",
+        kind: "booster",
+      }),
+    ).toBe("blister");
+    expect(
+      refineSealedKind({
+        category: "boosters",
+        slug: "carton-de-24-blisters-set-12",
+        name: "Carton de 24 blisters Set 12",
+        kind: "booster",
+      }),
+    ).toBe("blister_case");
+    expect(
+      refineSealedKind({
+        category: "boosters-blister",
+        slug: "duopack-s28",
+        name: "Duopack Série 28",
+        kind: "coffret",
+      }),
+    ).toBe("multipack");
+    expect(
+      refineSealedKind({
+        category: "collector-boxes",
+        slug: "pack-decouverte",
+        name: "Pack Découverte",
+        kind: "coffret",
+      }),
+    ).toBe("deck_bundle");
+    // Lorcana « 2 Player Starter Set » is a collector/starter coffret — not
+    // Naruto-style multi-deck pack. Do not refine on bare `2-player` alone.
+    expect(
+      refineSealedKind({
+        category: "official-site",
+        slug: "2-player-starter-set-collector_box",
+        name: "Disney Lorcana TCG Coffret Démarrage 2 Joueurs",
+        kind: "collector_box",
+      }),
+    ).toBe("collector_box");
+    expect(
+      refineSealedKind({
+        category: "collector-boxes",
+        slug: "tin-box-hobby",
+        name: "Tin Box Hobby",
+        kind: "coffret",
+      }),
+    ).toBe("tin");
+  });
+
+  it("keeps gift boxes as collector_box (not decks→deck)", () => {
+    expect(
+      refineSealedKind({
+        category: "decks",
+        slug: "elsa-gift-box-collector_box-en",
+        name: "Elsa Gift Box",
+        kind: "deck",
+      }),
+    ).toBe("collector_box");
+    expect(
+      refineSealedKind({
+        category: "decks",
+        slug: "coffret-cadeau-aurore",
+        name: "Coffret cadeau Aurore",
+        kind: "deck",
+      }),
+    ).toBe("collector_box");
+  });
+
+  it("promotes Illumineer's Quest packshots off trove / byKind ×8", () => {
+    expect(
+      refineSealedKind({
+        category: "trove-packs",
+        slug: "great-hunny-rescue-trove-en",
+        name: "Illumineer's Quest Great Hunny Rescue",
+        kind: "trove",
+      }),
+    ).toBe("quest");
+    const demoted = withRefinedSealedKind({
+      kind: "trove" as const,
+      behavior: "mixed_bundle" as const,
+      category: "trove-packs",
+      slug: "great-hunny-rescue-trove-fr",
+      name: "Quête des Illumineurs — Le Grand Sauvetage du Miel",
+      packsContained: 8,
+      packsBySet: { set13: 8 },
+      cardsPerPack: 12,
+    });
+    expect(demoted.kind).toBe("quest");
+    expect(demoted.packsContained).toBeNull();
+    expect(demoted.packsBySet).toBeNull();
+    expect(demoted.cardsPerPack).toBeNull();
+    expect(demoted.behavior).toBe("mixed_bundle");
+  });
+
+  it("never treats a booster or display as known contents", () => {
+    expect(
+      sealedContentsKnown({
+        kind: "booster",
+        containsPrintsIsPreview: true,
+        printCount: 15,
+      }),
+    ).toBe(false);
+    expect(
+      sealedContentsKnown({
+        kind: "display",
+        containsPrintsIsPreview: false,
+        printCount: 0,
+      }),
+    ).toBe(false);
+    expect(
+      sealedContentsKnown({
+        kind: "blister_case",
+        containsPrintsIsPreview: false,
+        printCount: 0,
+      }),
+    ).toBe(false);
+    expect(
+      sealedContentsKnown({
+        kind: "deck",
+        containsPrintsIsPreview: false,
+        printCount: 19,
+      }),
+    ).toBe(true);
+    expect(
+      sealedContentsKnown({
+        kind: "deck",
+        containsPrintsIsPreview: true,
+        printCount: 15,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("sealed lang", () => {
+  it("normalizes boutique codes and infers from slug", () => {
+    expect(normalizeSealedLang("FR")).toBe("fr");
+    expect(normalizeSealedLang("jp")).toBe("ja");
+    expect(inferSealedLangFromSlug("en-booster-set-1")).toBe("en");
+    expect(inferSealedLangFromSlug("japanese-display-op01")).toBe("ja");
+    expect(inferSealedLangFromSlug("display-s1-it")).toBe("it");
+    expect(
+      inferSealedLangFromSlug("display-24-boosters-set-8-le-regne-de-jafar"),
+    ).toBeNull();
+    expect(
+      resolveSealedLang({ lang: "EN", slug: "booster-woody" }),
+    ).toBe("en");
+    expect(
+      resolveSealedLang({ lang: null, slug: "en-floodborn-booster" }),
+    ).toBe("en");
+  });
+});
+
+describe("sealed ingest", () => {
+  it("builds a product key that is not a printKey", () => {
+    expect(sealedProductKey("dragonball/cg", "sd23-starter-deck-final-radiance")).toBe(
+      "dragonball/cg::sd23-starter-deck-final-radiance",
+    );
+  });
+
+  it("round-trips a Bandai collector ref and leaves a shop ref alone", () => {
+    expect(printKeyFromCollectorRef("dbscg", "bt13-135")).toBe(
+      "dbscg:bt13-135",
+    );
+    expect(printKeyFromCollectorRef("dbsfw", "fs10-01-p1")).toBe(
+      "dbsfw:fs10-01-p1",
+    );
+    expect(printKeyFromCollectorRef("dbscg", "bt23-033-pr")).toBe(
+      "dbscg:bt23-033-pr",
+    );
+    expect(printKeyFromCollectorRef("onepiece", "st25-001")).toBe(
+      "onepiece:st25-001",
+    );
+    expect(printKeyFromCollectorRef("lorcana", "jessie")).toBeNull();
+    // lorcards prints "241-204" for card 241 / 204 in the set — not set 241.
+    expect(printKeyFromCollectorRef("lorcana", "241-204")).toBeNull();
+    expect(printKeyFromCollectorRef("pokemon", "fr-38")).toBeNull();
+  });
+
+  it("keeps a Woody booster as a preview, not the chapter pool", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "booster-set-12-contrees-inconnues-woody",
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        image: "https://static.lorcards.fr/woody.webp",
+      },
+      page: {
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        slug: "booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        name: "Booster Set 12 Contrées Inconnues - Woody",
+        image: "https://static.lorcards.fr/woody.webp",
+        sku: 2047,
+        price: "4.90",
+        currency: "EUR",
+        setCode: "WIL",
+        lang: "FR",
+        releaseDate: "2026-03-01",
+        declaredCardCount: 446,
+        containsPrints: [
+          {
+            slug: "241-204-fr-12-jessie",
+            path: "/cards/241-204-fr-12-jessie",
+            ref: "241-204",
+            sku: null,
+            name: "Jessie",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+    });
+    expect(entry).toMatchObject({
+      kind: "booster",
+      behavior: "random_pack",
+      contentsKnown: false,
+      containsPrintsIsPreview: true,
+      declaredCardCount: 446,
+      priceCents: 490,
+      /*
+        « Booster Set 12 … » : le 12 est le n° de set, pas « 12 cartes ».
+        Sans cette mention, cardsPerPack reste null — on n'invente pas.
+      */
+      cardsPerPack: null,
+      packsContained: 1,
+    });
+    expect(entry?.prints).toHaveLength(1);
+    expect(entry?.prints[0]?.printKey).toBeNull();
+    expect(entry?.setLogo).toBeNull();
+  });
+
+  it("reads cards-per-pack from « N cartes » in the product name", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "booster-premier-chapitre-malefique",
+        path: "/products/boosters/booster-premier-chapitre-malefique",
+        category: "boosters",
+        image: "https://static.lorcards.fr/malefique.webp",
+      },
+      page: {
+        path: "/products/boosters/booster-premier-chapitre-malefique",
+        slug: "booster-premier-chapitre-malefique",
+        category: "boosters",
+        name: "Booster 12 cartes Premier Chapitre - Maléfique",
+        image: "https://static.lorcards.fr/malefique.webp",
+        sku: 1,
+        price: "3.88",
+        currency: "EUR",
+        setCode: "FC",
+        lang: "FR",
+        releaseDate: "01/09/2023",
+        declaredCardCount: 420,
+        containsPrints: [],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+    });
+    expect(entry).toMatchObject({
+      cardsPerPack: 12,
+      packsContained: 1,
+      declaredCardCount: 420,
+      priceCents: 388,
+    });
+  });
+
+  it("reads packs-contained from a display slug without a name", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "display-24-boosters-premier-chapitre",
+        path: "/products/displays/display-24-boosters-premier-chapitre",
+        category: "displays",
+        image: null,
+      },
+      page: null,
+    });
+    expect(entry).toMatchObject({
+      kind: "display",
+      cardsPerPack: null,
+      packsContained: 24,
+    });
+  });
+
+  it("overlays the official Lorcana chapter thumb when the slug names the set", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "booster-set-12-contrees-inconnues-woody",
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        image: "https://static.lorcards.fr/woody.webp",
+      },
+      page: {
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        slug: "booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        name: "Booster Set 12 Contrées Inconnues - Woody",
+        image: "https://static.lorcards.fr/woody.webp",
+        sku: 2047,
+        price: "4.90",
+        currency: "EUR",
+        setCode: "WIL",
+        lang: "FR",
+        releaseDate: "2026-03-01",
+        declaredCardCount: 446,
+        containsPrints: [],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+      /*
+        Le relevé de logos appartient au pack : le code partagé ne le connaît
+        plus, il demande. Le test fournit donc le résolveur, comme le ferait le
+        module qui possède ce catalogue.
+      */
+      resolveSetLogo: ({ setCode }) =>
+        setCode === "WIL"
+          ? "/assets/lorcana/products/sets/set12/logo.png"
+          : null,
+    });
+    expect(entry?.setLogo).toBe("/assets/lorcana/products/sets/set12/logo.png");
+    expect(entry?.setCode).toBe("WIL");
+  });
+
+  it("marks a completed DBS starter as known contents", () => {
+    const entry = sealedProductFromStaging({
+      packId: "dragonball/cg",
+      listing: {
+        slug: "sd23-starter-deck-final-radiance",
+        path: "/products/decks/sd23-starter-deck-final-radiance",
+        category: "decks",
+        image: null,
+      },
+      page: {
+        path: "/products/decks/sd23-starter-deck-final-radiance",
+        slug: "sd23-starter-deck-final-radiance",
+        category: "decks",
+        name: "SD23 Starter Deck Final Radiance",
+        image: null,
+        sku: null,
+        price: null,
+        currency: null,
+        setCode: "SD23",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: 19,
+        containsPrints: [
+          {
+            slug: "sd23-007",
+            path: "/cards/sd23-007",
+            ref: "sd23-007",
+            sku: null,
+            name: "A",
+          },
+        ],
+        containsPrintsIsPreview: false,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+    });
+    expect(entry?.kind).toBe("deck");
+    expect(entry?.contentsKnown).toBe(true);
+    expect(entry?.prints[0]?.printKey).toBe("dbscg:sd23-007");
+  });
+
+  it("indexes a display from the listing alone", () => {
+    const entry = sealedProductFromStaging({
+      packId: "pokemon",
+      listing: {
+        slug: "display-sv08",
+        path: "/products/displays/display-sv08",
+        category: "displays",
+        image: "https://static.pkmcards.fr/x.webp",
+      },
+    });
+    expect(entry).toMatchObject({
+      kind: "display",
+      behavior: "pack_container",
+      contentsKnown: false,
+      image: "https://static.pkmcards.fr/x.webp",
+      prints: [],
+      setLogo: null,
+    });
+  });
+
+  it("overlays the TCGdex wordmark when pkmcards setCode is unique", () => {
+    const entry = sealedProductFromStaging({
+      packId: "pokemon",
+      listing: {
+        slug: "booster-sv08-5-evolutions-prismatiques",
+        path: "/products/boosters/booster-sv08-5-evolutions-prismatiques",
+        category: "boosters",
+        image: "https://static.pkmcards.fr/pre.webp",
+      },
+      page: {
+        path: "/products/boosters/booster-sv08-5-evolutions-prismatiques",
+        slug: "booster-sv08-5-evolutions-prismatiques",
+        category: "boosters",
+        name: "Booster EV8.5 Évolutions Prismatiques",
+        image: "https://static.pkmcards.fr/pre.webp",
+        sku: 1,
+        price: "5.90",
+        currency: "EUR",
+        setCode: "PRE",
+        lang: "FR",
+        releaseDate: "2025-01-17",
+        declaredCardCount: 10,
+        containsPrints: [],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+      /*
+        La fiche porte l'abréviation officielle (`PRE`) ; c'est le pack qui sait
+        la rattacher à son set (`sv08.5`). Le bouchon reproduit ce lien plutôt
+        que de le contourner.
+      */
+      resolveSetLogo: ({ setCode }) =>
+        setCode === "PRE"
+          ? "https://assets.tcgdex.net/fr/sv/sv08.5/logo.png"
+          : null,
+    });
+    expect(entry?.setLogo).toBe(
+      "https://assets.tcgdex.net/fr/sv/sv08.5/logo.png",
+    );
+    expect(entry?.setCode).toBe("PRE");
+  });
+
+  it("resolves Pokémon shop preview tiles to TCGdex printKeys + keeps tile art", () => {
+    const entry = sealedProductFromStaging({
+      packId: "pokemon",
+      listing: {
+        slug: "booster-mega-evolution-heros-transcendants",
+        path: "/products/boosters/booster-mega-evolution-heros-transcendants",
+        category: "boosters",
+        image: null,
+      },
+      page: {
+        path: "/products/boosters/booster-mega-evolution-heros-transcendants",
+        slug: "booster-mega-evolution-heros-transcendants",
+        category: "boosters",
+        name: "Booster ME02.5 Héros Transcendants",
+        image: null,
+        sku: null,
+        price: "9.99",
+        currency: "EUR",
+        setCode: "ASC",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: 217,
+        containsPrints: [
+          {
+            slug: "asc-fr-276-mega-evolution-heros-transcendants-pikachu",
+            path: "/cards/asc-fr-276-mega-evolution-heros-transcendants-pikachu",
+            ref: "asc-276",
+            sku: "ASC-276",
+            name: "Pikachu",
+            image:
+              "https://static.pkmcards.fr/cards/fr/asc/image-cartes-a-collectionner-pokemon-card-game-tcg-pkmcards-asc-fr-276-mega-evolution-heros-transcendants-pikachu.webp",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+      resolveCatalogueSetId: ({ setCode }) =>
+        setCode?.toUpperCase() === "ASC" ? "me02.5" : null,
+    });
+    expect(entry?.prints[0]).toMatchObject({
+      name: "Pikachu",
+      ref: "asc-276",
+      printKey: "pokemon:me02.5-276",
+      image:
+        "https://static.pkmcards.fr/cards/fr/asc/image-cartes-a-collectionner-pokemon-card-game-tcg-pkmcards-asc-fr-276-mega-evolution-heros-transcendants-pikachu.webp",
+    });
+  });
+
+  it("resolves Lorcana + Yu-Gi-Oh shop preview tiles to printKeys + tile art", () => {
+    const lorcana = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "booster-set-12-contrees-inconnues-woody",
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        image: null,
+      },
+      page: {
+        path: "/products/boosters/booster-set-12-contrees-inconnues-woody",
+        slug: "booster-set-12-contrees-inconnues-woody",
+        category: "boosters",
+        name: "Booster Set 12 Woody",
+        image: null,
+        sku: null,
+        price: "4.90",
+        currency: "EUR",
+        setCode: "WIL",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: 446,
+        containsPrints: [
+          {
+            slug: "223-204-fr-12-jessie-cowgirl-energique",
+            path: "/cards/223-204-fr-12-jessie-cowgirl-energique",
+            ref: "12-223",
+            sku: "12-223",
+            name: "Jessie, Cowgirl énergique",
+            image: "https://static.lorcards.fr/cards/fr/wil/jessie.webp",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+      resolveCatalogueSetId: ({ setCode }) =>
+        setCode?.trim() === "12" ? "12" : null,
+    });
+    expect(lorcana?.prints[0]).toMatchObject({
+      ref: "12-223",
+      printKey: "lorcana:12-223",
+      image: "https://static.lorcards.fr/cards/fr/wil/jessie.webp",
+    });
+
+    const ygo = sealedProductFromStaging({
+      packId: "yugioh",
+      listing: {
+        slug: "booster-acces-a-la-cyber-tempete",
+        path: "/products/boosters/booster-acces-a-la-cyber-tempete",
+        category: "boosters",
+        image: null,
+      },
+      page: {
+        path: "/products/boosters/booster-acces-a-la-cyber-tempete",
+        slug: "booster-acces-a-la-cyber-tempete",
+        category: "boosters",
+        name: "Booster Accès à la Cyber Tempête",
+        image: null,
+        sku: null,
+        price: "4.99",
+        currency: "EUR",
+        setCode: "CYAC",
+        lang: "FR",
+        releaseDate: null,
+        declaredCardCount: null,
+        containsPrints: [
+          {
+            slug: "cyac-fr042-str-acces-a-la-cyber-tempete-luluwalilith-despian",
+            path: "/cards/cyac-fr042-str-acces-a-la-cyber-tempete-luluwalilith-despian",
+            ref: "cyac-fr042",
+            sku: "CYAC-FR042",
+            name: "Luluwalilith Despian",
+            image:
+              "https://static.ygocards.fr/cards/fr/cyac/image-cartes-a-collectionner-yugioh-card-game-tcg-cyac-fr042-str.webp",
+          },
+        ],
+        containsPrintsIsPreview: true,
+        relatedProducts: [],
+        containedProducts: [],
+        tables: {},
+      },
+    });
+    expect(ygo?.prints[0]).toMatchObject({
+      ref: "cyac-fr042",
+      printKey: "yugioh:cyac-fr042",
+      image:
+        "https://static.ygocards.fr/cards/fr/cyac/image-cartes-a-collectionner-yugioh-card-game-tcg-cyac-fr042-str.webp",
+    });
+  });
+
+  it("maps Composition du produit into guaranteedProducts + packsContained", () => {
+    const entry = sealedProductFromStaging({
+      packId: "pokemon",
+      listing: {
+        slug: "foudre-noire-flamme-blanche-collection-poster",
+        path: "/products/collector-boxes/foudre-noire-flamme-blanche-collection-poster",
+        category: "collector-boxes",
+        image: null,
+      },
+      page: {
+        path: "/products/collector-boxes/foudre-noire-flamme-blanche-collection-poster",
+        slug: "foudre-noire-flamme-blanche-collection-poster",
+        category: "collector-boxes",
+        name: "Coffret Collection Poster EV10.5 Foudre Noire & Flamme Blanche",
+        image: null,
+        sku: null,
+        price: "34.99",
+        currency: "EUR",
+        setCode: null,
+        lang: "FR",
+        releaseDate: "18/07/2025",
+        declaredCardCount: null,
+        containsPrints: [],
+        containsPrintsIsPreview: false,
+        relatedProducts: [],
+        containedProducts: [
+          {
+            slug: "booster-flamme-blanche-reshiram",
+            path: "/products/boosters/booster-flamme-blanche-reshiram",
+            qty: 2,
+          },
+          {
+            slug: "booster-foudre-noire-zekrom",
+            path: "/products/boosters/booster-foudre-noire-zekrom",
+            qty: 2,
+          },
+        ],
+        tables: {},
+      },
+    });
+    expect(entry).toMatchObject({
+      kind: "collector_box",
+      behavior: "mixed_bundle",
+      packsContained: 4,
+      contentsKnown: true,
+      containsPrintsIsPreview: false,
+      priceCents: 3499,
+      guaranteedProducts: [
+        { slug: "booster-flamme-blanche-reshiram", qty: 2 },
+        { slug: "booster-foudre-noire-zekrom", qty: 2 },
+      ],
+    });
+  });
+
+  it("ingests a puzzle as known_bundle with promo-capable kind", () => {
+    const entry = sealedProductFromStaging({
+      packId: "lorcana",
+      listing: {
+        slug: "puzzle-woody",
+        path: "/products/puzzles/puzzle-woody",
+        category: "puzzles",
+        image: null,
+      },
+    });
+    expect(entry).toMatchObject({
+      slug: "puzzle-woody",
+      kind: "puzzle",
+      behavior: "known_bundle",
+      category: "puzzles",
+    });
+  });
+});
+
+describe("backfillPacksBySetFromGuaranteedProducts", () => {
+  function booster(
+    slug: string,
+    catalogueSetId: string,
+  ): SealedProductEntry {
+    return {
+      path: `/products/boosters/${slug}`,
+      slug,
+      name: slug,
+      kind: "booster",
+      behavior: "random_pack",
+      category: "boosters",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: null,
+      catalogueSetId,
+      lang: "fr",
+      releaseDate: null,
+      priceCents: null,
+      cardsPerPack: 12,
+      packsContained: 1,
+      packsBySet: null,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: false,
+      containsPrintsIsPreview: true,
+      prints: [],
+    };
+  }
+
+  it("invents packsBySet for a dual-set collector (Foudre + Flamme)", () => {
+    const products: Record<string, SealedProductEntry> = {
+      a: booster("booster-flamme", "10"),
+      b: booster("booster-foudre", "11"),
+      box: {
+        ...booster("coffret-dual", "10"),
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        packsContained: 4,
+        packsBySet: null,
+        guaranteedProducts: [
+          { slug: "booster-flamme", qty: 2 },
+          { slug: "booster-foudre", qty: 2 },
+        ],
+      },
+    };
+    backfillPacksBySetFromGuaranteedProducts(products);
+    expect(products.box?.packsBySet).toEqual({ "10": 2, "11": 2 });
+  });
+
+  it("does not invent packsBySet for gift-box marketing tiles spanning 3+ sets", () => {
+    const products: Record<string, SealedProductEntry> = {
+      b6: booster("booster-6", "6"),
+      b7a: booster("booster-7a", "7"),
+      b7b: booster("booster-7b", "7"),
+      b8: booster("booster-8", "8"),
+      b10: booster("booster-10", "10"),
+      picsou: {
+        ...booster("coffret-cadeau-balthazar-picsou", "10"),
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        packsContained: 5,
+        packsBySet: null,
+        guaranteeSets: ["10"],
+        guaranteedProducts: [
+          { slug: "booster-10" },
+          { slug: "booster-8" },
+          { slug: "booster-7a" },
+          { slug: "booster-7b" },
+          { slug: "booster-6" },
+        ],
+      },
+    };
+    backfillPacksBySetFromGuaranteedProducts(products);
+    expect(products.picsou?.packsBySet).toBeNull();
+  });
+});

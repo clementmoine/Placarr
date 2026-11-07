@@ -21,8 +21,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   abebooksCoverDownloadCandidates,
@@ -114,6 +114,7 @@ export function mapAbeBooksMetadata(
       sourceUrl: product.sourceUrl,
       evidenceSignals: ["barcode_match", "title_match"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -146,7 +147,7 @@ async function refreshAbeBooksOffers(ctx: BarcodePriceRefreshContext) {
   );
 }
 
-export const abebooksModule: ProviderModule = {
+export const abebooksModule = defineProvider({
   info: {
     id: "abebooks",
     label: "AbeBooks",
@@ -155,6 +156,7 @@ export const abebooksModule: ProviderModule = {
     // Prices stay on refreshBarcodePriceOffers — metadata chase must not wait.
     metadataCapabilities: ["cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     websiteUrl: "https://www.abebooks.fr/",
@@ -227,4 +229,4 @@ export const abebooksModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshAbeBooksOffers,
-};
+});

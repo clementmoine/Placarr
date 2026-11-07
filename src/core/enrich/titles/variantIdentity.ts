@@ -1,7 +1,7 @@
 /**
  * Product-line / variant identity tokens for title matching.
  */
-import { createTrailingVideoGamePlatformSuffixMatcher } from "@/core/identify/platforms/platforms";
+import { createTrailingVideoGamePlatformSuffixMatcher } from "@/core/identify/platforms/platformList";
 import {
   IDENTITY_EDITION_PACKAGING_TOKENS,
   IDENTITY_LEADING_ARTICLES,

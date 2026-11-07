@@ -145,9 +145,38 @@ export function planCroppedCoverAttachmentSync(
 
 /**
  * When a scan/create cover was client-localized to a UUID `/uploads` path, enrichment
- * later stores the same art under a provider-stamped hash path. Remap the pin to that
- * catalog row so the detail chip keeps ScreenScraper / Booknode instead of an orphan.
+ * later stores the same art under a provider-stamped hash path — or a pack
+ * `/assets/…` face. Remap the pin to that catalog row so the detail chip keeps
+ * ScreenScraper / Booknode / catalogue art instead of an orphan upload.
+ *
+ * Prefer durable pack assets (`/assets/…`) over another `/uploads/` twin: the
+ * catalogue face can be upgraded in place; a baked upload cannot.
  */
+/**
+ * Whether a UUID localize may rewrite `catalogTwinUrl`. Remote twins (or the
+ * row the collector picked) may fold; another provider's durable `/uploads/`
+ * hash must keep its bytes — marketplace + LDDb sleeves often share dHash ≤ 8.
+ */
+export function shouldRewriteCatalogTwinOntoLocalizedUpload(input: {
+  catalogTwinUrl: string;
+  localizedUploadUrl: string;
+  selectedImageUrl?: string | null;
+}): boolean {
+  const { catalogTwinUrl, localizedUploadUrl, selectedImageUrl } = input;
+  if (!localizedUploadUrl.startsWith("/uploads/")) return false;
+  if (catalogTwinUrl.startsWith("/assets/")) return false;
+  if (catalogTwinUrl === localizedUploadUrl) return false;
+  if (/^https?:\/\//i.test(catalogTwinUrl)) return true;
+  if (
+    selectedImageUrl &&
+    (catalogTwinUrl === selectedImageUrl ||
+      urlsReferToSameLocalizedImage(catalogTwinUrl, selectedImageUrl))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function pickVisuallyMatchingCatalogCoverUrl(
   pinHash: string,
   candidates: ReadonlyArray<{
@@ -158,6 +187,7 @@ export function pickVisuallyMatchingCatalogCoverUrl(
   }>,
   maxDistance: number = 8,
 ): string | null {
+  let bestUpload: string | null = null;
   for (const candidate of candidates) {
     const sourceKey = (candidate.source || "")
       .split(/[·/]/)[0]
@@ -166,11 +196,15 @@ export function pickVisuallyMatchingCatalogCoverUrl(
     if (sourceKey === "user") continue;
     if (!isCoverEligibleAttachmentType(candidate.type)) continue;
     if (!candidate.hash) continue;
-    if (hammingDistance(pinHash, candidate.hash) <= maxDistance) {
-      return candidate.url;
+    if (hammingDistance(pinHash, candidate.hash) > maxDistance) continue;
+    if (candidate.url.startsWith("/assets/")) return candidate.url;
+    if (!bestUpload && candidate.url.startsWith("/uploads/")) {
+      bestUpload = candidate.url;
+    } else if (!bestUpload) {
+      bestUpload = candidate.url;
     }
   }
-  return null;
+  return bestUpload;
 }
 
 export async function syncCroppedCoverAttachment(
@@ -215,10 +249,18 @@ export async function syncCroppedCoverAttachment(
     );
     let catalogTwinId: string | null = null;
     let catalogTwinUrl: string | null = null;
+    let pinHash: string | null = null;
+    let candidates: Array<{
+      id: string;
+      url: string;
+      type: string;
+      source: string | null;
+      hash: string | null;
+    }> = [];
     if (!alreadyOnCatalogRow) {
-      const pinHash = await perceptualHashForAsset(plan.url);
+      pinHash = await perceptualHashForAsset(plan.url);
       if (pinHash) {
-        const candidates = await Promise.all(
+        candidates = await Promise.all(
           attachments
             .filter((attachment) => attachment.source !== "user")
             .map(async (attachment) => ({
@@ -235,7 +277,9 @@ export async function syncCroppedCoverAttachment(
           PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
         );
         if (catalogUrl) {
-          const twin = candidates.find((candidate) => candidate.url === catalogUrl);
+          const twin = candidates.find(
+            (candidate) => candidate.url === catalogUrl,
+          );
           catalogTwinId = twin?.id ?? null;
           catalogTwinUrl = catalogUrl;
         }
@@ -243,13 +287,56 @@ export async function syncCroppedCoverAttachment(
     }
 
     if (catalogTwinId && catalogTwinUrl) {
-      if (catalogTwinUrl !== plan.url) {
+      // Never rewrite a pack `/assets/…` face onto a UUID upload — that froze
+      // catalogue upgrades and left twin bytes under public/uploads.
+      if (
+        catalogTwinUrl.startsWith("/assets/") ||
+        !plan.url.startsWith("/uploads/")
+      ) {
+        preferredImageUrl = catalogTwinUrl;
+        continue;
+      }
+      if (catalogTwinUrl === plan.url) {
+        preferredImageUrl = plan.url;
+        continue;
+      }
+
+      if (
+        shouldRewriteCatalogTwinOntoLocalizedUpload({
+          catalogTwinUrl,
+          localizedUploadUrl: plan.url,
+          selectedImageUrl,
+        })
+      ) {
         await prisma.attachment.update({
           where: { id: catalogTwinId },
           data: { url: plan.url },
         });
+        preferredImageUrl = plan.url;
+        continue;
       }
-      preferredImageUrl = plan.url;
+
+      const remoteVisualTwin =
+        pinHash &&
+        candidates.find(
+          (candidate) =>
+            candidate.id !== catalogTwinId &&
+            candidate.hash &&
+            /^https?:\/\//i.test(candidate.url) &&
+            isCoverEligibleAttachmentType(candidate.type) &&
+            hammingDistance(pinHash, candidate.hash) <=
+              PERCEPTUAL_DUPLICATE_MAX_DISTANCE,
+        );
+      if (remoteVisualTwin) {
+        await prisma.attachment.update({
+          where: { id: remoteVisualTwin.id },
+          data: { url: plan.url },
+        });
+        preferredImageUrl = plan.url;
+        continue;
+      }
+
+      preferredImageUrl = catalogTwinUrl;
       continue;
     }
 
@@ -359,7 +446,8 @@ export async function syncCroppedCoverAttachment(
     }
   }
 
-  const retargeted = await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
+  const retargeted =
+    await retargetUserHonorPinsInAttachmentGallery(galleryAfter);
   for (const attachment of retargeted) {
     const previous = galleryAfter.find((row) => row.id === attachment.id);
     if (!previous || previous.url === attachment.url) continue;

@@ -23,14 +23,42 @@ import {
 } from "@/lib/api/backgroundJobs";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
-import { METADATA_POLL_INTERVAL_MS } from "@/core/collect/enrichment";
+import { backgroundJobsRefetchInterval } from "@/core/collect/enrichment";
 import { itemPath } from "@/lib/routing/slugs";
 import { cn } from "@/lib/shared/utils";
 
 function jobKindLabel(job: BackgroundJob, t: (key: string) => string): string {
   if (job.kind === "metadataRefresh") return t("backgroundJobs.kindRefresh");
   if (job.kind === "priceRefresh") return t("backgroundJobs.kindPrice");
+  if (job.kind === "foilExtract") return t("backgroundJobs.kindFoil");
+  if (job.kind === "apkStoreFetch") return t("backgroundJobs.kindApkStore");
+  if (job.kind === "icollectCatalogSync")
+    return t("backgroundJobs.kindCatalog");
+  if (job.kind === "launchboxIndexSync")
+    return t("backgroundJobs.kindLaunchbox");
+  if (job.kind === "nointroIndexSync") return t("backgroundJobs.kindNointro");
+  if (job.kind === "catalogProviderSync")
+    return t("backgroundJobs.kindProviderSync");
   return t("backgroundJobs.kindEnrich");
+}
+
+/** Foil / APK lab work — subtitle points at the admin render tab. */
+function isFoilAdminJob(job: BackgroundJob): boolean {
+  return job.kind === "foilExtract" || job.kind === "apkStoreFetch";
+}
+
+function jobSubtitle(job: BackgroundJob, t: (key: string) => string): string {
+  const kind = jobKindLabel(job, t);
+  if (job.shelf) return `${kind} · ${job.shelf.name}`;
+  if (isFoilAdminJob(job)) return `${kind} · ${t("backgroundJobs.foilAdmin")}`;
+  return kind;
+}
+
+/** Prefer server deep-link; fall back for older payloads / item jobs. */
+function jobHref(job: BackgroundJob): string | null {
+  if (job.href) return job.href;
+  if (job.shelf) return itemPath(job.shelf, job);
+  return null;
 }
 
 export function BackgroundJobsMenu() {
@@ -42,9 +70,8 @@ export function BackgroundJobsMenu() {
     queryKey: ["backgroundJobs"],
     queryFn: getBackgroundJobs,
     enabled: !isGuest,
-    // Keep polling while idle so a just-started job appears without depending
-    // on every mutation remembering to invalidate this query.
-    refetchInterval: !isGuest ? METADATA_POLL_INTERVAL_MS : false,
+    // Busy → 5s; idle → 45s (mutations still invalidate for snappy start).
+    refetchInterval: !isGuest ? backgroundJobsRefetchInterval : false,
     refetchIntervalInBackground: true,
   });
 
@@ -133,41 +160,52 @@ export function BackgroundJobsMenu() {
             {t("backgroundJobs.empty")}
           </div>
         ) : (
-          jobs.map((job) => (
-            <DropdownMenuItem
-              key={job.id}
-              className="flex items-start gap-2 p-2 focus:bg-accent"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <ShelfTypeIcon
-                type={job.shelf.type}
-                className="mt-0.5 size-4 shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={itemPath(job.shelf, job)}
-                  className="block truncate text-sm font-semibold hover:text-primary"
-                >
-                  {job.name}
-                </Link>
-                <p className="truncate text-xs text-muted-foreground">
-                  {jobKindLabel(job, t)} · {job.shelf.name}
-                </p>
-              </div>
-              {job.cancellable ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 shrink-0"
-                  aria-label={t("backgroundJobs.cancelOne")}
-                  disabled={cancelOne.isPending}
-                  onClick={() => cancelOne.mutate(job.id)}
-                >
-                  <X className="size-3.5" />
-                </Button>
-              ) : null}
-            </DropdownMenuItem>
-          ))
+          jobs.map((job) => {
+            const href = jobHref(job);
+            return (
+              <DropdownMenuItem
+                key={job.id}
+                className="flex items-start gap-2 p-2 focus:bg-accent"
+                onSelect={(event) => event.preventDefault()}
+              >
+                {job.shelf ? (
+                  <ShelfTypeIcon
+                    type={job.shelf.type}
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                ) : (
+                  <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+                )}
+                <div className="min-w-0 flex-1">
+                  {href ? (
+                    <Link
+                      href={href}
+                      className="block truncate text-sm font-semibold hover:text-primary"
+                    >
+                      {job.name}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm font-semibold">{job.name}</p>
+                  )}
+                  <p className="truncate text-xs text-muted-foreground">
+                    {jobSubtitle(job, t)}
+                  </p>
+                </div>
+                {job.cancellable ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0"
+                    aria-label={t("backgroundJobs.cancelOne")}
+                    disabled={cancelOne.isPending}
+                    onClick={() => cancelOne.mutate(job.id)}
+                  >
+                    <X className="size-3.5" />
+                  </Button>
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })
         )}
       </DropdownMenuContent>
     </DropdownMenu>

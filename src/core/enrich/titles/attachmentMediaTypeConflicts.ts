@@ -26,4 +26,3 @@ export function attachmentTitleMediaTypeConflicts(
     attachmentTitleLooksLikeNonGameMedia(attachmentTitle, productTitle)
   );
 }
-

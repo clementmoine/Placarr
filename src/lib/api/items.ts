@@ -21,6 +21,168 @@ export const getItem = (
   return axios.get(url.toString()).then((response) => response.data);
 };
 
+/** Open a sealed product — materialize guaranteed / pile contents (étapes 4–6). */
+export const openSealedItem = (
+  id: Item["id"],
+  options?: {
+    shelfId?: string | null;
+    createShell?: boolean;
+    childBoosterSlug?: string | null;
+    packCount?: number | null;
+    takeSealedCount?: number | null;
+  },
+): Promise<{
+  item: ItemWithMetadata;
+  childIds: string[];
+  shellId: string | null;
+  childCount: number;
+  remainingSealed?: number;
+  groupId: string;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/open`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios
+    .post(url.toString(), {
+      createShell: Boolean(options?.createShell),
+      ...(options?.childBoosterSlug
+        ? { childBoosterSlug: options.childBoosterSlug }
+        : {}),
+      ...(options?.packCount != null ? { packCount: options.packCount } : {}),
+      ...(options?.takeSealedCount != null
+        ? { takeSealedCount: options.takeSealedCount }
+        : {}),
+    })
+    .then((response) => response.data);
+};
+
+/** Presence / sealed audit timeline for an item. */
+export const getItemEvents = (
+  id: Item["id"],
+  options?: { shelfId?: string | null },
+): Promise<{
+  itemId: string;
+  events: Array<{
+    id: string;
+    at: string;
+    fromPresence: string;
+    toPresence: string;
+    reason: string | null;
+    kind: string;
+    snapshot: Record<string, unknown> | null;
+  }>;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/events`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios.get(url.toString()).then((response) => response.data);
+};
+
+/** Current parent + remount candidates (décisions 8–9). */
+export const getItemContainment = (
+  id: Item["id"],
+  options?: { shelfId?: string | null },
+): Promise<{
+  childId: string;
+  childRef: { kind: "sealed"; slug: string; skuKey: string } | {
+    kind: "card";
+    printKey: string;
+  } | null;
+  currentParent: {
+    id: string;
+    name: string;
+    skuKey: string | null;
+    slug: string;
+    linkId: string;
+  } | null;
+  candidates: Array<{
+    id: string;
+    name: string;
+    skuKey: string;
+    slots: number;
+    attachedMatching: number;
+    remaining: number;
+  }>;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/containment`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios.get(url.toString()).then((response) => response.data);
+};
+
+/** Remettre un item sous un scellé ouvert compatible. */
+export const attachItemContainment = (
+  id: Item["id"],
+  options: { shelfId?: string | null; parentId: string },
+): Promise<{ item: ItemWithMetadata; parentId: string }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/containment`,
+    window.location.origin,
+  );
+  if (options.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios
+    .post(url.toString(), { parentId: options.parentId })
+    .then((response) => response.data);
+};
+
+/** Retirer l'item de son contenant (lien content). */
+export const detachItemContainment = (
+  id: Item["id"],
+  options?: { shelfId?: string | null },
+): Promise<{ item: ItemWithMetadata; detachedFrom: string }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/containment`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios.delete(url.toString()).then((response) => response.data);
+};
+
+/** Declare pulls from a sealed product (grouped / unit rip — étape 6). */
+export const declareSealedPulls = (
+  id: Item["id"],
+  options: {
+    shelfId?: string | null;
+    prints: readonly {
+      printKey: string;
+      name?: string | null;
+      language?: string | null;
+    }[];
+  },
+): Promise<{
+  item: ItemWithMetadata;
+  childIds: string[];
+  childCount: number;
+  groupId: string;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/declare`,
+    window.location.origin,
+  );
+  if (options.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios
+    .post(url.toString(), { prints: options.prints })
+    .then((response) => response.data);
+};
+
 export const saveItem = (
   data:
     | (Prisma.ItemCreateInput & {

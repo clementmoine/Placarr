@@ -33,6 +33,10 @@ import {
   isAnsweredQuery,
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
+import {
+  ensureSqliteFold,
+  foldedLikePattern,
+} from "@/providers/shared/sqliteFold";
 
 export const NARUTO_SHIPPUDEN_PACK_ID = "naruto/shippuden";
 
@@ -144,10 +148,12 @@ export function ensureNarutoShippudenIndex(): DatabaseSync | null {
     activeMtimeMs != null &&
     activeMtimeMs === mtimeMs
   ) {
+    ensureSqliteFold(activeDb);
     return activeDb;
   }
   resetNarutoShippudenIndexCache();
   const db = new DatabaseSync(dbPath, { readOnly: true });
+  ensureSqliteFold(db);
   activeDb = db;
   activePath = dbPath;
   activeMtimeMs = mtimeMs;
@@ -254,17 +260,18 @@ export function searchNarutoShippudenRows(
   */
   const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const like = `%${trimmed}%`;
+  const nameLike = foldedLikePattern(trimmed);
   const compact = trimmed.replace(/[\s-]/g, "");
 
   const scope = setScopedWhere({
     setColumn: "p.set_code",
     setId,
     textClause: trimmed
-      ? `LOWER(t.full_name) LIKE ?
+      ? `placarr_fold(t.full_name) LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.number) LIKE ?`
       : null,
-    textParams: [like, like, `%${compact}%`],
+    textParams: [nameLike, like, `%${compact}%`],
   });
 
   return db

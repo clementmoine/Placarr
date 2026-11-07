@@ -38,28 +38,41 @@ function printsLastSyncAt(): string | null {
 
 function printsDbEmpty(): boolean {
   if (!existsSync(tcgdexDbPath())) return true;
-  return listTcgdexLocalSets("fr").length === 0;
+  try {
+    return listTcgdexLocalSets("fr").length === 0;
+  } catch {
+    // Locked by another process — not empty; do not force a sync stampede.
+    return false;
+  }
 }
 
 export function tcgdexCatalogStatus(): ProviderCatalogStatus {
-  if (printsDbEmpty()) {
-    return { empty: true, stale: true, lastSyncAt: null };
+  try {
+    if (printsDbEmpty()) {
+      return { empty: true, stale: true, lastSyncAt: null };
+    }
+    const lastSyncAt = printsLastSyncAt();
+    if (!lastSyncAt) {
+      // DB exists from an old harvest without stamp → stale so auto-sync picks
+      // up new sets (e.g. me05.5) instead of sitting forever on aged data.
+      return { empty: false, stale: true, lastSyncAt: null };
+    }
+    const t = Date.parse(lastSyncAt);
+    if (!Number.isFinite(t)) {
+      return { empty: false, stale: true, lastSyncAt };
+    }
+    return {
+      empty: false,
+      stale: Date.now() - t > catalogMaxAgeMs(),
+      lastSyncAt,
+    };
+  } catch (error) {
+    console.warn(
+      "[tcgdex] catalog status skipped (sqlite busy or unreadable):",
+      error instanceof Error ? error.message : error,
+    );
+    return { empty: false, stale: false, lastSyncAt: null };
   }
-  const lastSyncAt = printsLastSyncAt();
-  if (!lastSyncAt) {
-    // DB exists from an old harvest without stamp → stale so auto-sync picks
-    // up new sets (e.g. me05.5) instead of sitting forever on aged data.
-    return { empty: false, stale: true, lastSyncAt: null };
-  }
-  const t = Date.parse(lastSyncAt);
-  if (!Number.isFinite(t)) {
-    return { empty: false, stale: true, lastSyncAt };
-  }
-  return {
-    empty: false,
-    stale: Date.now() - t > catalogMaxAgeMs(),
-    lastSyncAt,
-  };
 }
 
 export async function refreshTcgdexCatalog(

@@ -57,8 +57,8 @@ vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: async (id: string) => id,
 }));
 vi.mock("@/lib/routing/slugs", () => ({ slugify: (s: string) => `slug-${s}` }));
-vi.mock("@/core/collect/search", () => ({
-  buildItemSearchConditions: () => [],
+vi.mock("@/core/collect/searchFolded", () => ({
+  buildItemSearchConditionsFolded: async () => [],
 }));
 
 import { GET, POST, PATCH, DELETE } from "./route";

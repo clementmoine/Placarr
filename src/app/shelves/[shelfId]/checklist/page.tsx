@@ -48,6 +48,7 @@ import {
   DEFAULT_CHECKLIST_PREFS,
   readChecklistPrefs,
   writeChecklistPrefs,
+  type ChecklistPossessionView,
 } from "@/lib/client/checklistPrefs";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { printLanguageLabel } from "@/lib/shared/printLanguages";
@@ -58,6 +59,8 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -65,12 +68,21 @@ import styles from "./checklist.module.css";
 import { Advice as AdvicePanel, type SetAdvice } from "./AdvicePanel";
 import { ChecklistHoverThumb } from "./ChecklistHoverThumb";
 
+type ChecklistCardPresence =
+  | "owned"
+  | "virtual"
+  | "past"
+  | "wanted"
+  | "missing";
+
 type ChecklistPrint = {
   printKey: string;
   reference: string;
   title: string;
   thumbnailUrl?: string | null;
   owned?: boolean;
+  /** owned | virtual | past | wanted | missing. */
+  presence?: ChecklistCardPresence;
   /** Présent en mode master set — une ligne par finition. */
   finish?: string | null;
   landscapeFace?: boolean;
@@ -86,7 +98,10 @@ type ChecklistSet = {
   iconUrls?: string[] | null;
   total: number;
   owned: number;
+  virtual?: number;
+  covered?: number;
   completion: number;
+  coveredCompletion?: number;
   cards: ChecklistPrint[];
   missing: ChecklistPrint[];
 };
@@ -104,7 +119,14 @@ type ChecklistResponse = {
   sets: ChecklistSet[];
   setsWithoutCatalogue: { id: string; label: string }[];
   advice: SetAdvice[];
-  totals: { total: number; owned: number; completion: number };
+  totals: {
+    total: number;
+    owned: number;
+    virtual?: number;
+    covered?: number;
+    completion: number;
+    coveredCompletion?: number;
+  };
 };
 
 /** Les centimes ne s'affichent pas à l'utilisateur ; les euros, si. */
@@ -152,6 +174,10 @@ function SetRow({
   advice,
   expandable,
   showOwned,
+  showPast,
+  showVirtual,
+  onlyVirtual,
+  possessionView,
   alwaysShowFinishLabels,
   showPrices,
   hideImputedPrices,
@@ -164,6 +190,10 @@ function SetRow({
   advice?: SetAdvice;
   expandable: boolean;
   showOwned: boolean;
+  showPast: boolean;
+  showVirtual: boolean;
+  onlyVirtual: boolean;
+  possessionView: ChecklistPossessionView;
   alwaysShowFinishLabels: boolean;
   showPrices: boolean;
   hideImputedPrices: boolean;
@@ -187,18 +217,52 @@ function SetRow({
     repliée (`display: none` ne retire pas les nœuds du DOM).
   */
   const shouldMountCards = forceExpand || open || searching;
+  const displayOwned =
+    possessionView === "covered"
+      ? (set.covered ?? set.owned + (set.virtual ?? 0))
+      : set.owned;
+  const displayCompletion =
+    possessionView === "covered"
+      ? (set.coveredCompletion ?? set.completion)
+      : set.completion;
 
   const rows = useMemo(() => {
     if (!shouldMountCards) return [];
     /*
       La recherche ne contourne pas le filtre « déjà sur l'étagère » :
       sans la case, on ne voit / ne cherche que les manquantes.
+      `past` / `virtual` : visibles selon prefs — hors buy missing.
     */
-    const pool = showOwned
-      ? (set.cards ?? [
-          ...set.missing.map((row) => ({ ...row, owned: false as boolean })),
-        ])
-      : set.missing.map((row) => ({ ...row, owned: false as boolean }));
+    const asRow = (row: ChecklistPrint, owned: boolean): ChecklistPrint => ({
+      ...row,
+      owned,
+      presence: row.presence ?? (owned ? "owned" : "missing"),
+    });
+    const cards = set.cards ?? set.missing.map((row) => asRow(row, false));
+    let pool: ChecklistPrint[];
+    if (onlyVirtual) {
+      pool = cards
+        .filter((card) => card.presence === "virtual")
+        .map((row) => asRow(row, false));
+    } else if (showOwned) {
+      pool = cards.map((row) => asRow(row, Boolean(row.owned)));
+    } else {
+      pool = [
+        ...set.missing.map((row) => asRow(row, false)),
+        ...(showPast
+          ? cards.filter((card) => card.presence === "past")
+          : []),
+        ...(showVirtual
+          ? cards.filter((card) => card.presence === "virtual")
+          : []),
+      ];
+    }
+    if (!showPast) {
+      pool = pool.filter((card) => card.presence !== "past");
+    }
+    if (!showVirtual) {
+      pool = pool.filter((card) => card.presence !== "virtual");
+    }
     if (!searching || setMatches) return pool;
     return pool.filter((card) =>
       checklistTextMatches(
@@ -214,6 +278,9 @@ function SetRow({
     set.cards,
     set.missing,
     showOwned,
+    showPast,
+    showVirtual,
+    onlyVirtual,
     searching,
     searchQuery,
     setMatches,
@@ -289,10 +356,13 @@ function SetRow({
         ) : null}
         <span className={styles.setLabel}>{set.label}</span>
         <span className={styles.setCount}>
-          {t("items.checklistOwnedOf", { owned: set.owned, total: set.total })}
+          {t("items.checklistOwnedOf", {
+            owned: displayOwned,
+            total: set.total,
+          })}
         </span>
-        <CompletionBar value={set.completion} />
-        <span className={styles.setPct}>{set.completion}%</span>
+        <CompletionBar value={displayCompletion} />
+        <span className={styles.setPct}>{displayCompletion}%</span>
       </button>
 
       {/*
@@ -310,6 +380,7 @@ function SetRow({
             cards={set.missing}
             hideZeroSealedExpectation={hideZeroSealedExpectation}
             hideImputedPrices={hideImputedPrices}
+            virtualCoveredCount={set.virtual ?? 0}
             t={t}
           />
         )}
@@ -334,18 +405,24 @@ function SetRow({
               sources.length > 0
                 ? sources.map((source) => source.name).join(" · ")
                 : "";
+            const presence = row.presence ?? (row.owned ? "owned" : "missing");
             return (
               <li
                 key={`${row.printKey}|${row.finish ?? ""}`}
                 className={cn(
                   styles.missingRow,
                   row.owned && styles.missingOwned,
+                  presence === "past" && styles.missingPast,
+                  presence === "virtual" && styles.missingVirtual,
                 )}
               >
                 <span
                   className={cn(
                     styles.checkbox,
-                    row.owned && styles.checkboxOn,
+                    presence === "owned" && styles.checkboxOn,
+                    (presence === "past" || presence === "wanted") &&
+                      styles.checkboxMixed,
+                    presence === "virtual" && styles.checkboxVirtual,
                   )}
                   aria-hidden
                 />
@@ -361,7 +438,24 @@ function SetRow({
                   <span className={styles.thumbPlaceholder} aria-hidden />
                 )}
                 <span className={styles.ref}>{row.reference}</span>
-                <span className={styles.name}>{row.title}</span>
+                <span className={styles.name}>
+                  {row.title}
+                  {presence === "past" ? (
+                    <span className={styles.pastBadge}>
+                      {t("items.checklistAlreadyHad")}
+                    </span>
+                  ) : null}
+                  {presence === "wanted" ? (
+                    <span className={styles.wantedBadge}>
+                      {t("items.checklistWanted")}
+                    </span>
+                  ) : null}
+                  {presence === "virtual" ? (
+                    <span className={styles.virtualBadge}>
+                      {t("items.checklistVirtual")}
+                    </span>
+                  ) : null}
+                </span>
                 <span className={styles.cardMeta}>
                   {checklistShouldShowFinish({
                     printKey: row.printKey,
@@ -464,6 +558,16 @@ export default function ChecklistPage() {
     manquantes. Préférence mémorisée par étagère (localStorage).
   */
   const [showOwned, setShowOwned] = useState(DEFAULT_CHECKLIST_PREFS.showOwned);
+  const [showPast, setShowPast] = useState(DEFAULT_CHECKLIST_PREFS.showPast);
+  const [showVirtual, setShowVirtual] = useState(
+    DEFAULT_CHECKLIST_PREFS.showVirtual,
+  );
+  const [onlyVirtual, setOnlyVirtual] = useState(
+    DEFAULT_CHECKLIST_PREFS.onlyVirtual,
+  );
+  const [possessionView, setPossessionView] = useState<ChecklistPossessionView>(
+    DEFAULT_CHECKLIST_PREFS.possessionView,
+  );
   /*
     Master set : chaque finition (normale / foil / …) est une case. Posséder
     la foil ne coche pas la normale. Off par défaut en début de licence ;
@@ -494,6 +598,10 @@ export default function ChecklistPage() {
   useEffect(() => {
     const prefs = readChecklistPrefs(shelfId);
     setShowOwned(prefs.showOwned);
+    setShowPast(prefs.showPast);
+    setShowVirtual(prefs.showVirtual);
+    setOnlyVirtual(prefs.onlyVirtual);
+    setPossessionView(prefs.possessionView);
     setMasterSet(prefs.masterSet);
     setMasterSetSuggestDismissed(prefs.masterSetSuggestDismissed);
     setAlwaysShowFinishLabels(prefs.alwaysShowFinishLabels);
@@ -507,6 +615,10 @@ export default function ChecklistPage() {
     if (!prefsReady || !shelfId) return;
     writeChecklistPrefs(shelfId, {
       showOwned,
+      showPast,
+      showVirtual,
+      onlyVirtual,
+      possessionView,
       masterSet,
       masterSetSuggestDismissed,
       alwaysShowFinishLabels,
@@ -517,6 +629,10 @@ export default function ChecklistPage() {
   }, [
     shelfId,
     showOwned,
+    showPast,
+    showVirtual,
+    onlyVirtual,
+    possessionView,
     masterSet,
     masterSetSuggestDismissed,
     alwaysShowFinishLabels,
@@ -726,6 +842,53 @@ export default function ChecklistPage() {
                     {t("items.checklistShowOwned")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
+                    checked={showPast}
+                    onCheckedChange={(checked) =>
+                      setShowPast(checked === true)
+                    }
+                  >
+                    {t("items.checklistShowPast")}
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={showVirtual}
+                    onCheckedChange={(checked) => {
+                      const on = checked === true;
+                      setShowVirtual(on);
+                      if (!on) setOnlyVirtual(false);
+                    }}
+                  >
+                    {t("items.checklistShowVirtual")}
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={onlyVirtual}
+                    disabled={!showVirtual}
+                    onCheckedChange={(checked) =>
+                      setOnlyVirtual(checked === true)
+                    }
+                  >
+                    {t("items.checklistOnlyVirtual")}
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>
+                    {t("items.checklistPossessionView")}
+                  </DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={possessionView}
+                    onValueChange={(value) => {
+                      if (value === "covered" || value === "inHand") {
+                        setPossessionView(value);
+                      }
+                    }}
+                  >
+                    <DropdownMenuRadioItem value="inHand">
+                      {t("items.checklistPossessionInHand")}
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="covered">
+                      {t("items.checklistPossessionCovered")}
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
                     checked={masterSet}
                     onCheckedChange={(checked) => {
                       const on = checked === true;
@@ -784,13 +947,27 @@ export default function ChecklistPage() {
               <div className={styles.totals}>
                 <strong>
                   {t("items.checklistOwnedOf", {
-                    owned: data.totals.owned,
+                    owned:
+                      possessionView === "covered"
+                        ? (data.totals.covered ??
+                          data.totals.owned + (data.totals.virtual ?? 0))
+                        : data.totals.owned,
                     total: data.totals.total,
                   })}
                 </strong>
-                <CompletionBar value={data.totals.completion} />
+                <CompletionBar
+                  value={
+                    possessionView === "covered"
+                      ? (data.totals.coveredCompletion ??
+                        data.totals.completion)
+                      : data.totals.completion
+                  }
+                />
                 <span className={styles.totalsPct}>
-                  {data.totals.completion}%
+                  {possessionView === "covered"
+                    ? (data.totals.coveredCompletion ?? data.totals.completion)
+                    : data.totals.completion}
+                  %
                 </span>
               </div>
             )}
@@ -895,9 +1072,18 @@ export default function ChecklistPage() {
                   set={set}
                   advice={adviceBySet.get(set.id)}
                   expandable={
-                    set.missing.length > 0 || showOwned || Boolean(searchQuery)
+                    set.missing.length > 0 ||
+                    showOwned ||
+                    showPast ||
+                    showVirtual ||
+                    onlyVirtual ||
+                    Boolean(searchQuery)
                   }
                   showOwned={showOwned}
+                  showPast={showPast}
+                  showVirtual={showVirtual}
+                  onlyVirtual={onlyVirtual}
+                  possessionView={possessionView}
                   alwaysShowFinishLabels={alwaysShowFinishLabels}
                   showPrices={showPrices}
                   hideImputedPrices={hideImputedPrices}

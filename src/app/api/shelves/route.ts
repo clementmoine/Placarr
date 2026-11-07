@@ -24,7 +24,7 @@ import { metadataAliases } from "@/core/enrich/aliases";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
 import { slugify } from "@/lib/routing/slugs";
-import { buildItemSearchConditions } from "@/core/collect/search";
+import { buildItemSearchConditionsFolded } from "@/core/collect/searchFolded";
 import { bestRatingRatioFromFacts } from "@/core/collect/rating";
 import { summarizeShelfItemPrices } from "@/core/commerce/pricing/resolver";
 import {
@@ -231,7 +231,7 @@ export async function GET(req: NextRequest) {
           const searchTerm = q.trim();
           const shelfItemsInclude = {
             where: {
-              OR: buildItemSearchConditions(searchTerm),
+              OR: await buildItemSearchConditionsFolded(searchTerm),
             },
             include: {
               metadata: itemListMetadataInclude,
@@ -321,6 +321,7 @@ export async function GET(req: NextRequest) {
 
       if (q) {
         const searchTerm = q.trim();
+        const itemSearch = await buildItemSearchConditionsFolded(searchTerm);
 
         const shelves = await prisma.shelf.findMany({
           where: {
@@ -330,7 +331,7 @@ export async function GET(req: NextRequest) {
               {
                 items: {
                   some: {
-                    OR: buildItemSearchConditions(searchTerm),
+                    OR: itemSearch,
                   },
                 },
               },

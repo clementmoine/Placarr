@@ -24,6 +24,7 @@ import { canonicalDataPack, packCardsDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { migrateProductsSchema } from "@/providers/shared/sealedProducts/productsSqlite";
 import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
+import { ensureSqliteFold } from "@/providers/shared/sqliteFold";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { appearanceSetsOf } from "./identity";
@@ -990,6 +991,7 @@ export function ensureNarutoPackIndex(
       schemaOk = false;
     }
     if (schemaOk && hit.mtimeMs === mtimeMs) {
+      ensureSqliteFold(hit.db);
       return hit.db;
     }
     try {
@@ -1002,6 +1004,7 @@ export function ensureNarutoPackIndex(
 
   try {
     const db = new DatabaseSync(dbPath, { readOnly: true });
+    ensureSqliteFold(db);
     const schema = db
       .prepare(`SELECT value FROM meta WHERE key = ?`)
       .get("schemaVersion") as { value: string } | undefined;

@@ -23,6 +23,10 @@ import {
   isUsableSetLabel,
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
+import {
+  ensureSqliteFold,
+  foldedLikePattern,
+} from "@/providers/shared/sqliteFold";
 
 import {
   ensurePokemonDbLayout,
@@ -35,6 +39,51 @@ import {
   resolvePokemonCatalogueArtFilename,
 } from "./disk/paperCardDisk";
 import { POKEMON_GAME } from "./fetch";
+
+const TCGDEX_SQLITE_BUSY_MS = 30_000;
+
+function isSqliteBusy(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return String(error).includes("database is locked");
+  }
+  const row = error as {
+    errcode?: number;
+    errstr?: string;
+    code?: string;
+    message?: string;
+  };
+  if (row.errcode === 5) return true;
+  const blob = `${row.errstr ?? ""} ${row.message ?? ""} ${row.code ?? ""}`;
+  return blob.includes("database is locked") || blob.includes("SQLITE_BUSY");
+}
+
+/** Busy wait + WAL so Next / worker / icollect can share `catalog.sqlite`. */
+function configureTcgdexSqlite(
+  db: DatabaseSync,
+  opts?: { readOnly?: boolean },
+): void {
+  db.exec(`PRAGMA busy_timeout = ${TCGDEX_SQLITE_BUSY_MS}`);
+  if (opts?.readOnly) return;
+  try {
+    db.exec("PRAGMA journal_mode = WAL");
+    db.exec("PRAGMA synchronous = NORMAL");
+  } catch {
+    /* read-only mount / mid-replace */
+  }
+}
+
+function openTcgdexSqliteWrite(dbPath: string): DatabaseSync {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+  const db = new DatabaseSync(dbPath);
+  configureTcgdexSqlite(db);
+  return db;
+}
+
+function openTcgdexSqliteRead(dbPath: string): DatabaseSync {
+  const db = new DatabaseSync(dbPath, { readOnly: true });
+  configureTcgdexSqlite(db, { readOnly: true });
+  return db;
+}
 
 export type TcgdexPrintRow = {
   printKey: string;
@@ -282,10 +331,8 @@ export function writeTcgdexSet(input: {
   cardsRoot?: string;
 }): { prints: number; titles: number; assetsFromDisk: number } {
   const dbPath = input.dbPath ?? tcgdexDbPath();
-  mkdirSync(path.dirname(dbPath), { recursive: true });
-  const db = new DatabaseSync(dbPath);
+  const db = openTcgdexSqliteWrite(dbPath);
   try {
-    db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
     const insertPrint = db.prepare(`
       INSERT INTO prints (print_key, set_id, local_id, provider_id, image_base_url, printed)
@@ -435,9 +482,8 @@ export function syncTcgdexPrintAssetsFromDisk(input: {
 }): number {
   const dbPath = input.dbPath ?? tcgdexDbPath();
   if (!existsSync(dbPath)) return 0;
-  const db = new DatabaseSync(dbPath);
+  const db = openTcgdexSqliteWrite(dbPath);
   try {
-    db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
 
     const printKeys =
@@ -550,9 +596,8 @@ export function patchTcgdexSetCounts(
   dbPath = tcgdexDbPath(),
 ): number {
   if (rows.length === 0 || !existsSync(dbPath)) return 0;
-  const db = new DatabaseSync(dbPath);
+  const db = openTcgdexSqliteWrite(dbPath);
   try {
-    db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
     const update = db.prepare(`
       UPDATE sets
@@ -610,11 +655,12 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
     activeMtimeMs != null &&
     activeMtimeMs === mtimeMs
   ) {
+    ensureSqliteFold(activeDb);
     return activeDb;
   }
   resetTcgdexIndexCache();
-  {
-    const writable = new DatabaseSync(dbPath);
+  try {
+    const writable = openTcgdexSqliteWrite(dbPath);
     try {
       migrateTcgdexSetsColumns(writable);
       migrateTcgdexTitleColumns(writable);
@@ -623,12 +669,21 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
     } finally {
       writable.close();
     }
+  } catch (error) {
+    // Writer (harvest / Sync) holds the file — skip migrate; read with timeout.
+    if (!isSqliteBusy(error)) throw error;
   }
-  const db = new DatabaseSync(dbPath, { readOnly: true });
-  activeDb = db;
-  activePath = dbPath;
-  activeMtimeMs = mtimeMs;
-  return db;
+  try {
+    const db = openTcgdexSqliteRead(dbPath);
+    ensureSqliteFold(db);
+    activeDb = db;
+    activePath = dbPath;
+    activeMtimeMs = mtimeMs;
+    return db;
+  } catch (error) {
+    if (isSqliteBusy(error)) return null;
+    throw error;
+  }
 }
 
 /**
@@ -787,16 +842,17 @@ export function searchTcgdexRows(
   */
   const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const like = `%${trimmed}%`;
+  const nameLike = foldedLikePattern(trimmed);
 
   const scope = setScopedWhere({
     setColumn: "p.set_id",
     setId,
     textClause: trimmed
-      ? `LOWER(t.name) LIKE ?
+      ? `placarr_fold(t.name) LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.set_id || '-' || p.local_id) LIKE ?`
       : null,
-    textParams: [like, like, like],
+    textParams: [nameLike, like, like],
   });
   const printedGate = includeUnprinted
     ? ""
@@ -897,10 +953,10 @@ export function listTcgdexCatalogueBrowsePage(
   const q = opts.q?.trim().toLowerCase();
   if (q) {
     where.push(
-      `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_id) LIKE ? OR LOWER(p.local_id) LIKE ? OR LOWER(COALESCE(t.name, '')) LIKE ?)`,
+      `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_id) LIKE ? OR LOWER(p.local_id) LIKE ? OR placarr_fold(COALESCE(t.name, '')) LIKE ?)`,
     );
     const like = `%${q}%`;
-    params.push(like, like, like, like);
+    params.push(like, like, like, foldedLikePattern(q));
   }
 
   const whereSql = where.join(" AND ");
@@ -969,9 +1025,8 @@ export function patchTcgdexPrintImageBases(
   if (patches.length === 0) return 0;
   const pathToDb = dbPath ?? tcgdexDbPath();
   mkdirSync(path.dirname(pathToDb), { recursive: true });
-  const db = new DatabaseSync(pathToDb);
+  const db = openTcgdexSqliteWrite(pathToDb);
   try {
-    db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
     const updatePrint = db.prepare(`
       UPDATE prints
@@ -1027,7 +1082,7 @@ export function listTcgdexJaPrintsMissingImageBase(opts?: {
 }[] {
   const pathToDb = opts?.dbPath ?? tcgdexDbPath();
   if (!existsSync(pathToDb)) return [];
-  const db = new DatabaseSync(pathToDb, { readOnly: true });
+  const db = openTcgdexSqliteRead(pathToDb);
   try {
     const lim =
       opts?.limit != null
@@ -1072,9 +1127,8 @@ export function patchTcgdexTitleDetails(
   if (patches.length === 0) return 0;
   const pathToDb = dbPath ?? tcgdexDbPath();
   mkdirSync(path.dirname(pathToDb), { recursive: true });
-  const db = new DatabaseSync(pathToDb);
+  const db = openTcgdexSqliteWrite(pathToDb);
   try {
-    db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
     const update = db.prepare(`
       UPDATE print_titles
@@ -1149,22 +1203,28 @@ export function listTcgdexLocalSets(
            WHERE LOWER(p.set_id) = LOWER(sets.set_id)
              AND COALESCE(p.printed, 1) != 0
         )`;
-  const rows = db
-    .prepare(
-      `SELECT LOWER(set_id) AS setId,
-              MIN(NULLIF(TRIM(name), '')) AS name,
-              MIN(NULLIF(TRIM(serie_name), '')) AS serieName,
-              MIN(released_at) AS releasedAt
-         FROM sets
-        WHERE lang = ?${cardboardOnly}
-        GROUP BY LOWER(set_id)`,
-    )
-    .all(lang) as {
+  let rows: {
     setId: string;
     name: string | null;
     serieName: string | null;
     releasedAt: string | null;
   }[];
+  try {
+    rows = db
+      .prepare(
+        `SELECT LOWER(set_id) AS setId,
+                MIN(NULLIF(TRIM(name), '')) AS name,
+                MIN(NULLIF(TRIM(serie_name), '')) AS serieName,
+                MIN(released_at) AS releasedAt
+           FROM sets
+          WHERE lang = ?${cardboardOnly}
+          GROUP BY LOWER(set_id)`,
+      )
+      .all(lang) as typeof rows;
+  } catch (error) {
+    if (isSqliteBusy(error)) return localSetsCache?.rows ?? [];
+    throw error;
+  }
   const eraSerie = tcgdexEraSerieNames(rows);
   const ids = new Set(rows.map((row) => row.setId));
   const sortKeys = tcgdexBlockAwareSortKeys(rows);
@@ -1619,9 +1679,8 @@ export function pruneTcgdexSets(
   dbPath = tcgdexDbPath(),
 ): number {
   if (setIds.length === 0 || !existsSync(dbPath)) return 0;
-  const db = new DatabaseSync(dbPath);
+  const db = openTcgdexSqliteWrite(dbPath);
   try {
-    db.exec("PRAGMA busy_timeout = 30000");
     createSchema(db);
     const dropAssets = db.prepare(
       `DELETE FROM print_assets

@@ -128,6 +128,18 @@ describe("itemMatchesSearchQuery", () => {
     expect(itemMatchesSearchQuery(haystacks, "piccolo")).toBe(true);
     expect(itemMatchesSearchQuery(haystacks, "999")).toBe(false);
   });
+
+  it("ignore les accents (« 7 epees » ≡ « 7 Épées »)", () => {
+    const haystacks = itemSearchHaystacks({
+      name: "7 Épées",
+      metadata: { title: "7 Épées" },
+    });
+
+    expect(itemMatchesSearchQuery(haystacks, "7 epees")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "epees")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "7 épées")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "7 sabres")).toBe(false);
+  });
 });
 
 describe("itemMatchesSearchQuery — volume marqueur/padding indifférents", () => {

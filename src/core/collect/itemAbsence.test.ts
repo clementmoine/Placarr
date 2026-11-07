@@ -6,6 +6,7 @@ import {
   buildPresenceEvent,
   countsAsOwned,
   inferPresenceEventKind,
+  isAwaitingReceiptReason,
   isDefinitiveAbsenceReason,
   isItemOnLoan,
   isTemporaryAbsenceReason,
@@ -20,12 +21,14 @@ describe("presenceForReason", () => {
   it.each([
     ["loaned", "away"],
     ["ordered", "away"],
+    ["expected", "away"],
     ["repair", "away"],
     ["rental", "away"],
     ["sold", "past"],
     ["exchanged", "past"],
     ["gifted", "past"],
     ["discarded", "past"],
+    ["consumed", "past"],
     ["lost", "past"],
     ["stolen", "past"],
   ] as const)("%s → %s", (reason, presence) => {
@@ -125,6 +128,30 @@ describe("applyAbsenceAction", () => {
     const { fields, event } = applyAbsenceAction(current, { type: "return" });
     expect(fields).toEqual(ownedAbsenceState());
     expect(event.kind).toBe("returned");
+  });
+
+  it("receives expected / ordered as received_from_order", () => {
+    expect(isAwaitingReceiptReason("expected")).toBe(true);
+    expect(isAwaitingReceiptReason("ordered")).toBe(true);
+    expect(isAwaitingReceiptReason("loaned")).toBe(false);
+    for (const reason of ["ordered", "expected"] as const) {
+      const current = applyAbsenceAction(ownedAbsenceState(), {
+        type: "depart",
+        reason,
+      }).fields;
+      const { event } = applyAbsenceAction(current, { type: "return" });
+      expect(event.kind).toBe("received_from_order");
+    }
+  });
+
+  it("marks consumed as past (déjà eu, not missing)", () => {
+    const { fields } = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "consumed",
+    });
+    expect(fields.presence).toBe("past");
+    expect(fields.absenceReason).toBe("consumed");
+    expect(countsAsOwned(fields)).toBe(false);
   });
 
   it("cancels away → wanted keeping breadcrumbs", () => {

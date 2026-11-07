@@ -9,6 +9,7 @@ import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCatalogDb } from "@/lib/packPaths";
+import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
 import {
   createLocalPrintsIndex,
   type LocalPrintSearchRow,
@@ -41,19 +42,18 @@ function diskCardOf(row: LocalPrintSearchRow): string {
 function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
   const set = (row.setCode || row.cardType || "").trim() || "—";
   const diskCard = diskCardOf(row);
-  const artFile = row.art?.trim() || row.thumb?.trim() || "";
+  const { artUrl, artFile, missingArt } = resolveCatalogueLocalArtUrl({
+    packId: MTG_PACK_ID,
+    set,
+    lang: row.lang,
+    card: diskCard,
+    sqliteArt: row.art?.trim() || row.thumb?.trim() || "",
+  });
+  const thumbRaw = row.thumb?.trim() || "";
   const thumbFile =
-    row.thumb?.trim() && row.thumb.trim() !== artFile
-      ? row.thumb.trim()
+    thumbRaw && thumbRaw !== artFile && !thumbRaw.includes("/")
+      ? thumbRaw
       : "";
-  const artUrl = artFile
-    ? assetsCardUrl(
-        MTG_PACK_ID,
-        { set, lang: row.lang, card: diskCard },
-        artFile,
-      )
-    : "";
-  const artLang = row.lang;
   const name = row.fullName?.trim() || undefined;
   const label = name
     ? `${set} · ${diskCard} — ${name}`
@@ -77,8 +77,7 @@ function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
     label,
     ...(name ? { name } : {}),
     ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
-    missingArt: !artUrl,
-    ...(artLang !== row.lang && artUrl ? { artLocaleFrom: artLang } : {}),
+    missingArt,
     languageSpecific: true,
     kind: "face",
   };

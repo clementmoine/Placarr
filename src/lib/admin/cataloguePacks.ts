@@ -20,6 +20,9 @@ import {
 } from "@/providers/leclerc/pack";
 import { leclercSetLabel } from "@/providers/leclerc/printKey";
 
+/** Carddass admin selector — kept off catalogueLocales (no invent shells). */
+const CARDDASS_BROWSE_LOCALES = ["en", "fr", "it", "ja"] as const;
+
 /**
  * Stable pack ids for the admin hub. Declared once — {@link CATALOGUE_PACK_IDS}
  * is derived from {@link CATALOGUE_PACKS} so the hand-list cannot drift.
@@ -231,6 +234,33 @@ export type CataloguePackInfo = {
    */
   catalogueLocales?: readonly string[];
   /**
+   * Admin browse language selector when {@link catalogueLocales} is omitted
+   * (Carddass: no invent shells on materialize, but ja/it must stay selectable).
+   */
+  browseLocales?: readonly string[];
+  /**
+   * SQL browse can honour `foilOnly` (Live / foil_types / attested finishes).
+   * Without this, foilOnly returns an empty page — never an unfiltered corpus.
+   */
+  foilAwareBrowse?: boolean;
+  /**
+   * Prefixed pack backs for every browse locale (shared `back.webp` deduped).
+   * Server fold / collapse / print-scoped / locale-axis hooks live in
+   * `cataloguePackHooks` — never attach Node callbacks here (`cataloguePackInfo`
+   * is imported by client scan UI).
+   */
+  unifiedCatalogueBacks?: boolean;
+  /**
+   * Cardboard `printed` rules beyond the index slot flag.
+   * `naruto-carddass` = unpublished HTML phantoms + cancelled S6 FR.
+   */
+  cardboardPrintedRules?: "slot" | "naruto-carddass";
+  /**
+   * Hide FR/IT invent tiles on promo printKeys not on the promo checklist
+   * (JA tourney reprints with hung EU titles).
+   */
+  gatePromoLocaleTiles?: boolean;
+  /**
    * Cross-locale recto policy. Default off = faces stay on the tile lang
    * (Yu-Gi-Oh, most Pokémon). Opt in only when art is language-neutral
    * (no text / identical across langs) for that TCG / series / card.
@@ -349,6 +379,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Pokémon",
     hasFoilEffects: true,
     hasFoilMeta: true,
+    foilAwareBrowse: true,
     androidPackageId: "com.pokemon.pokemontcgl",
     defaultScope: "foils",
     /**
@@ -393,6 +424,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelEn: "Lorcana",
     hasFoilEffects: true,
     hasFoilMeta: true,
+    foilAwareBrowse: true,
     /**
      * Cards scrape is EN+FR. Without expand, pickLang collapses to the UI
      * preferLang — « All locales » never shows FR+EN together.
@@ -431,6 +463,16 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Naruto Carddass",
     labelEn: "Naruto Carddass",
     hasFoilEffects: true,
+    foilAwareBrowse: true,
+    /**
+     * One tile per locale on the identity corpus (FR/EN/IT/JA). Without this,
+     * pickLang collapses and hides sister-lang faces. Invent shells stay off
+     * via omitted {@link catalogueLocales}.
+     */
+    expandLocales: true,
+    unifiedCatalogueBacks: true,
+    cardboardPrintedRules: "naruto-carddass",
+    gatePromoLocaleTiles: true,
     defaultScope: "foils",
     sameNumberArtFallback: true,
     collectorCardFolder: true,
@@ -475,9 +517,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     /**
      * No cross-lang recto borrow (FR≠JA≠EN). Same-locale set inheritance stays
      * on {@link artBorrowFrom}. Do **not** declare `catalogueLocales` or we
-     * invent empty FR shells for EN-only CCG cards.
+     * invent empty FR shells for EN-only CCG cards — use {@link browseLocales}
+     * for the admin selector instead.
      */
     localeArt: { bestFaceAcrossLocales: false },
+    browseLocales: CARDDASS_BROWSE_LOCALES,
     extractTarget: "naruto",
     catalogueOnly: true,
     extractMarkers: [
@@ -722,6 +766,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     labelFr: "Naruto Kayou",
     labelEn: "Naruto Kayou",
     hasFoilEffects: true,
+    foilAwareBrowse: true,
     defaultScope: "foils",
     /** EN gallery on disk today (CN originals when attested). */
     catalogueLocales: ["en"],

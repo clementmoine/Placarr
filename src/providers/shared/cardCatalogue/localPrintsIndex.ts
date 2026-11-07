@@ -23,6 +23,10 @@ import {
   setScopedWhere,
 } from "./sets";
 import { migrateProductsSchema } from "../sealedProducts/productsSqlite";
+import {
+  ensureSqliteFold,
+  foldedLikePattern,
+} from "@/providers/shared/sqliteFold";
 
 export type LocalPrintSearchRow = {
   printKey: string;
@@ -308,7 +312,10 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
   const ensure = (): DatabaseSync | null => {
     const file = dbPath();
     if (!existsSync(file)) return null;
-    if (activeDb && activePath === file) return activeDb;
+    if (activeDb && activePath === file) {
+      ensureSqliteFold(activeDb);
+      return activeDb;
+    }
     // Writable pass first: older pack DBs may lack `category` and SELECT would fail.
     try {
       const writable = new DatabaseSync(file);
@@ -321,6 +328,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       // Unreadable / locked — read-only open may still work on a fresh schema.
     }
     const db = new DatabaseSync(file, { readOnly: true });
+    ensureSqliteFold(db);
     activeDb = db;
     activePath = file;
     return db;
@@ -356,6 +364,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT),
     );
     const like = `%${trimmed}%`;
+    const nameLike = foldedLikePattern(trimmed);
     const compact = trimmed.replace(/[\s-]/g, "");
     /*
       `d-15` (normalisé `d0015`) doit aussi trouver `d0150` : préfixe sur les
@@ -389,12 +398,12 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
       setId,
       usePrintSets: true,
       textClause: trimmed
-        ? `LOWER(t.full_name) LIKE ?
+        ? `placarr_fold(t.full_name) LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.number) LIKE ?
            ${collectorClause}`
         : null,
-      textParams: [like, like, `%${compact}%`, ...collectorParams],
+      textParams: [nameLike, like, `%${compact}%`, ...collectorParams],
     });
 
     /*
@@ -629,10 +638,10 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     if (q) {
       where.push(
         `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
-          OR LOWER(COALESCE(t.full_name, '')) LIKE ?)`,
+          OR placarr_fold(COALESCE(t.full_name, '')) LIKE ?)`,
       );
       const like = `%${q}%`;
-      params.push(like, like, like, like);
+      params.push(like, like, like, foldedLikePattern(q));
     }
     const whereSql = where.join(" AND ");
     try {

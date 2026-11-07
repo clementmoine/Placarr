@@ -29,6 +29,10 @@ import {
   printAssetsColumnNames,
 } from "@/providers/shared/cardCatalogue/printAssetsCore";
 import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
+import {
+  ensureSqliteFold,
+  foldedLikePattern,
+} from "@/providers/shared/sqliteFold";
 
 import { dataRoot } from "@/lib/runtimeData";
 
@@ -330,11 +334,13 @@ export function ensureDbsCgIndex(): DatabaseSync | null {
     activeMtimeMs != null &&
     activeMtimeMs === mtimeMs
   ) {
+    ensureSqliteFold(activeDb);
     return activeDb;
   }
   resetDbsCgDbCache();
   try {
     activeDb = new DatabaseSync(dbPath, { readOnly: true });
+    ensureSqliteFold(activeDb);
     activePath = dbPath;
     activeMtimeMs = mtimeMs;
     return activeDb;
@@ -423,10 +429,10 @@ export function listDbsCgCatalogueBrowsePage(
   if (q) {
     where.push(
       `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
-        OR LOWER(COALESCE(t.full_name, '')) LIKE ?)`,
+        OR placarr_fold(COALESCE(t.full_name, '')) LIKE ?)`,
     );
     const like = `%${q}%`;
-    params.push(like, like, like, like);
+    params.push(like, like, like, foldedLikePattern(q));
   }
   const whereSql = where.join(" AND ");
   const from = `prints p

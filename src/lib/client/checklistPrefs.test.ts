@@ -21,12 +21,36 @@ describe("checklistPrefs", () => {
   it("keeps valid booleans and fills the rest", () => {
     expect(parseChecklistPrefs({ showOwned: false, masterSet: true })).toEqual({
       showOwned: false,
+      showPast: false,
+      showVirtual: true,
+      onlyVirtual: false,
+      possessionView: "inHand",
       masterSet: true,
       masterSetSuggestDismissed: false,
       alwaysShowFinishLabels: false,
       showPrices: true,
       hideImputedPrices: false,
       hideZeroSealedExpectation: false,
+    });
+  });
+
+  it("round-trips showPast / showVirtual / possessionView", () => {
+    expect(parseChecklistPrefs({ showPast: true })).toMatchObject({
+      showPast: true,
+    });
+    expect(
+      parseChecklistPrefs({
+        showVirtual: false,
+        onlyVirtual: true,
+        possessionView: "covered",
+      }),
+    ).toMatchObject({
+      showVirtual: false,
+      onlyVirtual: true,
+      possessionView: "covered",
+    });
+    expect(parseChecklistPrefs({ possessionView: "nope" })).toMatchObject({
+      possessionView: "inHand",
     });
   });
 
@@ -52,6 +76,10 @@ describe("checklistPrefs", () => {
     const id = "shelf-test-prefs";
     writeChecklistPrefs(id, {
       showOwned: false,
+      showPast: true,
+      showVirtual: false,
+      onlyVirtual: true,
+      possessionView: "covered",
       masterSet: true,
       masterSetSuggestDismissed: true,
       alwaysShowFinishLabels: true,
@@ -61,6 +89,10 @@ describe("checklistPrefs", () => {
     });
     expect(readChecklistPrefs(id)).toEqual({
       showOwned: false,
+      showPast: true,
+      showVirtual: false,
+      onlyVirtual: true,
+      possessionView: "covered",
       masterSet: true,
       masterSetSuggestDismissed: true,
       alwaysShowFinishLabels: true,

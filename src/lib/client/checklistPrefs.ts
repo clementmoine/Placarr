@@ -6,8 +6,25 @@
  * être écartée sans activer le mode.
  */
 
+/** Compteur / % : en main seul, ou tout possédé (scellé compris). */
+export type ChecklistPossessionView = "inHand" | "covered";
+
 export type ChecklistShelfPrefs = {
   showOwned: boolean;
+  /**
+   * Afficher les cartes « déjà eues » (`past`) avec badge. Défaut off — elles
+   * restent hors buy missing mais hors liste (cas typique : vendu / jeté).
+   */
+  showPast: boolean;
+  /**
+   * Afficher les cartes virtuelles (dans un scellé fermé). Défaut on — hors
+   * buy missing, badge « virtuel ».
+   */
+  showVirtual: boolean;
+  /** Ne lister que les virtuels. */
+  onlyVirtual: boolean;
+  /** Bascule compteur / barre de progression. */
+  possessionView: ChecklistPossessionView;
   masterSet: boolean;
   /** L'utilisateur a écarté la suggestion d'activer le master set. */
   masterSetSuggestDismissed: boolean;
@@ -33,6 +50,10 @@ export type ChecklistShelfPrefs = {
 
 export const DEFAULT_CHECKLIST_PREFS: ChecklistShelfPrefs = {
   showOwned: true,
+  showPast: false,
+  showVirtual: true,
+  onlyVirtual: false,
+  possessionView: "inHand",
   masterSet: false,
   masterSetSuggestDismissed: false,
   alwaysShowFinishLabels: false,
@@ -51,6 +72,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function parsePossessionView(raw: unknown): ChecklistPossessionView {
+  return raw === "covered" ? "covered" : "inHand";
+}
+
 export function parseChecklistPrefs(raw: unknown): ChecklistShelfPrefs {
   if (!isRecord(raw)) return { ...DEFAULT_CHECKLIST_PREFS };
   return {
@@ -58,6 +83,19 @@ export function parseChecklistPrefs(raw: unknown): ChecklistShelfPrefs {
       typeof raw.showOwned === "boolean"
         ? raw.showOwned
         : DEFAULT_CHECKLIST_PREFS.showOwned,
+    showPast:
+      typeof raw.showPast === "boolean"
+        ? raw.showPast
+        : DEFAULT_CHECKLIST_PREFS.showPast,
+    showVirtual:
+      typeof raw.showVirtual === "boolean"
+        ? raw.showVirtual
+        : DEFAULT_CHECKLIST_PREFS.showVirtual,
+    onlyVirtual:
+      typeof raw.onlyVirtual === "boolean"
+        ? raw.onlyVirtual
+        : DEFAULT_CHECKLIST_PREFS.onlyVirtual,
+    possessionView: parsePossessionView(raw.possessionView),
     masterSet:
       typeof raw.masterSet === "boolean"
         ? raw.masterSet

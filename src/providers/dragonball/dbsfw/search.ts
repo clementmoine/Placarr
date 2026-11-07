@@ -15,6 +15,7 @@ import {
   printAssetsArtSql,
   printAssetsColumnNames,
 } from "@/providers/shared/cardCatalogue/printAssetsCore";
+import { foldedLikePattern } from "@/providers/shared/sqliteFold";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { assetsCardUrl } from "@/lib/packAssetUrls";
@@ -141,19 +142,20 @@ export function searchDbsFwPrints(
   const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const compact = trimmed.toLowerCase().replace(/[\s-]/g, "");
   const like = `%${trimmed.toLowerCase()}%`;
+  const nameLike = foldedLikePattern(trimmed);
   const likeCompact = `%${compact}%`;
 
   const scope = setScopedWhere({
     setColumn: "p.set_code",
     setId,
     textClause: trimmed
-      ? `LOWER(t.full_name) LIKE ?
+      ? `placarr_fold(t.full_name) LIKE ?
            OR LOWER(p.number)    LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.set_code || '-' || p.number) LIKE ?
            OR (p.grouping IS NOT NULL AND LOWER(p.set_code || '-' || p.number || '_' || p.grouping) LIKE ?)`
       : null,
-    textParams: [like, likeCompact, likeCompact, like, like],
+    textParams: [nameLike, likeCompact, likeCompact, like, like],
   });
 
   const rows = db

@@ -9,6 +9,7 @@ import {
   cataloguePackInfo,
   type CataloguePackId,
 } from "@/lib/admin/cataloguePacks";
+import { includesFolded, normalizeForTokens } from "@/core/enrich/titles/normalize";
 import { toContentsTree } from "@/core/collect/sealedContentsTree";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
@@ -775,16 +776,16 @@ export function listCatalogueProducts(
   if (input.missingPrice) {
     rows = rows.filter((row) => row.priceCents == null);
   }
-  const q = input.q?.trim().toLowerCase();
+  const q = input.q?.trim() ? normalizeForTokens(input.q) : "";
   if (q) {
     rows = rows.filter(
       (row) =>
-        row.productKey.toLowerCase().includes(q) ||
-        row.slug.toLowerCase().includes(q) ||
-        row.label.toLowerCase().includes(q) ||
-        row.kind.includes(q) ||
-        (row.setCode?.toLowerCase().includes(q) ?? false) ||
-        (row.name?.toLowerCase().includes(q) ?? false),
+        includesFolded(row.productKey, q) ||
+        includesFolded(row.slug, q) ||
+        includesFolded(row.label, q) ||
+        includesFolded(row.kind, q) ||
+        (row.setCode ? includesFolded(row.setCode, q) : false) ||
+        (row.name ? includesFolded(row.name, q) : false),
     );
   }
   return {

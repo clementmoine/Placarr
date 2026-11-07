@@ -46,9 +46,17 @@ import {
   type ItemAbsenceFields,
 } from "@/core/collect/itemAbsence";
 import {
-  buildExactBarcodeSearchCondition,
-  buildItemSearchConditions,
-} from "@/core/collect/search";
+  mergeItemGrade,
+  type ItemGradeFields,
+} from "@/core/collect/itemGrade";
+import {
+  defaultItemKind,
+  isItemKind,
+  sealedAcquisitionSnapshot,
+  type ItemKind,
+} from "@/core/collect/itemKind";
+import { buildExactBarcodeSearchCondition } from "@/core/collect/search";
+import { buildItemSearchConditionsFolded } from "@/core/collect/searchFolded";
 import {
   startItemMetadataRefresh,
   shelfMoveMetadataResetData,
@@ -184,7 +192,7 @@ export async function GET(req: NextRequest) {
         }
         Object.assign(whereClause, exactBarcodeCondition);
       } else {
-        whereClause.OR = buildItemSearchConditions(q);
+        whereClause.OR = await buildItemSearchConditionsFolded(q);
       }
     }
 
@@ -278,6 +286,13 @@ export async function POST(req: NextRequest) {
         condition,
         fetchMetadata = true,
         metadataPreview,
+        kind: rawKind,
+        skuKey: rawSkuKey,
+        skuName: rawSkuName,
+        skuLanguage: rawSkuLanguage,
+        purchasePriceCents: rawPurchasePriceCents,
+        purchasedAt: rawPurchasedAt,
+        catalogueKind: rawCatalogueKind,
         loanedTo: rawLoanedTo,
         loanedAt: rawLoanedAt,
         presence: rawPresence,
@@ -336,13 +351,23 @@ export async function POST(req: NextRequest) {
         typeof rawLanguage === "string" && rawLanguage.trim()
           ? rawLanguage.trim().toLowerCase()
           : null;
+      const earlySkuName =
+        typeof rawSkuName === "string" && rawSkuName.trim()
+          ? rawSkuName.trim()
+          : null;
+      const earlySkuKey =
+        typeof rawSkuKey === "string" && rawSkuKey.trim()
+          ? rawSkuKey.trim()
+          : null;
       let resolvedName = typeof name === "string" ? name.trim() : "";
       if (!resolvedName) {
         if (normalizedBarcode) {
           resolvedName = buildBarcodePlaceholderItemName(normalizedBarcode);
+        } else if (earlySkuName || earlySkuKey) {
+          resolvedName = earlySkuName || earlySkuKey!;
         } else {
           return NextResponse.json(
-            { error: "Name or barcode is required" },
+            { error: "Name, barcode, or sealed SKU is required" },
             { status: 400 },
           );
         }
@@ -406,6 +431,50 @@ export async function POST(req: NextRequest) {
           : null;
       const setCode = setCodeFromBody || catalogueSetFromPrintKey(printKey);
 
+      const skuKey =
+        typeof rawSkuKey === "string" && rawSkuKey.trim()
+          ? rawSkuKey.trim()
+          : null;
+      const skuName =
+        typeof rawSkuName === "string" && rawSkuName.trim()
+          ? rawSkuName.trim()
+          : null;
+      const skuLanguage =
+        typeof rawSkuLanguage === "string" && rawSkuLanguage.trim()
+          ? rawSkuLanguage.trim().toLowerCase()
+          : language;
+      const catalogueKind =
+        typeof rawCatalogueKind === "string" && rawCatalogueKind.trim()
+          ? rawCatalogueKind.trim()
+          : null;
+      const purchasePriceCents = (() => {
+        if (
+          typeof rawPurchasePriceCents === "number" &&
+          Number.isFinite(rawPurchasePriceCents) &&
+          rawPurchasePriceCents >= 0
+        ) {
+          return Math.round(rawPurchasePriceCents);
+        }
+        if (typeof rawPurchasePriceCents === "string") {
+          const n = Number(rawPurchasePriceCents.trim());
+          if (Number.isFinite(n) && n >= 0) return Math.round(n);
+        }
+        return null;
+      })();
+      const purchasedAt = (() => {
+        if (rawPurchasedAt == null || rawPurchasedAt === "") return null;
+        const d = new Date(rawPurchasedAt as string | number | Date);
+        return Number.isNaN(d.getTime()) ? null : d;
+      })();
+      const kind: ItemKind = defaultItemKind({
+        printKey,
+        skuKey,
+        kind: isItemKind(rawKind) ? rawKind : null,
+      });
+      if (skuKey && !resolvedName) {
+        resolvedName = skuName || skuKey;
+      }
+
       let localImageUrl = imageUrl;
       let localBackgroundImageUrl = backgroundImageUrl;
 
@@ -443,6 +512,27 @@ export async function POST(req: NextRequest) {
           absenceExpectedAt: rawAbsenceExpectedAt,
         }) ?? ownedAbsenceState();
 
+      const sealedSnapshot = skuKey
+        ? sealedAcquisitionSnapshot({
+            skuKey,
+            skuName: skuName || resolvedName,
+            skuLanguage,
+            purchasePriceCents,
+            purchasedAt,
+            imageUrl:
+              typeof localImageUrl === "string" ? localImageUrl : null,
+            catalogueKind,
+          })
+        : null;
+
+      const acquiredEvent = buildPresenceEvent({
+        from: "owned",
+        to: "owned",
+        kind: "acquired",
+        at: purchasedAt ?? undefined,
+        extraSnapshot: sealedSnapshot,
+      });
+
       const departedEvent =
         absence.presence !== "owned"
           ? buildPresenceEvent({
@@ -468,6 +558,12 @@ export async function POST(req: NextRequest) {
           variant,
           language,
           condition: resolvedCondition,
+          kind,
+          skuKey,
+          skuName: skuName || (skuKey ? resolvedName : null),
+          skuLanguage: skuKey ? skuLanguage : null,
+          purchasePriceCents,
+          purchasedAt,
           ...absence,
           userId: auth.user.id,
         },
@@ -483,22 +579,27 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (departedEvent) {
+      const writePresenceEvent = async (
+        event: NonNullable<typeof acquiredEvent>,
+      ) => {
         await prisma.itemPresenceEvent.create({
           data: {
             itemId: item.id,
-            at: departedEvent.at,
-            fromPresence: departedEvent.fromPresence,
-            toPresence: departedEvent.toPresence,
-            reason: departedEvent.reason,
-            kind: departedEvent.kind,
+            at: event.at,
+            fromPresence: event.fromPresence,
+            toPresence: event.toPresence,
+            reason: event.reason,
+            kind: event.kind,
             snapshot:
-              departedEvent.snapshot == null
+              event.snapshot == null
                 ? Prisma.JsonNull
-                : (departedEvent.snapshot as Prisma.InputJsonValue),
+                : (event.snapshot as Prisma.InputJsonValue),
           },
         });
-      }
+      };
+
+      await writePresenceEvent(acquiredEvent);
+      if (departedEvent) await writePresenceEvent(departedEvent);
 
       // Scan/modal already fetched a rich preview — seed it so the item page
       // is not empty while the background worker deepens enrichment.
@@ -596,7 +697,8 @@ export async function PATCH(req: NextRequest) {
         shelfId?: string;
         slug?: string;
         metadataId?: null;
-      } & Partial<ItemAbsenceFields> = {};
+      } & Partial<ItemAbsenceFields> &
+        Partial<ItemGradeFields> = {};
 
       if (typeof raw.name === "string") data.name = raw.name;
       if ("variant" in raw) {
@@ -647,6 +749,7 @@ export async function PATCH(req: NextRequest) {
       if (absencePatch) {
         Object.assign(data, absencePatch);
       }
+      // Grade patch applied after load (needs current fields) — see below.
       if (typeof raw.shelfId === "string") {
         data.shelfId = await resolveShelfId(raw.shelfId, auth.user.id);
       }
@@ -674,6 +777,11 @@ export async function PATCH(req: NextRequest) {
           absenceNote: true,
           absencePriceCents: true,
           absenceExpectedAt: true,
+          gradeStatus: true,
+          gradeHouse: true,
+          gradeLabel: true,
+          gradeCertNo: true,
+          gradedAt: true,
           shelfId: true,
           metadataId: true,
           name: true,
@@ -737,6 +845,17 @@ export async function PATCH(req: NextRequest) {
         );
       }
 
+      const gradePatch = mergeItemGrade(item, {
+        gradeStatus: raw.gradeStatus,
+        gradeHouse: raw.gradeHouse,
+        gradeLabel: raw.gradeLabel,
+        gradeCertNo: raw.gradeCertNo,
+        gradedAt: raw.gradedAt,
+      });
+      if (gradePatch) {
+        Object.assign(data, gradePatch);
+      }
+
       const presenceChanged =
         absencePatch != null &&
         (absencePatch.presence !== item.presence ||
@@ -751,6 +870,13 @@ export async function PATCH(req: NextRequest) {
             fields: absencePatch,
           })
         : null;
+
+      const gradeChanged =
+        gradePatch != null &&
+        (gradePatch.gradeStatus !== item.gradeStatus ||
+          gradePatch.gradeHouse !== item.gradeHouse ||
+          gradePatch.gradeLabel !== item.gradeLabel ||
+          gradePatch.gradeCertNo !== item.gradeCertNo);
 
       const updatedItem = await prisma.item.update({
         where: { id: resolvedId },
@@ -780,6 +906,29 @@ export async function PATCH(req: NextRequest) {
               presenceEvent.snapshot == null
                 ? Prisma.JsonNull
                 : (presenceEvent.snapshot as Prisma.InputJsonValue),
+          },
+        });
+      }
+
+      if (gradeChanged && gradePatch) {
+        await prisma.itemPresenceEvent.create({
+          data: {
+            itemId: updatedItem.id,
+            at: gradePatch.gradedAt ?? new Date(),
+            fromPresence: updatedItem.presence,
+            toPresence: updatedItem.presence,
+            reason: null,
+            kind:
+              gradePatch.gradeStatus === "submitted"
+                ? "grade_submitted"
+                : "grade_updated",
+            snapshot: {
+              gradeStatus: gradePatch.gradeStatus,
+              gradeHouse: gradePatch.gradeHouse,
+              gradeLabel: gradePatch.gradeLabel,
+              gradeCertNo: gradePatch.gradeCertNo,
+              gradedAt: gradePatch.gradedAt?.toISOString() ?? null,
+            } as Prisma.InputJsonValue,
           },
         });
       }

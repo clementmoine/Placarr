@@ -11,7 +11,10 @@ export type ItemPresence = (typeof ITEM_PRESENCES)[number];
 
 export const TEMPORARY_ABSENCE_REASONS = [
   "loaned",
+  /** Prefer {@link isAwaitingReceiptReason} — `ordered` is the narrow legacy. */
   "ordered",
+  /** Broad « attendu » (order, friend, trade in flight…). */
+  "expected",
   "repair",
   "rental",
 ] as const;
@@ -21,6 +24,8 @@ export const DEFINITIVE_ABSENCE_REASONS = [
   "exchanged",
   "gifted",
   "discarded",
+  /** Used up / played through — still « déjà eu », not missing. */
+  "consumed",
   "lost",
   "stolen",
 ] as const;
@@ -41,8 +46,28 @@ export const PRESENCE_EVENT_KINDS = [
   "cancelled_to_wanted",
   "received_from_order",
   "recovered",
+  /** Sealed parent opened — presence unchanged; snapshot holds composition. */
+  "opened",
+  /** Child item created from an open / declare. */
+  "materialized",
+  /** Group declaration of pulls (random display) without per-booster links. */
+  "declared",
+  /** Child re-attached under a compatible opened sealed parent. */
+  "contained",
+  /** Content link removed — child free on the shelf again. */
+  "detached",
+  /** Sent to a grading house (WIP) — presence unchanged. */
+  "grade_submitted",
+  /** Slab label recorded / updated — presence unchanged. */
+  "grade_updated",
 ] as const;
 export type PresenceEventKind = (typeof PRESENCE_EVENT_KINDS)[number];
+
+const PRESENCE_EVENT_KIND_SET = new Set<string>(PRESENCE_EVENT_KINDS);
+
+export function isPresenceEventKind(value: unknown): value is PresenceEventKind {
+  return typeof value === "string" && PRESENCE_EVENT_KIND_SET.has(value);
+}
 
 export type ItemAbsenceFields = {
   presence: ItemPresence;
@@ -105,6 +130,16 @@ export function isDefinitiveAbsenceReason(
   value: unknown,
 ): value is DefinitiveAbsenceReason {
   return typeof value === "string" && DEFINITIVE_SET.has(value);
+}
+
+/**
+ * Temporary wait that still counts as owned (avoid double-buy) — « attendu ».
+ * `ordered` is kept as a narrow alias of `expected`.
+ */
+export function isAwaitingReceiptReason(
+  value: unknown,
+): value is "ordered" | "expected" {
+  return value === "ordered" || value === "expected";
 }
 
 /** Presence implied by a reason when declaring a departure. */
@@ -320,6 +355,8 @@ export function buildPresenceEvent(args: {
   fields?: Partial<ItemAbsenceFields>;
   kind?: PresenceEventKind;
   receiveFromOrder?: boolean;
+  /** Merged into the event snapshot (sealed SKU / purchase / open composition). */
+  extraSnapshot?: Record<string, unknown> | null;
 }): ItemPresenceEventDraft {
   const kind =
     args.kind ??
@@ -327,7 +364,10 @@ export function buildPresenceEvent(args: {
       reason: args.reason,
       receiveFromOrder: args.receiveFromOrder,
     });
-  const snap = args.fields ? snapshotFromFields(args.fields) : {};
+  const snap = {
+    ...(args.fields ? snapshotFromFields(args.fields) : {}),
+    ...(args.extraSnapshot ?? {}),
+  };
   return {
     at: args.at ?? new Date(),
     fromPresence: args.from,
@@ -422,10 +462,9 @@ export function applyAbsenceAction(
       throw new Error(`Cannot ${action.type} from presence ${fromPresence}`);
     }
     const fields = ownedAbsenceState();
+    const awaiting = isAwaitingReceiptReason(from.absenceReason);
     const receiveFromOrder =
-      action.type === "receive"
-        ? action.fromOrder !== false
-        : from.absenceReason === "ordered";
+      action.type === "receive" ? action.fromOrder !== false : awaiting;
     return {
       fields,
       event: buildPresenceEvent({
@@ -435,7 +474,7 @@ export function applyAbsenceAction(
         receiveFromOrder:
           action.type === "receive" ? receiveFromOrder : undefined,
         kind:
-          action.type === "receive" || from.absenceReason === "ordered"
+          action.type === "receive" || awaiting
             ? "received_from_order"
             : "returned",
       }),

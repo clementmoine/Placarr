@@ -59,7 +59,7 @@ Une affirmation de ce document était fausse : `past` ne retombe pas dans les ma
 - `expectedNewCards` repose sur `missing / poolSize`. Retirer les virtuels de `missing` en gardant `poolSize` est cohérent (une carte virtuelle serait un doublon à l'ouverture) **mais suppose que le scellé sera ouvert** : l'UI doit le dire (« N cartes couvertes par tes scellés fermés »).
 - `sealedSourcesByPrint` inclut les pools `randomPoolScope: "listed"` (loterie). **Ne pas le réutiliser tel quel pour dériver les virtuels** : une loterie n'est pas une garantie. Seules les `guaranteedPrints` de produits `contentsKnown` sans `printsArePreview` comptent.
 - `expandBuyImpact` descend déjà un arbre (`toContentsTree`, `maxDepth` 4, multiplicateur `_qty`, garde `_seen`) : **réutiliser cet arbre pour l'ouverture** plutôt qu'écrire une seconde logique.
-- Cas limite : un blister = `pack_container` ×1 autour d'un booster → ouvrir donne un booster scellé à ouvrir encore. Décider : deux étapes, ou raccourci en un geste.
+- Cas limite blister `pack_container` ×1 : **tranché** — ouverture **1 étape** (`isUnitPackContainer` dans `sealedOpen.ts`) ; pas de booster fantôme. SKU enfant nommé dans `guaranteedProducts` → matérialisé.
 
 ---
 
@@ -172,11 +172,11 @@ Affichage : badge/pastille distincte sur la carte (case pleine ; case cochée gr
 
 ## 8. Risques et points ouverts
 
-- Blister (`pack_container` ×1) : une ou deux étapes d'ouverture ?
-- `packsContained = null` sur une display : saisie manuelle du nombre de boosters.
+- ~~Blister (`pack_container` ×1)~~ — **1 étape** (`isUnitPackContainer`) ; composition nommée → enfant matérialisé.
+- ~~`packsContained = null`~~ — UI open demande `packCount` (+ `childBoosterSlug` si besoin).
 - Granularités mixtes sous une display (booster ouvert seul + déclaration groupée) : règle de lecture à écrire.
 - Cohabitation de `LoanRequest` : présent dans le dépôt public (`main`), **absent du schéma local envoyé** (remplacé par la présence/absence). Ne pas le réintroduire.
-- Conseil d'achat qui exclut les virtuels : afficher explicitement l'hypothèse « tu ouvriras ces scellés ».
+- ~~Conseil d'achat virtuels~~ — `checklistAdviceVirtualBuyHint` sous la synthèse.
 - Version locale en avance sur le dépôt public : travailler uniquement sur la version locale de Clément.
 - Les raisons d'absence ajoutées doivent rester peu nombreuses ; chaque ajout se justifie par la décision 6.
 

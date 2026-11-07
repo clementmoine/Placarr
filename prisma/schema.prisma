@@ -58,15 +58,49 @@ enum ItemPresence {
 /// definitive reasons map to `past` (still recoverable via « Récupéré »).
 enum AbsenceReason {
   loaned
+  /// Narrow « commandé » — kept for existing rows; prefer `expected`.
   ordered
+  /// Broad « attendu » (order, friend bringing it, trade in flight…).
+  expected
   repair
   rental
   sold
   exchanged
   gifted
   discarded
+  /// Used up / played through (Exit…) — distinct from discarded.
+  consumed
   lost
   stolen
+}
+
+/// Professional slab / grading pipeline — orthogonal to `Condition` (raw health).
+enum GradeStatus {
+  /// Not submitted (raw copy, or grade fields cleared).
+  raw
+  /// Sent to a grading house — WIP.
+  submitted
+  /// Back with a label (slab).
+  graded
+}
+
+/// Coarse shelf-item shape (health ≠ containment ≠ presence).
+/// Fine sealed taxonomy (booster / ETB / …) lives on the catalogue SKU.
+enum ItemKind {
+  /// Generic shelf copy (game, book, …) — default for legacy rows.
+  object
+  /// TCG print (`printKey`).
+  card
+  /// Sealed product keyed by `skuKey` (`packId::slug`).
+  sealed
+  /// Empty packaging after open (optional keep / sell / discard).
+  shell
+}
+
+/// Role of a child under a parent sealed item.
+enum ContainmentRole {
+  content
+  shell
 }
 
 model Attachment {
@@ -286,6 +320,30 @@ model Item {
   /// Sale price in integer cents (null when unset / non-sale reasons).
   absencePriceCents         Int?
   absenceExpectedAt         DateTime?
+  /// Coarse kind — see `ItemKind`. Distinct from shelf `Type` and catalogue sealed kind.
+  kind                      ItemKind        @default(object)
+  /// Catalogue sealed key (`packId::slug`). Null for cards / generic objects.
+  skuKey                    String?
+  /// Name snapshot at acquisition (catalogue slugs can disappear).
+  skuName                   String?
+  /// Language snapshot for the SKU at acquisition (`fr`, `en`…).
+  skuLanguage               String?
+  /// When this sealed copy was opened (null = still sealed).
+  openedAt                  DateTime?
+  /// Purchase price in integer cents (cost basis — not `absencePriceCents`).
+  purchasePriceCents        Int?
+  /// Acquisition date (may differ from `createdAt` = capture date).
+  purchasedAt               DateTime?
+  /// Grading pipeline — see `GradeStatus`. Distinct from `condition`.
+  gradeStatus               GradeStatus     @default(raw)
+  /// PSA / CGC / BGS / … free text with known house helpers in core.
+  gradeHouse                String?
+  /// Label on the slab (`10`, `9.5`, `Black Label`…).
+  gradeLabel                String?
+  /// Certification / cert number.
+  gradeCertNo               String?
+  /// When the graded slab was received (null while WIP / raw).
+  gradedAt                  DateTime?
   user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   shelf                     Shelf           @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   metadata                  Metadata?       @relation(fields: [metadataId], references: [id])
@@ -294,6 +352,8 @@ model Item {
   presenceEvents            ItemPresenceEvent[]
   tradeLinksOut             ItemTradeLink[] @relation("TradeOut")
   tradeLinksIn              ItemTradeLink[] @relation("TradeIn")
+  containmentAsParent      ItemContainmentLink[] @relation("ContainmentParent")
+  containmentAsChild        ItemContainmentLink[] @relation("ContainmentChild")
 
   @@index([shelfId])
   @@index([userId])
@@ -306,9 +366,15 @@ model Item {
   @@index([presence])
   @@index([presence, absenceReason])
   @@index([absenceRecipient])
+  @@index([kind])
+  @@index([skuKey])
+  @@index([openedAt])
+  @@index([gradeStatus])
+  @@index([gradeHouse])
 }
 
 /// Lifecycle trace for shelf presence (acquired → departed → returned / recovered…).
+/// Also audits sealed open / materialize / declare (same presence, richer `kind`).
 model ItemPresenceEvent {
   id           String         @id @default(cuid())
   itemId       String
@@ -316,7 +382,9 @@ model ItemPresenceEvent {
   fromPresence ItemPresence
   toPresence   ItemPresence
   reason       AbsenceReason?
-  /// acquired | departed | returned | cancelled_to_wanted | received_from_order | recovered
+  /// acquired | departed | returned | cancelled_to_wanted | received_from_order |
+  /// recovered | opened | materialized | declared | contained | detached |
+  /// grade_submitted | grade_updated
   kind         String
   snapshot     Json?
   item         Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
@@ -339,6 +407,24 @@ model ItemTradeLink {
   @@unique([itemOutId, itemInId])
   @@index([itemOutId])
   @@index([itemInId])
+}
+
+/// Parent → child containment (display → boosters, sealed → cards, parent → shell).
+model ItemContainmentLink {
+  id        String          @id @default(cuid())
+  parentId  String
+  childId   String
+  role      ContainmentRole
+  /// Presence / open event that created this link (audit), when known.
+  eventId   String?
+  createdAt DateTime        @default(now())
+  parent    Item            @relation("ContainmentParent", fields: [parentId], references: [id], onDelete: Cascade)
+  child     Item            @relation("ContainmentChild", fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, childId])
+  @@index([parentId, role])
+  @@index([childId])
+  @@index([eventId])
 }
 
 model RawName {

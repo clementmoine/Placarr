@@ -329,6 +329,7 @@ export function Advice({
   cards,
   hideZeroSealedExpectation,
   hideImputedPrices = false,
+  virtualCoveredCount = 0,
   t,
 }: {
   advice: SetAdvice;
@@ -336,6 +337,8 @@ export function Advice({
   hideZeroSealedExpectation: boolean;
   /** Hors total / listes : cotes ~ traitées comme « sans cote ». */
   hideImputedPrices?: boolean;
+  /** Prints exclus du missing car virtuels sous scellé fermé. */
+  virtualCoveredCount?: number;
   t: Translate;
 }) {
   const [selected, setSelected] = useState<Track | null>(null);
@@ -553,6 +556,13 @@ export function Advice({
           })}
         </div>
         {heroCart.length > 0 && <CartStack items={heroCart} t={t} />}
+        {virtualCoveredCount > 0 && (
+          <p className={styles.adviceVirtualHint}>
+            {t("items.checklistAdviceVirtualBuyHint", {
+              count: virtualCoveredCount,
+            })}
+          </p>
+        )}
       </div>
 
       <Dialog

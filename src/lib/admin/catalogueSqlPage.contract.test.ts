@@ -103,6 +103,81 @@ describe.skipIf(!existsSync(narutoPackDbPath(NARUTO_PACK_ID)))(
       expect(page.cards.length).toBeGreaterThan(0);
       expect(buildCarddass).not.toHaveBeenCalled();
     });
+
+    it("exposes ja/it and serves 巻ノ under preferLang=ja (not coerced to en)", async () => {
+      const page = await listCatalogueCards({
+        pack: "naruto/carddass",
+        preferLang: "ja",
+        locales: "preferred",
+        limit: 24,
+      });
+      expect(page.availableLocales).toEqual(
+        expect.arrayContaining(["ja", "fr", "en", "it"]),
+      );
+      const faces = page.cards.filter((row) => row.kind === "face");
+      expect(faces.length).toBeGreaterThan(0);
+      expect(faces.every((row) => row.lang === "ja")).toBe(true);
+      expect(
+        faces.every(
+          (row) =>
+            /^maki/i.test(row.set) || /:maki/i.test(row.printKey),
+        ),
+      ).toBe(true);
+      expect(buildCarddass).not.toHaveBeenCalled();
+    });
+
+    it("does not mint ghost art URLs when disk face is missing", async () => {
+      const page = await listCatalogueCards({
+        pack: "naruto/carddass",
+        preferLang: "fr",
+        locales: "preferred",
+        limit: 48,
+      });
+      for (const row of page.cards.filter((card) => card.kind === "face")) {
+        if (row.missingArt) {
+          expect(row.artUrl).toBe("");
+        } else {
+          expect(row.artUrl.length).toBeGreaterThan(0);
+          // Print-scoped resolve path (borrow-aware), not raw /cards/ lang-first.
+          expect(row.artUrl).toMatch(/\/prints\//);
+        }
+      }
+    });
+
+    it("preferred FR applies Naruto axis (no S1 CCG N-* shells)", async () => {
+      const page = await listCatalogueCards({
+        pack: "naruto/carddass",
+        preferLang: "fr",
+        locales: "preferred",
+        limit: 96,
+      });
+      const faces = page.cards.filter((row) => row.kind === "face");
+      expect(faces.length).toBeGreaterThan(0);
+      expect(faces.every((row) => row.lang === "fr")).toBe(true);
+      expect(
+        faces.every(
+          (row) =>
+            !/^n\d/i.test(row.card) ||
+            /s(?:11|24|28)/i.test(row.set) ||
+            /:s(?:11|24|28)-/i.test(row.printKey),
+        ),
+      ).toBe(true);
+    });
+
+    it("missingArtOnly uses disk hydrate (empty artUrl, missingArt)", async () => {
+      const page = await listCatalogueCards({
+        pack: "naruto/carddass",
+        preferLang: "fr",
+        locales: "preferred",
+        missingArtOnly: true,
+        limit: 24,
+      });
+      const faces = page.cards.filter((row) => row.kind === "face");
+      expect(faces.every((row) => row.missingArt && row.artUrl === "")).toBe(
+        true,
+      );
+      expect(buildCarddass).not.toHaveBeenCalled();
+    });
   },
 );
 
@@ -152,6 +227,10 @@ describe.skipIf(!existsSync(tcgdexDbPath()))(
           .every((row) => row.hasFoil),
       ).toBe(true);
       expect(buildPokemon).not.toHaveBeenCalled();
-    }, 60_000);
+      /*
+        Live foil resolve over early NonFoil sets is ~45–60s cold — keep
+        headroom above the dedicated catalogueBrowsePage foilOnly suite.
+      */
+    }, 120_000);
   },
 );

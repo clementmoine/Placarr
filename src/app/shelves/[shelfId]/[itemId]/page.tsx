@@ -25,7 +25,9 @@ import {
   Loader2,
   Sparkles,
   HandHelping,
+  Award,
   Trash2,
+  PackageOpen,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -77,6 +79,10 @@ import {
   refreshItemMetadata,
   removeItemMediaImage,
   getItemSealedContainment,
+  getItemContainment,
+  attachItemContainment,
+  detachItemContainment,
+  openSealedItem,
   type ItemPrices,
   type SealedContainmentSourceDto,
 } from "@/lib/api/items";
@@ -90,6 +96,9 @@ import {
   type AttachmentDisplayLocale,
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
+import { ItemGradeEditor } from "@/components/ItemGradeEditor";
+import { ItemPresenceTimeline } from "@/components/ItemPresenceTimeline";
+import { formatGradeBadge } from "@/core/collect/itemGrade";
 import {
   hasGameMediaGalleryAttachment,
   hasDetailMetadataAttachments,
@@ -1227,6 +1236,8 @@ export default function ItemDetailsPage() {
   const itemId = params.itemId as Item["id"];
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [openingSealed, setOpeningSealed] = useState(false);
+  const [containmentBusy, setContainmentBusy] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState<
     "general" | "poster" | "background" | "info"
   >("general");
@@ -1300,6 +1311,15 @@ export default function ItemDetailsPage() {
     staleTime: 60_000,
   });
   const includedInSources = sealedContainment?.sources ?? [];
+
+  const { data: itemContainment } = useQuery({
+    queryKey: ["shelf", shelfId, "items", item?.id, "containment"],
+    queryFn: () => getItemContainment(item!.id, { shelfId }),
+    enabled: Boolean(
+      item?.id && (item.kind === "sealed" || item.kind === "card" || item.printKey),
+    ),
+    staleTime: 15_000,
+  });
 
   const isMetadataBusy = isItemMetadataBusy(item);
   const hasNoMetadata =
@@ -2992,6 +3012,15 @@ export default function ItemDetailsPage() {
                             })}
                       </Badge>
                     )}
+                    {formatGradeBadge(item) ? (
+                      <Badge
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-semibold px-2 py-0.5 flex gap-1 items-center"
+                      >
+                        <Award className="size-3" />
+                        {formatGradeBadge(item)}
+                      </Badge>
+                    ) : null}
                     {shelf?.type && (
                       <Badge className="bg-amber-550/10 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 px-2 py-0.5 text-xs font-semibold">
                         {t(`shelf.type.${shelf.type}`)}
@@ -3022,6 +3051,230 @@ export default function ItemDetailsPage() {
                         <Wrench className="size-4 mr-1.5" />
                         {t("items.editItem")}
                       </Button>
+                      {item?.kind === "sealed" && !item.openedAt ? (
+                        <Button
+                          variant="secondary"
+                          className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                          disabled={openingSealed}
+                          onClick={() => {
+                            void (async () => {
+                              setOpeningSealed(true);
+                              try {
+                                let packCount: number | null = null;
+                                let childBoosterSlug: string | null = null;
+                                let result: Awaited<
+                                  ReturnType<typeof openSealedItem>
+                                > | null = null;
+                                for (let attempt = 0; attempt < 3; attempt += 1) {
+                                  try {
+                                    result = await openSealedItem(item.id, {
+                                      shelfId,
+                                      createShell: true,
+                                      ...(packCount != null
+                                        ? { packCount }
+                                        : {}),
+                                      ...(childBoosterSlug
+                                        ? { childBoosterSlug }
+                                        : {}),
+                                    });
+                                    break;
+                                  } catch (err) {
+                                    const reason =
+                                      err &&
+                                      typeof err === "object" &&
+                                      "response" in err &&
+                                      (
+                                        err as {
+                                          response?: {
+                                            data?: { reason?: string };
+                                          };
+                                        }
+                                      ).response?.data?.reason;
+                                    if (reason === "needs_pack_count") {
+                                      const raw = window.prompt(
+                                        t("items.sealedOpen.askPackCount"),
+                                      );
+                                      if (raw == null) return;
+                                      const parsed = Number.parseInt(
+                                        raw.trim(),
+                                        10,
+                                      );
+                                      if (
+                                        !Number.isFinite(parsed) ||
+                                        parsed <= 0
+                                      ) {
+                                        toast.error(
+                                          t("items.sealedOpen.failed"),
+                                        );
+                                        return;
+                                      }
+                                      packCount = parsed;
+                                      continue;
+                                    }
+                                    if (reason === "needs_child_slug") {
+                                      const raw = window.prompt(
+                                        t("items.sealedOpen.askChildSlug"),
+                                      );
+                                      if (raw == null) return;
+                                      const slug = raw.trim();
+                                      if (!slug) {
+                                        toast.error(
+                                          t("items.sealedOpen.failed"),
+                                        );
+                                        return;
+                                      }
+                                      childBoosterSlug = slug;
+                                      continue;
+                                    }
+                                    throw err;
+                                  }
+                                }
+                                if (!result) {
+                                  toast.error(t("items.sealedOpen.failed"));
+                                  return;
+                                }
+                                toast.success(
+                                  result.childCount > 0
+                                    ? t("items.sealedOpen.success", {
+                                        count: result.childCount,
+                                      })
+                                    : t("items.sealedOpen.successUnit"),
+                                );
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["shelf", shelfId],
+                                });
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["item-events", item.id],
+                                });
+                              } catch {
+                                toast.error(t("items.sealedOpen.failed"));
+                              } finally {
+                                setOpeningSealed(false);
+                              }
+                            })();
+                          }}
+                        >
+                          {openingSealed ? (
+                            <Loader2 className="size-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <PackageOpen className="size-4 mr-1.5" />
+                          )}
+                          {t("items.sealedOpen.action")}
+                        </Button>
+                      ) : null}
+                      {itemContainment?.currentParent ? (
+                        <Button
+                          variant="secondary"
+                          className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                          disabled={containmentBusy}
+                          title={t("items.containment.inside", {
+                            name: itemContainment.currentParent.name,
+                          })}
+                          onClick={() => {
+                            void (async () => {
+                              setContainmentBusy(true);
+                              try {
+                                await detachItemContainment(item!.id, {
+                                  shelfId,
+                                });
+                                toast.success(t("items.containment.detached"));
+                                await queryClient.invalidateQueries({
+                                  queryKey: [
+                                    "shelf",
+                                    shelfId,
+                                    "items",
+                                    item!.id,
+                                    "containment",
+                                  ],
+                                });
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["item-events", item!.id],
+                                });
+                              } catch {
+                                toast.error(
+                                  t("items.containment.detachFailed"),
+                                );
+                              } finally {
+                                setContainmentBusy(false);
+                              }
+                            })();
+                          }}
+                        >
+                          {containmentBusy ? (
+                            <Loader2 className="size-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <PackageOpen className="size-4 mr-1.5" />
+                          )}
+                          {t("items.containment.detach")}
+                        </Button>
+                      ) : null}
+                      {!itemContainment?.currentParent &&
+                      (itemContainment?.candidates?.length ?? 0) > 0 ? (
+                        <label className="inline-flex items-center gap-2 bg-card border border-border dark:border-zinc-800 rounded-xl h-10 px-3 text-sm font-bold shadow-sm">
+                          <span className="text-muted-foreground whitespace-nowrap">
+                            {t("items.containment.reattach")}
+                          </span>
+                          <select
+                            className="bg-transparent border-0 text-foreground text-sm font-bold max-w-[14rem] cursor-pointer disabled:opacity-60"
+                            disabled={containmentBusy}
+                            defaultValue=""
+                            onChange={(event) => {
+                              const parentId = event.target.value;
+                              event.target.value = "";
+                              if (!parentId || !item) return;
+                              const parentName =
+                                itemContainment?.candidates.find(
+                                  (row) => row.id === parentId,
+                                )?.name ?? parentId;
+                              void (async () => {
+                                setContainmentBusy(true);
+                                try {
+                                  await attachItemContainment(item.id, {
+                                    shelfId,
+                                    parentId,
+                                  });
+                                  toast.success(
+                                    t("items.containment.attached", {
+                                      name: parentName,
+                                    }),
+                                  );
+                                  await queryClient.invalidateQueries({
+                                    queryKey: [
+                                      "shelf",
+                                      shelfId,
+                                      "items",
+                                      item.id,
+                                      "containment",
+                                    ],
+                                  });
+                                  await queryClient.invalidateQueries({
+                                    queryKey: ["item-events", item.id],
+                                  });
+                                } catch {
+                                  toast.error(
+                                    t("items.containment.attachFailed"),
+                                  );
+                                } finally {
+                                  setContainmentBusy(false);
+                                }
+                              })();
+                            }}
+                          >
+                            <option value="">
+                              {t("items.containment.reattachPick")}
+                            </option>
+                            {itemContainment!.candidates.map((row) => (
+                              <option key={row.id} value={row.id}>
+                                {row.name} (
+                                {t("items.containment.slotsLeft", {
+                                  remaining: row.remaining,
+                                })}
+                                )
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                       <Button
                         variant="secondary"
                         className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
@@ -3353,6 +3606,18 @@ export default function ItemDetailsPage() {
               </div>
             </div>
           )}
+
+          {item?.id && canEdit && !isGuest ? (
+            <ItemGradeEditor
+              itemId={item.id}
+              shelfId={shelfId}
+              grade={item}
+            />
+          ) : null}
+
+          {item?.id ? (
+            <ItemPresenceTimeline itemId={item.id} shelfId={shelfId} />
+          ) : null}
 
           <ItemDiscoverySection
             isPending={isPending}

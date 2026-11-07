@@ -23,6 +23,10 @@ import {
 } from "@/providers/shared/cardCatalogue/sets";
 import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
 import {
+  ensureSqliteFold,
+  foldedLikePattern,
+} from "@/providers/shared/sqliteFold";
+import {
   isLorcanaMainCatalogueSetCode,
   lorcanaPromoChecklistSeries,
   lorcanaSetScopeWhere,
@@ -816,11 +820,13 @@ export function ensureLorcanaTcgIndex(): DatabaseSync | null {
     activeMtimeMs != null &&
     activeMtimeMs === mtimeMs
   ) {
+    ensureSqliteFold(activeDb);
     return activeDb;
   }
   resetLorcanaTcgDbCache();
   migrateLorcanaTcgSchema(dbPath);
   const db = new DatabaseSync(dbPath, { readOnly: true });
+  ensureSqliteFold(db);
   activeDb = db;
   activePath = dbPath;
   activeMtimeMs = mtimeMs;
@@ -1033,10 +1039,12 @@ export function listLorcanaCatalogueBrowsePage(
   if (q) {
     where.push(
       `(LOWER(p.print_key) LIKE ? OR LOWER(p.set_code) LIKE ? OR LOWER(p.number) LIKE ?
-        OR LOWER(COALESCE(t.full_name, '')) LIKE ? OR LOWER(COALESCE(t.name, '')) LIKE ?)`,
+        OR placarr_fold(COALESCE(t.full_name, '')) LIKE ?
+        OR placarr_fold(COALESCE(t.name, '')) LIKE ?)`,
     );
     const like = `%${q}%`;
-    params.push(like, like, like, like, like);
+    const nameLike = foldedLikePattern(q);
+    params.push(like, like, like, nameLike, nameLike);
   }
   const whereSql = where.join(" AND ");
   const totalRow = db
@@ -1083,18 +1091,19 @@ export function searchLorcanaTcgRows(
   */
   const limit = Math.max(1, Math.min(opts.limit ?? 40, SET_ENUMERATION_LIMIT));
   const like = `%${trimmed}%`;
+  const nameLike = foldedLikePattern(trimmed);
 
   const collector = collectorQueryClause(trimmed);
   const scope = lorcanaSetScopeWhere({
     setId,
     textClause: trimmed
-      ? `LOWER(t.full_name) LIKE ?
-           OR LOWER(COALESCE(t.search_name, '')) LIKE ?
+      ? `placarr_fold(t.full_name) LIKE ?
+           OR placarr_fold(COALESCE(t.search_name, '')) LIKE ?
            OR LOWER(p.print_key) LIKE ?
            OR LOWER(p.set_code || '-' || p.number) LIKE ?
            ${collector ? `OR ${collector.clause}` : ""}`
       : null,
-    textParams: [like, like, like, like, ...(collector?.params ?? [])],
+    textParams: [nameLike, nameLike, like, like, ...(collector?.params ?? [])],
   });
 
   return db

@@ -14,6 +14,8 @@ import {
 import type {
   ContainmentProduct,
 } from "@/core/collect/sealedContainment";
+import type { VirtualProductView } from "@/core/collect/sealedLifecycle";
+import { parseSealedSkuKey } from "@/core/collect/sealedOpen";
 import { existsSync, readFileSync } from "node:fs";
 
 import { packProductsIndexPath } from "@/lib/packPaths";
@@ -196,4 +198,51 @@ export function loadContainmentProducts(
   pack: string | null | undefined,
 ): ContainmentProduct[] {
   return loadSealedProductEntries(pack).map(toContainmentProduct);
+}
+
+/** Entry → source plate pour dérivation de virtuels (checklist). */
+export function toVirtualProductView(
+  skuKey: string,
+  entry: SealedProductEntry,
+): VirtualProductView {
+  return {
+    skuKey,
+    kind: entry.kind,
+    behavior: entry.behavior,
+    contentsKnown: entry.contentsKnown,
+    printsArePreview: entry.containsPrintsIsPreview,
+    guaranteedPrints: entry.guaranteedPrints,
+    cardCount: entry.declaredCardCount,
+    cardsPerPack: entry.cardsPerPack,
+    packsContained: entry.packsContained,
+    packsBySet: entry.packsBySet,
+    randomPoolScope: entry.randomPoolScope,
+    randomPoolPrints: (entry.randomPoolPrints ?? []).map(
+      (row) => row.printKey ?? "",
+    ),
+    guaranteedProducts: entry.guaranteedProducts,
+    structureUnits: entry.structureUnits,
+  };
+}
+
+/**
+ * Resolve a sealed SKU to a {@link VirtualProductView}. Caches entries per
+ * packId for batch checklist derivation.
+ */
+export function makeVirtualProductLoader(): (
+  skuKey: string,
+) => VirtualProductView | null {
+  const byPack = new Map<string, SealedProductEntry[]>();
+  return (skuKey: string) => {
+    const parsed = parseSealedSkuKey(skuKey);
+    if (!parsed) return null;
+    let entries = byPack.get(parsed.packId);
+    if (!entries) {
+      entries = loadSealedProductEntries(parsed.packId);
+      byPack.set(parsed.packId, entries);
+    }
+    const entry = entries.find((row) => row.slug === parsed.slug);
+    if (!entry) return null;
+    return toVirtualProductView(skuKey, entry);
+  };
 }

@@ -166,7 +166,17 @@ export async function maybeEnqueueCatalogueProviderSync(
   const mdl = getCatalogProviderModule(providerId);
   if (!mdl?.catalog) return false;
   if (catalogSkipsAutoSync(mdl.info.catalogLifecycle)) return false;
-  const status = await mdl.catalog.status();
+  let status;
+  try {
+    status = await mdl.catalog.status();
+  } catch (error) {
+    // SQLite busy / transient IO must not kill the icollect supervise loop.
+    console.warn(
+      `[catalogue sync] status failed for ${providerId}:`,
+      error instanceof Error ? error.message : error,
+    );
+    return false;
+  }
   if (!status.stale) return false;
 
   const state = globalSyncState();

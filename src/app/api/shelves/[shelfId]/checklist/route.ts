@@ -15,12 +15,19 @@
  *
  * **Set-scoped** : `Item.setCode` borne la case à une extension. Sans setCode
  * (items legacy), le `printKey` compte encore dans chaque set qui le liste.
+ *
+ * **Virtuels** : scellés fermés à contenu connu → printKeys dérivés, hors
+ * « en main », exclus du buy missing.
  */
 import { NextRequest, NextResponse } from "next/server";
 
-import { checklistSetOwnedKey } from "@/core/collect/checklist";
-import { ownershipSetFromPrintKey } from "@/core/collect/checklistOwnership";
+import { partitionChecklistOwnership } from "@/core/collect/checklistPresence";
+import {
+  virtualChecklistKeys,
+  virtualPrintKeysFromSealedItems,
+} from "@/core/collect/checklistVirtual";
 import { buildChecklistForShelf } from "@/lib/collect/shelfChecklist";
+import { makeVirtualProductLoader } from "@/lib/collect/sealedProductsLoad";
 /*
   Lorcana Promo Year ownership (`p4` vs chapter `13`) registers on module load.
   Pull the catalogue so the resolver is installed before we build owned keys.
@@ -52,6 +59,14 @@ function dominantLanguage(
   return best;
 }
 
+function languageMatches(
+  itemLanguage: string | null | undefined,
+  language: string | null,
+): boolean {
+  const code = itemLanguage?.trim().toLowerCase();
+  return !language || !code || code === language;
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ shelfId: string }> },
@@ -78,13 +93,39 @@ export async function GET(
     params.get("masterSet") === "1" ||
     params.get("masterSet")?.trim().toLowerCase() === "true";
 
-  const items = await prisma.item.findMany({
-    where: { shelfId: shelf.id, printKey: { not: null } },
-    select: { printKey: true, setCode: true, language: true, variant: true },
-  });
+  const [items, sealedItems] = await Promise.all([
+    prisma.item.findMany({
+      where: { shelfId: shelf.id, printKey: { not: null } },
+      select: {
+        printKey: true,
+        setCode: true,
+        language: true,
+        variant: true,
+        presence: true,
+      },
+    }),
+    prisma.item.findMany({
+      where: {
+        shelfId: shelf.id,
+        kind: "sealed",
+        skuKey: { not: null },
+      },
+      select: {
+        kind: true,
+        skuKey: true,
+        skuLanguage: true,
+        presence: true,
+        openedAt: true,
+      },
+    }),
+  ]);
 
   const language =
-    params.get("language")?.trim().toLowerCase() || dominantLanguage(items);
+    params.get("language")?.trim().toLowerCase() ||
+    dominantLanguage([
+      ...items,
+      ...sealedItems.map((row) => ({ language: row.skuLanguage })),
+    ]);
 
   /*
     Les exemplaires d'une autre langue ne comptent pas comme possédés : avoir
@@ -92,23 +133,35 @@ export async function GET(
     la langue est inconnue est compté — le retirer punirait un item que la
     passe de rattrapage n'a pas su trancher.
   */
-  const matching = items.filter((item) => {
-    const code = item.language?.trim().toLowerCase();
-    return !language || !code || code === language;
-  });
+  const matching = items.filter((item) =>
+    languageMatches(item.language, language),
+  );
+  const matchingSealed = sealedItems.filter((item) =>
+    languageMatches(item.skuLanguage, language),
+  );
 
-  const owned = new Set(
-    matching.map((item) => {
-      const setCode = ownershipSetFromPrintKey(item.printKey, item.setCode);
-      return masterSet
-        ? checklistSetOwnedKey(setCode, item.printKey!, item.variant)
-        : checklistSetOwnedKey(setCode, item.printKey!);
-    }),
+  const virtualPrintKeys = virtualPrintKeysFromSealedItems(
+    matchingSealed,
+    makeVirtualProductLoader(),
+  );
+  const virtualKeys = virtualChecklistKeys(virtualPrintKeys, { masterSet });
+
+  /*
+    Presence buckets: past/wanted must not inflate owned (buy + %), and past
+    must surface as « déjà eu » in the same change or sold cards look missing.
+    Virtuals exclude from buy missing without counting as in-hand.
+  */
+  const { owned, virtual, alreadyHad, wanted } = partitionChecklistOwnership(
+    matching,
+    { masterSet, virtualKeys },
   );
 
   const checklist = await buildChecklistForShelf({
     shelfType: shelf.type as MediaType,
     owned,
+    virtual,
+    alreadyHad,
+    wanted,
     language,
     shelfName: shelf.name,
     masterSet,

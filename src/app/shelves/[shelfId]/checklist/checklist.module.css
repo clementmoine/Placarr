@@ -367,6 +367,55 @@
   box-shadow: inset 0 0 0 1px var(--card);
 }
 
+/* past / wanted — case intermédiaire (déjà eu ou recherché). */
+.checkboxMixed {
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0 50%,
+    transparent 50% 100%
+  );
+  border-color: var(--primary);
+}
+
+/* Virtuel — couverture scellée, pas en main. */
+.checkboxVirtual {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--primary) 0 2px,
+    transparent 2px 5px
+  );
+  border-color: var(--primary);
+  opacity: 0.85;
+}
+
+.missingPast,
+.missingVirtual {
+  opacity: 0.78;
+}
+
+.pastBadge,
+.wantedBadge,
+.virtualBadge {
+  margin-left: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.pastBadge {
+  color: var(--muted-foreground);
+}
+
+.wantedBadge {
+  color: var(--primary);
+}
+
+.virtualBadge {
+  color: var(--muted-foreground);
+}
+
 .thumb,
 .thumbPlaceholder {
   width: 1.75rem;
@@ -683,6 +732,13 @@
   flex-direction: column;
   gap: 0.4rem;
   min-width: 0;
+}
+
+.adviceVirtualHint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
 }
 
 /*

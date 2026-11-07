@@ -377,7 +377,16 @@ describe("cataloguePacks", () => {
     expect(naruto.localeArt?.bestFaceAcrossLocales).toBe(false);
     // Inventing fr/en/ja/it shells made EN-only CCG cards look « sans nom ».
     expect(naruto.catalogueLocales).toBeUndefined();
+    expect(naruto.browseLocales).toEqual(
+      expect.arrayContaining(["fr", "en", "it", "ja"]),
+    );
+    expect(naruto.expandLocales).toBe(true);
+    expect(naruto.foilAwareBrowse).toBe(true);
+    expect(naruto.unifiedCatalogueBacks).toBe(true);
+    expect(naruto.cardboardPrintedRules).toBe("naruto-carddass");
+    expect(naruto.gatePromoLocaleTiles).toBe(true);
   });
+
 
   it("CCG S11 FR garde Coleka — pas de Drive EN ; Carddass NI-100 garde carddass.fr", () => {
     const index = {

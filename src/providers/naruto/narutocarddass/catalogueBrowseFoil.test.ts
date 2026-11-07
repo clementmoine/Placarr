@@ -63,6 +63,8 @@ describe.skipIf(!hasDb)("carddass catalogue foilOnly SQL page", () => {
   it("marks hasFoil on browse rows and filters foilOnly without materialize", async () => {
     const page = listCarddassCatalogueBrowsePage({
       langs: ["fr"],
+      preferLang: "fr",
+      localeMode: "preferred",
       offset: 0,
       limit: 48,
     });
@@ -72,6 +74,8 @@ describe.skipIf(!hasDb)("carddass catalogue foilOnly SQL page", () => {
 
     const foil = listCarddassCatalogueBrowsePage({
       langs: ["fr"],
+      preferLang: "fr",
+      localeMode: "preferred",
       foilOnly: true,
       offset: 0,
       limit: 24,

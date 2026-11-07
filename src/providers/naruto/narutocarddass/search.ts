@@ -19,6 +19,7 @@ import {
   setScopedWhere,
 } from "@/providers/shared/cardCatalogue/sets";
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
+import { foldedLikePattern } from "@/providers/shared/sqliteFold";
 import type { PrintCandidate } from "@/types/providerModule";
 import ledgerLandscape from "./curated/sources/landscape-prints.json";
 import {
@@ -931,6 +932,7 @@ export function searchNarutoPrints(
   // `NI-232` and `ni 232` must both reach `ni232` as stored.
   const compact = trimmed.toLowerCase().replace(/[\s-]/g, "");
   const like = `%${trimmed.toLowerCase()}%`;
+  const nameLike = foldedLikePattern(trimmed);
   const likeCompact = `%${compact}%`;
   /*
     Collector needles must not be wrapped in `%n14%` : that substring matches
@@ -990,12 +992,12 @@ export function searchNarutoPrints(
     setColumn: "p.set_code",
     setId: null,
     textClause: trimmed
-      ? `LOWER(t.full_name) LIKE ?
+      ? `placarr_fold(t.full_name) LIKE ?
                OR LOWER(p.print_key) LIKE ?
                OR LOWER(p.print_key) LIKE ?
                OR ${numberClause}`
       : null,
-    textParams: [like, like, likeCompact, ...numberParams],
+    textParams: [nameLike, like, likeCompact, ...numberParams],
   });
 
   const rows: NarutoPrintDetail[] = [];

@@ -4,12 +4,13 @@
 import { existsSync, statSync } from "node:fs";
 
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
-import { assetsCardUrl } from "@/lib/packAssetUrls";
+import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
 import {
   DBS_CG_FACE_LANGS,
   DBS_CG_PACK_ID,
   dbsCgCardFolder,
   dbsCgDbPath,
+  dbsCgLocalArtFilename,
   listDbsCgCatalogueBrowsePage,
   listDbsCgRowsForLanguage,
   type DbsCgBrowseRow,
@@ -34,15 +35,18 @@ function rowToCatalogueCard(row: DbsCgBrowseRow): CatalogueCardRow {
     number: row.number,
     grouping: row.grouping,
   });
-  /*
-    Admin grid = local `/assets/…` only. Sqlite may still hold CDN URLs for
-    ingest; Sync faces densify disk. Basename → assets URL when present.
-  */
-  const raw = row.imageUrl?.trim() || "";
-  const localFile = raw && !raw.includes("/") ? raw : null;
-  const artUrl = localFile
-    ? assetsCardUrl(DBS_CG_PACK_ID, { set, lang, card }, localFile)
-    : "";
+  const { artUrl, missingArt } = resolveCatalogueLocalArtUrl({
+    packId: DBS_CG_PACK_ID,
+    set,
+    lang,
+    card,
+    sqliteArt: row.imageUrl,
+    resolveDiskFile: () =>
+      dbsCgLocalArtFilename(
+        { setCode: set, number: row.number, grouping: row.grouping },
+        lang,
+      ),
+  });
   const name = row.fullName?.trim() || undefined;
   const label = name ? `${set}-${card} — ${name}` : `${set}-${card}`;
   return {
@@ -55,7 +59,7 @@ function rowToCatalogueCard(row: DbsCgBrowseRow): CatalogueCardRow {
     label,
     ...(name ? { name } : {}),
     ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
-    missingArt: !artUrl,
+    missingArt,
     /*
       FR and EN are distinct printings. Identity browse emits one tile per
       locale — mark language-specific so preferred-lang catalogue filter

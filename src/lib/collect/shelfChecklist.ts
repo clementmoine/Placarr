@@ -421,6 +421,12 @@ export async function buildChecklistForShelf(input: {
    * Master set : `setCode|printKey|finish` via {@link checklistSetOwnedKey}.
    */
   owned: ReadonlySet<string>;
+  /** Covered by closed sealed products — buy exclusion, not in-hand %. */
+  virtual?: ReadonlySet<string>;
+  /** `past` — déjà eu ; hors % et hors buy missing. */
+  alreadyHad?: ReadonlySet<string>;
+  /** `wanted` — encore dans buy missing, case intermédiaire. */
+  wanted?: ReadonlySet<string>;
   language?: string | null;
   /** Nom d'étagère — borne au catalogue quand il est unique (Ninja Ranks…). */
   shelfName?: string | null;
@@ -644,16 +650,24 @@ export async function buildChecklistForShelf(input: {
   ];
   const compositionFile = boosterCompositionForModules(modules, dataPackIds);
 
-  const checklist = buildShelfChecklist({
-    sets,
-    prints,
-    owned: masterSet
+  const expandOwned = (keys: ReadonlySet<string> | undefined) => {
+    const source = keys ?? new Set<string>();
+    return masterSet
       ? resolveMasterSetOwned({
-          owned: input.owned,
+          owned: source,
           finishesByPrintKey,
           plainFinishesByPrintKey,
         })
-      : input.owned,
+      : source;
+  };
+
+  const checklist = buildShelfChecklist({
+    sets,
+    prints,
+    owned: expandOwned(input.owned),
+    virtual: expandOwned(input.virtual),
+    alreadyHad: expandOwned(input.alreadyHad),
+    wanted: expandOwned(input.wanted),
     language,
     masterSet,
   });

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeForTokens, repairCatalogColonSubstitute } from "./normalize";
+import {
+  includesFolded,
+  normalizeForTokens,
+  repairCatalogColonSubstitute,
+} from "./normalize";
 
 describe("normalizeForTokens", () => {
   it("strips diacritics and lowercases", () => {
@@ -10,6 +14,14 @@ describe("normalizeForTokens", () => {
 
   it("preserves digits and latin letters otherwise", () => {
     expect(normalizeForTokens("Borderlands 3")).toBe("borderlands 3");
+  });
+});
+
+describe("includesFolded", () => {
+  it("matches accent-stripped queries against accented titles", () => {
+    expect(includesFolded("7 Épées", "7 epees")).toBe(true);
+    expect(includesFolded("Kidōmaru", "kidomaru")).toBe(true);
+    expect(includesFolded("7 Épées", "7 sabres")).toBe(false);
   });
 });
 

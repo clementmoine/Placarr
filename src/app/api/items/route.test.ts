@@ -91,7 +91,10 @@ vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (s: string) => `slug-${s}`,
 }));
 vi.mock("@/core/collect/search", () => ({
-  buildItemSearchConditions: () => [],
+  buildExactBarcodeSearchCondition: () => null,
+}));
+vi.mock("@/core/collect/searchFolded", () => ({
+  buildItemSearchConditionsFolded: async () => [],
 }));
 vi.mock(
   "@/core/collect/jobs/scheduleMetadataRefresh",
@@ -363,6 +366,65 @@ describe("POST /api/items — autorisation", () => {
 
     expect(res.status).toBe(200);
     expect(h.item.create.mock.calls[0][0].data.userId).toBe("u1");
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          itemId: "i1",
+          kind: "acquired",
+        }),
+      }),
+    );
+  });
+
+  it("crée un scellé avec skuKey, kind=sealed et snapshot acquired", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.shelf.findUnique.mockResolvedValue({
+      type: "tcg",
+      userId: "u1",
+      name: "Lorcana",
+    });
+    h.item.create.mockResolvedValue({ id: "i-sealed", shelf: { type: "tcg" } });
+    h.downloadRemoteImage.mockResolvedValue("/uploads/booster.webp");
+
+    const res = await POST(
+      withBody("POST", {
+        shelfId: "s1",
+        name: "Booster Chapter 1",
+        kind: "sealed",
+        skuKey: "lorcana::booster-chapter-1",
+        skuName: "Booster Chapter 1",
+        skuLanguage: "fr",
+        catalogueKind: "booster",
+        imageUrl: "https://cdn.example/booster.jpg",
+        purchasePriceCents: 499,
+        condition: "new",
+        fetchMetadata: false,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.item.create.mock.calls[0][0].data).toMatchObject({
+      kind: "sealed",
+      skuKey: "lorcana::booster-chapter-1",
+      skuName: "Booster Chapter 1",
+      skuLanguage: "fr",
+      purchasePriceCents: 499,
+      condition: "new",
+      userId: "u1",
+    });
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          itemId: "i-sealed",
+          kind: "acquired",
+          snapshot: expect.objectContaining({
+            skuKey: "lorcana::booster-chapter-1",
+            catalogueKind: "booster",
+            purchasePriceCents: 499,
+          }),
+        }),
+      }),
+    );
   });
 
   it("seed le metadataPreview du scan puis enqueue le refresh", async () => {

@@ -25,6 +25,7 @@ import {
   ChevronRight,
   ListPlus,
   ScanLine,
+  Package,
   Layers,
   Check,
   ArrowRightLeft,
@@ -78,6 +79,13 @@ const PrintPickerModal = dynamic(
   () =>
     import("@/components/modals/PrintPickerModal").then(
       (m) => m.PrintPickerModal,
+    ),
+  { ssr: false },
+);
+const SealedPickerModal = dynamic(
+  () =>
+    import("@/components/modals/SealedPickerModal").then(
+      (m) => m.SealedPickerModal,
     ),
   { ssr: false },
 );
@@ -258,7 +266,9 @@ function ShelfComponent() {
   const shelfId = params.shelfId as Shelf["id"];
 
   const [editingItemId, setEditingItemId] = useState<Item["id"]>();
-  const [visibleModal, setVisibleModal] = useState<"shelf" | "item" | "bulk">();
+  const [visibleModal, setVisibleModal] = useState<
+    "shelf" | "item" | "bulk" | "sealed"
+  >();
   const [bulkInitialTab, setBulkInitialTab] = useState<BulkAddTab>("names");
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -596,7 +606,7 @@ function ShelfComponent() {
 
   const handleModalOpen = useCallback(
     (
-      modal: "shelf" | "item" | "bulk",
+      modal: "shelf" | "item" | "bulk" | "sealed",
       id?: Item["id"],
       bulkTab?: BulkAddTab,
     ) => {
@@ -611,7 +621,7 @@ function ShelfComponent() {
   );
 
   const openModalFromAddMenu = useCallback(
-    (modal: "item" | "bulk", bulkTab: BulkAddTab = "names") => {
+    (modal: "item" | "bulk" | "sealed", bulkTab: BulkAddTab = "names") => {
       setAddMenuOpen(false);
       window.setTimeout(() => {
         releaseStuckOverlayLocks();
@@ -839,6 +849,16 @@ function ShelfComponent() {
               }}
             />
           )}
+          <SealedPickerModal
+            shelfId={resolvedShelfId}
+            isOpen={visibleModal === "sealed"}
+            onClose={handleModalClose}
+            onAdded={() => {
+              void queryClient.invalidateQueries({
+                queryKey: ["shelf", shelfId],
+              });
+            }}
+          />
           {visibleModal === "bulk" && (
             <BulkAddModal
               shelfId={resolvedShelfId}
@@ -911,67 +931,69 @@ function ShelfComponent() {
                   {t("shelves.editShelf")}
                 </Button>
 
-                {isPrintSearchShelf ? (
-                  <Button
-                    className="w-full sm:w-auto justify-center rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
-                    onClick={() => openModalFromAddMenu("item")}
-                    tabIndex={selectionMode ? -1 : undefined}
-                  >
-                    <Plus className="size-4" />
-                    {addItemLabel}
-                  </Button>
-                ) : (
-                  <DropdownMenu
-                    open={addMenuOpen}
-                    onOpenChange={setAddMenuOpen}
-                    modal={false}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        className="w-full sm:w-auto justify-center rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
-                        tabIndex={selectionMode ? -1 : undefined}
-                      >
-                        <Plus className="size-4" />
-                        {addItemLabel}
-                        <ChevronDown className="size-4 opacity-80" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-xl">
+                <DropdownMenu
+                  open={addMenuOpen}
+                  onOpenChange={setAddMenuOpen}
+                  modal={false}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="w-full sm:w-auto justify-center rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                      tabIndex={selectionMode ? -1 : undefined}
+                    >
+                      <Plus className="size-4" />
+                      {addItemLabel}
+                      <ChevronDown className="size-4 opacity-80" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    <DropdownMenuItem
+                      className="cursor-pointer font-medium"
+                      onSelect={() => openModalFromAddMenu("item")}
+                    >
+                      <Plus className="size-4 mr-2" />
+                      {addItemLabel}
+                    </DropdownMenuItem>
+                    {isPrintSearchShelf ? (
                       <DropdownMenuItem
                         className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("item")}
+                        onSelect={() => openModalFromAddMenu("sealed")}
                       >
-                        <Plus className="size-4 mr-2" />
-                        {addItemLabel}
+                        <Package className="size-4 mr-2" />
+                        {t("items.sealedPicker.menuLabel")}
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("bulk", "names")}
-                      >
-                        <ListPlus className="size-4 mr-2" />
-                        {t("items.bulkAdd.menuLabel")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("bulk", "scan")}
-                      >
-                        <ScanLine className="size-4 mr-2" />
-                        {t("items.bulkAdd.tabScan")}
-                      </DropdownMenuItem>
-                      {shelf?.type === "books" && (
+                    ) : null}
+                    {!isPrintSearchShelf ? (
+                      <>
                         <DropdownMenuItem
                           className="cursor-pointer font-medium"
-                          onSelect={() =>
-                            openModalFromAddMenu("bulk", "series")
-                          }
+                          onSelect={() => openModalFromAddMenu("bulk", "names")}
                         >
-                          <Layers className="size-4 mr-2" />
-                          {t("items.bulkSeries.menuLabel")}
+                          <ListPlus className="size-4 mr-2" />
+                          {t("items.bulkAdd.menuLabel")}
                         </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() => openModalFromAddMenu("bulk", "scan")}
+                        >
+                          <ScanLine className="size-4 mr-2" />
+                          {t("items.bulkAdd.tabScan")}
+                        </DropdownMenuItem>
+                        {shelf?.type === "books" && (
+                          <DropdownMenuItem
+                            className="cursor-pointer font-medium"
+                            onSelect={() =>
+                              openModalFromAddMenu("bulk", "series")
+                            }
+                          >
+                            <Layers className="size-4 mr-2" />
+                            {t("items.bulkSeries.menuLabel")}
+                          </DropdownMenuItem>
+                        )}
+                      </>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>

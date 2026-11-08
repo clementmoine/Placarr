@@ -23,6 +23,7 @@ vi.mock("@/lib/client/scan/cardEmbed.client", () => ({
       return embedState.byTurn[turn] ?? null;
     },
   ),
+  embedFullFrameBlobClient: vi.fn(async () => null),
   clientEmbedDim: () => 4,
   clientEmbedModelId: () => CARD_EMBED_MODEL,
 }));
@@ -111,6 +112,7 @@ function stubManifest(packs: ClientPackManifest[]) {
       ok: true,
       json: async () => ({
         packs: packs.map((p) => ({ ...p, centroid: Array.from(p.centroid) })),
+        productPacks: [],
       }),
     })),
   );

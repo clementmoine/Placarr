@@ -2,12 +2,12 @@
  * Live scan session: cooldown dedup + tray of locks (ManaBox / TCG Live style).
  */
 
-export type SessionLockKind = "barcode" | "card" | "manual";
+export type SessionLockKind = "barcode" | "card" | "sealed" | "manual";
 
 export type SessionLock = {
   id: string;
   kind: SessionLockKind;
-  /** Barcode raw value, card printKey, or manual placeholder key. */
+  /** Barcode raw value, card printKey, sealed skuKey, or manual placeholder. */
   key: string;
   /** Display label — catalogue title when known, else the key. */
   label: string;
@@ -54,6 +54,11 @@ export class ScanSession {
   isCoolingDown(kind: SessionLockKind, key: string, now = Date.now()): boolean {
     const until = this.cooldownUntil.get(`${kind}:${key}`);
     return until !== undefined && until > now;
+  }
+
+  /** Suppress re-lock without appending a tray entry (e.g. EAN after sealed sure). */
+  armCooldown(kind: SessionLockKind, key: string, now = Date.now()): void {
+    this.cooldownUntil.set(`${kind}:${key}`, now + this.cooldownMs);
   }
 
   /**

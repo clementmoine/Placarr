@@ -147,6 +147,19 @@ export type CardLiveMatch = {
   confidence?: "sure" | "doubt" | "miss";
 };
 
+/** Sealed packshot hit — shown in the same doubt carousel as cards. */
+export type ProductLiveMatch = {
+  productKey: string;
+  lang: string;
+  slug?: string;
+  distance: number;
+  faceUrl?: string | null;
+  packId?: string;
+  ambiguous?: boolean;
+  method?: "embed";
+  confidence?: "sure" | "doubt" | "miss";
+};
+
 const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   audio: false,
   video: {
@@ -457,7 +470,13 @@ export function UnifiedScanCapture({
   const [gateHint, setGateHint] = useState<QualityHint>("ok");
   const [identifyMiss, setIdentifyMiss] = useState(false);
   const [matches, setMatches] = useState<CardLiveMatch[]>([]);
+  const [productMatches, setProductMatches] = useState<ProductLiveMatch[]>(
+    [],
+  );
   const [stable, setStable] = useState<CardLiveMatch | null>(null);
+  const [stableProduct, setStableProduct] = useState<ProductLiveMatch | null>(
+    null,
+  );
   const [sessionLocks, setSessionLocks] = useState<SessionLock[]>([]);
   const [hydrations, setHydrations] = useState<
     Record<string, HydratedScanLock>
@@ -569,7 +588,9 @@ export function UnifiedScanCapture({
       }
       hydrateAbortRef.current.clear();
       setMatches([]);
+      setProductMatches([]);
       setStable(null);
+      setStableProduct(null);
       setPhase("looking");
       setBarcodePaused(false);
       setManualOpen(false);
@@ -633,7 +654,8 @@ export function UnifiedScanCapture({
           imageUrl: lock.faceUrl ?? null,
           language: lock.language ?? null,
           packId: lock.packId ?? null,
-          shelfType: lock.kind === "card" ? "tcg" : null,
+          shelfType:
+            lock.kind === "card" || lock.kind === "sealed" ? "tcg" : null,
           suggestedShelfId: null,
           shelfSure: false,
           owned: null,
@@ -690,15 +712,62 @@ export function UnifiedScanCapture({
   const handleBarcodeValue = useCallback(
     (raw: string) => {
       if (sessionRef.current.isCoolingDown("barcode", raw)) return;
-      if (!recordSessionLock("barcode", raw, raw)) return;
-      setPhase("delivering");
       setBarcodePaused(true);
+      setPhase("delivering");
       patchScanDebug({ phase: "delivering", confidence: "barcode" });
-      // Keep scanning — short pause so the same code isn't re-queued instantly.
-      window.setTimeout(() => {
-        setBarcodePaused(false);
-        setPhase("looking");
-      }, 700);
+      void (async () => {
+        try {
+          const res = await fetch(
+            `/api/identify/sealed-barcode?q=${encodeURIComponent(raw)}`,
+            { cache: "no-store" },
+          );
+          if (res.ok) {
+            const data = (await res.json()) as {
+              confidence?: string;
+              sealed?: {
+                productKey?: string;
+                packId?: string;
+                name?: string;
+                imageUrl?: string | null;
+                language?: string | null;
+              } | null;
+            };
+            if (
+              data.confidence === "sure" &&
+              data.sealed?.productKey &&
+              !sessionRef.current.isCoolingDown(
+                "sealed",
+                data.sealed.productKey,
+              )
+            ) {
+              if (
+                recordSessionLock(
+                  "sealed",
+                  data.sealed.productKey,
+                  data.sealed.name || data.sealed.productKey,
+                  data.sealed.imageUrl,
+                  {
+                    packId: data.sealed.packId ?? null,
+                    language: data.sealed.language ?? null,
+                  },
+                )
+              ) {
+                sessionRef.current.armCooldown("barcode", raw);
+                return;
+              }
+            }
+          }
+        } catch {
+          // Fall through to generic barcode lock.
+        }
+        if (sessionRef.current.isCoolingDown("barcode", raw)) return;
+        recordSessionLock("barcode", raw, raw);
+      })().finally(() => {
+        window.setTimeout(() => {
+          setBarcodePaused(false);
+          setPhase("looking");
+        }, 700);
+      });
     },
     [recordSessionLock],
   );
@@ -721,13 +790,50 @@ export function UnifiedScanCapture({
       }
       toast.success(t("scanner.addedKeepScanning"));
       setMatches([]);
+      setProductMatches([]);
       setStable(null);
+      setStableProduct(null);
       setIdentifyMiss(false);
       setPanel("camera");
       setPhase("looking");
       acceptRef.current = createAcceptState();
     },
     [matches, recordSessionLock, t],
+  );
+
+  const commitProductToSession = useCallback(
+    (productKey: string) => {
+      const row =
+        productMatches.find((m) => m.productKey === productKey) ??
+        productMatches[0] ??
+        null;
+      if (!row) return;
+      if (
+        !recordSessionLock(
+          "sealed",
+          row.productKey,
+          row.productKey,
+          row.faceUrl,
+          {
+            force: true,
+            language: row.lang,
+            packId: row.packId ?? null,
+          },
+        )
+      ) {
+        return;
+      }
+      toast.success(t("scanner.addedKeepScanning"));
+      setMatches([]);
+      setProductMatches([]);
+      setStable(null);
+      setStableProduct(null);
+      setIdentifyMiss(false);
+      setPanel("camera");
+      setPhase("looking");
+      acceptRef.current = createAcceptState();
+    },
+    [productMatches, recordSessionLock, t],
   );
 
   const undoSessionLock = useCallback((id: string) => {
@@ -763,7 +869,9 @@ export function UnifiedScanCapture({
     setPanel("review");
     setManualOpen(false);
     setMatches([]);
+    setProductMatches([]);
     setStable(null);
+    setStableProduct(null);
   }, []);
 
   const exitReviewToHunt = useCallback(() => {
@@ -894,14 +1002,57 @@ export function UnifiedScanCapture({
     }
   }, [consumeReviewHead, hydrations, reviewIndex, sessionLocks, t]);
 
-  const applyCardMatches = useCallback(
+  const applyIdentifyResult = useCallback(
     (
       next: CardLiveMatch[],
+      products: ProductLiveMatch[],
       confidence: "sure" | "doubt" | "miss",
+      kind: "card" | "product" | "doubt" | "miss",
       frame: number,
     ) => {
-      setIdentifyMiss(confidence === "miss");
+      setIdentifyMiss(confidence === "miss" && kind === "miss");
       setMatches(next);
+      setProductMatches(products);
+
+      if (kind === "product" && confidence === "sure" && products[0]) {
+        const top = products[0];
+        setStable(null);
+        setStableProduct(top);
+        if (!sessionRef.current.isCoolingDown("sealed", top.productKey)) {
+          const aimMs =
+            aimStartedRef.current != null
+              ? Date.now() - aimStartedRef.current
+              : null;
+          patchScanDebug({
+            aimToLockMs: aimMs,
+            phase: "delivering",
+            confidence,
+            method: "product-embed",
+          });
+          recordSessionLock(
+            "sealed",
+            top.productKey,
+            top.productKey,
+            top.faceUrl,
+            {
+              language: top.lang,
+              packId: top.packId ?? null,
+            },
+          );
+          clearFocus();
+          setStableProduct(null);
+          setMatches([]);
+          setProductMatches([]);
+          setPanel("camera");
+          setPhase("looking");
+          acceptRef.current = createAcceptState();
+          aimStartedRef.current = null;
+          return;
+        }
+        setPhase("understanding");
+        return;
+      }
+
       const scores = next.map((m) => ({
         key: m.printKey,
         score: distanceToScore(m.distance, m.method),
@@ -911,15 +1062,22 @@ export function UnifiedScanCapture({
         ? decision.winner.score - decision.winner.rivalScore
         : 0;
 
-      if (confidence !== "sure" || !decision.winner || decision.refused) {
+      if (
+        kind !== "card" ||
+        confidence !== "sure" ||
+        !decision.winner ||
+        decision.refused
+      ) {
         setStable(null);
-        setPhase(next.length ? "understanding" : "looking");
+        setStableProduct(null);
+        const hasRows = next.length > 0 || products.length > 0;
+        setPhase(hasRows ? "understanding" : "looking");
         patchScanDebug({
-          phase: next.length ? "understanding" : "looking",
+          phase: hasRows ? "understanding" : "looking",
           margin,
           runWeight: 0,
           confidence,
-          method: next[0]?.method ?? "",
+          method: next[0]?.method ?? products[0]?.method ?? "",
         });
         return;
       }
@@ -951,15 +1109,15 @@ export function UnifiedScanCapture({
               ? Date.now() - aimStartedRef.current
               : null;
           patchScanDebug({ aimToLockMs: aimMs, phase: "delivering" });
-          // Multi-frame sure → stage in session tray (not shelf). Keep hunting
-          // the next ranked subject (clear tap-focus so centre ranking wins).
           recordSessionLock("card", top.printKey, top.printKey, top.faceUrl, {
             language: top.lang,
             packId: top.packId ?? null,
           });
           clearFocus();
           setStable(null);
+          setStableProduct(null);
           setMatches([]);
+          setProductMatches([]);
           setPanel("camera");
           setPhase("looking");
           acceptRef.current = createAcceptState();
@@ -1042,8 +1200,15 @@ export function UnifiedScanCapture({
           // Client "miss" still asks the server (full pack walk). The phone
           // shortlist can skip a small pack whose shard is resident but whose
           // centroid was far from a glare frame — server does not shortlist.
-          if (client.confidence !== "miss") {
-            applyCardMatches(client.matches, client.confidence, frame);
+          // Product-sure from full-frame fuse is a complete client answer.
+          if (client.confidence !== "miss" || client.kind === "product") {
+            applyIdentifyResult(
+              client.matches,
+              client.products ?? [],
+              client.confidence,
+              client.kind ?? "card",
+              frame,
+            );
             return;
           }
           patchScanDebug({
@@ -1087,6 +1252,8 @@ export function UnifiedScanCapture({
       if (generation !== genRef.current) return;
       const data = (await response.json()) as {
         matches?: CardLiveMatch[];
+        products?: ProductLiveMatch[];
+        kind?: "card" | "product" | "doubt" | "miss";
         confidence?: "sure" | "doubt" | "miss";
         method?: string;
         abstain?: string;
@@ -1173,9 +1340,23 @@ export function UnifiedScanCapture({
       }
       backoffUntilRef.current = 0;
       const confidence =
-        data.confidence ?? (data.matches?.length ? "doubt" : "miss");
-      applyCardMatches(data.matches ?? [], confidence, frame);
-      if (!data.matches?.length) {
+        data.confidence ??
+        (data.matches?.length || data.products?.length ? "doubt" : "miss");
+      const kind =
+        data.kind ??
+        (data.products?.length && !data.matches?.length
+          ? "product"
+          : data.matches?.length
+            ? "card"
+            : "miss");
+      applyIdentifyResult(
+        data.matches ?? [],
+        data.products ?? [],
+        confidence,
+        kind,
+        frame,
+      );
+      if (!data.matches?.length && !data.products?.length) {
         patchScanDebug({
           confidence,
           method: data.method ?? data.abstain ?? "",
@@ -1183,7 +1364,7 @@ export function UnifiedScanCapture({
         });
       }
     },
-    [applyCardMatches, locale, noteIdentify, noteOcr, t],
+    [applyIdentifyResult, locale, noteIdentify, noteOcr, t],
   );
 
   /** Continuous vision overlay — frame-driven; keeps tracking during identify. */
@@ -1535,6 +1716,8 @@ export function UnifiedScanCapture({
         if (generation !== genRef.current) return;
         const data = (await response.json()) as {
           matches?: CardLiveMatch[];
+          products?: ProductLiveMatch[];
+          kind?: "card" | "product" | "doubt" | "miss";
           confidence?: "sure" | "doubt" | "miss";
           ocrText?: string | null;
         };
@@ -1550,10 +1733,28 @@ export function UnifiedScanCapture({
           patchScanDebug({ ocrPreview: data.ocrText.slice(0, 48) });
         }
         const next = data.matches ?? [];
+        const products = data.products ?? [];
         const confidence = data.confidence ?? "doubt";
-        applyCardMatches(next, confidence, ++frameRef.current);
-        if (confidence === "sure" && next[0]) {
+        const kind =
+          data.kind ??
+          (products.length && !next.length
+            ? "product"
+            : next.length
+              ? "card"
+              : "miss");
+        applyIdentifyResult(
+          next,
+          products,
+          confidence,
+          kind,
+          ++frameRef.current,
+        );
+        if (confidence === "sure" && kind === "card" && next[0]) {
           setStable(next[0]);
+          setPhase("delivering");
+        }
+        if (confidence === "sure" && kind === "product" && products[0]) {
+          setStableProduct(products[0]);
           setPhase("delivering");
         }
         // Empty match → identifyMiss + overlay hint + in-chrome CTA (no toast).
@@ -1563,7 +1764,7 @@ export function UnifiedScanCapture({
         if (generation === genRef.current) setSampling(false);
       }
     },
-    [applyCardMatches, locale, t],
+    [applyIdentifyResult, locale, t],
   );
 
   const toggleTorch = useCallback(async () => {
@@ -1653,14 +1854,17 @@ export function UnifiedScanCapture({
   }, [setZoomClamped, zoomRange.max, zoomRange.min, zoomRange.step]);
 
   const showCamera = active && !isCameraUnavailable && !isCheckingCamera;
-  const hasCardMatches = matches.length > 0;
+  const hasCardMatches = matches.length > 0 || productMatches.length > 0;
   const reviewOpen = panel === "review";
   const resultsOpen = hasCardMatches && panel === "results" && !reviewOpen;
   const cameraCompact = resultsOpen || reviewOpen;
   const reviewLock = reviewOpen ? sessionLocks[reviewIndex] ?? null : null;
   const reviewHydrated = reviewLock ? hydrations[reviewLock.id] : null;
 
-  const matchesFp = matches.map((m) => m.printKey).join("|");
+  const matchesFp = [
+    ...matches.map((m) => `c:${m.printKey}`),
+    ...productMatches.map((m) => `p:${m.productKey}`),
+  ].join("|");
   useEffect(() => {
     if (!hasCardMatches) {
       matchesFpRef.current = "";
@@ -1902,7 +2106,9 @@ export function UnifiedScanCapture({
           onClick={openResults}
           className="shrink-0 mx-4 mt-3 mb-2 h-11 rounded-full bg-white text-zinc-950 text-sm font-semibold cursor-pointer"
         >
-          {t("scanner.resultsPeek", { count: matches.length })}
+          {t("scanner.resultsPeek", {
+            count: matches.length + productMatches.length,
+          })}
         </button>
       ) : null}
 
@@ -1918,9 +2124,14 @@ export function UnifiedScanCapture({
           </button>
           <div className="px-4 pb-2 shrink-0">
             <p className="text-xs text-muted-foreground">
-              {stable || (matches.length === 1 && !matches[0]?.ambiguous)
+              {stable ||
+              stableProduct ||
+              (matches.length + productMatches.length === 1 &&
+                !(matches[0]?.ambiguous || productMatches[0]?.ambiguous))
                 ? t("scanner.cardConfirmHint")
-                : matches.length > 1 || matches.some((m) => m.ambiguous)
+                : matches.length + productMatches.length > 1 ||
+                    matches.some((m) => m.ambiguous) ||
+                    productMatches.some((m) => m.ambiguous)
                   ? t("scanner.cardDoubtHint")
                   : t("scanner.cardSearching")}
             </p>
@@ -1931,9 +2142,52 @@ export function UnifiedScanCapture({
               role="list"
               aria-label={t("scanner.cardCarouselLabel")}
             >
+              {productMatches.map((row, index) => {
+                const suggestedKey =
+                  stableProduct?.productKey ?? productMatches[0]?.productKey;
+                const isBest = row.productKey === suggestedKey && !stable;
+                return (
+                  <button
+                    key={`product:${row.productKey}:${row.lang}:${index}`}
+                    type="button"
+                    role="listitem"
+                    onClick={() => commitProductToSession(row.productKey)}
+                    className={cn(
+                      "snap-center shrink-0 w-[108px] rounded-2xl border bg-card overflow-hidden text-left cursor-pointer",
+                      isBest
+                        ? "border-primary ring-2 ring-primary/35"
+                        : "border-border",
+                    )}
+                  >
+                    <div className="aspect-[3/4] bg-muted relative">
+                      {row.faceUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={row.faceUrl}
+                          alt={row.productKey}
+                          className="absolute inset-0 size-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground p-2 text-center">
+                          {row.productKey}
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-2 py-1.5">
+                      <p className="text-[10px] font-bold truncate leading-tight">
+                        {row.slug || row.productKey}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
               {matches.map((row, index) => {
                 const suggestedKey = stable?.printKey ?? matches[0]?.printKey;
-                const isBest = row.printKey === suggestedKey;
+                const isBest =
+                  row.printKey === suggestedKey && !stableProduct;
                 return (
                   <button
                     key={`${row.printKey}:${row.lang}:${index}`}
@@ -1973,7 +2227,19 @@ export function UnifiedScanCapture({
                 );
               })}
             </div>
-            {matches[0] ? (
+            {stableProduct || productMatches[0] ? (
+              <button
+                type="button"
+                onClick={() =>
+                  commitProductToSession(
+                    (stableProduct ?? productMatches[0])!.productKey,
+                  )
+                }
+                className="w-full h-12 rounded-2xl text-sm font-bold bg-primary text-primary-foreground cursor-pointer"
+              >
+                {t("scanner.cardConfirm")}
+              </button>
+            ) : matches[0] ? (
               <button
                 type="button"
                 onClick={() => commitCardToSession(matches[0]!.printKey)}

@@ -24,6 +24,24 @@ export function isCardEmbedShardFile(name: string | undefined): boolean {
   );
 }
 
+/** Sealed-product identify shards (full-frame DINOv2) at the pack root. */
+export const PRODUCT_EMBED_SHARD_FILES = {
+  meta: "product-embedding-index.json",
+  f16: "product-embedding-index.f16",
+} as const;
+
+export function isProductEmbedShardFile(name: string | undefined): boolean {
+  return (
+    name === PRODUCT_EMBED_SHARD_FILES.meta ||
+    name === PRODUCT_EMBED_SHARD_FILES.f16
+  );
+}
+
+/** Pack-root identify shards (cards or sealed products). */
+export function isIdentifyEmbedShardFile(name: string | undefined): boolean {
+  return isCardEmbedShardFile(name) || isProductEmbedShardFile(name);
+}
+
 /**
  * Legacy pack ids still present in stored `/assets/…` URLs (sealed index,
  * older harvests). Disk + new URLs use the canonical id on the right.

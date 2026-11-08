@@ -45,4 +45,35 @@ describe("ScanSession", () => {
     });
     expect(lock?.language).toBe("fr");
   });
+
+  it("records sealed skuKey locks separately from cards", () => {
+    const s = new ScanSession({ cooldownMs: 1000 });
+    const sealed = s.tryLock(
+      "sealed",
+      "lorcana::into-the-inklands-booster",
+      "Into the Inklands Booster",
+      "/assets/lorcana/products/into-the-inklands-booster/fr/face",
+      0,
+      { packId: "lorcana", language: "fr" },
+    );
+    expect(sealed?.kind).toBe("sealed");
+    expect(sealed?.key).toBe("lorcana::into-the-inklands-booster");
+    expect(sealed?.packId).toBe("lorcana");
+    expect(
+      s.tryLock(
+        "sealed",
+        "lorcana::into-the-inklands-booster",
+        "Into the Inklands Booster",
+        null,
+        100,
+      ),
+    ).toBeNull();
+  });
+
+  it("armCooldown suppresses without adding a tray row", () => {
+    const s = new ScanSession({ cooldownMs: 1000 });
+    s.armCooldown("barcode", "3296580052110", 0);
+    expect(s.isCoolingDown("barcode", "3296580052110", 100)).toBe(true);
+    expect(s.list()).toHaveLength(0);
+  });
 });

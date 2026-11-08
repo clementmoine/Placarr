@@ -15,6 +15,8 @@
  */
 import { decode } from "html-entities";
 
+import { mergeSealedBarcodes } from "@/providers/shared/sealedProducts/barcodes";
+
 import {
   tcgCardsCategoryRole,
   tcgCardsDetailCategories,
@@ -79,6 +81,12 @@ export type DbscardsProductPage = {
    */
   containedProducts: DbscardsContainedProduct[];
   tables: Record<string, Record<string, string[]>>;
+  /**
+   * Retail GTINs when the fiche publishes them (JSON-LD `gtin13` / `gtin` /
+   * `ean` / `upc`, or a product-table row). Empty when the shop only exposes
+   * its internal `sku` — never invent from that id.
+   */
+  barcodes?: string[];
 };
 
 const PRODUCT_HREF = /href="(\/products\/([a-z0-9-]+)\/([^"?#]+))"/gi;
@@ -288,6 +296,78 @@ function firstField(
   return value || null;
 }
 
+/** Schema.org / shop JSON-LD fields that may hold a retail GTIN. */
+const LD_BARCODE_FIELDS = [
+  "gtin13",
+  "gtin12",
+  "gtin14",
+  "gtin8",
+  "gtin",
+  "ean",
+  "upc",
+  "jan",
+] as const;
+
+/**
+ * Product-table labels seen (or expected) on TCG Cards hosts. Match on the
+ * normalized key — French « Code-barres » / « EAN / UPC » included.
+ */
+const TABLE_BARCODE_LABEL = /^(gtin(?:13|12|14|8)?|ean(?:\/?\s*upc)?|upc|jan|barcode|code[-\s]?barres?)$/i;
+
+function pushBarcodeCandidates(
+  into: string[],
+  value: unknown,
+): void {
+  if (typeof value === "string" || typeof value === "number") {
+    into.push(String(value));
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (typeof item === "string" || typeof item === "number") {
+        into.push(String(item));
+      }
+    }
+  }
+}
+
+/** Collect raw GTIN candidates from a Product JSON-LD block. */
+export function barcodesFromJsonLdProduct(
+  ld: Record<string, unknown> | null | undefined,
+): string[] {
+  if (!ld) return [];
+  const raw: string[] = [];
+  for (const field of LD_BARCODE_FIELDS) {
+    pushBarcodeCandidates(raw, ld[field]);
+  }
+  return mergeSealedBarcodes([], raw);
+}
+
+/** Collect raw GTIN candidates from captioned product tables. */
+export function barcodesFromProductTables(
+  tables: Record<string, Record<string, string[]>>,
+): string[] {
+  const raw: string[] = [];
+  for (const fields of Object.values(tables)) {
+    for (const [label, values] of Object.entries(fields)) {
+      if (!TABLE_BARCODE_LABEL.test(label.trim())) continue;
+      for (const value of values) pushBarcodeCandidates(raw, value);
+    }
+  }
+  return mergeSealedBarcodes([], raw);
+}
+
+/** Merge JSON-LD + table GTINs for a product fiche. */
+export function extractProductPageBarcodes(input: {
+  ld?: Record<string, unknown> | null;
+  tables?: Record<string, Record<string, string[]>>;
+}): string[] {
+  return mergeSealedBarcodes(
+    barcodesFromJsonLdProduct(input.ld),
+    barcodesFromProductTables(input.tables ?? {}),
+  );
+}
+
 function declaredCardCount(
   tables: Record<string, Record<string, string[]>>,
 ): number | null {
@@ -401,6 +481,7 @@ export function parseDbscardsProductPage(
     (typeof ld?.image === "string" ? ld.image : null) || og?.[1] || null,
   );
 
+  const barcodes = extractProductPageBarcodes({ ld, tables });
   return {
     path,
     slug,
@@ -426,5 +507,6 @@ export function parseDbscardsProductPage(
     relatedProducts: relatedProducts(html, path),
     containedProducts: parseContainedProducts(html, path),
     tables,
+    ...(barcodes.length ? { barcodes } : {}),
   };
 }

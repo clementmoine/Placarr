@@ -3,7 +3,7 @@
  * anniversary binder sets. Packshots from Amazon dig
  * (`curated/sources/amazon-packshots-2026-09-20.json`).
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/providers/shared/sealedProducts/localWrite";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
+import { collectBarcodesFromLedgerRow } from "@/providers/shared/sealedProducts/barcodes";
 
 import { DBH_PACK_ID, dbhCuratedDir } from "./pack";
 
@@ -821,6 +822,37 @@ function curatedProductArt(name: string): string | null {
   return existsSync(p) ? p : null;
 }
 
+/** Carddass Club matched dig — `stem` aligns with sealed slug when known. */
+function dbhClubMatchedJanByStem(): Map<string, string[]> {
+  const file = path.join(
+    dbhCuratedDir(),
+    "sources",
+    "carddass-club-matched-2026-09-20.json",
+  );
+  const out = new Map<string, string[]>();
+  if (!existsSync(file)) return out;
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as {
+      items?: Array<Record<string, unknown>>;
+    };
+    for (const item of raw.items ?? []) {
+      const stem =
+        typeof item.stem === "string"
+          ? item.stem
+          : typeof item.slug === "string"
+            ? item.slug
+            : null;
+      if (!stem) continue;
+      const barcodes = collectBarcodesFromLedgerRow(item);
+      if (!barcodes.length) continue;
+      out.set(stem, barcodes);
+    }
+  } catch {
+    /* curated dig optional */
+  }
+  return out;
+}
+
 export function ingestDbhSealedProducts(): {
   pack: string;
   written: number;
@@ -832,22 +864,34 @@ export function ingestDbhSealedProducts(): {
     path.join(dbhCuratedDir(), "products-contents.json"),
   );
 
-  const products: LocalSealedWrite[] = DBH_SEALED_SPECS.map((spec) => ({
-    slug: spec.slug,
-    kind: spec.kind,
-    category: spec.category,
-    name: spec.name,
-    source: "carddass-dbh",
-    setCode: spec.setCode,
-    catalogueSetId: spec.setCode,
-    lang: "ja",
-    releaseDate: null,
-    declaredCardCount: spec.declaredCardCount,
-    cardsPerPack: spec.cardsPerPack,
-    packsContained: spec.packsContained,
-    path: spec.path,
-    artPath: spec.artFile ? curatedProductArt(spec.artFile) : null,
-  }));
+  const janByStem = dbhClubMatchedJanByStem();
+  const products: LocalSealedWrite[] = DBH_SEALED_SPECS.map((spec) => {
+    const barcodes = janByStem.get(spec.slug) ?? [];
+    return {
+      slug: spec.slug,
+      kind: spec.kind,
+      category: spec.category,
+      name: spec.name,
+      source: "carddass-dbh",
+      setCode: spec.setCode,
+      catalogueSetId: spec.setCode,
+      lang: "ja",
+      releaseDate: null,
+      declaredCardCount: spec.declaredCardCount,
+      cardsPerPack: spec.cardsPerPack,
+      packsContained: spec.packsContained,
+      path: spec.path,
+      artPath: spec.artFile ? curatedProductArt(spec.artFile) : null,
+      ...(barcodes.length
+        ? {
+            barcodes,
+            barcodeSources: Object.fromEntries(
+              barcodes.map((code) => [code, "carddass-club"]),
+            ),
+          }
+        : {}),
+    };
+  });
 
   return writeLocalSealedProducts({
     packId: DBH_PACK_ID,

@@ -66,6 +66,17 @@ export type HydratedScanLock = {
   selectedHitIndex: number;
   status: "loading" | "ready" | "error";
   metadataPreview: MetadataResult | null;
+  /**
+   * Catalogue sealed resolve from barcode hydrate (sure skuKey, or doubt list).
+   * Visual sealed locks use `kind: "sealed"` instead.
+   */
+  sealedSkuKey?: string | null;
+  sealedHits?: Array<{
+    productKey: string;
+    packId: string;
+    name: string;
+    imageUrl: string | null;
+  }>;
 };
 
 export type HydrateScanContext = {
@@ -98,7 +109,8 @@ function emptyHydrated(lock: SessionLock): HydratedScanLock {
     imageUrl: lock.faceUrl ?? null,
     language: lock.language ?? null,
     packId: lock.packId ?? null,
-    shelfType: lock.kind === "card" ? "tcg" : null,
+    shelfType:
+      lock.kind === "card" || lock.kind === "sealed" ? "tcg" : null,
     suggestedShelfId: null,
     shelfSure: false,
     owned: null,
@@ -271,9 +283,29 @@ async function hydrateBarcodeLock(
 
   if (ctx.signal?.aborted) return base;
 
+  const sealed = payload.sealed as
+    | {
+        confidence?: string;
+        productKey?: string;
+        packId?: string;
+        name?: string;
+        imageUrl?: string | null;
+        language?: string | null;
+        hits?: Array<{
+          productKey: string;
+          packId: string;
+          name: string;
+          imageUrl: string | null;
+        }>;
+      }
+    | null
+    | undefined;
+
   const matches = (payload.matches as Array<{ name?: string; coverUrl?: string }> | undefined) || [];
   const resolvedShelfType =
-    (payload.shelfType as string | undefined) || null;
+    sealed?.confidence === "sure" || sealed?.confidence === "doubt"
+      ? "tcg"
+      : (payload.shelfType as string | undefined) || null;
   const platformKey = (payload.platformKey as string | undefined) || null;
   const hideBarcodeImage = resolvedShelfType === "games";
 
@@ -297,6 +329,29 @@ async function hydrateBarcodeLock(
             metadataPreview: null,
           },
         ];
+
+  // Surfacing sealed catalogue hits ahead of generic metadata matches.
+  if (sealed?.confidence === "sure" && sealed.productKey) {
+    hits = [
+      {
+        title: sealed.name || sealed.productKey,
+        imageUrl: sealed.imageUrl || null,
+        imageSource: sealed.imageUrl ? "face" : "none",
+        metadataPreview: null,
+      },
+      ...hits,
+    ];
+  } else if (sealed?.confidence === "doubt" && sealed.hits?.length) {
+    hits = [
+      ...sealed.hits.map((row) => ({
+        title: row.name || row.productKey,
+        imageUrl: row.imageUrl || null,
+        imageSource: (row.imageUrl ? "face" : "none") as HydrateHit["imageSource"],
+        metadataPreview: null,
+      })),
+      ...hits,
+    ];
+  }
 
   const shelfHints = shelfSearchHintsFromBarcodePayload(payload || {});
   const searchNames = Array.from(
@@ -334,10 +389,16 @@ async function hydrateBarcodeLock(
     ...base,
     title: primary.title,
     imageUrl: primary.imageUrl || lock.faceUrl || null,
+    language: sealed?.language ?? base.language,
+    packId: sealed?.packId ?? base.packId,
     shelfType: resolvedShelfType,
     suggestedShelfId: suggestion.shelfId,
     shelfSure: suggestion.confidence === "sure",
     hits,
+    sealedSkuKey:
+      sealed?.confidence === "sure" ? sealed.productKey ?? null : null,
+    sealedHits:
+      sealed?.confidence === "doubt" ? sealed.hits ?? [] : undefined,
     status: "loading",
   };
   ctx.onProgress?.(current);
@@ -486,6 +547,84 @@ async function hydrateCardLock(
   };
 }
 
+async function hydrateSealedLock(
+  lock: SessionLock,
+  ctx: HydrateScanContext,
+): Promise<HydratedScanLock> {
+  const base = emptyHydrated(lock);
+  const skuKey = lock.key.trim();
+  ctx.onProgress?.(base);
+
+  const suggestion = suggestShelfForScan({
+    shelves: ctx.shelves,
+    itemType: "tcg",
+    pathname: ctx.pathname,
+    preferredShelfId: ctx.preferredShelfId,
+  });
+
+  let title = lock.label?.trim() || skuKey;
+  let imageUrl = lock.faceUrl ?? null;
+  let language = lock.language ?? null;
+  let packId = lock.packId ?? null;
+
+  try {
+    const params = new URLSearchParams({ skuKey });
+    const res = await axios.get(`/api/identify/product?${params.toString()}`, {
+      signal: ctx.signal,
+    });
+    const data = res.data as {
+      name?: string;
+      imageUrl?: string | null;
+      language?: string | null;
+      packId?: string | null;
+    };
+    if (data?.name?.trim()) title = data.name.trim();
+    if (data?.imageUrl) imageUrl = data.imageUrl;
+    if (data?.language) language = data.language;
+    if (data?.packId) packId = data.packId;
+  } catch {
+    // Catalogue miss — keep skuKey / face from identify or barcode resolve.
+  }
+
+  if (ctx.signal?.aborted) return base;
+
+  const ownedExact = await fetchOwnedByQuery(skuKey, ctx.signal).catch(
+    () => [],
+  );
+  const owned = pickOwnedScanHit(
+    ownedExact.filter((item) => {
+      const itemSku =
+        (item as { skuKey?: string | null }).skuKey?.trim() ||
+        item.printKey?.trim() ||
+        "";
+      return itemSku.toLowerCase() === skuKey.toLowerCase();
+    }),
+    [],
+    null,
+  );
+
+  const hit: HydrateHit = {
+    title,
+    imageUrl,
+    imageSource: imageUrl ? "face" : "none",
+    metadataPreview: null,
+  };
+
+  return {
+    ...base,
+    title,
+    imageUrl,
+    language,
+    packId,
+    shelfType: "tcg",
+    suggestedShelfId: suggestion.shelfId,
+    shelfSure: suggestion.confidence === "sure",
+    owned,
+    hits: [hit],
+    status: "ready",
+  };
+}
+
 async function hydrateManualLock(
   lock: SessionLock,
   ctx: HydrateScanContext,
@@ -596,6 +735,7 @@ export async function hydrateScanLock(
 ): Promise<HydratedScanLock> {
   try {
     if (lock.kind === "card") return await hydrateCardLock(lock, ctx);
+    if (lock.kind === "sealed") return await hydrateSealedLock(lock, ctx);
     if (lock.kind === "manual") return await hydrateManualLock(lock, ctx);
     return await hydrateBarcodeLock(lock, ctx);
   } catch (error) {
@@ -621,6 +761,7 @@ export function prefillFromHydrated(
   barcode: string;
   shelfId?: string;
   printKey?: string | null;
+  skuKey?: string | null;
   language?: string | null;
   shelfType?: string | null;
   shelfSure?: boolean;
@@ -628,9 +769,19 @@ export function prefillFromHydrated(
 } {
   const hit = hydrated.hits[hitIndex] ?? hydrated.hits[0];
   const isCard = hydrated.kind === "card";
+  const isSealed = hydrated.kind === "sealed";
   const isBarcode =
     hydrated.kind === "barcode" ||
     (hydrated.kind === "manual" && /^\d{8,14}$/.test(hydrated.key));
+
+  const sealedFromBarcode =
+    hydrated.kind === "barcode" ? hydrated.sealedSkuKey : null;
+  const sealedDoubtHit =
+    hydrated.kind === "barcode" &&
+    hydrated.sealedHits?.length &&
+    hitIndex < hydrated.sealedHits.length
+      ? hydrated.sealedHits[hitIndex]?.productKey
+      : null;
 
   return {
     name: hit?.title || hydrated.title,
@@ -638,6 +789,9 @@ export function prefillFromHydrated(
     barcode: isBarcode ? hydrated.key : "",
     shelfId: hydrated.suggestedShelfId || undefined,
     printKey: isCard ? hydrated.key : null,
+    skuKey: isSealed
+      ? hydrated.key
+      : sealedFromBarcode || sealedDoubtHit || null,
     language: hydrated.language,
     shelfType: hydrated.shelfType,
     shelfSure: hydrated.shelfSure,

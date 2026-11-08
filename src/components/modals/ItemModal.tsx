@@ -233,6 +233,8 @@ export function ItemModal({
     imageUrl?: string | null;
     shelfId?: string;
     printKey?: string | null;
+    /** Sealed catalogue skuKey (`packId::slug`) from scan / sealed picker. */
+    skuKey?: string | null;
     language?: string | null;
     setCode?: string | null;
     variant?: string | null;
@@ -456,6 +458,9 @@ export function ItemModal({
     form.setValue("absenceSince", "", { shouldDirty: true });
   }, [form]);
 
+  const [tradeRecoverOpen, setTradeRecoverOpen] = useState(false);
+  const [tradeRecoverBusy, setTradeRecoverBusy] = useState(false);
+
   const handleRecoverPast = useCallback(() => {
     if (
       watchedAbsenceReason === "exchanged" &&
@@ -614,8 +619,6 @@ export function ItemModal({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload: any;
   } | null>(null);
-  const [tradeRecoverOpen, setTradeRecoverOpen] = useState(false);
-  const [tradeRecoverBusy, setTradeRecoverBusy] = useState(false);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(
@@ -1965,6 +1968,14 @@ export function ItemModal({
                 fetchedMetadata ?? prefilledValues?.metadataPreview ?? null,
               ...(prefilledValues?.printKey
                 ? { printKey: prefilledValues.printKey }
+                : {}),
+              ...(prefilledValues?.skuKey
+                ? {
+                    kind: "sealed",
+                    skuKey: prefilledValues.skuKey,
+                    skuName: prefilledValues.name ?? undefined,
+                    skuLanguage: prefilledValues.language ?? undefined,
+                  }
                 : {}),
               ...(prefilledValues?.language
                 ? { language: prefilledValues.language }

@@ -205,6 +205,199 @@ describe("upsertOfficialSiteProducts without staging", () => {
       skipped: 0,
     });
   });
+
+  it("promotes orphan durable FR art even when the pages ledger is empty", () => {
+    const artDir = path.join(
+      root,
+      "lorcana",
+      "products",
+      "into-the-inklands-booster",
+      "fr",
+    );
+    mkdirSync(artDir, { recursive: true });
+    writeFileSync(path.join(artDir, "art.disneysite.png"), "png");
+    // Numbered collision dumps — must not mint parallel SKUs.
+    for (const slug of [
+      "into-the-inklands-booster-2",
+      "into-the-inklands-booster-3",
+    ]) {
+      const dump = path.join(root, "lorcana", "products", slug, "fr");
+      mkdirSync(dump, { recursive: true });
+      writeFileSync(path.join(dump, "art.disneysite.png"), "png");
+    }
+
+    persistSealedProductsIndexDoc(
+      {
+        version: 1,
+        pack: "lorcana",
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        products: {
+          "lorcana::booster-les-terres-d-encres-minnie": {
+            slug: "booster-les-terres-d-encres-minnie",
+            path: "https://www.lorcards.fr/products/booster-les-terres-d-encres-minnie",
+            kind: "booster",
+            behavior: sealedBehaviorForKind("booster"),
+            category: "boosters",
+            name: "Booster Les Terres d'Encres - Minnie",
+            image: "https://static.lorcards.fr/products/fr/boosters/minnie.png",
+            imageBack: null,
+            setLogo: null,
+            setCode: "ITI",
+            catalogueSetId: "3",
+            lang: "fr",
+            releaseDate: null,
+            priceCents: 200,
+            cardsPerPack: 12,
+            packsContained: 1,
+            guaranteedPrints: [],
+            randomPoolScope: "set",
+            randomPoolPrints: [],
+            declaredCardCount: null,
+            setCardCount: null,
+            contentsKnown: false,
+            containsPrintsIsPreview: true,
+            prints: [],
+          } satisfies SealedProductEntry,
+          "lorcana::into-the-inklands-booster-en": {
+            slug: "into-the-inklands-booster-en",
+            path: "https://www.disneylorcana.com/en-US/product/into-the-inklands",
+            kind: "booster",
+            behavior: sealedBehaviorForKind("booster"),
+            category: "official-site",
+            name: "Into The Inklands",
+            image:
+              "/assets/lorcana/products/into-the-inklands-booster-en/en/face",
+            imageBack: null,
+            setLogo: null,
+            setCode: "3",
+            catalogueSetId: "3",
+            lang: "en",
+            releaseDate: null,
+            priceCents: null,
+            cardsPerPack: 12,
+            packsContained: 1,
+            guaranteedPrints: [],
+            randomPoolScope: "set",
+            randomPoolPrints: [],
+            declaredCardCount: null,
+            setCardCount: null,
+            contentsKnown: false,
+            containsPrintsIsPreview: true,
+            prints: [],
+          } satisfies SealedProductEntry,
+        },
+      },
+      { alreadyMerged: true },
+    );
+
+    const out = upsertOfficialSiteProducts({ setLogoIndex: null });
+    expect(out.written).toBeGreaterThanOrEqual(1);
+
+    const row =
+      loadSealedProductsIndex("lorcana").products[
+        "lorcana::into-the-inklands-booster"
+      ];
+    expect(row).toMatchObject({
+      slug: "into-the-inklands-booster",
+      lang: "fr",
+      kind: "booster",
+      category: "official-site",
+      name: "Les Terres d'Encres booster",
+      catalogueSetId: "3",
+      image: "/assets/lorcana/products/into-the-inklands-booster/fr/face",
+    });
+    expect(
+      loadSealedProductsIndex("lorcana").products[
+        "lorcana::into-the-inklands-booster-2"
+      ],
+    ).toBeUndefined();
+  });
+
+  it("does not let FR character shop boosters cover an official generic mint", () => {
+    const ledgerPath = officialSiteDurablePagesPath("lorcana");
+    mkdirSync(path.dirname(ledgerPath), { recursive: true });
+    writeFileSync(
+      ledgerPath,
+      JSON.stringify({
+        menu: [],
+        pages: [
+          {
+            slug: "into-the-inklands",
+            title: "Les Terres d'Encres",
+            logoUrl: null,
+            logoAlt: null,
+            setId: "set3",
+            packshots: [
+              {
+                url: "https://example.com/assets/fr_booster.png",
+                alt: "Booster Pack product-shot",
+                kind: "booster",
+              },
+            ],
+            spoilers: [],
+            contents: null,
+            sourceUrl:
+              "https://www.disneylorcana.com/fr-FR/product/into-the-inklands",
+            lang: "fr",
+          },
+        ],
+      }),
+    );
+    const artDir = path.join(
+      root,
+      "lorcana",
+      "products",
+      "into-the-inklands-booster",
+      "fr",
+    );
+    mkdirSync(artDir, { recursive: true });
+    writeFileSync(path.join(artDir, "art.disneysite.png"), "png");
+
+    persistSealedProductsIndexDoc(
+      {
+        version: 1,
+        pack: "lorcana",
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        products: {
+          "lorcana::booster-les-terres-d-encres-minnie": {
+            slug: "booster-les-terres-d-encres-minnie",
+            path: "https://www.lorcards.fr/products/booster-les-terres-d-encres-minnie",
+            kind: "booster",
+            behavior: sealedBehaviorForKind("booster"),
+            category: "boosters",
+            name: "Booster Les Terres d'Encres - Minnie",
+            image: "https://static.lorcards.fr/products/fr/boosters/minnie.png",
+            imageBack: null,
+            setLogo: null,
+            setCode: "ITI",
+            catalogueSetId: "3",
+            lang: "fr",
+            releaseDate: null,
+            priceCents: 200,
+            cardsPerPack: 12,
+            packsContained: 1,
+            guaranteedPrints: [],
+            randomPoolScope: "set",
+            randomPoolPrints: [],
+            declaredCardCount: null,
+            setCardCount: null,
+            contentsKnown: false,
+            containsPrintsIsPreview: true,
+            prints: [],
+          } satisfies SealedProductEntry,
+        },
+      },
+      { alreadyMerged: true },
+    );
+
+    const out = upsertOfficialSiteProducts({ setLogoIndex: null });
+    expect(out.written).toBeGreaterThanOrEqual(1);
+    expect(
+      loadSealedProductsIndex("lorcana").products[
+        "lorcana::into-the-inklands-booster"
+      ]?.lang,
+    ).toBe("fr");
+  });
 });
 
 describe("officialArtLooksLikeCmsHero", () => {

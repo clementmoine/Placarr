@@ -2,6 +2,7 @@ import {
   resolveLocaleRegion,
   type LocaleRegion,
 } from "@/core/locale/preference";
+import { FACE_SITE_DUMP_LABELS } from "@/providers/shared/faceDumpSiteLabels";
 
 export type AttachmentDisplayLocale = "fr" | "en";
 
@@ -624,22 +625,6 @@ export function formatAttachmentLanguageLabel(
   if (!code) return null;
   return LANGUAGE_LABELS[locale][code] ?? null;
 }
-
-/**
- * External dump sites (`art.animecollection.jpg`, role `…-face-fr-coleka`).
- * Affiche source chip — never the catalogue line ("Naruto Ninja Ranks").
- */
-const FACE_SITE_DUMP_LABELS: Record<string, string> = {
-  animecollection: "AnimeCollection",
-  coleka: "Coleka",
-  inkworks: "Inkworks",
-  ebay: "eBay",
-  suruga: "Suruga",
-  lorenzone: "Lorenzone",
-  dbzcollection: "DBZ Collection",
-  tcgplayer: "TCGplayer",
-  carddass: "Carddass",
-};
 
 /**
  * In-pipeline dump channels under a real metadata provider (TCGdex Live,

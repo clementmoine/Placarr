@@ -181,7 +181,8 @@ describe("catalogue identity browse anti-désync", () => {
         expect(listed.every((c) => c.printed !== false)).toBe(true);
       }
     },
-    300_000,
+    // Solo ~250s; under full-suite load the identity browse needs headroom.
+    600_000,
   );
 
   it("Lorcana identity browse printKeys ⊆ checklist sqlite (same corpus)", () => {

@@ -21,6 +21,7 @@ import {
   recordCatalogPromoteAndPurgeStaging,
 } from "@/providers/shared/catalogIngestLedger";
 
+import { mergeSealedBarcodes } from "./barcodes";
 import {
   emptyProductsIndex,
   sealedProductKey,
@@ -79,6 +80,9 @@ export type LocalSealedWrite = {
     imageBackPath?: string | null;
     posterPath?: string | null;
   }[];
+  /** Retail GTINs already known on the ledger row (EAN / UPC / JAN). */
+  barcodes?: string[];
+  barcodeSources?: Record<string, string>;
 };
 
 export type WriteLocalSealedResult = {
@@ -239,6 +243,12 @@ export function writeLocalSealedProducts(input: {
       contentsKnown,
       containsPrintsIsPreview: preview,
       prints: [],
+      ...(spec.barcodes?.length
+        ? { barcodes: mergeSealedBarcodes([], spec.barcodes) }
+        : {}),
+      ...(spec.barcodeSources
+        ? { barcodeSources: spec.barcodeSources }
+        : {}),
     };
     index.products[sealedProductKey(input.packId, spec.slug)] = entry;
   }

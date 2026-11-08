@@ -175,7 +175,39 @@ describe("prefillFromHydrated", () => {
       name: "Ryse",
       barcode: "045496590042",
       printKey: null,
+      skuKey: null,
       shelfId: "xbox",
+    });
+  });
+
+  it("maps a sealed lock to skuKey prefill", () => {
+    expect(
+      prefillFromHydrated(
+        base({
+          lockId: "sealed:1",
+          kind: "sealed",
+          key: "lorcana::into-the-inklands-booster",
+          title: "Into the Inklands Booster",
+          packId: "lorcana",
+          shelfType: "tcg",
+          suggestedShelfId: "lorcana-shelf",
+          hits: [
+            {
+              title: "Into the Inklands Booster",
+              imageUrl: "/assets/lorcana/products/into-the-inklands-booster/fr/face",
+              imageSource: "face",
+              metadataPreview: null,
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({
+      name: "Into the Inklands Booster",
+      skuKey: "lorcana::into-the-inklands-booster",
+      printKey: null,
+      barcode: "",
+      shelfId: "lorcana-shelf",
+      shelfType: "tcg",
     });
   });
 });

@@ -1428,9 +1428,15 @@ export function inkworksSealedSpecs(
   const allCurated =
     ledger.skus.length > 0 &&
     ledger.skus.every((sku) => curatedArt.has(sku.slug));
+  const upcBySlug: Record<string, string | undefined> = {
+    booster: ledger.sellSheet?.upc?.pack,
+    display: ledger.sellSheet?.upc?.display,
+    "collector-album": ledger.sellSheet?.upc?.album,
+  };
   const products = ledger.skus.map((sku) => {
     const better = allCurated ? (curatedArt.get(sku.slug) ?? null) : null;
     const official = path.join(staging, sku.art);
+    const upc = upcBySlug[sku.slug];
     return {
       slug: sku.slug,
       kind: sku.kind,
@@ -1448,6 +1454,12 @@ export function inkworksSealedSpecs(
         better && existsSync(official)
           ? [{ source: ledger.sourceId, artPath: official }]
           : [],
+      ...(upc
+        ? {
+            barcodes: [upc],
+            barcodeSources: { [upc]: "inkworks-sell-sheet" },
+          }
+        : {}),
     };
   });
   return {

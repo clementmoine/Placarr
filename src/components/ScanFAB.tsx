@@ -38,6 +38,7 @@ type PrefillState = {
   barcode: string;
   shelfId?: string;
   printKey?: string | null;
+  skuKey?: string | null;
   language?: string | null;
   setCode?: string | null;
   shelfType?: Type | string | null;
@@ -89,6 +90,7 @@ export function ScanFAB() {
         barcode: prefill.barcode,
         shelfId: prefill.shelfId || shelfId,
         printKey: prefill.printKey,
+        skuKey: prefill.skuKey,
         language: prefill.language,
         shelfType: prefill.shelfType,
         shelfSure: prefill.shelfSure,

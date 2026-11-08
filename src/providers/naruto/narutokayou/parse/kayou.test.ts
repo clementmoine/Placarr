@@ -360,18 +360,22 @@ import { hashKayouOfficialCatalog } from "../sources/crawl";
       );
     });
 
-    it("maps SSR/PTR onto the shared SR sleeve via aliases", () => {
+    it("maps SSR onto the shared PTR sleeve via aliases", () => {
+      // Sync hash-collapse (`kayou-back-aliases.json`): SSR bytes ≡ PTR sleeve.
       expect(kayouBackTierSlug("SSR")).toBe("ssr");
       expect(kayouCardBackUrlForRarity("naruto/kayou", "SSR")).toBe(
-        "/assets/naruto/kayou/backs/en/tiers/sr",
+        "/assets/naruto/kayou/backs/en/tiers/ptr",
       );
       expect(kayouCardBackUrlForRarity("naruto/kayou", "PTR")).toBe(
-        "/assets/naruto/kayou/backs/en/tiers/sr",
+        "/assets/naruto/kayou/backs/en/tiers/ptr",
       );
     });
 
-    it("does not stamp R when it matches the pack default", () => {
-      expect(kayouCardBackUrlForRarity("naruto/kayou", "R")).toBeNull();
+    it("stamps R when it is not in skippedDefault", () => {
+      // Alias ledger no longer lists `r` in skippedDefault after Sync densify.
+      expect(kayouCardBackUrlForRarity("naruto/kayou", "R")).toBe(
+        "/assets/naruto/kayou/backs/en/tiers/r",
+      );
     });
 
     it("returns null when rarity is empty", () => {

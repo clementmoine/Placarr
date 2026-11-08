@@ -2,6 +2,10 @@
  * CardNexus sealed products (booster boxes, ETBs, …) for an expansion.
  *
  * `productType` filter is `{ op, values }` per OpenAPI — a bare string is ignored.
+ *
+ * `externalIds` are Cardmarket / TCGPlayer product ids only — **not** GTINs.
+ * Do not project those marketplace ids onto `SealedProductEntry.barcodes`.
+ * See `barcodeAudit.ts` (packs still at 0 GTIN need retail / shop digs).
  */
 
 import { cardnexusPost } from "./client";

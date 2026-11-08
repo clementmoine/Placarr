@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   embedCardFaceBuffer,
+  embedFullFrameBuffer,
   prefetchCardEmbed,
 } from "@/core/identify/cardEmbed";
 import {
@@ -42,10 +43,22 @@ import {
   matchCardVisualSignals,
   matchCardVisualSignalsAcrossPacks,
 } from "@/core/identify/cardVisualSignals";
+import {
+  listProductEmbeddingIndexPackIds,
+  matchProductEmbedding,
+  matchProductEmbeddingAcrossPacks,
+  loadProductEmbeddingIndex,
+  productEmbeddingIndexesAvailable,
+} from "@/core/identify/productEmbeddingIndex";
+import { fuseCardAndProductIdentify } from "@/core/identify/productIdentifyFuse";
+import type { ProductVisualMatch } from "@/core/identify/productVisualIndex";
 import { requireGuestOrHigher } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import { isCataloguePackId } from "@/lib/admin/cataloguePacks";
-import { identifyMatchFaceUrl } from "@/lib/packAssetUrls";
+import {
+  assetsSealedProductRoleUrl,
+  identifyMatchFaceUrl,
+} from "@/lib/packAssetUrls";
 import { loadPrintTitlesForKeys } from "@/lib/server/identify/printTitles";
 import {
   prefetchPaddleCollectorOcr,
@@ -90,6 +103,57 @@ function withFaceUrl(match: CardVisualMatch): CardVisualMatch & {
       lang: match.lang || "fr",
     }),
   };
+}
+
+function withProductFaceUrl(match: ProductVisualMatch): ProductVisualMatch & {
+  faceUrl: string | null;
+  method: "embed";
+} {
+  const packId = match.packId?.trim();
+  if (!packId || !match.slug) {
+    return { ...match, faceUrl: null, method: "embed" };
+  }
+  return {
+    ...match,
+    faceUrl: assetsSealedProductRoleUrl(
+      packId,
+      match.slug,
+      match.lang || "fr",
+      "face",
+    ),
+    method: "embed",
+  };
+}
+
+async function matchProductFullFrame(
+  buffer: Buffer,
+  packId: string | null,
+  preferLang: string | null,
+): Promise<ProductVisualMatch[]> {
+  if (!productEmbeddingIndexesAvailable(packId ? [packId] : undefined)) {
+    return [];
+  }
+  const query = await embedFullFrameBuffer(buffer);
+  if (!query) return [];
+  if (packId) {
+    const index = loadProductEmbeddingIndex(packId);
+    if (!index?.meta.entries.length) return [];
+    return matchProductEmbedding(query, index, {
+      limit: LIVE_LIMIT,
+      maxDistance: EMBED_MAX_DISTANCE,
+      minMargin: EMBED_MIN_MARGIN,
+      preferLang,
+    });
+  }
+  const packIds = listProductEmbeddingIndexPackIds();
+  if (!packIds.length) return [];
+  return matchProductEmbeddingAcrossPacks(query, {
+    packIds,
+    limit: LIVE_LIMIT,
+    maxDistance: EMBED_MAX_DISTANCE,
+    minMargin: EMBED_MIN_MARGIN,
+    preferLang,
+  });
 }
 
 function sanitizePackId(raw: string): string | null {
@@ -282,17 +346,37 @@ export async function POST(req: NextRequest) {
       allowUndetectedFallbacks: fromGallery,
     });
     if (!built.views.length) {
-      // Honest miss — empty table / no card / unreadable. Never invent hits.
+      // No card quad — still try sealed full-frame (booster packshot).
       if (built.abstain === "unreadable") {
         return NextResponse.json(
           { error: "unreadable image", matches: [], abstain: built.abstain },
           { status: 422 },
         );
       }
+      const productRaw = await matchProductFullFrame(
+        buffer,
+        packId,
+        preferLang,
+      );
+      const fused = fuseCardAndProductIdentify(
+        [],
+        productRaw.map((row) => withProductFaceUrl(row)),
+      );
+      const products = fused.products.map((row) => ({
+        ...row,
+        method: "embed" as const,
+        confidence: fused.confidence,
+      }));
       return NextResponse.json({
         matches: [],
+        products,
+        kind: fused.kind,
+        confidence: fused.confidence,
         abstain: built.abstain ?? "no_card",
         requireConfirm: true,
+        ambiguous: fused.confidence !== "sure",
+        bestProductDistance: productRaw[0]?.distance ?? null,
+        bestProductKey: productRaw[0]?.productKey ?? null,
       });
     }
 
@@ -304,22 +388,25 @@ export async function POST(req: NextRequest) {
     const clientAlreadyRead =
       typeof ocrRaw === "string" && ocrRaw.trim().length > 0;
     const ocrSource = views[0]?.buffer ?? buffer;
-    const [embedResult, visualMatches, serverOcr] = await Promise.all([
-      useEmbed
-        ? matchEmbedViews(views, packId, packIds, preferLang)
-        : Promise.resolve(null),
-      matchVisualViews(views, packId, packIds),
-      clientAlreadyRead
-        ? Promise.resolve(null)
-        : recognizeCollectorBandServer(ocrSource, { timeoutMs: 2500 }),
-    ]);
+    const [embedResult, visualMatches, serverOcr, productRaw] =
+      await Promise.all([
+        useEmbed
+          ? matchEmbedViews(views, packId, packIds, preferLang)
+          : Promise.resolve(null),
+        matchVisualViews(views, packId, packIds),
+        clientAlreadyRead
+          ? Promise.resolve(null)
+          : recognizeCollectorBandServer(ocrSource, { timeoutMs: 2500 }),
+        matchProductFullFrame(buffer, packId, preferLang),
+      ]);
     const embedMatches = embedResult?.matches ?? null;
     const embedQuery = embedResult?.query ?? null;
 
-    if (!embedMatches && !visualMatches) {
+    if (!embedMatches && !visualMatches && !productRaw.length) {
       return NextResponse.json(
         {
           matches: [],
+          products: [],
           error:
             "visual index missing — run Catalogue Sync / buildCardVisualIndex",
         },
@@ -402,10 +489,44 @@ export async function POST(req: NextRequest) {
     const finalized = finalizeIdentifyConfidence(reranked, method, {
       ocrReinforced,
     });
-    const matches = finalized.matches.map((m) => ({
+    const cardMatches = finalized.matches.map((m) => ({
       ...withFaceUrl(m),
-      method: method === "hybrid" ? "dhash" : method,
+      method: (method === "hybrid" ? "dhash" : method) as "embed" | "dhash",
       confidence: finalized.confidence,
+    }));
+    const productFaced = productRaw.map((row) => withProductFaceUrl(row));
+    const fused = fuseCardAndProductIdentify(
+      cardMatches.map((m) => ({
+        printKey: m.printKey,
+        distance: m.distance,
+        confidence: finalized.confidence,
+        faceUrl: m.faceUrl,
+        packId: m.packId,
+        lang: m.lang,
+        ambiguous: m.ambiguous,
+      })),
+      productFaced,
+    );
+    // Backward-compatible card `matches`: empty when product alone won.
+    const cardByKey = new Map(cardMatches.map((m) => [m.printKey, m]));
+    const matches =
+      fused.kind === "product"
+        ? []
+        : fused.cards
+            .map((row) => {
+              const base = cardByKey.get(row.printKey);
+              if (!base) return null;
+              return {
+                ...base,
+                ambiguous: row.ambiguous ?? base.ambiguous,
+                confidence: fused.confidence,
+              };
+            })
+            .filter(Boolean);
+    const products = fused.products.map((row) => ({
+      ...row,
+      method: "embed" as const,
+      confidence: fused.confidence,
     }));
     const index = packId ? loadCardVisualIndex(packId) : null;
     const ocrText =
@@ -417,7 +538,8 @@ export async function POST(req: NextRequest) {
       lang: index?.lang,
       packIds: packId ? undefined : packIds,
       method,
-      confidence: finalized.confidence,
+      kind: fused.kind,
+      confidence: fused.confidence,
       collectorHint: collectorHint?.needle,
       collectorSet: collectorHint?.set ?? null,
       ocrText,
@@ -433,9 +555,12 @@ export async function POST(req: NextRequest) {
       bestDhashDistance: visualMatches?.[0]?.distance ?? null,
       bestEmbedKey: embedMatches?.[0]?.printKey ?? null,
       bestDhashKey: visualMatches?.[0]?.printKey ?? null,
+      bestProductDistance: productRaw[0]?.distance ?? null,
+      bestProductKey: productRaw[0]?.productKey ?? null,
       matches,
+      products,
       requireConfirm: true,
-      ambiguous: finalized.confidence !== "sure",
+      ambiguous: fused.confidence !== "sure",
     });
   } catch (error) {
     console.error("[POST /api/identify/card-image]", error);

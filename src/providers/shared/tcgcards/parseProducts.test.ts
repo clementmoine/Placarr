@@ -185,6 +185,36 @@ describe("parseDbscardsProductPage", () => {
       "/products/boosters/booster-set-12-contrees-inconnues-merida",
     ]);
     expect(page.containedProducts).toEqual([]);
+    // Synthetic gtin13 / EAN on the fixture — live lorcards dumps in-repo
+    // currently omit GTIN; parser must still harvest when present.
+    expect(page.barcodes).toEqual(["3391891963138"]);
+  });
+
+  it("extracts gtin13 from JSON-LD and EAN from the product table", () => {
+    const html = `<h1>Booster</h1>
+<script type="application/ld+json">
+{"@type":"Product","name":"Booster","sku":1,"gtin13":"3296580052110","offers":{"@type":"Offer","price":"4.90","priceCurrency":"EUR"}}
+</script>
+<table>
+  <caption>Informations générales</caption>
+  <tr><th>Code-barres</th><td>045557239770</td></tr>
+</table>`;
+    const page = parseDbscardsProductPage(
+      html,
+      "/products/boosters/sample",
+      "boosters",
+    );
+    expect(page.barcodes).toEqual(["3296580052110", "045557239770"]);
+  });
+
+  it("leaves barcodes absent when the fiche only has a shop sku", () => {
+    const page = parseDbscardsProductPage(
+      fixture("dbscards-product-booster.html"),
+      "/products/boosters/booster-b02-union-force",
+      "boosters",
+    );
+    expect(page.sku).toBe(54);
+    expect(page.barcodes).toBeUndefined();
   });
 });
 

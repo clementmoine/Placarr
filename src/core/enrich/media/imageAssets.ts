@@ -17,7 +17,10 @@ import {
 } from "@/core/enrich/media/coverUrl";
 import { resolveAttachmentDisplayRegion } from "@/core/enrich/media/attachmentDisplayLabels";
 import { measureCoverExposureFromBuffer } from "@/core/enrich/media/coverExposure.server";
-import { cardArtBandRect } from "@/core/identify/embedMath";
+import {
+  cardArtBandRect,
+  type EmbedCropMode,
+} from "@/core/identify/embedMath";
 import { regionRank } from "@/core/locale/preference";
 import { localMediaFilePath } from "@/lib/media/localMediaPath";
 
@@ -114,6 +117,26 @@ export async function extractCardArtBand(
     const rect = cardArtBandRect(meta.width ?? 0, meta.height ?? 0);
     if (!rect) return null;
     return sharp(buffer).extract(rect).jpeg({ quality: 90 }).toBuffer();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * JPEG ready for DINOv2 — art-band crop (cards) or full frame (sealed products).
+ * Product galleries must pass `cropMode: "full"` so CARD_ART_BAND never applies.
+ */
+export async function prepareEmbedImageBuffer(
+  buffer: Buffer,
+  opts: { cropMode: EmbedCropMode },
+): Promise<Buffer | null> {
+  if (opts.cropMode === "artBand") {
+    return extractCardArtBand(buffer);
+  }
+  try {
+    const meta = await sharp(buffer).metadata();
+    if ((meta.width ?? 0) < 16 || (meta.height ?? 0) < 16) return null;
+    return sharp(buffer).jpeg({ quality: 90 }).toBuffer();
   } catch {
     return null;
   }

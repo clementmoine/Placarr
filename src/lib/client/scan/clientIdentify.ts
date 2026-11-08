@@ -1,14 +1,20 @@
 /**
  * Full-client identify path: PP-OCR (native band) + on-device embed + f16 NN.
+ * Also tries sealed full-frame product shards and kind-aware fuse.
  * Falls back to null so the caller can POST fallback=1 to the server — the
  * OCR stage result is kept separately so its text still reaches the server.
  */
 import { shortlistPacksByCentroid } from "@/core/identify/cardEmbeddingSearch";
 import { finalizeIdentifyConfidence } from "@/core/identify/identifyConfidence";
 import { parseCollectorNumberHint } from "@/core/identify/collectorNumberHint";
-import { identifyMatchFaceUrl } from "@/lib/packAssetUrls";
+import { fuseCardAndProductIdentify } from "@/core/identify/productIdentifyFuse";
+import {
+  assetsSealedProductRoleUrl,
+  identifyMatchFaceUrl,
+} from "@/lib/packAssetUrls";
 import {
   embedCardFaceBlobClient,
+  embedFullFrameBlobClient,
   isCardEmbedClientReady,
   prefetchCardEmbedClient,
 } from "@/lib/client/scan/cardEmbed.client";
@@ -22,6 +28,14 @@ import {
   type ClientEmbedHit,
   type ClientLoadedPack,
 } from "@/lib/client/scan/cardEmbeddingIndex.client";
+import {
+  getResidentProductPack,
+  matchClientProductEmbeddings,
+  prefetchClientProductEmbeddingPacks,
+  prioritizeProductPack,
+  residentProductPackIds,
+  type ClientProductHit,
+} from "@/lib/client/scan/productEmbeddingIndex.client";
 import type { CollectorBandGrab } from "@/lib/client/scan/grabCollectorBand";
 import {
   prefetchPaddleCollectorOcrClient,
@@ -147,8 +161,23 @@ export type ClientIdentifyMatch = {
   confidence?: "sure" | "doubt" | "miss";
 };
 
+export type ClientProductIdentifyMatch = {
+  productKey: string;
+  lang: string;
+  slug: string;
+  distance: number;
+  faceUrl: string | null;
+  packId?: string;
+  artRel?: string;
+  ambiguous?: boolean;
+  method: "embed";
+  confidence?: "sure" | "doubt" | "miss";
+};
+
 export type ClientIdentifyResult = {
   matches: ClientIdentifyMatch[];
+  products: ClientProductIdentifyMatch[];
+  kind: "card" | "product" | "doubt" | "miss";
   confidence: "sure" | "doubt" | "miss";
   ocrText: string;
   ocrStatus: string;
@@ -164,6 +193,8 @@ export type ClientIdentifyResult = {
   ocrSourceHeight: number | null;
   bestEmbedDistance: number | null;
   bestEmbedKey: string | null;
+  bestProductDistance: number | null;
+  bestProductKey: string | null;
   path: "client";
 };
 
@@ -189,6 +220,27 @@ function withFaceUrl(hit: ClientEmbedHit): ClientIdentifyMatch {
   };
 }
 
+function withProductFaceUrl(hit: ClientProductHit): ClientProductIdentifyMatch {
+  const faceUrl = hit.packId
+    ? assetsSealedProductRoleUrl(
+        hit.packId,
+        hit.slug,
+        hit.lang || "fr",
+        "face",
+      )
+    : null;
+  return {
+    productKey: hit.productKey,
+    lang: hit.lang,
+    slug: hit.slug,
+    distance: hit.distance,
+    faceUrl,
+    packId: hit.packId,
+    artRel: hit.artRel,
+    method: "embed",
+  };
+}
+
 export type ClientPackManifest = {
   packId: string;
   entries: number;
@@ -198,10 +250,14 @@ export type ClientPackManifest = {
   centroid: Float32Array;
 };
 
-let manifestPromise: Promise<ClientPackManifest[]> | null = null;
+type IdentifyManifestBundle = {
+  packs: ClientPackManifest[];
+  productPacks: ClientPackManifest[];
+};
 
-function parseManifest(body: unknown): ClientPackManifest[] {
-  const raw = (body as { packs?: unknown })?.packs;
+let manifestPromise: Promise<IdentifyManifestBundle> | null = null;
+
+function parseManifestList(raw: unknown): ClientPackManifest[] {
   if (!Array.isArray(raw)) return [];
   const out: ClientPackManifest[] = [];
   for (const p of raw) {
@@ -220,28 +276,49 @@ function parseManifest(body: unknown): ClientPackManifest[] {
   return out;
 }
 
+function parseManifestBundle(body: unknown): IdentifyManifestBundle {
+  const root = body as { packs?: unknown; productPacks?: unknown };
+  return {
+    packs: parseManifestList(root?.packs),
+    productPacks: parseManifestList(root?.productPacks),
+  };
+}
+
+async function resolveIdentifyManifest(): Promise<IdentifyManifestBundle> {
+  if (!manifestPromise) {
+    manifestPromise = (async () => {
+      try {
+        const res = await fetch("/api/identify/packs", { cache: "no-store" });
+        if (!res.ok) return { packs: [], productPacks: [] };
+        return parseManifestBundle(await res.json());
+      } catch {
+        return { packs: [], productPacks: [] };
+      }
+    })();
+    void manifestPromise.then((bundle) => {
+      if (!bundle.packs.length && !bundle.productPacks.length) {
+        manifestPromise = null;
+      }
+    });
+  }
+  return manifestPromise;
+}
+
 /**
  * Pack manifest (size + centroid per pack, cheapest first) — asked once per
  * session, soft-fail to none (identify then falls back to the server route,
  * never to a guess).
  */
-export function resolveClientIdentifyPacks(): Promise<ClientPackManifest[]> {
-  if (!manifestPromise) {
-    manifestPromise = (async () => {
-      try {
-        const res = await fetch("/api/identify/packs", { cache: "no-store" });
-        if (!res.ok) return [];
-        return parseManifest(await res.json());
-      } catch {
-        return [];
-      }
-    })();
-    // Let a later camera session retry after a transient failure.
-    void manifestPromise.then((packs) => {
-      if (!packs.length) manifestPromise = null;
-    });
-  }
-  return manifestPromise;
+export async function resolveClientIdentifyPacks(): Promise<
+  ClientPackManifest[]
+> {
+  return (await resolveIdentifyManifest()).packs;
+}
+
+export async function resolveClientProductIdentifyPacks(): Promise<
+  ClientPackManifest[]
+> {
+  return (await resolveIdentifyManifest()).productPacks;
 }
 
 /** Pack ids with shards (manifest order). */
@@ -263,10 +340,13 @@ export async function prefetchClientIdentify(
   packIds: readonly string[] = [],
 ): Promise<void> {
   const shards = (async () => {
-    const ids = packIds.length
+    const bundle = await resolveIdentifyManifest();
+    const cardIds = packIds.length
       ? [...packIds]
-      : await resolveClientIdentifyPackIds();
-    if (ids.length) void prefetchClientEmbeddingPacks(ids);
+      : bundle.packs.map((p) => p.packId);
+    if (cardIds.length) void prefetchClientEmbeddingPacks(cardIds);
+    const productIds = bundle.productPacks.map((p) => p.packId);
+    if (productIds.length) void prefetchClientProductEmbeddingPacks(productIds);
   })();
   await Promise.all([
     prefetchPaddleCollectorOcrClient(),
@@ -365,11 +445,46 @@ function matchAllResidentInScope(
   return finalizeHits(rawHits, ocrText);
 }
 
+function matchResidentProducts(
+  query: Float32Array,
+  productManifest: readonly ClientPackManifest[],
+): ClientProductHit[] {
+  if (!productManifest.length) return [];
+  const wanted = shortlistManifest(query, productManifest);
+  const packs: NonNullable<ReturnType<typeof getResidentProductPack>>[] = [];
+  let missing = 0;
+  for (const m of wanted) {
+    const resident = getResidentProductPack(m.packId);
+    if (resident) packs.push(resident);
+    else {
+      missing += 1;
+      prioritizeProductPack(m.packId);
+    }
+  }
+  // Products are small — if the shortlist is cold, still try every resident.
+  if (missing || !packs.length) {
+    const allowed = new Set(productManifest.map((m) => m.packId));
+    for (const id of residentProductPackIds()) {
+      if (!allowed.has(id)) continue;
+      const pack = getResidentProductPack(id);
+      if (pack && !packs.includes(pack)) packs.push(pack);
+    }
+  }
+  if (!packs.length) return [];
+  return matchClientProductEmbeddings(query, packs, {
+    limit: 8,
+    maxDistance: 450,
+  });
+}
+
 /**
  * Run on-device identify. Returns null whenever the client stack cannot
  * answer *right now* — model still loading, a shortlisted shard not yet
  * resident — so the caller falls back to the server for this sample instead
  * of waiting. Never a partial-coverage guess.
+ *
+ * Tries product full-frame when product shards are resident, or after a card
+ * miss, then kind-aware fuse (soft card + clear product → product).
  */
 export async function identifyCardBlobClient(
   blob: Blob,
@@ -384,75 +499,165 @@ export async function identifyCardBlobClient(
     void prefetchCardEmbedClient();
     return null;
   }
-  const manifest = await resolveClientIdentifyPacks();
+  const bundle = await resolveIdentifyManifest();
   const scope = opts?.packIds?.length
-    ? manifest.filter((m) => opts.packIds!.includes(m.packId))
-    : manifest;
-  if (!scope.length) return null;
+    ? bundle.packs.filter((m) => opts.packIds!.includes(m.packId))
+    : bundle.packs;
+  const productScope = opts?.packIds?.length
+    ? bundle.productPacks.filter((m) => opts.packIds!.includes(m.packId))
+    : bundle.productPacks;
+  if (!scope.length && !productScope.length) return null;
 
   const ocr = opts?.ocr ?? (await recognizeCollectorBandClient(blob));
   const ocrText = ocr.text;
 
-  // OCR half-turn tells us which end held the collector line; start there so
-  // a card pushed in upside down does not pay an extra embed on the hot path.
-  const startTurn = ocr.halfTurn ? 2 : 0;
-  const query = await embedCardFaceBlobClient(blob, {
-    quarterTurns: startTurn,
-  });
-  if (!query) return null;
+  let cardMatches: ClientIdentifyMatch[] = [];
+  let cardConfidence: "sure" | "doubt" | "miss" = "miss";
+  let bestEmbedDistance: number | null = null;
+  let bestEmbedKey: string | null = null;
+  let cardAttemptReady = !scope.length;
 
-  let attempt = await matchQuery(query, scope, ocrText);
-  if (!attempt) return null;
-  let bestQuery = query;
-  if (attempt.finalized.confidence === "miss") {
-    // Camera-native face can still be a quarter-turn off the catalogue scan:
-    // a 63:88 card on its side, or a landscape print held the other way.
-    // Try the three remaining orientations before an honest miss — never a
-    // looser distance gate.
-    for (const turn of [1, 2, 3]) {
-      const quarterTurns = (startTurn + turn) % 4;
-      const rotated = await embedCardFaceBlobClient(blob, { quarterTurns });
-      const alt = rotated ? await matchQuery(rotated, scope, ocrText) : null;
-      if (alt && alt.finalized.confidence !== "miss") {
-        attempt = alt;
-        if (rotated) bestQuery = rotated;
-        break;
+  if (scope.length) {
+    // OCR half-turn tells us which end held the collector line; start there so
+    // a card pushed in upside down does not pay an extra embed on the hot path.
+    const startTurn = ocr.halfTurn ? 2 : 0;
+    const query = await embedCardFaceBlobClient(blob, {
+      quarterTurns: startTurn,
+    });
+    if (query) {
+      let attempt = await matchQuery(query, scope, ocrText);
+      if (attempt) {
+        cardAttemptReady = true;
+        let bestQuery = query;
+        if (attempt.finalized.confidence === "miss") {
+          for (const turn of [1, 2, 3]) {
+            const quarterTurns = (startTurn + turn) % 4;
+            const rotated = await embedCardFaceBlobClient(blob, {
+              quarterTurns,
+            });
+            const alt = rotated
+              ? await matchQuery(rotated, scope, ocrText)
+              : null;
+            if (alt && alt.finalized.confidence !== "miss") {
+              attempt = alt;
+              if (rotated) bestQuery = rotated;
+              break;
+            }
+          }
+        }
+        if (attempt.finalized.confidence === "miss") {
+          const wide = matchAllResidentInScope(bestQuery, scope, ocrText);
+          if (wide && wide.finalized.confidence !== "miss") attempt = wide;
+        }
+        const { rawHits, finalized } = attempt;
+        cardConfidence = finalized.confidence;
+        bestEmbedDistance = rawHits[0]?.distance ?? null;
+        bestEmbedKey = rawHits[0]?.printKey ?? null;
+        cardMatches = finalized.matches
+          .map((m) => {
+            const hit = rawHits.find((h) => h.printKey === m.printKey);
+            if (!hit) return null;
+            const ambiguous =
+              "ambiguous" in m
+                ? Boolean((m as { ambiguous?: boolean }).ambiguous)
+                : false;
+            return {
+              ...withFaceUrl(hit),
+              ambiguous: ambiguous || undefined,
+              confidence: finalized.confidence,
+            };
+          })
+          .filter(Boolean) as ClientIdentifyMatch[];
       }
     }
   }
-  if (attempt.finalized.confidence === "miss") {
-    const wide = matchAllResidentInScope(bestQuery, scope, ocrText);
-    if (wide && wide.finalized.confidence !== "miss") attempt = wide;
-  }
-  const { rawHits, finalized } = attempt;
 
-  const matches = finalized.matches
-    .map((m) => {
-      const hit = rawHits.find((h) => h.printKey === m.printKey);
-      if (!hit) return null;
-      const ambiguous =
-        "ambiguous" in m
-          ? Boolean((m as { ambiguous?: boolean }).ambiguous)
-          : false;
-      return {
-        ...withFaceUrl(hit),
-        ambiguous: ambiguous || undefined,
-        confidence: finalized.confidence,
-      };
-    })
-    .filter(Boolean) as ClientIdentifyMatch[];
+  const tryProducts =
+    productScope.length > 0 &&
+    (residentProductPackIds().some((id) =>
+      productScope.some((m) => m.packId === id),
+    ) ||
+      cardConfidence === "miss" ||
+      cardConfidence === "doubt");
+
+  let productHits: ClientProductHit[] = [];
+  if (tryProducts) {
+    const full = await embedFullFrameBlobClient(blob);
+    if (full) {
+      productHits = matchResidentProducts(full, productScope);
+    }
+  }
+
+  // Card shards still loading and no product answer yet → server fallback.
+  if (!cardAttemptReady && !productHits.length) return null;
+
+  const fused = fuseCardAndProductIdentify(
+    cardMatches.map((m) => ({
+      printKey: m.printKey,
+      distance: m.distance,
+      confidence: cardConfidence,
+      faceUrl: m.faceUrl,
+      packId: m.packId,
+      lang: m.lang,
+      ambiguous: m.ambiguous,
+    })),
+    productHits.map((h) => ({
+      productKey: h.productKey,
+      distance: h.distance,
+      faceUrl: withProductFaceUrl(h).faceUrl,
+      packId: h.packId,
+      lang: h.lang,
+      slug: h.slug,
+    })),
+  );
+
+  const matches =
+    fused.kind === "product"
+      ? []
+      : fused.cards
+          .map((row) => {
+            const base = cardMatches.find((m) => m.printKey === row.printKey);
+            if (!base) return null;
+            return {
+              ...base,
+              ambiguous: row.ambiguous ?? base.ambiguous,
+              confidence: fused.confidence,
+            };
+          })
+          .filter(Boolean) as ClientIdentifyMatch[];
+
+  const products = fused.products.map((row) => {
+    const hit = productHits.find((h) => h.productKey === row.productKey);
+    const base = hit ? withProductFaceUrl(hit) : null;
+    return {
+      productKey: row.productKey,
+      lang: row.lang || base?.lang || "fr",
+      slug: row.slug || base?.slug || "",
+      distance: row.distance,
+      faceUrl: row.faceUrl ?? base?.faceUrl ?? null,
+      packId: row.packId ?? base?.packId,
+      artRel: base?.artRel,
+      ambiguous: row.ambiguous,
+      method: "embed" as const,
+      confidence: fused.confidence,
+    };
+  });
 
   return {
     matches,
-    confidence: finalized.confidence,
+    products,
+    kind: fused.kind,
+    confidence: fused.confidence,
     ocrText,
     ocrStatus: ocr.status,
     ocrEngine: ocr.engine,
     ocrWords: ocr.words,
     ocrSourceWidth: ocr.sourceWidth,
     ocrSourceHeight: ocr.sourceHeight,
-    bestEmbedDistance: rawHits[0]?.distance ?? null,
-    bestEmbedKey: rawHits[0]?.printKey ?? null,
+    bestEmbedDistance,
+    bestEmbedKey,
+    bestProductDistance: productHits[0]?.distance ?? null,
+    bestProductKey: productHits[0]?.productKey ?? null,
     path: "client",
   };
 }

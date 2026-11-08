@@ -13,6 +13,11 @@ import {
   listCardEmbeddingIndexPackIds,
   loadCardEmbeddingIndex,
 } from "@/core/identify/cardEmbeddingIndex";
+import {
+  listProductEmbeddingIndexPackIds,
+  loadProductEmbeddingIndex,
+  productEmbeddingIndexF16Path,
+} from "@/core/identify/productEmbeddingIndex";
 
 export type ClientPackManifestEntry = {
   packId: string;
@@ -39,6 +44,26 @@ export function buildClientPackManifest(): ClientPackManifestEntry[] {
     const index = loadCardEmbeddingIndex(packId);
     if (!index?.meta.entries.length) continue;
     const f16 = cardEmbeddingIndexF16Path(packId);
+    if (!existsSync(f16)) continue;
+    out.push({
+      packId,
+      entries: index.meta.entries.length,
+      dim: index.meta.dim,
+      builtAt: index.meta.builtAt,
+      bytesF16: statSync(f16).size,
+      centroid: Array.from(index.centroid, (v) => Math.round(v * 1e4) / 1e4),
+    });
+  }
+  return orderManifestForPrefetch(out);
+}
+
+/** Sealed packshot shards — same shape as card packs, separate list. */
+export function buildClientProductPackManifest(): ClientPackManifestEntry[] {
+  const out: ClientPackManifestEntry[] = [];
+  for (const packId of listProductEmbeddingIndexPackIds()) {
+    const index = loadProductEmbeddingIndex(packId);
+    if (!index?.meta.entries.length) continue;
+    const f16 = productEmbeddingIndexF16Path(packId);
     if (!existsSync(f16)) continue;
     out.push({
       packId,

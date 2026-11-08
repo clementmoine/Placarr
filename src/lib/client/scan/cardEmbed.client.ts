@@ -219,3 +219,47 @@ export async function embedCardFaceBlobClient(
     return null;
   }
 }
+
+/**
+ * Full-frame pixels at the processor resize target — sealed packshots.
+ * Never applies CARD_ART_BAND (product galleries are not cardboard).
+ */
+async function prepareFullFramePixels(
+  blob: Blob,
+): Promise<ArtBandPixels | null> {
+  const bitmap = await createImageBitmap(blob).catch(() => null);
+  if (!bitmap) return null;
+  try {
+    const target = cardEmbedResizeTarget(bitmap.width, bitmap.height);
+    if (!target) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = target.width;
+    canvas.height = target.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, target.width, target.height);
+    const { data } = ctx.getImageData(0, 0, target.width, target.height);
+    return { data, width: target.width, height: target.height };
+  } finally {
+    bitmap.close();
+  }
+}
+
+/** Embed a sealed packshot blob: full frame → DINOv2 CLS → unit vector. */
+export async function embedFullFrameBlobClient(
+  blob: Blob,
+): Promise<Float32Array | null> {
+  try {
+    const extractor = await loadExtractor();
+    if (!extractor) return null;
+    const frame = await prepareFullFramePixels(blob);
+    if (!frame) return null;
+    const { RawImage } = await import("@huggingface/transformers");
+    const image = new RawImage(frame.data, frame.width, frame.height, 4);
+    const out = await runOrtExclusive("dinov2:run", () => extractor(image));
+    return descriptorFromFeatures(out?.data ?? [], CARD_EMBED_DIM);
+  } catch (err) {
+    console.warn("[cardEmbed.client] full-frame embed failed", err);
+    return null;
+  }
+}

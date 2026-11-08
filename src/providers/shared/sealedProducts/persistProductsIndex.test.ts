@@ -276,4 +276,28 @@ describe("persistSealedProductsIndex", () => {
     expect(union["pack::a"]?.lang).toBe("fr");
     expect(union["pack::b"]?.name).toBe("Json only");
   });
+
+  it("coalesce merges barcodes and prefers primary barcodeSources", () => {
+    const shared = "3296580052110";
+    const primary = entry({
+      slug: "booster-s1",
+      barcodes: [shared],
+      barcodeSources: { [shared]: "tempslibre" },
+    });
+    const fill = entry({
+      slug: "booster-s1",
+      barcodes: [shared, "3296580051137"],
+      barcodeSources: {
+        [shared]: "ultrajeux-stale",
+        "3296580051137": "ultrajeux",
+      },
+    });
+    const merged = coalesceSealedProductEntry(primary, fill);
+    expect(merged.barcodes).toEqual(
+      expect.arrayContaining([shared, "3296580051137"]),
+    );
+    expect(merged.barcodeSources?.[shared]).toBe("tempslibre");
+    expect(merged.barcodeSources?.["3296580051137"]).toBe("ultrajeux");
+  });
 });
+

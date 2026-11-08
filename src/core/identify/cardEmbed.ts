@@ -6,7 +6,7 @@
  * Model / pooling / crop contract lives in `embedMath.ts` (shared with the
  * browser path so server shards and on-device queries share one space).
  */
-import { extractCardArtBand } from "@/core/enrich/media/imageAssets";
+import { prepareEmbedImageBuffer } from "@/core/enrich/media/imageAssets";
 import {
   CARD_EMBED_DIM,
   CARD_EMBED_MODEL,
@@ -81,7 +81,7 @@ async function embedJpegBytes(jpeg: Buffer): Promise<Float32Array | null> {
 export async function embedCardFaceBuffer(
   buffer: Buffer,
 ): Promise<Float32Array | null> {
-  const band = await extractCardArtBand(buffer);
+  const band = await prepareEmbedImageBuffer(buffer, { cropMode: "artBand" });
   if (!band) return null;
   return embedJpegBytes(band);
 }
@@ -91,4 +91,16 @@ export async function embedArtBandBuffer(
   buffer: Buffer,
 ): Promise<Float32Array | null> {
   return embedJpegBytes(buffer);
+}
+
+/**
+ * Embed a sealed packshot (or any full-frame image) with no CARD_ART_BAND crop.
+ * Product indexes must use this — never {@link embedCardFaceBuffer}.
+ */
+export async function embedFullFrameBuffer(
+  buffer: Buffer,
+): Promise<Float32Array | null> {
+  const frame = await prepareEmbedImageBuffer(buffer, { cropMode: "full" });
+  if (!frame) return null;
+  return embedJpegBytes(frame);
 }

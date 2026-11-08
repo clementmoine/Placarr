@@ -14,12 +14,14 @@ import {
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { CATALOGUE_PACKS } from "@/lib/admin/cataloguePacks";
 import { packCatalogDb } from "@/lib/packPaths";
 import {
   replaceSqliteLiveFile,
   unlinkSqliteSidecars,
 } from "@/providers/shared/sqliteLiveReplace";
 
+import { sealedBarcodeIndexKey } from "./barcodes";
 import {
   isProductsIndexV1,
   type ProductsIndexV1,
@@ -37,6 +39,7 @@ const PACK_SQLITE_BUSY_MS = 30_000;
 const PRODUCTS_REWRITE_TABLES = new Set([
   "products",
   "product_contents",
+  "product_barcodes",
   "sqlite_sequence",
 ]);
 
@@ -126,6 +129,14 @@ export function migrateProductsSchema(db: DatabaseSync): void {
       ON product_contents(product_key);
     CREATE INDEX IF NOT EXISTS idx_product_contents_print
       ON product_contents(print_key);
+
+    CREATE TABLE IF NOT EXISTS product_barcodes (
+      barcode TEXT NOT NULL,
+      product_key TEXT NOT NULL,
+      PRIMARY KEY (barcode, product_key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_product_barcodes_barcode
+      ON product_barcodes(barcode);
 
     CREATE TABLE IF NOT EXISTS locale_specific_faces (
       set_code TEXT NOT NULL,
@@ -269,12 +280,13 @@ function writeProductsIndexToSqliteOnce(
   packId: string,
   index: ProductsIndexV1,
   dbPath: string,
-): { dbPath: string; products: number; contents: number } {
+): { dbPath: string; products: number; contents: number; barcodes: number } {
   return withPackSqliteBusyRetry(() => {
     const db = openPackSqliteWrite(dbPath);
     try {
       migrateProductsSchema(db);
       db.exec("BEGIN");
+      db.exec(`DELETE FROM product_barcodes`);
       db.exec(`DELETE FROM product_contents`);
       db.exec(`DELETE FROM products`);
       const insertProduct = db.prepare(`
@@ -287,7 +299,12 @@ function writeProductsIndexToSqliteOnce(
         product_key, print_key, name, slug, ref, qty, finish, image
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
+      const insertBarcode = db.prepare(`
+    INSERT OR IGNORE INTO product_barcodes (barcode, product_key)
+      VALUES (?, ?)
+    `);
       let contents = 0;
+      let barcodes = 0;
       for (const [productKey, entry] of Object.entries(index.products)) {
         insertProduct.run(
           productKey,
@@ -313,9 +330,22 @@ function writeProductsIndexToSqliteOnce(
           );
           contents += 1;
         }
+        const seenKeys = new Set<string>();
+        for (const raw of entry.barcodes ?? []) {
+          const key = sealedBarcodeIndexKey(raw);
+          if (!key || seenKeys.has(key)) continue;
+          seenKeys.add(key);
+          insertBarcode.run(key, productKey);
+          barcodes += 1;
+        }
       }
       db.exec("COMMIT");
-      return { dbPath, products: Object.keys(index.products).length, contents };
+      return {
+        dbPath,
+        products: Object.keys(index.products).length,
+        contents,
+        barcodes,
+      };
     } catch (error) {
       try {
         db.exec("ROLLBACK");
@@ -333,7 +363,7 @@ export function writeProductsIndexToSqlite(
   packId: string,
   index: ProductsIndexV1,
   opts?: { dbPath?: string },
-): { dbPath: string; products: number; contents: number } {
+): { dbPath: string; products: number; contents: number; barcodes: number } {
   const dbPath = opts?.dbPath ?? packCatalogDb(packId);
   try {
     return writeProductsIndexToSqliteOnce(packId, index, dbPath);
@@ -435,6 +465,90 @@ export function catalogHasProductsCorpus(packId: string): boolean {
       /* corrupt handle */
     }
   }
+}
+
+/**
+ * Catalogue packs that expect retail sealed SKUs (`hasSealedProducts !== false`).
+ * Used as the default scan set for multi-pack GTIN lookup.
+ */
+export function sealedCataloguePackIds(): string[] {
+  return CATALOGUE_PACKS.filter(
+    (pack) => pack.hasSealedProducts !== false,
+  ).map((pack) => pack.id);
+}
+
+/**
+ * GTIN → product keys inside one pack catalog. Returns every hit when several
+ * SKUs share a code (Bleach booster/display) — caller must not auto-lock.
+ */
+export function lookupProductKeysByBarcode(
+  packId: string,
+  barcode: string,
+  opts?: { dbPath?: string },
+): string[] {
+  const key = sealedBarcodeIndexKey(barcode);
+  if (!key) return [];
+  const dbPath = opts?.dbPath ?? packCatalogDb(packId);
+  const db = openPackSqliteRead(dbPath);
+  if (!db) return [];
+  try {
+    const has = db
+      .prepare(
+        `SELECT 1 AS ok FROM sqlite_master
+          WHERE type = 'table' AND name = 'product_barcodes'`,
+      )
+      .get() as { ok?: number } | undefined;
+    if (!has?.ok) return [];
+    const rows = db
+      .prepare(
+        `SELECT product_key AS productKey FROM product_barcodes
+          WHERE barcode = ?
+          ORDER BY product_key`,
+      )
+      .all(key) as Array<{ productKey: string }>;
+    return rows.map((row) => row.productKey);
+  } catch {
+    return [];
+  } finally {
+    try {
+      db.close();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export type SealedBarcodeHit = {
+  packId: string;
+  productKey: string;
+};
+
+/**
+ * Multi-pack GTIN lookup. Defaults to sealed catalogue packs; skips packs
+ * without a products corpus. Collision across SKUs/packs is returned in full.
+ */
+export function lookupSealedProductKeysByBarcode(
+  barcode: string,
+  opts?: {
+    packIds?: readonly string[];
+    dbPathForPack?: (packId: string) => string;
+  },
+): SealedBarcodeHit[] {
+  const key = sealedBarcodeIndexKey(barcode);
+  if (!key) return [];
+  const packIds = opts?.packIds ?? sealedCataloguePackIds();
+  const dbPathForPack = opts?.dbPathForPack ?? packCatalogDb;
+  const hits: SealedBarcodeHit[] = [];
+  for (const packId of packIds) {
+    const dbPath = dbPathForPack(packId);
+    if (!existsSync(dbPath)) continue;
+    for (const productKey of lookupProductKeysByBarcode(packId, barcode, {
+      dbPath,
+    })) {
+      hits.push({ packId, productKey });
+    }
+  }
+  return hits;
 }
 
 function sealedKindOrderSql(): string {

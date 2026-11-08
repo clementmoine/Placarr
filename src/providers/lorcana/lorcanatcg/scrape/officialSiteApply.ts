@@ -23,6 +23,7 @@ import {
   sealedBehaviorForKind,
   sealedContentsKnown,
   sealedKindIsOpaqueContents,
+  type SealedKind,
 } from "@/providers/shared/sealedProducts/kinds";
 import { resolveContentLayers } from "@/providers/shared/sealedProducts/contentLayers";
 import {
@@ -30,10 +31,16 @@ import {
   persistSealedProductsIndexDoc,
 } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import { backfillSealedProductSetLogos } from "@/providers/shared/sealedProducts/backfillLogos";
+import {
+  promoteOrphanSealedProductsFromDisk,
+  sealedSlugKindStem,
+  type OrphanDiskProductHit,
+} from "@/providers/shared/sealedProducts/promoteOrphanDiskProducts";
 import { resolveSealedContents } from "@/core/collect/sealedContents";
 
 import {
   inferLangFromPackshotUrl,
+  inferOfficialSetId,
   inferPackshotKind,
   officialProductDisplayName,
   officialSetIdToSetCode,
@@ -45,6 +52,7 @@ import {
   lorcanaCatalogueSetIdForProduct,
   lorcanaLogoUrlForSet,
   lorcanaSetLogoAssetUrl,
+  lorcanaSetRowForProduct,
   loadLorcanaSetLogoIndex,
   lorcanaSetLogoCachePath,
   persistLorcanaSetLogoIndex,
@@ -53,6 +61,13 @@ import {
   LORCANA_SET_LOGO_CACHE_VERSION,
   LORCANA_CATALOG_URL,
 } from "../sources/setLogos";
+
+/** Kinds with many retail SKUs per set — setId alone must not cover an official mint. */
+const MULTI_SKU_PER_SET_KINDS = new Set<SealedKind>([
+  "booster",
+  "blister",
+  "display",
+]);
 
 const SOURCE = "disneysite";
 
@@ -173,6 +188,29 @@ function slugForOfficialPackshot(
 }
 
 /**
+ * Shop slug/name must share the official page slug (or enough tokens). Stops
+ * FR character boosters (`booster-les-terres-d-encres-minnie`) from covering
+ * the generic official packshot (`into-the-inklands-booster`).
+ */
+function shopSkuAffinesOfficialPage(
+  page: OfficialProductPage,
+  shop: SealedProductEntry,
+): boolean {
+  const pageSlug = page.slug.trim().toLowerCase();
+  if (!pageSlug) return false;
+  const compactPage = pageSlug.replace(/-/g, "");
+  const compactHay = `${shop.slug}${shop.name || ""}`
+    .replace(/-/g, "")
+    .toLowerCase();
+  if (compactPage.length > 8 && compactHay.includes(compactPage)) return true;
+  const tokens = pageSlug.split("-").filter((t) => t.length > 3);
+  if (!tokens.length) return false;
+  const hay = `${shop.slug} ${shop.name || ""}`.toLowerCase();
+  const hits = tokens.filter((t) => hay.includes(t)).length;
+  return hits >= Math.min(2, tokens.length);
+}
+
+/**
  * SKU boutique déjà présent pour le même set+kind+lang (évite un doublon
  * official-site). Retourne l'entrée pour éventuellement y coller le packshot
  * officiel (gift boxes, etc.).
@@ -203,25 +241,125 @@ function findCoveringShopSku(
     if (!pLang && want !== "fr") continue;
     if (setId) {
       const code = (p.setCode || "").toLowerCase();
-      if (code === setId) return p;
-      if (p.catalogueSetId && `set${p.catalogueSetId}` === setId) return p;
+      const setMatch =
+        code === setId ||
+        Boolean(p.catalogueSetId && `set${p.catalogueSetId}` === setId);
+      let questMatch = false;
       if (setId.startsWith("quest")) {
         const n = setId.replace(/^quest/, "");
         const hay = `${p.slug} ${p.name || ""} ${p.category || ""}`;
         if (new RegExp(`(?:quest|iq|quête)\\s*${n}`, "i").test(hay)) {
-          return p;
+          questMatch = true;
+        } else if (n === "3" && /miel|hunny/i.test(hay)) questMatch = true;
+        else if (n === "2" && /heist|palais|palace/i.test(hay)) {
+          questMatch = true;
+        } else if (n === "1" && /trouble|profond/i.test(hay)) {
+          questMatch = true;
         }
-        if (n === "3" && /miel|hunny/i.test(hay)) return p;
-        if (n === "2" && /heist|palais|palace/i.test(hay)) return p;
-        if (n === "1" && /trouble|profond/i.test(hay)) return p;
       }
-      continue;
+      if (!setMatch && !questMatch) continue;
+      // Many retail boosters share a set — require page-slug affinity.
+      if (
+        MULTI_SKU_PER_SET_KINDS.has(kind) &&
+        !shopSkuAffinesOfficialPage(page, p)
+      ) {
+        continue;
+      }
+      return p;
     }
-    const root = page.slug.replace(/-/g, "");
-    const hay = `${p.slug}${p.name || ""}`.replace(/-/g, "").toLowerCase();
-    if (root.length > 8 && hay.includes(root)) return p;
+    if (shopSkuAffinesOfficialPage(page, p)) return p;
   }
   return null;
+}
+
+/** `into-the-inklands-booster` → `into-the-inklands`. */
+function officialPageSlugFromProductSlug(productSlug: string): string {
+  const stem = sealedSlugKindStem(productSlug);
+  for (const kind of [
+    "collector_box",
+    "blister_case",
+    "prerelease",
+    "booster",
+    "display",
+    "trove",
+    "quest",
+    "coffret",
+    "blister",
+    "deck",
+    "tin",
+    "etb",
+    "case",
+  ] as const) {
+    if (stem === kind) return stem;
+    if (stem.endsWith(`-${kind}`)) {
+      return stem.slice(0, -(kind.length + 1));
+    }
+  }
+  return stem;
+}
+
+/**
+ * FR chapter title observed on lorcards rows for the same catalogue set
+ * (« Booster Les Terres d'Encres - Minnie » → Les Terres d'Encres).
+ */
+function frChapterTitleFromShopIndex(
+  index: ProductsIndexV1,
+  catalogueSetId: string,
+): string | null {
+  for (const p of Object.values(index.products)) {
+    if ((p.lang || "").trim().toLowerCase() !== "fr") continue;
+    if (String(p.catalogueSetId ?? "") !== catalogueSetId) continue;
+    const name = p.name?.trim() || "";
+    const booster = /^Booster\s+(.+?)\s+[-–—]/i.exec(name);
+    if (booster?.[1]?.trim()) return booster[1]!.trim();
+    const display = /Set\s+\d+\s*[-–—]\s*(.+)$/i.exec(name);
+    if (display?.[1]?.trim() && !/-/.test(display[1]!)) {
+      return display[1]!.trim();
+    }
+  }
+  return null;
+}
+
+function resolveOrphanOfficialDisplayName(
+  hit: OrphanDiskProductHit,
+  index: ProductsIndexV1,
+  logoIndex: LorcanaSetLogoIndex | null,
+): string | null {
+  const pageSlug = officialPageSlugFromProductSlug(hit.slug);
+  const setId = inferOfficialSetId(pageSlug, []);
+  const row =
+    lorcanaSetRowForProduct({
+      setCode: setId,
+      slug: pageSlug,
+      index: logoIndex,
+    }) ?? null;
+  let setName = row?.name?.trim() || null;
+  const catalogueSetId =
+    setId?.match(/^set(\d+)$/)?.[1] ??
+    lorcanaCatalogueSetIdForProduct({
+      setCode: setId,
+      slug: pageSlug,
+      index: logoIndex,
+    });
+  if (!setName && catalogueSetId) {
+    setName = frChapterTitleFromShopIndex(index, catalogueSetId);
+  }
+  if (!setName) {
+    for (const entry of Object.values(index.products)) {
+      if (officialPageSlugFromProductSlug(entry.slug) !== pageSlug) continue;
+      if (entry.kind !== hit.kind) continue;
+      const name = entry.name?.trim();
+      if (name) {
+        setName = name.replace(/\s+Starter Decks$/i, "").trim() || name;
+        break;
+      }
+    }
+  }
+  if (!setName) return null;
+  if (hit.lang === "fr" && hit.kind === "booster") {
+    return `${setName} booster`;
+  }
+  return setName;
 }
 
 /**
@@ -369,6 +507,8 @@ function resolveDurableOfficialArtPath(
 /**
  * Ajoute les packshots officiels absents de lorcards (sans écraser l'index).
  * Source de vérité = ledger `pages.json` (pas les fichiers orphelins du staging).
+ * Orphan `products/{slug}/{lang}/art.*` dirs are promoted even when the ledger
+ * is empty (bytes survived a covering/rebuild that dropped the SKU row).
  */
 export function upsertOfficialSiteProducts(opts: {
   stagingDir?: string;
@@ -380,15 +520,16 @@ export function upsertOfficialSiteProducts(opts: {
   const shotsDir = path.join(staging, "packshots");
   // Ledger falls back to durable pages.json — staging is purged after promote.
   const ledger = readOfficialSiteLedger(staging, packId);
-  if (!ledger) return { written: 0, skipped: 0 };
 
   const logoIndex =
     opts.setLogoIndex ?? loadLorcanaSetLogoIndex(lorcanaSetLogoCachePath());
   const index = loadSealedProductsIndex(packId);
   let written = 0;
   let skipped = 0;
+  /** Accessories dropped from the ledger — never re-mint via orphan disk art. */
+  const suppressedKeys = new Set<string>();
 
-  for (const page of ledger.pages) {
+  for (const page of ledger?.pages ?? []) {
     const pageLang = (page.lang ?? "fr").toLowerCase();
     for (const [shotIndex, shot] of page.packshots.entries()) {
       /*
@@ -403,6 +544,7 @@ export function upsertOfficialSiteProducts(opts: {
             inferLangFromPackshotUrl(shot.url) ?? pageLang;
           const dropSlug = slugForOfficialPackshot(page, shot.kind, dropLang);
           const dropKey = sealedProductKey(packId, dropSlug);
+          suppressedKeys.add(dropKey);
           const drop = index.products[dropKey];
           if (drop?.category === "official-site") {
             delete index.products[dropKey];
@@ -634,10 +776,48 @@ export function upsertOfficialSiteProducts(opts: {
     }
   }
 
+  const orphans = promoteOrphanSealedProductsFromDisk({
+    packId,
+    index,
+    category: "official-site",
+    skipKeys: suppressedKeys,
+    resolveName: (hit) =>
+      resolveOrphanOfficialDisplayName(hit, index, logoIndex),
+    resolveSetLogo: (hit) => {
+      const pageSlug = officialPageSlugFromProductSlug(hit.slug);
+      const setId = inferOfficialSetId(pageSlug, []);
+      return (
+        lorcanaLogoUrlForSet({
+          setCode: setId,
+          slug: pageSlug,
+          index: logoIndex,
+        }) ?? null
+      );
+    },
+    resolveCatalogueSetId: (hit) => {
+      const pageSlug = officialPageSlugFromProductSlug(hit.slug);
+      const setId = inferOfficialSetId(pageSlug, []);
+      return (
+        setId?.match(/^set(\d+)$/)?.[1] ??
+        lorcanaCatalogueSetIdForProduct({
+          setCode: setId,
+          slug: pageSlug,
+          index: logoIndex,
+        })
+      );
+    },
+    resolveSetCode: (hit) => {
+      const pageSlug = officialPageSlugFromProductSlug(hit.slug);
+      return officialSetIdToSetCode(inferOfficialSetId(pageSlug, []));
+    },
+  });
+  written += orphans.written;
   written += backfillSealedProductSetLogos(packId, index.products);
 
-  index.generatedAt = new Date().toISOString();
-  persistSealedProductsIndexDoc(index, { alreadyMerged: false });
+  if (written > 0 || ledger) {
+    index.generatedAt = new Date().toISOString();
+    persistSealedProductsIndexDoc(index, { alreadyMerged: false });
+  }
   return { written, skipped };
 }
 

@@ -15,6 +15,9 @@ export const CARD_EMBED_DIM = 384;
 /**
  * Art band crop (fractions of the card face). Must be identical on index
  * build and query, server and client — the vector space depends on it.
+ *
+ * **Cards only.** Sealed product packshots use {@link EmbedCropMode} `"full"`
+ * — never apply this band to a product gallery (borders/logos are signal).
  */
 export const CARD_ART_BAND = {
   left: 0.08,
@@ -22,6 +25,13 @@ export const CARD_ART_BAND = {
   width: 0.84,
   height: 0.48,
 } as const;
+
+/**
+ * How the face is framed before DINOv2.
+ * - `artBand` — cardboard ID (CARD_ART_BAND crop)
+ * - `full` — sealed packshots (entire frame, no band)
+ */
+export type EmbedCropMode = "artBand" | "full";
 
 export function cardArtBandRect(
   width: number,

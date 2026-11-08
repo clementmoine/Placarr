@@ -158,6 +158,18 @@ export type SealedProductEntry = {
   contentsKnown: boolean;
   containsPrintsIsPreview: boolean;
   prints: SealedPrintLink[];
+  /**
+   * Retail GTINs for this SKU (EAN-13 / UPC-A / JAN), digits-only after
+   * {@link normalizeSealedBarcode}. Several codes when territories differ;
+   * never invent. Shared codes across SKUs (display vs booster) stay listed
+   * on each — lookup returns every hit; caller decides collisions.
+   */
+  barcodes?: string[];
+  /**
+   * Optional citation per normalized code (URL or short note). Keys match
+   * entries in `barcodes` (or a `barcodeMatchKey` equivalent).
+   */
+  barcodeSources?: Record<string, string>;
 };
 
 export type ProductsIndexV1 = {

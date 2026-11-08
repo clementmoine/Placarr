@@ -70,7 +70,9 @@ import {
   installProviderProductsContents,
   mergeCuratedSealedContents,
 } from "@/providers/shared/sealedProducts/curatedContents";
+import { mergeSealedBarcodes } from "@/providers/shared/sealedProducts/barcodes";
 import { persistSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
+import { overlayMinedBarcodesOntoProducts } from "@/providers/shared/sealedProducts/projectLedgerBarcodes";
 import { isCatalogueProductLang } from "@/providers/shared/cardCatalogue/catalogueLangs";
 import {
   narutoProductFileOf,
@@ -447,6 +449,8 @@ export type NarutoSealedSpec = {
   attested?: boolean;
   /** Sachets dans ce produit (display EN = 24) — overlay curated peut aussi le poser. */
   packsContained?: number | null;
+  /** JAN / EAN Bandai ou boutique quand le relevé officiel le porte. */
+  jan?: string | null;
   /**
    * Dumps parallèles (JP multi-hôtes, etc.). Toujours archivés à côté du
    * stagingKind primaire ; productChoice choisit l'affichage.
@@ -1903,6 +1907,7 @@ export async function ingestSealedLine(opts: {
       contentsKnown: false,
       containsPrintsIsPreview: false,
     });
+    const barcodes = mergeSealedBarcodes([], [spec.jan]);
     const entry: SealedProductEntry = {
       slug: spec.slug,
       path: artDump?.stagingRel ?? artFile ?? "",
@@ -1933,11 +1938,21 @@ export async function ingestSealedLine(opts: {
       contentsKnown: false,
       containsPrintsIsPreview: false,
       prints: [],
+      ...(barcodes.length
+        ? {
+            barcodes,
+            barcodeSources: Object.fromEntries(
+              barcodes.map((code) => [code, "carddass-official"]),
+            ),
+          }
+        : {}),
     };
     index.products[sealedProductKey(opts.packId, spec.slug)] = entry;
   }
 
   removeLegacyFlatProductFiles(destRoot);
+  // Densify GTINs from packshot ledgers (fnac / toywiz / kinkai / …) by slug.
+  overlayMinedBarcodesOntoProducts(index.products, opts.packId);
   index.products = mergeCuratedSealedContents(opts.packId, index.products);
   const { file } = persistSealedProductsIndex(opts.packId, index.products, {
     alreadyMerged: true,

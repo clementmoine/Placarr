@@ -15,7 +15,7 @@ import {
   assetsPackFileUrl,
   assetsPackTierBackRoleUrl,
   assetsSetBackRoleUrl,
-  isCardEmbedShardFile,
+  isIdentifyEmbedShardFile,
 } from "./packAssetUrls";
 
 export {
@@ -240,6 +240,11 @@ export function packColekaPricesPath(pack: string): string {
 /** Pokémon McDo Coleka deals — `data/pokemon/coleka-mcdo-prices.json`. */
 export function packColekaMcdoPricesPath(): string {
   return path.join(packDataDir("pokemon"), "coleka-mcdo-prices.json");
+}
+
+/** Pokémon McDo Cardmarket EUR via TCGdex — `data/pokemon/tcgdex-mcdo-prices.json`. */
+export function packTcgdexMcdoPricesPath(): string {
+  return path.join(packDataDir("pokemon"), "tcgdex-mcdo-prices.json");
 }
 
 /**
@@ -524,7 +529,7 @@ export function resolveAssetsDiskRoot(
 ): { root: string; relative: string[] } | null {
   if (rest.length === 0) return null;
   const disk = canonicalDataPack(pack);
-  if (rest.length === 1 && isCardEmbedShardFile(rest[0])) {
+  if (rest.length === 1 && isIdentifyEmbedShardFile(rest[0])) {
     return { root: packDataDir(disk), relative: rest };
   }
   if (rest[0] === "cards") {

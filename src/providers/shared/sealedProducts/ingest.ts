@@ -23,6 +23,7 @@ import {
 import { tcgCardsSiteForPack } from "@/providers/shared/tcgcards/sites";
 import { resolveTcgCardsProductsDir } from "@/providers/shared/tcgcards/productsStagingLifecycle";
 
+import { mergeSealedBarcodes } from "./barcodes";
 import {
   emptyProductsIndex,
   sealedProductKey,
@@ -245,6 +246,7 @@ export function sealedProductFromStaging(input: {
       ? contained.reduce((sum, row) => sum + row.qty, 0)
       : null;
   const hasProductBundle = Boolean(guaranteedProducts?.length);
+  const barcodes = mergeSealedBarcodes([], page?.barcodes ?? []);
   return {
     slug: input.listing.slug,
     path: input.listing.path || page?.path || "",
@@ -299,6 +301,7 @@ export function sealedProductFromStaging(input: {
     containsPrintsIsPreview: hasProductBundle ? false : preview,
     contentsKnown: hasProductBundle ? true : contentsKnown,
     prints,
+    ...(barcodes.length ? { barcodes } : {}),
   };
 }
 

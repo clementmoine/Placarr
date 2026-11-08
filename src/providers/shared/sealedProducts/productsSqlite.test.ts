@@ -9,10 +9,44 @@ import { emptyProductsIndex, type SealedProductEntry } from "./indexFormat";
 import {
   listProductsCataloguePage,
   loadProductsIndexFromSqlite,
+  lookupProductKeysByBarcode,
+  lookupSealedProductKeysByBarcode,
   readPackDocument,
   writePackDocument,
   writeProductsIndexToSqlite,
 } from "./productsSqlite";
+
+function minimalEntry(
+  slug: string,
+  overrides: Partial<SealedProductEntry> = {},
+): SealedProductEntry {
+  return {
+    slug,
+    path: `products/${slug}`,
+    kind: "booster",
+    behavior: "random_pack",
+    category: "booster",
+    name: slug,
+    image: null,
+    imageBack: null,
+    setLogo: null,
+    setCode: "s1",
+    lang: "fr",
+    releaseDate: null,
+    priceCents: 100,
+    cardsPerPack: 5,
+    packsContained: 1,
+    guaranteedPrints: [],
+    randomPoolScope: "set",
+    randomPoolPrints: [],
+    declaredCardCount: null,
+    setCardCount: null,
+    contentsKnown: false,
+    containsPrintsIsPreview: false,
+    prints: [],
+    ...overrides,
+  };
+}
 
 describe("productsSqlite", () => {
   let dir = "";
@@ -146,6 +180,63 @@ describe("productsSqlite", () => {
     const header = Buffer.from("SQLite format 3\0");
     writeFileSync(dbPath, Buffer.concat([header, Buffer.alloc(4096, 0)]));
     expect(loadProductsIndexFromSqlite("demo", { dbPath })).toBeNull();
+  });
+
+  it("indexes barcodes and returns every SKU sharing a GTIN (Bleach trap)", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-barcode-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    // Shared retail EAN on Bleach S1 booster face + display (press-packshots).
+    const sharedEan = "3296580052110";
+    const index = emptyProductsIndex("bleach/scb");
+    index.products["bleach/scb::booster-s1-shinigami-and-ichigo"] = minimalEntry(
+      "booster-s1-shinigami-and-ichigo",
+      {
+        kind: "booster",
+        category: "booster",
+        barcodes: [sharedEan],
+        barcodeSources: { [sharedEan]: "tempslibre" },
+      },
+    );
+    index.products["bleach/scb::display-s1-shinigami-and-ichigo"] = minimalEntry(
+      "display-s1-shinigami-and-ichigo",
+      {
+        kind: "display",
+        category: "display",
+        behavior: "pack_container",
+        packsContained: 24,
+        barcodes: [sharedEan],
+        barcodeSources: { [sharedEan]: "ultrajeux" },
+      },
+    );
+
+    const written = writeProductsIndexToSqlite("bleach/scb", index, { dbPath });
+    expect(written.barcodes).toBe(2);
+
+    const keys = lookupProductKeysByBarcode("bleach/scb", sharedEan, { dbPath });
+    expect(keys).toEqual([
+      "bleach/scb::booster-s1-shinigami-and-ichigo",
+      "bleach/scb::display-s1-shinigami-and-ichigo",
+    ]);
+
+    // Leading-zero variant still hits the same index key.
+    expect(
+      lookupProductKeysByBarcode("bleach/scb", `0${sharedEan}`, { dbPath }),
+    ).toEqual(keys);
+
+    const multi = lookupSealedProductKeysByBarcode(sharedEan, {
+      packIds: ["bleach/scb"],
+      dbPathForPack: () => dbPath,
+    });
+    expect(multi).toEqual([
+      {
+        packId: "bleach/scb",
+        productKey: "bleach/scb::booster-s1-shinigami-and-ichigo",
+      },
+      {
+        packId: "bleach/scb",
+        productKey: "bleach/scb::display-s1-shinigami-and-ichigo",
+      },
+    ]);
   });
 
   it("salvages a corrupt catalog then rewrites products", () => {

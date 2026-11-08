@@ -138,8 +138,12 @@ describe("packPaths", () => {
   it("serves the identify embedding shards from the pack root, not foil/", async () => {
     const { splitAssetsPackPath, resolveAssetsDiskRoot } =
       await import("./packPaths");
-    const { CARD_EMBED_SHARD_FILES } = await import("./packAssetUrls");
-    for (const file of Object.values(CARD_EMBED_SHARD_FILES)) {
+    const { CARD_EMBED_SHARD_FILES, PRODUCT_EMBED_SHARD_FILES } =
+      await import("./packAssetUrls");
+    for (const file of [
+      ...Object.values(CARD_EMBED_SHARD_FILES),
+      ...Object.values(PRODUCT_EMBED_SHARD_FILES),
+    ]) {
       const split = splitAssetsPackPath(["lorcana", file])!;
       const mapped = resolveAssetsDiskRoot(split.pack, split.rest)!;
       expect(mapped.root.endsWith("/lorcana")).toBe(true);

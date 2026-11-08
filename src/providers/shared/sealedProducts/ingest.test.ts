@@ -327,6 +327,7 @@ describe("sealed ingest", () => {
         relatedProducts: [],
         containedProducts: [],
         tables: {},
+        barcodes: ["3391891963138"],
       },
     });
     expect(entry).toMatchObject({
@@ -342,6 +343,7 @@ describe("sealed ingest", () => {
       */
       cardsPerPack: null,
       packsContained: 1,
+      barcodes: ["3391891963138"],
     });
     expect(entry?.prints).toHaveLength(1);
     expect(entry?.prints[0]?.printKey).toBeNull();

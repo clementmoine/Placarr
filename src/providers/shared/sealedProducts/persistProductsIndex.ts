@@ -18,6 +18,11 @@ import {
   type SealedProductEntry,
 } from "./indexFormat";
 import { backfillSealedProductSetLogos } from "./backfillLogos";
+import { mergeSealedBarcodes } from "./barcodes";
+import {
+  mergeSealedBarcodeSources,
+  overlayMinedBarcodesOntoProducts,
+} from "./projectLedgerBarcodes";
 import { backfillSealedProductPackshots } from "./packshotUrl";
 import {
   loadProductsIndexFromSqlite,
@@ -113,6 +118,25 @@ export function coalesceSealedProductEntry(
     if (!next) next = { ...primary };
     (next as Record<string, unknown>)[field] = fill[field];
   }
+  const barcodes = mergeSealedBarcodes(primary.barcodes, fill.barcodes);
+  const barcodeSources = mergeSealedBarcodeSources(
+    primary.barcodeSources,
+    fill.barcodeSources,
+  );
+  const codesChanged =
+    barcodes.length > 0 &&
+    (barcodes.length !== (primary.barcodes?.length ?? 0) ||
+      barcodes.some((code, i) => code !== primary.barcodes?.[i]));
+  const sourcesChanged =
+    JSON.stringify(primary.barcodeSources ?? null) !==
+    JSON.stringify(barcodeSources ?? null);
+  if (codesChanged || sourcesChanged) {
+    next = {
+      ...(next ?? primary),
+      ...(barcodes.length ? { barcodes } : {}),
+      ...(barcodeSources ? { barcodeSources } : {}),
+    };
+  }
   return next ?? primary;
 }
 
@@ -163,6 +187,11 @@ export function loadSealedProductsIndex(
     };
   }
   const products = mergeCuratedSealedContents(packId, index.products);
+  try {
+    overlayMinedBarcodesOntoProducts(products, packId);
+  } catch {
+    /* Source digs optional — never block sealed index load. */
+  }
   return {
     ...index,
     pack: packId,
@@ -188,6 +217,11 @@ export function persistSealedProductsIndex(
   const merged = opts.alreadyMerged
     ? products
     : mergeCuratedSealedContents(packId, products);
+  try {
+    overlayMinedBarcodesOntoProducts(merged, packId);
+  } catch {
+    /* Source digs optional — never block sealed index write. */
+  }
   const index: ProductsIndexV1 = {
     version: 1,
     pack: packId,

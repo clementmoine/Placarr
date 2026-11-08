@@ -9,6 +9,7 @@
  * Reprint fallbacks for TCGdex Shiny Vault splits (`*sv`) — see
  * {@link liveSetCandidatesForResolve}.
  */
+import { reprintMetaForTcgdexSet } from "./liveJoin";
 import { TCGDEX_TO_LIVE_SETS } from "./setAliases";
 
 /** McDonald's year collections (`2023sv`) — not parent+sv vault splits. */
@@ -20,11 +21,27 @@ export function liveSetCandidatesFromTcgdexSet(
   const raw = setId?.trim().toLowerCase();
   if (!raw) return [];
 
-  const aliased = TCGDEX_TO_LIVE_SETS[raw];
-  if (aliased?.length) return [...aliased];
+  const out: string[] = [];
+  const push = (stem: string | null | undefined) => {
+    const s = stem?.trim().toLowerCase();
+    if (!s || out.includes(s)) return;
+    out.push(s);
+  };
 
-  const normalized = normalizeLiveSetId(raw);
-  return normalized ? [normalized] : [];
+  const aliased = TCGDEX_TO_LIVE_SETS[raw];
+  if (aliased?.length) {
+    for (const stem of aliased) push(stem);
+  } else {
+    push(normalizeLiveSetId(raw));
+  }
+
+  // Shiny Vault splits: primary mechanical stem is often absent (`swsh4-5sv`);
+  // paper faces live on the parent Live table (`swsh4-5` @ offset+SV#).
+  const reprint = reprintMetaForTcgdexSet(raw);
+  if (reprint?.parentLive) push(reprint.parentLive);
+  for (const stem of mechanicalReprintFallbackStems(raw)) push(stem);
+
+  return out;
 }
 
 /** Primary Live stem for a TCGdex set (first candidate). */

@@ -73,23 +73,17 @@ describe("mechanicalReprintFallbackStems", () => {
 });
 
 describe("liveSetCandidatesForResolve", () => {
-  it("appends mechanical *sv fallback when primary stem is absent from dump", () => {
+  it("lists parent Live stem for *sv vault splits (paper faces on parent table)", () => {
+    expect(liveSetCandidatesFromTcgdexSet("swsh4.5sv")).toEqual([
+      "swsh4-5sv",
+      "swsh4-5",
+    ]);
     const dump = new Set(["swsh4-5"]);
     expect(
       liveSetCandidatesForResolve("swsh4.5sv", (s) => dump.has(s)),
     ).toEqual({
-      primary: ["swsh4-5sv"],
+      primary: ["swsh4-5sv", "swsh4-5"],
       candidates: ["swsh4-5sv", "swsh4-5"],
-    });
-  });
-
-  it("drops reprint fallback once the dedicated Live stem exists", () => {
-    const dump = new Set(["swsh4-5sv", "swsh4-5"]);
-    expect(
-      liveSetCandidatesForResolve("swsh4.5sv", (s) => dump.has(s)),
-    ).toEqual({
-      primary: ["swsh4-5sv"],
-      candidates: ["swsh4-5sv"],
     });
   });
 

@@ -54,6 +54,24 @@ describe("remapCollectorNumberForLive", () => {
     expect(remapCollectorNumberForLive("g1", "RC1")).toBe("RC1");
   });
 
+  it("strips GG/TG/CC prefixes onto Live 1…N gallery folders", () => {
+    expect(remapCollectorNumberForLive("swsh12.5gg", "gg01")).toBe("1");
+    expect(remapCollectorNumberForLive("swsh12.5gg", "GG70")).toBe("70");
+    expect(remapCollectorNumberForLive("swsh9tg", "TG01")).toBe("1");
+    expect(remapCollectorNumberForLive("cel25cc", "cc001")).toBe("1");
+    expect(remapCollectorNumberForLive("cel25cc", "CC025")).toBe("25");
+  });
+
+  it("strips swsh prefix on Black Star SWSH promos", () => {
+    expect(remapCollectorNumberForLive("swshp", "swsh251")).toBe("251");
+    expect(remapCollectorNumberForLive("swshp", "SWSH307")).toBe("307");
+  });
+
+  it("strips sm prefix on Black Star SM promos", () => {
+    expect(remapCollectorNumberForLive("smp", "SM01")).toBe("1");
+    expect(remapCollectorNumberForLive("smp", "sm205")).toBe("205");
+  });
+
   it("remaps 30ᵉ Classic Collection TCGdex order onto Live me5-5c", () => {
     // TCGdex #001 Charizard / Dracaufeu → Live #2 (not Pikachu #1)
     expect(remapCollectorNumberForLive("me05.5c", "001")).toBe("2");

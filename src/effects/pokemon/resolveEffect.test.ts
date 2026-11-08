@@ -194,7 +194,8 @@ describe("resolveEffectForPrintKey", () => {
       variant: "std",
       bundle: "swsh4-5_fr_074",
       confidence: "exact",
-      source: "tcglive-reprint-fallback",
+      // Alias table now resolves SV vault → swsh4-5 as a direct Live bundle.
+      source: "tcglive-bundle",
     });
   });
 
@@ -203,7 +204,7 @@ describe("resolveEffectForPrintKey", () => {
     expect(r).toMatchObject({
       shader: "SwSecret",
       bundle: "swsh4-5_fr_195",
-      source: "tcglive-reprint-fallback",
+      source: "tcglive-bundle",
     });
   });
 

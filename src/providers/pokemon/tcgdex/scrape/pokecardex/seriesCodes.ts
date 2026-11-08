@@ -57,14 +57,20 @@ export function isPokecardexSeriesCode(code: string): boolean {
   return /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/.test(code.trim());
 }
 
-/** Curated alias only (`tk-ex-latia` → `TK1-LA`). */
+/** Curated alias only (`tk-ex-latia` / `tk.xy.w` → `TK1-LA` / `TK7-G`). */
 export function pokecardexAliasCodeForSet(
   setId: string,
   aliases: Readonly<Record<string, string>> = loadPokecardexSeriesAliases(),
 ): string | null {
   const id = setId.trim().toLowerCase();
   if (!id) return null;
-  const alias = aliases[id]?.trim();
-  if (alias && isPokecardexSeriesCode(alias)) return alias.toUpperCase();
+  const candidates = [id];
+  // Catalogue kits use dots (`tk.xy.w`); curated ledger keys use dashes.
+  if (id.includes(".")) candidates.push(id.replace(/\./g, "-"));
+  if (id.includes("-")) candidates.push(id.replace(/-/g, "."));
+  for (const key of candidates) {
+    const alias = aliases[key]?.trim();
+    if (alias && isPokecardexSeriesCode(alias)) return alias.toUpperCase();
+  }
   return null;
 }

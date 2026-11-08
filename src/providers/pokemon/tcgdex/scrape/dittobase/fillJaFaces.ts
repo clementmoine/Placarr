@@ -40,6 +40,13 @@ export const DITTOBASE_JA_SETS: Readonly<Record<string, string>> = {
   vs1: "VS1",
   /** Base Expansion Pack successors — `E1`/`web1` not hosted (403). */
   e2: "E2",
+  /** Original Japanese Base / Jungle / Fossil / Rocket era (pmcg*). */
+  pmcg1: "PMCG1",
+  pmcg2: "PMCG2",
+  pmcg3: "PMCG3",
+  pmcg4: "PMCG4",
+  pmcg5: "PMCG5",
+  pmcg6: "PMCG6",
 };
 
 export type DittobaseJaFillReport = {

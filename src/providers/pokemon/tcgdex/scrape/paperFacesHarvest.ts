@@ -17,6 +17,7 @@ import { syncTcgdexPrintAssetsFromDisk } from "@/providers/pokemon/tcgdex/indexS
 
 import { harvestColekaMcdoFaces } from "./coleka/scrapeColekaPokemonFaces";
 import { harvestColekaMcdoPrices } from "./coleka/colekaPrices";
+import { harvestTcgdexMcdoPrices } from "./tcgdexMcdoPrices";
 import {
   fillMcdnGalleryFaces,
   fillPkmcardsFaces,
@@ -30,6 +31,7 @@ import { fillAlamedyangJaFaces } from "./alamedyang/fillJaFaces";
 import { fillPokemonCardnexusFaces } from "./cardnexus/fillFaces";
 import { fillDittobaseJaFaces } from "./dittobase/fillJaFaces";
 import { fillLimitlessJaFaces } from "./limitless/fillJaFaces";
+import { fillLimitlessPocketFacesForSet } from "./limitless/fillPocketFaces";
 import { fillPokecardexMcdoFaces } from "./pokecardex/fillMcdo";
 import { fillPokecardexRetailFaces } from "./pokecardex/fillSets";
 import { fillPokellectorJaFaces } from "./pokellector/fillJaFaces";
@@ -170,6 +172,16 @@ export async function runPokemonPaperFacesHarvest(
       `   Coleka deals prices: ${err instanceof Error ? err.message : err}`,
     );
   }
+  try {
+    const tcgdexPrices = await harvestTcgdexMcdoPrices();
+    console.log(
+      `   TCGdex Cardmarket McDo: ${tcgdexPrices.ledger.withPrintKey} printKey (cote ${tcgdexPrices.ledger.withQuotation})`,
+    );
+  } catch (err) {
+    console.warn(
+      `   TCGdex Cardmarket McDo: ${err instanceof Error ? err.message : err}`,
+    );
+  }
 
   console.log("── Pokémon paper faces — TCGPlayer McDo 2023 EN");
   const tcgplayer = await fillTcgplayerMcdo2023({
@@ -184,18 +196,39 @@ export async function runPokemonPaperFacesHarvest(
   for (const setId of Object.keys(POKEMONTCG_MCDO_STEMS)) {
     const count = setId === "2021swsh" ? 25 : /swsh$/.test(setId) ? 15 : 12;
     const localIds = Array.from({ length: count }, (_, i) => String(i + 1));
-    const row = await fillPokemontcgIoFacesForSet({
-      setId,
+    for (const lang of ["fr", "en"] as const) {
+      const row = await fillPokemontcgIoFacesForSet({
+        setId,
+        localIds,
+        lang,
+        force: opts.force,
+        cardsRoot: opts.cardsRoot,
+      });
+      if (row.written + row.skipped > 0 || row.failed < row.tried) {
+        console.log(
+          `   pokemontcg.io ${setId}/${lang}: ${row.written} écrites / ${row.skipped} skip / ${row.failed} fail`,
+        );
+      }
+      pokemontcg.push(row);
+    }
+  }
+
+  console.log("── Pokémon paper faces — Limitless Pocket (B2a…)");
+  {
+    const localIds = Array.from({ length: 131 }, (_, i) =>
+      String(i + 1).padStart(3, "0"),
+    );
+    const pocket = await fillLimitlessPocketFacesForSet({
+      // CDN path is case-sensitive (`B2a_001_EN.webp`); disk folder lowercases.
+      setId: "B2a",
       localIds,
+      lang: "fr",
       force: opts.force,
       cardsRoot: opts.cardsRoot,
     });
-    if (row.written + row.skipped > 0 || row.failed < row.tried) {
-      console.log(
-        `   pokemontcg.io ${setId}: ${row.written} écrites / ${row.skipped} skip / ${row.failed} fail`,
-      );
-    }
-    pokemontcg.push(row);
+    console.log(
+      `   limitless pocket B2a: ${pocket.written} écrites / ${pocket.skipped} skip / ${pocket.failed} fail`,
+    );
   }
 
   console.log("── Pokémon paper faces — pkmcards.fr");

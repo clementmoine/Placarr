@@ -355,15 +355,13 @@ export function resolvePkmcardsAbbrToLiveStem(
 // —— fillPokemontcgIo.ts ——
 
 /**
- * Fill EN McDo faces from images.pokemontcg.io (years with CDN coverage).
+ * Fill catalogue faces from images.pokemontcg.io (McDo + other CDN stems).
  */
-
-
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
 
-/** TCGdex McDo set → pokemontcg.io stem. 2023/2024 absent on CDN. */
+/** TCGdex set → pokemontcg.io stem. 2023/2024 McDo absent on CDN. */
 export const POKEMONTCG_MCDO_STEMS: Readonly<Record<string, string>> = {
   "2011bw": "mcd11",
   "2012bw": "mcd12",
@@ -377,12 +375,54 @@ export const POKEMONTCG_MCDO_STEMS: Readonly<Record<string, string>> = {
   "2022swsh": "mcd22",
 };
 
+/** Extra TCGdex sets with pokemontcg.io coverage (not McDo). */
+export const POKEMONTCG_SET_STEMS: Readonly<Record<string, string>> = {
+  ...POKEMONTCG_MCDO_STEMS,
+  ecard2: "ecard2",
+  ecard3: "ecard3",
+  "tk.hs.r": "tk1a",
+  "tk-hs-r": "tk1a",
+  "tk.hs.g": "tk1a",
+  "tk.ex.latia": "tk1a",
+  "tk.ex.latio": "tk1b",
+  "tk.ex.m": "tk2a",
+  "tk.ex.p": "tk2b",
+  "tk.dp.m": "tk2a",
+  "tk.dp.l": "tk2b",
+  hgssp: "hsp",
+  swshp: "swshp",
+  pop6: "pop6",
+};
+
 export function pokemontcgIoMcdoImageUrl(
   stem: string,
   localId: string,
 ): string {
   const n = localId.replace(/\D/g, "") || localId;
   return `https://images.pokemontcg.io/${stem}/${n}_hires.png`;
+}
+
+/** Prefer printed token (H1, SWSH251) then digit-stripped fallback. */
+export function pokemontcgIoImageUrls(
+  stem: string,
+  localId: string,
+): string[] {
+  const raw = localId.trim();
+  const urls: string[] = [];
+  const push = (token: string) => {
+    const url = `https://images.pokemontcg.io/${stem}/${token}_hires.png`;
+    if (!urls.includes(url)) urls.push(url);
+  };
+  if (raw) {
+    push(raw);
+    push(raw.toUpperCase());
+  }
+  const digits = raw.replace(/\D/g, "");
+  if (digits) {
+    push(digits);
+    push(String(Number.parseInt(digits, 10)));
+  }
+  return urls;
 }
 
 async function download(url: string): Promise<Buffer | null> {
@@ -435,8 +475,14 @@ export async function fillPokemontcgIoFacesForSet(opts: {
   lang?: string;
   force?: boolean;
   cardsRoot?: string;
+  /** Override stem map lookup (defaults {@link POKEMONTCG_SET_STEMS}). */
+  stem?: string | null;
 }): Promise<PokemontcgFillReport> {
-  const stem = POKEMONTCG_MCDO_STEMS[opts.setId] ?? null;
+  const stem =
+    opts.stem?.trim() ||
+    POKEMONTCG_SET_STEMS[opts.setId] ||
+    POKEMONTCG_MCDO_STEMS[opts.setId] ||
+    null;
   const lang = (opts.lang ?? "en").toLowerCase();
   const report: PokemontcgFillReport = {
     setId: opts.setId,
@@ -465,7 +511,11 @@ export async function fillPokemontcgIoFacesForSet(opts: {
       refreshPokemonFaceDecision(cardDir, lang);
       continue;
     }
-    const buf = await download(pokemontcgIoMcdoImageUrl(stem, localId));
+    let buf: Buffer | null = null;
+    for (const url of pokemontcgIoImageUrls(stem, localId)) {
+      buf = await download(url);
+      if (buf) break;
+    }
     if (!buf) {
       report.failed += 1;
       continue;
@@ -495,10 +545,23 @@ export function tcgplayerIdFromCardPayload(raw: {
   variants_detailed?: Array<{
     thirdParty?: { tcgplayer?: number | null };
   }> | null;
+  pricing?: {
+    tcgplayer?: Record<string, { productId?: number | null } | string | null> | null;
+  } | null;
 }): number | null {
   for (const row of raw.variants_detailed ?? []) {
     const id = row.thirdParty?.tcgplayer;
     if (typeof id === "number" && id > 0) return id;
+  }
+  // TCGdex v2 often ships productId under pricing.tcgplayer.{normal,holofoil,…}
+  // without variants_detailed — Classic Collection / theme kits rely on this.
+  const pricing = raw.pricing?.tcgplayer;
+  if (pricing && typeof pricing === "object") {
+    for (const value of Object.values(pricing)) {
+      if (!value || typeof value !== "object") continue;
+      const id = value.productId;
+      if (typeof id === "number" && id > 0) return id;
+    }
   }
   return null;
 }
@@ -513,6 +576,44 @@ export type TcgplayerFillReport = {
 };
 
 /**
+ * Catalogue set id → TCGdex EN API set segment when they diverge
+ * (`me05.5c` → `30th-c`, `tk.xy.b` → `tk-xy-b`).
+ */
+export const TCGPLAYER_API_SET_IDS: Readonly<Record<string, string>> = {
+  "me05.5c": "30th-c",
+  "tk.hs.g": "tk-hs-g",
+  "tk.hs.r": "tk-hs-r",
+  "tk.bw.e": "tk-bw-e",
+  "tk.bw.z": "tk-bw-z",
+  "tk.sm.l": "tk-sm-l",
+  "tk.sm.r": "tk-sm-r",
+  "tk.xy.b": "tk-xy-b",
+  "tk.xy.latia": "tk-xy-latia",
+  "tk.xy.latio": "tk-xy-latio",
+  "tk.xy.n": "tk-xy-n",
+  "tk.xy.p": "tk-xy-p",
+  "tk.xy.su": "tk-xy-su",
+  "tk.xy.sy": "tk-xy-sy",
+  "tk.xy.w": "tk-xy-w",
+};
+
+export function tcgplayerApiSetId(setId: string): string {
+  const raw = setId.trim();
+  return TCGPLAYER_API_SET_IDS[raw] ?? raw.replace(/\./g, "-");
+}
+
+export function tcgplayerApiCardId(setId: string, localId: string): string {
+  const apiSet = tcgplayerApiSetId(setId);
+  const local = localId.trim();
+  if (!local) return apiSet;
+  // Keep `?` / `!` literal — callers encodeURIComponent the whole id.
+  if (/^[a-z!]$/i.test(local) || local === "?") {
+    return `${apiSet}-${local === "?" ? "?" : local.toUpperCase()}`;
+  }
+  return `${apiSet}-${local}`;
+}
+
+/**
  * For each localId in `localIds`, fetch TCGdex EN card → TCGPlayer image →
  * `art.tcgplayer.jpg` under cards/en/{set}/{num}/.
  */
@@ -522,6 +623,8 @@ export async function fillTcgplayerFacesForSet(opts: {
   lang?: string;
   force?: boolean;
   cardsRoot?: string;
+  /** Override TCGdex EN API set id (defaults {@link tcgplayerApiSetId}). */
+  apiSetId?: string;
   fetchCard?: (tcgdexId: string) => Promise<unknown>;
   downloadImage?: (url: string) => Promise<Buffer | null>;
 }): Promise<TcgplayerFillReport> {
@@ -567,14 +670,14 @@ export async function fillTcgplayerFacesForSet(opts: {
       continue;
     }
 
-    const tcgdexId = `${opts.setId}-${/^[a-z]$/i.test(localId) ? localId.toUpperCase() : localId}`;
+    const tcgdexId = opts.apiSetId
+      ? tcgplayerApiCardId(opts.apiSetId, localId)
+      : tcgplayerApiCardId(opts.setId, localId);
     let productId: number | null = null;
     try {
-      const raw = (await fetchCard(tcgdexId)) as {
-        variants_detailed?: Array<{
-          thirdParty?: { tcgplayer?: number | null };
-        }> | null;
-      };
+      const raw = (await fetchCard(tcgdexId)) as Parameters<
+        typeof tcgplayerIdFromCardPayload
+      >[0];
       productId = tcgplayerIdFromCardPayload(raw);
     } catch {
       report.failed += 1;

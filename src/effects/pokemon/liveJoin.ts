@@ -191,6 +191,29 @@ export function remapCollectorNumberForLive(
     }
   }
 
+  /*
+    Galarian Gallery / Trainer Gallery / Classic Collection reprints: TCGdex
+    keeps the printed prefix (`GG01`, `TG01`, `CC001`) while Live dumps those
+    slices as plain 1…N folders on `*a` / `*-r` stems.
+  */
+  const gallery = /^(gg|tg|cc)0*(\d+)$/i.exec(raw);
+  if (gallery) {
+    const n = Number.parseInt(gallery[2]!, 10);
+    if (n >= 1) return String(n);
+  }
+
+  // Black Star SWSH promos: TCGdex `swsh251` → Live `swshbsp/251`.
+  if (set === "swshp") {
+    const promo = /^swsh0*(\d+)$/i.exec(raw);
+    if (promo) return String(Number.parseInt(promo[1]!, 10));
+  }
+
+  // SM Black Star promos: TCGdex `SM01` → Live `smbsp/1`.
+  if (set === "smp") {
+    const promo = /^sm0*(\d+)$/i.exec(raw);
+    if (promo) return String(Number.parseInt(promo[1]!, 10));
+  }
+
   return raw;
 }
 

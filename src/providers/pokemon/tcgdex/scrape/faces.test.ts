@@ -39,6 +39,7 @@ import {
   pokemonMcdnGalleryCodes,
   POKEMONTCG_MCDO_STEMS,
   pokemontcgIoMcdoImageUrl,
+  tcgplayerApiCardId,
   tcgplayerIdFromCardPayload,
   tcgplayerProductImageUrl,
 } from "./faces";
@@ -333,6 +334,27 @@ describe("tcgplayerIdFromCardPayload", () => {
       }),
     ).toBe(516515);
     expect(tcgplayerIdFromCardPayload({})).toBeNull();
+  });
+
+  it("falls back to pricing.tcgplayer.*.productId", () => {
+    expect(
+      tcgplayerIdFromCardPayload({
+        pricing: {
+          tcgplayer: {
+            unit: "USD",
+            holofoil: { productId: 714372 },
+          },
+        },
+      }),
+    ).toBe(714372);
+  });
+});
+
+describe("tcgplayerApiCardId", () => {
+  it("remaps Classic Collection and dotted theme-kit set ids", () => {
+    expect(tcgplayerApiCardId("me05.5c", "001")).toBe("30th-c-001");
+    expect(tcgplayerApiCardId("tk.xy.b", "1")).toBe("tk-xy-b-1");
+    expect(tcgplayerApiCardId("exu", "?")).toBe("exu-?");
   });
 });
 

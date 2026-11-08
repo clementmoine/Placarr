@@ -182,7 +182,7 @@ describe.skipIf(!hasDb)("pokemon catalogue SQL browse page", () => {
     );
   });
 
-  it("does not invent /assets URLs for ghost a.art (Feuillajou 2012bw)", () => {
+  it("serves on-disk PokéCardex McDo face (Feuillajou 2012bw), never CDN", () => {
     const page = listPokemonCatalogueBrowsePage({
       langs: ["fr"],
       q: "2012bw-2",
@@ -193,15 +193,12 @@ describe.skipIf(!hasDb)("pokemon catalogue SQL browse page", () => {
       (row) => row.printKey === "pokemon:2012bw-2" && row.lang === "fr",
     );
     expect(feuillajou).toBeTruthy();
-    expect(feuillajou!.artUrl).not.toContain("art.pokecardex.jpg");
+    // Harvested `art.pokecardex.jpg` is fine — inventing the same basename
+    // from a ghost `print_assets.art` row without a file is not.
+    expect(feuillajou!.artUrl).toContain("/assets/pokemon/cards/fr/2012bw/");
     expect(feuillajou!.artUrl).not.toContain("assets.tcgdex.net");
-    expect(feuillajou!.missingArt || Boolean(feuillajou!.artUrl)).toBe(true);
-    if (feuillajou!.artUrl) {
-      expect(feuillajou!.artUrl.startsWith("/assets/")).toBe(true);
-      expect(feuillajou!.missingArt).toBe(false);
-    } else {
-      expect(feuillajou!.missingArt).toBe(true);
-    }
+    expect(feuillajou!.missingArt).toBe(false);
+    expect(feuillajou!.artUrl.startsWith("/assets/")).toBe(true);
   });
 
   it("missingArtOnly total is not capped by the first page fill", async () => {

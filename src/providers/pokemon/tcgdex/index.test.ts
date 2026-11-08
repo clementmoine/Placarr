@@ -162,7 +162,7 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
     );
   });
 
-  it("checklist candidate falls back to Live disk when TCGdex has no face", () => {
+  it("checklist candidate prefers local catalogue art when TCGdex has no face", () => {
     const card = mapTcgdexCard(
       {
         ...detailPayload(),
@@ -193,8 +193,10 @@ describe("toPrintCandidate / mapTcgdexMetadata", () => {
       setId: "me05.5c",
     };
     const light = toChecklistPrintCandidate(classic);
+    // Catalogue folder art wins when present (TCGPlayer dump); Live remap is
+    // only the fallback when that folder has no face.
     expect(light.thumbnailUrl).toBe(
-      "/assets/pokemon/cards/fr/me5-5c/002/art.webp",
+      "/assets/pokemon/cards/fr/me05.5c/001/art.tcgplayer.jpg",
     );
     expect(light.finishShaders).toBeUndefined();
   });

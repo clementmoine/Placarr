@@ -24,6 +24,8 @@ describe("pokecardexSeriesCodeForSet", () => {
     expect(pokecardexSeriesCodeForSet("tk-ex-latia")).toBe("TK1-LA");
     expect(pokecardexSeriesCodeForSet("tk-ex-latio")).toBe("TK1-LO");
     expect(pokecardexSeriesCodeForSet("tk-xy-n")).toBe("TK6-B");
+    expect(pokecardexSeriesCodeForSet("tk.xy.w")).toBe("TK7-G");
+    expect(pokecardexSeriesCodeForSet("tk.sm.r")).toBe("TK10-R");
   });
 
   it("does not guess kit codes from TCGdex abbr (TK4R ≠ TK4-R)", () => {

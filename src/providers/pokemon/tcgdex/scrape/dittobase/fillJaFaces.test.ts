@@ -22,7 +22,10 @@ describe("DITTOBASE_JA_SETS", () => {
     expect(DITTOBASE_JA_SETS.neo1).toBe("neo1");
     expect(DITTOBASE_JA_SETS.vs1).toBe("VS1");
     expect(DITTOBASE_JA_SETS.e2).toBe("E2");
+    expect(DITTOBASE_JA_SETS.pmcg1).toBe("PMCG1");
+    expect(DITTOBASE_JA_SETS.pmcg6).toBe("PMCG6");
     expect(DITTOBASE_JA_SETS).not.toHaveProperty("e1");
+    expect(DITTOBASE_JA_SETS).not.toHaveProperty("pcg1");
   });
 });
 

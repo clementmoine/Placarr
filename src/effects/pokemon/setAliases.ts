@@ -39,12 +39,17 @@ export const TCGDEX_TO_LIVE_SETS: Readonly<Record<string, readonly string[]>> =
     xyp: ["xybsp"],
     bwp: ["bwbsp"],
     smp: ["smbsp"],
-    // Trainer Gallery / Character Rare Western sets ↔ Live `*a` JP CHR tables
-    // (collector numbers still differ — card-level match may be needed).
+    // Trainer Gallery / Character Rare Western sets ↔ Live `*a` JP CHR tables.
+    // Printed TG## matches Live 1…N order for these SWSH galleries (verified
+    // Pyroli/Flareon TG01 ↔ #1 on swsh9a).
     "swsh9.5tg": ["swsh9a"],
+    "swsh9tg": ["swsh9a"],
     "swsh10.5tg": ["swsh10a"],
+    "swsh10tg": ["swsh10a"],
     "swsh11.5tg": ["swsh11a"],
+    "swsh11tg": ["swsh11a"],
     "swsh12.5tg": ["swsh12a"],
+    "swsh12tg": ["swsh12a"],
     // Pokémon GO (TCGdex `swsh10.5` / Simey `pgo` ↔ Live `swsh10-5`)
     "swsh10.5": ["swsh10-5"],
     pgo: ["swsh10-5"],

@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/http/rateLimit";
 import {
+  decideCorpusPromoteCandidate,
   enqueueCorpusPromoteCandidate,
   listCorpusPromoteCandidates,
-  setCorpusPromoteStatus,
 } from "@/core/catalog/corpusPromote";
 
 export const maxDuration = 30;
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   const status =
     statusRaw === "accepted" ||
     statusRaw === "rejected" ||
+    statusRaw === "applied" ||
     statusRaw === "pending"
       ? statusRaw
       : "pending";
@@ -65,18 +66,23 @@ export async function POST(req: NextRequest) {
   };
 
   if (body.id && (body.status === "accepted" || body.status === "rejected")) {
-    const row = await setCorpusPromoteStatus(
-      body.id.trim(),
-      body.status,
-      body.note?.trim() || null,
-    );
-    return NextResponse.json({
-      ok: true,
-      id: row.id,
-      status: row.status,
-      // Accepted = queued for human/corpus write — sqlite apply is a later step.
-      appliedToCorpus: false,
-    });
+    try {
+      const result = await decideCorpusPromoteCandidate(
+        body.id.trim(),
+        body.status,
+        body.note?.trim() || null,
+      );
+      return NextResponse.json({
+        ok: true,
+        id: result.id,
+        status: result.status,
+        appliedToCorpus: result.appliedToCorpus,
+        ...(result.reason ? { reason: result.reason } : {}),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
   }
 
   const itemId = String(body.itemId || "").trim();

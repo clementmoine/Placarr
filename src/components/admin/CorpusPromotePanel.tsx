@@ -61,7 +61,7 @@ async function enqueueItem(itemId: string): Promise<void> {
 async function setStatus(
   id: string,
   status: "accepted" | "rejected",
-): Promise<void> {
+): Promise<{ appliedToCorpus: boolean; reason?: string; status: string }> {
   const res = await fetch("/api/admin/corpus-promote", {
     method: "POST",
     headers: {
@@ -70,13 +70,24 @@ async function setStatus(
     },
     body: JSON.stringify({ id, status }),
   });
-  const body = (await res.json()) as { ok?: boolean; error?: string };
+  const body = (await res.json()) as {
+    ok?: boolean;
+    error?: string;
+    appliedToCorpus?: boolean;
+    reason?: string;
+    status?: string;
+  };
   if (!res.ok || !body.ok) {
     throw new Error(body.error || `HTTP ${res.status}`);
   }
+  return {
+    appliedToCorpus: Boolean(body.appliedToCorpus),
+    reason: body.reason,
+    status: body.status || status,
+  };
 }
 
-/** Admin-confirm queue: shelf item → corpus candidate (no auto-write). */
+/** Admin-confirm queue: accept writes LocalPrintsIndex when the pack supports it. */
 export function CorpusPromotePanel() {
   const { locale } = useLocale();
   const fr = locale === "fr";
@@ -114,16 +125,20 @@ export function CorpusPromotePanel() {
     async (id: string, status: "accepted" | "rejected") => {
       setBusy(id);
       try {
-        await setStatus(id, status);
-        toast.success(
-          status === "accepted"
-            ? fr
-              ? "Accepté (écriture corpus = étape suivante)"
-              : "Accepted (corpus write = later step)"
-            : fr
-              ? "Rejeté"
-              : "Rejected",
-        );
+        const result = await setStatus(id, status);
+        if (status === "rejected") {
+          toast.success(fr ? "Rejeté" : "Rejected");
+        } else if (result.appliedToCorpus) {
+          toast.success(
+            fr ? "Accepté et écrit dans le corpus" : "Accepted and written to corpus",
+          );
+        } else {
+          toast.message(
+            fr
+              ? `Accepté — corpus non écrit${result.reason ? ` (${result.reason})` : ""}`
+              : `Accepted — corpus not written${result.reason ? ` (${result.reason})` : ""}`,
+          );
+        }
         refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : String(error));
@@ -145,8 +160,8 @@ export function CorpusPromotePanel() {
         </CardTitle>
         <CardDescription>
           {fr
-            ? "File de confirmation admin — jamais d’écriture auto dans le sqlite catalogue."
-            : "Admin-confirm queue — never auto-writes into catalogue sqlite."}
+            ? "File de confirmation admin — l’acceptation écrit le tirage dans le LocalPrintsIndex du pack (quand le hook existe)."
+            : "Admin-confirm queue — accept writes the print into the pack LocalPrintsIndex when the hook exists."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

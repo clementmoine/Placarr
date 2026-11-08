@@ -658,6 +658,18 @@ export type ProviderCatalogRefreshOpts = {
  * `data/<pack>/`. Core/admin discover these via the registry — never by id.
  * @see docs/provider_supply_modes.md
  */
+/** Input for admin-confirmed shelf → corpus print write. */
+export type CorpusPromoteApplyInput = {
+  printKey: string;
+  title?: string | null;
+  language?: string | null;
+  barcode?: string | null;
+};
+
+export type CorpusPromoteApplyResult =
+  | { written: true; printKey: string }
+  | { written: false; reason: string };
+
 export interface ProviderCatalogHooks {
   /** Pack slug under `data/<pack>/` (may differ from provider id). */
   dataPack: string;
@@ -674,6 +686,14 @@ export interface ProviderCatalogHooks {
   legacyWorkKind?: string;
   status: () => ProviderCatalogStatus | Promise<ProviderCatalogStatus>;
   refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
+  /**
+   * Apply an accepted promote candidate into this pack's identity corpus
+   * (LocalPrintsIndex, or pack-specific e.g. Pokémon TCGdex `catalog.sqlite`).
+   * Opt-in — packs without a write path leave this unset.
+   */
+  applyCorpusPromote?: (
+    input: CorpusPromoteApplyInput,
+  ) => CorpusPromoteApplyResult | Promise<CorpusPromoteApplyResult>;
 }
 
 export interface ProviderModule {

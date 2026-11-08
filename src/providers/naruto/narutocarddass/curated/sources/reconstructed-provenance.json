@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-06T19:11:47.276Z",
+ "generatedAt": "2026-11-08T21:50:23.026Z",
  "method": "AI restoration of an authenticated collector photo, then Figma retouching",
  "sourcePhotos": "source.jpg next to art.reconstructed.png under curated/cards/{lang}/{set}/{id}/ (Mercari restorations: the mercdn ingest row in sources/mercari.json)",
  "note": "Displayed in place of the official face. The official file is kept on disk and remains the authentic source; every field was proofread against the collector photo (number, copyright, stats, badge).",
@@ -78,10 +78,10 @@
   },
   {
    "cardId": "ki0007",
-   "set": "s1",
+   "set": "maki13",
    "lang": "ja",
    "source": "cards/ja/maki13/ki0007/art.reconstructed.png",
-   "dest": "cards/ja/s1/ki0007/art.reconstructed.webp",
+   "dest": "cards/ja/maki13/ki0007/art.reconstructed.webp",
    "from": {
     "width": 941,
     "height": 1375
@@ -90,10 +90,10 @@
   },
   {
    "cardId": "ki0008",
-   "set": "s1",
+   "set": "maki13",
    "lang": "ja",
    "source": "cards/ja/maki13/ki0008/art.reconstructed.png",
-   "dest": "cards/ja/s1/ki0008/art.reconstructed.webp",
+   "dest": "cards/ja/maki13/ki0008/art.reconstructed.webp",
    "from": {
     "width": 942,
     "height": 1374
@@ -498,10 +498,10 @@
   },
   {
    "cardId": "ni0280",
-   "set": "s1",
+   "set": "s6",
    "lang": "ja",
    "source": "cards/ja/s6/ni0280/art.reconstructed.png",
-   "dest": "cards/ja/s1/ni0280/art.reconstructed.webp",
+   "dest": "cards/ja/s6/ni0280/art.reconstructed.webp",
    "from": {
     "width": 631,
     "height": 920

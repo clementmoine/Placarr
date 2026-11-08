@@ -36,6 +36,20 @@
     "kind": "checklist"
   },
   {
+    "url": "https://documents.local/poster_s5_face.png",
+    "localPath": "sources/curated-documents/poster_s5_face.png",
+    "lang": "fr",
+    "kind": "checklist",
+    "title": "Poster Série 5 — face (boosters, 92 cartes)"
+  },
+  {
+    "url": "https://documents.local/poster_s5_back.png",
+    "localPath": "sources/curated-documents/poster_s5_back.png",
+    "lang": "fr",
+    "kind": "checklist",
+    "title": "Poster Série 5 — dos (starters, 50 cartes)"
+  },
+  {
     "url": "http://www.carddass.fr/naruto/pdf/faq_jcc_naruto_au_23_juillet_2007.pdf",
     "localPath": "staging/carddass-fr/pdf/faq_jcc_naruto_au_23_juillet_2007.pdf",
     "lang": "fr",

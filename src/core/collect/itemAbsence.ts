@@ -225,7 +225,12 @@ export type AbsenceBadgeInfo = {
   detail?: string;
   /** Formatted sale price (`25 €`) when reason is sold. */
   price?: string;
+  /** Whole days for soft reminders (`ordered_ago`, `return_overdue`, …). */
+  days?: string;
 };
+
+/** Soft « commandée il y a N j » once the order is this old. */
+export const ORDERED_STALE_AFTER_DAYS = 14;
 
 type AbsenceBadgeFields = LoanCompatFields &
   Partial<
@@ -236,11 +241,106 @@ type AbsenceBadgeFields = LoanCompatFields &
       | "absenceReason"
       | "presence"
       | "absencePriceCents"
+      | "absenceExpectedAt"
     >
   > & {
     /** Optional trade counterpart title for `exchanged ↔ name`. */
     tradeCounterpartName?: string | null;
   };
+
+/** Calendar-day delta (UTC date parts) — null if `from` is missing/invalid. */
+export function calendarDaysBetween(
+  from: Date | string | null | undefined,
+  to: Date | string = new Date(),
+): number | null {
+  const start = toUtcDay(from);
+  const end = toUtcDay(to);
+  if (!start || !end) return null;
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+}
+
+function toUtcDay(value: Date | string | null | undefined): Date | null {
+  if (value == null) return null;
+  const d = value instanceof Date ? value : new Date(String(value).trim());
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+  );
+}
+
+/**
+ * Soft reminders layered on away badges (ordered age, expected return).
+ * Prefer expected-return cues when both apply.
+ */
+export function resolveAbsenceReminder(
+  item: AbsenceBadgeFields,
+  now: Date = new Date(),
+): Pick<AbsenceBadgeInfo, "labelKey" | "detail" | "days" | "name"> | null {
+  if ((item.presence ?? "owned") !== "away") return null;
+  const reason = isAbsenceReason(item.absenceReason)
+    ? item.absenceReason
+    : null;
+  const detail =
+    item.absenceCarrier?.trim() || item.absenceSource?.trim() || undefined;
+  const recipient =
+    item.absenceRecipient?.trim() ||
+    (typeof item.loanedTo === "string" ? item.loanedTo.trim() : "") ||
+    undefined;
+
+  const hasExpectedAt = Boolean(
+    item.absenceExpectedAt != null &&
+      String(item.absenceExpectedAt).trim(),
+  );
+  const daysUntil = hasExpectedAt
+    ? calendarDaysBetween(now, item.absenceExpectedAt)
+    : null;
+  if (
+    daysUntil != null &&
+    (reason === "loaned" ||
+      reason === "rental" ||
+      reason === "repair" ||
+      reason === "ordered" ||
+      reason === "expected" ||
+      (!reason && recipient))
+  ) {
+    if (daysUntil === 0) {
+      return {
+        labelKey: recipient ? "return_today_to" : "return_today",
+        ...(recipient ? { name: recipient } : {}),
+      };
+    }
+    if (daysUntil === 1) {
+      return {
+        labelKey: recipient ? "return_tomorrow_to" : "return_tomorrow",
+        ...(recipient ? { name: recipient } : {}),
+      };
+    }
+    if (daysUntil < 0) {
+      return {
+        labelKey: recipient ? "return_overdue_to" : "return_overdue",
+        days: String(-daysUntil),
+        ...(recipient ? { name: recipient } : {}),
+      };
+    }
+    if (daysUntil <= 7) {
+      return {
+        labelKey: recipient ? "return_in_days_to" : "return_in_days",
+        days: String(daysUntil),
+        ...(recipient ? { name: recipient } : {}),
+      };
+    }
+  }
+
+  if (reason === "ordered" || reason === "expected") {
+    const age = calendarDaysBetween(item.absenceSince, now);
+    if (age != null && age >= ORDERED_STALE_AFTER_DAYS) {
+      return detail
+        ? { labelKey: `${reason}_ago_detail`, detail, days: String(age) }
+        : { labelKey: `${reason}_ago`, days: String(age) };
+    }
+  }
+  return null;
+}
 
 /** Euro label from absence sale cents — null if unknown / zero. */
 export function formatAbsencePriceEuros(
@@ -280,9 +380,11 @@ export function sumSoldAbsenceCents(
 /**
  * Badge for away / wanted / past. Owned → null.
  * Loan without recipient still shows « Prêté » (not silent).
+ * Soft reminders (stale order / return due) override the away label when set.
  */
 export function formatAbsenceBadge(
   item: AbsenceBadgeFields | null | undefined,
+  opts?: { now?: Date },
 ): AbsenceBadgeInfo | null {
   if (!item) return null;
   const presence = item.presence ?? "owned";
@@ -305,6 +407,10 @@ export function formatAbsenceBadge(
   const detail = carrier || source || undefined;
 
   if (presence === "away") {
+    const reminder = resolveAbsenceReminder(item, opts?.now ?? new Date());
+    if (reminder) {
+      return { tone: "away", ...reminder };
+    }
     if (reason === "loaned" || (!reason && recipient)) {
       return recipient
         ? { tone: "away", labelKey: "loaned_to", name: recipient }

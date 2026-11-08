@@ -3046,6 +3046,7 @@ export default function ItemDetailsPage() {
                         ...(absence.name ? { name: absence.name } : {}),
                         ...(absence.detail ? { detail: absence.detail } : {}),
                         ...(absence.price ? { price: absence.price } : {}),
+                        ...(absence.days ? { days: absence.days } : {}),
                       });
                       const dated =
                         absence.labelKey === "loaned_to" &&

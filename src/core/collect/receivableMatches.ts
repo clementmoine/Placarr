@@ -116,6 +116,23 @@ export function findReceivableByBarcode(
 }
 
 /**
+ * Owned copies of the same print identity (anti-doublon when marking ordered).
+ * Excludes `excludeId` (the item being edited).
+ */
+export function findOwnedIdentityPeers(
+  items: readonly ReceivableShelfItem[],
+  query: ReceivableMatchQuery & { excludeId?: string | null },
+): ReceivableShelfItem[] {
+  const printKey = query.printKey?.trim();
+  if (!printKey) return [];
+  return items.filter((item) => {
+    if (query.excludeId && item.id === query.excludeId) return false;
+    if ((item.presence ?? "owned") !== "owned") return false;
+    return itemMatchesQuery(item, { ...query, printKey });
+  });
+}
+
+/**
  * Resolve one preferred receivable hit for a create/add: print identity first,
  * then barcode. Used by ItemModal / ScanFAB when PrintPicker is not in play.
  */

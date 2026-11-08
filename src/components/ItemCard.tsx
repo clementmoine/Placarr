@@ -139,6 +139,8 @@ function itemCardPropsEqual(prev: ItemCardProps, next: ItemCardProps): boolean {
     prev.absenceCarrier === next.absenceCarrier &&
     prev.absenceSource === next.absenceSource &&
     prev.absenceSince === next.absenceSince &&
+    prev.absenceExpectedAt === next.absenceExpectedAt &&
+    prev.absencePriceCents === next.absencePriceCents &&
     prev.copyCount === next.copyCount &&
     prev.metadata?.imageUrl === next.metadata?.imageUrl &&
     prev.metadata?.platformKey === next.metadata?.platformKey &&
@@ -171,6 +173,7 @@ function ItemCardInner(props: ItemCardProps) {
         ...(absenceBadge.name ? { name: absenceBadge.name } : {}),
         ...(absenceBadge.detail ? { detail: absenceBadge.detail } : {}),
         ...(absenceBadge.price ? { price: absenceBadge.price } : {}),
+        ...(absenceBadge.days ? { days: absenceBadge.days } : {}),
       })
     : null;
   const titledName = displayName.replace(

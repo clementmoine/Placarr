@@ -5,9 +5,12 @@ import {
   absenceSinceInputValue,
   buildPresenceEvent,
   countsAsOwned,
+  calendarDaysBetween,
   formatAbsenceBadge,
   formatAbsencePriceEuros,
   inferPresenceEventKind,
+  ORDERED_STALE_AFTER_DAYS,
+  resolveAbsenceReminder,
   sumSoldAbsenceCents,
   isAwaitingReceiptReason,
   isDefinitiveAbsenceReason,
@@ -151,6 +154,65 @@ describe("formatAbsenceBadge", () => {
     expect(formatAbsenceBadge({ presence: "wanted" })).toEqual({
       tone: "wanted",
       labelKey: "wanted",
+    });
+  });
+});
+
+describe("absence reminders", () => {
+  const now = new Date("2026-11-08T12:00:00.000Z");
+
+  it("calendarDaysBetween uses UTC calendar days", () => {
+    expect(calendarDaysBetween("2026-10-18", now)).toBe(21);
+    expect(calendarDaysBetween(now, "2026-11-09")).toBe(1);
+  });
+
+  it("flags stale orders and upcoming returns", () => {
+    expect(
+      formatAbsenceBadge(
+        {
+          presence: "away",
+          absenceReason: "ordered",
+          absenceSince: "2026-10-18",
+          absenceSource: "Cardmarket",
+        },
+        { now },
+      ),
+    ).toEqual({
+      tone: "away",
+      labelKey: "ordered_ago_detail",
+      detail: "Cardmarket",
+      days: "21",
+    });
+    expect(ORDERED_STALE_AFTER_DAYS).toBe(14);
+    expect(
+      resolveAbsenceReminder(
+        {
+          presence: "away",
+          absenceReason: "loaned",
+          absenceRecipient: "Bob",
+          absenceExpectedAt: "2026-11-09",
+        },
+        now,
+      ),
+    ).toEqual({
+      labelKey: "return_tomorrow_to",
+      name: "Bob",
+    });
+    expect(
+      formatAbsenceBadge(
+        {
+          presence: "away",
+          absenceReason: "loaned",
+          absenceRecipient: "Bob",
+          absenceExpectedAt: "2026-11-01",
+        },
+        { now },
+      ),
+    ).toEqual({
+      tone: "away",
+      labelKey: "return_overdue_to",
+      name: "Bob",
+      days: "7",
     });
   });
 });

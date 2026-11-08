@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findOwnedIdentityPeers,
   findReceivableByBarcode,
   findReceivableShelfMatches,
   pairReceivableAdds,
@@ -115,6 +116,27 @@ describe("pairReceivableAdds", () => {
     ]);
     expect(pairs.map((p) => p.match.id)).toEqual(["a", "b"]);
     expect(unmatchedIndexes).toEqual([2]);
+  });
+});
+
+describe("findOwnedIdentityPeers", () => {
+  it("finds owned twins and skips self / away", () => {
+    const items = [
+      { id: "self", name: "Self", ...base, presence: "owned" as const },
+      { id: "owned", name: "Owned", ...base, presence: "owned" as const },
+      {
+        id: "away",
+        name: "Away",
+        ...base,
+        presence: "away" as const,
+        absenceReason: "ordered" as const,
+      },
+    ];
+    expect(
+      findOwnedIdentityPeers(items, { ...base, excludeId: "self" }).map(
+        (h) => h.id,
+      ),
+    ).toEqual(["owned"]);
   });
 });
 

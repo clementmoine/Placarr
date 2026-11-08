@@ -17,7 +17,7 @@ Détail + exemples : **[backlog/2026-11-08-absence-reste-plan.md](backlog/2026-1
 | ~~**P2**~~ | ~~Export présence / raison / prix~~ | **Fait 2026-11-08** — `formatCessionMarkdown` + export vue past |
 | ~~**P2**~~ | ~~Stats cession~~ | **Fait 2026-11-08** — encart ventes en vue past |
 | ~~**P2**~~ | ~~Badges / timeline ItemModal~~ | **Fait 2026-11-08** — prix + échangé + 3 events compact dans modal |
-| **P3** | Rappels / anti-doublon commande | Badge « Commandée il y a 21 j » |
+| ~~**P3**~~ | ~~Rappels / anti-doublon / troc récup~~ | **Fait 2026-11-08** — badges âge/retour, warning ordered, dialog troc |
 
 ## Plan perf métadonnées — terminé (2026-07-25)
 

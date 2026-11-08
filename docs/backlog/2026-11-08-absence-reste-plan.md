@@ -1,6 +1,6 @@
 # Absence étagère — reste du plan (2026-11-08)
 
-**Statut :** P1–P2 livrés (2026-11-08). Reste surtout **P3** (rappels / anti-doublon commande).  
+**Statut :** plan absence **clos** (P1–P3 livrés 2026-11-08).  
 **Plan source :** Cursor *Absence étagère* (`absence_étagère_f0ec5d36`).  
 **Lié :** [cycle scellé](./2026-11-07-cycle-de-vie-scelle-possession-virtuelle.md), [passation](./2026-11-07-passation-cycle-scelle.md).
 
@@ -87,14 +87,16 @@
 
 ---
 
-### P3 — Idées produit (hors MVP strict)
+### P3 — Rappels / anti-doublon / troc à la récupération
 
-| Idée | Exemple |
-| ---- | ------- |
-| Rappel commandes anciennes (`ordered` + `absenceSince` > N jours) | Badge doux « Commandée il y a 21 j » |
-| Rappel `absenceExpectedAt` | « Retour prévu demain » sur un prêt |
-| Anti-doublon commande | Warning si `owned` du même print existe déjà quand tu passes en `ordered` |
-| Rompre / annoter `ItemTradeLink` à la récupération | « Contrepartie toujours chez toi ? » |
+**Statut 2026-11-08 :** **livré**
+
+| Idée | Preuve |
+| ---- | ------ |
+| Rappel commandes anciennes (≥14 j) | `ordered_ago` / `expected_ago` via `resolveAbsenceReminder` |
+| Rappel `absenceExpectedAt` | `return_today` / `tomorrow` / `in_days` / `overdue` |
+| Anti-doublon commande | `findOwnedIdentityPeers` + warning ItemModal |
+| Rompre troc à la récupération | Dialog « Contrepartie toujours chez toi ? » (garder / rompre) |
 
 ---
 

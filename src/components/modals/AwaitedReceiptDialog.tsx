@@ -42,6 +42,7 @@ function pairDetailLine(
         ...(badge.name ? { name: badge.name } : {}),
         ...(badge.detail ? { detail: badge.detail } : {}),
         ...(badge.price ? { price: badge.price } : {}),
+        ...(badge.days ? { days: badge.days } : {}),
       })
     : item.presence === "wanted"
       ? t("items.absence.presences.wanted")

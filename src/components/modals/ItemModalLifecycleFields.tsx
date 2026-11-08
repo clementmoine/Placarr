@@ -99,6 +99,10 @@ type Props = {
    * Bulk edit: empty fields mean « mixed / leave alone »; presence may be "".
    */
   bulkMode?: boolean;
+  /** Soft warning under the absence block (ordered while an owned twin exists). */
+  orderDuplicateWarning?: string | null;
+  /** Recover past → owned; defaults to clearing absence. */
+  onRecover?: () => void;
 };
 
 export function ItemModalLifecycleFields({
@@ -108,6 +112,8 @@ export function ItemModalLifecycleFields({
   showPurchase = true,
   showGrade = true,
   bulkMode = false,
+  orderDuplicateWarning = null,
+  onRecover,
 }: Props) {
   const presence = useWatch({ control, name: "presence" }) as ItemPresence | "";
   const reason = useWatch({ control, name: "absenceReason" }) as string;
@@ -387,7 +393,10 @@ export function ItemModalLifecycleFields({
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-xs font-semibold"
-                onClick={setOwned}
+                onClick={() => {
+                  if (onRecover) onRecover();
+                  else setOwned();
+                }}
               >
                 {t("items.absence.recover")}
               </Button>
@@ -408,6 +417,14 @@ export function ItemModalLifecycleFields({
         <p className="text-[11px] text-muted-foreground leading-snug -mt-1">
           {t("items.absence.hint")}
         </p>
+        {orderDuplicateWarning ? (
+          <p
+            className="text-[11px] font-medium text-amber-700 dark:text-amber-400 leading-snug rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-2"
+            role="status"
+          >
+            {orderDuplicateWarning}
+          </p>
+        ) : null}
 
         <FormField
           control={control}

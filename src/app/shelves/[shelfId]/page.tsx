@@ -537,6 +537,15 @@ function ShelfComponent() {
     [shelf?.items],
   );
 
+  /** All print/barcode copies — ordered anti-doublon vs owned twins. */
+  const identityPeerItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
+        (item) => Boolean(item.printKey || item.barcode),
+      ),
+    [shelf?.items],
+  );
+
   const totalValue = useMemo(() => {
     if (!shelf) return { total: 0, includesEstimates: false };
     return summarizeCollectionEstimatedValue(viewItems, shelf.type);
@@ -910,6 +919,7 @@ function ShelfComponent() {
             onClose={handleModalClose}
             onSubmit={handleItemModalSubmit}
             receivableItems={receivableItems}
+            identityPeerItems={identityPeerItems}
           />
           {shelf?.type && (
             <PrintPickerModal

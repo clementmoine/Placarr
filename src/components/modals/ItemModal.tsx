@@ -54,6 +54,7 @@ import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ImageCropModal } from "@/components/modals/ImageCropModal";
 import {
+  findOwnedIdentityPeers,
   resolveReceivableForCreate,
   type ReceivableShelfItem,
 } from "@/core/collect/receivableMatches";
@@ -99,8 +100,10 @@ import {
 import {
   deleteItem,
   getItem,
+  getItemTrades,
   removeItemMediaImage,
   saveItem,
+  unlinkItemTrade,
 } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
@@ -206,6 +209,7 @@ export function ItemModal({
   defaultTab,
   prefilledValues,
   receivableItems = [],
+  identityPeerItems = [],
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -218,6 +222,8 @@ export function ItemModal({
   defaultTab?: "general" | "poster" | "background" | "info";
   /** away / wanted copies — « tu l’attendais ? » before creating a duplicate. */
   receivableItems?: readonly ReceivableShelfItem[];
+  /** Shelf copies used for ordered anti-doublon (owned twin warning). */
+  identityPeerItems?: readonly ReceivableShelfItem[];
   prefilledValues?: {
     name?: string;
     barcode?: string;
@@ -393,6 +399,102 @@ export function ItemModal({
   // useWatch (abonnement par champ) au lieu de form.watch : API compatible
   // avec le compilateur React et re-rendus limités au champ concerné.
   const currentShelfId = useWatch({ control: form.control, name: "shelfId" });
+  const watchedPresence = useWatch({
+    control: form.control,
+    name: "presence",
+  });
+  const watchedAbsenceReason = useWatch({
+    control: form.control,
+    name: "absenceReason",
+  });
+  const watchedVariant = useWatch({ control: form.control, name: "variant" });
+
+  const orderDuplicateWarning = useMemo(() => {
+    if (watchedPresence !== "away") return null;
+    if (watchedAbsenceReason !== "ordered") return null;
+    const printKey =
+      item?.printKey?.trim() || prefilledValues?.printKey?.trim() || "";
+    if (!printKey) return null;
+    const peers = findOwnedIdentityPeers(identityPeerItems, {
+      printKey,
+      variant: watchedVariant ?? item?.variant ?? prefilledValues?.variant,
+      language: item?.language ?? prefilledValues?.language,
+      setCode: item?.setCode ?? prefilledValues?.setCode,
+      excludeId: item?.id ?? itemId ?? null,
+    });
+    if (peers.length === 0) return null;
+    return t("items.absence.orderDuplicateWarning", {
+      name: peers[0]!.name,
+      count: peers.length,
+    });
+  }, [
+    watchedPresence,
+    watchedAbsenceReason,
+    watchedVariant,
+    identityPeerItems,
+    item,
+    itemId,
+    prefilledValues,
+    t,
+  ]);
+
+  const clearAbsenceToOwned = useCallback(() => {
+    form.setValue("presence", "owned", { shouldDirty: true });
+    form.setValue("absenceReason", "", { shouldDirty: true });
+    form.setValue("absenceRecipient", "", { shouldDirty: true });
+    form.setValue("absenceSource", "", { shouldDirty: true });
+    form.setValue("absenceCarrier", "", { shouldDirty: true });
+    form.setValue("absenceTracking", "", { shouldDirty: true });
+    form.setValue("absenceOrderRef", "", { shouldDirty: true });
+    form.setValue("absenceOrderUrl", "", { shouldDirty: true });
+    form.setValue("absenceNote", "", { shouldDirty: true });
+    form.setValue("absencePrice", "", { shouldDirty: true });
+    form.setValue("absenceExpectedAt", "", { shouldDirty: true });
+    form.setValue("absenceSince", "", { shouldDirty: true });
+  }, [form]);
+
+  const handleRecoverPast = useCallback(() => {
+    if (
+      watchedAbsenceReason === "exchanged" &&
+      item?.id &&
+      !tradeRecoverOpen
+    ) {
+      setTradeRecoverOpen(true);
+      return;
+    }
+    clearAbsenceToOwned();
+  }, [
+    watchedAbsenceReason,
+    item?.id,
+    tradeRecoverOpen,
+    clearAbsenceToOwned,
+  ]);
+
+  const finishTradeRecover = useCallback(
+    async (breakLinks: boolean) => {
+      if (!item?.id) {
+        clearAbsenceToOwned();
+        setTradeRecoverOpen(false);
+        return;
+      }
+      setTradeRecoverBusy(true);
+      try {
+        if (breakLinks) {
+          const { links } = await getItemTrades(item.id, shelfId);
+          for (const link of links) {
+            await unlinkItemTrade(item.id, { linkId: link.id }, shelfId);
+          }
+        }
+        clearAbsenceToOwned();
+        setTradeRecoverOpen(false);
+      } catch {
+        toast.error(t("items.trade.unlinkFailed"));
+      } finally {
+        setTradeRecoverBusy(false);
+      }
+    },
+    [item?.id, shelfId, clearAbsenceToOwned, t],
+  );
 
   // Radix SelectValue stays blank until a matching SelectItem exists — seed the
   // current shelf so the trigger never flashes empty while the list loads.
@@ -509,6 +611,8 @@ export function ItemModal({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload: any;
   } | null>(null);
+  const [tradeRecoverOpen, setTradeRecoverOpen] = useState(false);
+  const [tradeRecoverBusy, setTradeRecoverBusy] = useState(false);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(
@@ -2605,6 +2709,8 @@ export function ItemModal({
                         form.setValue as unknown as UseFormSetValue<ItemModalLifecycleFormSlice>
                       }
                       t={t}
+                      orderDuplicateWarning={orderDuplicateWarning}
+                      onRecover={handleRecoverPast}
                     />
                     {item?.id ? (
                       <ItemPresenceTimeline
@@ -3421,6 +3527,52 @@ export function ItemModal({
         onReceive={confirmReceiveAwaited}
         onAddAsNew={confirmAddAsNewAwaited}
       />
+
+      <BaseModal
+        isOpen={tradeRecoverOpen}
+        onClose={() => {
+          if (!tradeRecoverBusy) setTradeRecoverOpen(false);
+        }}
+        size="sm"
+        title={t("items.trade.recoverTitle")}
+        description={t("items.trade.recoverHint")}
+        cancelLabel={t("common.cancel")}
+        onCancel={() => {
+          if (!tradeRecoverBusy) setTradeRecoverOpen(false);
+        }}
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={tradeRecoverBusy}
+              onClick={() => setTradeRecoverOpen(false)}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={tradeRecoverBusy}
+              onClick={() => void finishTradeRecover(true)}
+            >
+              {t("items.trade.recoverBreak")}
+            </Button>
+            <Button
+              type="button"
+              disabled={tradeRecoverBusy}
+              onClick={() => void finishTradeRecover(false)}
+            >
+              {tradeRecoverBusy ? (
+                <Loader2 className="size-4 animate-spin mr-1.5" />
+              ) : null}
+              {t("items.trade.recoverKeep")}
+            </Button>
+          </div>
+        }
+      >
+        <div className="hidden" />
+      </BaseModal>
     </>
   );
 }

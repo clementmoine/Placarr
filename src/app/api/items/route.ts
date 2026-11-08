@@ -41,6 +41,7 @@ import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
 import {
   buildPresenceEvent,
+  isAwaitingReceiptReason,
   normalizeItemAbsenceInput,
   ownedAbsenceState,
   parsePriceCents,
@@ -918,6 +919,12 @@ export async function PATCH(req: NextRequest) {
             reason: absencePatch.absenceReason,
             at: absencePatch.absenceSince ?? undefined,
             fields: absencePatch,
+            // Clearing absence to owned after an order/wait → received, not a loan return.
+            receiveFromOrder:
+              absencePatch.presence === "owned" &&
+              (item.presence === "wanted" ||
+                (item.presence === "away" &&
+                  isAwaitingReceiptReason(item.absenceReason))),
           })
         : null;
 

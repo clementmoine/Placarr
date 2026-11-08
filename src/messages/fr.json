@@ -403,6 +403,10 @@
       "titleRequired": "Le titre de la série est requis",
       "invalidRange": "Plage de tomes invalide"
     },
+    "addMenu": {
+      "catalogue": "Depuis le catalogue",
+      "freeEntry": "Saisie libre"
+    },
     "bulkAdd": {
       "title": "Ajout en masse",
       "menuLabel": "Ajout en masse",
@@ -704,7 +708,15 @@
       "closeConfirmTitle": "Fermer sans ajouter ?",
       "closeConfirmDescription": "Ta sélection (et la liste en cours) sera perdue.",
       "closeConfirmStay": "Rester",
-      "closeConfirmLeave": "Fermer"
+      "closeConfirmLeave": "Fermer",
+      "awaitedTitle": "Tu l'attendais ?",
+      "awaitedDescription": "{count} carte(s) de ta sélection correspondent à une copie déjà absente ou recherchée sur cette étagère.",
+      "awaitedReceive": "Recevoir {count}",
+      "awaitedAddNew": "Ajouter comme nouvelles copies",
+      "awaitedPartialFailure": "{failed} réception(s) ont échoué.",
+      "awaitedKindOrdered": "En commande / attendue",
+      "awaitedKindWanted": "Recherchée",
+      "awaitedKindAway": "Absente temporairement"
     },
     "checklistTitle": "Check-list",
     "checklistSubtitle": "Ce qui existe, ce que vous avez, et ce qu'il reste à trouver.",

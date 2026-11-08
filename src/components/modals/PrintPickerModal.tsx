@@ -24,7 +24,17 @@ import { FoilCardImage } from "@/components/FoilCardImage";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
 import { RemoteImage } from "@/components/RemoteImage";
 import { SealedBagOverlay } from "@/components/SealedBagOverlay";
+import { Button } from "@/components/ui/button";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
+import {
+  formatAbsenceBadge,
+  isAwaitingReceiptReason,
+} from "@/core/collect/itemAbsence";
+import {
+  pairReceivableAdds,
+  type ReceivablePair,
+  type ReceivableShelfItem,
+} from "@/core/collect/receivableMatches";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { resolveSharedCardBackSkeleton } from "@/core/render/foil/cardBacks";
 import {
@@ -36,6 +46,7 @@ import {
   type PrintVariantInfo,
 } from "@/lib/client/hooks/usePrintVariant";
 import { ownedPrintKeyAliases } from "@/core/identify/printKey";
+import { saveItem } from "@/lib/api/items";
 import { inferPrintPickerDefaults } from "@/lib/collect/inferPrintPickerDefaults";
 import {
   getCachedPrintCatalogues,
@@ -125,6 +136,11 @@ type PrintPickerModalProps = {
    * carte ajoutée.
    */
   ownedPrints?: readonly OwnedPrintRef[];
+  /**
+   * Copies `away` / `wanted` on this shelf — for « tu l’attendais ? » before
+   * creating a duplicate.
+   */
+  receivableItems?: readonly ReceivableShelfItem[];
 };
 
 /** Une ligne du sélecteur : un tirage et une finition. */
@@ -321,6 +337,7 @@ export function PrintPickerModal({
   onClose,
   onAdded,
   ownedPrints,
+  receivableItems = [],
 }: PrintPickerModalProps) {
   const { t } = useLocale();
   const [query, setQuery] = useState("");
@@ -329,6 +346,11 @@ export function PrintPickerModal({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [awaitedPrompt, setAwaitedPrompt] = useState<{
+    pairs: ReceivablePair[];
+    unmatchedRows: PickerFinishRow[];
+  } | null>(null);
+  const [isReceiving, setIsReceiving] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [language, setLanguage] = useState<string>(ALL_LANGUAGES);
   const [catalogue, setCatalogue] = useState<string>(ALL_CATALOGUES);
@@ -486,6 +508,8 @@ export function PrintPickerModal({
     setProgress(null);
     setListIndex(0);
     setConfirmCloseOpen(false);
+    setAwaitedPrompt(null);
+    setIsReceiving(false);
     setIsCataloguesLoading(false);
     shelfDefaultsApplied.current = false;
     onClose();
@@ -1061,6 +1085,17 @@ export function PrintPickerModal({
     [shelfId],
   );
 
+  const receiveMatch = useCallback(
+    async (itemId: string) => {
+      await saveItem({
+        id: itemId,
+        presence: "owned",
+        currentShelfId: shelfId,
+      } as Parameters<typeof saveItem>[0]);
+    },
+    [shelfId],
+  );
+
   const toggleRow = useCallback((row: PickerFinishRow) => {
     setSelected((current) => {
       const next = new Map(current);
@@ -1069,34 +1104,102 @@ export function PrintPickerModal({
     });
   }, []);
 
+  const runAdds = useCallback(
+    async (rows: PickerFinishRow[]) => {
+      if (rows.length === 0) {
+        onAdded();
+        performClose();
+        return;
+      }
+      setError(null);
+      setProgress({ done: 0, total: rows.length });
+      let failed = 0;
+      for (const [index, row] of rows.entries()) {
+        try {
+          await postRow(row, row.finish);
+        } catch {
+          failed += 1;
+        }
+        setProgress({ done: index + 1, total: rows.length });
+      }
+      setProgress(null);
+      onAdded();
+      if (failed > 0) {
+        setError(t("items.printPicker.partialFailure", { failed }));
+        setSelected(new Map());
+        return;
+      }
+      performClose();
+    },
+    [postRow, onAdded, performClose, t],
+  );
+
   /*
     Séquentiel, et une carte ratée n'arrête pas les autres : on rend compte du
     nombre d'échecs à la fin plutôt que de laisser un lot à moitié posé sans
     rien dire. `onAdded()` n'est appelé qu'une fois, quand tout est retombé.
+    Si des copies away/wanted matchent → dialog « tu l’attendais ? » d’abord.
   */
   const addSelected = useCallback(async () => {
     const rows = activeSelection;
     if (rows.length === 0) return;
+
+    const { pairs, unmatchedIndexes } = pairReceivableAdds(
+      receivableItems,
+      rows.map((row) => ({
+        printKey: row.printKey,
+        variant: row.finish,
+        language: row.language ?? null,
+        setCode: row.setCode ?? null,
+        title: row.title,
+      })),
+    );
+
+    if (pairs.length > 0) {
+      setAwaitedPrompt({
+        pairs,
+        unmatchedRows: unmatchedIndexes.map((index) => rows[index]!),
+      });
+      return;
+    }
+
+    await runAdds(rows);
+  }, [activeSelection, receivableItems, runAdds]);
+
+  const confirmReceiveAwaited = useCallback(async () => {
+    if (!awaitedPrompt) return;
+    setIsReceiving(true);
     setError(null);
-    setProgress({ done: 0, total: rows.length });
     let failed = 0;
-    for (const [index, row] of rows.entries()) {
+    for (const pair of awaitedPrompt.pairs) {
       try {
-        await postRow(row, row.finish);
+        await receiveMatch(pair.match.id);
       } catch {
         failed += 1;
       }
-      setProgress({ done: index + 1, total: rows.length });
     }
-    setProgress(null);
+    const leftover = awaitedPrompt.unmatchedRows;
+    setAwaitedPrompt(null);
+    setIsReceiving(false);
+    if (leftover.length > 0) {
+      await runAdds(leftover);
+      return;
+    }
     onAdded();
     if (failed > 0) {
-      setError(t("items.printPicker.partialFailure", { failed }));
+      setError(t("items.printPicker.awaitedPartialFailure", { failed }));
       setSelected(new Map());
       return;
     }
     performClose();
-  }, [activeSelection, postRow, onAdded, performClose, t]);
+  }, [awaitedPrompt, receiveMatch, runAdds, onAdded, performClose, t]);
+
+  const confirmAddAsNew = useCallback(async () => {
+    if (!awaitedPrompt) return;
+    const rows = activeSelection;
+    setAwaitedPrompt(null);
+    await runAdds(rows);
+  }, [awaitedPrompt, activeSelection, runAdds]);
 
   const advanceList = useCallback(
     (delta: number) => {
@@ -1563,6 +1666,91 @@ export function PrintPickerModal({
       }}
     >
       {null}
+    </BaseModal>
+
+    <BaseModal
+      isOpen={awaitedPrompt != null}
+      onClose={() => {
+        if (!isReceiving) setAwaitedPrompt(null);
+      }}
+      size="md"
+      title={t("items.printPicker.awaitedTitle")}
+      description={t("items.printPicker.awaitedDescription", {
+        count: awaitedPrompt?.pairs.length ?? 0,
+      })}
+      cancelLabel={t("common.cancel")}
+      onCancel={() => {
+        if (!isReceiving) setAwaitedPrompt(null);
+      }}
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 w-full">
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isReceiving}
+            onClick={() => setAwaitedPrompt(null)}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isReceiving}
+            onClick={() => void confirmAddAsNew()}
+          >
+            {t("items.printPicker.awaitedAddNew")}
+          </Button>
+          <Button
+            type="button"
+            disabled={isReceiving}
+            onClick={() => void confirmReceiveAwaited()}
+          >
+            {isReceiving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : null}
+            {t("items.printPicker.awaitedReceive", {
+              count: awaitedPrompt?.pairs.length ?? 0,
+            })}
+          </Button>
+        </div>
+      }
+    >
+      <ul className="flex flex-col gap-2 max-h-60 overflow-y-auto text-sm">
+        {(awaitedPrompt?.pairs ?? []).map((pair) => {
+          const badge = formatAbsenceBadge(pair.match);
+          const reasonKey = pair.match.absenceReason
+            ? `items.timeline.reason.${pair.match.absenceReason}`
+            : null;
+          const label = badge
+            ? t(`items.absence.badge.${badge.labelKey}`, {
+                ...(badge.name ? { name: badge.name } : {}),
+                ...(badge.detail ? { detail: badge.detail } : {}),
+              })
+            : pair.match.presence === "wanted"
+              ? t("items.absence.presences.wanted")
+              : t("items.absence.presences.away");
+          const verb = isAwaitingReceiptReason(pair.match.absenceReason)
+            ? t("items.printPicker.awaitedKindOrdered")
+            : pair.match.presence === "wanted"
+              ? t("items.printPicker.awaitedKindWanted")
+              : t("items.printPicker.awaitedKindAway");
+          return (
+            <li
+              key={pair.match.id}
+              className="rounded-xl border border-border/70 bg-zinc-50/40 dark:bg-zinc-950/20 px-3 py-2"
+            >
+              <p className="font-semibold text-foreground leading-snug">
+                {pair.query.title || pair.match.name}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {verb}
+                {reasonKey ? ` · ${t(reasonKey)}` : ""}
+                {label ? ` · ${label}` : ""}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
     </BaseModal>
     </>
   );

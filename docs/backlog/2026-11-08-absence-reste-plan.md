@@ -27,26 +27,31 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ### P1 — « Tu l’attendais ? » à l’ajout
 
-**Quoi.** Quand on ajoute une carte (catalogue ou barcode) dont le même `printKey` / identité existe déjà en `away` (commandée, prêt…) ou `wanted`, proposer de **récupérer / recevoir** cet item plutôt que d’en créer un doublon.
+**Statut 2026-11-08 :** **livré sur PrintPicker** (`receivableMatches` + dialog Recevoir / nouvelles copies). Reste : ItemModal create / ScanFAB / QuickScan (hors picker).
+
+**Quoi.** Quand on ajoute une carte dont le même `printKey` / identité existe déjà en `away` (commandée, prêt…) ou `wanted`, proposer de **récupérer / recevoir** cet item plutôt que d’en créer un doublon.
 
 **Pourquoi.** Sinon on rachète ou on double une commande en cours ; le matching absence n’a de sens qu’à l’ajout.
 
-**Exemple.** Tu as marqué *Stitch - Rock Star* en « Commandé · Cardmarket ». Au PrintPicker tu retombes sur le même tirage → dialog : « Tu l’attendais ? Commandée le 3 nov. chez Cardmarket » → **Oui** = `away`→`owned` + event `received_from_order` ; **Non, autre copie** = create normal.
+**Exemple.** *Stitch - Rock Star* en « Commandé · Cardmarket » → au PrintPicker, dialog « Tu l’attendais ? » → **Recevoir** = `away`→`owned` + `received_from_order` ; **Ajouter comme nouvelles copies** = create normal.
 
-**Surfaces.** PrintPicker / ItemModal create / QuickScan ; API peut réutiliser `normalize` + `buildPresenceEvent`.  
+**Surfaces faites.** PrintPicker + PATCH `receiveFromOrder` auto.  
+**Reste.** ItemModal / ScanFAB / QuickScan.  
 **Hors scope.** Matching Vinted automatique sans confirmation.
 
 ---
 
 ### P1 — Modal d’ajout : Catalogue vs Saisie libre
 
-**Quoi.** Deux parcours explicites et soignés : **Depuis le catalogue** (PrintPicker / sealed picker) et **Saisie libre** (nom / code-barres hors corpus) — jamais de libellés « hasardeux / custom junk ».
+**Statut 2026-11-08 :** **menu étagère print livré** — « Depuis le catalogue » (PrintPicker) / « Saisie libre » (ItemModal) / scellé. Pas encore de polish UX profond ni matching sur la saisie libre.
 
-**Pourquoi.** Le plan lie ce polish au matching « tu l’attendais ? » : l’ajout doit être lisible avant d’y brancher l’absence.
+**Quoi.** Deux parcours explicites : **Depuis le catalogue** et **Saisie libre** — jamais de libellés « hasardeux / custom junk ».
 
-**Exemple.** Étagère Lorcana → menu + → « Catalogue » ouvre le picker sets/cartes ; étagère jeux sans print → « Saisie libre » = nom + barcode, même chrome que ItemModal, sans dashboard ni pills décoratives.
+**Pourquoi.** Le matching « tu l’attendais ? » n’a de sens que si l’ajout est lisible.
 
-**Surfaces.** Menu FAB / add sur `shelves/[shelfId]/page.tsx` ; éventuelle fusion UX PrintPicker + ItemModal create.
+**Exemple.** Étagère Lorcana → + → « Depuis le catalogue » / « Saisie libre » / « Produit scellé ».
+
+**Reste.** Matching awaited sur saisie libre / scan ; polish typographique des parcours.
 
 ---
 
@@ -133,8 +138,8 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ## Critères de fin (reste)
 
-- [ ] Ajout d’un print déjà `away`/`wanted` propose la réception avant create.
-- [ ] Menu d’ajout distingue Catalogue et Saisie libre.
+- [x] Ajout d’un print déjà `away`/`wanted` propose la réception avant create (**PrintPicker**).
+- [x] Menu d’ajout distingue Catalogue et Saisie libre (étagère print).
 - [ ] Échange lié visible sur les deux fiches.
 - [ ] Ouverture random → UI declare utilisable.
 - [ ] Export et/ou stats portent présence + prix de cession.

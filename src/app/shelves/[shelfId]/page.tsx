@@ -276,7 +276,7 @@ function ShelfComponent() {
 
   const [editingItemId, setEditingItemId] = useState<Item["id"]>();
   const [visibleModal, setVisibleModal] = useState<
-    "shelf" | "item" | "bulk" | "sealed"
+    "shelf" | "item" | "itemFree" | "bulk" | "sealed"
   >();
   const [bulkInitialTab, setBulkInitialTab] = useState<BulkAddTab>("names");
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -521,6 +521,17 @@ function ShelfComponent() {
     [shelf?.items],
   );
 
+  /** away / wanted copies — « tu l’attendais ? » before creating a duplicate. */
+  const receivableItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
+        (item) =>
+          item.printKey &&
+          (item.presence === "away" || item.presence === "wanted"),
+      ),
+    [shelf?.items],
+  );
+
   const totalValue = useMemo(() => {
     if (!shelf) return { total: 0, includesEstimates: false };
     return summarizeCollectionEstimatedValue(viewItems, shelf.type);
@@ -615,7 +626,7 @@ function ShelfComponent() {
 
   const handleModalOpen = useCallback(
     (
-      modal: "shelf" | "item" | "bulk" | "sealed",
+      modal: "shelf" | "item" | "itemFree" | "bulk" | "sealed",
       id?: Item["id"],
       bulkTab?: BulkAddTab,
     ) => {
@@ -630,7 +641,10 @@ function ShelfComponent() {
   );
 
   const openModalFromAddMenu = useCallback(
-    (modal: "item" | "bulk" | "sealed", bulkTab: BulkAddTab = "names") => {
+    (
+      modal: "item" | "itemFree" | "bulk" | "sealed",
+      bulkTab: BulkAddTab = "names",
+    ) => {
       setAddMenuOpen(false);
       window.setTimeout(() => {
         releaseStuckOverlayLocks();
@@ -860,7 +874,10 @@ function ShelfComponent() {
             shelfId={resolvedShelfId}
             shelfType={shelf?.type}
             itemId={editingItemId}
-            isOpen={visibleModal === "item" && !usesPrintPicker}
+            isOpen={
+              visibleModal === "itemFree" ||
+              (visibleModal === "item" && !usesPrintPicker)
+            }
             onClose={handleModalClose}
             onSubmit={handleItemModalSubmit}
           />
@@ -870,6 +887,7 @@ function ShelfComponent() {
               shelfType={shelf.type}
               shelfName={shelf?.name}
               ownedPrints={ownedPrints}
+              receivableItems={receivableItems}
               isOpen={visibleModal === "item" && usesPrintPicker}
               onClose={handleModalClose}
               onAdded={() => {
@@ -985,22 +1003,39 @@ function ShelfComponent() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="rounded-xl">
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("item")}
-                    >
-                      <Plus className="size-4 mr-2" />
-                      {addItemLabel}
-                    </DropdownMenuItem>
                     {isPrintSearchShelf ? (
+                      <>
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() => openModalFromAddMenu("item")}
+                        >
+                          <Search className="size-4 mr-2" />
+                          {t("items.addMenu.catalogue")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() => openModalFromAddMenu("itemFree")}
+                        >
+                          <Plus className="size-4 mr-2" />
+                          {t("items.addMenu.freeEntry")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() => openModalFromAddMenu("sealed")}
+                        >
+                          <Package className="size-4 mr-2" />
+                          {t("items.sealedPicker.menuLabel")}
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
                       <DropdownMenuItem
                         className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("sealed")}
+                        onSelect={() => openModalFromAddMenu("item")}
                       >
-                        <Package className="size-4 mr-2" />
-                        {t("items.sealedPicker.menuLabel")}
+                        <Plus className="size-4 mr-2" />
+                        {addItemLabel}
                       </DropdownMenuItem>
-                    ) : null}
+                    )}
                     {!isPrintSearchShelf ? (
                       <>
                         <DropdownMenuItem

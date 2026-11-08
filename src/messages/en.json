@@ -403,6 +403,10 @@
       "titleRequired": "Series title is required",
       "invalidRange": "Invalid volume range"
     },
+    "addMenu": {
+      "catalogue": "From catalogue",
+      "freeEntry": "Free entry"
+    },
     "bulkAdd": {
       "title": "Bulk add",
       "menuLabel": "Bulk add",
@@ -704,7 +708,15 @@
       "closeConfirmTitle": "Close without adding?",
       "closeConfirmDescription": "Your selection (and any list in progress) will be lost.",
       "closeConfirmStay": "Stay",
-      "closeConfirmLeave": "Close"
+      "closeConfirmLeave": "Close",
+      "awaitedTitle": "Were you waiting for this?",
+      "awaitedDescription": "{count} card(s) in your selection match a copy already away or wanted on this shelf.",
+      "awaitedReceive": "Receive {count}",
+      "awaitedAddNew": "Add as new copies",
+      "awaitedPartialFailure": "{failed} receive(s) failed.",
+      "awaitedKindOrdered": "On order / expected",
+      "awaitedKindWanted": "Wanted",
+      "awaitedKindAway": "Temporarily away"
     },
     "checklistTitle": "Checklist",
     "checklistSubtitle": "What exists, what you own, and what is left to find.",

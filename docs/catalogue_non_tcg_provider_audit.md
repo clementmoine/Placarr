@@ -8,7 +8,7 @@
 | Pattern | Où | À garder pour catalogues |
 |---------|-----|---------------------------|
 | Provenance de cover | [`coverProvenance.ts`](../src/core/enrich/media/coverProvenance.ts), `ProviderInfo.coverProvenanceRules` | Chaque asset catalogue stampé (catalog / listing_photo / …) |
-| Ranking agnostique | [`coverDisplayRank.ts`](../src/core/enrich/media/coverDisplayRank.ts), [`catalogueFaceRank.ts`](../src/core/enrich/media/catalogueFaceRank.ts) | Core = **pixels + provenance + markers fichier** ; pas de listes de noms. Consumers : `createCardFaceChoice`, `resolvePrintFace`, harvests → `face.json`. Index stampé via `coverProvenanceForArtFile` + `enrichCardsIndexArtDimensions`. |
+| Ranking agnostique | [`coverDisplayRank.ts`](../src/core/enrich/media/coverDisplayRank.ts), [`catalogueFaceRank.ts`](../src/core/enrich/media/catalogueFaceRank.ts) | Core = **pixels + provenance + stamps `artKind`/`watermarked`** ; pas de listes de noms. Consumers : `createCardFaceChoice`, `resolvePrintFace`, emitters Affiche. `face.json` = audit dig opt-in. Index stampé via `coverProvenanceForArtFile` + `enrichCardsIndexArtDimensions`. |
 | `remoteImageFallback` | `ProviderInfo` + [`imageDownload.ts`](../src/core/enrich/media/imageDownload.ts) | Cousin de **durableCdn** : qui a le droit de rester distant |
 | Evidence durable | `durableEvidence` (BDfuge, Planetebd, PriceCharting…) | Prix / faits refreshables sans re-scrape si frais |
 | Découverte barcode | resolver + consensus + items | Cycle **découverte → confirm → ligne corpus** (backlog P2) |

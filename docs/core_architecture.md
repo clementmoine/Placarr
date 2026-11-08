@@ -107,22 +107,21 @@ Auth / DB / HTTP             → lib/
 5. ~~`metadataTitleAlign` / `residualIdentity`~~ **fait 2026-07-24** — align orchestrateur + series/score/volume/better-match ; residual facade + tokens/volumes/pairEvaluate.
 6. DRY titres identify↔enrich — **partiel 2026-07-19** (`normalizeForTokens` leaf) ; ne pas fusionner les matchers.
 
-## Faces catalogue — un scorer
+## Faces catalogue — observations Affiche
 
-[`catalogueFaceRank.ts`](../src/core/enrich/media/catalogueFaceRank.ts) décide
-quelle face montrer (tile Catalogue, `/prints/…/face`, `face.json` harvest) :
+[`catalogueFaceRank.ts`](../src/core/enrich/media/catalogueFaceRank.ts) est la
+façade TCG/admin sur les **mêmes observations** que l’Affiche
+(`observeCatalogueFace` → `artKind` / `watermarked` / `coverProvenance`) :
 
-- **critères** = pixels + provenance stampée (`catalog` / `listing_photo`) +
-  markers fichier (`.corrected.` / `.reconstructed.`) ;
-- **interdit** = listes de noms de sources / fallback « all zeros → priority ».
+- basename → meta **uniquement** via [`resolveFaceArtMetaForDig`](../src/core/enrich/media/faceArtMeta.ts) à la construction de l’observation ;
+- score TCG = adaptateur surface (area × aspect × stub floor) **par-dessus** ces stamps — pas un second dialecte de noms ;
+- projection Affiche : `catalogueFaceAsScoredAttachment` + `rankCoversForDisplay`.
 
-Wiring : `createCardFaceChoice` (packs), `resolvePrintFace` (probe dims sync),
-`coverProvenanceForArtFile` sur le module + stamp index
-(`enrichCardsIndexArtDimensions` / rebuild writers).
+Wiring : `createCardFaceChoice`, `resolvePrintFace`, sealed /
+`productVisualIndex`, `coverProvenanceForArtFile` + index stamps.
 
-**Gaps restants (hors chantier face-rank)** : CLIP-side SAMPLE /
-watermark detection beyond filename markers ; labels UI attribution vs host
-(mostly done via `destinationSiteDisplayLabel`).
+Shelf pin / soft-fill / print-role collapse restent hors scorer
+([shared_blocks_audit.md](shared_blocks_audit.md)).
 
 ## Checklist PR core
 

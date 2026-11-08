@@ -386,8 +386,8 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
      `api_live` / scrape en parallèle → consensus. Deux modules, pas un hybride.
   4. **Multi-face covers** : chaque `art.<source>.*` sur disque → une
      `MetadataAttachment` (`coverProvenance: "catalog"`) ; défaut =
-     `face.json` / faceChoice ; ItemModal pin user comme pour ScreenScraper.
-     Core reste aveugle aux hosts mcdn/coleka.
+     re-rank Affiche / catalogue (stamps) ; ItemModal pin user comme pour
+     ScreenScraper. Core reste aveugle aux hosts mcdn/coleka.
 - **Conséquences** : voir `docs/provider_supply_modes.md` ; densification
   `faces.ts` / dossiers d'action live ; Nest commerce / Naruto en phases
   suivantes.

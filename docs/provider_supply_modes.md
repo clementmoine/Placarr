@@ -77,7 +77,8 @@ Same `printGames` (e.g. `["pokemon"]`), distinct ids, consensus on enrich —
 
 Local card dirs often hold several arts (`art.webp`, `art.mcdn.png`, …).
 Providers emit **one `MetadataAttachment` per art file**; default `imageUrl` =
-`face.json` / faceChoice winner. Enrich + ItemModal behave like ScreenScraper
+Affiche / catalogue re-rank winner (stamped `artKind` / provenance / pixels).
+`face.json` is dig-audit only. Enrich + ItemModal behave like ScreenScraper
 galleries. Admin card browser keeps a single vignette for perf.
 
 ## Data vs curated

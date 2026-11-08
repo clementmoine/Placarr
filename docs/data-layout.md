@@ -44,7 +44,7 @@ data/
           art.<source>.<ext>   # un dump par hôte (carddass, nikita, suruga, …)
           art.jpg              # legacy, non renommé
           art.reconstructed.* | art.corrected.*
-          face.json            # fichier affiché (raw éditeur FR > photo Coleka ; sinon pixels)
+          face.json            # dig audit opt-in (PLACARR_WRITE_FACE_JSON) — pas SSOT display
       products/
         {slug}/{fr|en|it|ja}/
           art.<source>.<ext>   # packshots, tous les hôtes
@@ -91,12 +91,12 @@ Carddass : `card` = id collector (`ni0001`, `nus0097`) ; `set` = série / canal
 | Rôle | Forme |
 |------|--------|
 | Face / thumb / illust. B | `/assets/<pack>/prints/{set}-{id}-{lang}/face\|thumb\|face-b` (stem étagère sans finish). **Émis** aujourd’hui par Naruto Carddass ; résolveur HTTP pack-agnostique (emprunt = Carddass seulement). |
-| Scellé face / thumb / dos / logo | `/assets/<pack>/products/{slug}/{lang}/face\|thumb\|back\|logo` — basename sur disque (`art.*` / `back.*` / `logo.*` + `face.json`), jamais dans l’URL. |
+| Scellé face / thumb / dos / logo | `/assets/<pack>/products/{slug}/{lang}/face\|thumb\|back\|logo` — basename sur disque (`art.*` / `back.*` / `logo.*` ; `face.json` audit opt-in), jamais dans l’URL. |
 | Dos pack | `/assets/<pack>/backs/{lang}` |
 | Dos set | `/assets/<pack>/backs/{lang}/sets/{set}` |
 
-Le résolveur HTTP choisit le meilleur fichier sur disque (`face.json` +
-classement dump pour les faces ; `back.{lang}.*` / `back.*` pour les dos) et
+Le résolveur HTTP choisit le meilleur fichier sur disque (re-rank catalogue /
+Affiche pour les faces ; `back.{lang}.*` / `back.*` pour les dos) et
 expose `X-Placarr-Art-Source` / `X-Placarr-Art-Disk`. SQLite / index : présence
 éventuelle, **jamais** le basename dans l’URL publique. Layout disque inchangé
 (lang-first, `art.<source>.*`).
@@ -120,10 +120,11 @@ la tuile. Filtre admin « Art emprunté » = `artFallbackFrom` / `artLocaleFrom`
 recto peut quand même s’afficher via emprunt S5→S1.
 Migration one-shot : `tsx scripts/migrateCardsLangFirst.ts` (pas d'alias npm).
 Faces : **jamais ignorer un hôte** parce qu’une autre illustration est déjà là.
-Chaque dump reste `art.<source>.<ext>` ; `face.json` choisit l’affichage
-(pixels, tie-break par locale). Même contrat pour tous les TCG / packs — pas
-seulement Carddass. `art.jpg` non sourcé restant = `legacy`
-(thumbs EN bizarres, photos collectionneur) — le reste a été reclasse.
+Chaque dump reste `art.<source>.<ext>` ; l’affichage re-ranke (pixels +
+provenance + artKind), `face.json` = audit dig opt-in seulement. Même contrat
+pour tous les TCG / packs — pas seulement Carddass. `art.jpg` non sourcé
+restant = `legacy` (thumbs EN bizarres, photos collectionneur) — le reste a
+été reclasse.
 Produits scellés : même contrat sous `products/{slug}/{lang}/` (`art` +
 `logo`) — tous les hôtes archivés, `productChoice` décide. Le wordmark de
 série est recopié dans chaque SKU (Pokémon / Lorcana déjà un logo par produit ;

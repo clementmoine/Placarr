@@ -281,7 +281,7 @@ Exemple face :
 5. **Finition** = propriété exemplaire (`foil` / holo / `promo`+shuriken) sans rendu.
 6. **Prix** = secondaire.
 7. **Data Carddass arcade / Mythos / Kayou / 2027** = jeux séparés (autre `game` / pack) — hors ombrelle CACG/CCG legacy si produit vraiment distinct.
-8. **Faces** : chaque hôte écrit `art.<source>.<ext>` dans le dossier carte. On ne skippe que si _cette_ source est déjà là — jamais « déjà une illustration ». `face.json` (pixels, puis locale) décide l’affichage ; `art.reconstructed` / `art.corrected` restent au-dessus.
+8. **Faces** : chaque hôte écrit `art.<source>.<ext>` dans le dossier carte. On ne skippe que si _cette_ source est déjà là — jamais « déjà une illustration ». Affichage = re-rank Affiche (pixels + provenance + artKind) ; `face.json` = audit dig opt-in seulement ; `art.reconstructed` / `art.corrected` restent au-dessus.
 
 ## 6bis. GitHub / Reddit / archives machine-readable (2026-08-12)
 

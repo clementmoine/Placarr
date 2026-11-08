@@ -64,10 +64,10 @@ doit pouvoir **ajouter / mettre à jour** des faits sans perdre l’identité
 
 | Priorité | Item | Détail |
 | -------- | ---- | ------ |
-| **P1** | **Citations vérifiables sur chaque fait (tous providers)** | **Garde core 2026-11-05** : `sanitizePublicCitationUrl` / `isOpenablePublicCitationUrl` — refuse homepage / hub shallow ; Wayback OK si l’original est un deep link. Branché observations, field evidence, price offers, external links. **Stamps 2026-11-05** : TCGdex / Cover Project / LorcanaJSON Cardmarket / Détecteur FR. **2026-11-08** : Carddass digs + LocalTcgLine ; UNS3 ; sealed hunts ; IT/FR S5 ; UltraJeux S2 starters ; Kinkai duopack ; **display-s28-fr** eBay ; DBH Fullahead. **Bloqué** : Lorcana storytelling (pas de research-dig) ; displays Carddass FR S1–S5 (packshot). Voir [provider_external_links.md](provider_external_links.md). |
+| **P1** | **Citations vérifiables sur chaque fait (tous providers)** | **Garde core 2026-11-05** : `sanitizePublicCitationUrl` / `isOpenablePublicCitationUrl` — refuse homepage / hub shallow ; Wayback OK si l’original est un deep link. Branché observations, field evidence, price offers, external links. **Stamps 2026-11-05** : TCGdex / Cover Project / LorcanaJSON Cardmarket / Détecteur FR. **2026-11-08** : Carddass digs + LocalTcgLine ; UNS3 ; sealed hunts + `claims[]` ; FR S5 UltraJeux ; booster-s28 Sunny ; DBH Fullahead + Toy-Let/Chitoro/eBay/Club ; OPTCG ST13–28 Tier One ; Bleach display S1. **Bloqué** : Lorcana storytelling (pas de research-dig) ; displays Carddass FR S1–S5 (packshot) ; OP event boosters (pas de dig Pieces) ; DBH PUMS/starters orphelins. Voir [provider_external_links.md](provider_external_links.md). |
 | ~~**P1**~~ | ~~**Re-sync item existant via `printKey`**~~ | **Fait 2026-11-08** — après `catalogProviderSync`, `enqueuePrintCatalogPropagate` soft-refresh (`clearRemoteCover: false`, `preserveUserCover: true` — pas de wipe crop `/uploads/`). Compteur `payload.propagatedItemCount` → menu jobs + toast / status FoilSources. Titres user déjà gardés via `adoptMetadataTitle`. |
 | ~~**P2**~~ | ~~**Promote shelf → corpus (confirm)**~~ | **Fait 2026-11-08** : accept → `decideCorpusPromoteCandidate` → `catalog.applyCorpusPromote` (LocalPrintsIndex via `printGame` ; Pokémon = `applyCorpusPromotePokemon` → TCGdex `catalog.sqlite`). Dual-owner packs : prefer module with apply hook. Statut `applied` / `accepted`+reason. |
-| **P1** | **Encart « Le saviez-vous ? » / storytelling objet** | **Amorce 2026-11-08** : kind `story` + encart fiche ; dig claims (sans prose inventée) : UNS3 ; Pack Découverte / Tin Boxes / duopacks ; S2 UltraJeux (Détruire + Sceller) ; display-s28-fr eBay ; manga pack ; Kana ; prerelease ; S6 FR ; shuriken ; FB DVD/`labelText` ; IT S5 Emporio ; Mythos VV2. **Suite** : displays Carddass FR S1–S5 (packshot) ; forums si claim + URL. Hors TCG plus tard. |
+| **P1** | **Encart « Le saviez-vous ? » / storytelling objet** | **Amorce 2026-11-08** : dig claims only (UNS3, sealed hunts `claims[]`, Tin verso, UltraJeux S2/S5, Sunny s28, Emporio IT, FB/Mythos/DBH Namek…). **Reste sans claim+URL dig** : displays Carddass FR S1–S5 ; forums hub ; booster-s8-it (titre listing seul) ; starters FR S1/S3/S4 (catalogues staging locaux, pas d’URL publique dig) ; Pokémon Live foil digs (hors track). |
 
 ### Densif sealed / TCG — session 2026-10-15/16
 
@@ -535,6 +535,20 @@ Le reste du fichier = journal / historique.
 **Ne plus rouvrir sans raison** : blindness allowlist vide, merge dé-biaisé, workers hors Next, URL-first prix + external-links, corpus barcode 21/21, debias covers traits, cluster confidence + platform pick decide-late, GENERIC→IDENTITY, title-IDF offline index, No-Intro dump path, AUDIO-1/GS1, server dump hashing.
 
 ---
+
+## Campagne catalogues → 0 sans image (+ Magic) — 2026-11-08
+
+Voir [catalogue_sources_underexploited.md](catalogue_sources_underexploited.md) § Campagne faces → 0.
+
+| Levier | Résultat |
+| ------ | -------- |
+| Magic browse SQL-only | Contrat + index ; densify Scryfall faces = suite Sync |
+| Pokémon paper-faces | Sync en cours ; disque mid FR **10** / EN **0** / JA dirs **0** (était 69/23/1202) ; Trainers/Limitless JA en fin de Sync |
+| YGO FR ScanFlip + ygoresources | Branché ; résidu tip/strategy ~51 honnêtes |
+| Disney26 eBay | **132/132** |
+| naruto-card.jp | Blobs Chrome + install JA/疾風伝/Data |
+| Carddass EN re-promote | Vintage + Goat ; Drive Flare à rejouer |
+| Carddass FR S6 + Ninja IT ns-0003 | `printed=0` / face AnimeCollection |
 
 ## État actuel (snapshot)
 

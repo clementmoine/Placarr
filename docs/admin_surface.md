@@ -10,7 +10,7 @@
 |--------|-----|
 | Catalogue Sync (TCG + LaunchBox…) | `/admin` Catalogue → **Sync** (pack) / **Sync tout** ; job unique `catalogProviderSync` → `catalog.refresh` (harvest + faces + CLIP). Ancien `foilExtract` / Local indexes = remap ou legacy worker only. |
 | Affinités providers | Admin Refresh → `ProviderAffinitiesPanel` ; `GET /api/admin/provider-affinities` |
-| Promote shelf → corpus | Admin Refresh → `CorpusPromotePanel` ; confirm only (`CorpusPromoteCandidate`) |
+| Promote shelf → corpus | Admin Refresh → `CorpusPromotePanel` ; accept écrit via `catalog.applyCorpusPromote` (LocalPrintsIndex ou TCGdex identity pour `pokemon`) |
 | Refresh metadata items | Admin Refresh (file `metadataRefresh`) — **libellé distinct** du Sync corpus |
 | Worker | `pnpm worker` / compose — process ops, pas une CLI métier |
 

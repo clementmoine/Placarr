@@ -32,6 +32,7 @@ seulement, pas suppression de données.
 | [Wayback CDX `carddas.com/naruto/*`](https://web.archive.org/web/*/http://www.carddas.com/naruto/*)   | Même corpus que le dump `staging/carddas-jp/`.                                                                                                                                                                                   |
 | [carddass.fr racine](https://web.archive.org/web/20111228103710/http://www.carddass.fr/)              | Hub multi-jeux 2011. Naruto = `/naruto/` (déjà dumpé).                                                                                                                                                                           |
 | [nikita `?mode=img`](https://tcg-db.nikita.jp/cardlist/nrt/?mode=img)                                 | Vue faces du jeu `nrt` (pas seulement `/explist/nrt/`).                                                                                                                                                                          |
+| [naruto-card.jp photo-archive](https://naruto-card.jp/photo-archive/muin)                             | **2026-11-08** : HTML archives via Flare ; media `/media/cards` **429** curl/Flare stock → prefetch **Chrome** (`scripts/narutocardjpBrowserFetch.py`) → blobs → `art.narutocardjp.webp`. Ledgers 1003 / 516 / 692. |
 
 Corpus miné : `docs/naruto_*.md`, `src/providers/naruto/narutocarddass/curated/sources/*.json`,
 mémoires Claude (promo, liveinternet, Coleka, S6 IT), ce trip Cursor, share

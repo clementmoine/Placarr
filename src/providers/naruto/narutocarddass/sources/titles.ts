@@ -34,7 +34,7 @@ import { isImplausibleNarutoTitle } from "../pipeline";
 import { NARUTO_PACK_ID } from "../indexStore";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
-import { waybackRawUrl } from "../parse/bandai";
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
 import { narutoCarddassSourcePath } from "../syncedSources";
 import {
   MANGA_NEWS_DECKS,
@@ -905,45 +905,10 @@ export async function fetchCdxRows(
   cdxUrl: string,
   label: string,
 ): Promise<CdxRow[]> {
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    const started = Date.now();
-    console.log(`CDX ${label} attempt ${attempt}/5…`);
-    try {
-      const response = await httpGet<string[][]>(cdxUrl, {
-        headers: { "user-agent": WAYBACK_UA },
-        // Le CDX Wayback met souvent 20–90s à répondre.
-        timeout: 180_000,
-        validateStatus: () => true,
-      });
-      if (response.status < 200 || response.status >= 300) {
-        throw new Error(`CDX HTTP ${response.status}`);
-      }
-      const raw = response.data;
-      const rows: CdxRow[] = [];
-      for (const row of raw) {
-        if (!row[0] || row[0] === "timestamp") continue;
-        rows.push({
-          timestamp: row[0]!,
-          original: row[1]!,
-          mimetype: (row[2] || "").toLowerCase(),
-          statuscode: row[3] || "",
-        });
-      }
-      console.log(
-        `CDX ${label} done in ${Math.round((Date.now() - started) / 1000)}s → rows=${rows.length}`,
-      );
-      return rows;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      const wait = attempt * 3_000;
-      console.warn(
-        `CDX ${label} attempt ${attempt}/5 failed: ${lastError.message} — retry in ${wait}ms`,
-      );
-      await sleep(wait);
-    }
-  }
-  throw lastError ?? new Error(`CDX ${label} failed`);
+  const { fetchCdxRows: fetchShared } = await import(
+    "@/providers/shared/wayback/cdx"
+  );
+  return fetchShared(cdxUrl, label, { userAgent: WAYBACK_UA });
 }
 
 /** Latest capture per canonical URL. */

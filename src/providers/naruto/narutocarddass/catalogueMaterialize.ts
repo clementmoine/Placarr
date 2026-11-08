@@ -8,7 +8,7 @@ import {
   narutoPrintKeySetCode,
   type CatalogueCardRow,
 } from "@/lib/admin/catalogueCards";
-import { assetsPrintFaceUrl } from "@/lib/packAssetUrls";
+import { resolvePrintScopedCatalogueFace } from "@/providers/shared/cardCatalogue/resolvePrintScopedFace";
 
 import {
   canonicalizeNarutoPrintKey,
@@ -18,26 +18,21 @@ import {
   parseNarutoCollector,
   NARUTO_PACK_ID,
 } from "./identity";
-import { resolveNarutoPrintFace } from "./printFaceResolve";
 
 /**
- * PrintKey role URL only when bytes resolve on disk.
- * Stale index rows must not mint a 404 thumb.
+ * Admin / browse face URL when bytes resolve on disk.
+ * Prefer concrete `/cards/…/art.*` (same Affiche SSOT); print roles remain
+ * HTTP resolve fallbacks for foil / missing basename.
  */
 export function resolveCarddassPrintScopedFace(opts: {
   printKey: string;
   lang: string;
 }): Pick<CatalogueCardRow, "artUrl" | "thumbUrl" | "artFallbackFrom"> | null {
-  const { printKey, lang } = opts;
-  const hit = resolveNarutoPrintFace({ printKey, lang, role: "face" });
-  if (!hit) return null;
-  return {
-    artUrl: assetsPrintFaceUrl(NARUTO_PACK_ID, printKey, lang, "face"),
-    thumbUrl: assetsPrintFaceUrl(NARUTO_PACK_ID, printKey, lang, "thumb"),
-    ...(hit.source === "borrowed" && hit.donorPrintKey
-      ? { artFallbackFrom: hit.donorPrintKey }
-      : {}),
-  };
+  return resolvePrintScopedCatalogueFace({
+    packId: NARUTO_PACK_ID,
+    printKey: opts.printKey,
+    lang: opts.lang,
+  });
 }
 
 function narutoBrowseIdentityKey(row: CatalogueCardRow): string {

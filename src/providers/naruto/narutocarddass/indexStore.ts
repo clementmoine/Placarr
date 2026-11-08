@@ -26,6 +26,7 @@ import { migrateProductsSchema } from "@/providers/shared/sealedProducts/product
 import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
 import { ensureSqliteFold } from "@/providers/shared/sqliteFold";
 
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { appearanceSetsOf } from "./identity";
 import {
@@ -59,6 +60,7 @@ import { narutoEditorialLandscapePrints } from "./search";
 import { NARUTO_PACK_ID } from "./identity";
 import { NARUTO_GAME } from "./parse/bandai";
 import { isNarutoLangPrinted } from "./identity";
+import { resolveNarutoLocalePrinted } from "./printedLocale";
 import { RAMPAGE_TORNADO_SET } from "./parse/coleka";
 import { belongsOnNarutoPromoChecklist } from "./sources/promos";
 import {
@@ -253,6 +255,9 @@ export type NarutoAssetRow = {
   waybackTimestamp?: string | null;
   /** False = unprinted locale (S6 FR). Omitted / true = addable. */
   printed?: boolean;
+  /** Dig override — basename fills when omitted. */
+  artKind?: string | null;
+  watermarked?: boolean | null;
 };
 
 const activeDbs = new Map<
@@ -341,6 +346,8 @@ function createSchema(db: DatabaseSync): void {
       source_url TEXT,
       wayback_timestamp TEXT,
       printed INTEGER NOT NULL DEFAULT 1,
+      art_kind TEXT,
+      watermarked INTEGER,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
@@ -502,6 +509,9 @@ export function writeNarutoCcgIndex(input: {
     oldKeyCollector.set(p.printKey, collectorOf(p.number, p.printKey));
   }
   const unmappedRowKeys: string[] = [];
+  const expandedPrintByKey = new Map(
+    expandedPrints.map((p) => [p.printKey, p] as const),
+  );
   const expandRows = <T extends { printKey: string }>(
     rows: readonly T[],
     kind: "titre" | "face",
@@ -520,7 +530,31 @@ export function writeNarutoCcgIndex(input: {
         continue;
       }
       for (const printKey of keys) {
-        out.push({ ...row, printKey });
+        if (kind !== "face") {
+          out.push({ ...row, printKey });
+          continue;
+        }
+        /*
+          Fan-out copies art onto every set-scoped sibling. Recompute
+          `printed` for the *target* set — otherwise a cancelled S6 FR
+          row stamps s2/s5 retail cardboard as unprinted (last UPSERT wins).
+        */
+        const asset = row as T & { lang?: string };
+        const target = expandedPrintByKey.get(printKey);
+        const targetSet =
+          target?.setCode ?? parsePrintKey(printKey)?.set ?? "";
+        const number =
+          target?.number ?? collectorFromPrintKey(printKey) ?? "";
+        const lang = (asset.lang ?? "").trim().toLowerCase();
+        out.push({
+          ...row,
+          printKey,
+          printed: resolveNarutoLocalePrinted({
+            setCode: targetSet,
+            lang,
+            number,
+          }),
+        } as T);
       }
     }
     return out;
@@ -608,6 +642,44 @@ export function writeNarutoCcgIndex(input: {
       return setAcceptsLocaleRow(set, row.lang, row.printKey);
     },
   );
+  /*
+    Title-only *unprinted* shells (HTML phantoms TA-090 / S6 carte-semaine)
+    need an asset row so admin « Non imprimées » can see them — SQL filters
+    on print_assets.printed, and COALESCE(NULL→1) used to hide them while
+    « Toutes » still showed « non éditée ». Do not mint empty shells for
+    printed locales that simply lack art yet (prerelease bag vs retail).
+  */
+  {
+    const haveAsset = new Set(
+      expandedAssets.map(
+        (a) => `${a.printKey}\0${a.lang.trim().toLowerCase()}`,
+      ),
+    );
+    for (const title of expandedTitles) {
+      const lang = title.lang.trim().toLowerCase();
+      const key = `${title.printKey}\0${lang}`;
+      if (haveAsset.has(key)) continue;
+      const print = expandedPrintByKey.get(title.printKey);
+      const setCode =
+        print?.setCode ?? parsePrintKey(title.printKey)?.set ?? "";
+      const number =
+        print?.number ?? collectorFromPrintKey(title.printKey) ?? "";
+      if (
+        resolveNarutoLocalePrinted({ setCode, lang, number })
+      ) {
+        continue;
+      }
+      expandedAssets.push({
+        printKey: title.printKey,
+        lang: title.lang,
+        art: null,
+        thumb: null,
+        back: null,
+        printed: false,
+      });
+      haveAsset.add(key);
+    }
+  }
 
   const db = new DatabaseSync(buildPath);
   createSchema(db);
@@ -635,15 +707,17 @@ export function writeNarutoCcgIndex(input: {
       rarity = excluded.rarity
   `);
   const insertAsset = db.prepare(`
-    INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, wayback_timestamp, printed)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, wayback_timestamp, printed, art_kind, watermarked)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(print_key, lang) DO UPDATE SET
       art = COALESCE(excluded.art, print_assets.art),
       thumb = COALESCE(excluded.thumb, print_assets.thumb),
       back = COALESCE(excluded.back, print_assets.back),
       source_url = COALESCE(excluded.source_url, print_assets.source_url),
       wayback_timestamp = COALESCE(excluded.wayback_timestamp, print_assets.wayback_timestamp),
-      printed = excluded.printed
+      printed = excluded.printed,
+      art_kind = COALESCE(excluded.art_kind, print_assets.art_kind),
+      watermarked = COALESCE(excluded.watermarked, print_assets.watermarked)
   `);
 
   db.exec("BEGIN");
@@ -724,6 +798,13 @@ export function writeNarutoCcgIndex(input: {
       ) {
         continue;
       }
+      const faceMeta = a.art
+        ? resolveFaceArtMetaForDig({
+            artFile: a.art,
+            artKind: a.artKind,
+            watermarked: a.watermarked,
+          })
+        : null;
       insertAsset.run(
         a.printKey,
         a.lang,
@@ -733,6 +814,8 @@ export function writeNarutoCcgIndex(input: {
         a.sourceUrl ?? null,
         a.waybackTimestamp ?? null,
         a.printed === false ? 0 : 1,
+        faceMeta?.artKind ?? null,
+        faceMeta ? (faceMeta.watermarked ? 1 : 0) : null,
       );
     }
     db.exec("COMMIT");

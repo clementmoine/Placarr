@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { NARUTO_FACE_DECISION_FILE } from "../disk";
 import { NARUTO_STAGING_DRIVE } from "../harvest";
+import { promoteNarutoFace } from "../disk";
 import { narutoDiskCardId } from "../identity";
 import { driveEnhancedFolders } from "../parse/catalogues";
 import { installMercariFaces, installTvTokyoFaces, installYahooAuctionFaces, installNarutoCcgDriveFansetFallbacks, carddasDoubleGifBasename, goatLocalePromoFaceLedger, goatLocalePromoIngestFaces, leboncoinFaceLedger, leboncoinIngestFaces, leboncoinListingImageFull } from "./faces";
@@ -64,20 +64,9 @@ const ledger = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.j
         "art.mercari.jpg",
       );
       expect(readFileSync(dest).equals(jpeg)).toBe(true);
-      const decision = JSON.parse(
-        readFileSync(
-          path.join(
-            packRoot,
-            "cards",
-            "ja",
-            "maki1",
-            "ni0003",
-            NARUTO_FACE_DECISION_FILE,
-          ),
-          "utf8",
-        ),
-      ) as { art: string };
-      expect(decision.art).toBe("art.mercari.jpg");
+      expect(
+        await promoteNarutoFace(path.dirname(dest), "ja"),
+      ).toBe("art.mercari.jpg");
     });
   });
 }
@@ -145,16 +134,9 @@ const ledger = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.j
         "art.tvtokyo.jpg",
       );
       expect(existsSync(installedFile)).toBe(true);
-
-      const decisionFile = path.join(
-        packRoot,
-        "cards",
-        "ja",
-        "maki1",
-        "ni0001",
-        NARUTO_FACE_DECISION_FILE,
-      );
-      expect(existsSync(decisionFile)).toBe(true);
+      expect(
+        await promoteNarutoFace(path.dirname(installedFile), "ja"),
+      ).toBe("art.tvtokyo.jpg");
     }, 30_000);
   });
 }
@@ -213,20 +195,9 @@ const ledger = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.j
         "art.yahoo.jpg",
       );
       expect(readFileSync(dest).equals(jpeg)).toBe(true);
-      const decision = JSON.parse(
-        readFileSync(
-          path.join(
-            packRoot,
-            "cards",
-            "ja",
-            "maki1",
-            "ni0019",
-            NARUTO_FACE_DECISION_FILE,
-          ),
-          "utf8",
-        ),
-      ) as { art: string };
-      expect(decision.art).toBe("art.yahoo.jpg");
+      expect(
+        await promoteNarutoFace(path.dirname(dest), "ja"),
+      ).toBe("art.yahoo.jpg");
     });
   });
 }
@@ -316,10 +287,8 @@ const ledger = readNarutoCarddassSyncedSource("carddas-jp-double-illustrations.j
       const stats = await installNarutoCcgDriveFansetFallbacks({ packRoot });
       expect(stats.written).toContain("n0001/en");
       expect(existsSync(path.join(existing, "art.fanset.webp"))).toBe(true);
-      const decision = JSON.parse(
-        readFileSync(path.join(existing, NARUTO_FACE_DECISION_FILE), "utf8"),
-      ) as { art?: string };
-      expect(decision.art).toBe("art.vintage.jpg");
+      // Vintage dump outranks fanset fallback for EN display.
+      expect(await promoteNarutoFace(existing, "en")).toBe("art.vintage.jpg");
       expect(
         existsSync(path.join(packRoot, "cards", "en", "s28", "n1715")),
       ).toBe(false);

@@ -18,6 +18,7 @@ import {
   CARD_FACE_DECISION_FILE,
   CARD_FACE_ROLES,
   createCardFaceChoice,
+  promoteResolvedFace,
   type CardFaceRole,
   type FaceDecision,
   type StoredFace as SharedStoredFace,
@@ -139,9 +140,10 @@ export function isNewNarutoCardLayoutRoot(name: string): boolean {
  * Which stored face a Naruto print shows.
  *
  * Same mechanism as DBS — `providers/shared/cardFaces`. Every dump is kept as
- * `art.<source>.<ext>`; `face.json` names the winner. Hand-made
- * `art.reconstructed.*` and errata `art.corrected.*` sit above the dumps
- * (watermarked official S5 vs a reconstruction).
+ * `art.<source>.<ext>`; display re-ranks by Affiche stamps (pixels +
+ * provenance + artKind). `face.json` is an optional dig audit trail only.
+ * Hand-made `art.reconstructed.*` and errata `art.corrected.*` sit above the
+ * dumps (watermarked official S5 vs a reconstruction).
  */
 
 export const NARUTO_FACE_SOURCES = [
@@ -203,6 +205,11 @@ export const NARUTO_FACE_SOURCES = [
    * pixels keep larger Drive / Vintage dumps ahead.
    */
   "narutocardgamegg",
+  /**
+   * naruto-card.jp photo archives — collector scans with printed refs
+   * (JA Carddass / 疾風伝 / Data Carddass).
+   */
+  "narutocardjp",
   "legacy",
   "fanset",
 ] as const;
@@ -254,6 +261,7 @@ export const NARUTO_JA_SHOP_SCAN_SOURCES: ReadonlySet<NarutoFaceSource> =
     "tvtokyo",
     "tvtokyo-a",
     "tvtokyo-b",
+    "narutocardjp",
   ]);
 
 /**
@@ -361,7 +369,9 @@ export function pickBestNarutoDumpFace(
 }
 
 const LEGACY_ART = /^art\.(jpe?g|png|gif|webp)$/i;
-const SPECIAL_ART = /^art\.(reconstructed|corrected)\.(jpe?g|png|webp|gif)$/i;
+/** Hand-made / errata dumps — shared by parse, Affiche attachments, promote. */
+export const NARUTO_SPECIAL_ART_RE =
+  /^art\.(reconstructed|corrected)\.(jpe?g|png|webp|gif)$/i;
 
 /**
  * `face.json` may name a dump (`art.suruga.jpg`), unsourced `art.jpg`, or a
@@ -377,7 +387,7 @@ export function parseNarutoFaceDecision(
     const raw = JSON.parse(json) as FaceDecision;
     const file = raw?.[role]?.trim();
     if (!file || role !== "art") return null;
-    if (narutoFaceSourceOf(file) || SPECIAL_ART.test(file)) return file;
+    if (narutoFaceSourceOf(file) || NARUTO_SPECIAL_ART_RE.test(file)) return file;
     return null;
   } catch {
     return null;
@@ -480,7 +490,7 @@ export function listNarutoCardDirs(
  * Shared bytes helpers for catalogue face installs.
  *
  * Each dump is `art.<source>.<ext>` — never overwrite another source. The
- * displayed file is chosen afterwards (`promoteNarutoFace` → `face.json`).
+ * displayed file is chosen afterwards (`promoteNarutoFace` / resolve re-rank).
  */
 
 
@@ -574,8 +584,6 @@ export function writeNarutoArtFile(
   return destName;
 }
 
-const SPECIAL_FACE = /^art\.(reconstructed|corrected)\.(jpe?g|png|webp|gif)$/i;
-
 export async function promoteNarutoFace(
   cardDir: string,
   lang: string,
@@ -586,21 +594,19 @@ export async function promoteNarutoFace(
     /^art\.reconstructed\.(jpe?g|png|webp|gif)$/i.test(name),
   );
   if (reconstructed) {
-    recordNarutoFaceDecision(cardDir, "art", reconstructed);
-    return reconstructed;
+    return promoteResolvedFace({ cardDir, filename: reconstructed });
   }
   const corrected = files.find((name) =>
     /^art\.corrected\.(jpe?g|png|webp|gif)$/i.test(name),
   );
   if (corrected) {
-    recordNarutoFaceDecision(cardDir, "art", corrected);
-    return corrected;
+    return promoteResolvedFace({ cardDir, filename: corrected });
   }
   const { default: sharp } = await import("sharp");
   const artBFile = illustrationBArtFileForCardDir(cardDir);
   const stored: NarutoStoredFace[] = [];
   for (const name of files) {
-    if (SPECIAL_FACE.test(name)) continue;
+    if (NARUTO_SPECIAL_ART_RE.test(name)) continue;
     // Ledger art B stays on disk for the finish selector, never as primary.
     if (artBFile && name === artBFile) continue;
     const source = narutoFaceSourceOf(name);
@@ -633,9 +639,10 @@ export async function promoteNarutoFace(
   const best = pickBestNarutoDumpFace(stored, lang);
   if (!best) return null;
   const winner = stored.find((face) => face.source === best);
-  const filename = winner?.file ?? narutoFaceFilename(best);
-  recordNarutoFaceDecision(cardDir, "art", filename);
-  return filename;
+  return promoteResolvedFace({
+    cardDir,
+    filename: winner?.file ?? narutoFaceFilename(best),
+  });
 }
 
 export async function promoteAllNarutoFaces(root: string): Promise<number> {

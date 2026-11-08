@@ -2,7 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { NARUTO_FACE_SOURCES, narutoDumpFaceRank, narutoFaceFilename, narutoFaceSourceOf, parseNarutoFaceDecision, pickBestNarutoDumpFace, narutoAssetsCardUrl, narutoCardPathFromCollector, narutoCardRelPath, normalizeNarutoLang, NARUTO_FACE_DECISION_FILE, existingNarutoArtForSource, saveNarutoFace, writeNarutoArtFile, isMarketplacePaddedImage, carddasJpVol1FaceOriginalUrls, carddasJpVol1FaceStem, carddasJpVol1FaceTargets, carddasJpVolumeFaceOriginalUrls, carddasJpVolumeFaceStem, carddasJpVolumeFaceTargets, waybackImageUrl } from "./disk";
+import { NARUTO_FACE_SOURCES, narutoDumpFaceRank, narutoFaceFilename, narutoFaceSourceOf, parseNarutoFaceDecision, pickBestNarutoDumpFace, narutoAssetsCardUrl, narutoCardPathFromCollector, narutoCardRelPath, normalizeNarutoLang, existingNarutoArtForSource, promoteNarutoFace, saveNarutoFace, writeNarutoArtFile, isMarketplacePaddedImage, carddasJpVol1FaceOriginalUrls, carddasJpVol1FaceStem, carddasJpVol1FaceTargets, carddasJpVolumeFaceOriginalUrls, carddasJpVolumeFaceStem, carddasJpVolumeFaceTargets, waybackImageUrl } from "./disk";
 import { canonicalizeNarutoPrintKey, mintNarutoPrintKey, narutoCollectorsMatch, narutoDiskCardId } from "./identity";
 import sharp from "sharp";
 
@@ -695,10 +695,7 @@ import sharp from "sharp";
         "art.suruga.jpg",
       );
       expect(existingNarutoArtForSource(cardDir, "legacy")).toBe("art.jpg");
-      const decision = JSON.parse(
-        readFileSync(path.join(cardDir, NARUTO_FACE_DECISION_FILE), "utf8"),
-      ) as { art?: string };
-      expect(decision.art).toBe("art.suruga.jpg");
+      expect(await promoteNarutoFace(cardDir, "ja")).toBe("art.suruga.jpg");
     });
 
     it("skips only when that source is already on disk", async () => {
@@ -734,10 +731,9 @@ import sharp from "sharp";
         source: "nikita",
         lang: "ja",
       });
-      const decision = JSON.parse(
-        readFileSync(path.join(cardDir, NARUTO_FACE_DECISION_FILE), "utf8"),
-      ) as { art?: string };
-      expect(decision.art).toBe("art.reconstructed.png");
+      expect(await promoteNarutoFace(cardDir, "ja")).toBe(
+        "art.reconstructed.png",
+      );
     });
 
     it("keeps the official FR raw when Coleka is a larger photo", async () => {
@@ -749,10 +745,7 @@ import sharp from "sharp";
         source: "coleka",
         lang: "fr",
       });
-      const decision = JSON.parse(
-        readFileSync(path.join(cardDir, NARUTO_FACE_DECISION_FILE), "utf8"),
-      ) as { art?: string };
-      expect(decision.art).toBe("art.carddass.jpg");
+      expect(await promoteNarutoFace(cardDir, "fr")).toBe("art.carddass.jpg");
     });
   });
 }

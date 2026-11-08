@@ -112,12 +112,12 @@ import {
   carddassFaceFilename,
   faceArtRank,
   pickPreferredFaceArtFilename,
-  waybackRawUrl,
   type ParsedCarddassAsset,
 } from "../parse/bandai";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
 import { isNarutoFansetCollector } from "../parse/catalogues";
 import { relocateFansetCollectors } from "../sources/relocateFansetCollectors";
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
 
 const CDX_URL =
   "https://web.archive.org/cdx/search/cdx?url=www.carddass.fr/naruto/images/*&output=json&fl=timestamp,original,mimetype,statuscode&filter=statuscode:200&collapse=urlkey&limit=20000";

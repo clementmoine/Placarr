@@ -1,5 +1,11 @@
 import { describe, expect, it, afterEach } from "vitest";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { collisionsFrom, titleMismatches, type FaceRef, foldUnsourcedNarutoArt, inferUnsourcedNarutoSource, planUnsourcedNarutoArt } from "./audit";
@@ -250,16 +256,14 @@ import sharp from "sharp";
         .toBuffer();
       writeFileSync(path.join(ja, "art.jpg"), dup);
       writeFileSync(path.join(ja, "art.suruga.jpg"), dup);
-      writeFileSync(path.join(ja, "face.json"), '{"art":"art.jpg"}\n');
       const ni2 = path.join(root, "cards", "ja", "ninja", "ni0002");
       mkdirSync(ni2, { recursive: true });
       writeFileSync(path.join(ni2, "art.jpg"), nikita);
 
       const out = await foldUnsourcedNarutoArt(root);
       expect(out).toEqual({ deleted: 1, renamed: 1, kept: 0 });
-      expect(readFileSync(path.join(ja, "face.json"), "utf8")).toContain(
-        "art.suruga.jpg",
-      );
+      expect(existsSync(path.join(ja, "art.jpg"))).toBe(false);
+      expect(existsSync(path.join(ja, "art.suruga.jpg"))).toBe(true);
       expect(readFileSync(path.join(ni2, "art.nikita.jpg")).equals(nikita)).toBe(
         true,
       );

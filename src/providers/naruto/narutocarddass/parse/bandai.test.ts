@@ -3,7 +3,9 @@ import enCcgSeries from "../curated/sources/en-ccg-series.json";
 import tcdb from "../curated/sources/tcdb-en-ccg.json";
 import { mintNarutoPrintKey, parseNarutoCollector } from "../identity";
 import { canonicalizeCarddassUrl, siteRelPathFromOriginal } from "../scrape/scrapeCards";
-import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaicgEnCardlistCards, mergeBandaicgEnNamesIntoIndex, parseBandaicgCardlistHtml, bggEnCcgPrinted, bggEnCcgS1Cards, bggEnCcgS1Ledger, mergeBggEnCcgS1IntoIndex, parseCarddasJpAssetPath, carddasJpStagingFaceToDiskId, carddasJpStagingFaceInstallTarget, carddasJpCardlistCards, carddasJpVolumeSetCode, mergeCarddasJpNamesIntoIndex, parseCarddasJpCardlistHtml, carddas20ProCards, carddasJpPromoCards, mergeCarddas20ProIntoIndex, mergeCarddasJpPromoIntoIndex, noihjpCarddassCards, mergeNoihjpCarddassIntoIndex, NARUTO_GAME, carddassFaceFilename, parseCarddassAssetPath, parseCarddassMedThumbFilename, pickLatestCdxRow, faceArtRank, pickPreferredFaceArtFilename, waybackRawUrl, parseEnCcgPrintedRef } from "./bandai";
+import { pickLatestCdxRow } from "@/providers/shared/wayback/cdx";
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
+import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaicgEnCardlistCards, mergeBandaicgEnNamesIntoIndex, parseBandaicgCardlistHtml, bggEnCcgPrinted, bggEnCcgS1Cards, bggEnCcgS1Ledger, mergeBggEnCcgS1IntoIndex, parseCarddasJpAssetPath, carddasJpStagingFaceToDiskId, carddasJpStagingFaceInstallTarget, carddasJpCardlistCards, carddasJpVolumeSetCode, mergeCarddasJpNamesIntoIndex, parseCarddasJpCardlistHtml, carddas20ProCards, carddasJpPromoCards, mergeCarddas20ProIntoIndex, mergeCarddasJpPromoIntoIndex, noihjpCarddassCards, mergeNoihjpCarddassIntoIndex, NARUTO_GAME, carddassFaceFilename, parseCarddassAssetPath, parseCarddassMedThumbFilename, faceArtRank, pickPreferredFaceArtFilename, parseEnCcgPrintedRef } from "./bandai";
 
 // —— parseBandaicgAsset ——
 {
@@ -786,14 +788,13 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
     });
 
     it("ranks faces so every caller agrees on precedence", () => {
-      expect(faceArtRank("art.reconstructed.png")).toBeGreaterThan(
-        faceArtRank("art.corrected.jpg"),
+      // Shared catalogueFaceRank: corrected > reconstructed > dump.
+      expect(faceArtRank("art.corrected.jpg")).toBeGreaterThan(
+        faceArtRank("art.reconstructed.png"),
       );
       expect(faceArtRank("art.corrected.jpg")).toBeGreaterThan(
         faceArtRank("art.jpg"),
       );
-      // A scrape merging disk into freshly downloaded files must not demote a
-      // reconstruction just because it is not `.corrected.`.
       expect(faceArtRank("art.reconstructed.png")).toBeGreaterThan(
         faceArtRank("art.jpg"),
       );
@@ -801,7 +802,7 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
       expect(faceArtRank("back.jpg")).toBe(0);
     });
 
-    it("prefers a hand-made reconstruction over both official faces", () => {
+    it("prefers corrected, then reconstructed, over dump faces", () => {
       expect(
         pickPreferredFaceArtFilename([
           "thumb.jpg",
@@ -809,11 +810,10 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
           "art.corrected.jpg",
           "art.reconstructed.png",
         ]),
-      ).toBe("art.reconstructed.png");
+      ).toBe("art.corrected.jpg");
       expect(
         pickPreferredFaceArtFilename(["art.jpg", "art.reconstructed.png"]),
       ).toBe("art.reconstructed.png");
-      // `art.reconstructed.*` must not be served by the plain `art.*` branch.
       expect(pickPreferredFaceArtFilename(["art.reconstructed.png"])).toBe(
         "art.reconstructed.png",
       );

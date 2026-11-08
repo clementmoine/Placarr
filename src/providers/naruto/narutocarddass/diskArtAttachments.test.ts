@@ -13,12 +13,13 @@ import {
 } from "./diskArtAttachments";
 
 describe("buildNarutoDiskArtAttachments", () => {
-  it("emits one catalog cover per art.* and defaults to face.json winner", () => {
+  it("emits one catalog cover per art.* and defaults to ranked catalog dump", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "naruto-multi-art-"));
     const cardDir = path.join(root, "fr", "s1", "ni0017");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.carddass.jpg"), "a");
     writeFileSync(path.join(cardDir, "art.coleka.webp"), "b");
+    // face.json is not SSOT — ranking prefers catalog carddass over listing coleka.
     recordNarutoFaceDecision(cardDir, "art", "art.coleka.webp");
 
     const { attachments, defaultUrl } = buildNarutoDiskArtAttachments({
@@ -41,7 +42,7 @@ describe("buildNarutoDiskArtAttachments", () => {
     ).toBe("listing_photo");
     expect(attachments.every((a) => a.source === "narutocarddass")).toBe(true);
     expect(defaultUrl).toBe(
-      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.coleka.webp",
+      "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
     );
     expect(attachments[0]?.url).toBe(defaultUrl);
     expect(attachments.map((a) => a.role).sort()).toEqual(
@@ -171,12 +172,11 @@ describe("buildNarutoDiskArtAttachments", () => {
     );
   });
 
-  it("surfaces reconstructed-only faces named by face.json", () => {
+  it("surfaces reconstructed-only faces via shared rank (no face.json needed)", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "naruto-recon-art-"));
     const cardDir = path.join(root, "fr", "promo", "pr0093");
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(path.join(cardDir, "art.reconstructed.webp"), "recon");
-    recordNarutoFaceDecision(cardDir, "art", "art.reconstructed.webp");
 
     const { attachments, defaultUrl } = buildNarutoDiskArtAttachments({
       printKey: "naruto:promo-pr0093",
@@ -192,5 +192,36 @@ describe("buildNarutoDiskArtAttachments", () => {
     expect(attachments).toHaveLength(1);
     expect(attachments[0]?.role).toBe("naruto-face-fr-reconstructed");
     expect(attachments[0]?.coverProvenance).toBe("catalog");
+    expect(attachments[0]?.artKind).toBe("reconstructed");
+  });
+
+  it("applies print_assets stamps only on the indexed winner", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "naruto-stamp-winner-"));
+    const cardDir = path.join(root, "fr", "s1", "ni0017");
+    mkdirSync(cardDir, { recursive: true });
+    writeFileSync(path.join(cardDir, "art.coleka.webp"), "listing");
+    writeFileSync(path.join(cardDir, "art.carddass.jpg"), "catalog");
+
+    const { attachments } = buildNarutoDiskArtAttachments({
+      printKey: "naruto:s1-ni0017",
+      number: "ni0017",
+      lang: "fr",
+      source: "narutocarddass",
+      cardsRoot: root,
+      indexedArt: "art.coleka.webp",
+      artKind: "sample",
+      watermarked: true,
+    });
+
+    const coleka = attachments.find((a) =>
+      a.url?.includes("art.coleka.webp"),
+    );
+    const carddass = attachments.find((a) =>
+      a.url?.includes("art.carddass.jpg"),
+    );
+    expect(coleka?.artKind).toBe("sample");
+    expect(coleka?.watermarked).toBe(true);
+    expect(carddass?.artKind).toBe("dump");
+    expect(carddass?.watermarked).toBe(false);
   });
 });

@@ -37,6 +37,7 @@ import {
   matchesNarutoPreferredLocaleAxis,
 } from "./preferredLocaleAxis";
 import { resolveNarutoPrintFace } from "./printFaceResolve";
+import { resolveNarutoLocalePrinted } from "./printedLocale";
 import {
   listNarutoPrintSets,
   listNarutoSetPrints,
@@ -272,7 +273,13 @@ function sqlRowToCatalogueCardIdentity(
     label,
     ...(name ? { name } : {}),
     ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
-    ...(row.printed === 0 ? { printed: false } : {}),
+    ...(!resolveNarutoLocalePrinted({
+      setCode: set,
+      lang,
+      number: row.number,
+    })
+      ? { printed: false }
+      : {}),
     // Hint only — disk truth applied in {@link hydrateCarddassCatalogueCard}.
     missingArt: !row.art?.trim(),
     languageSpecific: true,
@@ -370,9 +377,12 @@ function listCarddassCatalogueBrowsePageSql(
   ];
   params.push(...langs);
   if (input.printed === "printed") {
+    // Title without asset still counts as printed until a printed=0 shell exists.
     where.push("COALESCE(a.printed, 1) != 0");
   } else if (input.printed === "unprinted") {
-    where.push("COALESCE(a.printed, 1) = 0");
+    // Require an explicit printed=0 asset (phantoms mint a null-art shell).
+    // COALESCE(NULL→1) used to hide title-only unprinted FR rows.
+    where.push("a.printed = 0");
   }
   if (input.missingNameOnly) {
     where.push(`(t.full_name IS NULL OR TRIM(t.full_name) = '')`);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { catalogueCollectorKey } from "@/lib/admin/catalogueCards";
-import { COLEKA_CARDDASS_FR_SERIES, colekaCarddassFrListingPageUrls, colekaCarddassFrParentUrl, parseColekaCarddassFrListing, colekaCarddassPrefixToCollector, colekaS6ItListingPageUrls, colekaS6ItNameIsPlaceholder, colekaS6ItPrintedRef, parseColekaS6ItListing, colekaEuPrefixToCollector, COLEKA_SAGES_LEGACY_SET_COVER_URL, COLEKA_STORM3_SET_COVER_URL, colekaRampagePrefixToCollector, colekaFullFaceUrl, colekaHtmlIsVerifyWall, colekaSagesLegacyListingPageUrls, colekaStorm3ListingPageUrls, parseColekaStorm3Listing, parseColekaRampageTornadoListing, colekaUsPromoCanonicalRef, colekaUsPromoListingPageUrls, colekaUsPromoRefToCollector, parseColekaUsPromoListing } from "./coleka";
+import { colekaHtmlIsVerifyWall } from "@/providers/shared/coleka/verifyWall";
+import { COLEKA_CARDDASS_FR_SERIES, colekaCarddassFrListingPageUrls, colekaCarddassFrParentUrl, parseColekaCarddassFrListing, colekaCarddassPrefixToCollector, colekaS6ItListingPageUrls, colekaS6ItNameIsPlaceholder, colekaS6ItPrintedRef, parseColekaS6ItListing, colekaEuPrefixToCollector, COLEKA_SAGES_LEGACY_SET_COVER_URL, COLEKA_STORM3_SET_COVER_URL, colekaRampagePrefixToCollector, colekaFullFaceUrl, colekaSagesLegacyListingPageUrls, colekaStorm3ListingPageUrls, parseColekaStorm3Listing, parseColekaRampageTornadoListing, colekaUsPromoCanonicalRef, colekaUsPromoListingPageUrls, colekaUsPromoRefToCollector, parseColekaUsPromoListing } from "./coleka";
 import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
 const colekaS24 = readNarutoCarddassSyncedSource("coleka-s24.json");

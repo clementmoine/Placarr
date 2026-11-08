@@ -26,7 +26,7 @@ import {
   type SealedProductEntry,
 } from "@/providers/shared/sealedProducts/indexFormat";
 import { sealedBehaviorForKind } from "@/providers/shared/sealedProducts/kinds";
-import { writeSealedProductFaceDecision } from "@/providers/shared/sealedProducts/resolveProductFace";
+import { mergeWriteFaceDecision } from "@/providers/shared/cardFaces";
 import {
   atomicempireIngestPackshots,
   bandaiFrUsDriveIngestPackshots,
@@ -1882,10 +1882,10 @@ export async function ingestSealedLine(opts: {
     const backFile = await promoteProductRole(destDir, lang, "back", sharp);
     const logoFile = await promoteProductRole(destDir, lang, "logo", sharp);
     if (artFile || backFile || logoFile) {
-      writeSealedProductFaceDecision(destDir, {
-        art: artFile,
-        back: backFile,
-        logo: logoFile,
+      mergeWriteFaceDecision(destDir, {
+        ...(artFile ? { art: artFile } : {}),
+        ...(backFile ? { back: backFile } : {}),
+        ...(logoFile ? { logo: logoFile } : {}),
       });
     }
     const artDump = artFile

@@ -381,8 +381,6 @@ function cardTypeOfNumber(
   return null;
 }
 
-export { colekaHtmlIsVerifyWall } from "@/providers/shared/coleka/verifyWall";
-
 /** Listing thumbs are `_250x250.webp`; the full face is the same path without the size suffix. */
 export function colekaFullFaceUrl(thumbUrl: string): string {
   return thumbUrl.replace(/_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i, "");

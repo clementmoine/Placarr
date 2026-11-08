@@ -2,6 +2,8 @@
  * Naruto Carddass bandai parsers.
  */
 
+import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { buildPrintKey } from "@/core/identify/printKey";
 import {
   canonicalizeNarutoPrintKey,
@@ -11,7 +13,12 @@ import {
   resolveNarutoLedgerPrintTarget,
 } from "../identity";
 import { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
-import { narutoDumpFaceRank } from "../disk";
+import {
+  NARUTO_SPECIAL_ART_RE,
+  narutoDumpFaceRank,
+  narutoFaceCoverProvenance,
+  narutoFaceSourceOf,
+} from "../disk";
 import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
 const carddas20ProLedger = readNarutoCarddassSyncedSource("carddas20-pro.json");
@@ -873,16 +880,10 @@ export function carddassFaceFilename(
 }
 
 /**
- * Display order: `art.reconstructed.*` → `art.corrected.*` → dump
- * `art.<source>.*` (pixels via `face.json`, filename tie-break here).
+ * Display order via shared {@link catalogueFaceRankScore} (stamped artKind) +
+ * Naruto dump ordering. Corrected → reconstructed → catalog dumps → listing.
  *
- * `reconstructed` wins because the official S5 faces carry a burnt-in
- * `www.carddass.fr` watermark and some errata scans are crude; a hand-made
- * face is the better thing to show. It never replaces the official file on
- * disk — that one stays as the authentic source.
- *
- * The `$` anchors matter: `art.reconstructed.png` and `art.corrected.jpg`
- * must not be picked up by the plain `art.*` pattern.
+ * Thin adapter: do not invent a second quality ladder here.
  */
 export function pickPreferredFaceArtFilename(
   files: readonly string[],
@@ -897,39 +898,34 @@ export function pickPreferredFaceArtFilename(
 }
 
 /**
- * Display precedence of a face filename — higher wins. Any code choosing
- * between two faces must use this, so the order lives in one place: a scrape
- * merging freshly downloaded files with what is already on disk would
- * otherwise silently drop a reconstruction it does not know about.
+ * Display precedence of a face filename — higher wins. Delegates quality to
+ * {@link catalogueFaceRankScore}; dump-source order is the Naruto tie-break.
  *
  * 0 means "not a face" (thumb, back, …).
  */
 export function faceArtRank(filename: string, lang = "fr"): number {
-  // Above any dump rank (`narutoDumpFaceRank` ≈ catalogBoost 200 + order ≤ ~240).
-  if (/^art\.reconstructed\.(jpe?g|png|webp|gif)$/i.test(filename)) return 1000;
-  if (/^art\.corrected\.(jpe?g|png|webp|gif)$/i.test(filename)) return 900;
-  return narutoDumpFaceRank(filename, lang);
-}
+  const name = filename.trim();
+  if (!name) return 0;
+  const special = NARUTO_SPECIAL_ART_RE.test(name);
+  const source = narutoFaceSourceOf(name);
+  if (!special && !source) return 0;
 
-/** Prefer newest capture; CDX rows are [timestamp, original, …]. */
-export function pickLatestCdxRow(
-  rows: readonly (readonly string[])[],
-): { timestamp: string; original: string } | null {
-  let best: { timestamp: string; original: string } | null = null;
-  for (const row of rows) {
-    const timestamp = row[0];
-    const original = row[1];
-    if (!timestamp || !original) continue;
-    if (!best || timestamp > best.timestamp) {
-      best = { timestamp, original };
-    }
-  }
-  return best;
-}
-
-export function waybackRawUrl(timestamp: string, original: string): string {
-  const ts = timestamp.replace(/\D/g, "");
-  return `https://web.archive.org/web/${ts}id_/${original}`;
+  const meta = resolveFaceArtMetaForDig({ artFile: name });
+  const coverProvenance = special
+    ? "catalog"
+    : source
+      ? narutoFaceCoverProvenance(source)
+      : "catalog";
+  // Equal dims: filename-only path (no I/O) — Affiche stamps + dump tie-break.
+  const shared = catalogueFaceRankScore({
+    artFile: name,
+    width: 1000,
+    height: 1400,
+    artKind: meta.artKind,
+    watermarked: meta.watermarked,
+    coverProvenance,
+  });
+  return shared + narutoDumpFaceRank(name, lang);
 }
 
 const MED_TYPE: Record<string, CarddassCardType> = {

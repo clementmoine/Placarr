@@ -443,6 +443,113 @@ describe("writeNarutoCcgIndex", () => {
     ]);
   });
 
+  it("mints a printed=0 asset shell for title-only FR phantoms (TA-090)", () => {
+    /*
+      Admin « Non imprimées » filters on print_assets.printed. A FR title
+      without an asset row left-joined to NULL and COALESCE(NULL,1) hid the
+      tile from that filter while « Toutes » still showed « non éditée ».
+    */
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s2-ta0090",
+          setCode: "s2",
+          number: "ta0090",
+          cardType: "ta",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:s2-ta0090",
+          lang: "fr",
+          fullName: "Le don de la copie",
+        },
+      ],
+      assets: [],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const row = db
+      .prepare(
+        `SELECT printed, art FROM print_assets
+          WHERE print_key = 'naruto:s2-ta0090' AND lang = 'fr'`,
+      )
+      .get() as { printed: number; art: string | null } | undefined;
+    db.close();
+    expect(row).toEqual({ printed: 0, art: null });
+  });
+
+  it("does not stamp S2 FR unprinted when an S6 FR asset fans out (NI-103)", () => {
+    /*
+      Appearances fr: [s2, s6] + disk art under both folders. Expanding the
+      cancelled-S6 asset row used to UPSERT printed=0 onto naruto:s2-ni0103
+      (last write wins) — admin « non éditée » on real S2 cardboard.
+    */
+    const dbPath = scratch();
+    writeNarutoCcgIndex({
+      prints: [
+        {
+          printKey: "naruto:s2-ni0103",
+          setCode: "s2",
+          setCodes: ["s2", "s6"],
+          number: "ni0103",
+          cardType: "ni",
+        },
+        {
+          printKey: "naruto:s6-ni0103",
+          setCode: "s6",
+          setCodes: ["s2", "s6"],
+          number: "ni0103",
+          cardType: "ni",
+        },
+      ],
+      titles: [
+        {
+          printKey: "naruto:s2-ni0103",
+          lang: "fr",
+          fullName: "Dosu Kinuta",
+        },
+        {
+          printKey: "naruto:s6-ni0103",
+          lang: "fr",
+          fullName: "Dosu Kinuta",
+        },
+      ],
+      assets: [
+        {
+          printKey: "naruto:s2-ni0103",
+          lang: "fr",
+          art: "art.carddass.jpg",
+          printed: true,
+        },
+        {
+          printKey: "naruto:s6-ni0103",
+          lang: "fr",
+          art: "art.reconstructed.webp",
+          printed: false,
+        },
+      ],
+      dbPath,
+    });
+    const db = new DatabaseSync(dbPath);
+    const rows = db
+      .prepare(
+        `SELECT p.print_key AS printKey, a.printed AS printed
+           FROM prints p
+           JOIN print_assets a ON a.print_key = p.print_key AND a.lang = 'fr'
+          WHERE p.number = 'ni0103'
+          ORDER BY p.print_key`,
+      )
+      .all() as { printKey: string; printed: number }[];
+    db.close();
+    expect(rows).toEqual([
+      { printKey: "naruto:s2-ni0103", printed: 1 },
+      // MIJ reprint ledger — real cardboard under the s6 chapter.
+      { printKey: "naruto:s6-ni0103", printed: 1 },
+    ]);
+  });
+
   it("keeps JA s1 print but does not fan FR title onto it (NI-316)", () => {
     /*
       `ja/s1/ni0316` mints s1 for JA; FR scan lives under fr/s6. Expanding every

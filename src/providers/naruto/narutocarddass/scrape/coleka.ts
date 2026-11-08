@@ -11,7 +11,7 @@ import {
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
-import { fetchColekaListingHtml } from "../sources/faces";
+import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { narutoCardAbsDir } from "../disk";
 import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
@@ -866,57 +866,64 @@ async function scrapeColekaCcgFrSet(
   );
 }
 
-const SAGES_LEGACY_SPEC: ColekaCcgFrScrapeSpec = {
-  set: SAGES_LEGACY_SET,
-  listingPath: COLEKA_SAGES_LEGACY_LISTING_PATH,
-  listingPageUrls: colekaSagesLegacyListingPageUrls,
-  stagingRel: NARUTO_STAGING_COLEKA_S24,
-  coverUrl: COLEKA_SAGES_LEGACY_SET_COVER_URL,
-  label: "Sage's Legacy FR (Coleka s24)",
-  jsonKey: "sagesLegacyColeka",
-};
+/** Lazy specs — avoid TDZ when parse/coleka ↔ identity ↔ scrape cycle. */
+function sagesLegacySpec(): ColekaCcgFrScrapeSpec {
+  return {
+    set: SAGES_LEGACY_SET,
+    listingPath: COLEKA_SAGES_LEGACY_LISTING_PATH,
+    listingPageUrls: colekaSagesLegacyListingPageUrls,
+    stagingRel: NARUTO_STAGING_COLEKA_S24,
+    coverUrl: COLEKA_SAGES_LEGACY_SET_COVER_URL,
+    label: "Sage's Legacy FR (Coleka s24)",
+    jsonKey: "sagesLegacyColeka",
+  };
+}
 
-const STORM3_SPEC: ColekaCcgFrScrapeSpec = {
-  set: STORM3_SET,
-  listingPath: COLEKA_STORM3_LISTING_PATH,
-  listingPageUrls: colekaStorm3ListingPageUrls,
-  stagingRel: NARUTO_STAGING_COLEKA_S28,
-  coverUrl: COLEKA_STORM3_SET_COVER_URL,
-  productLogo: "logo-s28",
-  label: "Storm 3 FR (Coleka s28)",
-  jsonKey: "storm3Coleka",
-};
+function storm3Spec(): ColekaCcgFrScrapeSpec {
+  return {
+    set: STORM3_SET,
+    listingPath: COLEKA_STORM3_LISTING_PATH,
+    listingPageUrls: colekaStorm3ListingPageUrls,
+    stagingRel: NARUTO_STAGING_COLEKA_S28,
+    coverUrl: COLEKA_STORM3_SET_COVER_URL,
+    productLogo: "logo-s28",
+    label: "Storm 3 FR (Coleka s28)",
+    jsonKey: "storm3Coleka",
+  };
+}
 
-const RAMPAGE_TORNADO_SPEC: ColekaCcgFrScrapeSpec = {
-  set: RAMPAGE_TORNADO_SET,
-  listingPath: COLEKA_RAMPAGE_TORNADO_LISTING_PATH,
-  listingPageUrls: colekaRampageTornadoListingPageUrls,
-  stagingRel: NARUTO_STAGING_COLEKA_RAMPAGE,
-  coverUrl: COLEKA_RAMPAGE_TORNADO_SET_COVER_URL,
-  productLogo: "deck-la-tempete-approche",
-  label: "La tempête approche FR (Coleka Rampage Tornado)",
-  jsonKey: "rampageTornadoColeka",
-  parseListing: parseColekaRampageTornadoListing,
-};
+function rampageTornadoSpec(): ColekaCcgFrScrapeSpec {
+  return {
+    set: RAMPAGE_TORNADO_SET,
+    listingPath: COLEKA_RAMPAGE_TORNADO_LISTING_PATH,
+    listingPageUrls: colekaRampageTornadoListingPageUrls,
+    stagingRel: NARUTO_STAGING_COLEKA_RAMPAGE,
+    coverUrl: COLEKA_RAMPAGE_TORNADO_SET_COVER_URL,
+    productLogo: "deck-la-tempete-approche",
+    label: "La tempête approche FR (Coleka Rampage Tornado)",
+    jsonKey: "rampageTornadoColeka",
+    parseListing: parseColekaRampageTornadoListing,
+  };
+}
 
 export async function scrapeNarutoColekaSagesLegacyCards(
   options: ScrapeColekaStorm3Options = {},
 ): Promise<void> {
-  await scrapeColekaCcgFrSet(SAGES_LEGACY_SPEC, options);
+  await scrapeColekaCcgFrSet(sagesLegacySpec(), options);
 }
 
 export async function scrapeNarutoColekaRampageTornadoCards(
   options: ScrapeColekaStorm3Options = {},
 ): Promise<void> {
-  await scrapeColekaCcgFrSet(RAMPAGE_TORNADO_SPEC, options);
+  await scrapeColekaCcgFrSet(rampageTornadoSpec(), options);
 }
 
 export async function scrapeNarutoColekaStorm3Cards(
   options: ScrapeColekaStorm3Options = {},
 ): Promise<void> {
   const root = packRoot(options.root);
-  await scrapeColekaCcgFrSet(STORM3_SPEC, options);
-  await scrapeColekaCcgFrSet(RAMPAGE_TORNADO_SPEC, options);
+  await scrapeColekaCcgFrSet(storm3Spec(), options);
+  await scrapeColekaCcgFrSet(rampageTornadoSpec(), options);
   const covers = await installColekaEnCcgCovers({
     packRoot: root,
     force: options.force === true,

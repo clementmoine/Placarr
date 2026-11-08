@@ -28,10 +28,6 @@ const tvtokyoLedgerJson = readNarutoCarddassSyncedSource("tvtokyo.json");
 const yahooAuctionsLedgerJson = readNarutoCarddassSyncedSource("yahoo-auctions.json");
 
 
-// ─── Coleka listing fetch ──────────────────────────────────────────────────
-
-export { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
-
 // ─── Bandai FR Série 1 détaillée ─────────────────────────────────────────
 
 export function bandaiFrSerie1DetailleeLedger() {

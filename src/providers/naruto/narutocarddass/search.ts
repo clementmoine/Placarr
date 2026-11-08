@@ -38,7 +38,6 @@ import {
   narutoSetShippedLanguages,
   narutoSetsUnreleasedInFrench,
   isNarutoFrUnpublishedHtmlNumber,
-  narutoDetailIsPrinted,
   officialFrChecklistIds,
   officialFrChecklistSetsForNumber,
   NARUTO_PACK_ID,
@@ -47,6 +46,7 @@ import {
 } from "./identity";
 import { resolveNarutoArtDiskNumber } from "./diskArtAttachments";
 import { resolveNarutoPrintFace } from "./printFaceResolve";
+import { resolveNarutoLocalePrinted } from "./printedLocale";
 import {
   ensureNarutoPackIndex,
   narutoIndexPacks,
@@ -148,6 +148,19 @@ function printedColumnSql(db: DatabaseSync): string {
     name: string;
   }[];
   return cols.some((col) => col.name === "printed") ? "a.printed" : "1";
+}
+
+function artMetaColumnsSql(db: DatabaseSync): string {
+  const cols = new Set(
+    (
+      db.prepare("PRAGMA table_info(print_assets)").all() as { name: string }[]
+    ).map((col) => col.name),
+  );
+  const artKind = cols.has("art_kind") ? "a.art_kind AS artKind" : "NULL AS artKind";
+  const watermarked = cols.has("watermarked")
+    ? "a.watermarked AS watermarked"
+    : "NULL AS watermarked";
+  return `${artKind}, ${watermarked}`;
 }
 
 /**
@@ -383,8 +396,9 @@ function narutoBaseDiskNumber(raw: string): string | null {
 function artDonorScore(setCode: string, artFile: string): number {
   let score = 0;
   if (setCode.trim().toLowerCase() !== "promo") score += 100;
-  if (/\.reconstructed\./i.test(artFile)) score += 30;
-  else if (/\.corrected\./i.test(artFile)) score += 20;
+  // Match shared catalogue order: corrected > reconstructed > dump.
+  if (/\.corrected\./i.test(artFile)) score += 30;
+  else if (/\.reconstructed\./i.test(artFile)) score += 20;
   return score;
 }
 
@@ -589,20 +603,17 @@ function toCandidate(row: NarutoPrintDetail): PrintCandidate {
     ? [...baseFinishes, ...baseFinishes.map(narutoIllustrationBFinish)]
     : [...baseFinishes];
   /*
-    Cardboard flag: HTML phantoms / cancelled S6 stay false. Attested S6 FR
-    inserts (Kana / DVD) are real cardboard despite set-level unprinted
-    (sqlite often stamps the whole S6 FR channel as printed=0).
+    Cardboard flag from set+lang+number — not raw sqlite `printed`.
+    Fan-out used to copy S6 FR `printed:0` onto s2/s5 siblings; resolve here
+    so browse stays honest even before a catalogue rebuild.
   */
-  let printed = narutoDetailIsPrinted(row.printed);
   const rowLang = (row.lang ?? "").trim().toLowerCase();
   const rowSet = (row.setCode ?? "").trim().toLowerCase();
-  if (rowLang === "fr" && isNarutoFrUnpublishedHtmlNumber(row.number)) {
-    printed = false;
-  } else if (isNarutoS6FrPrintedNumber(row.number)) {
-    printed = true;
-  } else if (rowLang === "fr" && rowSet === "s6") {
-    printed = false;
-  }
+  const printed = resolveNarutoLocalePrinted({
+    setCode: rowSet,
+    lang: rowLang,
+    number: row.number,
+  });
   const sleeveBack = narutoCandidateCardBackUrl(
     row.number,
     row.setCode,
@@ -1081,15 +1092,15 @@ export function searchNarutoPrints(
   const out: PrintCandidate[] = [];
   const enriched = withNarutoRetailArtFallback(rows);
   for (const row of enriched) {
-    if (!narutoDetailIsPrinted(row.printed) && !includeUnprinted) {
-      /*
-        Index : s6 FR « unreleased » → printed=0 (préprod carddass.fr).
-        Les inserts Kana / DVD attestés restent pickables.
-      */
-      const s6FrInsert =
-        (!requestedLang || requestedLang === "fr") &&
-        isNarutoS6FrPrintedNumber(row.number);
-      if (!s6FrInsert) continue;
+    if (
+      !resolveNarutoLocalePrinted({
+        setCode: row.setCode,
+        lang: row.lang,
+        number: row.number,
+      }) &&
+      !includeUnprinted
+    ) {
+      continue;
     }
     /*
       HTML-only phantoms (TA-090 « Le don de la copie ») — never FR paper.
@@ -1390,6 +1401,8 @@ const NARUTO_PRINT_DETAIL_SELECT = (db: DatabaseSync) =>
           t.rarity     AS rarity,
           a.art        AS art,
           a.thumb      AS thumb,
+          a.source_url AS sourceUrl,
+          ${artMetaColumnsSql(db)},
           ${printedColumnSql(db)} AS printed
      FROM prints p
      LEFT JOIN print_titles t

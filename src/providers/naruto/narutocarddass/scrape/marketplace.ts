@@ -11,6 +11,7 @@ import {
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
 import {
   narutoCardDiskFolder,
   narutoDiskCardId,
@@ -1266,7 +1267,7 @@ export type ScrapeUltrajeuxS5Options = {
 };
 
 export function ultrajeuxWaybackUrl(file: string, timestamp: string): string {
-  return `https://web.archive.org/web/${timestamp}id_/${ledger.waybackHost}${file}`;
+  return waybackRawUrl(timestamp, `${ledger.waybackHost}${file}`);
 }
 
 async function downloadJpeg(url: string): Promise<Buffer | null> {

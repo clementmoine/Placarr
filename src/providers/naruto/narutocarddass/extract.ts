@@ -163,6 +163,83 @@ async function runScrape(argv: readonly string[]): Promise<void> {
           delayMs: shared.delayMs,
           limit: shared.limit,
         });
+        if (!argv.includes("--skip-narutocardjp")) {
+          try {
+            const {
+              harvestNarutocardjpFaces,
+              installNarutocardjpFaces,
+            } = await import("@/providers/naruto/shared/narutocardjp/harvest");
+            const { narutoDiskCardId, mintNarutoPrintKey } = await import(
+              "./identity"
+            );
+            const { readdirSync, existsSync } = await import("node:fs");
+            const { packCardsDir } = await import("@/lib/packPaths");
+            const harvested = await harvestNarutocardjpFaces({
+              packId: NARUTO_PACK_ID,
+              line: "carddass-ja",
+            });
+            console.log(
+              `── naruto-card.jp Carddass JA — ${harvested.hits} faces → ${harvested.path}`,
+            );
+            const { DatabaseSync } = await import("node:sqlite");
+            const { packCatalogDb } = await import("@/lib/packPaths");
+            const catalogPath = packCatalogDb(NARUTO_PACK_ID);
+            const catalog = existsSync(catalogPath)
+              ? new DatabaseSync(catalogPath, { readOnly: true })
+              : null;
+            const lookup = catalog?.prepare(
+              "SELECT print_key, set_code FROM prints WHERE number = ? ORDER BY set_code LIMIT 8",
+            );
+            const installed = await installNarutocardjpFaces({
+              packId: NARUTO_PACK_ID,
+              line: "carddass-ja",
+              force: shared.force,
+              resolveDest: (hit) => {
+                if (!hit.family || !hit.number) return null;
+                const diskId = narutoDiskCardId(`${hit.family}${hit.number}`);
+                if (!diskId) return null;
+                const rows = (lookup?.all(diskId) ?? []) as Array<{
+                  print_key: string;
+                  set_code: string;
+                }>;
+                const preferred =
+                  rows.find((row) => /^s\d+$/i.test(row.set_code)) ?? rows[0];
+                if (preferred) {
+                  return {
+                    set: preferred.set_code,
+                    lang: "ja",
+                    card: diskId,
+                    printKey: preferred.print_key,
+                  };
+                }
+                // Fall back to any on-disk appearance folder.
+                const jaRoot = path.join(packCardsDir(NARUTO_PACK_ID), "ja");
+                if (!existsSync(jaRoot)) return null;
+                for (const set of readdirSync(jaRoot)) {
+                  const cardDir = path.join(jaRoot, set, diskId);
+                  if (!existsSync(cardDir)) continue;
+                  const printKey = mintNarutoPrintKey(diskId, set);
+                  if (!printKey) continue;
+                  return {
+                    set,
+                    lang: "ja",
+                    card: diskId,
+                    printKey,
+                  };
+                }
+                return null;
+              },
+            });
+            catalog?.close();
+            console.log(
+              `── naruto-card.jp Carddass JA install — ${installed.written} écrites, ${installed.skipped} skip, ${installed.failed} fail`,
+            );
+          } catch (err) {
+            console.warn(
+              `── naruto-card.jp Carddass JA — ${err instanceof Error ? err.message : err}`,
+            );
+          }
+        }
       }
     } else if (locale === "storm3" || locale === "s28" || locale === "uns3") {
       // Storm 3 runs after this loop (not a Wayback locale).
@@ -688,9 +765,18 @@ export async function runNarutoPackPipeline(
         runNarutoSources({ dryRun });
         break;
       case "documents": {
-        const { loadCarddassCuratedDocuments } = await import(
+        const {
+          loadCarddassCuratedDocuments,
+          stageCarddassCuratedDocumentFiles,
+        } = await import(
           "@/providers/naruto/narutocarddass/curated/documents"
         );
+        const staged = stageCarddassCuratedDocumentFiles();
+        if (staged.staged.length) {
+          console.log(
+            `── curated documents staged : ${staged.staged.length} → sources/curated-documents/`,
+          );
+        }
         const { harvestPackDocuments } = await import(
           "@/providers/shared/documents/harvestPackDocuments"
         );

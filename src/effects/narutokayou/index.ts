@@ -33,7 +33,8 @@ export const NARUTO_KAYOU_FINISHES = KAYOU_LENTICULAR_TYPE_IDS;
 export { KAYOU_LENTICULAR_TYPES, kayouLenticularTypeForFinish } from "./lenticularTypes";
 
 function resolveKayouCss(finish: string): FoilCssRecipe {
-  const key = (finish ?? "").trim().toLowerCase();
+  // Catalogue finishes may use × (HR-2×2); shader map keys are ascii `x`.
+  const key = (finish ?? "").trim().toLowerCase().replace(/×/g, "x");
   const typed = kayouLenticularTypeForFinish(key);
   const shaderId = FINISH_SHADER[key] ?? null;
 

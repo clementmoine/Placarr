@@ -5,7 +5,11 @@ import {
 } from "@/core/render/foil/cache";
 import {
   astcFormatConstant,
+  foilForceRasterOverride,
+  foilFragmentNeedsLinearEncode,
+  foilTextureInternalFormat,
   getFoilCapabilities,
+  preferAstcTextureUpload,
 } from "@/core/render/foil/capabilities";
 import { foilClockSeconds, subscribeFoilFrame } from "../clock";
 
@@ -294,17 +298,6 @@ export function aspectCorrectSquareMotifUv(
 }
 
 /**
- * @deprecated Prefer {@link aspectCorrectSquareMotifUv} — same CC path, kept
- * as a named export for existing tests.
- */
-export function aspectCorrectSquareCcUv(
-  source: string,
-  aspect: number = LIVE_CARD_ASPECT,
-): string {
-  return aspectCorrectSquareMotifUv(source, aspect);
-}
-
-/**
  * FlatSilver / SvUltra declare `in highp vec4 vs_TEXCOORD0` while the shared
  * quad VS emits `vec2` (and every other Live dump already expects `vec2`).
  * WebGL2 rejects the type mismatch at link. Those two frags only swizzle
@@ -510,19 +503,6 @@ function supportsAstcOnContext(gl: WebGL2RenderingContext): boolean {
   );
 }
 
-/**
- * Smoke / debug: `localStorage.placarrForceFoilRaster = "1"` skips ASTC so the
- * lossless WebP (or PNG) raster path is exercised. Lorcana dumps prefer ASTC
- * on desktop otherwise — WebP never appears in Network.
- */
-function forceFoilRaster(): boolean {
-  try {
-    return globalThis.localStorage?.getItem("placarrForceFoilRaster") === "1";
-  } catch {
-    return false;
-  }
-}
-
 export function createWebglFoilRenderer(
   canvas: HTMLCanvasElement,
   material: FoilMaterial,
@@ -629,13 +609,20 @@ export function createWebglFoilRenderer(
   ): WebGLTexture {
     const texture = gl!.createTexture();
     gl!.bindTexture(gl!.TEXTURE_2D, texture);
+    const internal =
+      foilTextureInternalFormat({
+        linearOutput: material.linearOutput,
+        srgb: binding?.srgb,
+      }) === "srgb8_alpha8"
+        ? gl!.SRGB8_ALPHA8
+        : gl!.RGBA;
     gl!.texImage2D(
       gl!.TEXTURE_2D,
       0,
       // Linear apps (Pokémon Live): sRGB→linear on sample. Raw RGBA keeps
       // authored bytes (Gamma / data maps). Spectrum ×17.5 needs the decode
       // or SunLava neon-clamps; Direction sRGB softens UV the same way.
-      binding?.srgb && material.linearOutput ? gl!.SRGB8_ALPHA8 : gl!.RGBA,
+      internal,
       gl!.RGBA,
       gl!.UNSIGNED_BYTE,
       image,
@@ -708,23 +695,27 @@ export function createWebglFoilRenderer(
       solidTexture(fallback as [number, number, number, number]),
     );
 
+    const astc = binding?.astc;
     if (
-      binding?.astc &&
-      binding.file &&
+      astc &&
       !role &&
-      !forceFoilRaster() &&
-      supportsAstcOnContext(gl!)
+      preferAstcTextureUpload({
+        hasAstcBinding: true,
+        hasRasterSibling: Boolean(binding?.file),
+        supportsAstc: supportsAstcOnContext(gl!),
+        forceRaster: foilForceRasterOverride(),
+      })
     ) {
       try {
-        const data = await fetchArrayBuffer(textureBase + binding.astc.file);
+        const data = await fetchArrayBuffer(textureBase + astc.file);
         if (destroyed) return;
-        const compressed = uploadCompressedTexture(data, binding.astc, binding);
+        const compressed = uploadCompressedTexture(data, astc, binding);
         if (compressed) {
           texturesBySlot.set(slot, compressed);
           return;
         }
       } catch {
-        // Fall through to PNG.
+        // Fall through to PNG / WebP raster.
       }
     }
 
@@ -995,7 +986,7 @@ export function createWebglFoilRenderer(
     const aligned = alignFragmentVaryings(source);
     const opaque = restoreOpaqueFoilOutput(aligned);
     const isotropic = aspectCorrectSquareMotifUv(opaque);
-    return material.linearOutput
+    return foilFragmentNeedsLinearEncode(material.linearOutput)
       ? encodeLinearFoilOutput(isotropic)
       : isotropic;
   };

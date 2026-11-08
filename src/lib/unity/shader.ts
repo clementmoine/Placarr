@@ -88,7 +88,26 @@ export function glslPrograms(data: Uint8Array): string[] {
   return parts;
 }
 
-/** Strip Unity ``#ifdef FRAGMENT`` guard for WebGL2. */
+/**
+ * Strip Unity ``#ifdef FRAGMENT`` guard for WebGL2 (Lorcana path — no
+ * Pokémon char-filter; keeps graph punctuation dump_unity.py leaves alone).
+ */
+export function toLorcanaWebgl2Fragment(src: string): string {
+  const i = src.indexOf("#ifdef FRAGMENT");
+  let frag = src.slice(i + "#ifdef FRAGMENT".length);
+  frag = frag.slice(0, frag.lastIndexOf("#endif")).replace(/^\n/, "");
+  frag = frag.replace(
+    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 1",
+    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 0",
+  );
+  frag = frag.replace(
+    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 1",
+    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 0",
+  );
+  return frag;
+}
+
+/** Strip Unity ``#ifdef FRAGMENT`` guard for WebGL2 (Pokémon — filters control chars). */
 export function toWebgl2Fragment(src: string): string {
   let frag: string;
   const i = src.indexOf("#ifdef FRAGMENT");

@@ -13,6 +13,7 @@ import {
   subscribeToPrintVariants,
 } from "@/lib/client/printVariantStore";
 import { isHoloShaderId } from "@/core/render/holoShaderIds";
+import { isPrintRoleAssetUrl } from "@/lib/packAssetUrls";
 // Packs load via `ensureEffects()` / FoilCardImage — not eagerly here.
 // Full CSS look tables stay in holoShaders.ts; tiles only need `{ id }`.
 
@@ -149,11 +150,6 @@ export type VariantRenderingOptions = {
 function isUserPinnedCover(url: string): boolean {
   const u = url.trim();
   return u.startsWith("/uploads/") || u.startsWith("data:");
-}
-
-/** Print-scoped role URL — no art filename in the path. */
-function isPrintRoleAssetUrl(url: string): boolean {
-  return /\/assets\/.+\/prints\//i.test(url);
 }
 
 /**

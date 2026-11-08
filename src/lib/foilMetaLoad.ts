@@ -105,11 +105,18 @@ export function resetFoilMetaCache(): void {
   g.__PLACARR_FOIL_META_HYDRATE__ = undefined;
 }
 
+/** Pack → cards-index path under `data/` (override when layout differs). */
+const PACK_CARDS_INDEX_KEY: Record<string, string> = {
+  lorcana: FOIL_META_KEYS.lorcanaCardsIndex,
+};
+
+/** Pack → foil manifest path under `data/`. */
+const PACK_FOIL_MANIFEST_KEY: Record<string, string> = {
+  lorcana: FOIL_META_KEYS.lorcanaManifest,
+};
+
 export function loadCardsIndexJson(pack: string) {
-  const key =
-    pack === "lorcana"
-      ? FOIL_META_KEYS.lorcanaCardsIndex
-      : `${pack}/cards-index.json`;
+  const key = PACK_CARDS_INDEX_KEY[pack] ?? `${pack}/cards-index.json`;
   return readDataJsonSync(key, {
     version: 1 as const,
     pack,
@@ -118,10 +125,7 @@ export function loadCardsIndexJson(pack: string) {
 }
 
 export function loadFoilManifest(pack: string) {
-  const key =
-    pack === "lorcana"
-      ? FOIL_META_KEYS.lorcanaManifest
-      : `${pack}/foil/manifest.json`;
+  const key = PACK_FOIL_MANIFEST_KEY[pack] ?? `${pack}/foil/manifest.json`;
   return readDataJsonSync<Record<string, unknown>>(key, {});
 }
 
@@ -189,72 +193,36 @@ export function loadReprintMeta() {
   );
 }
 
-async function runFoilMetaHydrate(
-  fetchImpl: typeof fetch,
-): Promise<void> {
-  try {
-    const res = await fetchImpl("/api/admin/foil-meta?pack=pokemon");
-    if (res.ok) {
-      const body = (await res.json()) as {
-        liveFoilMasks?: Record<string, string>;
-        liveOwned?: unknown;
-        reprintMeta?: Record<string, unknown>;
-        materialSheets?: Record<string, unknown>;
-        textureFlags?: Record<string, unknown>;
-        sharedMotifs?: Record<string, Record<string, string>>;
-        fragStems?: string[];
-      };
-      if (body.liveFoilMasks) {
-        cache()[FOIL_META_KEYS.liveFoilMasks] = body.liveFoilMasks;
-      }
-      if (body.liveOwned) {
-        cache()[FOIL_META_KEYS.liveOwned] = body.liveOwned;
-      }
-      if (body.reprintMeta) {
-        cache()[FOIL_META_KEYS.reprintMeta] = body.reprintMeta;
-      }
-      if (body.materialSheets) {
-        cache()[FOIL_META_KEYS.materialSheets] = body.materialSheets;
-      }
-      if (body.textureFlags) {
-        cache()[FOIL_META_KEYS.textureFlags] = body.textureFlags;
-      }
-      if (body.sharedMotifs) {
-        cache()[FOIL_META_KEYS.sharedMotifs] = body.sharedMotifs;
-      }
-      if (body.fragStems) {
-        cache()[FOIL_META_KEYS.fragStems] = { stems: body.fragStems };
-      }
-    }
-  } catch {
-    /* optional */
-  }
+/**
+ * Pack-keyed hydrate table — add a row when a new effect pack ships foil meta.
+ * Avoid pack `if` forks in {@link runFoilMetaHydrate}.
+ */
+type FoilMetaPackHydrate = {
+  pack: string;
+  /** API JSON field → cache key under `data/`. */
+  apiFields: ReadonlyArray<{
+    field: string;
+    key: string;
+    /** Wrap arrays (frag stems) into `{ stems }` for {@link loadFragStems}. */
+    asStems?: boolean;
+  }>;
+  assetFallbacks: ReadonlyArray<{ key: string; url: string }>;
+  afterHydrate?: () => Promise<void>;
+};
 
-  try {
-    const res = await fetchImpl("/api/admin/foil-meta?pack=lorcana");
-    if (res.ok) {
-      const body = (await res.json()) as {
-        cardsIndex?: unknown;
-        manifest?: Record<string, unknown>;
-        webRecipes?: LorcanaWebRecipesMeta;
-      };
-      if (body.cardsIndex) {
-        cache()[FOIL_META_KEYS.lorcanaCardsIndex] = body.cardsIndex;
-      }
-      if (body.manifest) {
-        cache()[FOIL_META_KEYS.lorcanaManifest] = body.manifest;
-      }
-      if (body.webRecipes) {
-        cache()[FOIL_META_KEYS.lorcanaWebRecipes] = body.webRecipes;
-      }
-    }
-  } catch {
-    /* optional */
-  }
-
-  // Optional `/assets/` fallback when admin meta is unavailable.
-  await Promise.all(
-    [
+const FOIL_META_PACK_HYDRATE: readonly FoilMetaPackHydrate[] = [
+  {
+    pack: "pokemon",
+    apiFields: [
+      { field: "liveFoilMasks", key: FOIL_META_KEYS.liveFoilMasks },
+      { field: "liveOwned", key: FOIL_META_KEYS.liveOwned },
+      { field: "reprintMeta", key: FOIL_META_KEYS.reprintMeta },
+      { field: "materialSheets", key: FOIL_META_KEYS.materialSheets },
+      { field: "textureFlags", key: FOIL_META_KEYS.textureFlags },
+      { field: "sharedMotifs", key: FOIL_META_KEYS.sharedMotifs },
+      { field: "fragStems", key: FOIL_META_KEYS.fragStems, asStems: true },
+    ],
+    assetFallbacks: [
       {
         key: FOIL_META_KEYS.materialSheets,
         url: "/assets/pokemon/materialSheets.json",
@@ -271,6 +239,32 @@ async function runFoilMetaHydrate(
         key: FOIL_META_KEYS.fragStems,
         url: "/assets/pokemon/frag-stems.json",
       },
+    ],
+    afterHydrate: async () => {
+      try {
+        const { invalidatePokemonFoilNamesCache } =
+          await import("@/effects/pokemon/foilNames");
+        invalidatePokemonFoilNamesCache();
+      } catch {
+        /* optional */
+      }
+      try {
+        const { resetPaperMaterialCache } =
+          await import("@/effects/pokemon/materials");
+        resetPaperMaterialCache();
+      } catch {
+        /* server / circular */
+      }
+    },
+  },
+  {
+    pack: "lorcana",
+    apiFields: [
+      { field: "cardsIndex", key: FOIL_META_KEYS.lorcanaCardsIndex },
+      { field: "manifest", key: FOIL_META_KEYS.lorcanaManifest },
+      { field: "webRecipes", key: FOIL_META_KEYS.lorcanaWebRecipes },
+    ],
+    assetFallbacks: [
       {
         key: FOIL_META_KEYS.lorcanaManifest,
         url: "/assets/lorcana/manifest.json",
@@ -279,32 +273,60 @@ async function runFoilMetaHydrate(
         key: FOIL_META_KEYS.lorcanaWebRecipes,
         url: "/assets/lorcana/web/recipes.json",
       },
-    ].map(async ({ key, url }) => {
-      if (cache()[key] !== undefined) return;
+    ],
+    afterHydrate: async () => {
       try {
-        const res = await fetchImpl(url);
-        if (!res.ok) return;
-        cache()[key] = await res.json();
+        const { invalidateLorcanaFoilMetaDerived } =
+          await import("@/effects/lorcana/foilMetaInvalidate");
+        invalidateLorcanaFoilMetaDerived();
       } catch {
-        /* keep fallback */
+        /* optional */
       }
-    }),
-  );
+    },
+  },
+];
 
-  try {
-    const { invalidatePokemonFoilNamesCache } =
-      await import("@/effects/pokemon/foilNames");
-    invalidatePokemonFoilNamesCache();
-  } catch {
-    /* optional */
+async function runFoilMetaHydrate(
+  fetchImpl: typeof fetch,
+): Promise<void> {
+  for (const entry of FOIL_META_PACK_HYDRATE) {
+    try {
+      const res = await fetchImpl(
+        `/api/admin/foil-meta?pack=${encodeURIComponent(entry.pack)}`,
+      );
+      if (res.ok) {
+        const body = (await res.json()) as Record<string, unknown>;
+        for (const field of entry.apiFields) {
+          const value = body[field.field];
+          if (value == null) continue;
+          cache()[field.key] = field.asStems
+            ? { stems: value }
+            : value;
+        }
+      }
+    } catch {
+      /* optional */
+    }
   }
 
-  try {
-    const { resetPaperMaterialCache } =
-      await import("@/effects/pokemon/materials");
-    resetPaperMaterialCache();
-  } catch {
-    /* server / circular */
+  // Optional `/assets/` fallback when admin meta is unavailable.
+  await Promise.all(
+    FOIL_META_PACK_HYDRATE.flatMap((entry) => entry.assetFallbacks).map(
+      async ({ key, url }) => {
+        if (cache()[key] !== undefined) return;
+        try {
+          const res = await fetchImpl(url);
+          if (!res.ok) return;
+          cache()[key] = await res.json();
+        } catch {
+          /* keep fallback */
+        }
+      },
+    ),
+  );
+
+  for (const entry of FOIL_META_PACK_HYDRATE) {
+    if (entry.afterHydrate) await entry.afterHydrate();
   }
 }
 

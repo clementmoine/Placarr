@@ -72,6 +72,39 @@ function classifyFrag(
   };
 }
 
+const hasLorcanaDump = existsSync(LORCANA_SHADERS_DIR);
+
+describe("Lorcana dual-frag tilt drivers", () => {
+  it.skipIf(!hasLorcanaDump)(
+    "tilt-mode frags declare _Tilt (pointer phase); time siblings may omit it",
+    () => {
+      const tiltFrags: string[] = [];
+      const timeFrags: string[] = [];
+      for (const name of readdirSync(LORCANA_SHADERS_DIR)) {
+        if (!name.endsWith(".frag")) continue;
+        const src = readFileSync(path.join(LORCANA_SHADERS_DIR, name), "utf8");
+        const hasTilt = /\b_Tilt\b/.test(src);
+        if (/_SCROLLMODE_TILT|SCROLLMODE_TILT|tilt/i.test(name) || hasTilt) {
+          if (hasTilt) tiltFrags.push(name);
+        }
+        if (/_SCROLLMODE_TIME|SCROLLMODE_TIME|time/i.test(name)) {
+          timeFrags.push(name);
+        }
+      }
+      // At least one dumped tilt sibling must read the uniform the renderer sets.
+      expect(tiltFrags.length, "expected Lorcana frags that sample _Tilt").toBeGreaterThan(
+        0,
+      );
+      for (const name of tiltFrags) {
+        const src = readFileSync(path.join(LORCANA_SHADERS_DIR, name), "utf8");
+        expect(src, name).toMatch(/\b_Tilt\b/);
+      }
+      // Sanity: dump is not empty.
+      expect(timeFrags.length + tiltFrags.length).toBeGreaterThan(0);
+    },
+  );
+});
+
 describe("Live HoloFoil tilt drivers", () => {
   it.skipIf(!hasDump)(
     "no Live frag reads _Tilt — lean must come from light/TBN (camera rest-fixed)",

@@ -23,9 +23,13 @@ import {
   acquireFoilSlot,
   applyHouseFoilFallback,
   cssFinishResolveKey,
+  FOIL_MAX_TILT_DEG,
+  foilLeanAmplitude,
+  foilScrollModeForInteraction,
   getEffectPack,
   getFoilCapabilities,
   hasFoilSlot,
+  liveWebglTiltFromLight,
   releaseFoilSlot,
   selectFoilBackend,
   subscribeFoilPool,
@@ -35,6 +39,10 @@ import {
   foilRenderScale,
 } from "@/core/render/foil";
 import { applyFoilPointerCss } from "@/core/render/foil/pointerCss";
+import {
+  foilMaterialHasTimeSibling,
+  resolveFoilCardMaterial,
+} from "@/core/render/foil/resolveCardMaterial";
 import {
   leanForFaceQuarterTurns,
   leanFromPointer,
@@ -62,89 +70,6 @@ import "@/effects";
  * and fullscreen leave `auto`. While WebGL loads the face stays empty so the
  * parent card-back skeleton shows — no CSS→canvas flash.
  */
-
-const MAX_TILT = 18;
-/**
- * Lorcana dual-frag / `_CosTime` scroll amplitude. Live HoloFoil (Pokémon) does
- * **not** declare `_TimeFactor` — lean drives `_LightDirection` at full ±1;
- * mesh TBN (`u_CardLean`) is scaled to CSS ±18° inside the WebGL renderer.
- * `_WorldSpaceCameraPos` stays rest-fixed. Reusing 0.4 capped light lean and
- * the foil layers barely moved vs the Mac app.
- */
-const LORCANA_TIME_FACTOR = 0.4;
-/** Live light lean: full edge → ±1 into `_LightDirection` (camera stays rest). */
-const LIVE_LEAN_AMPLITUDE = 1;
-
-/**
- * Map a light position (0..100, 50 at rest) to one lean component for
- * `setTilt` / light+TBN (or Lorcana `_Tilt` phase).
- *
- * Lorcana Time-scroll uses `_CosTime.w * _TimeFactor` (±timeFactor). Live
- * Pokémon maps the same 0..100 pointer onto ±{@amplitude} so a full
- * card-edge sweep matches the Mac client's visible spectrum / sheen travel.
- */
-export function tiltFromLightPercent(
-  lightPercent: number,
-  amplitude: number = LORCANA_TIME_FACTOR,
-): number {
-  return ((lightPercent - 50) / 50) * amplitude;
-}
-
-/**
- * Pointer light % → Live WebGL `setTilt` XY.
- *
- * Vertical matches CSS dip-under-finger once VS height is +Z toward card top
- * (`local.z = uv.y - 0.5`): pointer-bottom → +lean.y → N tips toward +Z (top).
- */
-export function liveWebglTiltFromLight(
-  lightX: number,
-  lightY: number,
-  amplitude: number,
-): readonly [number, number] {
-  return [
-    tiltFromLightPercent(lightX, amplitude),
-    tiltFromLightPercent(lightY, amplitude),
-  ];
-}
-
-/**
- * How far `setTilt` should travel at the card edge.
- *
- * - Lorcana sheets ship `_TimeFactor` (0.33–0.4) for CosTime / tilt-frag phase.
- * - Pokémon Live sheets omit it — use full ±1 so `_LightDirection` swings
- *   (mesh tip is scaled separately; a ±0.4 light cap was the “weak tilt”
- *   feel vs TCG Live).
- */
-export function foilLeanAmplitude(opts: {
-  timeFactor?: number | null;
-  hasTimeSibling?: boolean;
-}): number {
-  if (opts.timeFactor != null && Number.isFinite(opts.timeFactor)) {
-    return opts.timeFactor;
-  }
-  if (opts.hasTimeSibling) return LORCANA_TIME_FACTOR;
-  return LIVE_LEAN_AMPLITUDE;
-}
-
-/**
- * Which WebGL scroll clock to run while the card is idle vs pointer-driven.
- *
- * TCG Live HoloFoil frags bake `_Time` motif scroll **and** light/view response
- * in a single program. Flipping to `"tilt"` on hover used to unsubscribe the
- * shared clock — `_Time` froze and the foil looked "posed" under the cursor
- * while Live keeps shimmering. Lorcana alone ships a dual sibling
- * (`fragmentTime` / tilt); only then may hover swap programs.
- */
-export function foilScrollModeForInteraction(opts: {
-  isDriven: boolean;
-  /** True when the material has a separate SCROLLMODE_TIME fragment. */
-  hasTimeSibling: boolean;
-  prefersReducedMotion?: boolean;
-}): "time" | "tilt" {
-  if (opts.prefersReducedMotion && !opts.isDriven) return "tilt";
-  if (opts.hasTimeSibling && opts.isDriven) return "tilt";
-  return "time";
-}
 
 type FoilCardImageProps = {
   effectPack?: string | null;
@@ -407,29 +332,18 @@ export function FoilCardImage({
   // `metaReady` re-resolves after browser foil-meta hydrate.
   const material = useMemo(() => {
     void metaReady;
-    if (!pack) return null;
-    if (materialName) {
-      return (
-        pack.materialForPrint?.(materialName, {
-          secondVarnishMaskUrl,
-          foilMask: liveFoilMask,
-          // Product often omits liveFoilMask; pack joins printKey → foil_mask
-          // (CastAndCure / laminates) so WebGL CC layers match Live.
-          printKey,
-          title,
-          finish,
-        }) ?? pack.material(materialName)
-      );
-    }
-    if (finish) {
-      return pack.resolveMaterialForPrint(finish, varnishType, {
-        secondVarnishMaskUrl,
-        printKey,
-        title,
-        foilMask: liveFoilMask,
-      });
-    }
-    return null;
+    return resolveFoilCardMaterial({
+      pack,
+      materialName,
+      finish,
+      varnishType,
+      secondVarnishMaskUrl,
+      // Product often omits liveFoilMask; pack joins printKey → foil_mask
+      // (CastAndCure / laminates) so WebGL CC layers match Live.
+      foilMask: liveFoilMask,
+      printKey,
+      title,
+    });
   }, [
     pack,
     materialName,
@@ -617,12 +531,12 @@ export function FoilCardImage({
       hasPoolSlot: poolOk,
     }) === "webgl";
 
-  const deviceTilt = useDeviceTilt(MAX_TILT, trackPointer && useWebgl);
+  const deviceTilt = useDeviceTilt(FOIL_MAX_TILT_DEG, trackPointer && useWebgl);
   const deviceLean = deviceTilt.lean;
   const isDriven = isActive || Boolean(deviceLean);
 
   /** Lorcana dual-frag only — Pokémon keeps one Live frag with `_Time` + light. */
-  const hasTimeSibling = Boolean(material?.fragmentTime);
+  const hasTimeSibling = foilMaterialHasTimeSibling(material);
   const leanAmplitude = foilLeanAmplitude({
     timeFactor: material?.floats._TimeFactor,
     hasTimeSibling,
@@ -682,7 +596,7 @@ export function FoilCardImage({
   // CSS foil still idles inside HoloCardImage.
   const { noteLean } = useFoilIdleLean(
     isDriven || !tilt || (!useWebgl && !bagged),
-    MAX_TILT,
+    FOIL_MAX_TILT_DEG,
     (lean, glare) => applyLean(lean, { glare }),
   );
 
@@ -843,7 +757,7 @@ export function FoilCardImage({
         const lean = leanFromPointer(
           ((event.clientX - rect.left) / rect.width) * 100,
           ((event.clientY - rect.top) / rect.height) * 100,
-          MAX_TILT,
+          FOIL_MAX_TILT_DEG,
         );
         noteLean(lean);
         applyLean(lean, { engageTiltProgram: true });

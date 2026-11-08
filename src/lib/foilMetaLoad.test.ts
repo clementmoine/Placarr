@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { lorcanaFoilMetaGeneration } from "@/effects/lorcana/foilMetaInvalidate";
+
 import {
   hydrateFoilMetaFromAssets,
   resetFoilMetaCache,
@@ -54,5 +56,22 @@ describe("hydrateFoilMetaFromAssets", () => {
       String(c[0]).includes("/api/admin/foil-meta"),
     );
     expect(adminCalls).toHaveLength(4);
+  });
+
+  it("invalidates Lorcana derived meta after each hydrate", async () => {
+    vi.stubGlobal("window", {});
+    const fetchImpl = vi.fn(async (url: string) => {
+      if (String(url).includes("/api/admin/foil-meta")) {
+        return new Response(JSON.stringify({}), { status: 200 });
+      }
+      return new Response("missing", { status: 404 });
+    });
+
+    const before = lorcanaFoilMetaGeneration();
+    await hydrateFoilMetaFromAssets(fetchImpl);
+    expect(lorcanaFoilMetaGeneration()).toBe(before + 1);
+
+    await hydrateFoilMetaFromAssets(fetchImpl);
+    expect(lorcanaFoilMetaGeneration()).toBe(before + 2);
   });
 });

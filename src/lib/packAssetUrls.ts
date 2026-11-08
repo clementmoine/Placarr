@@ -118,9 +118,23 @@ export function printKeyAssetStem(
 }
 
 /**
+ * Live print role URL (`…/prints/{stem}/face|thumb`) — HTTP resolve + shelf
+ * stem. Affiche prefers concrete `/cards/…/art.*` when both exist.
+ */
+export function isPrintRoleAssetUrl(url: string): boolean {
+  return /\/assets\/.+\/prints\//i.test(url.trim());
+}
+
+/** On-disk card face (`…/cards/…/art.*`) — Affiche / metadata gallery SSOT. */
+export function isDiskCardArtUrl(url: string): boolean {
+  const path = url.trim().split(/[?#]/, 1)[0] ?? "";
+  return /\/assets\/.+\/cards\//i.test(path) && /\/art\.[^/]+$/i.test(path);
+}
+
+/**
  * Print-scoped face URL — same stem as the shelf item URL.
  * `/assets/<pack>/prints/{set}-{id}-{lang}/face` (ex. `…/prints/s1-cl0001-fr/thumb`).
- * Never embeds `art.carddass.jpg` — ranking lives on disk (`face.json`).
+ * Bytes still resolve from ranked on-disk `art.*` (not a second Affiche twin).
  */
 /**
  * Scan carousel / lock tray URL — prefer the print `thumb` role (falls back

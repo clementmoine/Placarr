@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   alignFragmentVaryings,
-  aspectCorrectSquareCcUv,
   aspectCorrectSquareMotifUv,
   encodeLinearFoilOutput,
   foilCosTime,
@@ -103,7 +102,7 @@ describe("restoreOpaqueFoilOutput", () => {
   });
 });
 
-describe("aspectCorrectSquareCcUv", () => {
+describe("aspectCorrectSquareMotifUv", () => {
   it("corrige le tiling égal FlatSilver (_Tex_CC Poké Ball)", () => {
     const source = `
     u_xlat6.xy = vs_TEXCOORD0.xy * vec2(1.25, 1.25) + u_xlat6.xy;
@@ -111,7 +110,7 @@ describe("aspectCorrectSquareCcUv", () => {
     u_xlat32.xy = vs_TEXCOORD0.xy * vec2(0.699999988, 0.699999988);
     u_xlat16_9.xyz = texture(_Tex_CC_Glitter, u_xlat32.xy).xyz;
 `;
-    const patched = aspectCorrectSquareCcUv(source);
+    const patched = aspectCorrectSquareMotifUv(source);
     expect(patched).toContain(
       `vs_TEXCOORD0.xy * vec2(${1.25 * LIVE_CARD_ASPECT}, 1.25)`,
     );
@@ -128,14 +127,14 @@ describe("aspectCorrectSquareCcUv", () => {
     u_xlat13.xz = vs_TEXCOORD0.xy * vec2(3.0, 3.0) + u_xlat13.xz;
     u_xlat16_13.x = texture(_CCPatternTex, u_xlat13.xz).y;
 `;
-    const patched = aspectCorrectSquareCcUv(source);
+    const patched = aspectCorrectSquareMotifUv(source);
     const needle = `vs_TEXCOORD0.xy * vec2(${3.0 * LIVE_CARD_ASPECT}, 3)`;
     expect(patched.split(needle)).toHaveLength(3);
   });
 
   it("no-op sans _Tex_CC / _CCPatternTex", () => {
     const source = "vs_TEXCOORD0.xy * vec2(1.25, 1.25);";
-    expect(aspectCorrectSquareCcUv(source)).toBe(source);
+    expect(aspectCorrectSquareMotifUv(source)).toBe(source);
   });
 
   it("corrige PikachuFoil / FlatSilver _CCPatternTex (StitchedRings, Poké Ball)", () => {
@@ -153,9 +152,7 @@ describe("aspectCorrectSquareCcUv", () => {
       `vs_TEXCOORD0.xy * vec2(${6.0 * LIVE_CARD_ASPECT}, 6)`,
     );
   });
-});
 
-describe("aspectCorrectSquareMotifUv", () => {
   it("corrige les étoiles Galaxy (vec2 + vec4)", () => {
     const source = `
     u_xlat0.xy = vs_TEXCOORD0.xy * vec2(0.5, 0.5);

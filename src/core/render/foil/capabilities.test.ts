@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   astcFormatConstant,
+  foilForceRasterOverride,
   foilRenderScale,
   FOIL_SHARP_WIDTH_PX,
   getFoilCapabilities,
+  preferAstcTextureUpload,
   probeFoilCapabilities,
   resetFoilCapabilitiesForTests,
 } from "./capabilities";
@@ -108,6 +110,68 @@ describe("astcFormatConstant", () => {
       getExtension: () => ({ COMPRESSED_RGBA_ASTC_4x4_KHR: 0x93b0 }),
     } as unknown as WebGL2RenderingContext;
     expect(astcFormatConstant(glWithExt, "UNKNOWN_FORMAT")).toBeNull();
+  });
+});
+
+describe("preferAstcTextureUpload", () => {
+  it("prefers ASTC when GPU + dump + raster sibling are present", () => {
+    expect(
+      preferAstcTextureUpload({
+        hasAstcBinding: true,
+        hasRasterSibling: true,
+        supportsAstc: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("falls through to RGBA/WebP when ASTC is unsupported", () => {
+    expect(
+      preferAstcTextureUpload({
+        hasAstcBinding: true,
+        hasRasterSibling: true,
+        supportsAstc: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("falls through when the dump has no raster sibling", () => {
+    expect(
+      preferAstcTextureUpload({
+        hasAstcBinding: true,
+        hasRasterSibling: false,
+        supportsAstc: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("honours placarrForceFoilRaster smoke override", () => {
+    expect(
+      preferAstcTextureUpload({
+        hasAstcBinding: true,
+        hasRasterSibling: true,
+        supportsAstc: true,
+        forceRaster: true,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("foilForceRasterOverride", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads localStorage placarrForceFoilRaster=1", () => {
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) =>
+        key === "placarrForceFoilRaster" ? "1" : null,
+    });
+    expect(foilForceRasterOverride()).toBe(true);
+  });
+
+  it("is false when localStorage is missing or unset", () => {
+    vi.stubGlobal("localStorage", undefined);
+    expect(foilForceRasterOverride()).toBe(false);
   });
 });
 

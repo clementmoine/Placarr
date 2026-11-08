@@ -5,11 +5,36 @@ import {
   assetsPrintFaceUrl,
   identifyMatchDisplayUrl,
   identifyMatchFaceUrl,
+  isDiskCardArtUrl,
+  isPrintRoleAssetUrl,
   pokemonCardTextureUrl,
   pokemonFaceFileFromTex,
   rewriteAssetPackUrl,
   rewriteAssetUrlForPrintKeyChange,
 } from "./packAssetUrls";
+
+describe("isPrintRoleAssetUrl / isDiskCardArtUrl", () => {
+  it("distinguishes print roles from disk art paths", () => {
+    expect(
+      isPrintRoleAssetUrl(
+        "/assets/naruto/carddass/prints/s1-ni0017-fr/face",
+      ),
+    ).toBe(true);
+    expect(
+      isDiskCardArtUrl(
+        "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
+      ),
+    ).toBe(true);
+    expect(
+      isPrintRoleAssetUrl(
+        "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
+      ),
+    ).toBe(false);
+    expect(
+      isDiskCardArtUrl("/assets/naruto/carddass/prints/s1-ni0017-fr/face"),
+    ).toBe(false);
+  });
+});
 
 describe("assetsPrintFaceUrl", () => {
   it("uses the shelf stem (set-id-lang) without the finish", () => {

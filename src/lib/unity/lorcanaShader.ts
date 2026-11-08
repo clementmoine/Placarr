@@ -1,28 +1,16 @@
 /**
  * Lorcana Shader Graph variants → `.frag` (parity with ``dump_unity.py``).
+ * Fragment strippers live in {@link ./shader} — this module owns graph maps.
  */
 
 import { decompressBlock } from "unityfs-js/decoders/drivers/lz4.js";
 
-import { toWebgl2Fragment as toWebgl2FragmentPokemon } from "@/lib/unity/shader";
+import {
+  toLorcanaWebgl2Fragment,
+  toWebgl2Fragment,
+} from "@/lib/unity/shader";
 
-/** Parity with ``dump_unity.py`` ``to_webgl2_fragment`` (no Pokémon char-filter). */
-export function toLorcanaWebgl2Fragment(src: string): string {
-  const i = src.indexOf("#ifdef FRAGMENT");
-  let frag = src.slice(i + "#ifdef FRAGMENT".length);
-  frag = frag.slice(0, frag.lastIndexOf("#endif")).replace(/^\n/, "");
-  frag = frag.replace(
-    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 1",
-    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 0",
-  );
-  frag = frag.replace(
-    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 1",
-    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 0",
-  );
-  return frag;
-}
-
-export { toWebgl2FragmentPokemon as toWebgl2Fragment };
+export { toLorcanaWebgl2Fragment, toWebgl2Fragment };
 
 const CARD_EFFECT_KEYS = ["Foil", "Varnish", "Holo"] as const;
 const SCROLL_TILT = "_SCROLLMODE_TILT";

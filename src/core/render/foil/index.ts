@@ -13,11 +13,20 @@ export type {
 
 export {
   astcFormatConstant,
+  foilForceRasterOverride,
+  foilFragmentNeedsLinearEncode,
+  foilTextureInternalFormat,
   getFoilCapabilities,
+  preferAstcTextureUpload,
   probeFoilCapabilities,
   resetFoilCapabilitiesForTests,
   type FoilCapabilities,
 } from "./capabilities";
+export {
+  foilMaterialHasTimeSibling,
+  foilMaterialUsesSecondTopLayer,
+  resolveFoilCardMaterial,
+} from "./resolveCardMaterial";
 
 export {
   fetchArrayBuffer,
@@ -70,6 +79,16 @@ export {
   idleLeanFromSeconds,
   idlePointerFromSeconds,
 } from "./idleLean";
+
+export {
+  FOIL_DUAL_FRAG_TIME_FACTOR,
+  FOIL_LIVE_LEAN_AMPLITUDE,
+  FOIL_MAX_TILT_DEG,
+  foilLeanAmplitude,
+  foilScrollModeForInteraction,
+  liveWebglTiltFromLight,
+  tiltFromLightPercent,
+} from "./leanPolicy";
 
 export {
   BACKGROUND_X_RANGE,

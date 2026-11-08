@@ -1,5 +1,6 @@
 /**
- * Local-first Lorcana per-card assets under `/assets/lorcana/cards/{set}/{lang}/{card}/`.
+ * Local-first Lorcana per-card assets under
+ * `/assets/lorcana/cards/{lang}/{set}/{card}/` (universal lang-first layout).
  */
 
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";

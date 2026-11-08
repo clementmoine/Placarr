@@ -84,6 +84,56 @@ export function astcFormatConstant(
   return typeof value === "number" ? value : null;
 }
 
+/**
+ * Prefer ASTC dump over raster WebP/PNG when the GPU supports it.
+ * `forceRaster` (smoke: `localStorage.placarrForceFoilRaster=1`) always
+ * falls through to the lossless raster path for Network debugging.
+ */
+export function preferAstcTextureUpload(opts: {
+  hasAstcBinding: boolean;
+  /** Raster sibling exists (binding.file) — ASTC alone is not enough. */
+  hasRasterSibling: boolean;
+  supportsAstc: boolean;
+  forceRaster?: boolean;
+}): boolean {
+  return (
+    opts.hasAstcBinding &&
+    opts.hasRasterSibling &&
+    opts.supportsAstc &&
+    !opts.forceRaster
+  );
+}
+
+/** Read the smoke override; safe when `localStorage` is missing. */
+export function foilForceRasterOverride(): boolean {
+  try {
+    return globalThis.localStorage?.getItem("placarrForceFoilRaster") === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * WebGL2 internal format for a foil texture upload.
+ *
+ * Live (Pokémon) sheets are authored Linear: sample sRGB→linear when the
+ * binding opts in (`srgb`) and the material sets `linearOutput`, then the
+ * fragment path OETF-encodes. Lorcana / Gamma dumps keep raw RGBA bytes.
+ */
+export function foilTextureInternalFormat(opts: {
+  linearOutput?: boolean;
+  srgb?: boolean;
+}): "srgb8_alpha8" | "rgba" {
+  return opts.srgb && opts.linearOutput ? "srgb8_alpha8" : "rgba";
+}
+
+/** Frag prep: Linear packs need OETF encode; Gamma packs leave GLSL as-is. */
+export function foilFragmentNeedsLinearEncode(
+  linearOutput?: boolean,
+): boolean {
+  return Boolean(linearOutput);
+}
+
 export { ASTC_FORMAT_NAMES };
 
 /**

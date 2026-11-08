@@ -10,6 +10,7 @@ import {
   BACKGROUND_WORK_KIND,
   enqueueBackgroundWorkJob,
   isBackgroundWorkJobCancelled,
+  mergeBackgroundWorkJobPayload,
   mergeCatalogueExtractCompletedStep,
   touchBackgroundWorkJobLock,
   type ApkStoreFetchJobPayload,
@@ -90,6 +91,7 @@ function withTimeout<T>(
 async function prepareItemForMetadataRefresh(input: {
   itemId: string;
   clearRemoteCover?: boolean;
+  preserveUserCover?: boolean;
 }): Promise<void> {
   // Scan historically stored `name = printKey` without the column — local
   // catalogue adapters only resolve by printKey. Recover before fetch.
@@ -118,6 +120,9 @@ async function prepareItemForMetadataRefresh(input: {
       });
     }
   }
+
+  // Catalogue soft-propagate keeps the collector's local crop/pin intact.
+  if (input.preserveUserCover) return;
 
   const itemForCoverReset = await prisma.item.findUnique({
     where: { id: input.itemId },
@@ -447,6 +452,9 @@ export async function executeBackgroundWorkJob(
         "@/core/collect/jobs/printCatalogPropagate"
       );
       const n = await enqueuePrintCatalogPropagate({ providerId });
+      await mergeBackgroundWorkJobPayload(job.id, {
+        propagatedItemCount: n,
+      });
       if (n > 0) {
         console.log(
           `[catalogProviderSync] ${providerId}: propagated soft refresh to ${n} shelf item(s)`,

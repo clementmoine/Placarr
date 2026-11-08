@@ -22,6 +22,8 @@ export type BackgroundJob = {
   foilTarget?: CatalogueExtractTarget | null;
   /** Most-scoped destination (item page or Catalogue pack/corpus). */
   href?: string | null;
+  /** Soft-refresh fan-out count after catalogue Sync (`printKey` propagate). */
+  propagatedItemCount?: number;
   shelf: {
     id: string;
     name: string;

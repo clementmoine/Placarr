@@ -104,6 +104,7 @@ export async function enqueuePrintCatalogPropagate(input: {
             shelfName: bucket.shelf.name,
             // Soft: densify from corpus — never clear user crops / remote pin.
             clearRemoteCover: false,
+            preserveUserCover: true,
             bypassMetadataCache: false,
             forceRefresh: false,
             userId: existing?.userId,

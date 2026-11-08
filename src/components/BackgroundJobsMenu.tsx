@@ -51,6 +51,15 @@ function jobSubtitle(job: BackgroundJob, t: (key: string) => string): string {
   const kind = jobKindLabel(job, t);
   if (job.shelf) return `${kind} · ${job.shelf.name}`;
   if (isFoilAdminJob(job)) return `${kind} · ${t("backgroundJobs.foilAdmin")}`;
+  if (
+    job.kind === "catalogProviderSync" &&
+    typeof job.propagatedItemCount === "number"
+  ) {
+    return `${kind} · ${t("backgroundJobs.propagated").replace(
+      "{count}",
+      String(job.propagatedItemCount),
+    )}`;
+  }
   return kind;
 }
 

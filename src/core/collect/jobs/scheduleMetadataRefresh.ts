@@ -18,6 +18,7 @@ export type ScheduleItemMetadataRefreshInput = {
   barcode?: string | null;
   shelfName: string;
   clearRemoteCover?: boolean;
+  preserveUserCover?: boolean;
   bypassMetadataCache?: boolean;
   forceRefresh?: boolean;
   userId?: string | null;
@@ -82,6 +83,7 @@ function toMetadataRefreshPayload(
     shelfName: input.shelfName,
     barcode: input.barcode,
     clearRemoteCover: input.clearRemoteCover,
+    preserveUserCover: input.preserveUserCover,
     bypassMetadataCache: input.bypassMetadataCache,
     forceRefresh: input.forceRefresh,
     generation,

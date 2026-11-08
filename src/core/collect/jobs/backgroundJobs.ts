@@ -54,6 +54,11 @@ export type BackgroundJobRow = {
    * Null only when there is nowhere useful to land.
    */
   href: string | null;
+  /**
+   * After `catalogProviderSync` densifies prints — how many shelf items got a
+   * soft metadata refresh enqueued (`payload.propagatedItemCount`).
+   */
+  propagatedItemCount?: number;
   shelf: {
     id: string;
     name: string;
@@ -61,6 +66,17 @@ export type BackgroundJobRow = {
     type: string;
   } | null;
 };
+
+function propagatedItemCountFromPayload(payload: unknown): number | undefined {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return undefined;
+  }
+  const value = (payload as { propagatedItemCount?: unknown }).propagatedItemCount;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+  return Math.floor(value);
+}
 
 function hrefForItemJob(item: {
   id: string;
@@ -280,6 +296,7 @@ async function listCatalogIndexJobsForUser(
           : "catalogue";
       const label =
         getProviderModule(providerId)?.info.label?.trim() || providerId;
+      const propagatedItemCount = propagatedItemCountFromPayload(job.payload);
       return {
         id: job.id,
         name: label,
@@ -288,6 +305,7 @@ async function listCatalogIndexJobsForUser(
         startedAt: job.lockedAt ?? job.createdAt,
         cancellable: true,
         href: hrefForCatalogProvider(providerId),
+        ...(propagatedItemCount !== undefined ? { propagatedItemCount } : {}),
         shelf: null,
       };
     }

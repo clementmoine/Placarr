@@ -96,6 +96,11 @@ export type MetadataRefreshJobPayload = {
   shelfName: string;
   barcode?: string | null;
   clearRemoteCover?: boolean;
+  /**
+   * Soft catalogue propagate: never wipe a local `/uploads/` cover (user crop
+   * or pin) before densifying metadata — even if resolution looks low.
+   */
+  preserveUserCover?: boolean;
   bypassMetadataCache?: boolean;
   forceRefresh?: boolean;
   generation: number;
@@ -537,6 +542,40 @@ export async function touchBackgroundWorkJobLock(
 }
 
 /**
+ * Shallow-merge keys into a running job's JSON payload (no `result` column —
+ * progress / outcomes live on `payload`).
+ */
+export async function mergeBackgroundWorkJobPayload(
+  jobId: string,
+  patch: Record<string, unknown>,
+): Promise<boolean> {
+  const job = await prisma.backgroundWorkJob.findUnique({
+    where: { id: jobId },
+    select: { payload: true, status: true },
+  });
+  if (!job || job.status !== BACKGROUND_WORK_STATUS.running) {
+    return false;
+  }
+
+  const raw =
+    job.payload && typeof job.payload === "object" && !Array.isArray(job.payload)
+      ? (job.payload as Record<string, unknown>)
+      : {};
+
+  const result = await prisma.backgroundWorkJob.updateMany({
+    where: {
+      id: jobId,
+      status: BACKGROUND_WORK_STATUS.running,
+    },
+    data: {
+      payload: { ...raw, ...patch } as Prisma.InputJsonValue,
+      updatedAt: new Date(),
+    },
+  });
+  return result.count > 0;
+}
+
+/**
  * Record a finished extract pipeline step on the job payload so a later
  * resume can `--skip` it (autonomy_audit §4 / ADR-017).
  */
@@ -574,17 +613,7 @@ export async function mergeCatalogueExtractCompletedStep(
     return true;
   }
 
-  const result = await prisma.backgroundWorkJob.updateMany({
-    where: {
-      id: jobId,
-      status: BACKGROUND_WORK_STATUS.running,
-    },
-    data: {
-      payload: { ...raw, completedSteps } as Prisma.InputJsonValue,
-      updatedAt: new Date(),
-    },
-  });
-  return result.count > 0;
+  return mergeBackgroundWorkJobPayload(jobId, { completedSteps });
 }
 
 /**

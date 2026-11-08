@@ -94,6 +94,7 @@ function statusLine(
   status: FoilPackStatus | undefined,
   jobRunning: boolean,
   fr: boolean,
+  propagatedItemCount?: number,
 ): string {
   if (!status) return "…";
   const parts: string[] = [];
@@ -131,6 +132,13 @@ function statusLine(
     }
   }
   if (jobRunning) parts.push(fr ? "en cours" : "running");
+  if (typeof propagatedItemCount === "number") {
+    parts.push(
+      fr
+        ? `propagé ${propagatedItemCount}`
+        : `propagated ${propagatedItemCount}`,
+    );
+  }
   return parts.join(" · ");
 }
 
@@ -184,6 +192,9 @@ export function FoilPackSources({
   const packHref = adminCatalogueHref(
     cataloguePackForExtractTarget(target)?.id ?? target,
   );
+  const catalogSyncJob = (backgroundJobs?.jobs ?? []).find(
+    (job) => job.kind === "catalogProviderSync" && job.href === packHref,
+  );
   const jobRunning = (backgroundJobs?.jobs ?? []).some((job) => {
     if (job.kind === "foilExtract" && job.foilTarget === target) return true;
     // Unified Sync path.
@@ -192,6 +203,9 @@ export function FoilPackSources({
     }
     return false;
   });
+  const propagatedItemCount = catalogSyncJob?.propagatedItemCount;
+  const wasCatalogSyncRunningRef = useRef(false);
+  const lastPropagatedCountRef = useRef<number | null>(null);
 
   const { data: statusPayload, refetch: refetchStatus } = useQuery({
     queryKey: ["foilStatus"],
@@ -207,6 +221,25 @@ export function FoilPackSources({
   const status = packs.find((pack) => pack.id === target);
   const canExtract = status?.canExtract ?? true;
   const busy = enqueueing || jobRunning;
+
+  useEffect(() => {
+    if (typeof propagatedItemCount === "number") {
+      lastPropagatedCountRef.current = propagatedItemCount;
+    }
+    const catalogRunning = Boolean(catalogSyncJob);
+    if (wasCatalogSyncRunningRef.current && !catalogRunning) {
+      const n = lastPropagatedCountRef.current;
+      if (typeof n === "number" && n > 0) {
+        toast.success(
+          fr
+            ? `Propagé ${n} item(s) étagère`
+            : `Propagated ${n} shelf item(s)`,
+        );
+      }
+      lastPropagatedCountRef.current = null;
+    }
+    wasCatalogSyncRunningRef.current = catalogRunning;
+  }, [catalogSyncJob, propagatedItemCount, fr]);
 
   useEffect(() => {
     const el = logPreRef.current;
@@ -344,9 +377,9 @@ export function FoilPackSources({
               ? "hidden max-w-[9rem] truncate text-xs text-muted-foreground xl:inline"
               : "min-w-0 text-xs text-muted-foreground"
           }
-          title={statusLine(status, jobRunning, fr)}
+          title={statusLine(status, jobRunning, fr, propagatedItemCount)}
         >
-          {statusLine(status, jobRunning, fr)}
+          {statusLine(status, jobRunning, fr, propagatedItemCount)}
         </p>
         <div className="flex flex-wrap gap-1.5">
           <Button

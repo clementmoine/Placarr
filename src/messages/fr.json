@@ -166,6 +166,8 @@
     "kindLaunchbox": "Index LaunchBox",
     "kindNointro": "Index No-Intro",
     "kindProviderSync": "Sync catalogue",
+    "propagated": "Propagé {count}",
+    "propagatedToast": "Propagé {count} item(s) étagère",
     "foilAdmin": "Admin · rendu",
     "cancelAll": "Tout annuler",
     "cancelOne": "Annuler",

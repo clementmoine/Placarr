@@ -10,6 +10,7 @@ import {
   enqueueBackgroundWorkJob,
   failBackgroundWorkJob,
   hasActiveBackgroundWorkJobForItem,
+  mergeBackgroundWorkJobPayload,
   recoverStaleRunningBackgroundWorkJobs,
   releaseRunningJobsForWorker,
   resolveWorkerKinds,
@@ -319,6 +320,47 @@ describe("workQueue", () => {
         }),
       }),
     );
+  });
+});
+
+describe("mergeBackgroundWorkJobPayload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it("merges keys onto a running job payload", async () => {
+    h.findUnique.mockResolvedValueOnce({
+      payload: { providerId: "lorcanatcg" },
+      status: BACKGROUND_WORK_STATUS.running,
+    });
+
+    const ok = await mergeBackgroundWorkJobPayload("job-sync", {
+      propagatedItemCount: 7,
+    });
+    expect(ok).toBe(true);
+    expect(h.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: "job-sync",
+          status: BACKGROUND_WORK_STATUS.running,
+        }),
+        data: expect.objectContaining({
+          payload: { providerId: "lorcanatcg", propagatedItemCount: 7 },
+        }),
+      }),
+    );
+  });
+
+  it("refuses non-running jobs", async () => {
+    h.findUnique.mockResolvedValueOnce({
+      payload: { providerId: "lorcanatcg" },
+      status: BACKGROUND_WORK_STATUS.completed,
+    });
+    expect(
+      await mergeBackgroundWorkJobPayload("job-done", { propagatedItemCount: 1 }),
+    ).toBe(false);
+    expect(h.updateMany).not.toHaveBeenCalled();
   });
 });
 

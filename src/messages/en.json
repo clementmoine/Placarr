@@ -166,6 +166,8 @@
     "kindLaunchbox": "LaunchBox index",
     "kindNointro": "No-Intro index",
     "kindProviderSync": "Catalogue sync",
+    "propagated": "Propagated {count}",
+    "propagatedToast": "Propagated {count} shelf item(s)",
     "foilAdmin": "Admin · render",
     "cancelAll": "Cancel all",
     "cancelOne": "Cancel",

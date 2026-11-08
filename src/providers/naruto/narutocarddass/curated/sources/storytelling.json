@@ -1,0 +1,161 @@
+{
+  "kind": "storytelling-ledger",
+  "observed": "2026-11-08",
+  "note": "Editorial mini-chroniques. Faits durs ⊆ sources[]. Mentions [[print:…|…]] / [[sealed:…|…]].",
+  "stories": [
+    {
+      "id": "booster-s28-eu-eight",
+      "targets": { "sealed": ["booster-s28"], "prints": [] },
+      "bodyFr": "On confond souvent le Storm 3 français avec son cousin américain. Pourtant, si tu retournes un [[sealed:booster-s28|sachet FR scellé]], le verdict est imprimé en toutes lettres : « 8 CARTES ». Pas dix. C’est la formule Namco Bandai Europe — la même famille mathématique que les displays continentaux — alors que le [[sealed:booster-s28-en|booster US]] reste calé sur le schéma Bandai America à dix cartes.\n\nAutrement dit : même set, deux objets. Le sachet que tu as en main raconte déjà sa ligne.",
+      "sources": [
+        {
+          "claim": "Face printed « 8 CARTES »",
+          "url": "https://sunnystore.es/en/products/naruto-ccg-ultimate-ninja-storm-3-sealed-booster-pack-frances"
+        },
+        {
+          "claim": "EACH PACK INCLUDES: 10 randomly selected cards…",
+          "url": "https://sunnystore.es/en/products/naruto-ccg-bandai-ultimate-ninja-storm-3-sealed-booster-pack-usa-version"
+        }
+      ]
+    },
+    {
+      "id": "duopack-s28-window-pr096",
+      "targets": { "sealed": ["duopack-s28"], "prints": ["naruto:pr-0096"] },
+      "bodyFr": "Le [[sealed:duopack-s28|duopack Storm 3]] n’est pas « deux boosters collés ». Sur la fenêtre promo Kinkai, Bandai Europe y fixe la [[print:naruto:pr-0096|PR‑096]] — une carte que le [[sealed:booster-s28|sachet unitaire]] ne promet pas.\n\nSi tu as ouvert le blister en pensant n’avoir que de l’aléatoire s28, regarde la vitrine : le retail tardif mélange volontairement lot de sachets et insert promo. Deux lectures du même produit, selon que tu tiens le duo ou le single.",
+      "sources": [
+        {
+          "claim": "2× s28 FR boosters + window promo",
+          "url": "https://kinkai.fr/article/5274"
+        }
+      ]
+    },
+    {
+      "id": "uns3-pr093-kana-je",
+      "targets": { "sealed": [], "prints": ["naruto:pr-0093"] },
+      "bodyFr": "La [[print:naruto:pr-0093|PR‑093]] n’est pas une random de booster. En 2013, Kana l’offre au stand Japan Expo : tu rachètes un tome, tu repartais avec la carte — canal manga, pas table de display.\n\nSi elle traîne dans ton classeur FR sans boîte, c’est souvent ça l’histoire : une promo de salon branchée sur la librairie, pas sur le sachet Ultimate Ninja Storm 3.",
+      "sources": [
+        {
+          "claim": "Stand Kana JE 2013 — tome → carte",
+          "url": "https://www.kana.fr/je-18-carte-naruto-offerte/"
+        }
+      ]
+    },
+    {
+      "id": "uns3-pr095-day-one",
+      "targets": { "sealed": ["xbox360-uns3"], "prints": ["naruto:pr-0095"] },
+      "bodyFr": "La [[print:naruto:pr-0095|PR‑095]] voyage avec le jeu, pas avec le display de cartes. Presse et Day One EU la rattachent à Ultimate Ninja Storm 3 — l’édition collector / lancement, pas le sachet JCC classique.\n\nTu peux donc avoir la carte sans jamais avoir acheté de booster Carddass : le canal, c’est la boîte de jeu (voir aussi le SKU [[sealed:xbox360-uns3|Xbox 360 UNS3]] quand le dig l’atteste).",
+      "sources": [
+        {
+          "claim": "Day One / presse UNS3 EU — carte à collectionner",
+          "url": "https://jeuvideo.afjv.com/news/6890_naruto_ultimate_ninja_kit.htm"
+        }
+      ]
+    },
+    {
+      "id": "uns3-pr100-dvd-goat",
+      "targets": { "sealed": ["kana-dvd-shippuden-vol21"], "prints": ["naruto:pr-0100"] },
+      "bodyFr": "La [[print:naruto:pr-0100|PR‑100]] sent le DVD autant que le JCC. Côté collectionneurs FR, elle est collée au [[sealed:kana-dvd-shippuden-vol21|DVD Shippuden vol. 21]] — insert produit, pas chase de sachet.\n\nEt ce n’est pas tout : le marché foil FR la liste encore chez Goat / CrystalCommerce, preuve que la carte a survécu comme single alors que son canal d’origine était un coffret vidéo Kana.",
+      "sources": [
+        {
+          "claim": "DVD vol. 21 Shippuden — insert",
+          "url": "https://www.facebook.com/groups/805799330361374/posts/1228068058134497/"
+        },
+        {
+          "claim": "Goat Cards — Naruto Uzumaki PR-100 FR foil",
+          "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/naruto_uzumaki__pr100__promo__1st_edition__french__foil/564430"
+        }
+      ]
+    },
+    {
+      "id": "tin-box-invocation-verso",
+      "targets": { "sealed": ["tin-box"], "prints": [] },
+      "bodyFr": "La [[sealed:tin-box|Tin Box Collector]] (Invocation) ne se résume pas à « une boîte en métal pour Noël ». Le verso imprimé déroule le vrai contenu : deck 40 cartes série 4, un booster s1, un booster s2, une holo promo exclusive, tapis, jetons, livret.\n\nSi tu as ouvert la tin en 2007 sans lire le dos, tu as peut‑être sous‑estimé le kit : ce n’est pas cinq boosters Hobby — c’est le coffret Invocation Ref. 05129, une autre SKU que la [[sealed:tin-box-hobby|Tin Box Hobby]].",
+      "sources": [
+        {
+          "claim": "1 deck 40 cartes [INVOCATION] série 4 · boosters s1/s2 · promo holo…",
+          "url": "https://www.leboncoin.fr/ad/jeux_jouets/3258840985"
+        }
+      ]
+    },
+    {
+      "id": "tin-box-hobby-vs-invocation",
+      "targets": { "sealed": ["tin-box-hobby"], "prints": ["naruto:pr-0016", "naruto:pr-0011"] },
+      "bodyFr": "Même silhouette de tin, autre promesse. La [[sealed:tin-box-hobby|Tin Box Hobby]] empile cinq boosters S1–S5 plus les promos [[print:naruto:pr-0016|PR‑016]] et [[print:naruto:pr-0011|PR‑011]] — d’après la news Bandai d’époque.\n\nNe la fusionne pas mentalement avec la [[sealed:tin-box|Tin Box Invocation]] : faces proches, contenus et canaux distincts. Avoir l’une ne dit rien sur l’autre.",
+      "sources": [
+        {
+          "claim": "Tin Box Hobby : 5 boosters S1–S5 + PR-016 + PR-011",
+          "url": "https://web.archive.org/web/20081118125752/http://www.carddass.fr/naruto/news.htm"
+        }
+      ]
+    },
+    {
+      "id": "pack-decouverte-s1",
+      "targets": { "sealed": ["pack-decouverte"], "prints": [] },
+      "bodyFr": "Le [[sealed:pack-decouverte|Pack Découverte]] est le vrai « premier contact » Carddass FR : deux starters S1 (Pays du Vent + Maître Hokage) et deux boosters série 1, scellés ensemble.\n\nRare en rayon aujourd’hui, il explique pourquoi tant de collections FR démarrent pile sur ces deux decks — ce n’était pas seulement un choix de joueur, c’était le coffret d’entrée Bandai.",
+      "sources": [
+        {
+          "claim": "Pack Découverte scellé = 2 starters S1 + 2 boosters S1",
+          "url": "https://www.manga-sanctuary.com/news/7397/naruto-jcc.html"
+        }
+      ]
+    },
+    {
+      "id": "starter-s2-detruire",
+      "targets": {
+        "sealed": ["starter-detruire-konoha", "starter-sceller-le-malefice"],
+        "prints": []
+      },
+      "bodyFr": "Les starters S2 [[sealed:starter-detruire-konoha|Détruire Konoha]] et [[sealed:starter-sceller-le-malefice|Sceller le maléfice]] sont des decks de 40 avec exclusives — pas des « boosters en boîte ».\n\nUltraJeux les vendait encore avec la promesse claire : quarante cartes dont des exclusives série 2. Si tu as l’un des deux scellés, tu tiens une composition de deck d’usine, pas un tirage aléatoire de display.",
+      "sources": [
+        {
+          "claim": "40 cartes / exclusives — UltraJeux S2",
+          "url": "https://www.ultrajeux.com/produit-776-naruto-serie-2-detruire-konoha-3296580051137.html"
+        },
+        {
+          "claim": "40 cartes / exclusives — Sceller",
+          "url": "https://www.ultrajeux.com/produit-777-naruto-serie-2-sceller-le-malefice-.html"
+        }
+      ]
+    },
+    {
+      "id": "starter-s5-quete",
+      "targets": {
+        "sealed": ["starter-la-quete", "starter-un-nouveau-depart"],
+        "prints": []
+      },
+      "bodyFr": "[[sealed:starter-la-quete|La Quête]] et [[sealed:starter-un-nouveau-depart|Un nouveau départ]] portent encore le texte de boîte Carddass : deck de 40 cartes dont 2 holographiques — même promesse UltraJeux, livret et jetons compris.\n\nCe que tu n’as presque jamais en ligne, c’est la liste des 40. S5 est le trou documentaire FR : les starters existent, le détail usine reste rare. Posséder la boîte scellée, c’est déjà tenir une preuve physique que le papier marketing ne remplace pas.",
+      "sources": [
+        {
+          "claim": "Boîte = 40 cartes + livret + tapis/jetons",
+          "url": "https://www.ultrajeux.com/produit-1044-naruto-serie-5-la-quete-.html"
+        },
+        {
+          "claim": "DECK DE 40 CARTES DONT 2 CARTES HOLOGRAPHIQUES",
+          "url": "https://joueur.ch/trading-cards/naruto-la-quete-serie-5/"
+        }
+      ]
+    },
+    {
+      "id": "it-fascino-s6",
+      "targets": { "sealed": ["starter-il-fascino-del-male"], "prints": [] },
+      "bodyFr": "Le [[sealed:starter-il-fascino-del-male|Mazzo Il Fascino del Male]] est la preuve vivante que la Série 6 a existé en Italie alors qu’elle n’a jamais été imprimée en France.\n\nVinted le décrit encore scellé : un mazzo di 40 carte, regolamento, plancia, segnaturni, monete. Si tu collectionnes le FR « jusqu’à S5 », ce starter IT raconte l’autre bout de la carte — Rivalità Eterna, sortie sud-européenne.",
+      "sources": [
+        {
+          "claim": "1 Mazzo di 40 carte · regolamento · plancia…",
+          "url": "https://www.vinted.fr/items/7633991617-naruto-card-game-serie-6-rivalita-eterna-starter-deck-il-fascino-del-male-sealed"
+        }
+      ]
+    },
+    {
+      "id": "es-booster-s3-ocho",
+      "targets": { "sealed": ["booster-s3-es"], "prints": [] },
+      "bodyFr": "Le [[sealed:booster-s3-es|sobre Serie 3 castellano]] n’est pas un Storm 3 CCG. Face imprimée : « SOBRE DE 8 CARTAS » et une holo promise — même famille Amigo / Carddass EU que le FR, pas le Bandai USA à dix cartes.\n\nRef. 93114, EAN belge Bandai España : si tu as ce sachet dans un lot « Naruto espagnol », tu tiens de la Carddass continentale, pas de l’EN CCG Dream Legacy.",
+      "sources": [
+        {
+          "claim": "SOBRE DE 8 CARTAS · INCLUYE UNA CARTA HOLOGRÁFICA",
+          "url": "https://sunnystore.es/en/products/naruto-sobre-cerrado-serie-series-3-jcc-castellano-juego-de-cartas-booster"
+        }
+      ]
+    }
+  ]
+}

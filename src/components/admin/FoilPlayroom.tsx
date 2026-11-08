@@ -20,6 +20,7 @@ import {
 import { CatalogueBrowser } from "@/components/admin/CatalogueBrowser";
 import { CatalogueSealedBrowser } from "@/components/admin/CatalogueSealedBrowser";
 import { PackDocumentsPanel } from "@/components/admin/PackDocumentsPanel";
+import { PackStorytellingPanel } from "@/components/admin/PackStorytellingPanel";
 import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
@@ -1021,6 +1022,10 @@ export function FoilPlayroom({
           params.set("scope", "documents");
           params.delete("material");
           params.delete("view");
+        } else if (next === "stories") {
+          params.set("scope", "stories");
+          params.delete("material");
+          params.delete("view");
         } else {
           params.set("scope", "all");
           params.delete("material");
@@ -1177,14 +1182,16 @@ export function FoilPlayroom({
         value={
           browseScope === "documents"
             ? "documents"
-            : browseScope === "sealed" &&
-                catalogueInfo.hasSealedProducts !== false
-              ? "sealed"
-              : catalogueInfo.hasFoilEffects
-                ? browseScope === "sealed"
-                  ? "all"
-                  : browseScope
-                : "all"
+            : browseScope === "stories"
+              ? "stories"
+              : browseScope === "sealed" &&
+                  catalogueInfo.hasSealedProducts !== false
+                ? "sealed"
+                : catalogueInfo.hasFoilEffects
+                  ? browseScope === "sealed"
+                    ? "all"
+                    : browseScope
+                  : "all"
         }
         onChange={selectScope}
         options={[
@@ -1204,6 +1211,10 @@ export function FoilPlayroom({
             value: "documents" as const,
             label: fr ? "Documents" : "Documents",
           },
+          {
+            value: "stories" as const,
+            label: fr ? "Le saviez-vous ?" : "Did you know?",
+          },
           /*
             Last: foils, sachets, and later box/disc renders — not only TCG
             foil dumps. URL scope stays `foils` for bookmarks.
@@ -1221,6 +1232,8 @@ export function FoilPlayroom({
 
       {browseScope === "documents" ? (
         <PackDocumentsPanel packId={cataloguePackId} locale={locale} />
+      ) : browseScope === "stories" ? (
+        <PackStorytellingPanel packId={cataloguePackId} locale={locale} />
       ) : browseScope === "sealed" ? (
         <CatalogueSealedBrowser packId={cataloguePackId} locale={locale} />
       ) : !showFoilPlayroom ? (

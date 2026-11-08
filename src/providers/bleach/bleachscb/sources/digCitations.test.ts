@@ -25,8 +25,8 @@ describe("bleachscb digCitations", () => {
       "catalogue_S1_Bleach.html",
     );
     expect(
-      bleachScbSealedDistributionCitation("display-s1-shinigami-and-ichigo"),
-    ).toBeNull();
+      bleachScbSealedDistributionCitation("display-s1-shinigami-and-ichigo")?.url,
+    ).toContain("catalogue_S1_Bleach.html");
   });
 
   it("stamps Compagnons guaranteed prints as Insert starter", () => {

@@ -65,6 +65,43 @@ describe("onepiece digCitations", () => {
     ).toEqual([]);
   });
 
+  it("stamps ST19–28 Tier One harvest onto starter SKUs + Insert qty maps", () => {
+    expect(
+      onepieceSealedDistributionCitation(
+        "st19-deck-pour-debutant-noir-smoker",
+      )?.url,
+    ).toBe("https://tier-one-onepiece.jp/blog/st19_cardlists/");
+    expect(
+      onepieceSealedDistributionCitation(
+        "japanese-starter-deck-st19-smoker",
+      )?.url,
+    ).toContain("st19_cardlists");
+    expect(
+      onepieceSealedDistributionCitation(
+        "booster-fete-decks-debutants-st23-st28-participation",
+      ),
+    ).toBeNull();
+
+    const insert = onepiecePrintFacts(
+      {
+        printKey: "onepiece:st19-001",
+        setCode: "st19",
+        number: "001",
+        cardType: "st19",
+        grouping: null,
+        category: null,
+        lang: "en",
+        fullName: "Smoker",
+        rarity: null,
+        art: null,
+        thumb: null,
+        back: null,
+      },
+      "onepiece",
+    );
+    expect(insert[0]?.url).toContain("st19_cardlists");
+  });
+
   it("bridges ST29 dig URL onto sealed SKU + Insert via products-contents", () => {
     const sealed = onepieceSealedDistributionCitation(
       "st29-deck-de-demarrage-egg-head",

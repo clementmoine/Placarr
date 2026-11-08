@@ -1482,6 +1482,7 @@ export function narutoPrintFacts(
     number: row.number,
     setCode: row.setCode,
     grouping,
+    printKey: row.printKey,
   })) {
     facts.push({
       kind: story.kind,

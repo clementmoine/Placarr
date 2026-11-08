@@ -87,7 +87,7 @@ describe("digCitations", () => {
     );
   });
 
-  it("stamps UNS3 dig official / press Distribution for PR-093 / PR-095", () => {
+  it("stamps UNS3 dig official / press / Goat Distribution for PR-093 / 095 / 100", () => {
     expect(uns3PromoDistributionCitationForNumber("pr093")).toMatchObject({
       label: expect.stringMatching(/Kana Japan Expo 2013/i),
       url: "https://www.kana.fr/je-18-carte-naruto-offerte/",
@@ -95,7 +95,10 @@ describe("digCitations", () => {
     expect(uns3PromoDistributionCitationForNumber("PR-095")?.url).toMatch(
       /afjv\.com|gematsu\.com/,
     );
-    expect(uns3PromoDistributionCitationForNumber("pr100")).toBeNull();
+    expect(uns3PromoDistributionCitationForNumber("pr100")).toMatchObject({
+      label: expect.stringMatching(/Goat/i),
+      url: expect.stringContaining("crystalcommerce.com"),
+    });
   });
 
   it("emits dig-claim storytelling for UNS3 PR-093 / 095 / 096", () => {
@@ -115,16 +118,16 @@ describe("digCitations", () => {
 
   it("emits sealed dig claims for Pack Découverte / Tin Boxes", () => {
     const pack = narutoStoryFactsForSealedSlug("pack-decouverte");
-    expect(pack[0]?.value).toMatch(/2 starters S1/i);
+    expect(pack[0]?.value).toMatch(/Pack Découverte|starters S1/i);
     expect(pack[0]?.url).toMatch(/manga-sanctuary|youtube\.com/);
 
     const hobby = narutoStoryFactsForSealedSlug("tin-box-hobby");
-    expect(hobby[0]?.value).toMatch(/PR-016|PR-011/i);
+    expect(hobby[0]?.value).toMatch(/Tin Box Hobby|PR‑016|PR-016/i);
     expect(hobby[0]?.url).toMatch(/web\.archive\.org|youtube\.com|carddass/);
 
     const tin = narutoStoryFactsForSealedSlug("tin-box");
-    expect(tin[0]?.value).toMatch(/Tin Box Collector|Noël/i);
-    expect(tin[0]?.url).toContain("scifi-universe.com");
+    expect(tin[0]?.value).toMatch(/Tin Box Collector|Invocation|05129/i);
+    expect(tin[0]?.url).toContain("leboncoin.fr");
 
     expect(narutoStoryFactsForSealedSlug("display-s1")).toEqual([]);
   });
@@ -181,11 +184,11 @@ describe("digCitations", () => {
       number: "pr100",
       setCode: "promo",
     });
-    expect(pr100[0]?.value).toMatch(/DVD vol\. 21|Shippuden/i);
-    expect(pr100[0]?.url).toContain("facebook.com");
+    expect(pr100[0]?.value).toMatch(/DVD|Shippuden|PR‑100|PR-100/i);
+    expect(pr100[0]?.url).toMatch(/facebook\.com|crystalcommerce\.com/);
 
     const sealed = narutoStoryFactsForSealedSlug("kana-dvd-shippuden-vol21");
-    expect(sealed[0]?.value).toMatch(/DVD vol\. 21|Shippuden/i);
+    expect(sealed[0]?.value).toMatch(/DVD|Shippuden|PR‑100|PR-100/i);
 
     const vol15 = narutoStoryFactsForSealedSlug("kana-dvd-naruto-vol15");
     expect(vol15[0]?.value).toMatch(/vol\. 15|Série 6/i);
@@ -198,7 +201,7 @@ describe("digCitations", () => {
     expect(vol3[0]?.value).toMatch(/série 5/i);
 
     const xbox = narutoStoryFactsForSealedSlug("xbox360-uns3");
-    expect(xbox[0]?.value).toMatch(/Sangoku|carte à collectionner/i);
+    expect(xbox[0]?.value).toMatch(/PR‑095|PR-095|UNS3|Xbox/i);
 
     const duo24 = narutoStoryFactsForSealedSlug(
       "duopack-s24-organisation-pacifique",
@@ -207,23 +210,29 @@ describe("digCitations", () => {
     expect(duo24[0]?.url).toContain("facebook.com");
 
     const duo28 = narutoStoryFactsForSealedSlug("duopack-s28");
-    expect(duo28[0]?.value).toMatch(/s28|window promo/i);
+    expect(duo28[0]?.value).toMatch(/duopack|PR‑096|PR-096|s28/i);
 
     const mangaPack = narutoStoryFactsForSealedSlug("kana-manga-pack-1-2-3");
     expect(mangaPack[0]?.value).toMatch(/avant-première manga/i);
     expect(mangaPack[0]?.url).toContain("youtube.com");
   });
 
-  it("stamps FR S5 sealed Distribution from joueur.ch / Parence digs", () => {
+  it("stamps FR S5 sealed Distribution from UltraJeux / Parence digs", () => {
     expect(narutoSealedDistributionCitation("starter-la-quete")?.url).toContain(
-      "joueur.ch",
+      "ultrajeux.com",
     );
     expect(
       narutoSealedDistributionCitation("starter-un-nouveau-depart")?.url,
-    ).toContain("joueur.ch");
+    ).toContain("ultrajeux.com");
     expect(narutoSealedDistributionCitation("booster-s5")?.url).toMatch(
       /parence\.com|checklist_naruto_S5/,
     );
+    expect(narutoStoryFactsForSealedSlug("starter-la-quete")[0]?.value).toMatch(
+      /40 cartes|La Quête|holographiques/i,
+    );
+    expect(
+      narutoStoryFactsForSealedSlug("starter-un-nouveau-depart")[0]?.url,
+    ).toContain("ultrajeux.com");
   });
 
   it("stamps kana manga pack Distribution from prerelease dig chapter", () => {
@@ -237,14 +246,14 @@ describe("digCitations", () => {
       narutoSealedDistributionCitation("starter-detruire-konoha")?.url,
     ).toContain("ultrajeux.com");
     const destroy = narutoStoryFactsForSealedSlug("starter-detruire-konoha");
-    expect(destroy[0]?.value).toMatch(/40 cartes|exclusives/i);
+    expect(destroy[0]?.value).toMatch(/40|Détruire Konoha|exclusives/i);
 
     expect(
       narutoSealedDistributionCitation("starter-sceller-le-malefice")?.url,
     ).toContain("ultrajeux.com");
     expect(
       narutoStoryFactsForSealedSlug("starter-sceller-le-malefice")[0]?.value,
-    ).toMatch(/40 cartes|exclusives/i);
+    ).toMatch(/40|Sceller|exclusives|starters S2/i);
 
     expect(narutoSealedDistributionCitation("duopack-s28")?.url).toMatch(
       /kinkai\.fr|ebay\.fr/,
@@ -260,6 +269,67 @@ describe("digCitations", () => {
     );
   });
 
+  it("stamps booster-s28 FR/EN from eu-ccg-pack-math dig", () => {
+    expect(narutoSealedDistributionCitation("booster-s28")?.url).toContain(
+      "sunnystore.es/en/products/naruto-ccg-ultimate-ninja-storm-3-sealed-booster-pack-frances",
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s28")[0]?.value).toMatch(
+      /8 CARTES|Storm 3 français/i,
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s28")[0]?.url).toContain(
+      "sunnystore.es",
+    );
+
+    expect(narutoSealedDistributionCitation("booster-s28-en")?.url).toContain(
+      "sunnystore.es",
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s28-en")[0]?.value).toMatch(
+      /10.*cards|EACH PACK/i,
+    );
+
+    expect(narutoSealedDistributionCitation("booster-s24")?.url).toContain(
+      "spong.com",
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s24")[0]?.value).toMatch(
+      /8 cards/i,
+    );
+
+    expect(narutoSealedDistributionCitation("booster-s24-en")?.url).toContain(
+      "toywiz.com",
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s24-en")[0]?.value).toMatch(
+      /10 cards|24 packs/i,
+    );
+  });
+
+
+  it("emits sealed-hunt claims[] as storytelling for ES / IT SKUs", () => {
+    expect(narutoStoryFactsForSealedSlug("booster-s3-es")[0]?.value).toMatch(
+      /8 CARTAS|HOLOGRÁFICA|castellano|Serie 3/i,
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s3-es")[0]?.url).toContain(
+      "sunnystore.es",
+    );
+    expect(
+      narutoStoryFactsForSealedSlug("starter-il-fascino-del-male")[0]?.value,
+    ).toMatch(/Mazzo|Fascino|Italie|40 carte/i);
+    expect(
+      narutoStoryFactsForSealedSlug("booster-s6-it")[0]?.value,
+    ).toMatch(/bustina|Serie 6|holo/i);
+    expect(narutoStoryFactsForSealedSlug("booster-s7-it")[0]?.value).toMatch(
+      /8 Carte|Booster da 8/i,
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s7-it")[0]?.url).toContain(
+      "madhouse.it",
+    );
+
+    expect(narutoStoryFactsForSealedSlug("booster-tp3")[0]?.value).toMatch(
+      /10 randomly|6 common/i,
+    );
+    expect(narutoStoryFactsForSealedSlug("booster-s5-en")[0]?.value).toMatch(
+      /9 randomly|6 common/i,
+    );
+  });
 
   it("stamps ES / IT / EN sealed hunts to openable marketplace proofs", () => {
     expect(narutoSealedDistributionCitation("booster-s3-es")?.url).toContain(

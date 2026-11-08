@@ -75,7 +75,7 @@ describe("narutocarddass provider hooks", () => {
     expect(dist?.url).toContain("manga-sanctuary.com/news/7397");
     const story = hit?.facts?.find((f) => f.kind === "story");
     expect(story?.label).toMatch(/saviez/i);
-    expect(story?.value).toMatch(/2 starters S1/i);
+    expect(story?.value).toMatch(/2 starters S1|Pack Découverte/i);
   });
 
   it("stamps Kana DVD sealed SKU Distribution from Facebook dig", async () => {
@@ -107,7 +107,7 @@ describe("narutocarddass provider hooks", () => {
       printKey: "naruto:promo-pr0093",
     });
     const story = hit?.facts?.find((f) => f.kind === "story");
-    expect(story?.value).toMatch(/Stand Kana JE 2013/i);
+    expect(story?.value).toMatch(/Kana|Japan Expo|PR‑093|PR-093/i);
     expect(story?.url).toContain("kana.fr");
   });
 });

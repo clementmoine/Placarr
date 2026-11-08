@@ -20,17 +20,20 @@ type DigIngestRow = {
 
 type DigSource = { id?: string; url?: string };
 
+type DigDeckTable = {
+  url?: string;
+  rows?: readonly { id?: string }[];
+  /** ST13–28 harvest: cardId → qty (numbers only). */
+  [cardId: string]: string | number | readonly { id?: string }[] | undefined;
+};
+
 type DigFile = {
   kind?: string;
+  /** ST13–28 harvest — code → Tier One Pieces URL. */
+  urls?: Record<string, string>;
   verdict?: { ingested?: Record<string, DigIngestRow> };
   sources?: readonly DigSource[];
-  decks?: Record<
-    string,
-    {
-      url?: string;
-      rows?: readonly { id?: string }[];
-    }
-  >;
+  decks?: Record<string, DigDeckTable>;
 };
 
 type ProductsContentsFile = {
@@ -58,6 +61,7 @@ export function resetOnepieceDigCitationCaches(): void {
 
 const DIG_FILES = [
   "st01-21-tier-one-pieces-2026-09-13.json",
+  "st13-19-28-tier-one-pieces-2026-09-14.json",
   "st29-35-tier-one-pieces-2026-09-13.json",
 ] as const;
 
@@ -78,13 +82,26 @@ function loadDigs(): DigFile[] {
     try {
       if (!existsSync(digPath)) continue;
       const raw = JSON.parse(readFileSync(digPath, "utf8")) as DigFile;
-      if (raw?.kind === "research-dig") out.push(raw);
+      // ST13–28 harvest omits `kind` but carries Tier One `urls` + deck qty maps.
+      if (raw?.kind === "research-dig" || raw?.urls) out.push(raw);
     } catch {
       /* skip bad dig */
     }
   }
   digsCache = out;
   return out;
+}
+
+/** Match starter SKUs to dig codes (st19, …) — skip event/tournament boosters. */
+function slugMatchesStarterCode(slug: string, code: string): boolean {
+  const c = code.trim().toLowerCase();
+  const key = slug.trim().toLowerCase();
+  if (!c || !key) return false;
+  if (key.startsWith("booster-")) return false;
+  if (key.startsWith(`${c}-`)) return true;
+  if (key.includes(`japanese-starter-deck-${c}-`)) return true;
+  if (key.includes(`starter-deck-${c}-`)) return true;
+  return false;
 }
 
 /** First http(s) URL embedded in a products-contents `source` field. */
@@ -102,8 +119,14 @@ function collectDigProofUrls(digs: DigFile[]): Map<string, string> {
       const url = sanitizePublicCitationUrl(row.url);
       if (url) byUrl.set(url, code.toUpperCase());
     }
+    for (const [code, urlRaw] of Object.entries(dig.urls ?? {})) {
+      const url = sanitizePublicCitationUrl(urlRaw);
+      if (url && !byUrl.has(url)) byUrl.set(url, code.toUpperCase());
+    }
     for (const [code, deck] of Object.entries(dig.decks ?? {})) {
-      const url = sanitizePublicCitationUrl(deck.url);
+      const url = sanitizePublicCitationUrl(
+        typeof deck.url === "string" ? deck.url : undefined,
+      );
       if (url && !byUrl.has(url)) byUrl.set(url, code.toUpperCase());
     }
     for (const source of dig.sources ?? []) {
@@ -179,11 +202,22 @@ function ensureMaps(): {
       });
     }
     for (const [code, deck] of Object.entries(dig.decks ?? {})) {
-      const url = sanitizePublicCitationUrl(deck.url);
+      const url = sanitizePublicCitationUrl(
+        (typeof deck.url === "string" ? deck.url : undefined) ??
+          dig.urls?.[code],
+      );
       if (!url) continue;
       const value = `OPTCG Starter ${code.toUpperCase()} (Tier One Pieces)`;
       for (const row of deck.rows ?? []) {
         const pk = onepiecePrintKey(row.id)?.toLowerCase();
+        if (!pk || inserts.has(pk)) continue;
+        inserts.set(pk, { label: "Insert starter", value, url });
+      }
+      // ST13–28 qty maps: cardId → count.
+      for (const [cardId, qty] of Object.entries(deck)) {
+        if (cardId === "url" || cardId === "rows") continue;
+        if (typeof qty !== "number") continue;
+        const pk = onepiecePrintKey(cardId)?.toLowerCase();
         if (!pk || inserts.has(pk)) continue;
         inserts.set(pk, { label: "Insert starter", value, url });
       }
@@ -209,6 +243,20 @@ function ensureMaps(): {
       const pk = printKey.trim().toLowerCase();
       if (!pk || inserts.has(pk)) continue;
       inserts.set(pk, { label: "Insert starter", value, url: hit.url });
+    }
+  }
+
+  // ST13–28: products often lack Tier One URLs — match dig codes onto starter slugs.
+  for (const dig of digs) {
+    for (const [code, urlRaw] of Object.entries(dig.urls ?? {})) {
+      const url = sanitizePublicCitationUrl(urlRaw);
+      if (!url) continue;
+      const label = `Canal — Pieces ${code.toUpperCase()} (Tier One)`;
+      for (const slug of Object.keys(products?.skus ?? {})) {
+        const key = slug.trim().toLowerCase();
+        if (!slugMatchesStarterCode(key, code) || sealed.has(key)) continue;
+        sealed.set(key, { label, url });
+      }
     }
   }
 

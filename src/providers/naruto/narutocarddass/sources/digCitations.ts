@@ -10,6 +10,11 @@ import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitatio
 
 import { narutoNumbersEqual } from "../identity";
 import { narutoCuratedSourcesDir } from "../install/curated";
+import {
+  narutoEditorialStoryEntryForPrint,
+  narutoEditorialStoryEntryForSealedSlug,
+  resetNarutoStorytellingCache,
+} from "./storytelling";
 
 type YoutubeChapterMap = Record<string, string>;
 
@@ -126,6 +131,14 @@ type Uns3Channel = {
   sku?: string;
 };
 
+type Uns3MarketplaceAttestation = {
+  ref?: string | null;
+  listing?: string;
+  goat?: string;
+  title?: string;
+  note?: string;
+};
+
 type Uns3DigFile = {
   kind?: string;
   channelMap?: {
@@ -138,6 +151,7 @@ type Uns3DigFile = {
       contents?: string;
     };
   };
+  marketplaceAttestations?: readonly Uns3MarketplaceAttestation[];
   duopack?: {
     slug?: string;
     attestations?: readonly { id?: string; url?: string; note?: string }[];
@@ -157,12 +171,18 @@ type QtyHuntDigFile = {
 /** Generic sealed-hunt dig shapes (ES / IT packshot + listing digs). */
 type SealedHuntDigFile = {
   kind?: string;
-  sources?: readonly { id?: string; url?: string }[];
+  sources?: readonly {
+    id?: string;
+    url?: string;
+    claims?: readonly string[];
+    claim?: string;
+  }[];
   skuMapping?: Record<string, unknown>;
   listings?: readonly {
     sku?: string;
     url?: string;
     claim?: string;
+    claims?: readonly string[];
     title?: string;
   }[];
   found?: readonly {
@@ -170,8 +190,41 @@ type SealedHuntDigFile = {
     listing?: string;
     title?: string;
     claim?: string;
+    claims?: readonly string[];
   }[];
-  attestations?: Record<string, { url?: string } | undefined>;
+  attestations?: Record<
+    string,
+    { url?: string; claims?: readonly string[]; claim?: string } | undefined
+  >;
+};
+
+/** EU/US pack math dig — `claims[]` on sources, explicit source→SKU (no EN/FR mixup). */
+type EuPackMathDigFile = {
+  kind?: string;
+  sources?: readonly {
+    id?: string;
+    url?: string;
+    claims?: readonly string[];
+    region?: string;
+  }[];
+};
+
+/** Source id → sealed slug. Prefer FR Sunny for `booster-s28`, EN Sunny for `-en`. */
+const EU_PACK_MATH_SOURCE_SKUS: Readonly<Record<string, string>> = {
+  "sunnystore-booster-s28-fr": "booster-s28",
+  "sunnystore-booster-s28-en": "booster-s28-en",
+  "toywiz-s28": "booster-s28-en",
+  "toywiz-s24": "booster-s24-en",
+  "namco-uk-storm-generations-press": "booster-s24",
+};
+
+/** Tin Box Invocation verso dig — printed contents + Leboncoin listing. */
+type TinBoxVersoDigFile = {
+  kind?: string;
+  listing?: string;
+  sku?: string;
+  versoContents?: readonly string[];
+  relatedSku?: { slug?: string; claim?: string };
 };
 
 type S5Pass3DigFile = {
@@ -182,6 +235,29 @@ type S5Pass3DigFile = {
     urls?: readonly string[];
     finding?: string;
   }[];
+};
+
+type S5LeboncoinDigFile = {
+  kind?: string;
+  files?: readonly { file?: string; finding?: string }[];
+  confirmedAgain?: readonly string[];
+};
+
+type S5ContentsHuntDigFile = {
+  kind?: string;
+  sourcesTried?: readonly {
+    id?: string;
+    url?: string;
+    urls?: readonly string[];
+    finding?: string;
+  }[];
+};
+
+type RakutenTinHobbyDigFile = {
+  kind?: string;
+  listing?: string;
+  title?: string;
+  verdict?: string;
 };
 
 export type SealedDistributionCitation = {
@@ -209,7 +285,12 @@ let sealedHuntBySlug:
   | null
   | undefined;
 let sealedHuntStoryBySlug: Map<string, DigStoryFact> | null | undefined;
+let euPackMathCache: EuPackMathDigFile | null | undefined;
+let tinBoxVersoCache: TinBoxVersoDigFile | null | undefined;
 let s5Pass3Cache: S5Pass3DigFile | null | undefined;
+let s5LeboncoinCache: S5LeboncoinDigFile | null | undefined;
+let s5ContentsHuntCache: S5ContentsHuntDigFile | null | undefined;
+let rakutenTinHobbyCache: RakutenTinHobbyDigFile | null | undefined;
 let detruireKonohaCache: QtyHuntDigFile | null | undefined;
 
 export function resetNarutoDigCitationCaches(): void {
@@ -220,8 +301,14 @@ export function resetNarutoDigCitationCaches(): void {
   uns3Cache = undefined;
   sealedHuntBySlug = undefined;
   sealedHuntStoryBySlug = undefined;
+  euPackMathCache = undefined;
+  tinBoxVersoCache = undefined;
   s5Pass3Cache = undefined;
+  s5LeboncoinCache = undefined;
+  s5ContentsHuntCache = undefined;
+  rakutenTinHobbyCache = undefined;
   detruireKonohaCache = undefined;
+  resetNarutoStorytellingCache();
 }
 
 function youtubeDigPath(): string {
@@ -253,10 +340,45 @@ function uns3DigPath(): string {
   return path.join(narutoCuratedSourcesDir(), "uns3-eu-promos-hunt.json");
 }
 
+function euPackMathDigPath(): string {
+  return path.join(
+    narutoCuratedSourcesDir(),
+    "eu-ccg-pack-math-2026-08-29.json",
+  );
+}
+
+function tinBoxVersoDigPath(): string {
+  return path.join(
+    narutoCuratedSourcesDir(),
+    "tin-box-verso-hunt-2026-08-29.json",
+  );
+}
+
 function s5Pass3DigPath(): string {
   return path.join(
     narutoCuratedSourcesDir(),
     "s5-starter-qty-web-hunt-pass3-2026-10-01.json",
+  );
+}
+
+function s5LeboncoinDigPath(): string {
+  return path.join(
+    narutoCuratedSourcesDir(),
+    "s5-leboncoin-vendeur-photos-2026-10-01.json",
+  );
+}
+
+function s5ContentsHuntDigPath(): string {
+  return path.join(
+    narutoCuratedSourcesDir(),
+    "s5-starter-contents-hunt-2026-08-26.json",
+  );
+}
+
+function rakutenTinHobbyDigPath(): string {
+  return path.join(
+    narutoCuratedSourcesDir(),
+    "rakuten-tin-box-hobby-2026-08-30.json",
   );
 }
 
@@ -335,12 +457,139 @@ function loadS5Pass3Dig(): S5Pass3DigFile | null {
   return s5Pass3Cache;
 }
 
+function loadS5LeboncoinDig(): S5LeboncoinDigFile | null {
+  if (s5LeboncoinCache !== undefined) return s5LeboncoinCache;
+  try {
+    if (!existsSync(s5LeboncoinDigPath())) {
+      s5LeboncoinCache = null;
+      return null;
+    }
+    const raw = JSON.parse(
+      readFileSync(s5LeboncoinDigPath(), "utf8"),
+    ) as S5LeboncoinDigFile;
+    s5LeboncoinCache = raw?.kind === "research-dig" ? raw : null;
+  } catch {
+    s5LeboncoinCache = null;
+  }
+  return s5LeboncoinCache;
+}
+
+function loadS5ContentsHuntDig(): S5ContentsHuntDigFile | null {
+  if (s5ContentsHuntCache !== undefined) return s5ContentsHuntCache;
+  try {
+    if (!existsSync(s5ContentsHuntDigPath())) {
+      s5ContentsHuntCache = null;
+      return null;
+    }
+    const raw = JSON.parse(
+      readFileSync(s5ContentsHuntDigPath(), "utf8"),
+    ) as S5ContentsHuntDigFile;
+    s5ContentsHuntCache = raw?.kind === "research-dig" ? raw : null;
+  } catch {
+    s5ContentsHuntCache = null;
+  }
+  return s5ContentsHuntCache;
+}
+
+function loadRakutenTinHobbyDig(): RakutenTinHobbyDigFile | null {
+  if (rakutenTinHobbyCache !== undefined) return rakutenTinHobbyCache;
+  try {
+    if (!existsSync(rakutenTinHobbyDigPath())) {
+      rakutenTinHobbyCache = null;
+      return null;
+    }
+    const raw = JSON.parse(
+      readFileSync(rakutenTinHobbyDigPath(), "utf8"),
+    ) as RakutenTinHobbyDigFile;
+    rakutenTinHobbyCache = raw?.kind === "research-dig" ? raw : null;
+  } catch {
+    rakutenTinHobbyCache = null;
+  }
+  return rakutenTinHobbyCache;
+}
+
+/** UltraJeux S5 starter product pages from contents-hunt dig. */
+function s5UltrajeuxDistributionCitation(
+  key: string,
+): SealedDistributionCitation | null {
+  if (
+    key !== "starter-la-quete" &&
+    key !== "starter-un-nouveau-depart"
+  ) {
+    return null;
+  }
+  const dig = loadS5ContentsHuntDig();
+  const row = dig?.sourcesTried?.find(
+    (entry) => entry.id === "ultrajeux-product-pages",
+  );
+  const urls = [
+    ...(row?.urls ?? []),
+    ...(row?.url ? [row.url] : []),
+  ];
+  const pick =
+    key === "starter-la-quete"
+      ? urls.find((u) => /la-quete/i.test(u))
+      : urls.find((u) => /nouveau-depart/i.test(u));
+  const url = sanitizePublicCitationUrl(pick);
+  if (!url) return null;
+  return {
+    label: canalLabelForCitationUrl(url, "Canal — UltraJeux"),
+    url,
+  };
+}
+
 /**
- * FR S5 sealed — joueur.ch / Parence dig URLs, then official checklist PDF.
+ * FR S5 starters — UltraJeux / Leboncoin dig claims, proof = Distribution URL.
+ */
+function s5FrStarterStoryFact(slug: string): DigStoryFact | null {
+  if (
+    slug !== "starter-la-quete" &&
+    slug !== "starter-un-nouveau-depart"
+  ) {
+    return null;
+  }
+  const url = s5FrSealedDistributionCitation(slug)?.url;
+  if (!url) return null;
+
+  const ultraFinding = loadS5ContentsHuntDig()
+    ?.sourcesTried?.find((row) => row.id === "ultrajeux-product-pages")
+    ?.finding?.trim();
+  if (ultraFinding && /40 cartes/i.test(ultraFinding)) {
+    // Dig finding opens with the sealed contents claim — take that sentence.
+    const sentence =
+      ultraFinding.match(/Boîte\s*=\s*40 cartes[^.…]*/i)?.[0]?.trim() ||
+      ultraFinding.split(/[.]/)[0]?.trim() ||
+      "";
+    if (sentence) return makeStoryFact(sentence, url, 26);
+  }
+
+  const dig = loadS5LeboncoinDig();
+  const printed = dig?.files
+    ?.map((row) => row.finding?.trim() || "")
+    .find((finding) =>
+      /DECK DE 40 CARTES DONT 2 CARTES HOLOGRAPHIQUES/i.test(finding),
+    );
+  const match = printed?.match(
+    /«\s*(DECK DE 40 CARTES DONT 2 CARTES HOLOGRAPHIQUES)\s*»/i,
+  );
+  const claim =
+    match?.[1]?.trim() ||
+    (dig?.confirmedAgain?.some((row) => /40.*2 holos/i.test(row))
+      ? "DECK DE 40 CARTES DONT 2 CARTES HOLOGRAPHIQUES"
+      : "");
+  if (!claim) return null;
+  return makeStoryFact(claim, url, 26);
+}
+
+/**
+ * FR S5 sealed — UltraJeux product pages, then joueur.ch / Parence, then checklist PDF.
  */
 function s5FrSealedDistributionCitation(
   key: string,
 ): SealedDistributionCitation | null {
+  const ultra = s5UltrajeuxDistributionCitation(key);
+  if (ultra) return ultra;
+
   const dig = loadS5Pass3Dig();
   const sources = dig?.newSourcesEvaluated ?? [];
 
@@ -455,6 +704,12 @@ function loadSealedHuntMaps(): {
           source?.url,
           `Canal — dig ${sku}`,
         );
+        rememberSealedHuntStory(
+          stories,
+          sku,
+          source?.url,
+          pickDigClaimArray(source?.claims, source?.claim),
+        );
       }
 
       for (const listing of raw.listings ?? []) {
@@ -466,12 +721,12 @@ function loadSealedHuntMaps(): {
             ? `Canal — ${listing.title.trim()}`
             : `Canal — dig ${listing.sku ?? "sealed"}`,
         );
-        const key = listing.sku?.trim().toLowerCase() || "";
-        const claim = listing.claim?.trim() || "";
-        const url = sanitizePublicCitationUrl(listing.url);
-        if (key && claim && url && !stories.has(key)) {
-          stories.set(key, makeStoryFact(claim, url, 26));
-        }
+        rememberSealedHuntStory(
+          stories,
+          listing.sku,
+          listing.url,
+          pickDigClaimArray(listing.claims, listing.claim),
+        );
       }
 
       for (const row of raw.found ?? []) {
@@ -483,28 +738,148 @@ function loadSealedHuntMaps(): {
             ? `Canal — ${row.title.trim()}`
             : `Canal — dig ${row.sku ?? "sealed"}`,
         );
-        const key = row.sku?.trim().toLowerCase() || "";
-        const claim = row.claim?.trim() || "";
-        const url = sanitizePublicCitationUrl(row.listing);
-        if (key && claim && url && !stories.has(key)) {
-          stories.set(key, makeStoryFact(claim, url, 26));
-        }
+        rememberSealedHuntStory(
+          stories,
+          row.sku,
+          row.listing,
+          pickDigClaimArray(row.claims, row.claim),
+        );
       }
 
-      const madhouse = raw.attestations?.madhouseS7?.url;
+      const madhouse = raw.attestations?.madhouseS7;
       rememberSealedHunt(
         map,
         "booster-s7-it",
-        madhouse,
+        madhouse?.url,
         "Canal — Madhouse (IT)",
+      );
+      rememberSealedHuntStory(
+        stories,
+        "booster-s7-it",
+        madhouse?.url,
+        pickDigClaimArray(madhouse?.claims, madhouse?.claim),
       );
     } catch {
       /* skip bad dig */
     }
   }
+  mergeEuPackMathIntoSealedMaps(map, stories);
   sealedHuntBySlug = map;
   sealedHuntStoryBySlug = stories;
   return { citations: map, stories };
+}
+
+function loadEuPackMathDig(): EuPackMathDigFile | null {
+  if (euPackMathCache !== undefined) return euPackMathCache;
+  try {
+    if (!existsSync(euPackMathDigPath())) {
+      euPackMathCache = null;
+      return null;
+    }
+    const raw = JSON.parse(
+      readFileSync(euPackMathDigPath(), "utf8"),
+    ) as EuPackMathDigFile;
+    euPackMathCache = raw?.kind === "research-dig" ? raw : null;
+  } catch {
+    euPackMathCache = null;
+  }
+  return euPackMathCache;
+}
+
+function loadTinBoxVersoDig(): TinBoxVersoDigFile | null {
+  if (tinBoxVersoCache !== undefined) return tinBoxVersoCache;
+  try {
+    if (!existsSync(tinBoxVersoDigPath())) {
+      tinBoxVersoCache = null;
+      return null;
+    }
+    const raw = JSON.parse(
+      readFileSync(tinBoxVersoDigPath(), "utf8"),
+    ) as TinBoxVersoDigFile;
+    tinBoxVersoCache = raw?.kind === "research-dig" ? raw : null;
+  } catch {
+    tinBoxVersoCache = null;
+  }
+  return tinBoxVersoCache;
+}
+
+/** Printed verso lines from the Invocation tin dig (no invented prose). */
+function tinBoxVersoStoryFact(): DigStoryFact | null {
+  const dig = loadTinBoxVersoDig();
+  const lines = (dig?.versoContents ?? [])
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const url = sanitizePublicCitationUrl(dig?.listing);
+  if (!lines.length || !url) return null;
+  return makeStoryFact(lines.join(" · "), url, 27);
+}
+
+/**
+ * Prefer face/contents claims (« 8 CARTES », Mazzo 40, SOBRE DE 8…) over
+ * generic sealed titles / UPC/EAN / CDN photo noise.
+ */
+function pickDigClaimArray(
+  claims: readonly string[] | undefined,
+  singular?: string | null,
+): string {
+  const list = [
+    ...(singular?.trim() ? [singular.trim()] : []),
+    ...(claims ?? []).map((c) => c.trim()).filter(Boolean),
+  ];
+  if (!list.length) return "";
+  const faceOrContents = list.find((c) =>
+    /\d+\s*(cartes|cartas|cards)\b|«\s*\d+|sobre de \d+|pack includes|cards per pack|booster pack contains|zufälligen|mazzo di \d+|bustina serie|booster da \d+|\bholo\b|hologr[aá]fica/i.test(
+      c,
+    ),
+  );
+  if (faceOrContents) return faceOrContents;
+  const sealedPresence = list.find((c) =>
+    /\bsigillato\b|\bsealed\b(?!\s+single)/i.test(c),
+  );
+  return sealedPresence ?? list[0] ?? "";
+}
+
+function rememberSealedHuntStory(
+  stories: Map<string, DigStoryFact>,
+  sku: string | null | undefined,
+  urlRaw: string | null | undefined,
+  claimRaw: string,
+): void {
+  const key = sku?.trim().toLowerCase() || "";
+  const url = sanitizePublicCitationUrl(urlRaw);
+  const claim = claimRaw.trim();
+  if (!key || !claim || !url || stories.has(key)) return;
+  stories.set(key, makeStoryFact(claim, url, 26));
+}
+
+function mergeEuPackMathIntoSealedMaps(
+  map: Map<string, SealedDistributionCitation>,
+  stories: Map<string, DigStoryFact>,
+): void {
+  const dig = loadEuPackMathDig();
+  if (!dig?.sources?.length) return;
+  const byId = new Map(
+    dig.sources
+      .filter((row) => row.id?.trim())
+      .map((row) => [row.id!.trim(), row] as const),
+  );
+
+  // Iterate preferred map order (Sunny FR/EN before ToyWiz fallback).
+  for (const [sourceId, sku] of Object.entries(EU_PACK_MATH_SOURCE_SKUS)) {
+    const source = byId.get(sourceId);
+    if (!source) continue;
+    const url = sanitizePublicCitationUrl(source.url);
+    if (!url) continue;
+
+    rememberSealedHunt(map, sku, url, `Canal — dig ${sku}`);
+
+    rememberSealedHuntStory(
+      stories,
+      sku,
+      url,
+      pickDigClaimArray(source.claims),
+    );
+  }
 }
 
 function loadSealedHuntBySlug(): Map<string, SealedDistributionCitation> {
@@ -660,6 +1035,27 @@ export function uns3PromoDistributionCitationForNumber(
     };
   }
 
+  // Marketplace / Goat dig rows (PR-100 FR foil, …) when no official press channel.
+  for (const row of dig?.marketplaceAttestations ?? []) {
+    const ref = row.ref?.trim();
+    if (!ref || !narutoNumbersEqual(ref, needle)) continue;
+    const url = firstOpenable(row.goat, row.listing);
+    if (!url) continue;
+    const hostLabel = (() => {
+      try {
+        const host = new URL(url).hostname.replace(/^www\./i, "");
+        if (host.includes("crystalcommerce") || host.includes("goat")) {
+          return "Canal — Goat Cards (FR foil)";
+        }
+        if (host.includes("ebay.")) return "Canal — eBay (promo attesté)";
+      } catch {
+        /* fall through */
+      }
+      return "Canal — marketplace UNS3 dig";
+    })();
+    return { label: hostLabel, url };
+  }
+
   return null;
 }
 
@@ -754,6 +1150,12 @@ export function narutoStoryFactsForSealedSlug(
 ): DigStoryFact[] {
   const key = slug?.trim().toLowerCase() || "";
   if (!key) return [];
+
+  const editorial = narutoEditorialStoryEntryForSealedSlug(key);
+  if (editorial?.sources[0]?.url) {
+    return [makeStoryFact(editorial.bodyFr, editorial.sources[0].url, 29)];
+  }
+
   const dig = loadYoutubeDig();
   const row = dig?.sealedFrCarddass?.attestedNow?.find(
     (entry) => entry.slug?.trim().toLowerCase() === key,
@@ -768,6 +1170,8 @@ export function narutoStoryFactsForSealedSlug(
         : null);
 
   if (!claim && key === "tin-box") {
+    const verso = tinBoxVersoStoryFact();
+    if (verso) return [verso];
     const finding = findingById("tin-box-sfu-noel-2007");
     claim = finding?.claim?.trim() || "";
     url =
@@ -793,6 +1197,14 @@ export function narutoStoryFactsForSealedSlug(
   ) {
     const ultra = detruireKonohaUltrajeuxSource(key);
     if (ultra) return [makeStoryFact(ultra.finding, ultra.url, 26)];
+  }
+
+  if (
+    !claim &&
+    (key === "starter-la-quete" || key === "starter-un-nouveau-depart")
+  ) {
+    const s5 = s5FrStarterStoryFact(key);
+    if (s5) return [s5];
   }
 
   if (!claim && key === "kana-manga-pack-1-2-3") {
@@ -946,9 +1358,18 @@ export function narutoStoryFactsForPrint(input: {
   number: string | null | undefined;
   setCode?: string | null;
   grouping?: string | null;
+  printKey?: string | null;
 }): DigStoryFact[] {
   const number = input.number?.trim() || "";
   if (!number) return [];
+
+  const editorial = narutoEditorialStoryEntryForPrint({
+    number,
+    printKey: input.printKey,
+  });
+  if (editorial?.sources[0]?.url) {
+    return [makeStoryFact(editorial.bodyFr, editorial.sources[0].url, 29)];
+  }
 
   const uns3 = uns3StoryFactForNumber(number);
   if (uns3) return [uns3];
@@ -1222,6 +1643,12 @@ export function narutoSealedDistributionCitation(
     const official = sanitizePublicCitationUrl(row?.official?.url);
     if (official) {
       return { label: "Canal — Tin Box Hobby (carddass.fr)", url: official };
+    }
+    const rakuten = sanitizePublicCitationUrl(
+      loadRakutenTinHobbyDig()?.listing,
+    );
+    if (rakuten) {
+      return { label: "Canal — Rakuten (Tin Box Hobby)", url: rakuten };
     }
     return null;
   }

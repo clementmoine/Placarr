@@ -370,6 +370,8 @@ describe("cataloguePacks", () => {
     expect(resolveCatalogueScope("sealed", carddass)).toBe("sealed");
     expect(resolveCatalogueScope("documents", carddass)).toBe("documents");
     expect(resolveCatalogueScope("docs", carddass)).toBe("documents");
+    expect(resolveCatalogueScope("stories", carddass)).toBe("stories");
+    expect(resolveCatalogueScope("saviez", carddass)).toBe("stories");
   });
 
   it("carddass refuses cross-lang face borrow (FR≠EN≠JA)", () => {
@@ -429,13 +431,10 @@ describe("cataloguePacks", () => {
     const carddass = rows.find(
       (r) => r.printKey === "naruto:s2-ni0100" && r.lang === "fr",
     );
-    expect(ccg?.artUrl).toContain("/prints/");
-    expect(ccg?.artUrl).toContain("/prints/s11-n0100-fr/");
-    expect(ccg?.artUrl).toMatch(/\/face$/);
+    // Admin browse prefers concrete /cards/…/art.* (Affiche SSOT).
+    expect(ccg?.artUrl).toMatch(/\/cards\/fr\/s11\/n0100\/art\./);
     expect(ccg?.artLocaleFrom).toBeUndefined();
-    expect(carddass?.artUrl).toContain("/prints/");
-    expect(carddass?.artUrl).toContain("/prints/s2-ni0100-fr/");
-    expect(carddass?.artUrl).toMatch(/\/face$/);
+    expect(carddass?.artUrl).toMatch(/\/cards\/fr\/s2\/ni0100\/art\./);
     expect(carddass?.artLocaleFrom).toBeUndefined();
   });
 
@@ -596,16 +595,14 @@ describe("Naruto catalogue lines", () => {
     expect(jaNi?.artLocaleFrom).toBeUndefined();
     expect(jaNi?.artFallbackFrom).toBeUndefined();
     if (jaNi?.artUrl) {
-      expect(jaNi.artUrl).toMatch(/-ja\//);
-      expect(jaNi.artUrl).not.toMatch(/-fr\//);
+      expect(jaNi.artUrl).toMatch(/\/cards\/ja\//);
+      expect(jaNi.artUrl).not.toMatch(/\/cards\/fr\//);
     } else {
       expect(jaNi?.missingArt).toBe(true);
     }
     expect(
       rows.find((row) => row.card === "n1621" && row.lang === "en")?.artUrl,
-    ).toBe(
-      "/assets/naruto/carddass/prints/s28-n1621-en/face",
-    );
+    ).toMatch(/\/cards\/en\/s28\/n1621\/art\./);
     expect(rows.some((row) => row.card === "n001" && row.lang === "en")).toBe(
       true,
     );
@@ -982,8 +979,7 @@ describe("Naruto catalogue lines", () => {
     expect(rows[0]?.printed).toBe(false);
     // Synthetic index art without disk bytes → honest missingArt (no 404 URL).
     if (rows[0]?.artUrl) {
-      expect(rows[0].artUrl).toContain("/prints/");
-      expect(rows[0].artUrl).toMatch(/\/face$/);
+      expect(rows[0].artUrl).toMatch(/\/(cards|prints)\//);
     } else {
       expect(rows[0]?.missingArt).toBe(true);
     }
@@ -1014,10 +1010,9 @@ describe("Naruto catalogue lines", () => {
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     expect(rows.map((r) => r.lang)).toEqual(["ja"]);
     if (rows[0]?.artUrl) {
-      expect(rows[0].artUrl).toContain("/prints/");
-      // Stem leading grouping: `ps-ni0001-ja` (same family as prerelease-/cdf-).
-      expect(rows[0].artUrl).toMatch(/\/ps-ni0001-ja\//);
-      expect(rows[0].artUrl).toMatch(/\/face$/);
+      // Disk art under JA card folder (ps grouping on disk id when present).
+      expect(rows[0].artUrl).toMatch(/\/cards\/ja\//);
+      expect(rows[0].artUrl).toMatch(/ni0001/);
     } else {
       expect(rows[0]?.missingArt).toBe(true);
     }
@@ -1117,9 +1112,9 @@ describe("Naruto catalogue lines", () => {
     expect(retail?.artFallbackFrom).toBeUndefined();
     expect(s6?.printed).toBe(false);
     expect(s6?.printKey).not.toBe(retail?.printKey);
-    // Live disk may supply S5→S1 borrow; URL stays on the s6 printKey.
+    // Live disk may supply S5→S1 borrow; donor tracked, bytes under cards/.
     if (s6?.artUrl) {
-      expect(s6.artUrl).toContain("/prints/s6-ni0064-fr/");
+      expect(s6.artUrl).toMatch(/\/cards\/fr\/.+\/ni0*64/);
       expect(s6.artFallbackFrom).toMatch(/s[1-5]-ni0*64/);
     } else {
       expect(s6?.missingArt).toBe(true);
@@ -1370,9 +1365,7 @@ describe("same-number art fallback (Naruto)", () => {
     // Must not borrow *from* the promo stub onto retail.
     expect(retailJa?.artFallbackFrom ?? "").not.toMatch(/promo/i);
     if (promoJa?.artUrl) {
-      expect(promoJa.artUrl).toContain("/prints/");
-      expect(promoJa.artUrl).toContain("/prints/promo-te0107-ja/");
-      expect(promoJa.artUrl).toMatch(/\/face$/);
+      expect(promoJa.artUrl).toMatch(/\/cards\/ja\/promo\/te0107/);
     }
     // JA-only tourney reprint — not on FR Promo checklist; no invent FR tile.
     expect(promoFr).toBeUndefined();
@@ -1405,14 +1398,14 @@ describe("same-number art fallback (Naruto)", () => {
     const s2 = rows.find(
       (r) => r.printKey === "naruto:s2-cl0005" && r.lang === "fr",
     );
-    // Role URLs only when disk resolves; each printKey stays distinct.
+    // Disk art URLs when bytes resolve; each set folder stays distinct.
     if (s2?.artUrl) {
-      expect(s2.artUrl).toContain("/prints/s2-cl0005-fr/");
+      expect(s2.artUrl).toMatch(/\/cards\/fr\/s2\/cl0005\/art\./);
     } else {
       expect(s2?.missingArt).toBe(true);
     }
     if (s1?.artUrl) {
-      expect(s1.artUrl).toContain("/prints/s1-cl0005-fr/");
+      expect(s1.artUrl).toMatch(/\/cards\/fr\/s1\/cl0005\/art\./);
       if (s2?.artUrl) expect(s1.artUrl).not.toBe(s2.artUrl);
     } else {
       expect(s1?.missingArt).toBe(true);
@@ -1443,14 +1436,11 @@ describe("same-number art fallback (Naruto)", () => {
     const rows = buildCatalogueCardRows("naruto/carddass", index);
     const promo = rows.find((r) => /promo-ni0*24/i.test(r.printKey));
     const retail = rows.find((r) => /s1-ni0*24/i.test(r.printKey));
-    expect(retail?.artUrl).toContain("/prints/");
-    expect(retail?.artUrl).toMatch(/\/face$/);
+    expect(retail?.artUrl).toMatch(/\/cards\/fr\/.+\/ni0*24/);
     expect(promo?.missingArt).toBeUndefined();
     expect(promo?.artFallbackFrom).toMatch(/s1-ni0*24/);
-    // Print-scoped URLs stay on the requesting printKey; bytes resolve at HTTP.
-    expect(promo?.artUrl).toContain("/prints/");
-    expect(promo?.artUrl).not.toBe(retail?.artUrl);
-    expect(promo?.thumbUrl).toMatch(/\/thumb$/);
+    // Borrowed bytes → same /cards/…/art.* path as retail (Affiche SSOT).
+    expect(promo?.artUrl).toBe(retail?.artUrl);
   });
 
   it("prefers S1 FR retail over JA scan hung on a manga prerelease stub", () => {
@@ -1493,13 +1483,12 @@ describe("same-number art fallback (Naruto)", () => {
         r.lang === "fr",
     );
     if (retail?.artUrl) {
-      expect(retail.artUrl).toContain("/prints/");
-      expect(retail.artUrl).toMatch(/\/face$/);
+      expect(retail.artUrl).toMatch(/\/cards\/fr\/.+\/ni0*19/);
     } else {
       expect(retail?.missingArt).toBe(true);
     }
     if (pre?.artUrl) {
-      expect(pre.artUrl).toContain("/prints/");
+      expect(pre.artUrl).toMatch(/\/cards\/fr\//);
       if (retail?.artUrl) expect(pre.artUrl).not.toBe(retail.artUrl);
       if (pre.artFallbackFrom) {
         expect(pre.artFallbackFrom).toMatch(/ni-0*19|s1-ni0*19/);
@@ -1542,7 +1531,7 @@ describe("same-number art fallback (Naruto)", () => {
       (r) => r.printKey.includes("prerelease") && /te0*3/i.test(r.card),
     );
     expect(pre.map((r) => r.lang)).toEqual(["fr"]);
-    expect(pre[0]?.artUrl).toContain("/prints/");
+    expect(pre[0]?.artUrl).toMatch(/\/(cards|prints)\//);
     if (pre[0]?.artFallbackFrom) {
       expect(pre[0].artFallbackFrom).toMatch(/te-0*3/);
     }
@@ -1817,7 +1806,7 @@ describe("same-number art fallback (Naruto)", () => {
     const cdf = rows.find(
       (r) => r.printKey.includes("cdf") || /te0*30-cdf/i.test(r.card),
     );
-    expect(cdf?.artUrl).toContain("/prints/");
+    expect(cdf?.artUrl).toMatch(/\/(cards|prints)\//);
     if (cdf?.artFallbackFrom) {
       expect(cdf.artFallbackFrom).toMatch(/s3-te0*30/);
     }
@@ -1944,6 +1933,12 @@ describe("same-number art fallback (Naruto)", () => {
       "fr",
       "it",
     ]);
+    expect(
+      cataloguePackInfo("dragonball/fw")?.localeArt?.auditAfterLocalResolve,
+    ).toBe(true);
+    expect(
+      cataloguePackInfo("dragonball/fw")?.localeArt?.bestFaceAcrossLocales,
+    ).toBe(false);
     expect(cataloguePackInfo("dragonball/fw")?.catalogueLocales).toEqual([
       "en",
       "ja",

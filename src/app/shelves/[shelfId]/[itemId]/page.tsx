@@ -230,6 +230,7 @@ import {
   isStoryDisplayFact,
   splitTagValues,
 } from "@/core/enrich/facts/displayFacts";
+import { StoryBodyWithMentions } from "@/components/storytelling/StoryBodyWithMentions";
 import { ProviderLinksBar } from "@/components/ProviderLinksBar";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
@@ -3536,9 +3537,10 @@ export default function ItemDetailsPage() {
                             <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
                               {t("items.didYouKnow")}
                             </span>
-                            <p className="text-sm leading-relaxed text-foreground dark:text-zinc-200">
-                              {fact.value}
-                            </p>
+                            <StoryBodyWithMentions
+                              body={fact.value}
+                              className="text-foreground dark:text-zinc-200"
+                            />
                             {proofUrl ? (
                               <a
                                 href={proofUrl}

@@ -37,6 +37,8 @@ const SEALED_SLUG_LABELS: Record<string, string> = {
   "starter-rivaux": 'Canal — Starter "Rivaux" (carddass.fr S1)',
   "booster-s1-shinigami-and-ichigo":
     "Canal — Booster S1 Shinigami & Ichigo (carddass.fr)",
+  "display-s1-shinigami-and-ichigo":
+    "Canal — Display S1 Shinigami & Ichigo (carddass.fr)",
 };
 
 let s1CatalogueUrlCache: string | null | undefined;

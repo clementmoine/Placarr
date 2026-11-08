@@ -61,7 +61,12 @@ export type CataloguePackId =
   | "leclerc/disney25"
   | "leclerc/disney26";
 
-export type CatalogueBrowseScope = "foils" | "all" | "sealed" | "documents";
+export type CatalogueBrowseScope =
+  | "foils"
+  | "all"
+  | "sealed"
+  | "documents"
+  | "stories";
 
 /** Naruto disk / verso line — same game, different back and sealed SKUs. */
 export type CatalogueCardLine = NarutoCardLine;
@@ -280,6 +285,12 @@ export type CataloguePackInfo = {
      * titles must not borrow JA shop rectos.
      */
     countLocalizedNames?: boolean;
+    /**
+     * « Sans image » / incomplete after disk resolve. Opt in when
+     * `print_assets` still holds CDN URLs (Bandai SAMPLE…) that SQL would
+     * treat as present art while the admin tile is local-only.
+     */
+    auditAfterLocalResolve?: boolean;
   };
   extractTarget: CatalogueExtractTarget;
   /** No store APK fetch — Bandai / Wayback catalogue sync. */
@@ -883,6 +894,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilEffects: false,
     /** EN printing + asia-en (filed as `ja`); no FR cardlist. */
     catalogueLocales: ["en", "ja"],
+    /*
+      EN ≠ JA printings — no cross-locale borrow. print_assets keeps Bandai
+      SAMPLE URLs until faces land on disk; sans-image must hydrate.
+    */
+    localeArt: {
+      bestFaceAcrossLocales: false,
+      auditAfterLocalResolve: true,
+    },
     defaultScope: "all",
     extractTarget: "dbs-fw",
     catalogueOnly: true,
@@ -1408,6 +1427,15 @@ export function resolveCatalogueScope(
   ) {
     return "documents";
   }
+  if (
+    raw === "stories" ||
+    raw === "story" ||
+    raw === "storytelling" ||
+    raw === "saviez" ||
+    raw === "didyouknow"
+  ) {
+    return "stories";
+  }
   if (!pack.hasFoilEffects) return "all";
   if (raw === "all" || raw === "toutes" || raw === "cards") return "all";
   /*
@@ -1444,8 +1472,8 @@ export function applyCataloguePackParams(
   if (next?.hasSealedProducts === false && scope === "sealed") {
     params.set("scope", next.hasFoilEffects ? next.defaultScope : "all");
     if (params.get("scope") === "foils") params.delete("scope");
-  } else if (scope === "documents") {
-    // Documents exists for every pack line — keep across franchise switches.
+  } else if (scope === "documents" || scope === "stories") {
+    // Documents / storytelling desks exist for every pack line — keep.
   } else if (next && !next.hasFoilEffects) {
     if (scope !== "sealed") params.set("scope", "all");
   } else if (next?.defaultScope === "foils") {

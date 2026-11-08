@@ -131,7 +131,12 @@ import {
   syncShelfQueries,
   invalidateShelfQueries,
 } from "@/core/collect/queryCache";
-import { countsAsOwned } from "@/core/collect/itemAbsence";
+import {
+  countsAsOwned,
+  formatAbsencePriceEuros,
+  sumSoldAbsenceCents,
+} from "@/core/collect/itemAbsence";
+import { formatCessionMarkdown } from "@/core/collect/cessionMarkdown";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
   filterItemsByShelfView,
@@ -536,6 +541,30 @@ function ShelfComponent() {
     if (!shelf) return { total: 0, includesEstimates: false };
     return summarizeCollectionEstimatedValue(viewItems, shelf.type);
   }, [shelf, viewItems]);
+
+  const soldStats = useMemo(() => {
+    if (shelfView !== "past") return null;
+    const stats = sumSoldAbsenceCents(
+      (shelf?.items ?? []) as unknown as ItemWithMetadata[],
+    );
+    if (stats.count === 0) return null;
+    return stats;
+  }, [shelf?.items, shelfView]);
+
+  const downloadCessionMarkdown = useCallback(() => {
+    if (!shelf) return;
+    const md = formatCessionMarkdown({
+      shelfName: shelf.name,
+      items: (shelf.items ?? []) as unknown as ItemWithMetadata[],
+    });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slugify(shelf.name) || "shelf"}-deja-eus.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [shelf]);
 
   const handleModalClose = useCallback(() => {
     setVisibleModal(undefined);
@@ -1158,15 +1187,37 @@ function ShelfComponent() {
               )}
             </div>
 
-            {totalValue.total > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
-                <span>Valeur estimée :</span>
-                <span className="font-extrabold text-sm">
-                  {totalValue.includesEstimates ? "~" : ""}
-                  {totalValue.total.toFixed(2)} €
-                </span>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              {shelfView === "past" ? (
+                <button
+                  type="button"
+                  onClick={downloadCessionMarkdown}
+                  className="px-3 py-1.5 rounded-full text-xs font-bold border border-border/70 bg-background/80 text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer shadow-sm"
+                >
+                  {t("items.cession.export")}
+                </button>
+              ) : null}
+              {soldStats ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-sm backdrop-blur-md">
+                  <span>{t("items.cession.salesLabel")}</span>
+                  <span className="font-extrabold text-sm">
+                    {formatAbsencePriceEuros(soldStats.cents)}
+                  </span>
+                  <span className="opacity-70 font-semibold">
+                    ({t("items.cession.salesCount", { count: soldStats.count })})
+                  </span>
+                </div>
+              ) : null}
+              {totalValue.total > 0 && shelfView !== "past" && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
+                  <span>Valeur estimée :</span>
+                  <span className="font-extrabold text-sm">
+                    {totalValue.includesEstimates ? "~" : ""}
+                    {totalValue.total.toFixed(2)} €
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           <LayoutGroup id="shelf-grid">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">

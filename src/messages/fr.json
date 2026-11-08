@@ -357,6 +357,8 @@
         "away": "Absent",
         "sold": "Vendu",
         "sold_detail": "Vendu · {detail}",
+        "sold_price": "Vendu · {price}",
+        "sold_detail_price": "Vendu · {detail} · {price}",
         "exchanged": "Échangé",
         "exchanged_for": "Échangé ↔ {name}",
         "gifted": "Offert",
@@ -751,6 +753,11 @@
     },
     "checklistTitle": "Check-list",
     "checklistSubtitle": "Ce qui existe, ce que vous avez, et ce qu'il reste à trouver.",
+    "cession": {
+      "export": "Exporter l'historique",
+      "salesLabel": "Ventes :",
+      "salesCount": "{count} carte(s)"
+    },
     "checklistOpen": "Voir la check-list",
     "checklistNoCatalogue": "Sans catalogue",
     "checklistNoCatalogueHint": "Ces extensions existent, mais notre catalogue n'en tient aucune carte dans cette langue. Leur absence n'est pas mesurable.",

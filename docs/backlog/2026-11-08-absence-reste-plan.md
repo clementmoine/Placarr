@@ -71,37 +71,23 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ### P2 — Export présence / raison / cession
 
-**Quoi.** Enrichir l’export checklist (ou export collection) : présence, raison, depuis, destinataire, prix de vente ; `past` dans une section « historique ».
+**Statut 2026-11-08 :** **livré** — `formatCessionMarkdown` + bouton « Exporter l'historique » en vue past.
 
-**Pourquoi.** Aujourd’hui l’export Markdown = cases possédé/manquant booléennes ; inutile pour un inventaire de ventes / prêts.
-
-**Exemple.** Export → ligne `NI-001 | past | sold | 2026-10-12 | Vinted | 25,00 €` ; section « Déjà eus » séparée des manquants à acheter.
-
-**Surfaces.** `checklistMarkdown.ts` (+ éventuellement CSV collection).
+**Exemple.** `NI-001 · Naruto | past | sold | 2026-10-12 | Vinted | 25,00 €`
 
 ---
 
 ### P2 — Stats cession (somme des ventes)
 
-**Quoi.** Agrégat des `absencePriceCents` sur items `past` + raison `sold` (vue past ou panneau étagère).
-
-**Pourquoi.** Le prix est déjà saisi ; sans somme, pas de lecture « j’ai revendu pour X € ».
-
-**Exemple.** Filtre vue « Déjà eus » → encart « Ventes : 312,50 € (14 cartes) ».
-
-**Surfaces.** Grille étagère (vue past) ou fiche checklist ; pure fonction `sumSoldAbsenceCents(items)`.
+**Statut 2026-11-08 :** **livré** — `sumSoldAbsenceCents` + encart « Ventes : … » en vue past.
 
 ---
 
 ### P2 — Badges / ItemModal polish restant
 
-**Quoi.**
+**Statut 2026-11-08 :** badge vendu + prix **livré** (`sold_price` / `sold_detail_price`) ; badge échangé ↔ **livré** (trocs). Reste : timeline compacte **dans** ItemModal.
 
-1. Badge vendu avec prix si renseigné (`Vendu · 25 €`).
-2. Badge échangé avec titre lié (dépend P1 trocs).
-3. Historique compact des `ItemPresenceEvent` **dans** ItemModal (aujourd’hui timeline surtout sur la fiche).
-
-**Exemple.** ItemModal ouvert sur une carte vendue → bloc absence « Déjà eu / Vendu » + sous le bloc les 3 derniers events (`departed` → `sold` 12 € ; …).
+**Exemple.** ItemModal ouvert sur une carte vendue → bloc absence + 3 derniers events.
 
 ---
 
@@ -131,4 +117,4 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 - [x] Menu d’ajout distingue Catalogue et Saisie libre (étagère print).
 - [x] Échange lié visible sur les deux fiches (API + panneau fiche + badge).
 - [x] Ouverture random → UI declare utilisable.
-- [ ] Export et/ou stats portent présence + prix de cession.
+- [x] Export et/ou stats portent présence + prix de cession.

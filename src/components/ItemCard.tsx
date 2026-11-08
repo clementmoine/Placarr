@@ -170,6 +170,7 @@ function ItemCardInner(props: ItemCardProps) {
     ? t(`items.absence.badge.${absenceBadge.labelKey}`, {
         ...(absenceBadge.name ? { name: absenceBadge.name } : {}),
         ...(absenceBadge.detail ? { detail: absenceBadge.detail } : {}),
+        ...(absenceBadge.price ? { price: absenceBadge.price } : {}),
       })
     : null;
   const titledName = displayName.replace(

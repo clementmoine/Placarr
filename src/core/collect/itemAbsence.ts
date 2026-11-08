@@ -216,25 +216,66 @@ export type AbsenceBadgeTone = "away" | "past" | "wanted";
 
 /**
  * Compact shelf / fiche tag for non-owned presence.
- * `labelKey` → `items.absence.badge.<key>` ; optional `{name}` / `{detail}`.
+ * `labelKey` → `items.absence.badge.<key>` ; optional `{name}` / `{detail}` / `{price}`.
  */
 export type AbsenceBadgeInfo = {
   tone: AbsenceBadgeTone;
   labelKey: string;
   name?: string;
   detail?: string;
+  /** Formatted sale price (`25 €`) when reason is sold. */
+  price?: string;
 };
 
 type AbsenceBadgeFields = LoanCompatFields &
   Partial<
     Pick<
       ItemAbsenceFields,
-      "absenceSource" | "absenceCarrier" | "absenceReason" | "presence"
+      | "absenceSource"
+      | "absenceCarrier"
+      | "absenceReason"
+      | "presence"
+      | "absencePriceCents"
     >
   > & {
     /** Optional trade counterpart title for `exchanged ↔ name`. */
     tradeCounterpartName?: string | null;
   };
+
+/** Euro label from absence sale cents — null if unknown / zero. */
+export function formatAbsencePriceEuros(
+  cents: number | null | undefined,
+): string | null {
+  if (typeof cents !== "number" || !Number.isFinite(cents) || cents <= 0) {
+    return null;
+  }
+  return `${(cents / 100).toFixed(2).replace(".", ",")} €`;
+}
+
+/**
+ * Sum of `absencePriceCents` on past + sold items (cession stats).
+ */
+export function sumSoldAbsenceCents(
+  items: readonly {
+    presence?: ItemPresence | string | null;
+    absenceReason?: AbsenceReason | string | null;
+    absencePriceCents?: number | null;
+  }[],
+): { cents: number; count: number } {
+  let cents = 0;
+  let count = 0;
+  for (const item of items) {
+    if ((item.presence ?? "owned") !== "past") continue;
+    if (item.absenceReason !== "sold") continue;
+    const price = item.absencePriceCents;
+    if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
+      continue;
+    }
+    cents += Math.round(price);
+    count += 1;
+  }
+  return { cents, count };
+}
 
 /**
  * Badge for away / wanted / past. Owned → null.
@@ -287,6 +328,13 @@ export function formatAbsenceBadge(
 
   // past
   if (reason === "sold") {
+    const price = formatAbsencePriceEuros(item.absencePriceCents);
+    if (detail && price) {
+      return { tone: "past", labelKey: "sold_detail_price", detail, price };
+    }
+    if (price) {
+      return { tone: "past", labelKey: "sold_price", price };
+    }
     return detail
       ? { tone: "past", labelKey: "sold_detail", detail }
       : { tone: "past", labelKey: "sold" };

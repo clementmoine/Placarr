@@ -357,6 +357,8 @@
         "away": "Away",
         "sold": "Sold",
         "sold_detail": "Sold · {detail}",
+        "sold_price": "Sold · {price}",
+        "sold_detail_price": "Sold · {detail} · {price}",
         "exchanged": "Traded",
         "exchanged_for": "Traded ↔ {name}",
         "gifted": "Gifted",
@@ -751,6 +753,11 @@
     },
     "checklistTitle": "Checklist",
     "checklistSubtitle": "What exists, what you own, and what is left to find.",
+    "cession": {
+      "export": "Export history",
+      "salesLabel": "Sales:",
+      "salesCount": "{count} card(s)"
+    },
     "checklistOpen": "View checklist",
     "checklistNoCatalogue": "No catalogue",
     "checklistNoCatalogueHint": "These sets exist, but our catalogue holds none of their cards in this language. Their absence cannot be measured.",

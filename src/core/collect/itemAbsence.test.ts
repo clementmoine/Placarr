@@ -6,7 +6,9 @@ import {
   buildPresenceEvent,
   countsAsOwned,
   formatAbsenceBadge,
+  formatAbsencePriceEuros,
   inferPresenceEventKind,
+  sumSoldAbsenceCents,
   isAwaitingReceiptReason,
   isDefinitiveAbsenceReason,
   isItemOnLoan,
@@ -118,6 +120,26 @@ describe("formatAbsenceBadge", () => {
     expect(
       formatAbsenceBadge({
         presence: "past",
+        absenceReason: "sold",
+        absencePriceCents: 2500,
+      }),
+    ).toEqual({ tone: "past", labelKey: "sold_price", price: "25,00 €" });
+    expect(
+      formatAbsenceBadge({
+        presence: "past",
+        absenceReason: "sold",
+        absenceSource: "Vinted",
+        absencePriceCents: 1200,
+      }),
+    ).toEqual({
+      tone: "past",
+      labelKey: "sold_detail_price",
+      detail: "Vinted",
+      price: "12,00 €",
+    });
+    expect(
+      formatAbsenceBadge({
+        presence: "past",
         absenceReason: "exchanged",
         tradeCounterpartName: "Luffy",
       }),
@@ -130,6 +152,32 @@ describe("formatAbsenceBadge", () => {
       tone: "wanted",
       labelKey: "wanted",
     });
+  });
+});
+
+describe("sumSoldAbsenceCents", () => {
+  it("sums past+sold prices only", () => {
+    expect(
+      sumSoldAbsenceCents([
+        {
+          presence: "past",
+          absenceReason: "sold",
+          absencePriceCents: 1000,
+        },
+        {
+          presence: "past",
+          absenceReason: "sold",
+          absencePriceCents: 250,
+        },
+        {
+          presence: "past",
+          absenceReason: "gifted",
+          absencePriceCents: 9999,
+        },
+        { presence: "owned", absencePriceCents: 500 },
+      ]),
+    ).toEqual({ cents: 1250, count: 2 });
+    expect(formatAbsencePriceEuros(31250)).toBe("312,50 €");
   });
 });
 

@@ -3045,6 +3045,7 @@ export default function ItemDetailsPage() {
                       const label = t(`items.absence.badge.${absence.labelKey}`, {
                         ...(absence.name ? { name: absence.name } : {}),
                         ...(absence.detail ? { detail: absence.detail } : {}),
+                        ...(absence.price ? { price: absence.price } : {}),
                       });
                       const dated =
                         absence.labelKey === "loaned_to" &&

@@ -14,9 +14,9 @@ Détail + exemples : **[backlog/2026-11-08-absence-reste-plan.md](backlog/2026-1
 | ~~**P1**~~ | ~~Modal d’ajout Catalogue vs Saisie libre~~ | **Fait 2026-11-08** — menu + matching saisie libre ; reste polish typo |
 | ~~**P1**~~ | ~~Trocs `ItemTradeLink` UI+API~~ | **Fait 2026-11-08** — API `/trades` + panneau fiche + badge `Échangé ↔` ; reste picker ItemModal |
 | ~~**P2**~~ | ~~UI declare pulls scellé random~~ | **Fait 2026-11-08** — `SealedDeclareModal` + bouton fiche |
-| **P2** | Export présence / raison / prix | Markdown avec section déjà eus + prix vente |
-| **P2** | Stats cession | Vue past → « Ventes : 312,50 € » |
-| **P2** | Badges prix / timeline ItemModal | `Vendu · 25 €` ; events sous le bloc absence |
+| ~~**P2**~~ | ~~Export présence / raison / prix~~ | **Fait 2026-11-08** — `formatCessionMarkdown` + export vue past |
+| ~~**P2**~~ | ~~Stats cession~~ | **Fait 2026-11-08** — encart ventes en vue past |
+| **P2** | Timeline ItemModal (reste badges) | Badge prix + échangé faits ; reste events dans modal |
 | **P3** | Rappels / anti-doublon commande | Badge « Commandée il y a 21 j » |
 
 ## Plan perf métadonnées — terminé (2026-07-25)

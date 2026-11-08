@@ -59,6 +59,11 @@ export type BackgroundJobRow = {
    * soft metadata refresh enqueued (`payload.propagatedItemCount`).
    */
   propagatedItemCount?: number;
+  /**
+   * Recently finished catalogue Sync kept briefly in the list so admin UI can
+   * show « propagé N » even when the worker completed between polls.
+   */
+  done?: boolean;
   shelf: {
     id: string;
     name: string;
@@ -66,6 +71,9 @@ export type BackgroundJobRow = {
     type: string;
   } | null;
 };
+
+/** How long a completed Sync stays visible for the propagate toast / subtitle. */
+const CATALOG_SYNC_DONE_WINDOW_MS = 90_000;
 
 function propagatedItemCountFromPayload(payload: unknown): number | undefined {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -239,19 +247,32 @@ async function listCatalogIndexJobsForUser(
     BACKGROUND_WORK_KIND.apkStoreFetch,
   ] as const;
 
+  const doneSince = new Date(Date.now() - CATALOG_SYNC_DONE_WINDOW_MS);
   const jobs = await prisma.backgroundWorkJob.findMany({
     where: {
-      kind: { in: [...kinds] },
-      status: {
-        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
-      },
-      OR: [{ userId }, { userId: null }],
+      OR: [
+        {
+          kind: { in: [...kinds] },
+          status: {
+            in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+          },
+          OR: [{ userId }, { userId: null }],
+        },
+        // Keep Sync results visible long enough for the admin poll + toast.
+        {
+          kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+          status: BACKGROUND_WORK_STATUS.completed,
+          finishedAt: { gte: doneSince },
+          OR: [{ userId }, { userId: null }],
+        },
+      ],
     },
     orderBy: [{ createdAt: "asc" }],
     take: 40,
     select: {
       id: true,
       kind: true,
+      status: true,
       payload: true,
       createdAt: true,
       lockedAt: true,
@@ -297,15 +318,17 @@ async function listCatalogIndexJobsForUser(
       const label =
         getProviderModule(providerId)?.info.label?.trim() || providerId;
       const propagatedItemCount = propagatedItemCountFromPayload(job.payload);
+      const done = job.status === BACKGROUND_WORK_STATUS.completed;
       return {
         id: job.id,
         name: label,
         slug: null,
         kind: "catalogProviderSync" as const,
         startedAt: job.lockedAt ?? job.createdAt,
-        cancellable: true,
+        cancellable: !done,
         href: hrefForCatalogProvider(providerId),
         ...(propagatedItemCount !== undefined ? { propagatedItemCount } : {}),
+        ...(done ? { done: true } : {}),
         shelf: null,
       };
     }

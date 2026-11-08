@@ -24,6 +24,8 @@ export type BackgroundJob = {
   href?: string | null;
   /** Soft-refresh fan-out count after catalogue Sync (`printKey` propagate). */
   propagatedItemCount?: number;
+  /** Brief post-completion Sync row so admin can read « propagé N ». */
+  done?: boolean;
   shelf: {
     id: string;
     name: string;

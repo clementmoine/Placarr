@@ -192,20 +192,28 @@ export function FoilPackSources({
   const packHref = adminCatalogueHref(
     cataloguePackForExtractTarget(target)?.id ?? target,
   );
-  const catalogSyncJob = (backgroundJobs?.jobs ?? []).find(
+  const catalogSyncJobs = (backgroundJobs?.jobs ?? []).filter(
     (job) => job.kind === "catalogProviderSync" && job.href === packHref,
   );
+  const catalogSyncRunning = catalogSyncJobs.some((job) => !job.done);
+  const catalogSyncDone = catalogSyncJobs.find((job) => job.done);
   const jobRunning = (backgroundJobs?.jobs ?? []).some((job) => {
     if (job.kind === "foilExtract" && job.foilTarget === target) return true;
-    // Unified Sync path.
-    if (job.kind === "catalogProviderSync" && job.href === packHref) {
+    // Unified Sync path (ignore brief post-completion rows).
+    if (
+      job.kind === "catalogProviderSync" &&
+      job.href === packHref &&
+      !job.done
+    ) {
       return true;
     }
     return false;
   });
-  const propagatedItemCount = catalogSyncJob?.propagatedItemCount;
-  const wasCatalogSyncRunningRef = useRef(false);
-  const lastPropagatedCountRef = useRef<number | null>(null);
+  const propagatedItemCount =
+    catalogSyncRunning
+      ? catalogSyncJobs.find((job) => !job.done)?.propagatedItemCount
+      : catalogSyncDone?.propagatedItemCount;
+  const toastedPropagateJobIdRef = useRef<string | null>(null);
 
   const { data: statusPayload, refetch: refetchStatus } = useQuery({
     queryKey: ["foilStatus"],
@@ -223,23 +231,18 @@ export function FoilPackSources({
   const busy = enqueueing || jobRunning;
 
   useEffect(() => {
-    if (typeof propagatedItemCount === "number") {
-      lastPropagatedCountRef.current = propagatedItemCount;
+    if (!catalogSyncDone) return;
+    if (toastedPropagateJobIdRef.current === catalogSyncDone.id) return;
+    toastedPropagateJobIdRef.current = catalogSyncDone.id;
+    const n = catalogSyncDone.propagatedItemCount;
+    if (typeof n === "number" && n > 0) {
+      toast.success(
+        fr
+          ? `Propagé ${n} item(s) étagère`
+          : `Propagated ${n} shelf item(s)`,
+      );
     }
-    const catalogRunning = Boolean(catalogSyncJob);
-    if (wasCatalogSyncRunningRef.current && !catalogRunning) {
-      const n = lastPropagatedCountRef.current;
-      if (typeof n === "number" && n > 0) {
-        toast.success(
-          fr
-            ? `Propagé ${n} item(s) étagère`
-            : `Propagated ${n} shelf item(s)`,
-        );
-      }
-      lastPropagatedCountRef.current = null;
-    }
-    wasCatalogSyncRunningRef.current = catalogRunning;
-  }, [catalogSyncJob, propagatedItemCount, fr]);
+  }, [catalogSyncDone, fr]);
 
   useEffect(() => {
     const el = logPreRef.current;

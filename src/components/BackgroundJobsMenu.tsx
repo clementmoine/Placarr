@@ -55,10 +55,11 @@ function jobSubtitle(job: BackgroundJob, t: (key: string) => string): string {
     job.kind === "catalogProviderSync" &&
     typeof job.propagatedItemCount === "number"
   ) {
-    return `${kind} · ${t("backgroundJobs.propagated").replace(
+    const propagated = t("backgroundJobs.propagated").replace(
       "{count}",
       String(job.propagatedItemCount),
-    )}`;
+    );
+    return job.done ? propagated : `${kind} · ${propagated}`;
   }
   return kind;
 }
@@ -115,11 +116,14 @@ export function BackgroundJobsMenu() {
 
   if (isGuest) return null;
 
-  const count = data?.count ?? 0;
   const jobs = data?.jobs ?? [];
-  const isBusy = count > 0 || cancelAll.isPending || cancelOne.isPending;
+  const activeCount = jobs.filter((job) => !job.done).length;
+  const hasDoneOnly = activeCount === 0 && jobs.some((job) => job.done);
+  const isBusy =
+    activeCount > 0 || cancelAll.isPending || cancelOne.isPending;
+  const visible = isBusy || hasDoneOnly;
 
-  if (!isBusy) return null;
+  if (!visible) return null;
 
   return (
     <DropdownMenu>
@@ -129,7 +133,7 @@ export function BackgroundJobsMenu() {
           size="icon"
           className={cn(
             "relative size-9 rounded-full",
-            isBusy && "text-primary",
+            (isBusy || hasDoneOnly) && "text-primary",
           )}
           aria-label={t("backgroundJobs.title")}
         >
@@ -137,9 +141,9 @@ export function BackgroundJobsMenu() {
             className={cn("size-4", isBusy && "animate-spin")}
             aria-hidden
           />
-          {count > 0 && (
+          {activeCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {count > 9 ? "9+" : count}
+              {activeCount > 9 ? "9+" : activeCount}
             </span>
           )}
         </Button>
@@ -147,7 +151,7 @@ export function BackgroundJobsMenu() {
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex items-center justify-between gap-2">
           <span>{t("backgroundJobs.title")}</span>
-          {count > 0 && (
+          {activeCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -181,6 +185,11 @@ export function BackgroundJobsMenu() {
                   <ShelfTypeIcon
                     type={job.shelf.type}
                     className="mt-0.5 size-4 shrink-0"
+                  />
+                ) : job.done ? (
+                  <span
+                    className="mt-0.5 size-4 shrink-0 rounded-full bg-primary/20"
+                    aria-hidden
                   />
                 ) : (
                   <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />

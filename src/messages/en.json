@@ -443,7 +443,12 @@
     },
     "addMenu": {
       "catalogue": "From catalogue",
-      "freeEntry": "Free entry"
+      "catalogueHint": "Search a printing in the local corpus.",
+      "freeEntry": "Free entry",
+      "freeEntryHint": "Name, barcode, or details — outside the catalogue.",
+      "freeEntryTitle": "Free entry",
+      "freeEntryDescription": "Add an item without the catalogue. If an away or wanted copy matches, we’ll offer to receive it.",
+      "sealedHint": "Display, deck, booster… sealed from the catalogue."
     },
     "bulkAdd": {
       "title": "Bulk add",

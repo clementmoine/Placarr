@@ -37,7 +37,7 @@
 
 ### P1 — Modal d’ajout : Catalogue vs Saisie libre
 
-**Statut 2026-11-08 :** **menu + matching saisie libre livrés** — Catalogue / Saisie libre / scellé ; ItemModal reçoit `receivableItems` et intercepte le create. Reste : polish typographique des parcours.
+**Statut 2026-11-08 :** **livré** — menu Catalogue / Saisie libre / scellé (hints), matching awaited, titres saisie libre, FAB/grille print → catalogue.
 
 **Quoi.** Deux parcours explicites : **Depuis le catalogue** et **Saisie libre**.
 

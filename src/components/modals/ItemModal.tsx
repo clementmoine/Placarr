@@ -210,6 +210,7 @@ export function ItemModal({
   prefilledValues,
   receivableItems = [],
   identityPeerItems = [],
+  entryKind,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -224,6 +225,8 @@ export function ItemModal({
   receivableItems?: readonly ReceivableShelfItem[];
   /** Shelf copies used for ordered anti-doublon (owned twin warning). */
   identityPeerItems?: readonly ReceivableShelfItem[];
+  /** Create path from the shelf add menu — shapes title/copy. */
+  entryKind?: "free";
   prefilledValues?: {
     name?: string;
     barcode?: string;
@@ -2273,12 +2276,18 @@ export function ItemModal({
           <span className="block text-left">
             {item
               ? `${t("items.editItem")} : ${item.name}`
-              : t("items.addNewItem")}
+              : entryKind === "free"
+                ? t("items.addMenu.freeEntryTitle")
+                : t("items.addNewItem")}
           </span>
         }
         description={
           <span className="block text-left">
-            {item ? t("items.editItemDetails") : t("items.createNewItem")}
+            {item
+              ? t("items.editItemDetails")
+              : entryKind === "free"
+                ? t("items.addMenu.freeEntryDescription")
+                : t("items.createNewItem")}
           </span>
         }
         size="xl"

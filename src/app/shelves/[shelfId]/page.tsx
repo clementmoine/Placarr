@@ -920,6 +920,11 @@ function ShelfComponent() {
             onSubmit={handleItemModalSubmit}
             receivableItems={receivableItems}
             identityPeerItems={identityPeerItems}
+            entryKind={
+              visibleModal === "itemFree" && !editingItemId
+                ? "free"
+                : undefined
+            }
           />
           {shelf?.type && (
             <PrintPickerModal
@@ -1042,29 +1047,53 @@ function ShelfComponent() {
                       <ChevronDown className="size-4 opacity-80" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl">
+                  <DropdownMenuContent
+                    align="end"
+                    className="rounded-xl min-w-[16rem] p-1.5"
+                  >
                     {isPrintSearchShelf ? (
                       <>
                         <DropdownMenuItem
-                          className="cursor-pointer font-medium"
+                          className="cursor-pointer items-start gap-2.5 py-2.5"
                           onSelect={() => openModalFromAddMenu("item")}
                         >
-                          <Search className="size-4 mr-2" />
-                          {t("items.addMenu.catalogue")}
+                          <Search className="size-4 mt-0.5 shrink-0" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="font-semibold leading-tight">
+                              {t("items.addMenu.catalogue")}
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground leading-snug">
+                              {t("items.addMenu.catalogueHint")}
+                            </span>
+                          </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="cursor-pointer font-medium"
+                          className="cursor-pointer items-start gap-2.5 py-2.5"
                           onSelect={() => openModalFromAddMenu("itemFree")}
                         >
-                          <Plus className="size-4 mr-2" />
-                          {t("items.addMenu.freeEntry")}
+                          <Plus className="size-4 mt-0.5 shrink-0" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="font-semibold leading-tight">
+                              {t("items.addMenu.freeEntry")}
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground leading-snug">
+                              {t("items.addMenu.freeEntryHint")}
+                            </span>
+                          </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="cursor-pointer font-medium"
+                          className="cursor-pointer items-start gap-2.5 py-2.5"
                           onSelect={() => openModalFromAddMenu("sealed")}
                         >
-                          <Package className="size-4 mr-2" />
-                          {t("items.sealedPicker.menuLabel")}
+                          <Package className="size-4 mt-0.5 shrink-0" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="font-semibold leading-tight">
+                              {t("items.sealedPicker.menuLabel")}
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground leading-snug">
+                              {t("items.addMenu.sealedHint")}
+                            </span>
+                          </span>
                         </DropdownMenuItem>
                       </>
                     ) : (
@@ -1073,7 +1102,7 @@ function ShelfComponent() {
                         onSelect={() => openModalFromAddMenu("item")}
                       >
                         <Plus className="size-4 mr-2" />
-                        {addItemLabel}
+                        {t("items.addMenu.freeEntry")}
                       </DropdownMenuItem>
                     )}
                     {!isPrintSearchShelf ? (
@@ -1265,14 +1294,27 @@ function ShelfComponent() {
                   onClick={() => handleModalOpen("item")}
                   tabIndex={selectionMode ? -1 : undefined}
                   aria-hidden={selectionMode || undefined}
+                  aria-label={
+                    isPrintSearchShelf
+                      ? t("items.addMenu.catalogue")
+                      : addItemLabel
+                  }
                   className={cn(
                     "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
                     selectionMode && "invisible pointer-events-none",
                   )}
                   style={{ aspectRatio: skeletonAspectRatio }}
                 >
-                  <Plus className="size-5 text-primary" />
-                  <span>{addItemLabel}</span>
+                  {isPrintSearchShelf ? (
+                    <Search className="size-5 text-primary" />
+                  ) : (
+                    <Plus className="size-5 text-primary" />
+                  )}
+                  <span>
+                    {isPrintSearchShelf
+                      ? t("items.addMenu.catalogue")
+                      : addItemLabel}
+                  </span>
                 </motion.button>
               )}
             </div>
@@ -1395,11 +1437,11 @@ function ShelfComponent() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleModalOpen("item")}
-              aria-label={addItemLabel}
-              title={addItemLabel}
+              aria-label={t("items.addMenu.catalogue")}
+              title={t("items.addMenu.catalogue")}
               className="size-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center focus:outline-none cursor-pointer border border-primary-foreground/10"
             >
-              <Plus className="size-6" />
+              <Search className="size-6" />
             </motion.button>
           </div>
         ) : (

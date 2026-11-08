@@ -443,7 +443,12 @@
     },
     "addMenu": {
       "catalogue": "Depuis le catalogue",
-      "freeEntry": "Saisie libre"
+      "catalogueHint": "Chercher un tirage du corpus local.",
+      "freeEntry": "Saisie libre",
+      "freeEntryHint": "Nom, code-barres ou détails — hors catalogue.",
+      "freeEntryTitle": "Saisie libre",
+      "freeEntryDescription": "Ajoute un objet sans passer par le catalogue. Si une copie absente ou recherchée correspond, on te le proposera.",
+      "sealedHint": "Display, deck, booster… scellé du catalogue."
     },
     "bulkAdd": {
       "title": "Ajout en masse",

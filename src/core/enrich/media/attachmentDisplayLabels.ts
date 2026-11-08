@@ -411,11 +411,20 @@ function parseKindFromRole(role?: string | null): AttachmentDisplayKind | null {
   return null;
 }
 
-/** Live print face URL — `/assets/…/prints/{stem}-{lang}/face`. */
+/**
+ * Catalogue face / back from pack asset URLs — works for absolute
+ * (`https://localhost:3000/assets/…`) and site-root (`/assets/…`) forms.
+ *
+ * TCG providers store disk faces as `type: "cover"`; without this, Affiche
+ * labels them « Jaquette » instead of « Face ».
+ */
 function parseKindFromUrl(url?: string | null): AttachmentDisplayKind | null {
   const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
-  if (/\/prints\/[^/]+\/(?:face|thumb)(?:\/|$)/i.test(path)) return "face";
-  // Pack disk art / back under `/cards/{…}/{card}/art.*` or `back.*`.
+  if (/\/prints\/[^/]+\/(?:face|thumb|face-b)(?:\/|$)/i.test(path)) {
+    return /\/face-b(?:\/|$)/i.test(path) ? "back" : "face";
+  }
+  // `/assets/<pack>/cards/{a}/{b}/{card}/back.*` or `art.*` / `face.*`
+  // (lang/set/card or set/lang/card — both Ninja Ranks / Pokémon / Lorcana).
   if (/\/cards\/[^/]+\/[^/]+\/[^/]+\/back\./i.test(path)) return "back";
   if (/\/cards\/[^/]+\/[^/]+\/[^/]+\/(?:art|face)\./i.test(path)) return "face";
   if (/\bproof\.[^/]*\.(?:twitter|flyer)\./i.test(path)) return "flyer";
@@ -463,10 +472,14 @@ export function resolveAttachmentDisplayKind(
 ): AttachmentDisplayKind {
   if (input.source === "barcode") return "barcode";
 
+  // Role + URL first: TCG catalogue faces are typed `cover` in metadata but
+  // carry `*-face-*` roles / `/cards|prints/…` URLs. Title-first wrongly kept
+  // them as « Jaquette » whenever a gallery caption looked cover-like, and
+  // bare `type: cover` won when role was missing.
   return (
-    parseKindFromTitle(input.title) ||
     parseKindFromRole(input.role) ||
     parseKindFromUrl(input.url) ||
+    parseKindFromTitle(input.title) ||
     parseKindFromType(input.type)
   );
 }

@@ -169,6 +169,65 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("TCG disk faces stay Face even when typed cover (all packs)", () => {
+    const cases: Array<{
+      url: string;
+      role?: string;
+      detail: string;
+    }> = [
+      {
+        url: "https://localhost:3000/assets/naruto/ninja-ranks/cards/ff/fr/0006/art.animecollection.jpg",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/pokemon/cards/fr/sv3-5/006/art.webp",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/dragonball/jcc/cards/fr/part1/d0050/art.dbzcollection.jpg",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/lorcana/prints/1-1-fr/face",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/naruto/carddass/prints/s5-ni0229-fr/face",
+        role: "naruto-face-fr-carddass",
+        detail: "Face · Français · Carddass",
+      },
+    ];
+    for (const row of cases) {
+      expect(
+        getAttachmentGalleryLabels({
+          type: "cover",
+          title: "Itachi - Sasuke",
+          url: row.url,
+          role: row.role,
+          source: "local",
+        }),
+      ).toMatchObject({
+        kind: "Face",
+        detail: row.detail,
+      });
+    }
+  });
+
+  it("keeps ScreenScraper box titles as Jaquette when URL is not a TCG face", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "eu",
+        title: "Box - Front",
+        url: "https://www.screenscraper.fr/image.php?gameid=1",
+        source: "screenscraper",
+      }),
+    ).toMatchObject({
+      kind: "Jaquette",
+      detail: "Jaquette · Europe",
+    });
+  });
+
   it("affiche la région d'une jaquette ScreenScraper australienne (au → Europe)", () => {
     // Regression: a `box-2D(au)` cover was stored with role "au" and showed
     // "Jaquette" with no region because the resolver only knew the 6 canonical

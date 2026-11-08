@@ -61,13 +61,11 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ### P2 — UI « Déclarer les pulls » (scellé random)
 
-**Quoi.** Après ouverture d’un display / booster aléatoire, flux UI pour déclarer les cartes sorties (API `POST …/declare` + `planSealedDeclare` déjà prêts, **sans consommateur UI**).
+**Statut 2026-11-08 :** **livré** — `SealedDeclareModal` + bouton fiche « Déclarer les cartes » (`canDeclareSealedPulls`). API `declare` inchangée ; déclaration partielle OK (qty par print).
 
-**Pourquoi.** Ouverture random ne doit pas inventer le contenu ; sans UI, le collecteur ne peut pas enregistrer les hits honnêtement.
+**Quoi.** Après ouverture (ou directement), déclarer les cartes sorties sans inventer la loterie.
 
-**Exemple.** Tu ouvres une display BT31 → event `opened`. Bouton fiche « Déclarer les cartes » → multi-select / scan des prints → create enfants + event `declared` (déclaration partielle OK).
-
-**Surfaces.** Fiche item scellé ; éventuellement ItemModal.
+**Exemple.** Display ouverte → Déclarer → chercher prints → qty → enfants + event `declared`.
 
 ---
 
@@ -132,5 +130,5 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 - [x] Ajout d’un print déjà `away`/`wanted` propose la réception avant create (PrintPicker + ItemModal + scan).
 - [x] Menu d’ajout distingue Catalogue et Saisie libre (étagère print).
 - [x] Échange lié visible sur les deux fiches (API + panneau fiche + badge).
-- [ ] Ouverture random → UI declare utilisable.
+- [x] Ouverture random → UI declare utilisable.
 - [ ] Export et/ou stats portent présence + prix de cession.

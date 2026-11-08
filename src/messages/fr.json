@@ -634,6 +634,18 @@
       "askPackCount": "Combien de sachets / boosters dans ce scellé ?",
       "askChildSlug": "Slug catalogue du booster enfant (ex. booster-s1) :"
     },
+    "sealedDeclare": {
+      "action": "Déclarer les cartes",
+      "title": "Déclarer les tirages",
+      "hint": "Ajoute uniquement les cartes que tu as vraiment sorties — pas d'invention. Tu peux déclarer en plusieurs fois.",
+      "search": "Nom ou numéro de carte…",
+      "searchHint": "Cherche une carte pour l'ajouter à la déclaration.",
+      "empty": "Aucune carte trouvée.",
+      "searchFailed": "Recherche impossible.",
+      "submit": "Déclarer {count}",
+      "success": "{count} carte(s) déclarée(s)",
+      "failed": "Impossible de déclarer ces tirages"
+    },
     "containment": {
       "inside": "Dans {name}",
       "detach": "Retirer du contenant",

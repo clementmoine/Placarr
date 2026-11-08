@@ -315,3 +315,16 @@ export function planSealedDeclare(input: {
   }
   return { ok: true, parentSkuKey: skuKey, children };
 }
+
+/** Fiche / UI gate before offering « Déclarer les cartes ». */
+export function canDeclareSealedPulls(item: {
+  kind?: string | null;
+  skuKey?: string | null;
+  countsAsOwned: boolean;
+}): boolean {
+  return (
+    item.kind === "sealed" &&
+    Boolean(item.skuKey?.trim()) &&
+    item.countsAsOwned
+  );
+}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canDeclareSealedPulls,
   parseSealedSkuKey,
   planSealedDeclare,
   planSealedOpen,
@@ -267,6 +268,32 @@ describe("planSealedOpen", () => {
         takeSealedCount: 9,
       }),
     ).toMatchObject({ ok: false, reason: "invalid_take" });
+  });
+});
+
+describe("canDeclareSealedPulls", () => {
+  it("requires sealed + sku + owned affinity", () => {
+    expect(
+      canDeclareSealedPulls({
+        kind: "sealed",
+        skuKey: "lorcana::booster",
+        countsAsOwned: true,
+      }),
+    ).toBe(true);
+    expect(
+      canDeclareSealedPulls({
+        kind: "sealed",
+        skuKey: "lorcana::booster",
+        countsAsOwned: false,
+      }),
+    ).toBe(false);
+    expect(
+      canDeclareSealedPulls({
+        kind: "card",
+        skuKey: "x",
+        countsAsOwned: true,
+      }),
+    ).toBe(false);
   });
 });
 

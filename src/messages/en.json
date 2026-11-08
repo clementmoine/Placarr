@@ -634,6 +634,18 @@
       "askPackCount": "How many packs / boosters are in this sealed product?",
       "askChildSlug": "Catalogue slug of the child booster (e.g. booster-s1):"
     },
+    "sealedDeclare": {
+      "action": "Declare cards",
+      "title": "Declare pulls",
+      "hint": "Only add cards you actually pulled — never invent hits. Partial declarations are fine.",
+      "search": "Card name or number…",
+      "searchHint": "Search for a card to add it to the declaration.",
+      "empty": "No cards found.",
+      "searchFailed": "Search failed.",
+      "submit": "Declare {count}",
+      "success": "{count} card(s) declared",
+      "failed": "Could not declare these pulls"
+    },
     "containment": {
       "inside": "Inside {name}",
       "detach": "Remove from container",

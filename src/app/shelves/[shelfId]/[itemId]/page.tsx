@@ -28,6 +28,7 @@ import {
   Award,
   Trash2,
   PackageOpen,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -69,6 +70,13 @@ const ItemModal = nextDynamic(
 const FoilCardImage = nextDynamic(
   () =>
     import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
+  { ssr: false },
+);
+const SealedDeclareModal = nextDynamic(
+  () =>
+    import("@/components/modals/SealedDeclareModal").then(
+      (m) => m.SealedDeclareModal,
+    ),
   { ssr: false },
 );
 
@@ -199,7 +207,11 @@ import {
   marketOfferConditionsForItem,
   shelfShowsItemCondition,
 } from "@/core/collect/condition";
-import { formatAbsenceBadge } from "@/core/collect/itemAbsence";
+import {
+  countsAsOwned,
+  formatAbsenceBadge,
+} from "@/core/collect/itemAbsence";
+import { canDeclareSealedPulls } from "@/core/collect/sealedOpen";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
 
@@ -1238,6 +1250,7 @@ export default function ItemDetailsPage() {
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [openingSealed, setOpeningSealed] = useState(false);
+  const [declareSealedOpen, setDeclareSealedOpen] = useState(false);
   const [containmentBusy, setContainmentBusy] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState<
     "general" | "poster" | "background" | "info"
@@ -2651,6 +2664,27 @@ export default function ItemDetailsPage() {
             onSubmit={handleModalSubmit}
             defaultTab={modalActiveTab}
           />
+          {item?.id && shelf?.type ? (
+            <SealedDeclareModal
+              itemId={item.id}
+              shelfId={shelfId}
+              shelfType={shelf.type}
+              defaultLanguage={item.skuLanguage ?? item.language ?? null}
+              isOpen={declareSealedOpen}
+              onClose={() => setDeclareSealedOpen(false)}
+              onDeclared={({ childCount }) => {
+                toast.success(
+                  t("items.sealedDeclare.success", { count: childCount }),
+                );
+                void queryClient.invalidateQueries({
+                  queryKey: ["shelf", shelfId],
+                });
+                void queryClient.invalidateQueries({
+                  queryKey: ["item-events", item.id],
+                });
+              }}
+            />
+          ) : null}
         </>
       )}
 
@@ -3191,6 +3225,21 @@ export default function ItemDetailsPage() {
                             <PackageOpen className="size-4 mr-1.5" />
                           )}
                           {t("items.sealedOpen.action")}
+                        </Button>
+                      ) : null}
+                      {item &&
+                      canDeclareSealedPulls({
+                        kind: item.kind,
+                        skuKey: item.skuKey,
+                        countsAsOwned: countsAsOwned(item),
+                      }) ? (
+                        <Button
+                          variant="secondary"
+                          className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                          onClick={() => setDeclareSealedOpen(true)}
+                        >
+                          <ListChecks className="size-4 mr-1.5" />
+                          {t("items.sealedDeclare.action")}
                         </Button>
                       ) : null}
                       {itemContainment?.currentParent ? (

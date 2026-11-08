@@ -2,6 +2,8 @@ import { repairCatalogColonSubstitute } from "@/core/enrich/titles/normalize";
 import {
   formatAttachmentLanguageLabel,
   isAttachmentFaceLabelTitle,
+  isPromoFlyerKind,
+  resolveAttachmentDisplayKind,
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import { cleanTitleForDisplay } from "@/core/identify/titleUtils";
 import { hasUnrequestedSeriesSuffixToken } from "@/core/enrich/titleMatching";
@@ -249,6 +251,7 @@ export function regionalCoverAliasTitles(
         type?: string | null;
         role?: string | null;
         title?: string | null;
+        url?: string | null;
       }>
     | null
     | undefined,
@@ -258,6 +261,20 @@ export function regionalCoverAliasTitles(
   const seen = new Set<string>();
   for (const attachment of attachments) {
     if (attachment.type !== "cover") continue;
+    // Promo proof flyers carry a language role (`mythos-proof-flyer-fr`) but
+    // are distribution evidence — not regional card names.
+    if (
+      isPromoFlyerKind(
+        resolveAttachmentDisplayKind({
+          type: attachment.type,
+          role: attachment.role,
+          title: attachment.title,
+          url: attachment.url,
+        }),
+      )
+    ) {
+      continue;
+    }
     // ISO print languages only — not LaunchBox/PriceCharting region codes.
     if (!formatAttachmentLanguageLabel(attachment.role)) continue;
     const title = attachment.title?.trim();

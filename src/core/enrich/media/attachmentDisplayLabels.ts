@@ -315,6 +315,15 @@ export function isAttachmentFaceLabelTitle(title?: string | null): boolean {
   ) {
     return true;
   }
+  // Promo proof captions ("Annonce promo Mythos (flyer FR)") — gallery media,
+  // never "Aussi connu sous".
+  if (
+    /^annonce\b/.test(normalized) ||
+    /\(.*\bflyer\b.*\)$/.test(normalized) ||
+    /(?:^|[\s\-–—])flyer(?:\s+(?:fr|en|de|it|es|ja|zh))?\s*$/.test(normalized)
+  ) {
+    return true;
+  }
   // Compound product captions that end with a face label suffix.
   return (
     parseKindFromTitle(normalized) !== null &&

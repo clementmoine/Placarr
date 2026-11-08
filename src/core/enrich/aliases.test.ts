@@ -98,6 +98,40 @@ describe("metadataAliases", () => {
     ).toEqual(["Trace Memory"]);
   });
 
+  it("drops Mythos promo flyer captions from Aussi connu sous", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Naruto Uzumaki",
+        metadataTitle: "Naruto Uzumaki",
+        aliases: [
+          "Naruto Uzumaki — Ninja Art! Summoning Jutsu!",
+          "Annonce promo Mythos (flyer FR)",
+          "Annonce promo Mythos (flyer EN)",
+        ],
+        attachments: [
+          {
+            type: "cover",
+            role: "mythos-proof-flyer-fr",
+            title: "Annonce promo Mythos (flyer FR)",
+            url: "/assets/naruto/mythos/cards/fr/ks1promo/0133-vv2/proof.french.twitter.webp",
+          },
+          {
+            type: "cover",
+            role: "mythos-proof-flyer-en",
+            title: "Annonce promo Mythos (flyer EN)",
+            url: "/assets/naruto/mythos/cards/en/ks1promo/0133-vv2/proof.english.twitter.webp",
+          },
+          {
+            type: "cover",
+            role: "en",
+            title: "Naruto Uzumaki — Ninja Art! Summoning Jutsu!",
+          },
+        ],
+      }),
+    ).toEqual(["Naruto Uzumaki — Ninja Art! Summoning Jutsu!"]);
+  });
+
   it("does not repeat the display name as an alias", async () => {
     const { displayAliasesForItem } = await import("@/core/enrich/aliases");
     expect(

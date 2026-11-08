@@ -231,7 +231,10 @@ type AbsenceBadgeFields = LoanCompatFields &
       ItemAbsenceFields,
       "absenceSource" | "absenceCarrier" | "absenceReason" | "presence"
     >
-  >;
+  > & {
+    /** Optional trade counterpart title for `exchanged ↔ name`. */
+    tradeCounterpartName?: string | null;
+  };
 
 /**
  * Badge for away / wanted / past. Owned → null.
@@ -257,6 +260,7 @@ export function formatAbsenceBadge(
     null;
   const carrier = item.absenceCarrier?.trim() || null;
   const source = item.absenceSource?.trim() || null;
+  const tradeName = item.tradeCounterpartName?.trim() || null;
   const detail = carrier || source || undefined;
 
   if (presence === "away") {
@@ -288,7 +292,9 @@ export function formatAbsenceBadge(
       : { tone: "past", labelKey: "sold" };
   }
   if (reason === "exchanged") {
-    return { tone: "past", labelKey: "exchanged" };
+    return tradeName
+      ? { tone: "past", labelKey: "exchanged_for", name: tradeName }
+      : { tone: "past", labelKey: "exchanged" };
   }
   if (
     reason === "gifted" ||

@@ -115,6 +115,17 @@ describe("formatAbsenceBadge", () => {
     expect(
       formatAbsenceBadge({ presence: "past", absenceReason: "sold" }),
     ).toEqual({ tone: "past", labelKey: "sold" });
+    expect(
+      formatAbsenceBadge({
+        presence: "past",
+        absenceReason: "exchanged",
+        tradeCounterpartName: "Luffy",
+      }),
+    ).toEqual({
+      tone: "past",
+      labelKey: "exchanged_for",
+      name: "Luffy",
+    });
     expect(formatAbsenceBadge({ presence: "wanted" })).toEqual({
       tone: "wanted",
       labelKey: "wanted",

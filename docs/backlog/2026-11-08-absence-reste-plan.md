@@ -57,14 +57,13 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ### P1 — Trocs (`ItemTradeLink`) — UI + API
 
-**Quoi.** Lier optionnellement un item `exchanged` à un ou plusieurs items reçus (edges bidirectionnels). Afficher « Échangé ↔ Titre » sur les deux fiches. Schéma déjà là ; **aucun** usage applicatif.
+**Statut 2026-11-08 :** **livré** — `GET/POST/DELETE …/trades`, panneau fiche `ItemTradeLinks`, badge `Échangé ↔ {name}`. Pas encore de picker intégré dans ItemModal (lien depuis la fiche suffit).
 
-**Pourquoi.** Critère de succès du plan : un échange apparaît sur **les deux** côtés.
+**Quoi.** Lier optionnellement un item échangé à la contrepartie reçue. Visible sur les deux fiches.
 
-**Exemple.** Tu cèdes *Naruto NI-001* contre *Luffy OP01-001*. Sur la fiche de NI-001 : badge « Échangé ↔ Monkey D. Luffy » ; sur OP01-001 : miroir + lien. Lien créable depuis ItemModal (raison `exchanged`) ou après coup.
+**Exemple.** NI-001 échangé contre Luffy → badge « Échangé ↔ Luffy » + panneau troc avec lien croisé.
 
-**Surfaces.** API CRUD légère ; ItemModal ; fiche ; badge (`formatAbsenceBadge` + titre lié).  
-**Idée plus tard.** Troc 1→N = plusieurs edges ; à la récupération, proposer de rompre le lien.
+**Reste.** Picker troc dans ItemModal ; rompre le lien à la récupération (P3).
 
 ---
 
@@ -140,6 +139,6 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 - [x] Ajout d’un print déjà `away`/`wanted` propose la réception avant create (**PrintPicker**).
 - [x] Menu d’ajout distingue Catalogue et Saisie libre (étagère print).
-- [ ] Échange lié visible sur les deux fiches.
+- [x] Échange lié visible sur les deux fiches (API + panneau fiche + badge).
 - [ ] Ouverture random → UI declare utilisable.
 - [ ] Export et/ou stats portent présence + prix de cession.

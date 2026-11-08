@@ -354,6 +354,7 @@
         "sold": "Vendu",
         "sold_detail": "Vendu · {detail}",
         "exchanged": "Échangé",
+        "exchanged_for": "Échangé ↔ {name}",
         "gifted": "Offert",
         "discarded": "Jeté",
         "consumed": "Consommé",
@@ -362,6 +363,20 @@
         "past": "Déjà eu",
         "wanted": "Recherchée"
       }
+    },
+    "trade": {
+      "title": "Échange / troc",
+      "hint": "Lie la contrepartie reçue — visible sur les deux fiches.",
+      "empty": "Aucune contrepartie liée.",
+      "against": "↔ {name}",
+      "linkAction": "Lier une contrepartie",
+      "unlink": "Retirer le lien",
+      "linked": "Échange lié",
+      "unlinked": "Lien retiré",
+      "linkFailed": "Impossible de lier l'échange",
+      "unlinkFailed": "Impossible de retirer le lien",
+      "searchPlaceholder": "Rechercher un objet…",
+      "noResults": "Aucun objet trouvé."
     },
     "noItems": "Aucun objet dans cette étagère",
     "addFirstItem": "Ajoutez votre premier objet pour commencer",

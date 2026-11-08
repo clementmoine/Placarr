@@ -354,6 +354,7 @@
         "sold": "Sold",
         "sold_detail": "Sold · {detail}",
         "exchanged": "Traded",
+        "exchanged_for": "Traded ↔ {name}",
         "gifted": "Gifted",
         "discarded": "Discarded",
         "consumed": "Consumed",
@@ -362,6 +363,20 @@
         "past": "Past",
         "wanted": "Wanted"
       }
+    },
+    "trade": {
+      "title": "Trade",
+      "hint": "Link the counterpart you received — shown on both item pages.",
+      "empty": "No counterpart linked.",
+      "against": "↔ {name}",
+      "linkAction": "Link a counterpart",
+      "unlink": "Remove link",
+      "linked": "Trade linked",
+      "unlinked": "Link removed",
+      "linkFailed": "Could not link the trade",
+      "unlinkFailed": "Could not remove the link",
+      "searchPlaceholder": "Search an item…",
+      "noResults": "No items found."
     },
     "noItems": "No items in this shelf",
     "addFirstItem": "Add your first item to get started",

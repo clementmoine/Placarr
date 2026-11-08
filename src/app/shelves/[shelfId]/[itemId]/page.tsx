@@ -83,6 +83,7 @@ import {
   attachItemContainment,
   detachItemContainment,
   openSealedItem,
+  getItemTrades,
   type ItemPrices,
   type SealedContainmentSourceDto,
 } from "@/lib/api/items";
@@ -97,6 +98,7 @@ import {
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
 import { ItemPresenceTimeline } from "@/components/ItemPresenceTimeline";
+import { ItemTradeLinks } from "@/components/ItemTradeLinks";
 import { formatGradeBadge } from "@/core/collect/itemGrade";
 import {
   hasGameMediaGalleryAttachment,
@@ -1319,6 +1321,15 @@ export default function ItemDetailsPage() {
     ),
     staleTime: 15_000,
   });
+
+  const { data: itemTrades } = useQuery({
+    queryKey: ["itemTrades", shelfId, item?.id],
+    queryFn: () => getItemTrades(item!.id, shelfId),
+    enabled: Boolean(item?.id),
+    staleTime: 15_000,
+  });
+  const tradeCounterpartName =
+    itemTrades?.links?.[0]?.counterpart.name?.trim() || null;
 
   const isMetadataBusy = isItemMetadataBusy(item);
   const hasNoMetadata =
@@ -2992,7 +3003,10 @@ export default function ItemDetailsPage() {
                       </Badge>
                     )}
                     {(() => {
-                      const absence = formatAbsenceBadge(item ?? {});
+                      const absence = formatAbsenceBadge({
+                        ...(item ?? {}),
+                        tradeCounterpartName,
+                      });
                       if (!absence) return null;
                       const label = t(`items.absence.badge.${absence.labelKey}`, {
                         ...(absence.name ? { name: absence.name } : {}),
@@ -3623,6 +3637,19 @@ export default function ItemDetailsPage() {
               </div>
             </div>
           )}
+
+          {item?.id &&
+          (item.absenceReason === "exchanged" ||
+            item.presence === "past" ||
+            (itemTrades?.links?.length ?? 0) > 0) ? (
+            <ItemTradeLinks
+              itemId={item.id}
+              shelfId={
+                typeof item.shelfId === "string" ? item.shelfId : shelfId
+              }
+              canEdit={Boolean(isAuthenticated && !isGuest && canEdit)}
+            />
+          ) : null}
 
           {item?.id ? (
             <ItemPresenceTimeline itemId={item.id} shelfId={shelfId} />

@@ -87,6 +87,59 @@ export const getItemEvents = (
 };
 
 /** Current parent + remount candidates (décisions 8–9). */
+export type ItemTradeLinkDto = {
+  id: string;
+  role: "out" | "in";
+  note: string | null;
+  createdAt: string;
+  counterpart: {
+    id: string;
+    name: string;
+    slug?: string | null;
+    shelfId?: string | null;
+  };
+};
+
+export const getItemTrades = (
+  id: Item["id"],
+  shelfId?: string | null,
+): Promise<{ itemId: string; links: ItemTradeLinkDto[] }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/trades`,
+    window.location.origin,
+  );
+  if (shelfId) url.searchParams.set("shelfId", shelfId);
+  return axios.get(url.toString()).then((response) => response.data);
+};
+
+export const linkItemTrade = (
+  id: Item["id"],
+  data: { counterpartItemId: string; note?: string | null },
+  shelfId?: string | null,
+): Promise<{ link: ItemTradeLinkDto | null }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/trades`,
+    window.location.origin,
+  );
+  if (shelfId) url.searchParams.set("shelfId", shelfId);
+  return axios.post(url.toString(), data).then((response) => response.data);
+};
+
+export const unlinkItemTrade = (
+  id: Item["id"],
+  data: { linkId?: string; counterpartItemId?: string },
+  shelfId?: string | null,
+): Promise<{ ok: boolean }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/trades`,
+    window.location.origin,
+  );
+  if (shelfId) url.searchParams.set("shelfId", shelfId);
+  return axios
+    .delete(url.toString(), { data })
+    .then((response) => response.data);
+};
+
 export const getItemContainment = (
   id: Item["id"],
   options?: { shelfId?: string | null },

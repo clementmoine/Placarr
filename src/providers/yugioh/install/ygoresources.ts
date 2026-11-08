@@ -7,6 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { httpGet } from "@/lib/http/httpClient";
 import { packCardDir, packLogsDir, packStagingDir } from "@/lib/packPaths";
 import {
   downloadCardFaceBytes,
@@ -73,13 +74,12 @@ export async function harvestYgoresourcesManifest(opts: {
       /* re-fetch */
     }
   }
-  const res = await fetch(MANIFEST_URL, {
+  const res = await httpGet<string>(MANIFEST_URL, {
     headers: { Accept: "application/json", Referer: REFERER },
+    responseType: "text",
+    validateStatus: (s) => s >= 200 && s < 300,
   });
-  if (!res.ok) {
-    throw new Error(`ygoresources manifest HTTP ${res.status}`);
-  }
-  const text = await res.text();
+  const text = typeof res.data === "string" ? res.data : String(res.data ?? "");
   const parsed = JSON.parse(text) as YgoresourcesManifest;
   mkdirSync(path.dirname(out), { recursive: true });
   writeFileSync(out, text);

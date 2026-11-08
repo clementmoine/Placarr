@@ -159,6 +159,8 @@ const nextConfig = {
    */
   serverExternalPackages: [
     "@huggingface/transformers",
+    // unpdf PDF→PNG fallback — native Skia bindings must stay external.
+    "@napi-rs/canvas",
     "eslint",
     "onnxruntime-node",
     "pg",
@@ -168,6 +170,7 @@ const nextConfig = {
     "prisma",
     "sharp",
     "typescript",
+    "unpdf",
   ],
 };
 

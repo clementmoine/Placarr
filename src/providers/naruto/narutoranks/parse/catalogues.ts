@@ -511,10 +511,19 @@ export type ArcadeParse = {
 };
 
 const PRODUCT_RE = /<li[^>]*class="[^"]*\bproduct\b[^"]*"[\s\S]*?<\/li>/g;
+/** Legacy flat title text (pre-2026 AGC short-card markup). */
 const TITLE_RE = /woocommerce-loop-product__title[^>]*>([^<]+)</;
-const IMAGE_RE = /(https:\/\/[^"'\s]*naruto2002panini[^"'\s]*?\.jpg)/i;
+/**
+ * Prefer full-size JPG when present; else any naruto2002panini*.jpg (incl.
+ * WooCommerce `-600x837` thumbs).
+ */
+const IMAGE_RE =
+  /(https:\/\/[^"'\s]*naruto2002panini[^"'\s]*?(?<!-\d{2,4}x\d{2,4})\.jpg)|(https:\/\/[^"'\s]*naruto2002panini[^"'\s]*?\.jpg)/i;
 /** `Naruto 2002 Panini Card 02 Group 7 Naruto Sakura` → `02` + le reste. */
 const REFERENCE_RE = /Card\s+([A-Za-z]{0,2}\d{1,3})\s+(.+)$/i;
+/** AGC short title after site redesign: `#02 Group 7 Naruto Sakura`. */
+const SHORT_CARD_NAME_RE =
+  /agc-card-name[^>]*>\s*#?\s*([A-Za-z]{0,2}\d{1,3})\s+([^<]+)</i;
 
 function decodeArcadeEntities(raw: string): string {
   return raw
@@ -522,6 +531,7 @@ function decodeArcadeEntities(raw: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&ldquo;|&rdquo;|&lsquo;|&rsquo;/gi, '"')
     .replace(/&nbsp;/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -609,6 +619,34 @@ export function arcadeListingUrls(): string[] {
   );
 }
 
+/**
+ * Full vendor title for REFERENCE_RE — legacy flat h2, img alt / aria-label,
+ * or AGC short `#NN Name` span (post-2026 markup).
+ */
+export function arcadeProductTitle(block: string): string | null {
+  const alt = block.match(/\balt="([^"]+)"/i);
+  if (alt) {
+    const decoded = decodeArcadeEntities(alt[1]!);
+    if (REFERENCE_RE.test(decoded)) return decoded;
+  }
+  const aria = block.match(/\baria-label="([^"]+)"/i);
+  if (aria) {
+    const decoded = decodeArcadeEntities(aria[1]!)
+      .replace(/^Read more about\s+/i, "")
+      .replace(/^["“«]+|["”»]+$/g, "")
+      .trim();
+    if (REFERENCE_RE.test(decoded)) return decoded;
+  }
+  const short = block.match(SHORT_CARD_NAME_RE);
+  if (short) {
+    return `Naruto 2002 Panini Card ${short[1]!.trim()} ${decodeArcadeEntities(short[2]!.trim())}`;
+  }
+  const title = block.match(TITLE_RE);
+  const flat = title?.[1]?.trim() ? decodeArcadeEntities(title[1]) : "";
+  if (flat && REFERENCE_RE.test(flat)) return flat;
+  return flat || null;
+}
+
 export function parseArcadeListing(
   html: string,
   nameCheck: ArcadeNameCheck,
@@ -617,10 +655,14 @@ export function parseArcadeListing(
   const rejected: ArcadeParse["rejected"] = [];
 
   for (const block of html.match(PRODUCT_RE) ?? []) {
-    const title = block.match(TITLE_RE);
+    // Skip nav/menu taxonomy items that also carry `product` in class names.
+    if (!/\btype-product\b/.test(block) && !/\bproduct-type-/.test(block)) {
+      continue;
+    }
     const image = block.match(IMAGE_RE);
-    if (!title || !image) continue;
-    const full = decodeArcadeEntities(title[1]!);
+    const full = arcadeProductTitle(block);
+    if (!full || !image) continue;
+    const imageUrl = image[1] || image[2]!;
     const ref = REFERENCE_RE.exec(full);
     if (!ref) continue;
     const printed = ref[1]!;
@@ -630,11 +672,11 @@ export function parseArcadeListing(
       rejected.push({ printed, name, reason: "référence illisible" });
       continue;
     }
-    if (!fileEchoesReference(image[1]!, printed)) {
+    if (!fileEchoesReference(imageUrl, printed)) {
       rejected.push({
         printed,
         name,
-        reason: `le nom de fichier ne redit pas la référence (${image[1]!.split("/").pop()})`,
+        reason: `le nom de fichier ne redit pas la référence (${imageUrl.split("/").pop()})`,
       });
       continue;
     }
@@ -648,7 +690,7 @@ export function parseArcadeListing(
     }
     const key = `${card.setCode}-${card.number}`;
     if (!cards.has(key)) {
-      cards.set(key, { ...card, printed, name, imageUrl: image[1]! });
+      cards.set(key, { ...card, printed, name, imageUrl });
     }
   }
 

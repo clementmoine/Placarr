@@ -1,10 +1,8 @@
 # Absence étagère — reste du plan (2026-11-08)
 
-**Statut :** socle livré (schéma, ItemModal lifecycle, badges, filtre vue étagère, bulk edit, checklist présence/virtuels, scellé MVP open/containment).  
+**Statut :** P1–P2 livrés (2026-11-08). Reste surtout **P3** (rappels / anti-doublon commande).  
 **Plan source :** Cursor *Absence étagère* (`absence_étagère_f0ec5d36`).  
 **Lié :** [cycle scellé](./2026-11-07-cycle-de-vie-scelle-possession-virtuelle.md), [passation](./2026-11-07-passation-cycle-scelle.md).
-
-Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention + exemple concret pour chaque chantier. Priorité = ordre de valeur produit.
 
 ---
 

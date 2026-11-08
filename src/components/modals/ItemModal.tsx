@@ -48,6 +48,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ItemPresenceTimeline } from "@/components/ItemPresenceTimeline";
 import { AwaitedReceiptDialog } from "@/components/modals/AwaitedReceiptDialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
@@ -2605,6 +2606,14 @@ export function ItemModal({
                       }
                       t={t}
                     />
+                    {item?.id ? (
+                      <ItemPresenceTimeline
+                        itemId={item.id}
+                        shelfId={shelfId}
+                        maxEvents={3}
+                        compact
+                      />
+                    ) : null}
 
                     {/* Condition — hidden for TCG (finish is the copy axis). */}
                     {shelfShowsItemCondition(activeShelfType) && (

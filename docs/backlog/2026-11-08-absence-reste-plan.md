@@ -85,9 +85,7 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ### P2 — Badges / ItemModal polish restant
 
-**Statut 2026-11-08 :** badge vendu + prix **livré** (`sold_price` / `sold_detail_price`) ; badge échangé ↔ **livré** (trocs). Reste : timeline compacte **dans** ItemModal.
-
-**Exemple.** ItemModal ouvert sur une carte vendue → bloc absence + 3 derniers events.
+**Statut 2026-11-08 :** **livré** — badge vendu + prix ; échangé ↔ ; timeline compacte (3 events) sous le bloc absence dans ItemModal.
 
 ---
 

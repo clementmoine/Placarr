@@ -56,7 +56,10 @@ import {
   loadLocaleSpecificFaces,
 } from "@/lib/admin/localeSpecificFaces";
 import { catalogueCardPriceQuoteByPrintKey } from "@/lib/admin/catalogueCardPrices";
-import { overscanFilterPageAsync } from "@/lib/admin/catalogueOverscan";
+import {
+  overscanFilterPage,
+  overscanFilterPageAsync,
+} from "@/lib/admin/catalogueOverscan";
 import {
   hydrateRegisteredBrowseRow,
   listRegisteredFaceBrowsePage,
@@ -70,6 +73,7 @@ import {
   type LocalPrintSearchRow,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
+import { resolvePrintScopedCatalogueFace } from "@/providers/shared/cardCatalogue/resolvePrintScopedFace";
 export { isNarutoJapaneseVolumeSet };
 /** @deprecated Prefer {@link cataloguePackHooks}.matchesPreferredLocaleAxis. */
 export { matchesNarutoPreferredLocaleAxis };
@@ -829,10 +833,13 @@ export function buildCatalogueCardRows(
         the FR tile shows « art JA » for a card that is the same FR print.
       */
       /*
-        Naruto Carddass: art URL is always print-scoped. The HTTP resolver
-        serves owned or borrowed bytes and exposes X-Placarr-Art-Source.
+        Print-scoped face: prefer concrete `/cards/…/art.*` when disk resolve
+        hits (Affiche SSOT). Carddass keeps an exclusive hook (borrow + miss →
+        missingArt). Other packs soft-fill from disk only when the index has
+        no basename and no remote artUrl — never override index / locale-borrow
+        winners (EN arcade vs Coleka reflection).
       */
-      if (hooks.resolvePrintScopedFace) {
+      {
         const orient = orientationFromIndexSlot(entry, slot.files);
         const landscapePrint = printIsLandscapeCard(entry);
         const identity = {
@@ -843,7 +850,21 @@ export function buildCatalogueCardRows(
             : {}),
           ...(landscapePrint ? { landscapePrint: true } : {}),
         };
-        const scoped = hooks.resolvePrintScopedFace({ printKey, lang });
+        const indexHasFace =
+          Boolean(artFile(slot.files)) || Boolean(remoteArtUrl(slot.files));
+        const softFillFromDisk =
+          !hooks.resolvePrintScopedFace &&
+          !bestFaceAcrossLocales &&
+          !indexHasFace;
+        const scoped = hooks.resolvePrintScopedFace
+          ? hooks.resolvePrintScopedFace({ printKey, lang })
+          : softFillFromDisk
+            ? resolvePrintScopedCatalogueFace({
+                packId: corpusPack,
+                printKey,
+                lang,
+              })
+            : null;
         if (scoped) {
           rows.push({
             ...identity,
@@ -852,32 +873,34 @@ export function buildCatalogueCardRows(
           });
           continue;
         }
-        const remote = remoteArtUrl(slot.files);
-        if (remote) {
-          rows.push({ ...identity, lang, artUrl: remote });
-          continue;
-        }
-        const back = backFile(slot.files);
-        if (back) {
+        if (hooks.resolvePrintScopedFace) {
+          const remote = remoteArtUrl(slot.files);
+          if (remote) {
+            rows.push({ ...identity, lang, artUrl: remote });
+            continue;
+          }
+          const back = backFile(slot.files);
+          if (back) {
+            rows.push({
+              ...identity,
+              lang,
+              artUrl: packFaceAssetUrl(pack, {
+                set: diskSet,
+                lang,
+                card: diskCard,
+              }, back),
+              versoOnly: true,
+            });
+            continue;
+          }
           rows.push({
             ...identity,
             lang,
-            artUrl: packFaceAssetUrl(pack, {
-              set: diskSet,
-              lang,
-              card: diskCard,
-            }, back),
-            versoOnly: true,
+            artUrl: "",
+            missingArt: true,
           });
           continue;
         }
-        rows.push({
-          ...identity,
-          lang,
-          artUrl: "",
-          missingArt: true,
-        });
-        continue;
       }
 
       const tileOwnArt = artFile(slot.files);
@@ -1786,6 +1809,92 @@ async function listSqlPagedCatalogueCards(
       limit,
       preferLang,
     );
+  }
+
+  /*
+    « Sans image » / incomplete / borrowed must use post-hydrate truth on
+    packs that borrow faces across locales (OPTCG…): SQL only sees
+    print_assets for the tile lang, so FR+EN-art tiles stayed in the audit.
+    Other packs keep the fast SQL missingArt path.
+  */
+  const packInfo = cataloguePackInfo(input.pack);
+  const needsHydratedArtAudit =
+    packInfo?.localeArt?.bestFaceAcrossLocales === true &&
+    (input.missingArtOnly ||
+      input.incompleteOnly ||
+      input.borrowedArtOnly);
+
+  if (needsHydratedArtAudit) {
+    const probe = listSqlBrowseFacePage(
+      {
+        ...input,
+        missingArtOnly: false,
+        incompleteOnly: false,
+        borrowedArtOnly: false,
+        missingNameOnly: false,
+      },
+      langs,
+      0,
+      1,
+      { preferLang },
+    );
+    if (!probe) return null;
+
+    const overscan = overscanFilterPage({
+      offset,
+      limit,
+      maxScan: 50_000,
+      chunk: Math.max(limit, 256),
+      fetchPage: (scanned, chunk) => {
+        const page = listSqlBrowseFacePage(
+          {
+            ...input,
+            missingArtOnly: false,
+            incompleteOnly: false,
+            borrowedArtOnly: false,
+            // Name-only can stay in SQL; combined incomplete needs hydrate.
+            missingNameOnly:
+              Boolean(input.missingNameOnly) &&
+              !input.missingArtOnly &&
+              !input.incompleteOnly,
+          },
+          langs,
+          scanned,
+          chunk,
+          { preferLang },
+        );
+        if (!page) return { rows: [], total: 0 };
+        return { rows: page.rows, total: page.total };
+      },
+      keep: (row) =>
+        matchesCatalogueAuditFilter(row, {
+          missingArtOnly: input.missingArtOnly,
+          missingNameOnly: input.missingNameOnly,
+          incompleteOnly: input.incompleteOnly,
+          borrowedArtOnly: input.borrowedArtOnly,
+        }),
+    });
+
+    let cards = overscan.rows;
+    if (offset === 0) {
+      cards = withCatalogueBackRows(input.pack, cards);
+    }
+    const corpus = catalogueCorpusPack(input.pack);
+    const pageKeys = [
+      ...new Set(cards.filter(isFaceRow).map((row) => row.printKey)),
+    ];
+    const priceByKey = await catalogueCardPriceQuoteByPrintKey(
+      corpus,
+      pageKeys,
+    );
+    return {
+      pack: input.pack,
+      total: overscan.total,
+      offset,
+      limit,
+      cards: cards.map((row) => attachPriceQuote(row, priceByKey)),
+      availableLocales,
+    };
   }
 
   const page = listSqlBrowseFacePage(input, langs, offset, limit, {

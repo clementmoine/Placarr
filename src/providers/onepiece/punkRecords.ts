@@ -500,8 +500,9 @@ export type OnepieceFacesInstall = {
 };
 
 /**
- * Pose `art.bandai.webp` sous `cards/{set}/{lang}/{number[-grouping]}/`.
- * Préfère l'URL de la locale ; sinon emprunte une autre langue du ledger.
+ * Pose `art.bandai.webp` sous `cards/{lang}/{set}/{card}/` (`packCardDir`).
+ * Préfère l'URL de la locale ; sinon emprunte une autre langue du ledger /
+ * `prints.source_url`.
  */
 export async function installOnepieceBandaiFaces(
   index: LocalPrintsIndex,
@@ -513,6 +514,8 @@ export async function installOnepieceBandaiFaces(
     langs?: readonly string[];
     /** Restrict to these set codes (`eb05`, `op01`, …). */
     sets?: readonly string[];
+    /** Restrict to these printKeys (gap-fill / audit). */
+    printKeys?: readonly string[];
   } = {},
 ): Promise<OnepieceFacesInstall> {
   const locales = loadPunkRecordsLocales(
@@ -524,6 +527,11 @@ export async function installOnepieceBandaiFaces(
   const setFilter = opts.sets?.length
     ? new Set(opts.sets.map((s) => s.trim().toLowerCase()).filter(Boolean))
     : null;
+  const keyFilter = opts.printKeys?.length
+    ? new Set(
+        opts.printKeys.map((k) => k.trim().toLowerCase()).filter(Boolean),
+      )
+    : null;
   const byKeyLang = new Map<string, PunkRecordsCard>();
   for (const locale of locales) {
     for (const card of locale.cards) {
@@ -533,9 +541,11 @@ export async function installOnepieceBandaiFaces(
     }
   }
 
-  const writes = buildOnepiecePrintWrites(locales).filter(
-    (row) => !setFilter || setFilter.has(row.setCode.toLowerCase()),
-  );
+  const writes = buildOnepiecePrintWrites(locales).filter((row) => {
+    if (setFilter && !setFilter.has(row.setCode.toLowerCase())) return false;
+    if (keyFilter && !keyFilter.has(row.printKey.toLowerCase())) return false;
+    return true;
+  });
   let faces = 0;
   let skip = 0;
   let fail = 0;

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   hydrateScanLock,
+  pickOwnedScanHit,
   prefillFromHydrated,
 } from "@/lib/client/scan/hydrateScanLock";
 import type { HydratedScanLock } from "@/lib/client/scan/hydrateScanLock";
@@ -103,6 +104,37 @@ describe("hydrateScanLock manual", () => {
     expect(hydrated.imageUrl).toBe("https://cdn.example/mario64.jpg");
     expect(hydrated.shelfType).toBe("games");
     expect(hydrated.status).toBe("ready");
+  });
+});
+
+describe("pickOwnedScanHit", () => {
+  it("prefers an ordered copy over an already-owned barcode twin", () => {
+    const hit = pickOwnedScanHit(
+      [
+        {
+          id: "owned",
+          name: "Owned",
+          shelfId: "s1",
+          barcode: "111",
+          presence: "owned",
+        },
+        {
+          id: "ordered",
+          name: "Ordered",
+          shelfId: "s1",
+          barcode: "111",
+          presence: "away",
+          absenceReason: "ordered",
+        },
+      ],
+      [],
+      "111",
+    );
+    expect(hit).toMatchObject({
+      id: "ordered",
+      receivable: true,
+      completable: false,
+    });
   });
 });
 

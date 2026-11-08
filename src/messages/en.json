@@ -122,7 +122,11 @@
     "sessionOpenOwned": "Open",
     "sessionAddCopy": "Add a copy",
     "sessionComplete": "Complete",
+    "sessionReceive": "Receive",
     "sessionReviewBack": "Keep scanning",
+    "awaitedHint": "Were you waiting for this? — {shelf}",
+    "receiveSuccess": "Received — now on the shelf",
+    "receiveFailed": "Could not receive this item",
     "pickMatch": "Pick the right product"
   },
   "user": {

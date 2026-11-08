@@ -10,8 +10,8 @@ Détail + exemples : **[backlog/2026-11-08-absence-reste-plan.md](backlog/2026-1
 
 | Priorité | Item | Exemple |
 | -------- | ---- | ------- |
-| **P1** | Matching « tu l’attendais ? » (reste hors PrintPicker) | **PrintPicker fait 2026-11-08** ; reste ItemModal / scan barcode |
-| **P1** | Modal d’ajout Catalogue vs Saisie libre | **Menu print fait 2026-11-08** ; reste polish + matching saisie libre |
+| ~~**P1**~~ | ~~Matching « tu l’attendais ? »~~ | **Fait 2026-11-08** — PrintPicker + ItemModal + Scan/QuickScan + barcode |
+| ~~**P1**~~ | ~~Modal d’ajout Catalogue vs Saisie libre~~ | **Fait 2026-11-08** — menu + matching saisie libre ; reste polish typo |
 | ~~**P1**~~ | ~~Trocs `ItemTradeLink` UI+API~~ | **Fait 2026-11-08** — API `/trades` + panneau fiche + badge `Échangé ↔` ; reste picker ItemModal |
 | **P2** | UI declare pulls scellé random | Après open display → « Déclarer les cartes » |
 | **P2** | Export présence / raison / prix | Markdown avec section déjà eus + prix vente |

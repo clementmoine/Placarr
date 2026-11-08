@@ -8,6 +8,11 @@ import axios from "axios";
 import { getCoverImage } from "@/core/collect/media";
 import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import {
+  isReceivablePresence,
+  pickPreferredReceivableMatch,
+  type ReceivableShelfItem,
+} from "@/core/collect/receivableMatches";
+import {
   guessShelfFromBarcodeLookup,
   shelfSearchHintsFromBarcodePayload,
 } from "@/core/identify/query";
@@ -30,6 +35,12 @@ export type OwnedScanHit = {
   imageUrl: string | null;
   /** True when we scanned a barcode the owned copy is missing. */
   completable: boolean;
+  /**
+   * away / wanted copy — offer « Recevoir » instead of treating as already owned.
+   */
+  receivable: boolean;
+  presence?: string | null;
+  absenceReason?: string | null;
 };
 
 export type HydrateHit = {
@@ -66,13 +77,15 @@ export type HydrateScanContext = {
   onProgress?: (partial: HydratedScanLock) => void;
 };
 
-type OwnedApiItem = {
+export type OwnedApiItem = {
   id: string;
   name: string;
   shelfId: string;
   barcode?: string | null;
   printKey?: string | null;
   imageUrl?: string | null;
+  presence?: string | null;
+  absenceReason?: string | null;
   shelf?: { id: string; name: string } | null;
 };
 
@@ -100,6 +113,7 @@ function mapOwned(
   item: OwnedApiItem,
   scannedBarcode: string | null,
 ): OwnedScanHit {
+  const receivable = isReceivablePresence(item.presence);
   return {
     id: item.id,
     name: item.name,
@@ -108,7 +122,24 @@ function mapOwned(
     barcode: item.barcode ?? null,
     printKey: item.printKey ?? null,
     imageUrl: item.imageUrl ?? null,
-    completable: Boolean(scannedBarcode?.trim()) && !item.barcode?.trim(),
+    completable:
+      !receivable &&
+      Boolean(scannedBarcode?.trim()) &&
+      !item.barcode?.trim(),
+    receivable,
+    presence: item.presence ?? null,
+    absenceReason: item.absenceReason ?? null,
+  };
+}
+
+function asReceivableShelfItem(item: OwnedApiItem): ReceivableShelfItem {
+  return {
+    id: item.id,
+    name: item.name,
+    barcode: item.barcode,
+    printKey: item.printKey,
+    presence: item.presence,
+    absenceReason: item.absenceReason,
   };
 }
 
@@ -135,12 +166,36 @@ async function fetchOwnedByQuery(
   return Array.isArray(data) ? data : [];
 }
 
-function pickOwned(
+/** Exported for unit tests — prefer receivable exact hits over plain owned. */
+export function pickOwnedScanHit(
   exact: OwnedApiItem[],
   byTitle: OwnedApiItem[],
   scannedBarcode: string | null,
 ): OwnedScanHit | null {
+  // Prefer an away/wanted copy when several share the barcode/print —
+  // scanning the arrival of an order should offer Receive, not "already in".
+  const receivableExact = pickPreferredReceivableMatch(
+    exact.filter((item) => isReceivablePresence(item.presence)).map(
+      asReceivableShelfItem,
+    ),
+  );
+  if (receivableExact) {
+    const full = exact.find((item) => item.id === receivableExact.id);
+    if (full) return mapOwned(full, scannedBarcode);
+  }
   if (exact[0]) return mapOwned(exact[0], scannedBarcode);
+  const receivableTitle = pickPreferredReceivableMatch(
+    byTitle
+      .filter(
+        (item) =>
+          !item.barcode?.trim() && isReceivablePresence(item.presence),
+      )
+      .map(asReceivableShelfItem),
+  );
+  if (receivableTitle) {
+    const full = byTitle.find((item) => item.id === receivableTitle.id);
+    if (full) return mapOwned(full, scannedBarcode);
+  }
   const titleOnly = byTitle.find((item) => !item.barcode?.trim());
   if (titleOnly) return mapOwned(titleOnly, scannedBarcode);
   return null;
@@ -295,7 +350,7 @@ async function hydrateBarcodeLock(
 
   current = {
     ...current,
-    owned: pickOwned(ownedExact, ownedTitle, code),
+    owned: pickOwnedScanHit(ownedExact, ownedTitle, code),
   };
   ctx.onProgress?.(current);
 
@@ -404,7 +459,7 @@ async function hydrateCardLock(
       ? []
       : await fetchOwnedByQuery(title, ctx.signal).catch(() => []);
 
-  const owned = pickOwned(
+  const owned = pickOwnedScanHit(
     byPrint.length > 0 ? byPrint : ownedExact.filter((i) => i.printKey),
     ownedTitle,
     null,
@@ -458,7 +513,7 @@ async function hydrateManualLock(
   const shelfType = guessedShelf?.type ?? null;
 
   const ownedTitle = await fetchOwnedByQuery(title, ctx.signal).catch(() => []);
-  const owned = pickOwned([], ownedTitle, null);
+  const owned = pickOwnedScanHit([], ownedTitle, null);
 
   let imageUrl = lock.faceUrl ?? owned?.imageUrl ?? null;
   let imageSource: HydrateHit["imageSource"] = lock.faceUrl

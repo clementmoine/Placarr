@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findReceivableByBarcode,
   findReceivableShelfMatches,
   pairReceivableAdds,
   pickPreferredReceivableMatch,
   printIdentityKey,
+  resolveReceivableForCreate,
 } from "@/core/collect/receivableMatches";
 
 const base = {
@@ -113,5 +115,75 @@ describe("pairReceivableAdds", () => {
     ]);
     expect(pairs.map((p) => p.match.id)).toEqual(["a", "b"]);
     expect(unmatchedIndexes).toEqual([2]);
+  });
+});
+
+describe("findReceivableByBarcode", () => {
+  it("matches away/wanted with barcode variants, ignores owned", () => {
+    const items = [
+      {
+        id: "owned",
+        name: "Owned",
+        barcode: "0827912079678",
+        presence: "owned" as const,
+      },
+      {
+        id: "ordered",
+        name: "Ordered",
+        barcode: "827912079678",
+        presence: "away" as const,
+        absenceReason: "ordered" as const,
+      },
+      {
+        id: "wanted",
+        name: "Wanted",
+        barcode: "0827912079678",
+        presence: "wanted" as const,
+      },
+    ];
+    expect(
+      findReceivableByBarcode(items, "0827912079678").map((h) => h.id).sort(),
+    ).toEqual(["ordered", "wanted"]);
+  });
+});
+
+describe("resolveReceivableForCreate", () => {
+  it("prefers print identity over barcode", () => {
+    const items = [
+      {
+        id: "by-barcode",
+        name: "Barcode hit",
+        barcode: "111",
+        printKey: "other:1",
+        presence: "away" as const,
+        absenceReason: "ordered" as const,
+      },
+      {
+        id: "by-print",
+        name: "Print hit",
+        barcode: "222",
+        ...base,
+        presence: "away" as const,
+        absenceReason: "ordered" as const,
+      },
+    ];
+    expect(
+      resolveReceivableForCreate(items, { ...base, barcode: "111" })?.id,
+    ).toBe("by-print");
+  });
+
+  it("falls back to barcode when no printKey", () => {
+    const items = [
+      {
+        id: "ordered",
+        name: "O",
+        barcode: "0827912079678",
+        presence: "away" as const,
+        absenceReason: "ordered" as const,
+      },
+    ];
+    expect(
+      resolveReceivableForCreate(items, { barcode: "0827912079678" })?.id,
+    ).toBe("ordered");
   });
 });

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Loader2, Search } from "lucide-react";
 
+import { AwaitedReceiptDialog } from "@/components/modals/AwaitedReceiptDialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import {
   printPickerActiveSearchQuery,
@@ -26,10 +27,6 @@ import { RemoteImage } from "@/components/RemoteImage";
 import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import { Button } from "@/components/ui/button";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
-import {
-  formatAbsenceBadge,
-  isAwaitingReceiptReason,
-} from "@/core/collect/itemAbsence";
 import {
   pairReceivableAdds,
   type ReceivablePair,
@@ -1668,90 +1665,14 @@ export function PrintPickerModal({
       {null}
     </BaseModal>
 
-    <BaseModal
+    <AwaitedReceiptDialog
       isOpen={awaitedPrompt != null}
-      onClose={() => {
-        if (!isReceiving) setAwaitedPrompt(null);
-      }}
-      size="md"
-      title={t("items.printPicker.awaitedTitle")}
-      description={t("items.printPicker.awaitedDescription", {
-        count: awaitedPrompt?.pairs.length ?? 0,
-      })}
-      cancelLabel={t("common.cancel")}
-      onCancel={() => {
-        if (!isReceiving) setAwaitedPrompt(null);
-      }}
-      footer={
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 w-full">
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={isReceiving}
-            onClick={() => setAwaitedPrompt(null)}
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isReceiving}
-            onClick={() => void confirmAddAsNew()}
-          >
-            {t("items.printPicker.awaitedAddNew")}
-          </Button>
-          <Button
-            type="button"
-            disabled={isReceiving}
-            onClick={() => void confirmReceiveAwaited()}
-          >
-            {isReceiving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : null}
-            {t("items.printPicker.awaitedReceive", {
-              count: awaitedPrompt?.pairs.length ?? 0,
-            })}
-          </Button>
-        </div>
-      }
-    >
-      <ul className="flex flex-col gap-2 max-h-60 overflow-y-auto text-sm">
-        {(awaitedPrompt?.pairs ?? []).map((pair) => {
-          const badge = formatAbsenceBadge(pair.match);
-          const reasonKey = pair.match.absenceReason
-            ? `items.timeline.reason.${pair.match.absenceReason}`
-            : null;
-          const label = badge
-            ? t(`items.absence.badge.${badge.labelKey}`, {
-                ...(badge.name ? { name: badge.name } : {}),
-                ...(badge.detail ? { detail: badge.detail } : {}),
-              })
-            : pair.match.presence === "wanted"
-              ? t("items.absence.presences.wanted")
-              : t("items.absence.presences.away");
-          const verb = isAwaitingReceiptReason(pair.match.absenceReason)
-            ? t("items.printPicker.awaitedKindOrdered")
-            : pair.match.presence === "wanted"
-              ? t("items.printPicker.awaitedKindWanted")
-              : t("items.printPicker.awaitedKindAway");
-          return (
-            <li
-              key={pair.match.id}
-              className="rounded-xl border border-border/70 bg-zinc-50/40 dark:bg-zinc-950/20 px-3 py-2"
-            >
-              <p className="font-semibold text-foreground leading-snug">
-                {pair.query.title || pair.match.name}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {verb}
-                {reasonKey ? ` · ${t(reasonKey)}` : ""}
-                {label ? ` · ${label}` : ""}
-              </p>
-            </li>
-          );
-        })}
-      </ul>
-    </BaseModal>
+      pairs={awaitedPrompt?.pairs ?? []}
+      isReceiving={isReceiving}
+      onClose={() => setAwaitedPrompt(null)}
+      onReceive={confirmReceiveAwaited}
+      onAddAsNew={confirmAddAsNew}
+    />
     </>
   );
 }

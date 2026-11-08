@@ -122,7 +122,11 @@
     "sessionOpenOwned": "Ouvrir",
     "sessionAddCopy": "Ajouter une copie",
     "sessionComplete": "Compléter",
+    "sessionReceive": "Recevoir",
     "sessionReviewBack": "Continuer à scanner",
+    "awaitedHint": "Tu l'attendais ? — {shelf}",
+    "receiveSuccess": "Reçu — présent sur l'étagère",
+    "receiveFailed": "Impossible de recevoir cet objet",
     "pickMatch": "Choisir le bon produit"
   },
   "user": {

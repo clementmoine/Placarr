@@ -872,6 +872,28 @@ export function UnifiedScanCapture({
     }
   }, [consumeReviewHead, hydrations, reviewIndex, sessionLocks, t]);
 
+  const handleReviewReceiveAwaited = useCallback(async () => {
+    const lock = sessionLocks[reviewIndex];
+    if (!lock) return;
+    const owned = hydrations[lock.id]?.owned;
+    if (!owned?.receivable) return;
+    try {
+      await saveItem({
+        id: owned.id,
+        presence: "owned",
+        ...(lock.kind === "barcode" && !owned.barcode?.trim()
+          ? { barcode: lock.key }
+          : {}),
+        currentShelfId: owned.shelfId,
+      } as Parameters<typeof saveItem>[0]);
+      toast.success(t("scanner.receiveSuccess"));
+      consumeReviewHead();
+    } catch (error) {
+      console.error(error);
+      toast.error(t("scanner.receiveFailed"));
+    }
+  }, [consumeReviewHead, hydrations, reviewIndex, sessionLocks, t]);
+
   const applyCardMatches = useCallback(
     (
       next: CardLiveMatch[],
@@ -2050,19 +2072,54 @@ export function UnifiedScanCapture({
                 {reviewLock.kind}
               </p>
               {reviewHydrated?.owned ? (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                  {reviewHydrated.owned.completable
-                    ? t("scanner.alreadyIncomplete").replace(
+                <p
+                  className={
+                    reviewHydrated.owned.receivable
+                      ? "text-xs text-amber-700 dark:text-amber-400"
+                      : "text-xs text-emerald-600 dark:text-emerald-400"
+                  }
+                >
+                  {reviewHydrated.owned.receivable
+                    ? t("scanner.awaitedHint").replace(
                         "{shelf}",
                         reviewHydrated.owned.shelfName || "Placarr",
                       )
-                    : `${t("scanner.alreadyIn")} ${reviewHydrated.owned.shelfName || ""}`}
+                    : reviewHydrated.owned.completable
+                      ? t("scanner.alreadyIncomplete").replace(
+                          "{shelf}",
+                          reviewHydrated.owned.shelfName || "Placarr",
+                        )
+                      : `${t("scanner.alreadyIn")} ${reviewHydrated.owned.shelfName || ""}`}
                 </p>
               ) : null}
             </div>
           </div>
           <div className="p-4 flex flex-col gap-2 border-t border-border shrink-0">
-            {reviewHydrated?.owned ? (
+            {reviewHydrated?.owned?.receivable ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void handleReviewReceiveAwaited()}
+                  className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold cursor-pointer"
+                >
+                  {t("scanner.sessionReceive")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReviewOpenOwned}
+                  className="w-full h-11 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+                >
+                  {t("scanner.sessionOpenOwned")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReviewAdd}
+                  className="w-full h-11 rounded-xl border border-border text-sm font-semibold cursor-pointer"
+                >
+                  {t("scanner.sessionAddCopy")}
+                </button>
+              </>
+            ) : reviewHydrated?.owned ? (
               <>
                 <button
                   type="button"

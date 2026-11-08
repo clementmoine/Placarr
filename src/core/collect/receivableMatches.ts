@@ -5,6 +5,7 @@ import {
   type AbsenceReason,
   type ItemPresence,
 } from "@/core/collect/itemAbsence";
+import { itemMatchesBarcodeQuery } from "@/core/collect/search";
 
 /**
  * Finish-exact identity for shelf matching (same rules as print picker ownership).
@@ -28,6 +29,7 @@ export type ReceivableShelfItem = {
   id: string;
   name: string;
   slug?: string | null;
+  barcode?: string | null;
   printKey?: string | null;
   variant?: string | null;
   language?: string | null;
@@ -97,6 +99,50 @@ export function findReceivableShelfMatches(
     if (!isReceivablePresence(item.presence)) return false;
     return itemMatchesQuery(item, { ...query, printKey });
   });
+}
+
+/** Barcode path (games / sealed / ScanFAB) — same away|wanted gate. */
+export function findReceivableByBarcode(
+  items: readonly ReceivableShelfItem[],
+  barcode: string | null | undefined,
+): ReceivableShelfItem[] {
+  const q = barcode?.trim();
+  if (!q) return [];
+  return items.filter(
+    (item) =>
+      isReceivablePresence(item.presence) &&
+      itemMatchesBarcodeQuery(item.barcode, q),
+  );
+}
+
+/**
+ * Resolve one preferred receivable hit for a create/add: print identity first,
+ * then barcode. Used by ItemModal / ScanFAB when PrintPicker is not in play.
+ */
+export function resolveReceivableForCreate(
+  items: readonly ReceivableShelfItem[],
+  query: {
+    printKey?: string | null;
+    variant?: string | null;
+    language?: string | null;
+    setCode?: string | null;
+    barcode?: string | null;
+  },
+): ReceivableShelfItem | null {
+  const printKey = query.printKey?.trim();
+  if (printKey) {
+    const byPrint = findReceivableShelfMatches(items, {
+      printKey,
+      variant: query.variant,
+      language: query.language,
+      setCode: query.setCode,
+    });
+    const pick = pickPreferredReceivableMatch(byPrint);
+    if (pick) return pick;
+  }
+  return pickPreferredReceivableMatch(
+    findReceivableByBarcode(items, query.barcode),
+  );
 }
 
 /** Prefer awaiting-receipt (ordered/expected), then other away, then wanted. */

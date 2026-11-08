@@ -48,9 +48,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { AwaitedReceiptDialog } from "@/components/modals/AwaitedReceiptDialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
 import { ImageCropModal } from "@/components/modals/ImageCropModal";
+import {
+  resolveReceivableForCreate,
+  type ReceivableShelfItem,
+} from "@/core/collect/receivableMatches";
 import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { usePrintVariant } from "@/lib/client/hooks/usePrintVariant";
 import { normalizeVariantOptions } from "@/core/enrich/variants";
@@ -90,7 +95,12 @@ import {
   buildItemModalSessionInit,
   itemModalSessionKey,
 } from "@/lib/client/itemModalSession";
-import { deleteItem, getItem, removeItemMediaImage } from "@/lib/api/items";
+import {
+  deleteItem,
+  getItem,
+  removeItemMediaImage,
+  saveItem,
+} from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
@@ -194,6 +204,7 @@ export function ItemModal({
   shelfType,
   defaultTab,
   prefilledValues,
+  receivableItems = [],
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -204,6 +215,8 @@ export function ItemModal({
   shelfId: Shelf["id"];
   shelfType?: Shelf["type"];
   defaultTab?: "general" | "poster" | "background" | "info";
+  /** away / wanted copies — « tu l’attendais ? » before creating a duplicate. */
+  receivableItems?: readonly ReceivableShelfItem[];
   prefilledValues?: {
     name?: string;
     barcode?: string;
@@ -212,6 +225,7 @@ export function ItemModal({
     printKey?: string | null;
     language?: string | null;
     setCode?: string | null;
+    variant?: string | null;
     /** When true, prefer / lock the prefilled shelfId as a sure guess. */
     shelfSure?: boolean;
     metadataPreview?: MetadataResult | null;
@@ -488,6 +502,12 @@ export function ItemModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReceivingAwaited, setIsReceivingAwaited] = useState(false);
+  const [awaitedPrompt, setAwaitedPrompt] = useState<{
+    match: ReceivableShelfItem;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload: any;
+  } | null>(null);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [guessedShelfId, setGuessedShelfId] = useState<string | null>(
@@ -1731,6 +1751,44 @@ export function ItemModal({
     }
   };
 
+  const lookupReceivableCandidates = useCallback(
+    async (query: {
+      printKey?: string | null;
+      barcode?: string | null;
+    }): Promise<ReceivableShelfItem[]> => {
+      if (receivableItems.length > 0) return [...receivableItems];
+      const printKey = query.printKey?.trim();
+      const barcode = query.barcode?.trim();
+      if (!printKey && !barcode) return [];
+      try {
+        const { data } = await axios.get<ReceivableShelfItem[]>("/api/items", {
+          params: barcode
+            ? { q: barcode, barcodeExact: "true", includeMetadata: "false" }
+            : { q: printKey, includeMetadata: "false" },
+        });
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    },
+    [receivableItems],
+  );
+
+  const finishCreateSubmit = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async (updatedItem: any, valuesShelfId: string) => {
+      await onSubmit(updatedItem);
+      if (itemId) {
+        void invalidateItemQueries(queryClient, itemId, [
+          shelfId,
+          valuesShelfId,
+        ]);
+      }
+      onClose();
+    },
+    [itemId, onClose, onSubmit, queryClient, shelfId],
+  );
+
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
@@ -1809,14 +1867,23 @@ export function ItemModal({
             }),
       };
 
-      await onSubmit(updatedItem);
-      if (itemId) {
-        void invalidateItemQueries(queryClient, itemId, [
-          shelfId,
-          values.shelfId,
-        ]);
+      if (!item) {
+        const createQuery = {
+          printKey: prefilledValues?.printKey ?? null,
+          variant: values.variant ?? prefilledValues?.variant ?? null,
+          language: prefilledValues?.language ?? null,
+          setCode: prefilledValues?.setCode ?? null,
+          barcode: values.barcode?.trim() || null,
+        };
+        const candidates = await lookupReceivableCandidates(createQuery);
+        const match = resolveReceivableForCreate(candidates, createQuery);
+        if (match) {
+          setAwaitedPrompt({ match, payload: updatedItem });
+          return;
+        }
       }
-      onClose();
+
+      await finishCreateSubmit(updatedItem, values.shelfId);
     } catch (error) {
       if (!isAbortError(error)) {
         console.error("Error submitting form:", error);
@@ -1826,6 +1893,49 @@ export function ItemModal({
       setIsSubmitting(false);
     }
   };
+
+  const confirmReceiveAwaited = useCallback(async () => {
+    if (!awaitedPrompt) return;
+    setIsReceivingAwaited(true);
+    try {
+      const updated = await saveItem({
+        id: awaitedPrompt.match.id,
+        presence: "owned",
+        currentShelfId: shelfId,
+      } as Parameters<typeof saveItem>[0]);
+      await invalidateItemQueries(queryClient, updated.id, [
+        shelfId,
+        updated.shelfId,
+      ]);
+      toast.success(t("scanner.receiveSuccess"));
+      setAwaitedPrompt(null);
+      onClose();
+    } catch (error) {
+      if (!isAbortError(error)) {
+        console.error(error);
+        toast.error(t("scanner.receiveFailed"));
+      }
+    } finally {
+      setIsReceivingAwaited(false);
+    }
+  }, [awaitedPrompt, onClose, queryClient, shelfId, t]);
+
+  const confirmAddAsNewAwaited = useCallback(async () => {
+    if (!awaitedPrompt) return;
+    const { payload } = awaitedPrompt;
+    setAwaitedPrompt(null);
+    setIsSubmitting(true);
+    try {
+      await finishCreateSubmit(payload, String(payload.shelfId || shelfId));
+    } catch (error) {
+      if (!isAbortError(error)) {
+        console.error("Error submitting form:", error);
+        toast.error(t("items.saveFailed"));
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [awaitedPrompt, finishCreateSubmit, shelfId, t]);
 
   const handleDelete = async () => {
     if (!item?.id) return;
@@ -3279,6 +3389,28 @@ export function ItemModal({
           });
           setCropVersion(Date.now());
         }}
+      />
+
+      <AwaitedReceiptDialog
+        isOpen={awaitedPrompt != null}
+        pairs={
+          awaitedPrompt
+            ? [
+                {
+                  queryIndex: 0,
+                  query: {
+                    printKey: awaitedPrompt.match.printKey || "",
+                    title: awaitedPrompt.match.name,
+                  },
+                  match: awaitedPrompt.match,
+                },
+              ]
+            : []
+        }
+        isReceiving={isReceivingAwaited}
+        onClose={() => setAwaitedPrompt(null)}
+        onReceive={confirmReceiveAwaited}
+        onAddAsNew={confirmAddAsNewAwaited}
       />
     </>
   );

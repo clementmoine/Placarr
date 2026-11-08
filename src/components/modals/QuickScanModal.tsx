@@ -23,6 +23,11 @@ import {
   ManualBarcodeEntry,
 } from "@/components/ManualBarcodeEntry";
 import { itemMatchesBarcodeQuery } from "@/core/collect/search";
+import {
+  isReceivablePresence,
+  pickPreferredReceivableMatch,
+  type ReceivableShelfItem,
+} from "@/core/collect/receivableMatches";
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 
 import { BaseModal } from "@/components/modals/BaseModal";
@@ -75,6 +80,9 @@ type ExistingQuickItem = {
   shelfId: string;
   condition: string;
   barcode?: string | null;
+  printKey?: string | null;
+  presence?: string | null;
+  absenceReason?: string | null;
   metadataId?: string | null;
   imageUrl?: string | null;
   shelf?: {
@@ -87,7 +95,22 @@ function isOwnedItemCompletable(
   item: ExistingQuickItem,
   scannedBarcode: string,
 ): boolean {
-  return Boolean(scannedBarcode.trim()) && !item.barcode?.trim();
+  return (
+    !isReceivablePresence(item.presence) &&
+    Boolean(scannedBarcode.trim()) &&
+    !item.barcode?.trim()
+  );
+}
+
+function asReceivable(item: ExistingQuickItem): ReceivableShelfItem {
+  return {
+    id: item.id,
+    name: item.name,
+    barcode: item.barcode,
+    printKey: item.printKey,
+    presence: item.presence,
+    absenceReason: item.absenceReason,
+  };
 }
 
 const MIN_BACKGROUND_LOADING_MS = 250;
@@ -641,21 +664,67 @@ export function QuickScanModal({
     [activeBarcode, handleClose, queryClient, router, t],
   );
 
+  const handleReceiveAwaitedItem = useCallback(
+    async (item: ExistingQuickItem) => {
+      setCompletingItemId(item.id);
+      try {
+        const updated = await saveItem({
+          id: item.id,
+          presence: "owned",
+          ...(activeBarcode.trim() && !item.barcode?.trim()
+            ? { barcode: activeBarcode }
+            : {}),
+          currentShelfId: item.shelfId,
+        } as Parameters<typeof saveItem>[0]);
+        await syncItemQueries(queryClient, updated, [item.shelfId]);
+        toast.success(t("scanner.receiveSuccess"));
+        handleClose();
+        router.push(itemPath(item.shelf || { id: item.shelfId }, updated));
+      } catch (error) {
+        console.error("Failed to receive awaited item:", error);
+        toast.error(t("scanner.receiveFailed"));
+      } finally {
+        setCompletingItemId(null);
+      }
+    },
+    [activeBarcode, handleClose, queryClient, router, t],
+  );
+
   const getOwnedStatusForProduct = (productTitle: string) => {
     if (!ownedCandidates.length) return null;
 
-    const barcodeMatch = ownedCandidates.find((item) =>
+    const barcodeMatches = ownedCandidates.filter((item) =>
       itemMatchesBarcodeQuery(item.barcode, activeBarcode),
     );
-    if (barcodeMatch) return barcodeMatch;
-
-    return (
-      ownedCandidates.find(
-        (item) =>
-          !item.barcode?.trim() &&
-          isMetadataTitleAligned({ title: item.name }, [productTitle], 0.58),
-      ) ?? null
+    const preferredReceivable = pickPreferredReceivableMatch(
+      barcodeMatches
+        .filter((item) => isReceivablePresence(item.presence))
+        .map(asReceivable),
     );
+    if (preferredReceivable) {
+      return (
+        barcodeMatches.find((item) => item.id === preferredReceivable.id) ??
+        null
+      );
+    }
+    if (barcodeMatches[0]) return barcodeMatches[0];
+
+    const titleMatches = ownedCandidates.filter(
+      (item) =>
+        !item.barcode?.trim() &&
+        isMetadataTitleAligned({ title: item.name }, [productTitle], 0.58),
+    );
+    const titleReceivable = pickPreferredReceivableMatch(
+      titleMatches
+        .filter((item) => isReceivablePresence(item.presence))
+        .map(asReceivable),
+    );
+    if (titleReceivable) {
+      return (
+        titleMatches.find((item) => item.id === titleReceivable.id) ?? null
+      );
+    }
+    return titleMatches[0] ?? null;
   };
 
   const hasExistingItems = Boolean(ownedCandidates.length);
@@ -746,6 +815,10 @@ export function QuickScanModal({
               {results.map((product) => {
                 const ownedItem = getOwnedStatusForProduct(product.title);
                 const isOwned = !!ownedItem;
+                const isReceivable =
+                  isOwned &&
+                  ownedItem &&
+                  isReceivablePresence(ownedItem.presence);
                 const canComplete =
                   isOwned &&
                   ownedItem &&
@@ -789,17 +862,22 @@ export function QuickScanModal({
                             <span
                               className={cn(
                                 "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black border",
-                                canComplete
+                                isReceivable || canComplete
                                   ? "bg-amber-500/10 dark:bg-amber-500/5 text-amber-700 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/10"
                                   : "bg-emerald-500/10 dark:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/10",
                               )}
                             >
-                              {canComplete
-                                ? t("scanner.alreadyIncomplete").replace(
+                              {isReceivable
+                                ? t("scanner.awaitedHint").replace(
                                     "{shelf}",
                                     ownedItem.shelf?.name || "Placarr",
                                   )
-                                : `${t("scanner.alreadyIn")} ${ownedItem.shelf?.name}`}
+                                : canComplete
+                                  ? t("scanner.alreadyIncomplete").replace(
+                                      "{shelf}",
+                                      ownedItem.shelf?.name || "Placarr",
+                                    )
+                                  : `${t("scanner.alreadyIn")} ${ownedItem.shelf?.name}`}
                             </span>
                           )}
                           {(product.shelfType || estimatedType) && (
@@ -873,6 +951,21 @@ export function QuickScanModal({
                           {t("scanner.viewExisting") || "Consulter"}
                         </Button>
                       )}
+                      {isReceivable && ownedItem && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            void handleReceiveAwaitedItem(ownedItem)
+                          }
+                          disabled={Boolean(completingItemId)}
+                          className="h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto"
+                        >
+                          {isCompleting ? (
+                            <Loader2 className="size-4 mr-1.5 shrink-0 animate-spin" />
+                          ) : null}
+                          {t("scanner.sessionReceive")}
+                        </Button>
+                      )}
                       {canComplete && ownedItem && (
                         <Button
                           size="sm"
@@ -892,11 +985,13 @@ export function QuickScanModal({
                       )}
                       <Button
                         size="sm"
-                        variant={canComplete ? "outline" : "default"}
+                        variant={
+                          canComplete || isReceivable ? "outline" : "default"
+                        }
                         onClick={() => handleSelectProduct(product)}
                         className={cn(
                           "h-10 sm:h-9 px-4 sm:px-3 rounded-xl text-xs font-bold cursor-pointer shadow-sm flex items-center justify-center w-full sm:w-auto",
-                          canComplete
+                          canComplete || isReceivable
                             ? "border-border/60 bg-background hover:bg-zinc-100 dark:hover:bg-zinc-900"
                             : "bg-primary text-primary-foreground hover:bg-primary/95",
                         )}

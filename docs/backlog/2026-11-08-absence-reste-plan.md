@@ -27,31 +27,23 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ### P1 — « Tu l’attendais ? » à l’ajout
 
-**Statut 2026-11-08 :** **livré sur PrintPicker** (`receivableMatches` + dialog Recevoir / nouvelles copies). Reste : ItemModal create / ScanFAB / QuickScan (hors picker).
+**Statut 2026-11-08 :** **livré** — PrintPicker + ItemModal create (printKey/barcode) + Scan review + QuickScan. Dialog partagé `AwaitedReceiptDialog`. Matching barcode (`findReceivableByBarcode`) pour jeux / scellés.
 
-**Quoi.** Quand on ajoute une carte dont le même `printKey` / identité existe déjà en `away` (commandée, prêt…) ou `wanted`, proposer de **récupérer / recevoir** cet item plutôt que d’en créer un doublon.
+**Quoi.** Quand on ajoute une carte/objet dont l’identité existe déjà en `away` ou `wanted`, proposer de **récupérer / recevoir** plutôt qu’un doublon.
 
-**Pourquoi.** Sinon on rachète ou on double une commande en cours ; le matching absence n’a de sens qu’à l’ajout.
+**Exemple.** Commande Cardmarket → PrintPicker / scan / saisie libre → « Tu l’attendais ? » → Recevoir.
 
-**Exemple.** *Stitch - Rock Star* en « Commandé · Cardmarket » → au PrintPicker, dialog « Tu l’attendais ? » → **Recevoir** = `away`→`owned` + `received_from_order` ; **Ajouter comme nouvelles copies** = create normal.
-
-**Surfaces faites.** PrintPicker + PATCH `receiveFromOrder` auto.  
-**Reste.** ItemModal / ScanFAB / QuickScan.  
 **Hors scope.** Matching Vinted automatique sans confirmation.
 
 ---
 
 ### P1 — Modal d’ajout : Catalogue vs Saisie libre
 
-**Statut 2026-11-08 :** **menu étagère print livré** — « Depuis le catalogue » (PrintPicker) / « Saisie libre » (ItemModal) / scellé. Pas encore de polish UX profond ni matching sur la saisie libre.
+**Statut 2026-11-08 :** **menu + matching saisie libre livrés** — Catalogue / Saisie libre / scellé ; ItemModal reçoit `receivableItems` et intercepte le create. Reste : polish typographique des parcours.
 
-**Quoi.** Deux parcours explicites : **Depuis le catalogue** et **Saisie libre** — jamais de libellés « hasardeux / custom junk ».
-
-**Pourquoi.** Le matching « tu l’attendais ? » n’a de sens que si l’ajout est lisible.
+**Quoi.** Deux parcours explicites : **Depuis le catalogue** et **Saisie libre**.
 
 **Exemple.** Étagère Lorcana → + → « Depuis le catalogue » / « Saisie libre » / « Produit scellé ».
-
-**Reste.** Matching awaited sur saisie libre / scan ; polish typographique des parcours.
 
 ---
 
@@ -137,7 +129,7 @@ Ce document liste **uniquement ce qui n’est pas encore fait**, avec intention 
 
 ## Critères de fin (reste)
 
-- [x] Ajout d’un print déjà `away`/`wanted` propose la réception avant create (**PrintPicker**).
+- [x] Ajout d’un print déjà `away`/`wanted` propose la réception avant create (PrintPicker + ItemModal + scan).
 - [x] Menu d’ajout distingue Catalogue et Saisie libre (étagère print).
 - [x] Échange lié visible sur les deux fiches (API + panneau fiche + badge).
 - [ ] Ouverture random → UI declare utilisable.

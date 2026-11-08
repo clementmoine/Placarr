@@ -526,7 +526,7 @@ function ShelfComponent() {
     () =>
       ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
         (item) =>
-          item.printKey &&
+          (item.printKey || item.barcode) &&
           (item.presence === "away" || item.presence === "wanted"),
       ),
     [shelf?.items],
@@ -880,6 +880,7 @@ function ShelfComponent() {
             }
             onClose={handleModalClose}
             onSubmit={handleItemModalSubmit}
+            receivableItems={receivableItems}
           />
           {shelf?.type && (
             <PrintPickerModal

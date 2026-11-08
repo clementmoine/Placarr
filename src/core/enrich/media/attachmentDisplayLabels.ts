@@ -415,6 +415,9 @@ function parseKindFromRole(role?: string | null): AttachmentDisplayKind | null {
 function parseKindFromUrl(url?: string | null): AttachmentDisplayKind | null {
   const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
   if (/\/prints\/[^/]+\/(?:face|thumb)(?:\/|$)/i.test(path)) return "face";
+  // Pack disk art / back under `/cards/{…}/{card}/art.*` or `back.*`.
+  if (/\/cards\/[^/]+\/[^/]+\/[^/]+\/back\./i.test(path)) return "back";
+  if (/\/cards\/[^/]+\/[^/]+\/[^/]+\/(?:art|face)\./i.test(path)) return "face";
   if (/\bproof\.[^/]*\.(?:twitter|flyer)\./i.test(path)) return "flyer";
   if (/\/proof\./i.test(path) && /flyer|twitter/i.test(path)) return "flyer";
   return null;
@@ -563,17 +566,34 @@ export function parsePrintLanguageCodeFromRole(
 }
 
 /**
- * Language from a live print face URL: `/assets/…/prints/{stem}-{lang}/face`.
+ * Language from a catalogue face URL:
+ * - live print role `/assets/…/prints/{stem}-{lang}/face`
+ * - disk art `/assets/…/cards/{lang}/{set}/{card}/…` (`assetsCardUrl`)
+ * - disk art `/assets/…/cards/{set}/{lang}/{card}/…` (Ninja Ranks AC dumps)
  */
 export function parsePrintLanguageCodeFromUrl(
   url?: string | null,
 ): string | null {
   const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
-  const match = path.match(
+  const printMatch = path.match(
     /\/prints\/[^/]+-([a-z]{2})\/(?:face|thumb)(?:\/|$)/i,
   );
-  const code = match?.[1]?.toLowerCase() ?? "";
-  return PRINT_LANGUAGE_CODES.has(code) ? code : null;
+  const printCode = printMatch?.[1]?.toLowerCase() ?? "";
+  if (PRINT_LANGUAGE_CODES.has(printCode)) return printCode;
+
+  const cardsMatch = path.match(/\/cards\/([^/]+)\/([^/]+)\/([^/]+)\//i);
+  if (!cardsMatch) return null;
+  const first = cardsMatch[1]!.toLowerCase();
+  const second = cardsMatch[2]!.toLowerCase();
+  const firstIsLang = PRINT_LANGUAGE_CODES.has(first);
+  const secondIsLang = PRINT_LANGUAGE_CODES.has(second);
+  // Canonical `assetsCardUrl`: lang / set / card.
+  if (firstIsLang && !secondIsLang) return first;
+  // Ninja Ranks animecollection: set / lang / card (`ff/fr/0006`).
+  if (secondIsLang && !firstIsLang) return second;
+  if (firstIsLang) return first;
+  if (secondIsLang) return second;
+  return null;
 }
 
 /**

@@ -142,6 +142,33 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("lit la langue FR depuis les chemins /cards/ Ninja Ranks (set/lang et lang/set)", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        url: "/assets/naruto/ninja-ranks/cards/ff/fr/0006/art.animecollection.jpg",
+        source: "narutoranks",
+        providerLabel: "Naruto Ninja Ranks",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        url: "/assets/naruto/ninja-ranks/cards/fr/nr/0001/art.coleka.webp",
+        source: "narutoranks",
+        providerLabel: "Naruto Ninja Ranks",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+    });
+  });
+
   it("affiche la région d'une jaquette ScreenScraper australienne (au → Europe)", () => {
     // Regression: a `box-2D(au)` cover was stored with role "au" and showed
     // "Jaquette" with no region because the resolver only knew the 6 canonical

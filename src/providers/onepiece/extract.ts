@@ -24,6 +24,7 @@ import {
   installOnepieceDonCardlistFaces,
   seedOnepieceDonFromCardlist,
 } from "./donCardlist";
+import { migrateOnepieceCardLayout } from "./migrateCardLayout";
 import { harvestOpecardsDistinctBacks } from "./opecardsBacks";
 import { ONEPIECE_PACK_ID, onepieceCuratedDir } from "./pack";
 import {
@@ -164,6 +165,12 @@ export async function runOnepiecePackPipeline(
       }
 
       if (steps.includes("faces")) {
+        const layout = migrateOnepieceCardLayout();
+        if (layout.moved || layout.skippedExisting) {
+          console.log(
+            `── layout cards — ${layout.moved} déplacé${layout.moved === 1 ? "" : "s"} set/lang→lang/set, ${layout.skippedExisting} déjà canonique${layout.skippedExisting === 1 ? "" : "s"}`,
+          );
+        }
         console.log("── faces Bandai — téléchargement / pose en cours…");
         const faces = await installOnepieceBandaiFaces(index, {
           force,

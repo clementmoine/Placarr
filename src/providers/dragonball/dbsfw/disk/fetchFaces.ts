@@ -1,11 +1,10 @@
 /**
  * Fusion World faces → `data/dragonball/fw/cards/{set}/{lang}/{card}/art.<source>.webp`.
  *
- * The pack had no faces pass at all: 3946 printings, every one of them served
- * straight from Bandai's remote URL, and not one image on disk. dbscards runs
- * Fusion World on `fw.dbscards.fr` with the same markup as Masters, so the same
- * crawled list gives a real URL per card — front and back, named outright by
- * the tile rather than guessed from a filename suffix.
+ * dbscards (`fw.dbscards.fr`) leads when the tile lists the print — larger scan,
+ * front + back. Bandai's cardlist SAMPLE URL (already in `print_assets`) fills
+ * the rest: Energy Markers and any print dbscards never indexed. No invented
+ * URL — only the remote the scrape already stored.
  *
  * Two locales, each filed under its own folder because they are different
  * printings: `en` for the English one, `ja` for the Japanese one — read from
@@ -43,8 +42,10 @@ import {
   softbanRemainingMs,
 } from "@/providers/shared/softban";
 import { dataPackPath } from "@/providers/shared/catalogCorpus";
+import { promoteResolvedFace } from "@/providers/shared/cardFaces";
 
 import {
+  dbsFwFaceFileOf,
   dbsFwFaceFilename,
   dbsFwFaceSourceOf,
   pickBestFwFace,
@@ -57,6 +58,7 @@ import {
   DBS_FW_PACK_ID,
   dbsFwCardFolder,
   loadDbsFwIndex,
+  type DbsFwAssetRow,
 } from "../indexStore";
 
 const UA =
@@ -132,6 +134,63 @@ export function fwListedUrl(
   role: DbsFwFaceRole,
 ): string | null {
   return (role === "back" ? entry.imageBack : entry.imageFront) ?? null;
+}
+
+/**
+ * Bandai SAMPLE URL already indexed on the cardlist scrape — never invented.
+ * Key = `printKey\\0lang` (see {@link buildFwAssetUrlMap}).
+ */
+export function fwBandaiAssetUrl(
+  assetsByKeyLang: ReadonlyMap<string, string>,
+  printKey: string,
+  lang: string,
+): string | null {
+  const raw =
+    assetsByKeyLang.get(`${printKey}\0${lang.trim().toLowerCase()}`)?.trim() ||
+    "";
+  if (!/^https?:\/\//i.test(raw)) return null;
+  return raw;
+}
+
+export function buildFwAssetUrlMap(
+  assets: readonly DbsFwAssetRow[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const asset of assets) {
+    const url = (asset.art ?? asset.imageUrl)?.trim();
+    if (!url) continue;
+    map.set(`${asset.printKey}\0${asset.lang.trim().toLowerCase()}`, url);
+  }
+  return map;
+}
+
+/** On-disk face for one source/role, any extension the host served. */
+function storedFaceFile(
+  cardDir: string,
+  source: DbsFwFaceSource,
+  role: DbsFwFaceRole = "art",
+): string | null {
+  let names: string[];
+  try {
+    names = readdirSync(cardDir);
+  } catch {
+    return null;
+  }
+  for (const name of names) {
+    const parsed = dbsFwFaceFileOf(name);
+    if (parsed?.source === source && parsed.role === role) return name;
+  }
+  return null;
+}
+
+function hasArtOnDisk(cardDir: string): boolean {
+  let names: string[];
+  try {
+    names = readdirSync(cardDir);
+  } catch {
+    return false;
+  }
+  return names.some((name) => dbsFwFaceFileOf(name)?.role === "art");
 }
 
 function writeAtomic(destPath: string, buf: Buffer): void {
@@ -212,7 +271,10 @@ export async function promoteBestFwFace(
   // The file as stored, not a name rebuilt from the source: the extension is
   // whatever the source served.
   const winner = stored.find((face) => face.source === best);
-  recordFwFaceDecision(cardDir, "art", winner?.file ?? dbsFwFaceFilename(best));
+  promoteResolvedFace({
+    cardDir,
+    filename: winner?.file ?? dbsFwFaceFilename(best),
+  });
   return best;
 }
 
@@ -253,14 +315,26 @@ export async function fetchDbsFwFaces(
   const delayMs = opts.delayMs ?? 0;
   const stats = { ...empty };
   let throttledStreak = 0;
+  const assetUrls = buildFwAssetUrlMap(loaded.assets);
+
+  const noteThrottle = (host: string): boolean => {
+    throttledStreak += 1;
+    stats.throttled += 1;
+    if (throttledStreak < 20) return false;
+    recordSoftbanFailure(cacheRoot, {
+      reason: `${host} a refusé 20 requêtes d'affilée`,
+      name: SOFTBAN_LEDGER,
+    });
+    console.warn("── fw faces : hôte fermé, arrêt et refroidissement");
+    return true;
+  };
 
   for (const lang of langs) {
     const index = fwIndex(lang);
     if (index.size === 0) {
       console.warn(
-        `── fw faces [${lang}] : liste dbscards absente — lancer d'abord --only dbscards`,
+        `── fw faces [${lang}] : liste dbscards absente — Bandai cardlist seulement`,
       );
-      continue;
     }
     const prints = opts.limit
       ? loaded.prints.slice(0, opts.limit)
@@ -272,10 +346,13 @@ export async function fetchDbsFwFaces(
 
     for (const print of prints) {
       done += 1;
-      const listed = lookupDbscardsEntry(
-        index,
-        `${print.setCode}-${print.number}`.toLowerCase(),
-      );
+      const listed =
+        index.size > 0
+          ? lookupDbscardsEntry(
+              index,
+              `${print.setCode}-${print.number}`.toLowerCase(),
+            )
+          : undefined;
       const cardDir = packCardDir(DBS_FW_PACK_ID, {
         set: print.setCode,
         lang,
@@ -291,20 +368,7 @@ export async function fetchDbsFwFaces(
           if (!opts.force && existsSync(dest)) continue;
           const { buf, throttled } = await downloadFace(url);
           if (throttled) {
-            throttledStreak += 1;
-            stats.throttled += 1;
-            if (throttledStreak >= 20) {
-              // Circuit breaker : reset exponentiel (2 → 5 → 15 → 60 min) à
-              // chaque réouverture — voir `providers/shared/softban`.
-              recordSoftbanFailure(cacheRoot, {
-                reason: "fw.dbscards.fr a refusé 20 requêtes d'affilée",
-                name: SOFTBAN_LEDGER,
-              });
-              console.warn(
-                "── fw faces : hôte fermé, arrêt et refroidissement",
-              );
-              return stats;
-            }
+            if (noteThrottle("fw.dbscards.fr")) return stats;
             continue;
           }
           throttledStreak = 0;
@@ -323,6 +387,35 @@ export async function fetchDbsFwFaces(
             stats.fail += 1;
           }
           if (delayMs > 0) await sleep(delayMs);
+        }
+      }
+
+      /*
+        Gap-fill from the Bandai URL already in sqlite — Energy Markers and
+        any print dbscards skipped. Skip when disk already has an art face
+        (dbscards / prior Bandai / CardNexus) unless --force.
+      */
+      if (opts.force || !hasArtOnDisk(cardDir)) {
+        const bandaiUrl = fwBandaiAssetUrl(assetUrls, print.printKey, lang);
+        if (bandaiUrl) {
+          const dest = path.join(cardDir, dbsFwFaceFilename("bandai", "art"));
+          if (opts.force || !storedFaceFile(cardDir, "bandai", "art")) {
+            const { buf, throttled } = await downloadFace(bandaiUrl);
+            if (throttled) {
+              if (noteThrottle("dbs-cardgame.com")) return stats;
+            } else {
+              throttledStreak = 0;
+              if (buf) {
+                try {
+                  writeAtomic(dest, buf);
+                  fetched += 1;
+                } catch {
+                  stats.fail += 1;
+                }
+              }
+            }
+            if (delayMs > 0) await sleep(delayMs);
+          }
         }
       }
 

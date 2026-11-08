@@ -16,7 +16,12 @@ import { DatabaseSync } from "node:sqlite";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
-import { packCardsDir, packLogsDir, packStagingDir } from "@/lib/packPaths";
+import {
+  packCardDir,
+  packCardsDir,
+  packLogsDir,
+  packStagingDir,
+} from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type {
   LocalPrintAssetWrite,
@@ -562,12 +567,8 @@ export async function installOnepieceBandaiFaces(
         maybeProgress();
         continue;
       }
-      const destDir = path.join(
-        packCardsDir(ONEPIECE_PACK_ID),
-        disk.set,
-        disk.lang,
-        disk.card,
-      );
+      // Contrat universel : cards/{lang}/{set}/{card}/ (pas set/lang).
+      const destDir = packCardDir(ONEPIECE_PACK_ID, disk);
       mkdirSync(destDir, { recursive: true });
       const art = `art.${SOURCE_ID}.webp`;
       const dest = path.join(destDir, art);

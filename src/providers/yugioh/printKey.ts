@@ -35,6 +35,15 @@ export function formatYugiohReference(set: string, number: string): string {
   return `${set.trim().toUpperCase()}-${number.trim().toUpperCase()}`;
 }
 
+/**
+ * True when the collector segment is a French regional printing
+ * (`fr001`, `frp01`, `frse1`, `f000`…), not an EN/PT code with a FR *name*.
+ */
+export function isYugiohFrRegionalNumber(number: string): boolean {
+  const n = number.trim().toLowerCase();
+  return /^fr/.test(n) || /^f\d/.test(n);
+}
+
 export function normalizeYugiohSearchQuery(query: string): string {
   const parsed = parseYugiohPrintedCode(query);
   if (parsed) return parsed.number;

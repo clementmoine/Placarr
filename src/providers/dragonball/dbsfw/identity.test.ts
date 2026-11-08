@@ -13,6 +13,9 @@ describe("parseDbsFwCollectorNumber", () => {
     ["ST01-001", { set: "st01", number: "001", grouping: null }],
     ["FB10-003", { set: "fb10", number: "003", grouping: null }],
     ["FS01-01", { set: "fs01", number: "01", grouping: null }],
+    ["E-11", { set: "e", number: "11", grouping: null }],
+    ["E-17_p1", { set: "e", number: "17", grouping: "p1" }],
+    ["E01-11", { set: "e01", number: "11", grouping: null }],
   ] as const)("%s", (raw, expected) => {
     expect(parseDbsFwCollectorNumber(raw)).toEqual(expected);
   });

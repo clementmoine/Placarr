@@ -11,7 +11,12 @@ import {
   dbsFwFaceFilename,
   pickBestFwFace,
 } from "./faceChoice";
-import { DBS_FW_FACE_LANGS, fwListedUrl } from "./fetchFaces";
+import {
+  DBS_FW_FACE_LANGS,
+  buildFwAssetUrlMap,
+  fwBandaiAssetUrl,
+  fwListedUrl,
+} from "./fetchFaces";
 import {
   DBS_FW_CARDLIST_LOCALES,
   DBS_FW_DEFAULT_LOCALES,
@@ -66,6 +71,38 @@ describe("fwListedUrl", () => {
 
   it("has no back for a card that has none", () => {
     expect(fwListedUrl(tile({ imageBack: null }), "back")).toBeNull();
+  });
+});
+
+describe("fwBandaiAssetUrl", () => {
+  it("reads the Bandai SAMPLE URL already stored on the cardlist scrape", () => {
+    const map = buildFwAssetUrlMap([
+      {
+        printKey: "dbsfw:e-11",
+        lang: "en",
+        art: "https://www.dbs-cardgame.com/fw/images/cards/card/en/E-11.webp",
+      },
+      {
+        printKey: "dbsfw:e-17-p1",
+        lang: "EN",
+        imageUrl:
+          "https://www.dbs-cardgame.com/fw/images/cards/card/en/E-17_p1.webp",
+      },
+    ]);
+    expect(fwBandaiAssetUrl(map, "dbsfw:e-11", "en")).toMatch(/E-11\.webp$/);
+    expect(fwBandaiAssetUrl(map, "dbsfw:e-17-p1", "en")).toMatch(
+      /E-17_p1\.webp$/,
+    );
+    expect(fwBandaiAssetUrl(map, "dbsfw:e-11", "ja")).toBeNull();
+  });
+
+  it("rejects non-http leftovers (basename / empty)", () => {
+    const map = buildFwAssetUrlMap([
+      { printKey: "dbsfw:e-11", lang: "en", art: "art.webp" },
+      { printKey: "dbsfw:e-12", lang: "en", art: "" },
+    ]);
+    expect(fwBandaiAssetUrl(map, "dbsfw:e-11", "en")).toBeNull();
+    expect(fwBandaiAssetUrl(map, "dbsfw:e-12", "en")).toBeNull();
   });
 });
 

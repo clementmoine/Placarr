@@ -1490,16 +1490,64 @@ function localPrintDiskCard(row: LocalPrintSearchRow): string {
 function localPrintRowToCatalogueCard(
   pack: CataloguePackId,
   row: LocalPrintSearchRow,
+  opts?: {
+    index?: ReturnType<typeof createLocalPrintsIndex>;
+    bestFaceAcrossLocales?: boolean;
+    localeSpecificFaces?: ReturnType<typeof loadLocaleSpecificFaces>;
+  },
 ): CatalogueCardRow {
   const set = (row.setCode || row.cardType || "").trim() || "—";
   const diskCard = localPrintDiskCard(row);
-  const { artUrl, artFile, missingArt } = resolveCatalogueLocalArtUrl({
+  const bestFaceAcrossLocales = opts?.bestFaceAcrossLocales === true;
+  const languageSpecific = bestFaceAcrossLocales
+    ? isLocaleSpecificFace(opts?.localeSpecificFaces ?? null, set, diskCard)
+    : true;
+
+  let artLang = row.lang;
+  let sqliteArt = row.art?.trim() || row.thumb?.trim() || "";
+  let { artUrl, artFile, missingArt } = resolveCatalogueLocalArtUrl({
     packId: pack,
     set,
-    lang: row.lang,
+    lang: artLang,
     card: diskCard,
-    sqliteArt: row.art?.trim() || row.thumb?.trim() || "",
+    sqliteArt,
   });
+
+  /*
+    Neutral OPTCG prints: SQL browse used to hardcode languageSpecific and
+    skip borrow — FR titles looked « sans image » while EN/JA bytes existed.
+    Same contract as buildLocalPrintsBrowseRows.
+  */
+  if (
+    missingArt &&
+    bestFaceAcrossLocales &&
+    !languageSpecific &&
+    opts?.index
+  ) {
+    const borrowed = opts.index.lookupAssets(row.printKey, {
+      preferLang: row.lang,
+    });
+    if (borrowed?.art || borrowed?.thumb) {
+      const borrowLang = borrowed.lang;
+      const borrowArt =
+        borrowed.art?.trim() || borrowed.thumb?.trim() || "";
+      const resolved = resolveCatalogueLocalArtUrl({
+        packId: pack,
+        set,
+        lang: borrowLang,
+        card: diskCard,
+        sqliteArt: borrowArt,
+      });
+      if (!resolved.missingArt) {
+        artLang = borrowLang;
+        sqliteArt = borrowArt;
+        artUrl = resolved.artUrl;
+        artFile = resolved.artFile;
+        missingArt = false;
+      }
+    }
+  }
+
   const thumbRaw = row.thumb?.trim() || "";
   const thumbFile =
     thumbRaw && thumbRaw !== artFile && !thumbRaw.includes("/")
@@ -1519,7 +1567,7 @@ function localPrintRowToCatalogueCard(
       ? {
           thumbUrl: assetsCardUrl(
             pack,
-            { set, lang: row.lang, card: diskCard },
+            { set, lang: artLang, card: diskCard },
             thumbFile,
           ),
         }
@@ -1532,7 +1580,8 @@ function localPrintRowToCatalogueCard(
       ? { printed: false }
       : {}),
     missingArt,
-    languageSpecific: true,
+    ...(artLang !== row.lang && artUrl ? { artLocaleFrom: artLang } : {}),
+    languageSpecific,
     kind: "face",
   };
 }
@@ -1586,6 +1635,11 @@ function listSqlBrowseFacePage(
 
   const index = createLocalPrintsIndex(input.pack);
   if (!index.hasIdentityCorpus()) return null;
+  const bestFaceAcrossLocales =
+    packInfo?.localeArt?.bestFaceAcrossLocales === true;
+  const localeSpecificFaces = bestFaceAcrossLocales
+    ? loadLocaleSpecificFaces(input.pack)
+    : null;
   const page = index.listBrowsePage({
     langs,
     q: input.q,
@@ -1599,7 +1653,11 @@ function listSqlBrowseFacePage(
   return {
     total: page.total,
     rows: page.rows.map((row) =>
-      localPrintRowToCatalogueCard(input.pack, row),
+      localPrintRowToCatalogueCard(input.pack, row, {
+        index,
+        bestFaceAcrossLocales,
+        localeSpecificFaces,
+      }),
     ),
   };
 }

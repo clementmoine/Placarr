@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatYugiohReference,
+  isYugiohFrRegionalNumber,
   parseYugiohPrintedCode,
   yugiohPrintKey,
 } from "./printKey";
@@ -25,5 +26,18 @@ describe("yugioh printKey", () => {
     });
     expect(yugiohPrintKey("ldd", "f000")).toBe("yugioh:ldd-f000");
     expect(formatYugiohReference("ldd", "f000")).toBe("LDD-F000");
+  });
+
+  it.each([
+    ["f000", true],
+    ["fr001", true],
+    ["frp01", true],
+    ["frse1", true],
+    ["en001", false],
+    ["en013", false],
+    ["pt001", false],
+    ["e001", false],
+  ] as const)("isYugiohFrRegionalNumber(%j) → %s", (number, expected) => {
+    expect(isYugiohFrRegionalNumber(number)).toBe(expected);
   });
 });

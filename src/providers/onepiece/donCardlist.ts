@@ -15,7 +15,7 @@ import path from "node:path";
 
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
 import { cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
-import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import type {
   LocalPrintAssetWrite,
   LocalPrintsIndex,
@@ -207,12 +207,8 @@ export async function installOnepieceDonCardlistFaces(
         fail += 1;
         continue;
       }
-      const destDir = path.join(
-        packCardsDir(ONEPIECE_PACK_ID),
-        disk.set,
-        disk.lang,
-        disk.card,
-      );
+      // Contrat universel : cards/{lang}/{set}/{card}/ (pas set/lang).
+      const destDir = packCardDir(ONEPIECE_PACK_ID, disk);
       mkdirSync(destDir, { recursive: true });
       const art = `art.${SOURCE_ID}.webp`;
       const dest = path.join(destDir, art);

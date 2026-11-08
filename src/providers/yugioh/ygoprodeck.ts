@@ -3,8 +3,9 @@
  *
  * Konami Neuron / db.yugioh-card.com has no public API; YGOPRODeck is the
  * community mirror (passcode + konami_id via misc). French `language=fr`
- * returns FR names; set codes stay regional EN/OC G style (LOB-EN001…).
- * ScanFlip FR codes (LDD-F000) remain separate printKeys.
+ * returns FR *names*; EN set codes (LOB-EN001…) stay EN printings — do not
+ * mint `print_titles.lang=fr` for them. ScanFlip FR codes (LDD-F000) remain
+ * separate printKeys with real FR faces.
  */
 import {
   copyFileSync,
@@ -37,6 +38,7 @@ import {
 import { YUGIOH_PACK_ID } from "./pack";
 import {
   formatYugiohReference,
+  isYugiohFrRegionalNumber,
   parseYugiohPrintedCode,
   yugiohPrintKey,
 } from "./printKey";
@@ -329,7 +331,15 @@ export async function installYugiohYgoprodeck(
         rarity: row.rarity,
       });
     }
-    if (langs.includes("fr") && ledger.frNames[id]) {
+    /*
+      FR name from YGOPRODeck is a translation, not a FR printing. Only attach
+      `lang=fr` when the collector is itself a French regional code.
+    */
+    if (
+      langs.includes("fr") &&
+      ledger.frNames[id] &&
+      isYugiohFrRegionalNumber(row.number)
+    ) {
       titles.push({
         lang: "fr",
         fullName: ledger.frNames[id]!,
@@ -400,11 +410,36 @@ export async function installYugiohYgoprodeck(
   }
   if (assets.length) index.writeAssets(assets);
 
+  // Drop FR title rows previously minted on EN/PT collectors (translations ≠ FR prints).
+  purgeYgoprodeckFrTitlesOnNonFrPrints(index);
+
   // OTS PT rows often lack ScanFlip CDN; mirror EN sibling art onto FR.
   const mirrored = mirrorYgoprodeckEnFacesOntoPtSiblings(index);
   faces += mirrored;
 
   return { prints, titles, faces };
+}
+
+/**
+ * Remove `print_titles.lang=fr` on collectors that are not French regional
+ * printings (`en001`, `pt028`…). Keeps ScanFlip / ygocards FR codes.
+ */
+export function purgeYgoprodeckFrTitlesOnNonFrPrints(
+  index: LocalPrintsIndex,
+): number {
+  const db = index.openForWrite();
+  const result = db
+    .prepare(
+      `DELETE FROM print_titles
+        WHERE lang = 'fr'
+          AND print_key IN (
+            SELECT print_key FROM prints p
+             WHERE lower(p.number) NOT LIKE 'fr%'
+               AND lower(p.number) NOT GLOB 'f[0-9]*'
+          )`,
+    )
+    .run() as { changes?: number };
+  return Number(result.changes ?? 0);
 }
 
 /**

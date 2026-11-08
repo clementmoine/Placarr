@@ -4,6 +4,9 @@
  */
 export const CACHED_FICHE_MERGE_KEY = "__cached_fiche__";
 
+/** Shelf sealed SKU (`packId::slug`) carried into adapter `externalIds`. */
+export const SKU_KEY_MERGE_KEY = "__skuKey";
+
 /** Kinds the seeded fiche may still contribute on refresh (gap-fill only). */
 const CACHED_FICHE_MERGE_FACT_KINDS = new Set([
   "external-link",

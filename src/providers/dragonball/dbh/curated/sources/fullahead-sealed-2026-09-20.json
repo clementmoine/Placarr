@@ -10,9 +10,11 @@
   "wired": [
     {
       "slugs": [
-        "ultimate-booster-new-clash"
+        "ultimate-booster-new-clash",
+        "ultimate-booster-new-clash-box"
       ],
-      "productUrl": "https://pt-fullahead.com/shopdetail/000000050213/",
+      "productUrl": "https://pt-fullahead.com/shopdetail/000000050128/",
+      "packProductUrl": "https://pt-fullahead.com/shopdetail/000000050213/",
       "art": [
         "products/fullahead/ultimate-booster-new-clash.jpg"
       ],

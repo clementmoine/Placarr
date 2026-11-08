@@ -1,6 +1,26 @@
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import type { DetailFact } from "./playerFacts";
 import { formatDetailFactSourceToken, getFactSourceNames } from "./playerFacts";
 import { isInternalMetadataMergeKey } from "@/core/enrich/internalMergeKeys";
+
+/**
+ * Shelf-facing proof URL — openable deep link only (homepage / shallow → drop).
+ * Use when rendering Distribution / Estimation / Affiche citations.
+ */
+export function displayFactCitationUrl(
+  url: string | null | undefined,
+): string | undefined {
+  return sanitizePublicCitationUrl(url) ?? undefined;
+}
+
+/** Dig-attested storytelling encart (`Le saviez-vous ?`) — never invent prose. */
+export const STORY_DISPLAY_FACT_KIND = "story";
+
+export function isStoryDisplayFact(fact: {
+  kind?: string | null;
+}): boolean {
+  return fact.kind === STORY_DISPLAY_FACT_KIND;
+}
 
 const HIDDEN_DISPLAY_KINDS = new Set([
   "identifier",

@@ -1151,6 +1151,11 @@ import type { NarutoPrintDetail } from "./search";
       );
       expect(value(facts, "Distribution")).toContain("Coupe de France");
       expect(value(facts, "Shurikens")).toBe("★★★");
+      const dist = facts.find((f) => f.label === "Distribution");
+      expect(dist?.url).toBe(
+        "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+      );
+      expect(facts.find((f) => f.label === "Shurikens")?.url).toBe(dist?.url);
     });
 
     it("labels 1★ tournament promos as participation (TE-002 Shuriken)", () => {
@@ -1195,7 +1200,62 @@ import type { NarutoPrintDetail } from "./search";
       );
       expect(value(facts, "Numéro")).toBe("NI-019 · prerelease");
       expect(value(facts, "Distribution")).toBe("Avant-première manga");
+      expect(facts.find((f) => f.label === "Distribution")?.url).toContain(
+        "t=1156",
+      );
       expect(value(facts, "Estimation")).toBe("10 €");
+    });
+
+    it("stamps Kana 2008 manga-insert Distribution with Wayback proof", () => {
+      const facts = narutoPrintFacts(
+        row({ setCode: "s6", number: "ni0253", cardType: "ni" }),
+        "narutocarddass",
+      );
+      expect(value(facts, "Distribution")).toBe("Insert manga — tome 6 (Kana)");
+      expect(facts.find((f) => f.label === "Distribution")?.url).toContain(
+        "web.archive.org",
+      );
+    });
+
+    it("stamps Kana DVD insert beside manga Distribution when both digs hit", () => {
+      const facts = narutoPrintFacts(
+        row({ setCode: "s6", number: "ni0236", cardType: "ni" }),
+        "narutocarddass",
+      );
+      expect(value(facts, "Distribution")).toMatch(/Insert manga/i);
+      expect(value(facts, "Insert DVD")).toMatch(/vol\. 15/i);
+      expect(facts.find((f) => f.label === "Insert DVD")?.url).toContain(
+        "facebook.com",
+      );
+    });
+
+    it("stamps DVD insert for S5 packshot card TA-214", () => {
+      const facts = narutoPrintFacts(
+        row({ setCode: "s5", number: "ta0214", cardType: "ta" }),
+        "narutocarddass",
+      );
+      expect(value(facts, "Insert DVD")).toMatch(/vol\. 3/i);
+    });
+
+    it("stamps Insert jeu / duopack from Facebook dig inserts", () => {
+      expect(
+        value(
+          narutoPrintFacts(
+            row({ setCode: "promo", number: "pr095", cardType: "pr" }),
+            "narutocarddass",
+          ),
+          "Insert jeu",
+        ),
+      ).toMatch(/Storm 3/i);
+      expect(
+        value(
+          narutoPrintFacts(
+            row({ setCode: "s24", number: "m0873", cardType: "m" }),
+            "narutocarddass",
+          ),
+          "Insert duopack",
+        ),
+      ).toMatch(/Duo Pack/i);
     });
 
     it("estimates promo cotes from Collection Naruto (1★ / CdF / tin)", () => {

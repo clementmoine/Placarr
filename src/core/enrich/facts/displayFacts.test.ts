@@ -3,8 +3,10 @@ import type { DetailFact } from "./playerFacts";
 import {
   consolidateTagLikeFactsByKind,
   dedupeTagLikeFacts,
+  displayFactCitationUrl,
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
+  isStoryDisplayFact,
   parseAgeFromFactValue,
   providerLinkDisplayLabel,
   sortProviderLinkFacts,
@@ -12,6 +14,30 @@ import {
 } from "./displayFacts";
 
 describe("displayFacts", () => {
+  describe("displayFactCitationUrl", () => {
+    it("keeps dig deep links and drops shallow hubs", () => {
+      expect(
+        displayFactCitationUrl(
+          "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+        ),
+      ).toBe(
+        "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+      );
+      expect(
+        displayFactCitationUrl("https://narutocarddassfrance.1fr1.net/"),
+      ).toBeUndefined();
+      expect(displayFactCitationUrl(null)).toBeUndefined();
+    });
+  });
+
+  describe("isStoryDisplayFact", () => {
+    it("recognizes dig storytelling encart kind", () => {
+      expect(isStoryDisplayFact({ kind: "story" })).toBe(true);
+      expect(isStoryDisplayFact({ kind: "category" })).toBe(false);
+    });
+  });
+
+
   describe("splitTagValues", () => {
     it("splits bullet, semicolon, and comma joined theme lists", () => {
       expect(splitTagValues("Adventure; Stealth")).toEqual([

@@ -63,4 +63,52 @@ describe("narutocarddass provider hooks", () => {
     expect(extension(asS2, "Extension")).toMatch(/Série 2/i);
     expect(extension(asS3, "Extension")).toMatch(/Série 3/i);
   });
+
+  it("stamps sealed dig Distribution from __skuKey", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Pack Découverte",
+      externalIds: { __skuKey: "naruto/carddass::pack-decouverte" },
+    });
+    expect(hit?.title).toMatch(/Pack Découverte/i);
+    const dist = hit?.facts?.find((f) => f.label === "Distribution");
+    expect(dist?.url).toContain("manga-sanctuary.com/news/7397");
+    const story = hit?.facts?.find((f) => f.kind === "story");
+    expect(story?.label).toMatch(/saviez/i);
+    expect(story?.value).toMatch(/2 starters S1/i);
+  });
+
+  it("stamps Kana DVD sealed SKU Distribution from Facebook dig", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Naruto DVD vol. 3",
+      externalIds: { __skuKey: "naruto/carddass::kana-dvd-naruto-vol3" },
+    });
+    expect(hit?.title).toMatch(/DVD/i);
+    const dist = hit?.facts?.find((f) => f.label === "Distribution");
+    expect(dist?.url).toContain("facebook.com");
+  });
+
+  it("stamps UNS3 Xbox sealed Distribution from Facebook dig", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Xbox 360 UNS3",
+      externalIds: { __skuKey: "naruto/carddass::xbox360-uns3" },
+    });
+    expect(hit?.facts?.find((f) => f.label === "Distribution")?.url).toContain(
+      "facebook.com",
+    );
+  });
+
+  it("emits dig storytelling encart for UNS3 PR-093", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Double éclair pourfendeur",
+      printKey: "naruto:promo-pr0093",
+    });
+    const story = hit?.facts?.find((f) => f.kind === "story");
+    expect(story?.value).toMatch(/Stand Kana JE 2013/i);
+    expect(story?.url).toContain("kana.fr");
+  });
 });
+

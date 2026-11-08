@@ -5,10 +5,12 @@
  * Ce qui change d'une ligne à l'autre (id, pack, dos, notes) reste chez le
  * provider. Ce qui ne change pas : schéma, recherche, sonde, santé.
  */
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
+import { parseSealedSkuKey } from "@/core/collect/sealedOpen";
+import { SKU_KEY_MERGE_KEY } from "@/core/enrich/internalMergeKeys";
 import {
   comparePrintKeys,
   parsePrintKey,
@@ -21,7 +23,6 @@ import {
   assetsPrintFaceUrl,
   type CardDiskId,
 } from "@/lib/packAssetUrls";
-import { packCardsDir } from "@/lib/packPaths";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import {
@@ -29,8 +30,12 @@ import {
   type SetOption,
 } from "@/providers/shared/cardCatalogue/sets";
 import { artOrientationForPackPrint } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
-import type { MetadataAttachment, MetadataResult } from "@/types/metadataProvider";
-import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
+import { buildCatalogueDiskFaceAttachments } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
+import type {
+  MetadataAttachment,
+  MetadataFact,
+  MetadataResult,
+} from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
   PrintCandidate,
@@ -153,6 +158,19 @@ export type LocalTcgLineSpec = {
    * empty lookup that factory lines used to ship.
    */
   probePrintKey?: string;
+  /**
+   * Dig / catalogue facts for a print row (Distribution, Insert… with proof URL).
+   */
+  printFacts?: (
+    row: LocalPrintSearchRow,
+    providerId: string,
+  ) => MetadataFact[];
+  /**
+   * Dig citation for a sealed SKU slug (`packId::slug` via enrich `__skuKey`).
+   */
+  sealedCitation?: (
+    slug: string,
+  ) => { label: string; url: string } | null;
 };
 
 export type LocalTcgLine = {
@@ -267,9 +285,10 @@ function toCandidate(
   const faces = resolveFaceFiles(index, spec, row);
   const diskId: CardDiskId = { set, lang: faces.diskLang, card };
   /*
-    Rôle stable `/prints/…/face` — comme Carddass / Pokémon. Le basename
-    (`art.coleka.webp`) reste sur disque + face.json ; changer de source
-    préférée ne casse plus les URL d'item / checklist.
+    Rôle stable `/prints/…/face` — shelf / checklist identity. Basename
+    (`art.coleka.webp`) stays on disk; HTTP resolve re-ranks by criteria
+    (`face.json` is not SSOT). Affiche collapses the print-role twin when
+    `/cards/…/art.*` dumps are already in the gallery.
   */
   const usePrintRoles = !spec.cardAssetUrl;
   /*
@@ -434,47 +453,17 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       lang: faces.diskLang,
       card,
     };
-    const cardDir = path.join(
-      packCardsDir(spec.packId),
-      diskId.set,
-      diskId.lang,
-      diskId.card,
-    );
-    if (!existsSync(cardDir)) return { attachments: [], defaultUrl: null };
-    const arts = readdirSync(cardDir).filter((name) => {
-      const low = name.toLowerCase();
-      return low.startsWith("art.") && !low.includes("reconstructed");
+    return buildCatalogueDiskFaceAttachments({
+      packId: spec.packId,
+      diskId,
+      preferredArt: faces.art,
+      providerId: spec.providerId,
+      printGame: spec.printGame,
+      title,
+      proofUrl: row.sourceUrl,
+      winnerArtKind: row.artKind,
+      winnerWatermarked: row.watermarked,
     });
-    if (arts.length === 0) return { attachments: [], defaultUrl: null };
-    const defaultArt =
-      (faces.art && arts.includes(faces.art) ? faces.art : null) ?? arts[0]!;
-    const ordered = [
-      defaultArt,
-      ...arts.filter((file) => file !== defaultArt),
-    ];
-    const faceLang = (faces.diskLang || row.lang?.trim().toLowerCase() || "")
-      .trim()
-      .toLowerCase();
-    const attachments: MetadataAttachment[] = ordered.map((file) => {
-      const sourceHint = file.replace(/^art\./i, "").replace(/\.[^.]+$/, "");
-      const sourceToken = sourceHint || "art";
-      return {
-        type: "cover",
-        url: assetsCardUrl(spec.packId, diskId, file),
-        title: title.trim() || sourceToken,
-        role: tcgFaceAttachmentRole({
-          printGame: spec.printGame,
-          lang: faceLang || null,
-          source: sourceToken,
-        }),
-        source: spec.providerId,
-        coverProvenance: "catalog",
-      };
-    });
-    return {
-      attachments,
-      defaultUrl: assetsCardUrl(spec.packId, diskId, defaultArt),
-    };
   };
 
   /**
@@ -484,9 +473,55 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
    * When the card folder holds several `art.*` dumps, emit them all so the
    * Images picker can propose same-print catalogue faces.
    */
+  const resolveSealedFromLocal = (
+    ctx: MetadataAdapterContext,
+  ): MetadataResult | null => {
+    if (!spec.sealedCitation) return null;
+    const skuKey = ctx.externalIds?.[SKU_KEY_MERGE_KEY]?.trim() || "";
+    const parsed = parseSealedSkuKey(skuKey);
+    if (!parsed || parsed.packId !== spec.packId) return null;
+    /*
+      Lazy: `sealedProductsLoad` pulls pack indexes that can cycle back through
+      the provider registry while `createLocalTcgLine` is still initializing.
+    */
+    const { loadSealedProductEntries } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("@/lib/collect/sealedProductsLoad") as typeof import("@/lib/collect/sealedProductsLoad");
+    const entry = loadSealedProductEntries(spec.packId).find(
+      (row) => row.slug === parsed.slug,
+    );
+    const title = entry?.name?.trim();
+    if (!title) return null;
+    const citation = spec.sealedCitation(parsed.slug);
+    const facts: MetadataFact[] = [];
+    if (citation) {
+      facts.push({
+        kind: "category",
+        label: "Distribution",
+        value: citation.label,
+        source: spec.providerId,
+        url: citation.url,
+        confidence: 0.85,
+        priority: 34,
+      });
+    }
+    return {
+      title,
+      ...(entry?.image ? { imageUrl: entry.image } : {}),
+      ...(facts.length ? { facts } : {}),
+      externalIds: {
+        [spec.providerId]: skuKey,
+        skuKey,
+      },
+    };
+  };
+
   const resolveFromLocal = (
     ctx: MetadataAdapterContext,
   ): MetadataResult | null => {
+    const sealed = resolveSealedFromLocal(ctx);
+    if (sealed) return sealed;
+
     const printKey =
       ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim() || "";
     if (!printKey) return null;
@@ -501,12 +536,17 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       ? diskArtAttachmentsForHit(row, title)
       : { attachments: [] as MetadataAttachment[], defaultUrl: null };
     const imageUrl = disk.defaultUrl || hit.imageUrl || undefined;
+    const facts =
+      row && spec.printFacts
+        ? spec.printFacts(row, spec.providerId)
+        : undefined;
     return {
       title,
       ...(imageUrl ? { imageUrl } : {}),
       ...(disk.attachments.length > 0
         ? { attachments: disk.attachments }
         : {}),
+      ...(facts?.length ? { facts } : {}),
       externalIds: {
         [spec.providerId]: printKey,
         printKey,

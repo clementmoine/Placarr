@@ -224,8 +224,10 @@ import {
   formatDetailFactSourceToken,
 } from "@/core/enrich/facts/playerFacts";
 import {
+  displayFactCitationUrl,
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
+  isStoryDisplayFact,
   splitTagValues,
 } from "@/core/enrich/facts/displayFacts";
 import { ProviderLinksBar } from "@/components/ProviderLinksBar";
@@ -764,8 +766,10 @@ function isDurationLikeFact(fact: DetailFact) {
 }
 
 function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
+  const citation = displayFactCitationUrl(fact.url);
+
   if (fact.kind === "external-link") {
-    return fact.url ? fact : null;
+    return citation ? { ...fact, url: citation } : null;
   }
 
   if (fact.kind === "time-to-beat") {
@@ -777,7 +781,7 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
         ...fact,
         kind: "completion-time",
         label: "Complétion",
-        url: isHowLongToBeatSource(fact) ? fact.url : undefined,
+        url: isHowLongToBeatSource(fact) ? citation : undefined,
       };
     }
 
@@ -785,16 +789,25 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
       ...fact,
       kind: "duration",
       label: "Durée",
-      url: isHowLongToBeatSource(fact) ? fact.url : undefined,
+      url: isHowLongToBeatSource(fact) ? citation : undefined,
     };
   }
 
+  // Dig indicative quotes (Naruto YT…) — surface as estimated-value with proof.
+  // Other `price` rows stay hidden via filterRedundantDisplayFacts.
+  if (fact.kind === "price" && citation && /^estimation$/i.test(fact.label)) {
+    return {
+      ...fact,
+      kind: "estimated-value",
+      url: citation,
+    };
+  }
+
+  // Keep stamped dig / offer proofs (Distribution, …).
+  // Homepage stamps are already null after sanitize.
   return {
     ...fact,
-    url:
-      fact.kind === "estimated-value" || isHowLongToBeatSource(fact)
-        ? fact.url
-        : undefined,
+    url: citation,
   };
 }
 
@@ -2568,6 +2581,11 @@ export default function ItemDetailsPage() {
     [usefulFacts],
   );
 
+  const storyFacts = useMemo(
+    () => usefulFacts.filter(isStoryDisplayFact).sort(sortDetailFacts),
+    [usefulFacts],
+  );
+
   const audioTracks = useMemo(() => {
     const attachments = (item?.metadata?.attachments || []) as Array<{
       type?: string;
@@ -3506,34 +3524,81 @@ export default function ItemDetailsPage() {
                     />
                   )}
 
-                  {detailTableFacts.map((fact) => (
-                    <div
-                      key={`${fact.kind}-${fact.label}-${fact.value}`}
-                      className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0"
-                    >
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
-                        {fact.label}
-                      </span>
-                      {isTagLikeDetailFact(fact) ? (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {splitTagValues(fact.value).map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
-                          {fact.value}
-                        </span>
-                      )}
-                      <FactSourceFooter fact={fact} />
+                  {storyFacts.length > 0 && (
+                    <div className="sm:col-span-2 space-y-3 border-y border-border/60 py-3 dark:border-zinc-800/50">
+                      {storyFacts.map((fact) => {
+                        const proofUrl = displayFactCitationUrl(fact.url);
+                        return (
+                          <div
+                            key={`${fact.kind}-${fact.label}-${fact.value}`}
+                            className="space-y-1.5"
+                          >
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                              {t("items.didYouKnow")}
+                            </span>
+                            <p className="text-sm leading-relaxed text-foreground dark:text-zinc-200">
+                              {fact.value}
+                            </p>
+                            {proofUrl ? (
+                              <a
+                                href={proofUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-500 underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300"
+                              >
+                                <span>{t("items.didYouKnowSource")}</span>
+                                <Link2 className="size-3 shrink-0" />
+                              </a>
+                            ) : null}
+                            <FactSourceFooter fact={fact} />
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  )}
+
+                  {detailTableFacts.map((fact) => {
+                    const proofUrl = displayFactCitationUrl(fact.url);
+                    const valueNode = isTagLikeDetailFact(fact) && !proofUrl ? (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {splitTagValues(fact.value).map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : proofUrl ? (
+                      <a
+                        href={proofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:text-zinc-200 dark:hover:text-zinc-50"
+                      >
+                        <span>{fact.value}</span>
+                        <Link2 className="size-3 shrink-0 text-zinc-400" />
+                      </a>
+                    ) : (
+                      <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                        {fact.value}
+                      </span>
+                    );
+                    return (
+                      <div
+                        key={`${fact.kind}-${fact.label}-${fact.value}`}
+                        className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0"
+                      >
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                          {fact.label}
+                        </span>
+                        {valueNode}
+                        <FactSourceFooter fact={fact} />
+                      </div>
+                    );
+                  })}
 
                   {item?.metadata?.releaseDate &&
                     !isNaN(new Date(item.metadata.releaseDate).getTime()) && (

@@ -533,6 +533,8 @@
       "lastFetched": "Dernière mise à jour",
       "noMetadata": "Aucune métadonnée disponible pour cet objet.",
       "defaultMetadataImage": "Par défaut",
+      "appChoiceCover": "Meilleure source",
+      "appChoiceCoverDetail": "Choix automatique",
       "scannedImage": "Image du scan",
       "searchMetadata": "Rechercher des métadonnées",
       "search": "Rechercher",
@@ -617,6 +619,8 @@
     "estimatedCopyValueExplanation": "Basé sur l'état :",
     "referencePrices": "Détail des cotes de référence :",
     "providerLinks": "Sources & boutiques",
+    "didYouKnow": "Le saviez-vous ?",
+    "didYouKnowSource": "Source",
     "info": {
       "ageAndUp": "{age} ans et plus",
       "allAges": "Tout public",

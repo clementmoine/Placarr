@@ -11,6 +11,10 @@ import {
 } from "./pack";
 import { stampOnepieceBack } from "./onepieceBack";
 import { formatOnepieceReference } from "./printIdentity";
+import {
+  onepiecePrintFacts,
+  onepieceSealedDistributionCitation,
+} from "./sources/digCitations";
 
 export {
   ONEPIECE_EFFECT_PACK_ID,
@@ -47,6 +51,8 @@ const built = createEmptyLocalTcgProvider({
     },
     notes:
       "Bandai OPTCG → `data/onepiece/`. Titres FR/EN via punk-records (vegapull) ; DON!! via don-cardlist.pdf (`art.don-cardlist.webp`) ; faces cardlist Bandai (`art.bandai.webp`) ; scellé opecards.fr. Pas de client Unity foil Bandai → face plate.",
+    printFacts: onepiecePrintFacts,
+    sealedCitation: onepieceSealedDistributionCitation,
   },
   runPipeline: async (argv) => {
     const { withCardnexusPackFacesStep } = await import(

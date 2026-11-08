@@ -36,6 +36,7 @@ import {
   externalIdsFromStoredSources,
   providerRecordUrlsFromStoredSources,
 } from "@/core/enrich/scrapePassGate";
+import { SKU_KEY_MERGE_KEY } from "@/core/enrich/internalMergeKeys";
 import {
   mergeRomChecksums,
   romChecksumsFromIdentifierFacts,
@@ -167,13 +168,17 @@ async function storedProviderMemoryForItem(itemId: Item["id"]): Promise<{
     attachments: item.metadata?.attachments ?? [],
   };
 
+  const externalIds = externalIdsFromStoredSources({
+    facts,
+    fieldEvidence,
+  });
+  const skuKey = item.skuKey?.trim();
+  if (skuKey) externalIds[SKU_KEY_MERGE_KEY] = skuKey;
+
   return {
     scrapeProviderIds: scrapeProviderIdsFromStoredSources(sourceInput),
     ficheProviderIds: nonScrapeProviderIdsFromStoredSources(sourceInput),
-    externalIds: externalIdsFromStoredSources({
-      facts,
-      fieldEvidence,
-    }),
+    externalIds,
     providerRecordUrls: providerRecordUrlsFromStoredSources({
       facts,
       fieldEvidence,

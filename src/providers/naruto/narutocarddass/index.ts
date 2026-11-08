@@ -11,8 +11,10 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
+import { parseSealedSkuKey } from "@/core/collect/sealedOpen";
+import { SKU_KEY_MERGE_KEY } from "@/core/enrich/internalMergeKeys";
 import { parsePrintKey } from "@/core/identify/printKey";
-import type { MetadataResult } from "@/types/metadataProvider";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
   ProviderCatalogHooks,
@@ -20,6 +22,7 @@ import type {
 } from "@/types/providerModule";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
 import { defineProvider } from "@/providers/shared/defineProvider";
+import { resolveSealedPackshotUrl } from "@/providers/shared/sealedProducts/packshotUrl";
 import narutoBoosterComposition from "./curated/booster-composition.json";
 import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
 
@@ -40,7 +43,7 @@ import {
   matchNarutoPrintsAssetRest,
   resolveNarutoPrintFace,
 } from "./printFaceResolve";
-import { narutoPrintFacts } from "./identity";
+import { narutoPrintFacts, NARUTO_PACK_ID } from "./identity";
 import {
   narutoAssetsCardUrl,
   narutoCardPathFromCollector,
@@ -51,7 +54,11 @@ import {
   buildNarutoDiskArtAttachments,
   resolveNarutoArtDiskNumber,
 } from "./diskArtAttachments";
-import { NARUTO_PACK_ID } from "./identity";
+import { NARUTO_SEALED_SKUS } from "./sealed";
+import {
+  narutoSealedDistributionCitation,
+  narutoStoryFactsForSealedSlug,
+} from "./sources/digCitations";
 import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./sources/priceSourceId";
 import { refreshNarutoIndicativePriceOffers } from "./sources/prices";
 import {
@@ -91,6 +98,7 @@ const DATA_PACK = "naruto/carddass";
 const narutocarddassCatalogHooks = cardCatalogueHooks({
   packId: DATA_PACK,
   effectPackId: NARUTO_CARDDASS_EFFECT_PACK_ID,
+  printGame: "naruto",
   dbPath: narutoCcgDbPath,
   runPipeline: async (argv) => {
     /*
@@ -120,7 +128,61 @@ const PROVIDER_LABEL = "Naruto CCG";
 const PROBE_PRINT_KEY = "naruto:s1-ni001";
 const PROBE_CARD_NAME = "Naruto Uzumaki";
 
+function resolveSealedFromLocal(
+  ctx: MetadataAdapterContext,
+): MetadataResult | null {
+  const skuKey = ctx.externalIds?.[SKU_KEY_MERGE_KEY]?.trim() || "";
+  const parsed = parseSealedSkuKey(skuKey);
+  if (!parsed || parsed.packId !== NARUTO_PACK_ID) return null;
+  const spec = NARUTO_SEALED_SKUS.find((row) => row.slug === parsed.slug);
+  if (!spec?.name?.trim()) return null;
+
+  const citation = narutoSealedDistributionCitation(parsed.slug);
+  const facts: MetadataFact[] = [];
+  if (citation) {
+    facts.push({
+      kind: "category",
+      label: "Distribution",
+      value: citation.label,
+      source: PROVIDER_ID,
+      url: citation.url,
+      confidence: 0.85,
+      priority: 34,
+    });
+  }
+  for (const story of narutoStoryFactsForSealedSlug(parsed.slug)) {
+    facts.push({
+      kind: story.kind,
+      label: story.label,
+      value: story.value,
+      source: PROVIDER_ID,
+      url: story.url,
+      confidence: story.confidence,
+      priority: story.priority,
+    });
+  }
+
+  const face = resolveSealedPackshotUrl({
+    packId: NARUTO_PACK_ID,
+    slug: parsed.slug,
+    lang: spec.lang ?? "fr",
+  });
+
+  return {
+    title: spec.name.trim(),
+    ...(face ? { imageUrl: face } : {}),
+    ...(facts.length ? { facts } : {}),
+    externalIds: {
+      [PROVIDER_ID]: skuKey,
+      skuKey,
+    },
+  };
+}
+
 function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
+  const sealed = resolveSealedFromLocal(ctx);
+  if (sealed) return sealed;
+
   const printKey =
     ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim() || "";
   if (!printKey) return null;
@@ -148,6 +210,10 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     lang,
     source: PROVIDER_ID,
     title,
+    sourceUrl: row.sourceUrl,
+    indexedArt: row.art,
+    artKind: row.artKind,
+    watermarked: row.watermarked,
   });
   const face =
     disk.defaultUrl ||

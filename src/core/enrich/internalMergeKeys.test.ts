@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isInternalMetadataMergeKey,
   metadataForCachedFicheMerge,
+  SKU_KEY_MERGE_KEY,
 } from "./internalMergeKeys";
 
 describe("metadataForCachedFicheMerge", () => {
@@ -43,5 +44,6 @@ describe("metadataForCachedFicheMerge", () => {
       "identifier",
     ]);
     expect(isInternalMetadataMergeKey("__cached_fiche__")).toBe(true);
+    expect(isInternalMetadataMergeKey(SKU_KEY_MERGE_KEY)).toBe(true);
   });
 });

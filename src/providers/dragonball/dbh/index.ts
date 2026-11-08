@@ -14,6 +14,10 @@ import {
   formatDbhReference,
   normalizeDbhSearchQuery,
 } from "./printKey";
+import {
+  dbhPrintFacts,
+  dbhSealedDistributionCitation,
+} from "./sources/digCitations";
 
 export {
   DBH_EFFECT_PACK_ID,
@@ -48,6 +52,8 @@ const built = createEmptyLocalTcgProvider({
     websiteUrl: "https://www.carddass.com/dbh/cardlist/",
     notes:
       "Dragon Ball Heroes / Super DBH → `data/dragonball/heroes/`. Cardlist officiel JA carddass.com. Pas de trad EN inventée.",
+    printFacts: dbhPrintFacts,
+    sealedCitation: dbhSealedDistributionCitation,
   },
   runPipeline: async (argv) => {
     const { runDbhPackPipeline } = await import(

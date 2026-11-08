@@ -173,6 +173,88 @@ describe("createLocalPrintsIndex", () => {
     expect(index.lookupRow("naruto:sd-0001")?.art).toBe("art.inkworks.jpg");
   });
 
+  it("drops gallery / list hub sourceUrls at write (keeps deep fiches)", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:sd-hub",
+        setCode: "sd",
+        number: "0099",
+        cardType: "sd",
+        sourceUrl: "https://narutocardguide.com/cards-list/",
+        titles: [{ lang: "en", fullName: "Hub" }],
+      },
+      {
+        printKey: "naruto:sd-deep",
+        setCode: "sd",
+        number: "0100",
+        cardType: "sd",
+        sourceUrl: "https://cardnexus.com/product/212092",
+        titles: [{ lang: "en", fullName: "Deep" }],
+      },
+    ]);
+    index.writeAssets([
+      {
+        printKey: "naruto:sd-hub",
+        lang: "en",
+        art: "art.jpg",
+        sourceUrl: "https://www.scanflip.fr/fr/naruto-mythos/cards",
+      },
+      {
+        printKey: "naruto:sd-deep",
+        lang: "en",
+        art: "art.jpg",
+        sourceUrl: "https://cardnexus.com/product/212092",
+      },
+    ]);
+    expect(index.lookupRow("naruto:sd-hub", { language: "en" })?.sourceUrl).toBeNull();
+    expect(index.lookupRow("naruto:sd-deep", { language: "en" })?.sourceUrl).toBe(
+      "https://cardnexus.com/product/212092",
+    );
+  });
+
+  it("stamps art_kind / watermarked at write (basename fill + dig override)", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:sd-0002",
+        setCode: "sd",
+        number: "0002",
+        cardType: "sd",
+        titles: [{ lang: "en", fullName: "Sample" }],
+      },
+      {
+        printKey: "naruto:sd-0003",
+        setCode: "sd",
+        number: "0003",
+        cardType: "sd",
+        titles: [{ lang: "en", fullName: "Override" }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "naruto:sd-0002", lang: "en", art: "art.sample.jpg" },
+      {
+        printKey: "naruto:sd-0003",
+        lang: "en",
+        art: "art.coleka.webp",
+        artKind: "sample",
+        watermarked: true,
+      },
+    ]);
+    expect(index.lookupRow("naruto:sd-0002", { language: "en" })).toMatchObject({
+      art: "art.sample.jpg",
+      artKind: "sample",
+      watermarked: 1,
+    });
+    expect(index.lookupRow("naruto:sd-0003", { language: "en" })).toMatchObject({
+      art: "art.coleka.webp",
+      artKind: "sample",
+      watermarked: 1,
+    });
+  });
+
   it("lookupAssets prefers the requested lang then any art", () => {
     tmpDataRoot();
     const index = createLocalPrintsIndex("naruto/ninja-ranks");

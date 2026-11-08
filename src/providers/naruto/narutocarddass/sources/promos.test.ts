@@ -6,7 +6,7 @@ import dig from "../curated/sources/ebay-tin-metal-hunt-2026-08-29.json";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { NARUTO_SEALED_SKUS } from "../sealed";
 import { ebayIngestPackshots } from "./packshots";
-import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, groupingFromDiskCardId, mergeAttestedPromos, type AttestedPromoRow, colekaUsPromoLedgerPath, loadColekaUsPromoLedger, mergeColekaUsPromosIntoIndex, parseColekaUsPromoLedgerFromStaging, loadS1FrPrerelease, materializeS1FrPrereleaseIdenticalRetailFaces, mergeS1FrPrerelease, s1FrPrereleasePrintKey, belongsOnNarutoPromoChecklist, digCollectorForm } from "./promos";
+import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoCitationUrl, attestedPromoPrintKey, groupingFromDiskCardId, mergeAttestedPromos, type AttestedPromoRow, colekaUsPromoLedgerPath, loadColekaUsPromoLedger, mergeColekaUsPromosIntoIndex, parseColekaUsPromoLedgerFromStaging, loadS1FrPrerelease, materializeS1FrPrereleaseIdenticalRetailFaces, mergeS1FrPrerelease, s1FrPrereleasePrintKey, belongsOnNarutoPromoChecklist, digCollectorForm } from "./promos";
 
 // —— attestedPairs ——
 {
@@ -27,6 +27,23 @@ import { narutoAttestedPairOf, narutoIsAttestedPair, attestedPromoPrintKey, grou
       expect(groupingFromDiskCardId("te030", "te030-cdf")).toBe("cdf");
       expect(groupingFromDiskCardId("ni063", "ni063")).toBeNull();
       expect(groupingFromDiskCardId("ni063", undefined)).toBeNull();
+    });
+
+    it("picks the first openable dig URL (skips staging path / shallow hub)", () => {
+      expect(
+        attestedPromoCitationUrl([
+          { id: "staging", path: "staging/carddass-fr/pages/x.htm" },
+          { id: "hub", url: "https://narutocarddassfrance.1fr1.net/" },
+          {
+            id: "ncf-t544",
+            url: "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+          },
+        ]),
+      ).toBe(
+        "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+      );
+      expect(attestedPromoCitationUrl([{ id: "only-path", path: "x" }])).toBeNull();
+      expect(attestedPromoCitationUrl(undefined)).toBeNull();
     });
 
     it("builds promo printKeys", () => {

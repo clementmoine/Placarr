@@ -127,6 +127,20 @@ export function mythosPrintFacts(printKey: string | null | undefined): MetadataF
       priority: 34,
       providerLabel: "Naruto Mythos",
     });
+    const claim = dig.proof.tweet.claimFr?.trim();
+    if (claim && tweetUrl) {
+      facts.push({
+        kind: "story",
+        label: "Le saviez-vous ?",
+        value: claim,
+        url: tweetUrl,
+        source: NARUTO_MYTHOS_PROVIDER_ID,
+        sourceNames: ["Naruto Mythos TCG", "Kana"],
+        confidence: 0.9,
+        priority: 28,
+        providerLabel: "Naruto Mythos",
+      });
+    }
   }
   return facts;
 }

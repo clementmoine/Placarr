@@ -3,14 +3,19 @@
  * Provider id `dbscg`; printKey game slug `dbscg`. Fusion World is `dbsfw`.
  */
 import { catalogAliasesFromNames } from "@/core/enrich/aliases";
+import { SKU_KEY_MERGE_KEY } from "@/core/enrich/internalMergeKeys";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { createDbsCatalogModule } from "@/providers/dragonball/shared/dbs/createDbsCatalogModule";
+import { buildCatalogueDiskFaceAttachments } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 
 import { dbsCgPrintFacts } from "./facts";
 import {
+  DBS_CG_PACK_ID,
+  dbsCgCardFolder,
   dbsCgDbPath,
+  dbsCgLocalArtFilename,
   ensureDbsCgIndex,
   listDbsCgPrintSets,
 } from "./indexStore";
@@ -23,6 +28,10 @@ import {
 } from "./search";
 import dbscgBoosterComposition from "./curated/booster-composition.json";
 import type { BoosterCompositionFile } from "@/providers/shared/sealedProducts/boosterComposition";
+import {
+  dbsCgDigPrintFacts,
+  dbsCgSealedMetadataResult,
+} from "./sources/digCitations";
 
 const PROVIDER_ID = "dbscg";
 const PROVIDER_LABEL = "Dragon Ball Super Card Game";
@@ -31,6 +40,12 @@ const PROBE_PRINT_KEY = "dbscg:bt1-001";
 const PROBE_CARD_NAME = "Champa";
 
 function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
+  const skuKey = ctx.externalIds?.[SKU_KEY_MERGE_KEY]?.trim() || "";
+  if (skuKey) {
+    const sealed = dbsCgSealedMetadataResult(skuKey, PROVIDER_ID);
+    if (sealed) return sealed;
+  }
+
   const printKey =
     ctx.printKey?.trim() || ctx.externalIds?.printKey?.trim() || "";
   if (!printKey) return null;
@@ -51,11 +66,34 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     other?.character,
   ]);
 
+  const lang = (row.lang || "fr").toLowerCase();
+  const diskId = {
+    set: row.setCode.trim().toLowerCase(),
+    lang,
+    card: dbsCgCardFolder(row),
+  };
+  const preferredArt = dbsCgLocalArtFilename(row, lang);
+  const diskFaces = buildCatalogueDiskFaceAttachments({
+    packId: DBS_CG_PACK_ID,
+    diskId,
+    preferredArt,
+    providerId: PROVIDER_ID,
+    printGame: DBS_CG_GAME,
+    title,
+  });
+  const imageUrl = diskFaces.defaultUrl ?? row.imageUrl ?? undefined;
+
   return {
     title,
-    ...(row.imageUrl ? { imageUrl: row.imageUrl } : {}),
+    ...(imageUrl ? { imageUrl } : {}),
+    ...(diskFaces.attachments.length
+      ? { attachments: diskFaces.attachments }
+      : {}),
     ...(aliases?.length ? { aliases } : {}),
-    facts: dbsCgPrintFacts(row, PROVIDER_ID),
+    facts: [
+      ...dbsCgPrintFacts(row, PROVIDER_ID),
+      ...dbsCgDigPrintFacts(printKey, PROVIDER_ID),
+    ],
     externalIds: {
       [PROVIDER_ID]: printKey,
       printKey,

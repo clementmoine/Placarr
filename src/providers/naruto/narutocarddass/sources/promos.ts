@@ -12,6 +12,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
@@ -44,7 +45,7 @@ import {
   parseColekaUsPromoListing,
 } from "../parse/coleka";
 import type { ColekaUsPromoCard } from "../parse/coleka";
-import { fetchColekaListingHtml } from "./faces";
+import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 
 const ledger = readNarutoCarddassSyncedSource("coleka-us-promos.json");
 
@@ -158,6 +159,21 @@ export type AttestedPromoRow = {
   /** Evidence (forum / marketplace / archived site pages). */
   sources?: AttestedPromoSource[];
 };
+
+/**
+ * First dig URL that opens a verifiable public document (forum post, YT watch…).
+ * Staging `path` rows and shallow hubs are skipped — no homepage stand-in.
+ */
+export function attestedPromoCitationUrl(
+  sources: readonly AttestedPromoSource[] | null | undefined,
+): string | null {
+  if (!sources?.length) return null;
+  for (const entry of sources) {
+    const openable = sanitizePublicCitationUrl(entry.url);
+    if (openable) return openable;
+  }
+  return null;
+}
 
 type AttestedPromosFile = {
   promos?: AttestedPromoRow[];

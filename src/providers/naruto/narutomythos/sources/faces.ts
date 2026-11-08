@@ -16,6 +16,7 @@ import path from "node:path";
 
 import sharp from "sharp";
 
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { httpGet } from "@/lib/http/httpClient";
 import {
@@ -1132,7 +1133,8 @@ export async function installOfficialMythosFaces(
       printKey,
       lang,
       art,
-      sourceUrl: print.faceUrl ?? OFFICIAL_API,
+      // Face CDN / fiche only — never the API list hub as Affiche proof.
+      sourceUrl: sanitizePublicCitationUrl(print.faceUrl),
     });
   }
 

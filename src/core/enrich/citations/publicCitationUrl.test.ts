@@ -45,4 +45,28 @@ describe("publicCitationUrl", () => {
       sanitizePublicCitationUrl("https://www.okkazeo.com/jeu/black-stories/1"),
     ).toBe("https://www.okkazeo.com/jeu/black-stories/1");
   });
+
+  it("rejects gallery / list / API hubs (not a specific fiche)", () => {
+    expect(
+      sanitizePublicCitationUrl("https://www.narutotcgmythos.com/fr/galerie"),
+    ).toBeNull();
+    expect(
+      sanitizePublicCitationUrl(
+        "https://www.scanflip.fr/fr/naruto-mythos/cards",
+      ),
+    ).toBeNull();
+    expect(
+      sanitizePublicCitationUrl(
+        "https://cards.narutotcgmythos.com/api/cards",
+      ),
+    ).toBeNull();
+    expect(
+      sanitizePublicCitationUrl("https://narutocardguide.com/cards-list/"),
+    ).toBeNull();
+    expect(
+      sanitizePublicCitationUrl(
+        "https://www.dbscards.fr/cards/bt2-103-r-frappe-cruelle",
+      ),
+    ).toBe("https://www.dbscards.fr/cards/bt2-103-r-frappe-cruelle");
+  });
 });

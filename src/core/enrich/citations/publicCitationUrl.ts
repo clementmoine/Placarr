@@ -34,6 +34,24 @@ const SHALLOW_SEGMENTS = new Set([
   "2v2",
 ]);
 
+/**
+ * Final path segment that means a list / API hub, not a card or article.
+ * `/fr/galerie`, `/fr/naruto-mythos/cards`, `/api/cards` — not `/cards/ks-001`.
+ */
+const HUB_TAIL_SEGMENTS = new Set([
+  "galerie",
+  "gallery",
+  "cards",
+  "cardlist",
+  "cards-list",
+  "catalog",
+  "catalogue",
+  "browse",
+  "search",
+  "products",
+  "api",
+]);
+
 const WAYBACK_HOST_RE = /^(?:www\.)?web\.archive\.org$/i;
 
 export function isWaybackHost(hostname: string): boolean {
@@ -91,6 +109,10 @@ export function isSiteRootOrShallowCitationUrl(url: string): boolean {
       const only = segments[0]!.toLowerCase();
       if (SHALLOW_SEGMENTS.has(only)) return true;
     }
+    // JSON/API endpoints are not collector-facing proofs.
+    if (segments.some((seg) => seg.toLowerCase() === "api")) return true;
+    const last = segments[segments.length - 1]!.toLowerCase();
+    if (HUB_TAIL_SEGMENTS.has(last)) return true;
     return false;
   } catch {
     return true;

@@ -5,6 +5,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 import {
@@ -357,7 +358,8 @@ export function buildMythosFromLedgers(
         number,
         cardType: setCode,
         grouping,
-        sourceUrl: ledger.url,
+        // Gallery hubs (`/fr/galerie`) are not openable citations — prefer null.
+        sourceUrl: sanitizePublicCitationUrl(ledger.url),
         titles,
       });
     }

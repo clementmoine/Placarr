@@ -1,67 +1,43 @@
 /**
  * One cover attachment per `art.<source>.*` on disk for a Naruto Carddass print.
- * Same contract as Pokémon `buildPokemonDiskArtAttachments` — ItemModal / enrich
- * stay provider-blind; they just rank attachments.
+ * Path resolve stays pack-local; Affiche mint → shared
+ * {@link buildCatalogueDiskFaceAttachments}.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { packCardsDir } from "@/lib/packPaths";
-import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
+import { buildCatalogueDiskFaceAttachments } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import { narutoRetailDiskNumber } from "./identity";
 import { NARUTO_PACK_ID } from "./packs";
 import {
-  NARUTO_FACE_DECISION_FILE,
-  narutoAssetsCardUrl,
+  NARUTO_SPECIAL_ART_RE,
   narutoCardPathFromCollector,
   narutoFaceCoverProvenance,
   narutoFaceSourceOf,
-  parseNarutoFaceDecision,
 } from "./disk";
 import { pickPreferredFaceArtFilename } from "./parse/bandai";
-
-const SPECIAL_ART = /^art\.(reconstructed|corrected)\.(jpe?g|png|webp|gif)$/i;
 
 export function listNarutoArtFiles(cardDir: string): string[] {
   if (!existsSync(cardDir) || !statSync(cardDir).isDirectory()) return [];
   return readdirSync(cardDir).filter((name) => {
     const low = name.toLowerCase();
     if (!low.startsWith("art.")) return false;
-    if (SPECIAL_ART.test(name)) return false;
+    if (NARUTO_SPECIAL_ART_RE.test(name)) return true;
     return narutoFaceSourceOf(name) != null;
   });
 }
 
 /**
- * Winner shown as the card face: `face.json` (incl. reconstructed/corrected),
- * else highest `faceArtRank` among files on disk.
+ * Winner shown as the card face: shared catalogue rank (+ Naruto dump order).
+ * `face.json` is not SSOT — sync / Affiche re-rank from stamped criteria.
  */
 export function resolveNarutoDiskArtFilename(cardDir: string): string | null {
   if (!existsSync(cardDir) || !statSync(cardDir).isDirectory()) return null;
   const files = readdirSync(cardDir);
-
-  const decisionPath = path.join(cardDir, NARUTO_FACE_DECISION_FILE);
-  if (existsSync(decisionPath)) {
-    try {
-      const named = parseNarutoFaceDecision(
-        readFileSync(decisionPath, "utf8"),
-        "art",
-      );
-      if (
-        named &&
-        files.includes(named) &&
-        (SPECIAL_ART.test(named) || narutoFaceSourceOf(named) != null)
-      ) {
-        return named;
-      }
-    } catch {
-      /* fall through */
-    }
-  }
-
   return (
     pickPreferredFaceArtFilename(files) ?? listNarutoArtFiles(cardDir)[0] ?? null
   );
@@ -74,7 +50,7 @@ function faceRoleOf(file: string): string {
 }
 
 function faceProvenanceOf(file: string): "catalog" | "listing_photo" {
-  if (SPECIAL_ART.test(file)) return "catalog";
+  if (NARUTO_SPECIAL_ART_RE.test(file)) return "catalog";
   const source = narutoFaceSourceOf(file);
   if (!source) return "catalog";
   return narutoFaceCoverProvenance(source);
@@ -268,6 +244,14 @@ export function buildNarutoDiskArtAttachments(opts: {
   lang: string;
   source: string;
   title?: string | null;
+  /** Proof URL from print_assets / dig (Affiche chip). */
+  sourceUrl?: string | null;
+  /** Indexed winner basename — stamps apply only to this file. */
+  indexedArt?: string | null;
+  /** `print_assets.art_kind` for the indexed winner. */
+  artKind?: string | null;
+  /** `print_assets.watermarked` for the indexed winner. */
+  watermarked?: boolean | number | null;
   /** Override cards root (tests). */
   cardsRoot?: string;
 }): { attachments: MetadataAttachment[]; defaultUrl: string | null } {
@@ -301,30 +285,23 @@ export function buildNarutoDiskArtAttachments(opts: {
     return { attachments: [], defaultUrl: null };
   }
 
-  const defaultUrl = defaultArt
-    ? narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, defaultArt)
-    : null;
-
-  const ordered = defaultArt
-    ? [defaultArt, ...arts.filter((a) => a !== defaultArt)]
-    : arts;
-
-  const faceLang = opts.lang.trim().toLowerCase();
-  const attachments: MetadataAttachment[] = ordered.map((file) => {
-    const faceSource = faceRoleOf(file);
-    return {
-      type: "cover",
-      url: narutoAssetsCardUrl(NARUTO_PACK_ID, pathId, file),
-      title: opts.title?.trim() || faceSource,
-      role: tcgFaceAttachmentRole({
-        printGame: "naruto",
-        lang: faceLang,
-        source: faceSource,
-      }),
-      source: opts.source,
-      coverProvenance: faceProvenanceOf(file),
-    };
+  return buildCatalogueDiskFaceAttachments({
+    packId: NARUTO_PACK_ID,
+    diskId: {
+      set: pathId.set,
+      lang: pathId.lang,
+      card: pathId.diskId,
+    },
+    preferredArt: defaultArt,
+    indexedWinnerArt: opts.indexedArt?.trim() || defaultArt,
+    providerId: opts.source,
+    printGame: "naruto",
+    title: opts.title?.trim() || "",
+    proofUrl: opts.sourceUrl,
+    winnerArtKind: opts.artKind,
+    winnerWatermarked: opts.watermarked,
+    artFiles: arts.length ? arts : defaultArt ? [defaultArt] : [],
+    sourceTokenForFile: faceRoleOf,
+    coverProvenanceForFile: faceProvenanceOf,
   });
-
-  return { attachments, defaultUrl };
 }

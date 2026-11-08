@@ -14,6 +14,10 @@ import {
   formatBleachScbReference,
   normalizeBleachScbSearchQuery,
 } from "./printKey";
+import {
+  bleachScbPrintFacts,
+  bleachScbSealedDistributionCitation,
+} from "./sources/digCitations";
 
 export {
   BLEACH_SCB_EFFECT_PACK_ID,
@@ -49,6 +53,8 @@ const built = createEmptyLocalTcgProvider({
     websiteUrl: "http://www.carddass.fr/bleach/",
     notes:
       "Bandai Soul Card Battle (Carddass) → `data/bleach/scb/`. Original JA (nikita S-/B-/E-/Z-) + FR (carddass.fr A/C/E/Z). Pas Union Arena ni Bleach TCG Score US.",
+    printFacts: bleachScbPrintFacts,
+    sealedCitation: bleachScbSealedDistributionCitation,
   },
   runPipeline: async (argv) => {
     const { runBleachScbPackPipeline } = await import(

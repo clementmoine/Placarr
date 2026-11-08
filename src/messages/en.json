@@ -533,6 +533,8 @@
       "lastFetched": "Last fetched",
       "noMetadata": "No metadata available for this item.",
       "defaultMetadataImage": "Default",
+      "appChoiceCover": "Best source",
+      "appChoiceCoverDetail": "Automatic choice",
       "scannedImage": "Scanned image",
       "searchMetadata": "Search metadata",
       "search": "Search",
@@ -617,6 +619,8 @@
     "estimatedCopyValueExplanation": "Based on condition:",
     "referencePrices": "Reference price details:",
     "providerLinks": "Sources & stores",
+    "didYouKnow": "Did you know?",
+    "didYouKnowSource": "Source",
     "info": {
       "ageAndUp": "{age} and up",
       "allAges": "Everyone",

@@ -7,10 +7,12 @@
  * première carte pour que le catalogue « ait l'air peuplé » serait un faux
  * positif.
  */
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import type { CardsIndexEntry, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCatalogDb } from "@/lib/packPaths";
 
@@ -44,6 +46,12 @@ export type LocalPrintSearchRow = {
   back: string | null;
   /** Sqlite 0/1 — false/0 = not cardboard in this locale. */
   printed?: number | boolean | null;
+  /** Proof URL for the face dump (print_assets.source_url). */
+  sourceUrl?: string | null;
+  /** Ingest-stamped face meta (print_assets.art_kind). */
+  artKind?: string | null;
+  /** Ingest-stamped watermark flag (print_assets.watermarked). */
+  watermarked?: boolean | null;
 };
 
 /** Face attestée — le fichier est déjà sous `cards/`, on n'enregistre que le nom. */
@@ -53,6 +61,9 @@ export type LocalPrintAssetWrite = {
   art?: string;
   back?: string;
   sourceUrl?: string | null;
+  /** Dig observation — preferred over basename at write. */
+  artKind?: string | null;
+  watermarked?: boolean | null;
 };
 
 /** Une ligne à poser dans l'index — titres attestés, faces plus tard. */
@@ -170,7 +181,10 @@ const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.num
               p.card_type AS cardType, p.grouping, p.category,
               t.lang, t.full_name AS fullName, t.rarity,
               a.art, a.thumb, a.back,
-              COALESCE(a.printed, 1) AS printed
+              COALESCE(a.printed, 1) AS printed,
+              a.source_url AS sourceUrl,
+              a.art_kind AS artKind,
+              a.watermarked AS watermarked
          FROM prints p
          LEFT JOIN print_titles t ON t.print_key = p.print_key
          LEFT JOIN print_assets a
@@ -191,7 +205,10 @@ const SELECT_ROW = `SELECT p.print_key AS printKey, p.set_code AS setCode, p.num
 */
 const SELECT_ORPHAN_ASSETS = `SELECT a.print_key AS printKey, p.card_type AS cardType,
               p.number, a.lang, a.art, a.thumb, a.back,
-              COALESCE(a.printed, 1) AS printed
+              COALESCE(a.printed, 1) AS printed,
+              a.source_url AS sourceUrl,
+              a.art_kind AS artKind,
+              a.watermarked AS watermarked
          FROM print_assets a
          JOIN prints p ON p.print_key = a.print_key
         WHERE NOT EXISTS (
@@ -204,6 +221,8 @@ const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
 
 const ADDED_ASSET_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
   { name: "printed", ddl: "INTEGER NOT NULL DEFAULT 1" },
+  { name: "art_kind", ddl: "TEXT" },
+  { name: "watermarked", ddl: "INTEGER" },
 ];
 
 function migrateTableColumns(
@@ -242,6 +261,8 @@ export function migrateLocalPrintsSchema(db: DatabaseSync): void {
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_print_sets_set ON print_sets(set_code);
+    CREATE INDEX IF NOT EXISTS idx_prints_browse ON prints(set_code, number);
+    CREATE INDEX IF NOT EXISTS idx_print_titles_lang_key ON print_titles(lang, print_key);
   `);
 }
 
@@ -273,6 +294,8 @@ export function createPrintsSchema(db: DatabaseSync): void {
       thumb TEXT,
       back TEXT,
       source_url TEXT,
+      art_kind TEXT,
+      watermarked INTEGER,
       printed INTEGER NOT NULL DEFAULT 1,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
@@ -288,9 +311,43 @@ export function createPrintsSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_prints_set ON prints(set_code);
     CREATE INDEX IF NOT EXISTS idx_print_sets_set ON print_sets(set_code);
     CREATE INDEX IF NOT EXISTS idx_print_titles_lang ON print_titles(lang);
+    CREATE INDEX IF NOT EXISTS idx_prints_browse ON prints(set_code, number);
+    CREATE INDEX IF NOT EXISTS idx_print_titles_lang_key ON print_titles(lang, print_key);
   `);
   migrateLocalPrintsSchema(db);
   migrateProductsSchema(db);
+}
+
+/** Process-level browse COUNT cache — keyed by pack + db mtime + filter. */
+const browseTotalCache = new Map<string, number>();
+
+const indexSingletons = new Map<string, LocalPrintsIndex>();
+
+/**
+ * Reuse one {@link LocalPrintsIndex} per pack across admin requests so
+ * migrate/open is paid once (Magic ~100k rows).
+ */
+export function getLocalPrintsIndex(packId: string): LocalPrintsIndex {
+  const existing = indexSingletons.get(packId);
+  if (existing) return existing;
+  const created = createLocalPrintsIndex(packId);
+  indexSingletons.set(packId, created);
+  return created;
+}
+
+/** Test / Sync seam — drop cached handles after corpus rewrite. */
+export function clearLocalPrintsIndexSingletons(packId?: string): void {
+  if (packId) {
+    indexSingletons.get(packId)?.resetCache();
+    indexSingletons.delete(packId);
+    for (const key of [...browseTotalCache.keys()]) {
+      if (key.startsWith(`${packId}\0`)) browseTotalCache.delete(key);
+    }
+    return;
+  }
+  for (const index of indexSingletons.values()) index.resetCache();
+  indexSingletons.clear();
+  browseTotalCache.clear();
 }
 
 export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
@@ -307,6 +364,9 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     }
     activeDb = null;
     activePath = null;
+    for (const key of [...browseTotalCache.keys()]) {
+      if (key.startsWith(`${packId}\0`)) browseTotalCache.delete(key);
+    }
   };
 
   const ensure = (): DatabaseSync | null => {
@@ -645,16 +705,27 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     }
     const whereSql = where.join(" AND ");
     try {
-      const totalRow = db
-        .prepare(
-          `SELECT COUNT(*) AS n
-             FROM prints p
-             JOIN print_titles t ON t.print_key = p.print_key
-             LEFT JOIN print_assets a
-                    ON a.print_key = p.print_key AND a.lang = t.lang
-            WHERE ${whereSql}`,
-        )
-        .get(...params) as { n: number };
+      let total: number;
+      const file = dbPath();
+      const mtime = existsSync(file) ? statSync(file).mtimeMs : 0;
+      const totalKey = `${packId}\0${mtime}\0${whereSql}\0${JSON.stringify(params)}`;
+      const cachedTotal = browseTotalCache.get(totalKey);
+      if (cachedTotal != null) {
+        total = cachedTotal;
+      } else {
+        const totalRow = db
+          .prepare(
+            `SELECT COUNT(*) AS n
+               FROM prints p
+               JOIN print_titles t ON t.print_key = p.print_key
+               LEFT JOIN print_assets a
+                      ON a.print_key = p.print_key AND a.lang = t.lang
+              WHERE ${whereSql}`,
+          )
+          .get(...params) as { n: number };
+        total = Number(totalRow?.n ?? 0);
+        browseTotalCache.set(totalKey, total);
+      }
       const rows = db
         .prepare(
           `${SELECT_ROW}
@@ -663,7 +734,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
             LIMIT ? OFFSET ?`,
         )
         .all(...params, limit, offset) as LocalPrintSearchRow[];
-      return { rows, total: Number(totalRow?.n ?? 0) };
+      return { rows, total };
     } catch {
       return { rows: [], total: 0 };
     }
@@ -698,44 +769,49 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
          VALUES (?, ?)
          ON CONFLICT(print_key, set_code) DO NOTHING`,
       );
-      db.exec("BEGIN IMMEDIATE");
-      try {
-        for (const row of rows) {
-          insertPrint.run(
-            row.printKey,
-            row.setCode,
-            row.number,
-            row.cardType,
-            row.grouping ?? null,
-            row.sourceUrl ?? null,
-            row.category?.trim() || null,
-          );
-          const membership = [
-            ...new Set(
-              [row.setCode, ...(row.setCodes ?? [])]
-                .map((code) => code.trim().toLowerCase())
-                .filter(Boolean),
-            ),
-          ];
-          for (const setCode of membership) {
-            insertPrintSet.run(row.printKey, setCode);
-          }
-          for (const title of row.titles) {
-            const name = title.fullName.trim();
-            if (!name) continue;
-            insertTitle.run(
+      // Batch commits so Magic-scale (~100k) seeds do not hold one giant lock.
+      const BATCH = 5_000;
+      for (let start = 0; start < rows.length; start += BATCH) {
+        const slice = rows.slice(start, start + BATCH);
+        db.exec("BEGIN IMMEDIATE");
+        try {
+          for (const row of slice) {
+            insertPrint.run(
               row.printKey,
-              title.lang?.trim().toLowerCase(),
-              name,
-              title.rarity?.trim() || null,
+              row.setCode,
+              row.number,
+              row.cardType,
+              row.grouping ?? null,
+              sanitizePublicCitationUrl(row.sourceUrl),
+              row.category?.trim() || null,
             );
-            titles += 1;
+            const membership = [
+              ...new Set(
+                [row.setCode, ...(row.setCodes ?? [])]
+                  .map((code) => code.trim().toLowerCase())
+                  .filter(Boolean),
+              ),
+            ];
+            for (const setCode of membership) {
+              insertPrintSet.run(row.printKey, setCode);
+            }
+            for (const title of row.titles) {
+              const name = title.fullName.trim();
+              if (!name) continue;
+              insertTitle.run(
+                row.printKey,
+                title.lang?.trim().toLowerCase(),
+                name,
+                title.rarity?.trim() || null,
+              );
+              titles += 1;
+            }
           }
+          db.exec("COMMIT");
+        } catch (error) {
+          db.exec("ROLLBACK");
+          throw error;
         }
-        db.exec("COMMIT");
-      } catch (error) {
-        db.exec("ROLLBACK");
-        throw error;
       }
     } finally {
       db.close();
@@ -839,12 +915,16 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     let assets = 0;
     try {
       const upsert = db.prepare(
-        `INSERT INTO print_assets (print_key, lang, art, back, source_url, printed)
-         VALUES (?, ?, ?, ?, ?, 1)
+        `INSERT INTO print_assets (
+           print_key, lang, art, back, source_url, art_kind, watermarked, printed
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1)
          ON CONFLICT(print_key, lang) DO UPDATE SET
            art = COALESCE(excluded.art, print_assets.art),
            back = COALESCE(excluded.back, print_assets.back),
-           source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
+           source_url = COALESCE(excluded.source_url, print_assets.source_url),
+           art_kind = COALESCE(excluded.art_kind, print_assets.art_kind),
+           watermarked = COALESCE(excluded.watermarked, print_assets.watermarked)`,
       );
       const printExists = db.prepare(
         `SELECT 1 AS ok FROM prints WHERE print_key = ? LIMIT 1`,
@@ -858,12 +938,19 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
           const printKey = row.printKey?.trim().toLowerCase();
           if (!printKey) continue;
           if (!printExists.get(printKey)) continue;
+          const meta = resolveFaceArtMetaForDig({
+            artFile: art,
+            artKind: row.artKind,
+            watermarked: row.watermarked,
+          });
           upsert.run(
             printKey,
             row.lang?.trim().toLowerCase(),
             art,
             back,
-            row.sourceUrl ?? null,
+            sanitizePublicCitationUrl(row.sourceUrl),
+            meta.artKind,
+            meta.watermarked ? 1 : 0,
           );
           assets += 1;
         }

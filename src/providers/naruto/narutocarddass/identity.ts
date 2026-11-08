@@ -28,7 +28,17 @@ import {
 } from "./parse/catalogues";
 import { listNarutoCardDirs } from "./disk";
 import { type NarutoPrintRow, type NarutoTitleRow, loadNarutoCardsIndexFromSqlite } from "./indexStore";
-import { loadAttestedPromos } from "./sources/promos";
+import {
+  facebookProductInsertCitationForNumber,
+  kanaMangaInsertCitationForNumber,
+  narutoPrereleaseDistributionCitationUrl,
+  uns3PromoDistributionCitationForNumber,
+  narutoStoryFactsForPrint,
+} from "./sources/digCitations";
+import {
+  attestedPromoCitationUrl,
+  loadAttestedPromos,
+} from "./sources/promos";
 import { NARUTO_INDICATIVE_PRICE_SOURCE } from "./sources/priceSourceId";
 import { narutoIndicativeQuoteForPrint } from "./sources/prices";
 import {
@@ -1051,6 +1061,12 @@ export type NarutoPrintDetail = {
   rarity: string | null;
   art: string | null;
   thumb: string | null;
+  /** Proof URL from print_assets.source_url when present. */
+  sourceUrl?: string | null;
+  /** Ingest-stamped face kind (`print_assets.art_kind`). */
+  artKind?: string | null;
+  /** Ingest-stamped watermark (`print_assets.watermarked`, 0/1). */
+  watermarked?: boolean | number | null;
   /** Sqlite often returns 0/1 — coerce with {@link narutoDetailIsPrinted}. */
   printed?: boolean | number | null;
   /**
@@ -1301,6 +1317,7 @@ function promoFacts(number: string, providerId: string): MetadataFact[] {
   }
   if (!row) return [];
   const out: MetadataFact[] = [];
+  const proofUrl = attestedPromoCitationUrl(row.sources);
   const channel = row.channel
     ? (tournamentTierLabel(row.channel, row.shuriken) ??
       PROMO_CHANNEL_LABEL[row.channel] ??
@@ -1314,6 +1331,7 @@ function promoFacts(number: string, providerId: string): MetadataFact[] {
       source: providerId,
       confidence: 0.85,
       priority: 34,
+      ...(proofUrl ? { url: proofUrl } : {}),
     });
   }
   if (typeof row.shuriken === "number" && row.shuriken > 0) {
@@ -1325,6 +1343,7 @@ function promoFacts(number: string, providerId: string): MetadataFact[] {
       source: providerId,
       confidence: 0.85,
       priority: 32,
+      ...(proofUrl ? { url: proofUrl } : {}),
     });
   }
   return out;
@@ -1395,9 +1414,30 @@ export function narutoPrintFacts(
 
   if (row.setCode.toLowerCase() === "promo") {
     facts.push(...promoFacts(row.number, providerId));
+    const uns3 = uns3PromoDistributionCitationForNumber(row.number);
+    if (uns3) {
+      const existing = facts.find(
+        (f) => f.label === "Distribution" && f.source === providerId,
+      );
+      if (!existing) {
+        facts.push({
+          kind: "category",
+          label: "Distribution",
+          value: uns3.label,
+          source: providerId,
+          url: uns3.url,
+          confidence: 0.85,
+          priority: 34,
+        });
+      } else if (!existing.url) {
+        existing.url = uns3.url;
+        existing.value = uns3.label;
+      }
+    }
   } else if (
     parseNarutoCollector(row.number)?.grouping?.toLowerCase() === "prerelease"
   ) {
+    const prereleaseProof = narutoPrereleaseDistributionCitationUrl();
     facts.push({
       kind: "category",
       label: "Distribution",
@@ -1405,6 +1445,52 @@ export function narutoPrintFacts(
       source: providerId,
       confidence: 0.85,
       priority: 34,
+      ...(prereleaseProof ? { url: prereleaseProof } : {}),
+    });
+  } else {
+    const kana = kanaMangaInsertCitationForNumber(row.number);
+    if (kana) {
+      facts.push({
+        kind: "category",
+        label: "Distribution",
+        value: kana.label,
+        source: providerId,
+        url: kana.url,
+        confidence: 0.85,
+        priority: 34,
+      });
+    }
+  }
+
+  // Distinct labels from Distribution (Insert DVD / jeu / duopack / promo)
+  // so multiple dig canals survive display collapse.
+  const productInsert = facebookProductInsertCitationForNumber(row.number);
+  if (productInsert) {
+    facts.push({
+      kind: "category",
+      label: productInsert.label,
+      value: productInsert.value,
+      source: providerId,
+      url: productInsert.url,
+      confidence: 0.85,
+      priority: 33,
+    });
+  }
+
+  const grouping = parseNarutoCollector(row.number)?.grouping ?? null;
+  for (const story of narutoStoryFactsForPrint({
+    number: row.number,
+    setCode: row.setCode,
+    grouping,
+  })) {
+    facts.push({
+      kind: story.kind,
+      label: story.label,
+      value: story.value,
+      source: providerId,
+      url: story.url,
+      confidence: story.confidence,
+      priority: story.priority,
     });
   }
 
@@ -2195,9 +2281,6 @@ export const PHYSICAL_KNOWN_SOURCES: readonly KnownSource[] = [
 export function isUnpublishedHtmlRef(sources: readonly KnownSource[]): boolean {
   return sources.length > 0 && sources.every((s) => s === "carddass-html");
 }
-
-/** @deprecated alias — use {@link isUnpublishedHtmlRef} */
-export const isHtmlOnlyPhantom = isUnpublishedHtmlRef;
 
 function packRoot(): string {
   return path.join(dataRoot(), NARUTO_PACK_ID);

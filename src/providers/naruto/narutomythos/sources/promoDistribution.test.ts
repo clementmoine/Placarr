@@ -54,6 +54,19 @@ describe("mythosPrintFacts", () => {
     );
   });
 
+  it("emits dig tweet claim as storytelling encart for VV2", () => {
+    resetMythosPromoDistributionCache();
+    const story = mythosPrintFacts(VV2_PROMO_PRINT_KEY).find(
+      (f) => f.kind === "story",
+    );
+    expect(story).toMatchObject({
+      label: "Le saviez-vous ?",
+      url: "https://x.com/NarutoMythosTCG/status/2094456658164391972",
+    });
+    expect(story!.value).toMatch(/premier tirage du tome 6/i);
+  });
+
+
   it("emits nothing for an unrelated printKey", () => {
     resetMythosPromoDistributionCache();
     expect(mythosPrintFacts("mythos:ks1-0001")).toEqual([]);

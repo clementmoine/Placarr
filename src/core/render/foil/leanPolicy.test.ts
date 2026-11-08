@@ -1,0 +1,92 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  foilLeanAmplitude,
+  foilScrollModeForInteraction,
+  liveWebglTiltFromLight,
+  tiltFromLightPercent,
+} from "./leanPolicy";
+
+describe("tiltFromLightPercent", () => {
+  it("reste à 0 au centre", () => {
+    expect(tiltFromLightPercent(50, 0.4)).toBe(0);
+  });
+
+  it("atteint ±amplitude aux bords", () => {
+    expect(tiltFromLightPercent(0, 0.4)).toBeCloseTo(-0.4);
+    expect(tiltFromLightPercent(100, 0.4)).toBeCloseTo(0.4);
+    expect(tiltFromLightPercent(0, 0.33)).toBeCloseTo(-0.33);
+    expect(tiltFromLightPercent(100, 1)).toBeCloseTo(1);
+  });
+});
+
+describe("liveWebglTiltFromLight", () => {
+  it("maps pointer-bottom to +lean.y (N tips toward card top / +Z)", () => {
+    // VS local.z = uv.y - 0.5 → top = +Z; CSS dip at bottom raises top → +N·Z.
+    expect(liveWebglTiltFromLight(50, 100, 1)[0]).toBeCloseTo(0);
+    expect(liveWebglTiltFromLight(50, 100, 1)[1]).toBeCloseTo(1);
+    expect(liveWebglTiltFromLight(50, 0, 1)[1]).toBeCloseTo(-1);
+    expect(liveWebglTiltFromLight(50, 50, 1)[1]).toBeCloseTo(0);
+    expect(liveWebglTiltFromLight(100, 50, 1)[0]).toBeCloseTo(1);
+  });
+});
+
+describe("foilLeanAmplitude", () => {
+  it("uses sheet _TimeFactor for dual-frag CosTime", () => {
+    expect(foilLeanAmplitude({ timeFactor: 0.4, hasTimeSibling: true })).toBe(
+      0.4,
+    );
+    expect(foilLeanAmplitude({ timeFactor: 0.33 })).toBe(0.33);
+  });
+
+  it("uses full ±1 for Live HoloFoil (no _TimeFactor) so light/camera move", () => {
+    expect(foilLeanAmplitude({ hasTimeSibling: false })).toBe(1);
+    expect(foilLeanAmplitude({})).toBe(1);
+  });
+
+  it("falls back to 0.4 when dual-frag has no explicit factor", () => {
+    expect(foilLeanAmplitude({ hasTimeSibling: true })).toBe(0.4);
+  });
+});
+
+describe("foilScrollModeForInteraction", () => {
+  it("keeps the _Time clock on for single-frag Live materials under the pointer", () => {
+    expect(
+      foilScrollModeForInteraction({
+        isDriven: true,
+        hasTimeSibling: false,
+      }),
+    ).toBe("time");
+    expect(
+      foilScrollModeForInteraction({
+        isDriven: false,
+        hasTimeSibling: false,
+      }),
+    ).toBe("time");
+  });
+
+  it("swaps dual-frag to tilt while driven", () => {
+    expect(
+      foilScrollModeForInteraction({
+        isDriven: true,
+        hasTimeSibling: true,
+      }),
+    ).toBe("tilt");
+    expect(
+      foilScrollModeForInteraction({
+        isDriven: false,
+        hasTimeSibling: true,
+      }),
+    ).toBe("time");
+  });
+
+  it("prefers tilt when reduced motion and idle", () => {
+    expect(
+      foilScrollModeForInteraction({
+        isDriven: false,
+        hasTimeSibling: false,
+        prefersReducedMotion: true,
+      }),
+    ).toBe("tilt");
+  });
+});

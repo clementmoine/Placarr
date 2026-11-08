@@ -157,13 +157,23 @@ function isPrintRoleAssetUrl(url: string): boolean {
 }
 
 /**
- * Face to draw: user pin → catalogue print roles → other item cover →
- * catalogue file paths.
- *
- * Live `/prints/…` beats any non-pinned item cover — including a *stale*
- * `/prints/…` left on `Item.imageUrl` after a stem change (Mythos
- * `vv2-0133-fr` → `ks1promo-0133-vv2-fr`). Requiring the fallback to be a
- * legacy `/cards/…` path left foil heroes stuck on a 404 preload forever.
+ * Only a *stale* `/prints/…` stem is auto-upgraded to the live catalogue face
+ * (Mythos stem renames, etc.). Legacy `/cards/…/art.*` Affiche picks and other
+ * gallery URLs stay — otherwise Modifier l'objet looked like a no-op on the
+ * fiche. Corpus Sync densifies `item.imageUrl` when the pack face moves.
+ */
+function isUpgradeableCatalogueCover(
+  url: string,
+  liveCatalogue: string | null,
+): boolean {
+  if (!isPrintRoleAssetUrl(url)) return false;
+  if (!liveCatalogue) return false;
+  return url.trim() !== liveCatalogue.trim();
+}
+
+/**
+ * Face to draw: user pin → explicit item cover → finish art → live print
+ * roles → leftover paths.
  */
 function resolveFaceUrl(
   info: PrintVariantInfo | null,
@@ -171,16 +181,21 @@ function resolveFaceUrl(
   finish?: string | null,
   opts?: VariantRenderingOptions,
 ): string | null {
-  if (finish && info?.variantImageUrls?.[finish]) {
-    return info.variantImageUrls[finish] ?? null;
-  }
   const thumb = info?.thumbnailUrl?.trim() || null;
   const face = info?.imageUrl?.trim() || null;
   const catalogue =
     opts?.preferThumb && thumb ? thumb : face ?? thumb;
   const fallback = fallbackImageUrl?.trim() || null;
+  const finishArt =
+    finish && info?.variantImageUrls?.[finish]
+      ? (info.variantImageUrls[finish] ?? null)
+      : null;
 
   if (fallback && isUserPinnedCover(fallback)) return fallback;
+  if (fallback && !isUpgradeableCatalogueCover(fallback, catalogue)) {
+    return fallback;
+  }
+  if (finishArt) return finishArt;
   if (catalogue && isPrintRoleAssetUrl(catalogue)) return catalogue;
   return fallback ?? catalogue ?? null;
 }

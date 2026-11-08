@@ -45,14 +45,49 @@ describe("variantRendering", () => {
     });
   });
 
-  it("prefers the provider's own artwork for the variant when it exists", () => {
+  it("prefers the provider's own artwork for the variant when the item has no cover", () => {
+    expect(
+      variantRendering(
+        "Silver",
+        { ...lorcana, variantImageUrls: { Silver: "/uploads/foil.jpg" } },
+        null,
+      ),
+    ).toMatchObject({ imageUrl: "/uploads/foil.jpg" });
+  });
+
+  it("keeps an Affiche /uploads pin over finish-specific catalogue art", () => {
     expect(
       variantRendering(
         "Silver",
         { ...lorcana, variantImageUrls: { Silver: "/uploads/foil.jpg" } },
         BASE,
       ),
-    ).toMatchObject({ imageUrl: "/uploads/foil.jpg" });
+    ).toMatchObject({ imageUrl: BASE });
+  });
+
+  it("keeps an Affiche gallery pick over live /prints/ catalogue face", () => {
+    const ranks = {
+      finishes: ["holo"],
+      plainFinishes: [] as string[],
+      effectPack: "naruto-ranks",
+      imageUrl: "/assets/naruto/ranks/prints/s1-nr0001-fr/face",
+      thumbnailUrl: "/assets/naruto/ranks/prints/s1-nr0001-fr/thumb",
+      foilMaskUrl: "/assets/naruto/ranks/full_foil_mask.webp",
+    };
+    expect(
+      variantRendering(
+        "holo",
+        ranks,
+        "/assets/naruto/ranks/cards/fr/s1/nr0001/art.inkworks.jpg",
+      ).imageUrl,
+    ).toBe("/assets/naruto/ranks/cards/fr/s1/nr0001/art.inkworks.jpg");
+    expect(
+      variantRendering(
+        "holo",
+        ranks,
+        "https://cdn.example/inkworks/itachi-sasuke.jpg",
+      ).imageUrl,
+    ).toBe("https://cdn.example/inkworks/itachi-sasuke.jpg");
   });
 
   it("uses catalogue print art when the item has no persisted cover", () => {
@@ -76,7 +111,7 @@ describe("variantRendering", () => {
     expect(variantRendering("normal", pokemon, BASE).imageUrl).toBe(BASE);
   });
 
-  it("prefers live /prints/ roles over stale /cards/…/art.* item pins", () => {
+  it("keeps Affiche /cards/…/art.* picks (Sync densifies item.imageUrl instead)", () => {
     const carddass = {
       finishes: ["normal"],
       plainFinishes: ["normal"],
@@ -84,18 +119,18 @@ describe("variantRendering", () => {
       imageUrl: "/assets/naruto/carddass/prints/s5-ni0229-fr/face",
       thumbnailUrl: "/assets/naruto/carddass/prints/s5-ni0229-fr/thumb",
     };
-    const stale =
+    const affichePick =
       "/assets/naruto/carddass/cards/fr/s5/ni0229/art.carddass.jpg";
-    expect(variantRendering("normal", carddass, stale).imageUrl).toBe(
-      carddass.imageUrl,
+    expect(variantRendering("normal", carddass, affichePick).imageUrl).toBe(
+      affichePick,
     );
-    expect(
-      variantRendering("normal", carddass, stale, { preferThumb: true })
-        .imageUrl,
-    ).toBe(carddass.thumbnailUrl);
     expect(
       variantRendering("normal", carddass, "/uploads/my-scan.jpg").imageUrl,
     ).toBe("/uploads/my-scan.jpg");
+    // No item cover → catalogue print role.
+    expect(variantRendering("normal", carddass, null).imageUrl).toBe(
+      carddass.imageUrl,
+    );
   });
 
   it("prefers live /prints/ over a stale /prints/ stem left on the item", () => {

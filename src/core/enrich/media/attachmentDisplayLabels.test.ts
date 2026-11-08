@@ -54,7 +54,9 @@ describe("attachmentDisplayLabels", () => {
     ).toMatchObject({
       kind: "Face",
       region: "Français",
-      detail: "Face · Français · Carddass",
+      // Carddass is the source chip — not repeated in the Face detail.
+      detail: "Face · Français",
+      provider: "Naruto Carddass",
     });
   });
 
@@ -173,6 +175,8 @@ describe("attachmentDisplayLabels", () => {
     const cases: Array<{
       url: string;
       role?: string;
+      source?: string;
+      providerLabel?: string;
       detail: string;
     }> = [
       {
@@ -194,7 +198,9 @@ describe("attachmentDisplayLabels", () => {
       {
         url: "/assets/naruto/carddass/prints/s5-ni0229-fr/face",
         role: "naruto-face-fr-carddass",
-        detail: "Face · Français · Carddass",
+        source: "narutocarddass",
+        providerLabel: "Naruto Carddass",
+        detail: "Face · Français",
       },
     ];
     for (const row of cases) {
@@ -204,7 +210,8 @@ describe("attachmentDisplayLabels", () => {
           title: "Itachi - Sasuke",
           url: row.url,
           role: row.role,
-          source: "local",
+          source: row.source ?? "local",
+          providerLabel: row.providerLabel,
         }),
       ).toMatchObject({
         kind: "Face",

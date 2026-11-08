@@ -625,7 +625,11 @@ export function formatAttachmentLanguageLabel(
   return LANGUAGE_LABELS[locale][code] ?? null;
 }
 
-/** Dump source after the language in `…-face-fr-kana` → "Kana". */
+/**
+ * Dump channel after the language in `…-face-fr-kana` → "Kana" / "Live" /
+ * "Promo". Not the provider chip (Carddass, TCGdex…) — that lives in
+ * `sourceNames`.
+ */
 function parseFaceSourceDetail(role?: string | null): string | null {
   const normalized = normalizeToken(role);
   if (!normalized) return null;
@@ -633,6 +637,27 @@ function parseFaceSourceDetail(role?: string | null): string | null {
   const source = match?.[1]?.trim();
   if (!source || source === "art") return null;
   return titleCaseSourceToken(source);
+}
+
+/** True when the role dump token is just echoing the attachment source chip. */
+function faceSourceEchoesProvider(
+  faceSource: string,
+  sourceNames: string[],
+  sourceTag?: string | null,
+): boolean {
+  const token = normalizeToken(faceSource);
+  if (!token) return true;
+  const tag = normalizeToken(sourceTag);
+  if (tag && (tag === token || tag.includes(token) || token.includes(tag))) {
+    return true;
+  }
+  return sourceNames.some((name) => {
+    const label = normalizeToken(name);
+    return (
+      Boolean(label) &&
+      (label === token || label.includes(token) || token.includes(label))
+    );
+  });
 }
 
 export function getAttachmentGalleryLabels(
@@ -662,9 +687,14 @@ export function getAttachmentGalleryLabels(
     (kindKey === "grid" || kindKey === "grid3d")
       ? parseSteamGridDbStyleLabel(input.title)
       : null;
-  const faceSource =
+  const rawFaceSource =
     kindKey === "face" || kindKey === "cover"
       ? parseFaceSourceDetail(input.role)
+      : null;
+  const faceSource =
+    rawFaceSource &&
+    !faceSourceEchoesProvider(rawFaceSource, sourceNames, input.source)
+      ? rawFaceSource
       : null;
   const detail = [kind, region, styleLabel, faceSource]
     .filter(Boolean)

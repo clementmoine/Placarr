@@ -111,14 +111,19 @@ export type EbayDisney25FacesLedger = {
   variations: EbayDisney25Variation[];
 };
 
-/** « 001 | Lilo | 1 » or « 104 | Riley ». */
+/** « 001 | Lilo | 1 », « 104 | Riley », or Disney26 « 001. Woody ». */
 export function parseEbayDisney25VariationLabel(
   raw: string,
 ): { number: string; name: string } | null {
-  const text = raw.replace(/\s+/g, " ").trim();
-  const m = text.match(/^(\d{3})\s*\|\s*(.+?)(?:\s*\|\s*\d+)?$/);
+  const text = raw
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\s*\(en rupture de stock\)\s*$/i, "");
+  const pipe = text.match(/^(\d{3})\s*\|\s*(.+?)(?:\s*\|\s*\d+)?$/);
+  const dotted = text.match(/^(\d{1,3})\s*[.]\s*(.+)$/);
+  const m = pipe ?? dotted;
   if (!m) return null;
-  const number = m[1]!;
+  const number = m[1]!.padStart(3, "0");
   const name = m[2]!.trim();
   if (!name) return null;
   const n = Number(number);

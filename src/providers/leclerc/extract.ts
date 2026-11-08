@@ -17,6 +17,11 @@ import {
   installEbayDisney25Faces,
   readEbayDisney25AllLedgers,
 } from "./ebayDisney25Faces";
+import {
+  harvestEbayDisney26Faces,
+  installEbayDisney26Faces,
+  readEbayDisney26AllLedgers,
+} from "./ebayDisney26Faces";
 import { leclercCuratedDir } from "./curatedPaths";
 import {
   leclercOpForExtractTarget,
@@ -120,6 +125,29 @@ export async function runLeclercOpPipeline(
           });
           console.log(
             `── ${label} — eBay faces install ${ebayInstalled.faces} (missing ${ebayInstalled.missing.length})`,
+          );
+        }
+      }
+
+      if (op.setCode === "disney26") {
+        const ebayHarvest = await harvestEbayDisney26Faces({
+          packId: op.packId,
+        });
+        if (ebayHarvest) {
+          console.log(
+            `── ${label} — eBay faces harvest cards=${ebayHarvest.cards} ok=${ebayHarvest.ok} skip=${ebayHarvest.skip} fail=${ebayHarvest.fail}`,
+          );
+        }
+        if (readEbayDisney26AllLedgers().length) {
+          const ebayInstalled = await installEbayDisney26Faces(index, {
+            packId: op.packId,
+          });
+          console.log(
+            `── ${label} — eBay faces install ${ebayInstalled.faces} (missing ${ebayInstalled.missing.length})`,
+          );
+        } else {
+          console.log(
+            `── ${label} — eBay faces: ledger vide (Browse item group ${"237160946134"} / Fixeez ${"237152960926"} puis Sync)`,
           );
         }
       }

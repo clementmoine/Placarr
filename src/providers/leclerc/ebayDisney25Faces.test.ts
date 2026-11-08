@@ -21,6 +21,16 @@ describe("ebayDisney25Faces mapping", () => {
       number: "104",
       name: "Riley",
     });
+    expect(parseEbayDisney25VariationLabel("001. Woody")).toEqual({
+      number: "001",
+      name: "Woody",
+    });
+    expect(
+      parseEbayDisney25VariationLabel("002. Buzz l'Éclair (En rupture de stock)"),
+    ).toEqual({
+      number: "002",
+      name: "Buzz l'Éclair",
+    });
     expect(parseEbayDisney25VariationLabel("Album")).toBeNull();
   });
 

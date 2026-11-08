@@ -604,6 +604,46 @@ describe("attachmentDisplayScore", () => {
     ]);
   });
 
+  it("préfère une face corrected stampée à un dump égal (Affiche lit artKind)", () => {
+    const dump = {
+      type: "cover" as const,
+      role: "face",
+      url: "/uploads/dump.webp",
+      coverProvenance: "catalog",
+      artKind: "dump",
+    };
+    const corrected = {
+      type: "cover" as const,
+      role: "face",
+      url: "/uploads/corrected.webp",
+      coverProvenance: "catalog",
+      artKind: "corrected",
+    };
+    expect(rankCoversForDisplay([dump, corrected])[0]?.url).toBe(
+      "/uploads/corrected.webp",
+    );
+  });
+
+  it("déclasse une face watermarked stampée derrière une face propre", () => {
+    const clean = {
+      type: "cover" as const,
+      role: "face",
+      url: "/uploads/clean.webp",
+      coverProvenance: "catalog",
+      watermarked: false,
+    };
+    const marked = {
+      type: "cover" as const,
+      role: "face",
+      url: "/uploads/marked.webp",
+      coverProvenance: "catalog",
+      watermarked: true,
+    };
+    expect(rankCoversForDisplay([marked, clean])[0]?.url).toBe(
+      "/uploads/clean.webp",
+    );
+  });
+
   it("laisse la région primer sur la provenance (photo FR au-dessus d'un catalogue EU)", () => {
     const catalogEu = {
       type: "cover" as const,

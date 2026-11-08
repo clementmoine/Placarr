@@ -176,7 +176,7 @@ describe("resolvePrintFace (owned packs)", () => {
     });
   });
 
-  it("honours face.json over filesystem ranking", async () => {
+  it("ranks by pixels + provenance — face.json is not SSOT", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "print-face-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -203,6 +203,6 @@ describe("resolvePrintFace (owned packs)", () => {
         printKey: "naruto:nr-0044",
         lang: "fr",
       })?.artFile,
-    ).toBe("art.animecollection.jpg");
+    ).toBe("art.coleka.webp");
   });
 });

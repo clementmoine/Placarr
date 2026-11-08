@@ -56,6 +56,8 @@ export type StoreItemContext = {
   barcode?: string | null;
   name?: string | null;
   imageUrl?: string | null;
+  /** Affiche policy — see `core/collect/coverMode`. */
+  coverMode?: string | null;
   backgroundImageUrl?: string | null;
   /** Catalog print identity — scopes gallery preservation to that game. */
   printKey?: string | null;

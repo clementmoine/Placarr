@@ -1,17 +1,25 @@
 /**
- * Rank catalogue card faces by **criteria** — pixels + provenance + filename
- * quality markers (`corrected` / `reconstructed`). Never by provider-name lists.
+ * Catalogue disk faces as **Affiche observations** — stamped `artKind` /
+ * `watermarked` / `coverProvenance` + pixels. Basename is only used when
+ * building the observation ({@link resolveFaceArtMetaForDig}), never as a
+ * parallel name-list dialect.
  *
- * Shared by Catalogue → Cards tiles, `/prints/…/face` resolve, and pack
- * `createCardFaceChoice` when comparing on-disk `art.*` files.
+ * Scoring keeps a TCG area × aspect adapter (stub floor, near-square demotion)
+ * on top of the same stamps Affiche reads via {@link rankCoversForDisplay}.
  */
+import type { ScoredAttachmentInput } from "@/core/enrich/media/attachmentDisplayTypes";
 import {
   coverProvenanceRank,
   resolveCoverProvenance,
 } from "@/core/enrich/media/coverProvenance";
+import {
+  faceArtKindQuality,
+  resolveFaceArtMetaForDig,
+  type FaceArtKind,
+} from "@/core/enrich/media/faceArtMeta";
 
 export type CatalogueFaceRankInput = {
-  /** Basename, e.g. `art.coleka.webp`. */
+  /** Basename, e.g. `art.coleka.webp` — storage path only when meta missing. */
   artFile: string;
   width?: number | null;
   height?: number | null;
@@ -19,6 +27,10 @@ export type CatalogueFaceRankInput = {
   coverProvenance?: string | null;
   /** Thumb-only slot (no full art) — soft demotion. */
   thumbOnly?: boolean;
+  /** Ingest-stamped kind — preferred over basename markers when set. */
+  artKind?: string | null;
+  /** Ingest-stamped watermark — demotes when true. */
+  watermarked?: boolean | null;
 };
 
 export type CatalogueFaceCandidate = {
@@ -28,6 +40,19 @@ export type CatalogueFaceCandidate = {
   width?: number | null;
   height?: number | null;
   coverProvenance?: string | null;
+  thumbOnly?: boolean;
+  artKind?: string | null;
+  watermarked?: boolean | null;
+};
+
+/** Affiche-shaped face observation (stamps resolved once). */
+export type CatalogueFaceObservation = {
+  artFile: string;
+  width?: number | null;
+  height?: number | null;
+  coverProvenance: string;
+  artKind: FaceArtKind;
+  watermarked: boolean;
   thumbOnly?: boolean;
 };
 
@@ -51,18 +76,61 @@ export type PickBestCatalogueFaceOpts = {
 };
 
 /**
- * Filename quality markers only — not provider ids.
- * Higher = better when pixel size is unknown or tied.
+ * Build the stamped observation Affiche / catalogue rank both consume.
+ * Basename fills gaps only here — never inside Affiche compare.
  */
-export function catalogueArtQualityMarker(artFile: string): number {
-  const name = artFile.trim().toLowerCase();
-  const match = /^art\.([^.]+)\./i.exec(name);
-  const source = match?.[1] ?? "";
-  if (source.includes("corrected") || /\.corrected\./i.test(name)) return 100;
-  if (source.includes("reconstructed")) return 95;
-  // Bandai / official SAMPLE watermark faces — keep as fallback, never hero.
-  if (source.includes("sample") || /\.sample\./i.test(name)) return 20;
-  return 50;
+export function observeCatalogueFace(
+  input: CatalogueFaceRankInput,
+): CatalogueFaceObservation | null {
+  const art = input.artFile?.trim();
+  if (!art) return null;
+  const meta = resolveFaceArtMetaForDig({
+    artFile: art,
+    artKind: input.artKind,
+    watermarked: input.watermarked,
+  });
+  return {
+    artFile: art,
+    width: input.width,
+    height: input.height,
+    coverProvenance: resolveCoverProvenance({
+      coverProvenance: input.coverProvenance,
+    }),
+    artKind: meta.artKind,
+    watermarked: meta.watermarked,
+    thumbOnly: input.thumbOnly,
+  };
+}
+
+/**
+ * Project a catalogue face into an Affiche `ScoredAttachmentInput`.
+ * URL is a stable synthetic key unless callers pass a real asset URL.
+ */
+export function catalogueFaceAsScoredAttachment(
+  obs: CatalogueFaceObservation,
+  opts?: { url?: string; source?: string | null },
+): ScoredAttachmentInput {
+  return {
+    type: "cover",
+    url: opts?.url ?? `catalogue-face://${obs.artFile}`,
+    role: "face",
+    source: opts?.source ?? null,
+    coverProvenance: obs.coverProvenance,
+    artKind: obs.artKind,
+    watermarked: obs.watermarked,
+  };
+}
+
+/** Soft quality from Affiche face stamps (watermark demotes hardest). */
+export function catalogueFaceQualityMarker(input: {
+  artFile: string;
+  artKind?: string | null;
+  watermarked?: boolean | null;
+}): number {
+  const obs = observeCatalogueFace(input);
+  if (!obs) return -1;
+  if (obs.watermarked) return 20;
+  return faceArtKindQuality(obs.artKind);
 }
 
 /** Near-1:1 embeds (DOCX / padded squares) lose to real packshot aspect. */
@@ -73,34 +141,33 @@ export function catalogueNearSquareScale(width: number, height: number): number 
 }
 
 /**
- * Higher is better. With dims: area scaled by quality marker and provenance
- * demotion. Without dims: quality marker alone (equal sources → equal score).
+ * Higher is better. TCG adapter: area × Affiche stamp quality × provenance
+ * scale × near-square. Without dims: stamp quality alone.
  */
 export function catalogueFaceRankScore(input: CatalogueFaceRankInput): number {
-  const art = input.artFile?.trim();
-  if (!art) return -1;
+  const obs = observeCatalogueFace(input);
+  if (!obs) return -1;
 
-  const marker = catalogueArtQualityMarker(art);
-  const provenance = resolveCoverProvenance({
-    coverProvenance: input.coverProvenance,
-  });
+  const marker = obs.watermarked
+    ? 20
+    : faceArtKindQuality(obs.artKind);
   /*
     Provenance demotion: listing_photo / user_photo shrink the score so a
     slightly larger seller photo does not beat a catalog scan of similar size.
     catalog → ×1 ; listing_photo → ×0.7 ; user_photo → ×0.55.
   */
-  const provRank = coverProvenanceRank(provenance);
+  const provRank = coverProvenanceRank(obs.coverProvenance);
   const provenanceScale = provRank === 0 ? 1 : provRank === 1 ? 0.7 : 0.55;
 
-  const w = input.width ?? 0;
-  const h = input.height ?? 0;
+  const w = obs.width ?? 0;
+  const h = obs.height ?? 0;
   const aspectScale = catalogueNearSquareScale(w, h);
   let score =
     w > 0 && h > 0
       ? Math.floor(w * h * (marker / 50) * provenanceScale * aspectScale)
       : Math.floor(marker * provenanceScale);
 
-  if (input.thumbOnly) score = Math.floor(score * 0.5);
+  if (obs.thumbOnly) score = Math.floor(score * 0.5);
   return score;
 }
 
@@ -143,16 +210,17 @@ export function pickBestCatalogueFace(
   } | null = null;
 
   for (const face of measurable) {
-    const coverProvenance = resolveCoverProvenance({
-      coverProvenance: face.coverProvenance,
-    });
-    const provenanceRank = coverProvenanceRank(coverProvenance);
+    const obs = observeCatalogueFace(face);
+    if (!obs) continue;
+    const provenanceRank = coverProvenanceRank(obs.coverProvenance);
     const score = catalogueFaceRankScore({
-      artFile: face.artFile,
-      width: face.width,
-      height: face.height,
-      coverProvenance,
-      thumbOnly: face.thumbOnly,
+      artFile: obs.artFile,
+      width: obs.width,
+      height: obs.height,
+      coverProvenance: obs.coverProvenance,
+      thumbOnly: obs.thumbOnly,
+      artKind: obs.artKind,
+      watermarked: obs.watermarked,
     });
     const area = candidateArea(face);
     const bestArea = best ? candidateArea(best.face) : 0;

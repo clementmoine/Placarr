@@ -35,6 +35,18 @@ export interface MetadataAttachment {
   meanLuminance?: number;
   darkPixelRatio?: number;
   /**
+   * Public proof URL for this image (dump page, Wayback, official CDN).
+   * Persisted on `Attachment.sourceUrl` — Affiche chips link here.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Face/cover kind stamped at ingest (`dump` / `corrected` / `reconstructed`…).
+   * Ranking reads this — never re-parses the basename. See `faceArtMeta`.
+   */
+  artKind?: string | null;
+  /** Dig knows this art carries SAMPLE/DEMO/site overlay watermark. */
+  watermarked?: boolean | null;
+  /**
    * Provider-derived display fields, computed from `source` server-side so the
    * client-safe scorer/label formatter can read them. Not persisted (recomputed
    * on load). See `@/core/catalog/sourceTraits`.

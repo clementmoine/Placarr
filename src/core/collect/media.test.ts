@@ -7,6 +7,7 @@ import {
   backgroundPickerAttachments,
   backgroundPickerAttachmentsForItem,
   collapseCroppedUserPinWithCatalogOriginal,
+  collapsePrintRoleTwinWithDiskArt,
   mergeCoverAttachmentsForPicker,
 } from "./media";
 import {
@@ -1533,6 +1534,40 @@ describe("presentItem", () => {
     ).toEqual(["/uploads/tresors.jpg"]);
     expect(presented.imageUrl).toBe("/uploads/tresors.jpg");
     expect(presented.imageUrl).not.toBe("/uploads/ages-or-crop.jpg");
+  });
+});
+
+describe("collapsePrintRoleTwinWithDiskArt", () => {
+  it("drops /prints/face when /cards/art.* covers are present", () => {
+    const printFace = {
+      type: "cover" as const,
+      url: "/assets/naruto/carddass/prints/s1-ni0017-fr/face",
+      source: "narutocarddass",
+    };
+    const diskArt = {
+      type: "cover" as const,
+      url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.carddass.jpg",
+      source: "narutocarddass",
+    };
+    const listing = {
+      type: "cover" as const,
+      url: "/assets/naruto/carddass/cards/fr/s1/ni0017/art.coleka.webp",
+      source: "narutocarddass",
+    };
+    expect(
+      collapsePrintRoleTwinWithDiskArt([printFace, diskArt, listing]).map(
+        (a) => a.url,
+      ),
+    ).toEqual([diskArt.url, listing.url]);
+  });
+
+  it("keeps /prints/face when no disk art is in the gallery", () => {
+    const printFace = {
+      type: "cover" as const,
+      url: "/assets/lorcana/prints/1-1-fr/face",
+      source: "lorcana",
+    };
+    expect(collapsePrintRoleTwinWithDiskArt([printFace])).toEqual([printFace]);
   });
 });
 

@@ -55,6 +55,9 @@ const mapAttachments = (attachments?: Attachment[]) =>
       height: attachment.height ?? undefined,
       meanLuminance: attachment.meanLuminance ?? undefined,
       darkPixelRatio: attachment.darkPixelRatio ?? undefined,
+      sourceUrl: attachment.sourceUrl ?? undefined,
+      artKind: attachment.artKind ?? undefined,
+      watermarked: attachment.watermarked ?? undefined,
     }),
   ) ?? [];
 
@@ -73,6 +76,9 @@ export const toAttachmentCreateData = (
     source?: string | null;
     coverProvenance?: string | null;
     platformKey?: string | null;
+    sourceUrl?: string | null;
+    artKind?: string | null;
+    watermarked?: boolean | null;
   },
   metrics?: AttachmentImageMetrics | null,
 ) => ({
@@ -89,6 +95,9 @@ export const toAttachmentCreateData = (
   height: metrics?.height ?? null,
   meanLuminance: metrics?.meanLuminance ?? null,
   darkPixelRatio: metrics?.darkPixelRatio ?? null,
+  sourceUrl: attachment.sourceUrl ?? undefined,
+  artKind: attachment.artKind ?? undefined,
+  watermarked: attachment.watermarked ?? undefined,
 });
 
 export function formatMetadataForStorage(

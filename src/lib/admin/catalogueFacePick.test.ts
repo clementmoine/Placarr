@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { catalogueArtQualityMarker } from "@/core/enrich/media/catalogueFaceRank";
+import { catalogueFaceQualityMarker } from "@/core/enrich/media/catalogueFaceRank";
 
 import {
   catalogueFaceSlotScore,
@@ -10,9 +10,15 @@ import {
 
 describe("catalogueFacePick", () => {
   it("marks corrected / reconstructed without provider-name lists", () => {
-    expect(catalogueArtQualityMarker("art.carddass-fr.gif")).toBe(50);
-    expect(catalogueArtQualityMarker("art.reconstructed.webp")).toBe(95);
-    expect(catalogueArtQualityMarker("art.foo.corrected.jpg")).toBe(100);
+    expect(
+      catalogueFaceQualityMarker({ artFile: "art.carddass-fr.gif" }),
+    ).toBe(50);
+    expect(
+      catalogueFaceQualityMarker({ artFile: "art.reconstructed.webp" }),
+    ).toBe(95);
+    expect(
+      catalogueFaceQualityMarker({ artFile: "art.foo.corrected.jpg" }),
+    ).toBe(100);
   });
 
   it("prefers more pixels at equal provenance", () => {

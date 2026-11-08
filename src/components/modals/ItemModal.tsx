@@ -106,6 +106,7 @@ import {
   unlinkItemTrade,
 } from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getAspectRatio } from "@/lib/text/cardFormat";
@@ -299,6 +300,9 @@ export function ItemModal({
       )
       .optional(),
 
+    /** Affiche policy — `auto` tracks ranking; `pinned` keeps an explicit pick. */
+    coverMode: z.enum(["auto", "pinned"]).nullable().optional(),
+
     backgroundImageUrl: z
       .any()
       .refine(
@@ -323,6 +327,7 @@ export function ItemModal({
       shelfId: prefilledValues?.shelfId || shelfId || "",
       name: prefilledValues?.name || "",
       imageUrl: prefilledValues?.imageUrl || null,
+      coverMode: null,
       backgroundImageUrl: null,
       description: "",
       barcode: prefilledValues?.barcode || "",
@@ -1072,6 +1077,7 @@ export function ItemModal({
       galleryProvider?: string | null;
       gallerySourceNames?: string[];
       galleryDetail?: string | null;
+      proofUrl?: string | null;
     }[] = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -1207,6 +1213,9 @@ export function ItemModal({
       height?: number | null;
       meanLuminance?: number | null;
       darkPixelRatio?: number | null;
+      sourceUrl?: string | null;
+      artKind?: string | null;
+      watermarked?: boolean | null;
     }> = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -1229,6 +1238,9 @@ export function ItemModal({
       height?: number | null;
       meanLuminance?: number | null;
       darkPixelRatio?: number | null;
+      sourceUrl?: string | null;
+      artKind?: string | null;
+      watermarked?: boolean | null;
     }) => {
       if (!entry.url) return;
       const existingIndex = attachments.findIndex((attachment) =>
@@ -1270,6 +1282,9 @@ export function ItemModal({
         height: entry.height,
         meanLuminance: entry.meanLuminance,
         darkPixelRatio: entry.darkPixelRatio,
+        sourceUrl: entry.sourceUrl,
+        artKind: entry.artKind,
+        watermarked: entry.watermarked,
       });
     };
 
@@ -1357,6 +1372,9 @@ export function ItemModal({
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
           title: matchingAttachment?.title,
+          sourceUrl: matchingAttachment?.sourceUrl,
+          artKind: matchingAttachment?.artKind,
+          watermarked: matchingAttachment?.watermarked,
           ...attachmentTraitsOf(matchingAttachment),
         });
       }
@@ -1373,6 +1391,9 @@ export function ItemModal({
             source: attachment.source,
             role: attachment.role,
             title: attachment.title,
+            sourceUrl: attachment.sourceUrl,
+            artKind: attachment.artKind,
+            watermarked: attachment.watermarked,
             ...attachmentTraitsOf(attachment),
           });
         }
@@ -1399,7 +1420,7 @@ export function ItemModal({
       orderedCovers[0]?.url ??
       getCoverImage({ ...mediaForCover, imageUrl: null }, locale);
 
-    return orderedCovers.map((attachment) => {
+    const rows = orderedCovers.map((attachment) => {
       const gallery = getAttachmentGalleryLabels(
         {
           type: attachment.type,
@@ -1418,10 +1439,7 @@ export function ItemModal({
       const label =
         attachment.source === "barcode"
           ? t("items.editTabs.scannedImage")
-          : defaultCoverUrl &&
-              urlsReferToSameLocalizedImage(defaultCoverUrl, attachment.url)
-            ? t("items.editTabs.defaultMetadataImage")
-            : gallery.caption;
+          : gallery.caption;
 
       return {
         url: attachment.url,
@@ -1432,8 +1450,33 @@ export function ItemModal({
         galleryProvider: gallery.provider,
         gallerySourceNames: gallery.sourceNames,
         galleryDetail: gallery.detail,
+        proofUrl: sanitizePublicCitationUrl(attachment.sourceUrl),
+        isAppChoice: false as boolean,
       };
     });
+
+    // Dedicated auto tile (same preview bytes as engine top when dumps exist).
+    if (defaultCoverUrl) {
+      const proof = orderedCovers[0]
+        ? sanitizePublicCitationUrl(
+            (orderedCovers[0] as { sourceUrl?: string | null }).sourceUrl,
+          )
+        : null;
+      rows.unshift({
+        url: defaultCoverUrl,
+        type: "cover",
+        label: t("items.editTabs.appChoiceCover"),
+        source: "app-choice",
+        role: "app-choice",
+        galleryProvider: null,
+        gallerySourceNames: [t("items.editTabs.appChoiceCover")],
+        galleryDetail: t("items.editTabs.appChoiceCoverDetail"),
+        proofUrl: proof,
+        isAppChoice: true,
+      });
+    }
+
+    return rows;
   }, [
     itemId,
     item,
@@ -1447,6 +1490,7 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
+  const currentCoverMode = useWatch({ control: form.control, name: "coverMode" });
   // Checkmark = in-session Affiche pick, else the same cover as the fiche.
   const afficheSelectedCoverUrl = useMemo(() => {
     if (currentImageUrl instanceof File) return null;
@@ -1455,6 +1499,7 @@ export function ItemModal({
       getCoverImage(
         {
           imageUrl: item?.imageUrl ?? null,
+          coverMode: currentCoverMode ?? item?.coverMode ?? null,
           updatedAt: item?.updatedAt,
           condition: watchedCondition ?? item?.condition ?? null,
           metadata: item?.metadata ?? fetchedMetadata ?? null,
@@ -1466,9 +1511,11 @@ export function ItemModal({
     );
   }, [
     activeShelfForMedia,
+    currentCoverMode,
     currentImageUrl,
     fetchedMetadata,
     item?.condition,
+    item?.coverMode,
     item?.imageUrl,
     item?.metadata,
     item?.updatedAt,
@@ -1939,6 +1986,7 @@ export function ItemModal({
         ...restValues,
         id: item ? item?.id : undefined,
         imageUrl: imageUrl,
+        coverMode: restValues.coverMode ?? null,
         backgroundImageUrl: backgroundImageUrl,
         purchasePriceCents: parsePriceCents(purchasePrice),
         purchasedAt: purchasedAt?.trim() || null,
@@ -2971,37 +3019,60 @@ export function ItemModal({
                                 const selectedCoverUrl =
                                   pendingUploadPreviewUrl ??
                                   afficheSelectedCoverUrl;
-                                const isSelected =
-                                  typeof selectedCoverUrl === "string" &&
-                                  urlsReferToSameLocalizedImage(
-                                    selectedCoverUrl,
-                                    img.url,
+                                const mode =
+                                  currentCoverMode ??
+                                  item?.coverMode ??
+                                  (userPickedCoverUrl ? "pinned" : "auto");
+                                const isAppChoice = Boolean(
+                                  "isAppChoice" in img && img.isAppChoice,
+                                );
+                                const isSelected = pendingUploadPreviewUrl
+                                  ? typeof selectedCoverUrl === "string" &&
+                                    urlsReferToSameLocalizedImage(
+                                      selectedCoverUrl,
+                                      img.url,
+                                    )
+                                  : mode === "auto"
+                                    ? isAppChoice
+                                    : !isAppChoice &&
+                                      typeof selectedCoverUrl === "string" &&
+                                      urlsReferToSameLocalizedImage(
+                                        selectedCoverUrl,
+                                        img.url,
+                                      );
+                                const pickCover = () => {
+                                  const nextMode = isAppChoice
+                                    ? "auto"
+                                    : "pinned";
+                                  form.setValue("coverMode", nextMode, {
+                                    shouldDirty: true,
+                                  });
+                                  setUserPickedCoverUrl(
+                                    isAppChoice ? null : img.url,
                                   );
+                                  form.setValue("imageUrl", img.url, {
+                                    shouldDirty: true,
+                                  });
+                                };
                                 return (
                                   <div
                                     key={i}
                                     role="button"
                                     tabIndex={0}
-                                    onClick={() => {
-                                      setUserPickedCoverUrl(img.url);
-                                      form.setValue("imageUrl", img.url, {
-                                        shouldDirty: true,
-                                      });
-                                    }}
+                                    onClick={pickCover}
                                     onKeyDown={(event) => {
                                       if (
                                         event.key === "Enter" ||
                                         event.key === " "
                                       ) {
                                         event.preventDefault();
-                                        setUserPickedCoverUrl(img.url);
-                                        form.setValue("imageUrl", img.url, {
-                                          shouldDirty: true,
-                                        });
+                                        pickCover();
                                       }
                                     }}
                                     className={cn(
                                       "group relative overflow-hidden rounded-xl border-2 bg-white text-left transition-all duration-200 outline-none flex flex-col items-center justify-center cursor-pointer",
+                                      isAppChoice &&
+                                        "border-dashed border-zinc-400 dark:border-zinc-500",
                                       isSelected
                                         ? "border-amber-600 dark:border-amber-500 shadow-md ring-2 ring-amber-600/30"
                                         : "border-border/60 hover:border-border hover:shadow-sm",
@@ -3086,6 +3157,11 @@ export function ItemModal({
                                             : [])
                                         }
                                         detail={img.galleryDetail}
+                                        proofUrl={
+                                          "proofUrl" in img
+                                            ? img.proofUrl
+                                            : null
+                                        }
                                       />
                                     </div>
 
@@ -3367,6 +3443,11 @@ export function ItemModal({
                                             : [])
                                         }
                                         detail={img.galleryDetail}
+                                        proofUrl={
+                                          "proofUrl" in img
+                                            ? img.proofUrl
+                                            : null
+                                        }
                                       />
                                     </div>
 

@@ -137,6 +137,14 @@ model Attachment {
   height          Int?
   meanLuminance   Float?
   darkPixelRatio  Float?
+  // Public proof URL for this image (dump page, Wayback asset, official CDN).
+  // Dig/sync stamps it; Affiche chips link here. Distinct from `url` (bytes).
+  sourceUrl       String?
+  // Face / cover kind observed at ingest: dump | corrected | reconstructed | …
+  // Ranking reads this field — never re-parses the basename.
+  artKind         String?
+  // True when the dig knows the art carries SAMPLE/DEMO/site overlay watermark.
+  watermarked     Boolean?
   metadata        Metadata       @relation(fields: [metadataId], references: [id], onDelete: Cascade)
 
   @@index([metadataId])
@@ -269,6 +277,10 @@ model Item {
   slug                      String?
   description               String?
   imageUrl                  String?
+  // Affiche cover policy: `auto` follows the ranking engine on refresh;
+  // `pinned` keeps the user's explicit face/import. Null = legacy heuristics
+  // (`isHonoredUserCoverPin`) until the next Affiche save.
+  coverMode                 String?
   barcode                   String?
   // Identity anchor for objects that never carry a barcode — a trading card is
   // identified by what is printed on it (`lorcana:9-1`). Kept separate from

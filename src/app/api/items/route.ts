@@ -728,6 +728,7 @@ export async function PATCH(req: NextRequest) {
         name?: string;
         description?: string | null;
         imageUrl?: string | null;
+        coverMode?: string | null;
         backgroundImageUrl?: string | null;
         barcode?: string | null;
         variant?: string | null;
@@ -759,6 +760,17 @@ export async function PATCH(req: NextRequest) {
         (typeof raw.imageUrl === "string" || raw.imageUrl === null)
       ) {
         data.imageUrl = raw.imageUrl;
+      }
+      if ("coverMode" in raw) {
+        const mode =
+          typeof raw.coverMode === "string"
+            ? raw.coverMode.trim().toLowerCase()
+            : null;
+        if (mode === "auto" || mode === "pinned") {
+          data.coverMode = mode;
+        } else if (raw.coverMode === null) {
+          data.coverMode = null;
+        }
       }
       if (
         "backgroundImageUrl" in raw &&

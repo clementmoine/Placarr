@@ -5,8 +5,8 @@
  * borrow the best recto across `catalogueLocales` while the verso stays on the
  * tile locale (often localized — missing back is fine).
  *
- * Ranking = core criteria (pixels + provenance + filename markers) — see
- * {@link catalogueFaceRankScore}. No provider-name lists.
+ * Ranking = core criteria (pixels + provenance + stamped artKind/watermarked)
+ * via {@link catalogueFaceRankScore}. No provider-name lists.
  */
 import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
 import type {
@@ -27,10 +27,15 @@ export type ResolvedCatalogueFace = {
   thumb: string | null;
 };
 
+type FaceMetaFiles = CardsIndexLangFiles & {
+  artKind?: string | null;
+  watermarked?: boolean | null;
+  coverProvenance?: string | null;
+};
+
 export function catalogueFaceArtFile(
   files: CardsIndexLangFiles,
 ): string | null {
-  if (files.art && /\.corrected\./i.test(files.art)) return files.art;
   if (files.art) return files.art;
   return files.thumb ?? null;
 }
@@ -40,17 +45,19 @@ function catalogueFaceThumbFile(files: CardsIndexLangFiles): string | null {
   return null;
 }
 
-/** Higher is better — pixels + provenance + filename markers (core). */
+/** Higher is better — pixels + provenance + stamped face meta (core). */
 export function catalogueFaceSlotScore(files: CardsIndexLangFiles): number {
   const art = catalogueFaceArtFile(files);
   if (!art) return -1;
+  const meta = files as FaceMetaFiles;
   return catalogueFaceRankScore({
     artFile: art,
     width: files.artW,
     height: files.artH,
-    coverProvenance:
-      (files as { coverProvenance?: string | null }).coverProvenance ?? null,
+    coverProvenance: meta.coverProvenance ?? null,
     thumbOnly: !files.art && Boolean(files.thumb),
+    artKind: meta.artKind ?? null,
+    watermarked: meta.watermarked ?? null,
   });
 }
 

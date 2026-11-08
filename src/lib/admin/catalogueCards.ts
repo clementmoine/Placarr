@@ -1812,14 +1812,16 @@ async function listSqlPagedCatalogueCards(
   }
 
   /*
-    « Sans image » / incomplete / borrowed must use post-hydrate truth on
-    packs that borrow faces across locales (OPTCG…): SQL only sees
-    print_assets for the tile lang, so FR+EN-art tiles stayed in the audit.
+    « Sans image » / incomplete / borrowed must use post-hydrate truth when:
+    - faces borrow across locales (OPTCG…) — SQL only sees tile-lang assets
+    - sqlite still holds CDN URLs (FW Bandai SAMPLE…) — SQL thinks art exists
+      while resolveCatalogueLocalArtUrl is disk-only
     Other packs keep the fast SQL missingArt path.
   */
   const packInfo = cataloguePackInfo(input.pack);
   const needsHydratedArtAudit =
-    packInfo?.localeArt?.bestFaceAcrossLocales === true &&
+    (packInfo?.localeArt?.bestFaceAcrossLocales === true ||
+      packInfo?.localeArt?.auditAfterLocalResolve === true) &&
     (input.missingArtOnly ||
       input.incompleteOnly ||
       input.borrowedArtOnly);

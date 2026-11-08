@@ -32,6 +32,7 @@ import type {
 } from "@/types/metadataProvider";
 import type { StoreItemContext } from "@/core/enrich/media/prepareMetadataGallery";
 import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
+import { coverModeIsPinned } from "@/core/collect/coverMode";
 
 export async function syncItemFieldsAfterMetadataStore(input: {
   itemId: string;
@@ -62,7 +63,11 @@ export async function syncItemFieldsAfterMetadataStore(input: {
     imageMetricsByUrl,
   } = input;
 
-  if (item && croppedImageUrl) {
+  if (
+    item &&
+    croppedImageUrl &&
+    !coverModeIsPinned(item.coverMode)
+  ) {
     const previousMetadataImage = item.metadata?.imageUrl || null;
     const itemCoverStillInGallery = finalStorableAttachments.some(
       (attachment) => attachment.url === item.imageUrl,

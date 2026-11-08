@@ -3,17 +3,18 @@
  *
  * Stem = shelf item slug without finish (`s1-cl0001-fr`). Disk bytes stay
  * under `cards/{lang}/{set}/{id}/`. Naruto Carddass adds owned/borrowed
- * ranking; other packs resolve owned files (+ face.json / locale borrow).
+ * ranking; other packs resolve owned files (criteria rank + locale borrow).
+ * `face.json` is not display SSOT — sync / Affiche re-rank from observations.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { catalogueCorpusPack } from "@/lib/admin/cataloguePacks";
 import { canonicalAssetPack } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
-import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
 import { probeFaceFileDimensionsSync } from "@/providers/shared/faceFileDimensions";
 import {
   providerModuleProviding,
@@ -130,27 +131,9 @@ export function matchPrintsAssetRest(
   return null;
 }
 
-/** `face.json` art basename when the file exists — no directory listing. */
-function readFaceJsonArtFast(cardDir: string): string | null {
-  const decisionPath = path.join(cardDir, CARD_FACE_DECISION_FILE);
-  if (!existsSync(decisionPath)) return null;
-  try {
-    const raw = JSON.parse(readFileSync(decisionPath, "utf8")) as {
-      art?: string;
-    };
-    const named = raw.art?.trim();
-    if (!named || !/^art\./i.test(named)) return null;
-    if (named.includes("/") || named.includes("..")) return null;
-    return existsSync(path.join(cardDir, named)) ? named : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Owned face basename — `face.json` wins (no readdir), else best `art.*` by
- * {@link catalogueFaceRankScore} (probed pixels + pack provenance stamp).
- * Same criteria as Catalogue → Cards — no provider-name lists / byte proxy.
+ * Owned face basename — best `art.*` by {@link catalogueFaceRankScore}
+ * (pixels + provenance + stamped artKind). Same criteria as Catalogue → Cards.
  */
 function pickOwnedArtFile(
   cardDir: string,
@@ -158,14 +141,6 @@ function pickOwnedArtFile(
   pack: string,
 ): string | null {
   if (!existsSync(cardDir) || !statSync(cardDir).isDirectory()) return null;
-  /*
-    Hot path (catalogue /assets grid): honor face.json without listing the
-    folder. Thumb / face-b still need a directory listing when no decision.
-  */
-  if (role === "face") {
-    const decided = readFaceJsonArtFast(cardDir);
-    if (decided) return decided;
-  }
   let names: string[] = [];
   try {
     names = readdirSync(cardDir);
@@ -196,18 +171,24 @@ function pickOwnedArtFile(
     const pathB = path.join(cardDir, b);
     const dimsA = probeFaceFileDimensionsSync(pathA);
     const dimsB = probeFaceFileDimensionsSync(pathB);
+    const metaA = resolveFaceArtMetaForDig({ artFile: a });
+    const metaB = resolveFaceArtMetaForDig({ artFile: b });
     return (
       catalogueFaceRankScore({
         artFile: b,
         width: dimsB?.width,
         height: dimsB?.height,
         coverProvenance: provenanceOf?.(b),
+        artKind: metaB.artKind,
+        watermarked: metaB.watermarked,
       }) -
         catalogueFaceRankScore({
           artFile: a,
           width: dimsA?.width,
           height: dimsA?.height,
           coverProvenance: provenanceOf?.(a),
+          artKind: metaA.artKind,
+          watermarked: metaA.watermarked,
         }) || a.localeCompare(b)
     );
   });

@@ -92,7 +92,7 @@ export async function enqueuePrintCatalogPropagate(input: {
       try {
         const existing = await prisma.item.findUnique({
           where: { id: next.itemId },
-          select: { userId: true },
+          select: { userId: true, coverMode: true },
         });
         const session = await stampItemMetadataRefresh(next.itemId);
         await enqueueItemMetadataRefresh(
@@ -102,9 +102,10 @@ export async function enqueuePrintCatalogPropagate(input: {
             barcode: next.barcode,
             shelfType: bucket.shelf.type,
             shelfName: bucket.shelf.name,
-            // Soft: densify from corpus — never clear user crops / remote pin.
+            // Soft densify: never wipe remote cover. Keep local crop only when
+            // Affiche is pinned — auto tracks the engine on re-rank.
             clearRemoteCover: false,
-            preserveUserCover: true,
+            preserveUserCover: existing?.coverMode === "pinned",
             bypassMetadataCache: false,
             forceRefresh: false,
             userId: existing?.userId,

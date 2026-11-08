@@ -9,6 +9,7 @@ import {
   isListingPhotoCoverProvenance,
   resolveCoverProvenance,
 } from "@/core/enrich/media/coverProvenance";
+import { faceArtKindQuality } from "@/core/enrich/media/faceArtMeta";
 import { isCoverEligibleAttachmentType } from "@/core/enrich/media/coverUrl";
 import {
   isCoverResolutionAcceptable,
@@ -150,6 +151,7 @@ export function compareCoverDisplayRank<
     localeRankValue: number;
     platformMatchRank: number;
     provenanceRank: number;
+    watermarkRank: number;
     shortestEdge: number;
     score: number;
     index: number;
@@ -161,6 +163,7 @@ export function compareCoverDisplayRank<
     a.platformMatchRank - b.platformMatchRank ||
     a.localeRankValue - b.localeRankValue ||
     a.provenanceRank - b.provenanceRank ||
+    a.watermarkRank - b.watermarkRank ||
     b.score - a.score ||
     b.shortestEdge - a.shortestEdge ||
     a.index - b.index
@@ -195,8 +198,11 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
           provenance: attachment.coverProvenance,
         }),
       ),
+      watermarkRank: attachment.watermarked === true ? 1 : 0,
       shortestEdge: shortestImageEdge(metrics),
-      score: scoreAttachmentForDisplay(attachment, metrics, options),
+      score:
+        scoreAttachmentForDisplay(attachment, metrics, options) +
+        (faceArtKindQuality(attachment.artKind) - 50),
     };
   });
 
@@ -211,6 +217,7 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
       platformMatchRank: number;
       localeRankValue: number;
       provenanceRank: number;
+      watermarkRank: number;
       shortestEdge: number;
       sources: Set<string>;
       sourceLabels: Set<string>;
@@ -298,6 +305,9 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         provenanceRank: keepExisting
           ? existing.provenanceRank
           : entry.provenanceRank,
+        watermarkRank: keepExisting
+          ? existing.watermarkRank
+          : entry.watermarkRank,
         shortestEdge: keepExisting ? existing.shortestEdge : entry.shortestEdge,
       });
     }

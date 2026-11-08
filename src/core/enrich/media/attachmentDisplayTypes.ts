@@ -60,6 +60,11 @@ export type ScoredAttachmentInput = {
    * See the `platformKey` column in `prisma/schema.prisma`.
    */
   platformKey?: string | null;
+  /** Public proof URL (Affiche chip). */
+  sourceUrl?: string | null;
+  /** Ingest-stamped face kind — not derived at rank time from basename. */
+  artKind?: string | null;
+  watermarked?: boolean | null;
 };
 
 import type { Locale } from "@/types/i18n";

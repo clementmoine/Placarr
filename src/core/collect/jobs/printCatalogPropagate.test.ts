@@ -58,7 +58,7 @@ describe("enqueuePrintCatalogPropagate", () => {
     h.findUnique.mockResolvedValue({ userId: "u1" });
   });
 
-  it("soft-enqueues with preserveUserCover and no clearRemoteCover", async () => {
+  it("soft-enqueues auto covers without preserveUserCover", async () => {
     h.findMany.mockResolvedValueOnce([
       {
         id: "item-1",
@@ -68,6 +68,7 @@ describe("enqueuePrintCatalogPropagate", () => {
         shelf: { type: "cards", name: "Lorcana" },
       },
     ]);
+    h.findUnique.mockResolvedValue({ userId: "u1", coverMode: "auto" });
 
     const n = await enqueuePrintCatalogPropagate({ providerId: "lorcanatcg" });
     expect(n).toBe(1);
@@ -75,8 +76,30 @@ describe("enqueuePrintCatalogPropagate", () => {
       expect.objectContaining({
         itemId: "item-1",
         clearRemoteCover: false,
-        preserveUserCover: true,
+        preserveUserCover: false,
         forceRefresh: false,
+      }),
+      { generation: 1 },
+    );
+  });
+
+  it("preserves cover when Affiche is pinned", async () => {
+    h.findMany.mockResolvedValueOnce([
+      {
+        id: "item-2",
+        name: "Elsa",
+        barcode: null,
+        userId: "u1",
+        shelf: { type: "cards", name: "Lorcana" },
+      },
+    ]);
+    h.findUnique.mockResolvedValue({ userId: "u1", coverMode: "pinned" });
+
+    await enqueuePrintCatalogPropagate({ providerId: "lorcanatcg" });
+    expect(h.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemId: "item-2",
+        preserveUserCover: true,
       }),
       { generation: 1 },
     );

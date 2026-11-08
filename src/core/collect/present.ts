@@ -123,6 +123,9 @@ const itemListCoverAttachmentInclude = {
     height: true,
     meanLuminance: true,
     darkPixelRatio: true,
+    sourceUrl: true,
+    artKind: true,
+    watermarked: true,
   },
   where: {
     type: { in: ["cover", "artwork", "image"] as AttachmentType[] },

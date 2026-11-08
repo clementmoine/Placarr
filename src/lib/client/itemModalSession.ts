@@ -55,6 +55,7 @@ export type ItemModalFormValues = {
   gradeCertNo: string;
   gradedAt: string;
   imageUrl: string | File | null;
+  coverMode: "auto" | "pinned" | null;
   backgroundImageUrl: string | File | null;
 };
 
@@ -151,6 +152,7 @@ function defaultFormValues(
     shelfId: prefilledValues?.shelfId || shelfId || "",
     name: prefilledValues?.name || "",
     imageUrl: prefilledValues?.imageUrl || null,
+    coverMode: null,
     backgroundImageUrl: null,
     description: "",
     barcode: prefilledValues?.barcode || "",
@@ -245,8 +247,13 @@ export function buildItemModalSessionInit(input: {
 
   if (item) {
     const storedName = (item.storedName || item.name || defaults.name).trim();
+    const seededCoverMode =
+      item.coverMode === "auto" || item.coverMode === "pinned"
+        ? item.coverMode
+        : null;
     const mediaForCover = {
       imageUrl: item.imageUrl,
+      coverMode: seededCoverMode,
       updatedAt: item.updatedAt,
       condition: item.condition,
       metadata: item.metadata,
@@ -274,6 +281,7 @@ export function buildItemModalSessionInit(input: {
       condition: item.condition || defaults.condition,
       variant: item.variant ?? defaults.variant ?? null,
       imageUrl: seededCoverUrl,
+      coverMode: seededCoverMode,
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,

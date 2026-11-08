@@ -47,6 +47,10 @@ import {
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/coverResolution";
 import { expectedCoverAspectRatioForShelf } from "@/lib/text/cardFormat";
 import {
+  isDiskCardArtUrl,
+  isPrintRoleAssetUrl,
+} from "@/lib/packAssetUrls";
+import {
   findAttachmentForUrl,
   isCoverEligibleAttachmentType,
   isEditDerivativeUrl,
@@ -92,11 +96,21 @@ export interface MediaItem {
   height?: number | null;
   meanLuminance?: number | null;
   darkPixelRatio?: number | null;
+  /** Public proof URL for Affiche chips (Attachment.sourceUrl). */
+  sourceUrl?: string | null;
+  /** Ingest-stamped face kind — ranking must not re-parse basenames. */
+  artKind?: string | null;
+  watermarked?: boolean | null;
 }
 
 export interface MediaInput {
   imageUrl?: string | null;
   updatedAt?: Date | string | null;
+  /**
+   * Affiche policy: `auto` | `pinned`. When set, overrides timestamp heuristics
+   * for whether refresh may replace `imageUrl`. See `coverMode.ts`.
+   */
+  coverMode?: string | null;
   /** Item grade — loose games prefer disc art as the displayed cover. */
   condition?: string | null;
   metadata?: {
@@ -163,8 +177,13 @@ export function isExplicitUserCoverOverride(item: MediaInput): boolean {
 /**
  * Durable user cover: either a persisted `source: "user"` gallery attachment, or
  * a post-enrichment override. Survives metadata refresh (unlike timestamp-only).
+ * Explicit `coverMode` wins: `auto` never honors; `pinned` always does.
  */
 export function isHonoredUserCoverPin(item: MediaInput): boolean {
+  const mode = (item.coverMode || "").trim().toLowerCase();
+  if (mode === "auto") return false;
+  if (mode === "pinned") return Boolean(item.imageUrl?.trim());
+
   const pin = item.imageUrl?.trim();
   if (!pin) return false;
   const list = attachments(item);
@@ -715,6 +734,31 @@ function isLocalCropUploadUrl(url: string): boolean {
 }
 
 /**
+ * Affiche: `/prints/…/face` is the HTTP/shelf stem for the same bytes as
+ * `/cards/…/art.*`. When disk art dumps are already in the gallery, drop the
+ * print-role twin so the picker shows one face per source — not a duplicate.
+ */
+export function collapsePrintRoleTwinWithDiskArt(
+  list: ScoredAttachmentInput[],
+): ScoredAttachmentInput[] {
+  const hasDiskArt = list.some(
+    (attachment) =>
+      attachment.url &&
+      COVER_GALLERY_TYPES.has(attachment.type) &&
+      isDiskCardArtUrl(attachment.url),
+  );
+  if (!hasDiskArt) return list;
+  return list.filter(
+    (attachment) =>
+      !(
+        attachment.url &&
+        COVER_GALLERY_TYPES.has(attachment.type) &&
+        isPrintRoleAssetUrl(attachment.url)
+      ),
+  );
+}
+
+/**
  * Affiche picker: a Perso `/uploads/…_edited` pin beside its remote catalog
  * jaquette (failed remote→local fold) is the same art twice. Keep the crop as
  * the display URL and inherit catalog provenance; drop the redundant remote.
@@ -964,10 +1008,12 @@ export function orderedCoverAttachmentsForDisplay(
   );
   if (covers.length === 0) return [];
   const ranked = rankCoverGalleryAttachments(
-    collapseCroppedUserPinWithCatalogOriginal(covers, item.imageUrl, {
-      metadataImageUrl: item.metadata?.imageUrl,
-      preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
-    }),
+    collapsePrintRoleTwinWithDiskArt(
+      collapseCroppedUserPinWithCatalogOriginal(covers, item.imageUrl, {
+        metadataImageUrl: item.metadata?.imageUrl,
+        preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
+      }),
+    ),
     persistedImageMetricsByUrl(item),
     options,
   );
@@ -1000,13 +1046,15 @@ export function mergeCoverAttachmentsForPicker(
     options,
   );
   const ranked = rankCoverGalleryAttachments(
-    collapseCroppedUserPinWithCatalogOriginal(
-      dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
-      item.imageUrl,
-      {
-        metadataImageUrl: item.metadata?.imageUrl,
-        preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
-      },
+    collapsePrintRoleTwinWithDiskArt(
+      collapseCroppedUserPinWithCatalogOriginal(
+        dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
+        item.imageUrl,
+        {
+          metadataImageUrl: item.metadata?.imageUrl,
+          preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
+        },
+      ),
     ),
     persistedImageMetricsByUrl(item),
     options,
@@ -1203,7 +1251,14 @@ export function getGalleryImages(
       resolvedDefault,
       item.imageUrl ?? "",
     );
-    if (!alreadyListed || !item.imageUrl) {
+    const hasDiskArt =
+      [...seen].some((url) => isDiskCardArtUrl(url)) ||
+      attachments(item).some(
+        (attachment) =>
+          attachment.url && isDiskCardArtUrl(attachment.url),
+      );
+    const printTwin = hasDiskArt && isPrintRoleAssetUrl(resolvedDefault);
+    if ((!alreadyListed || !item.imageUrl) && !printTwin) {
       add({ url: resolvedDefault, type: "cover" });
     }
   }
@@ -1240,7 +1295,15 @@ export function getGalleryImages(
   }
 
   if (item.imageUrl && !seen.has(item.imageUrl)) {
-    add({ url: item.imageUrl, type: "image" });
+    const hasDiskArt =
+      [...seen].some((url) => isDiskCardArtUrl(url)) ||
+      attachments(item).some(
+        (attachment) =>
+          attachment.url && isDiskCardArtUrl(attachment.url),
+      );
+    if (!(hasDiskArt && isPrintRoleAssetUrl(item.imageUrl))) {
+      add({ url: item.imageUrl, type: "image" });
+    }
   }
 
   return max ? result.slice(0, max) : result;

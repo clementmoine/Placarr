@@ -626,17 +626,68 @@ export function formatAttachmentLanguageLabel(
 }
 
 /**
- * Dump channel after the language in `…-face-fr-kana` → "Kana" / "Live" /
- * "Promo". Not the provider chip (Carddass, TCGdex…) — that lives in
- * `sourceNames`.
+ * External dump sites (`art.animecollection.jpg`, role `…-face-fr-coleka`).
+ * Affiche source chip — never the catalogue line ("Naruto Ninja Ranks").
  */
-function parseFaceSourceDetail(role?: string | null): string | null {
-  const normalized = normalizeToken(role);
-  if (!normalized) return null;
-  const match = normalized.match(/(?:^|-)face-[a-z]{2}-([a-z0-9]+)$/);
-  const source = match?.[1]?.trim();
-  if (!source || source === "art") return null;
-  return titleCaseSourceToken(source);
+const FACE_SITE_DUMP_LABELS: Record<string, string> = {
+  animecollection: "AnimeCollection",
+  coleka: "Coleka",
+  inkworks: "Inkworks",
+  ebay: "eBay",
+  suruga: "Suruga",
+  lorenzone: "Lorenzone",
+  dbzcollection: "DBZ Collection",
+  tcgplayer: "TCGplayer",
+  carddass: "Carddass",
+};
+
+/**
+ * In-pipeline dump channels under a real metadata provider (TCGdex Live,
+ * Mythos Promo / Kana). Stay on the Face detail line, provider keeps the chip.
+ */
+const FACE_CHANNEL_DUMPS = new Set([
+  "live",
+  "promo",
+  "kana",
+  "reconstructed",
+  "mcdn",
+]);
+
+/** Raw dump token from role (`…-face-fr-kana`) or disk basename (`art.coleka.webp`). */
+function parseFaceDumpToken(
+  role?: string | null,
+  url?: string | null,
+): string | null {
+  const normalizedRole = normalizeToken(role);
+  if (normalizedRole) {
+    const match = normalizedRole.match(/(?:^|-)face-[a-z]{2}-([a-z0-9]+)$/);
+    const fromRole = match?.[1]?.trim();
+    if (fromRole && fromRole !== "art") return fromRole;
+  }
+  const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
+  // `art.animecollection.jpg` → animecollection; bare `art.webp` → no dump.
+  const fromUrl = path.match(
+    /\/(?:art|face|back)\.([a-z0-9]+)\.[a-z0-9]+$/i,
+  )?.[1];
+  const token = fromUrl?.trim().toLowerCase() ?? "";
+  if (!token || token === "art" || token === "face" || token === "back") {
+    return null;
+  }
+  return token;
+}
+
+/**
+ * Dump channel label for the Face detail line (`Live` / `Promo` / `Kana`).
+ * Site dumps are handled as the source chip instead.
+ */
+function parseFaceSourceDetail(
+  role?: string | null,
+  url?: string | null,
+): string | null {
+  const token = parseFaceDumpToken(role, url);
+  if (!token || FACE_SITE_DUMP_LABELS[token]) return null;
+  if (!FACE_CHANNEL_DUMPS.has(token)) return titleCaseSourceToken(token);
+  return titleCaseSourceToken(token);
 }
 
 /** True when the role dump token is just echoing the attachment source chip. */
@@ -680,7 +731,15 @@ export function getAttachmentGalleryLabels(
   const regionKey = language ? null : resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
   const region = language ?? formatAttachmentRegionLabel(regionKey, locale);
-  const sourceNames = formatAttachmentSourceNames(input);
+  const dumpToken = parseFaceDumpToken(input.role, input.url);
+  const siteDumpLabel = dumpToken
+    ? FACE_SITE_DUMP_LABELS[normalizeToken(dumpToken)] ?? null
+    : null;
+  // Catalogue line providers stamp `providerLabel` ("Naruto Ninja Ranks") while
+  // the bytes come from AnimeCollection / Coleka / … — prefer the dump site.
+  const sourceNames = siteDumpLabel
+    ? [siteDumpLabel]
+    : formatAttachmentSourceNames(input);
   const provider = sourceNames[0] ?? null;
   const styleLabel =
     input.gridStyleCoverLabelsSource &&
@@ -689,7 +748,7 @@ export function getAttachmentGalleryLabels(
       : null;
   const rawFaceSource =
     kindKey === "face" || kindKey === "cover"
-      ? parseFaceSourceDetail(input.role)
+      ? parseFaceSourceDetail(input.role, input.url)
       : null;
   const faceSource =
     rawFaceSource &&

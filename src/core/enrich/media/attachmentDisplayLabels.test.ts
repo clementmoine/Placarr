@@ -54,9 +54,9 @@ describe("attachmentDisplayLabels", () => {
     ).toMatchObject({
       kind: "Face",
       region: "Français",
-      // Carddass is the source chip — not repeated in the Face detail.
       detail: "Face · Français",
-      provider: "Naruto Carddass",
+      // Dump token `carddass` is the Affiche source chip (not the catalogue line).
+      provider: "Carddass",
     });
   });
 
@@ -156,6 +156,7 @@ describe("attachmentDisplayLabels", () => {
       kind: "Face",
       region: "Français",
       detail: "Face · Français",
+      provider: "AnimeCollection",
     });
     expect(
       getAttachmentGalleryLabels({
@@ -168,6 +169,23 @@ describe("attachmentDisplayLabels", () => {
       kind: "Face",
       region: "Français",
       detail: "Face · Français",
+      provider: "Coleka",
+    });
+  });
+
+  it("Affiche source chip is the dump site, not the catalogue line name", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "naruto-face-fr-animecollection",
+        url: "https://localhost:3000/assets/naruto/ninja-ranks/cards/nr/fr/0020/art.animecollection.jpg",
+        source: "narutoranks",
+        providerLabel: "Naruto Ninja Ranks",
+      }),
+    ).toMatchObject({
+      provider: "AnimeCollection",
+      sourceNames: ["AnimeCollection"],
+      detail: "Face · Français",
     });
   });
 
@@ -178,6 +196,7 @@ describe("attachmentDisplayLabels", () => {
       source?: string;
       providerLabel?: string;
       detail: string;
+      provider?: string;
     }> = [
       {
         url: "https://localhost:3000/assets/naruto/ninja-ranks/cards/ff/fr/0006/art.animecollection.jpg",
@@ -201,6 +220,7 @@ describe("attachmentDisplayLabels", () => {
         source: "narutocarddass",
         providerLabel: "Naruto Carddass",
         detail: "Face · Français",
+        provider: "Carddass",
       },
     ];
     for (const row of cases) {
@@ -216,6 +236,7 @@ describe("attachmentDisplayLabels", () => {
       ).toMatchObject({
         kind: "Face",
         detail: row.detail,
+        ...(row.provider ? { provider: row.provider } : {}),
       });
     }
   });

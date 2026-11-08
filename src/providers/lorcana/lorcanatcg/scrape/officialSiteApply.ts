@@ -12,7 +12,7 @@ import {
 import path from "node:path";
 
 import { assetsSealedProductRoleUrl } from "@/lib/packAssetUrls";
-import { writeSealedProductFaceDecision } from "@/providers/shared/sealedProducts/resolveProductFace";
+import { mergeWriteFaceDecision } from "@/providers/shared/cardFaces";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import {
   sealedProductKey,
@@ -470,7 +470,7 @@ function installOfficialArtOnEntry(opts: {
     }
   }
   copyFileSync(opts.stagingArt, dest);
-  writeSealedProductFaceDecision(destDir, { art: artFile });
+  mergeWriteFaceDecision(destDir, { art: artFile });
   opts.entry.image = assetsSealedProductRoleUrl(
     opts.packId,
     opts.entry.slug,

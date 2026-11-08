@@ -3,10 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { mergeWriteFaceDecision } from "@/providers/shared/cardFaces";
 import {
   matchSealedProductsAssetRest,
   resolveSealedProductFace,
-  writeSealedProductFaceDecision,
 } from "./resolveProductFace";
 
 describe("matchSealedProductsAssetRest", () => {
@@ -39,7 +39,7 @@ describe("resolveSealedProductFace", () => {
     vi.unstubAllEnvs();
   });
 
-  it("resolves face/back from face.json and dumps", () => {
+  it("resolves face/back from ranked dumps (face.json not required)", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "sealed-face-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const dir = path.join(
@@ -53,8 +53,10 @@ describe("resolveSealedProductFace", () => {
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "art.paninimania.jpg"), "art");
     writeFileSync(path.join(dir, "back.paninimania.jpg"), "back");
-    writeSealedProductFaceDecision(dir, {
-      art: "art.paninimania.jpg",
+    // Audit write still allowed — resolve must ignore it as SSOT.
+    vi.stubEnv("PLACARR_WRITE_FACE_JSON", "1");
+    mergeWriteFaceDecision(dir, {
+      art: "art.missing.jpg",
       back: "back.paninimania.jpg",
     });
 

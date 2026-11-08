@@ -140,6 +140,9 @@ function buildAttachments(card: TcgdexCard): MetadataAttachment[] | undefined {
     language: card.language,
     source: PROVIDER_ID,
     title: card.name,
+    indexedArt: card.art,
+    artKind: card.artKind,
+    watermarked: card.watermarked,
   });
   const attachments: MetadataAttachment[] = [...disk.attachments];
   // Live dump art (lang-first URL; set-first bytes OK via assets rewrite).
@@ -510,6 +513,9 @@ export function mapTcgdexMetadata(
     language: card.language,
     source: PROVIDER_ID,
     title: card.name,
+    indexedArt: card.art,
+    artKind: card.artKind,
+    watermarked: card.watermarked,
   });
 
   const metadata: MetadataResult = {
@@ -678,6 +684,9 @@ export function cardFromLocalRow(row: TcgdexSearchRow): TcgdexCard {
     imageBaseUrl,
     imageUrl: localArtUrl,
     thumbnailUrl: localArtUrl,
+    art: row.art ?? null,
+    artKind: row.artKind ?? null,
+    watermarked: row.watermarked ?? null,
     cmPriceCents: null,
     cmFoilPriceCents: null,
     cardmarketProductId: null,

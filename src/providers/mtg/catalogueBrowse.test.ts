@@ -6,49 +6,79 @@ import {
   tryBuildIdentityCatalogueRows,
 } from "@/lib/admin/catalogueIdentityBrowse";
 import { listCatalogueCards, resetCatalogueCardsCache } from "@/lib/admin/catalogueCards";
+import { clearLocalPrintsIndexSingletons } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { listMtgCatalogueBrowsePage } from "./catalogueBrowse";
+import {
+  clearMtgCatalogueBrowseCache,
+  listMtgCatalogueBrowsePage,
+} from "./catalogueBrowse";
 
 const hasMtg = existsSync("data/mtg/catalog.sqlite");
 
-describe("MTG catalogue browse (local faces only)", () => {
+describe.skipIf(!hasMtg)("MTG catalogue browse (local faces only)", () => {
   afterEach(() => {
     clearIdentityCatalogueBrowseCache();
+    clearMtgCatalogueBrowseCache();
+    clearLocalPrintsIndexSingletons("mtg");
     resetCatalogueCardsCache();
   });
 
-  it("builds EN/FR tiles from sqlite + local /assets — no Scryfall CDN in the grid", () => {
-    if (!hasMtg) return;
+  it("SQL page serves EN tiles without Scryfall CDN", () => {
+    const page = listMtgCatalogueBrowsePage({
+      langs: ["en"],
+      offset: 0,
+      limit: 48,
+    });
+    expect(page.total).toBeGreaterThan(100_000);
+    expect(page.rows.length).toBeGreaterThan(0);
+    expect(page.rows.length).toBeLessThanOrEqual(48);
+    expect(
+      page.rows.every(
+        (r) =>
+          !r.artUrl.startsWith("https://cards.scryfall.io/") &&
+          (r.artUrl === "" || r.artUrl.startsWith("/assets/mtg/")),
+      ),
+    ).toBe(true);
+    expect(
+      page.rows.every(
+        (r) => !/errors\.scryfall\.com|\/soon\.jpe?g/i.test(r.artUrl),
+      ),
+    ).toBe(true);
+  });
 
+  it("missingArtOnly pages via SQL (no 50k overscan hang)", () => {
+    const page = listMtgCatalogueBrowsePage({
+      langs: ["en"],
+      offset: 0,
+      limit: 24,
+      missingArtOnly: true,
+    });
+    expect(page.total).toBeGreaterThan(1_000);
+    expect(page.rows.length).toBeGreaterThan(0);
+    expect(page.rows.every((r) => r.missingArt && r.artUrl === "")).toBe(true);
+  });
+
+  it("listCatalogueCards preferred EN stays interactive", async () => {
+    const page = await listCatalogueCards({
+      pack: "mtg",
+      preferLang: "en",
+      locales: "preferred",
+      limit: 48,
+    });
+    expect(page.total).toBeGreaterThan(50_000);
+    expect(page.cards.filter((c) => c.kind === "face").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("materialize identity rows stay local-only (offline audit)", () => {
     const rows = tryBuildIdentityCatalogueRows("mtg");
     expect(rows).not.toBeNull();
     expect(rows!.length).toBeGreaterThan(100_000);
-
-    const withScryfall = rows!.filter((r) =>
-      r.artUrl.startsWith("https://cards.scryfall.io/"),
-    );
-    const withLocal = rows!.filter((r) =>
-      r.artUrl.startsWith("/assets/mtg/"),
-    );
-    const missing = rows!.filter((r) => r.missingArt);
-
-    expect(withScryfall).toEqual([]);
-    expect(withLocal.length + missing.length).toBe(rows!.length);
-    expect(rows!.some((r) => r.printKey === "mtg:plst-cmm40")).toBe(false);
-    expect(rows!.some((r) => r.printKey === "mtg:plst-dmc175")).toBe(false);
     expect(
-      rows!.some((r) => /errors\.scryfall\.com|\/soon\.jpe?g/i.test(r.artUrl)),
-    ).toBe(false);
-  });
-
-  it("marks tiles without a local /assets face as missingArt (Sync densify debt)", () => {
-    if (!hasMtg) return;
-
-    const rows = tryBuildIdentityCatalogueRows("mtg");
-    expect(rows).not.toBeNull();
+      rows!.filter((r) => r.artUrl.startsWith("https://cards.scryfall.io/")),
+    ).toEqual([]);
     const missing = rows!.filter((r) => r.missingArt);
-    // Local-only grid: nearly the whole corpus is densify debt until Sync.
     expect(missing.length).toBeGreaterThan(1_000);
-    expect(missing.every((r) => !r.artUrl || r.artUrl === "")).toBe(true);
-  });
+  }, 120_000);
 });

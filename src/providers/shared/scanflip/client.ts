@@ -121,10 +121,61 @@ export function scanflipFaceUrl(card: ScanflipCardRow): string | null {
   return card.imageCdn?.trim() || card.imageLowResCdn?.trim() || null;
 }
 
+/**
+ * ScanFlip moved off `application/json` pageContext to RSC + SSR HTML tiles.
+ * Parse watermarked `media.scanflip.fr` + printed code + card slug from markup.
+ */
+export function parseScanflipExplorerHtml(
+  html: string,
+  page = 1,
+): ScanflipPageResult {
+  const cards: ScanflipCardRow[] = [];
+  const seen = new Set<string>();
+  const tileRe =
+    /<img[^>]+src="(https:\/\/media\.scanflip\.fr\/[^"]+)"[\s\S]{0,500}?font-bold">([A-Z0-9-]+)<\/span>[\s\S]{0,240}?href="(\/fr\/[^"]+\/card\/([^"]+))"/gi;
+  let match: RegExpExecArray | null;
+  while ((match = tileRe.exec(html))) {
+    const image = match[1]!;
+    const code = match[2]!;
+    const slug = match[4]!;
+    if (!code || !slug || seen.has(code)) continue;
+    seen.add(code);
+    const nameGuess = slug
+      .replace(/^[a-z0-9-]+?-(?:[cur]|scr|ur|sr|r|c|u)-?/i, "")
+      .replace(/-/g, " ")
+      .trim();
+    cards.push({
+      id: slug,
+      slug,
+      code,
+      name: nameGuess || code,
+      imageCdn: image,
+      imageLowResCdn: image,
+      expansionName: null,
+      rarityCode: null,
+      rarityName: null,
+      version: null,
+      formerName: null,
+      generalType: null,
+      releaseDate: null,
+    });
+  }
+  const totalMatch = html.match(/totalCount[:\s]+(\d{2,})/);
+  const totalCount = totalMatch ? Number(totalMatch[1]) : cards.length;
+  return {
+    page,
+    pageSize: cards.length || 500,
+    totalCount,
+    data: cards,
+  };
+}
+
 export async function fetchScanflipCardsPageSsr(
   spec: ScanflipExplorerSpec,
+  page = 1,
 ): Promise<ScanflipPageResult> {
-  const url = `${SCANFLIP_ORIGIN}${spec.path}`;
+  const base = `${SCANFLIP_ORIGIN}${spec.path}`;
+  const url = page > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${page}` : base;
   const res = await httpGet<string>(url, {
     headers: {
       "User-Agent": UA,
@@ -161,7 +212,7 @@ export async function fetchScanflipCardsPageSsr(
       /* next script */
     }
   }
-  return { page: 1, pageSize: 500, totalCount: 0, data: [] };
+  return parseScanflipExplorerHtml(html, page);
 }
 
 export async function fetchScanflipCardsPageTelefunc(
@@ -232,7 +283,7 @@ export async function harvestScanflipCards(
   opts: HarvestScanflipOptions = {},
 ): Promise<{ cards: ScanflipCardRow[]; totalCount: number; pages: number }> {
   const delayMs = opts.delayMs ?? 120;
-  const first = await fetchScanflipCardsPageSsr(spec);
+  const first = await fetchScanflipCardsPageSsr(spec, 1);
   opts.onPage?.(first);
   const byId = new Map<string, ScanflipCardRow>();
   for (const card of first.data) byId.set(card.id, card);
@@ -247,9 +298,18 @@ export async function harvestScanflipCards(
   while (page < maxPages && byId.size < (totalCount || Infinity)) {
     page += 1;
     if (delayMs > 0) await sleep(delayMs);
-    const next = await fetchScanflipCardsPageTelefunc(spec, page, {
-      languages: opts.languages,
-    });
+    let next: ScanflipPageResult;
+    try {
+      next = await fetchScanflipCardsPageTelefunc(spec, page, {
+        languages: opts.languages,
+      });
+      if (!next.data.length) {
+        next = await fetchScanflipCardsPageSsr(spec, page);
+      }
+    } catch {
+      // Telefunc broke (RSC-only explorers) — fall back to SSR `?page=`.
+      next = await fetchScanflipCardsPageSsr(spec, page);
+    }
     opts.onPage?.(next);
     totalCount = next.totalCount || totalCount;
     if (!next.data.length) break;

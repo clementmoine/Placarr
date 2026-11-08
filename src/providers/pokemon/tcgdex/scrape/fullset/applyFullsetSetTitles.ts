@@ -11,7 +11,8 @@ import {
   tcgdexDbPath,
 } from "../../indexStore";
 import { loadTcgdexSetLogoIndex } from "../../setLogos";
-import { fullsetPokemonSetsLedgerPath } from "./harvestFullsetSets";
+import { fullsetSetsLedgerReadPath } from "@/providers/shared/fullset/harvestSets";
+import { POKEMON_PACK_ID } from "@/providers/pokemon/paths";
 import {
   foldFullsetSetName,
   normalizeFullsetSetRef,
@@ -47,7 +48,10 @@ function readLedger(filePath: string): FullsetPokemonSetsLedger | null {
   }
 }
 
-function buildEnNameIndex(db: DatabaseSync): Map<string, string> {
+function buildEnNameIndex(db: DatabaseSync): {
+  byFoldedName: Map<string, string>;
+  foldedNameBySetId: Map<string, string>;
+} {
   const rows = db
     .prepare(
       `SELECT LOWER(set_id) AS setId, name
@@ -57,13 +61,15 @@ function buildEnNameIndex(db: DatabaseSync): Map<string, string> {
           AND TRIM(name) != ''`,
     )
     .all() as { setId: string; name: string }[];
-  const map = new Map<string, string>();
+  const byFoldedName = new Map<string, string>();
+  const foldedNameBySetId = new Map<string, string>();
   for (const row of rows) {
     const key = foldFullsetSetName(row.name);
-    if (!key || map.has(key)) continue;
-    map.set(key, row.setId);
+    if (!key) continue;
+    if (!byFoldedName.has(key)) byFoldedName.set(key, row.setId);
+    if (!foldedNameBySetId.has(row.setId)) foldedNameBySetId.set(row.setId, key);
   }
-  return map;
+  return { byFoldedName, foldedNameBySetId };
 }
 
 function buildAbbrIndex(): Map<string, string> {
@@ -99,6 +105,22 @@ function resolveSetId(
 }
 
 /**
+ * Abbr-only hits must agree with the target set's EN title when the ledger
+ * carries one — otherwise SSP→`sv08` paints SWSH promo FR onto Surging Sparks.
+ */
+function abbrHitConflictsWithEnTitle(
+  row: FullsetPokemonSetRow,
+  setId: string,
+  foldedNameBySetId: Map<string, string>,
+): boolean {
+  const ledgerEn = foldFullsetSetName(row.nameEn || "");
+  if (!ledgerEn) return false;
+  const targetEn = foldedNameBySetId.get(setId);
+  if (!targetEn) return false;
+  return ledgerEn !== targetEn;
+}
+
+/**
  * Apply Fullset FR titles from the synced ledger onto the local TCGdex DB.
  * No-op when ledger or DB is missing.
  */
@@ -115,7 +137,9 @@ export function applyFullsetPokemonSetTitles(opts?: {
     matches: [],
   };
 
-  const ledger = readLedger(opts?.ledgerPath ?? fullsetPokemonSetsLedgerPath());
+  const ledger = readLedger(
+    opts?.ledgerPath ?? fullsetSetsLedgerReadPath(POKEMON_PACK_ID),
+  );
   if (!ledger) return empty;
 
   const dbPath = opts?.dbPath ?? tcgdexDbPath();
@@ -127,7 +151,7 @@ export function applyFullsetPokemonSetTitles(opts?: {
   const db = new DatabaseSync(dbPath);
   try {
     db.exec("PRAGMA busy_timeout = 30000");
-    const byEnName = buildEnNameIndex(db);
+    const { byFoldedName, foldedNameBySetId } = buildEnNameIndex(db);
     const byAbbr = buildAbbrIndex();
 
     const readFr = db.prepare(
@@ -153,8 +177,20 @@ export function applyFullsetPokemonSetTitles(opts?: {
     db.exec("BEGIN IMMEDIATE");
     try {
       for (const row of ledger.sets) {
-        const hit = resolveSetId(row, byEnName, byAbbr);
+        const hit = resolveSetId(row, byFoldedName, byAbbr);
         if (!hit) {
+          unmatched += 1;
+          continue;
+        }
+        /*
+          Abbr collisions (SSP / BASE / …) must not overwrite a set whose EN
+          title disagrees — that painted « Promos Épée & Bouclier » onto `sv08`
+          and « Base Set (Shadowless) » onto `base1`.
+        */
+        if (
+          hit.via === "abbr" &&
+          abbrHitConflictsWithEnTitle(row, hit.setId, foldedNameBySetId)
+        ) {
           unmatched += 1;
           continue;
         }

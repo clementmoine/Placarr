@@ -15,7 +15,7 @@ import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
 import { remapCollectorNumberForLive } from "@/effects/pokemon/liveJoin";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCardsDir } from "@/lib/packPaths";
-import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
+import { buildCatalogueDiskFaceAttachments } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 import {
@@ -171,7 +171,7 @@ export function localPokemonCatalogueArtUrl(
 }
 
 /**
- * One cover attachment per `art.<source>.*` on disk. Default URL = face.json /
+ * One cover attachment per `art.<source>.*` on disk. Default URL = ranked
  * faceChoice winner (same as catalogue vignette). Core enrich + ItemModal pin
  * stay provider-blind.
  */
@@ -180,6 +180,11 @@ export function buildPokemonDiskArtAttachments(opts: {
   language?: string | null;
   source: string;
   title?: string | null;
+  sourceUrl?: string | null;
+  /** Indexed winner basename — stamps apply only to this file. */
+  indexedArt?: string | null;
+  artKind?: string | null;
+  watermarked?: boolean | number | null;
   cardsRoot?: string;
 }): { attachments: MetadataAttachment[]; defaultUrl: string | null } {
   const id = parsePrintKey(opts.printKey);
@@ -225,31 +230,20 @@ export function buildPokemonDiskArtAttachments(opts: {
       localId: id.number,
       cardsRoot: opts.cardsRoot,
     });
-    const defaultUrl = defaultArt
-      ? assetsCardUrl("pokemon", diskId, defaultArt)
-      : null;
-
-    const ordered = defaultArt
-      ? [defaultArt, ...arts.filter((a) => a !== defaultArt)]
-      : arts;
-
-    const attachments: MetadataAttachment[] = ordered.map((file) => {
-      const faceSource = pokemonFaceSourceOf(file) ?? "live";
-      return {
-        type: "cover",
-        url: assetsCardUrl("pokemon", diskId, file),
-        title: opts.title?.trim() || faceSource,
-        role: tcgFaceAttachmentRole({
-          printGame: POKEMON_GAME,
-          lang,
-          source: faceSource,
-        }),
-        source: opts.source,
-        coverProvenance: "catalog",
-      };
+    const indexedArt = opts.indexedArt?.trim() || defaultArt;
+    return buildCatalogueDiskFaceAttachments({
+      packId: "pokemon",
+      diskId,
+      preferredArt: indexedArt,
+      providerId: opts.source,
+      printGame: POKEMON_GAME,
+      title: opts.title?.trim() || "",
+      proofUrl: opts.sourceUrl,
+      winnerArtKind: opts.artKind,
+      winnerWatermarked: opts.watermarked,
+      artFiles: arts,
+      sourceTokenForFile: (file) => pokemonFaceSourceOf(file) ?? "live",
     });
-
-    return { attachments, defaultUrl };
   }
 
   return { attachments: [], defaultUrl: null };

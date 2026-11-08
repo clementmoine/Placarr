@@ -1,9 +1,4 @@
-import {
-  existsSync,
-  mkdtempSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -63,11 +58,13 @@ describe("fillPokecardexMcdoCampaign", () => {
     expect(pokemonFaceSourceOf("art.pokecardex.jpg")).toBe("pokecardex");
 
     // Re-rank now that coleka also sits on disk — catalog still wins.
-    const { refreshPokemonFaceDecision } = await import("../../disk/faceChoice");
-    expect(refreshPokemonFaceDecision(cardDir, "fr")).toBe("art.pokecardex.jpg");
-    const decision = JSON.parse(
-      readFileSync(path.join(cardDir, "face.json"), "utf8"),
-    ) as { art: string };
-    expect(decision.art).toBe("art.pokecardex.jpg");
+    const { refreshPokemonFaceDecision, resolvePokemonArtFilename } =
+      await import("../../disk/faceChoice");
+    expect(refreshPokemonFaceDecision(cardDir, "fr")).toBe(
+      "art.pokecardex.jpg",
+    );
+    expect(resolvePokemonArtFilename(cardDir, "fr")).toBe(
+      "art.pokecardex.jpg",
+    );
   });
 });

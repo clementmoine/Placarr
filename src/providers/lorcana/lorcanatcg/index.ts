@@ -1,11 +1,10 @@
 import { createMetadataHealthCheck } from "@/core/catalog/healthUtils";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { withPackCardUrls } from "@/effects/lorcana/packAssets";
+import { cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
+import { buildCatalogueDiskFaceAttachments } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
 import { tcgFaceAttachmentRole } from "@/providers/shared/cardCatalogue/tcgFaceRole";
-import type {
-  MetadataResult,
-  MetadataAttachment,
-} from "@/types/metadataProvider";
+import type { MetadataResult } from "@/types/metadataProvider";
 import type {
   MetadataAdapterContext,
   PrintCandidate,
@@ -35,6 +34,7 @@ import {
   lookupLorcanaTcgPrint,
   lookupLorcanaTcgSearchRow,
   lookupLorcanaTcgTitle,
+  LORCANA_PACK_ID,
   lorcanaTcgDbPath,
   searchLorcanaTcgRows,
 } from "./indexStore";
@@ -73,7 +73,22 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     lookupLorcanaTcgTitle(printKey, "it");
   if (!title) return null;
   const print = lookupLorcanaTcgPrint(printKey);
+  const searchRow = lookupLorcanaTcgSearchRow(printKey, {
+    language: title.lang,
+  });
+  const diskId = cardDiskIdFromPrintKey(printKey, title.lang);
+  const diskFaces = diskId
+    ? buildCatalogueDiskFaceAttachments({
+        packId: LORCANA_PACK_ID,
+        diskId,
+        preferredArt: searchRow?.art ?? null,
+        providerId: PROVIDER_ID,
+        printGame: LORCANA_GAME,
+        title: title.fullName,
+      })
+    : { attachments: [], defaultUrl: null };
 
+  // Foil / varnish URLs stay on the cards-index path when disk has no art dump.
   const withUrls = withPackCardUrls({
     printKey,
     language: title.lang,
@@ -83,21 +98,7 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
     varnishMaskUrl: null,
     secondVarnishMaskUrl: null,
   });
-
-  const attachments: MetadataAttachment[] = [];
-  if (withUrls.imageUrl) {
-    attachments.push({
-      type: "cover",
-      url: withUrls.imageUrl,
-      title: title.fullName,
-      role: tcgFaceAttachmentRole({
-        printGame: LORCANA_GAME,
-        lang: title.lang,
-        source: "art",
-      }),
-      source: PROVIDER_ID,
-    });
-  }
+  const imageUrl = diskFaces.defaultUrl ?? withUrls.imageUrl ?? undefined;
 
   const authors = (print?.artists ?? [])
     .map((name) => name.trim())
@@ -107,8 +108,27 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   return {
     title: title.fullName,
     description: title.flavorText ?? undefined,
-    imageUrl: withUrls.imageUrl ?? undefined,
-    attachments: attachments.length ? attachments : undefined,
+    ...(imageUrl ? { imageUrl } : {}),
+    ...(diskFaces.attachments.length
+      ? { attachments: diskFaces.attachments }
+      : imageUrl
+        ? {
+            attachments: [
+              {
+                type: "cover" as const,
+                url: imageUrl,
+                title: title.fullName,
+                role: tcgFaceAttachmentRole({
+                  printGame: LORCANA_GAME,
+                  lang: title.lang,
+                  source: "art",
+                }),
+                source: PROVIDER_ID,
+                coverProvenance: "catalog" as const,
+              },
+            ],
+          }
+        : {}),
     authors: authors.length ? authors : undefined,
     publishers: [{ name: "Ravensburger" }],
     externalIds: {

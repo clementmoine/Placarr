@@ -1,7 +1,7 @@
 /**
  * Rebuild the sealed-product dHash index for a catalogue dataPack.
  *
- * Walks `products/{slug}/{lang}/art.*` (face.json winner preferred). Full-frame
+ * Walks `products/{slug}/{lang}/art.*` (catalogue-ranked). Full-frame
  * signals only — never CARD_ART_BAND. Incremental on face fingerprints.
  */
 import { existsSync, statSync } from "node:fs";

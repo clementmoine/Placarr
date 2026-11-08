@@ -9,7 +9,8 @@
  *
  * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products` · `documents`.
  * `--skip-faces` remains an alias for `--skip faces`. Shop faces stay opt-in
- * via `--ygocards-faces`. Konami Neuron has no public API.
+ * via `--ygocards-faces`. FR residual fill: `--ygoresources-faces`
+ * (artworks.ygoresources.com). Konami Neuron has no public API.
  */
 import {
   catalogueArgList,
@@ -32,6 +33,7 @@ import {
 } from "./install/scanflip";
 import { scrapeYgocardsProducts } from "./sources/ygocards";
 import { harvestYgocardsDistinctBacks } from "./ygocardsBacks";
+import { fillYgoresourcesFrFaces } from "./install/ygoresources";
 import {
   harvestYugiohYgoprodeck,
   installYugiohYgoprodeck,
@@ -132,6 +134,7 @@ export async function runYugiohPackPipeline(
   const skipScanflip = argv.includes("--skip-scanflip");
   const skipYgoprodeck = argv.includes("--skip-ygoprodeck");
   const wantShopFaces = argv.includes("--ygocards-faces");
+  const wantYgoresourcesFaces = argv.includes("--ygoresources-faces");
   const skipYgocardsList =
     argv.includes("--skip-ygocards-list") || skipToken(argv, "ygocards-list");
   const skipBacks =
@@ -316,6 +319,17 @@ export async function runYugiohPackPipeline(
         faces += shop.written;
         console.log(
           `── ygocards.fr faces — ${shop.written} écrites, ${shop.skipped} déjà là, ${shop.unmapped} sans clé, ${shop.unknownPrint} hors catalogue, ${shop.failed} échecs (${shop.indexCards} tuiles)`,
+        );
+      }
+
+      if (downloadFaces && wantYgoresourcesFaces && !offline) {
+        const ygores = await fillYgoresourcesFrFaces(index, {
+          force,
+          limit: Number.isFinite(limit) ? limit : undefined,
+        });
+        faces += ygores.written;
+        console.log(
+          `── ygoresources FR faces — ${ygores.written} écrites, ${ygores.skipped} déjà là, ${ygores.unmapped} sans FR art, ${ygores.failed} échecs (${ygores.tried} tentées)`,
         );
       }
 

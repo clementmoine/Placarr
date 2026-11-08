@@ -34,6 +34,7 @@ import {
   dbsMastersFaceUrls,
   fetchDbsCgFaces,
   isWebpBuffer,
+  resolveDbsArtFilename,
 } from "./fetchFaces";
 import {
   DBS_CG_PACK_ID,
@@ -307,8 +308,8 @@ describe("fetchDbsCgFaces", () => {
       langs: ["fr"],
     });
     expect(result.ok).toBe(1);
-    // Nothing is copied to a generic name: the decision names the source file.
-    expect(chosenFace()).toBe("art.dbscards.webp");
+    // Nothing is copied to a generic name: ranking picks the source dump.
+    expect(await chosenFace()).toBe("art.dbscards.webp");
     // dbscards leads because it is the only 400x560 source; every host behind
     // it serves Bandai's 260x363.
     expect(String(mockedGet.mock.calls[0]?.[0])).toContain(
@@ -376,11 +377,11 @@ describe("fetchDbsCgFaces", () => {
     writeFileSync(path.join(dir, "art.dbscards.webp"), tinyWebp());
     writeFileSync(path.join(dir, "art.bandai.webp"), big);
     await fetchDbsCgFaces({ delayMs: 0, concurrency: 1, langs: ["fr"] });
-    // The decision points at Bandai's larger file, though dbscards outranks it
+    // Ranking prefers Bandai's larger file, though dbscards outranks it
     // on source order.
-    expect(chosenFace()).toBe("art.bandai.webp");
+    expect(await chosenFace()).toBe("art.bandai.webp");
     const shown = await sharp(
-      path.join(path.dirname(artPath()), chosenFace()!),
+      path.join(path.dirname(artPath()), (await chosenFace())!),
     ).metadata();
     expect(shown.width).toBe(400);
   });
@@ -495,15 +496,7 @@ describe("fetchDbsCgFaces", () => {
   });
 });
 
-/** The filename the ranking recorded for this card, or null. */
-function chosenFace(lang = "fr"): string | null {
-  try {
-    const raw = readFileSync(
-      path.join(path.dirname(artPath(lang)), "face.json"),
-      "utf8",
-    );
-    return (JSON.parse(raw) as { art?: string }).art ?? null;
-  } catch {
-    return null;
-  }
+/** Ranked art basename on disk (`face.json` is not SSOT). */
+async function chosenFace(lang = "fr"): Promise<string | null> {
+  return resolveDbsArtFilename(path.dirname(artPath(lang)), lang);
 }

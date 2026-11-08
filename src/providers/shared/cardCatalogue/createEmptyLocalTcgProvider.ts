@@ -31,6 +31,7 @@ export function createEmptyLocalTcgProvider(input: {
   const catalog = cardCatalogueHooks({
     packId: input.lineSpec.packId,
     effectPackId: input.lineSpec.effectPackId,
+    printGame: input.lineSpec.printGame,
     dbPath: line.index.dbPath,
     runPipeline: input.runPipeline,
     autoSkip: input.autoSkip,

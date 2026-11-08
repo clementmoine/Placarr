@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { parsePrintKey } from "@/core/identify/printKey";
 import {
   finalizeSetOptions,
@@ -143,6 +144,8 @@ export type TcgdexSearchRow = {
    * (`print_assets.art`). Null → fall back to CDN `imageBaseUrl`.
    */
   art?: string | null;
+  artKind?: string | null;
+  watermarked?: boolean | number | null;
 };
 
 /** Shared projection for search / lookup / checklist SQL. */
@@ -153,7 +156,9 @@ const TCGDEX_SEARCH_SELECT = `p.print_key AS printKey, p.set_id AS setId,
               t.lang, t.name, t.set_name AS setName, t.serie_name AS serieName,
               t.rarity, t.stage,
               s.official_count AS setOfficialCount,
-              a.art AS art`;
+              a.art AS art,
+              a.art_kind AS artKind,
+              a.watermarked AS watermarked`;
 
 /** Join face assets on the title language (same contract as other TCG packs). */
 const TCGDEX_SEARCH_FROM = `prints p
@@ -239,6 +244,8 @@ function createSchema(db: DatabaseSync): void {
       back TEXT,
       source_url TEXT,
       printed INTEGER NOT NULL DEFAULT 1,
+      art_kind TEXT,
+      watermarked INTEGER,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
@@ -263,10 +270,13 @@ function migrateTcgdexPrintAssetsTable(db: DatabaseSync): void {
       back TEXT,
       source_url TEXT,
       printed INTEGER NOT NULL DEFAULT 1,
+      art_kind TEXT,
+      watermarked INTEGER,
       PRIMARY KEY (print_key, lang),
       FOREIGN KEY (print_key) REFERENCES prints(print_key) ON DELETE CASCADE
     );
   `);
+  migrateTableColumns(db, "print_assets", ADDED_ASSET_COLUMNS);
 }
 
 /**
@@ -286,6 +296,11 @@ const ADDED_TITLE_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
 /** Cardboard flag — Pocket / misc stay in DB with printed=0. */
 const ADDED_PRINT_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
   { name: "printed", ddl: "INTEGER NOT NULL DEFAULT 1" },
+];
+
+const ADDED_ASSET_COLUMNS: ReadonlyArray<{ name: string; ddl: string }> = [
+  { name: "art_kind", ddl: "TEXT" },
+  { name: "watermarked", ddl: "INTEGER" },
 ];
 
 function migrateTableColumns(
@@ -505,10 +520,12 @@ export function syncTcgdexPrintAssetsFromDisk(input: {
     if (printKeys.length === 0 || languages.length === 0) return 0;
 
     const upsert = db.prepare(`
-      INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, printed)
-      VALUES (?, ?, ?, NULL, NULL, NULL, 1)
+      INSERT INTO print_assets (print_key, lang, art, thumb, back, source_url, printed, art_kind, watermarked)
+      VALUES (?, ?, ?, NULL, NULL, NULL, 1, ?, ?)
       ON CONFLICT(print_key, lang) DO UPDATE SET
-        art = COALESCE(excluded.art, print_assets.art)
+        art = COALESCE(excluded.art, print_assets.art),
+        art_kind = COALESCE(excluded.art_kind, print_assets.art_kind),
+        watermarked = COALESCE(excluded.watermarked, print_assets.watermarked)
     `);
     const clearGhostArt = db.prepare(`
       UPDATE print_assets
@@ -551,7 +568,14 @@ export function syncTcgdexPrintAssetsFromDisk(input: {
             if (Number(cleared.changes) > 0) synced += 1;
             continue;
           }
-          upsert.run(printKey, lang, art);
+          const meta = resolveFaceArtMetaForDig({ artFile: art });
+          upsert.run(
+            printKey,
+            lang,
+            art,
+            meta.artKind,
+            meta.watermarked ? 1 : 0,
+          );
           synced += 1;
         }
       }

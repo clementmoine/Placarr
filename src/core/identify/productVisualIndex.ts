@@ -4,7 +4,7 @@
  * Full-frame dHash/aHash/color — **never** CARD_ART_BAND (borders and logos
  * are signal on sealed SKUs). Match is top‑k + user confirm — never auto-accept.
  *
- * Disk layout: `products/{slug}/{lang}/art.*` (+ optional `face.json` winner).
+ * Disk layout: `products/{slug}/{lang}/art.*` (ranked by catalogue criteria).
  */
 import {
   existsSync,
@@ -20,6 +20,7 @@ import {
   hammingDistance,
 } from "@/core/enrich/media/imageAssets";
 import { catalogueFaceRankScore } from "@/core/enrich/media/catalogueFaceRank";
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { extractCardVisualSignals } from "@/core/identify/cardVisualSignals";
 import { faceFingerprint } from "@/core/identify/cardVisualIndex";
 import { packDataDir, packSealedProductsDir } from "@/lib/packPaths";
@@ -50,7 +51,6 @@ export type ProductVisualIndexFile = {
 export const PRODUCT_VISUAL_INDEX_VERSION = 1 as const;
 
 const INDEX_NAME = "product-visual-index.json";
-const FACE_DECISION_FILE = "face.json";
 const LANG_SEGMENT = /^[a-z]{2}([a-z]{2})?$/i;
 
 const FACE_LANGS = new Set([
@@ -275,41 +275,30 @@ function listArtFiles(dir: string): string[] {
         /^art(\.|$)/i.test(name) &&
         /\.(webp|jpg|jpeg|png|gif)$/i.test(name),
     )
-    .sort(
-      (a, b) =>
-        catalogueFaceRankScore({ artFile: b }) -
-          catalogueFaceRankScore({ artFile: a }) || a.localeCompare(b),
-    );
-}
-
-function readFaceArtWinner(dir: string): string | null {
-  try {
-    const raw: unknown = JSON.parse(
-      readFileSync(path.join(dir, FACE_DECISION_FILE), "utf8"),
-    );
-    if (!raw || typeof raw !== "object") return null;
-    const art =
-      typeof (raw as { art?: unknown }).art === "string"
-        ? (raw as { art: string }).art.trim()
-        : "";
-    if (!art || !/^art\./i.test(art)) return null;
-    if (!existsSync(path.join(dir, art))) return null;
-    return art;
-  } catch {
-    return null;
-  }
+    .sort((a, b) => {
+      const metaA = resolveFaceArtMetaForDig({ artFile: a });
+      const metaB = resolveFaceArtMetaForDig({ artFile: b });
+      return (
+        catalogueFaceRankScore({
+          artFile: b,
+          artKind: metaB.artKind,
+          watermarked: metaB.watermarked,
+        }) -
+          catalogueFaceRankScore({
+            artFile: a,
+            artKind: metaA.artKind,
+            watermarked: metaA.watermarked,
+          }) || a.localeCompare(b)
+      );
+    });
 }
 
 /**
- * Prefer `face.json.art` when present, then remaining `art.*` siblings
- * (ranked). Always full-frame files — never a card-band crop.
+ * Ranked `art.*` siblings (catalogue criteria). Always full-frame files —
+ * never a card-band crop. `face.json` is not SSOT.
  */
 export function listProductArtFaces(dir: string): string[] {
-  const files = listArtFiles(dir);
-  if (!files.length) return [];
-  const winner = readFaceArtWinner(dir);
-  if (!winner) return files;
-  return [winner, ...files.filter((f) => f !== winner)];
+  return listArtFiles(dir);
 }
 
 function listSubdirs(dir: string): string[] {

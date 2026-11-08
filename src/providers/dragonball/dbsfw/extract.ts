@@ -130,9 +130,11 @@ export async function runDbsFwPackPipeline(
       );
     }
     if (step === "faces") {
+      const sets = catalogueArgList(argv, "--sets");
       const result = await fetchDbsFwFaces({
         force,
         ...(langs.length ? { langs } : {}),
+        ...(sets.length ? { setCodes: sets } : {}),
         ...(catalogueArgValue(argv, "--limit")
           ? { limit: Number(catalogueArgValue(argv, "--limit")) }
           : {}),

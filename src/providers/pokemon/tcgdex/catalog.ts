@@ -15,6 +15,8 @@ import type {
   ProviderCatalogStatus,
 } from "@/types/providerModule";
 
+import { POKEMON_PACK_ID } from "@/providers/pokemon/paths";
+import { applyCorpusPromotePokemon } from "./applyCorpusPromotePokemon";
 import { listTcgdexLocalSets, tcgdexDbPath } from "./indexStore";
 
 const PRINTS_LAST_RUN = "tcgdex-prints-last-run.json";
@@ -106,13 +108,16 @@ export async function refreshTcgdexCatalog(
     unmatched: number;
   } | null = null;
   try {
-    const { harvestFullsetPokemonSets } = await import(
-      "./scrape/fullset/harvestFullsetSets"
+    const { harvestFullsetSets } = await import(
+      "@/providers/shared/fullset/harvestSets"
     );
     const { applyFullsetPokemonSetTitles } = await import(
       "./scrape/fullset/applyFullsetSetTitles"
     );
-    await harvestFullsetPokemonSets();
+    await harvestFullsetSets({
+      packId: POKEMON_PACK_ID,
+      game: "pokemon",
+    });
     const applied = applyFullsetPokemonSetTitles();
     fullsetTitles = {
       matched: applied.matched,
@@ -155,4 +160,5 @@ export const tcgdexCatalog: ProviderCatalogHooks = {
   dataPack: "pokemon",
   status: tcgdexCatalogStatus,
   refresh: refreshTcgdexCatalog,
+  applyCorpusPromote: applyCorpusPromotePokemon,
 };

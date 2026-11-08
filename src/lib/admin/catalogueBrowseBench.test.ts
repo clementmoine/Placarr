@@ -18,6 +18,8 @@ import { clearPokemonCatalogueBrowseCache } from "@/providers/pokemon/tcgdex/cat
 import { clearLorcanaCatalogueBrowseCache } from "@/providers/lorcana/lorcanatcg/catalogueBrowse";
 import { clearCarddassCatalogueBrowseCache } from "@/providers/naruto/narutocarddass/catalogueBrowse";
 import { clearDbsCgCatalogueBrowseCache } from "@/providers/dragonball/dbscg/catalogueBrowse";
+import { clearMtgCatalogueBrowseCache } from "@/providers/mtg/catalogueBrowse";
+import { clearLocalPrintsIndexSingletons } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { tcgdexDbPath } from "@/providers/pokemon/tcgdex/indexStore";
 import { lorcanaTcgDbPath } from "@/providers/lorcana/lorcanatcg/indexStore";
 import { narutoPackDbPath } from "@/providers/naruto/narutocarddass/indexStore";
@@ -34,6 +36,7 @@ const hasPokemon = existsSync(tcgdexDbPath());
 const hasLorcana = existsSync(lorcanaTcgDbPath());
 const hasNaruto = existsSync(narutoPackDbPath(NARUTO_PACK_ID));
 const hasDbsCg = existsSync(dbsCgDbPath());
+const hasMtg = existsSync("data/mtg/catalog.sqlite");
 const hasPokemonSealed = existsSync(packProductsIndexPath("pokemon"));
 const hasLorcanaSealed = existsSync(packProductsIndexPath("lorcana"));
 
@@ -190,6 +193,58 @@ describe.skipIf(!hasDbsCg)("bench listCatalogueCards dragonball/cg", () => {
       );
     },
     60_000,
+  );
+});
+
+describe.skipIf(!hasMtg)("bench listCatalogueCards mtg", () => {
+  afterEach(() => {
+    resetCatalogueCardsCache();
+    clearMtgCatalogueBrowseCache();
+    clearLocalPrintsIndexSingletons("mtg");
+  });
+
+  it(
+    "SQL page is fast; warm listCatalogueCards stays interactive",
+    async () => {
+      const { listMtgCatalogueBrowsePage } = await import(
+        "@/providers/mtg/catalogueBrowse"
+      );
+      resetCatalogueCardsCache();
+      clearMtgCatalogueBrowseCache();
+      clearLocalPrintsIndexSingletons("mtg");
+      const sqlCold = await ms(() =>
+        listMtgCatalogueBrowsePage({
+          langs: ["en"],
+          offset: 0,
+          limit: 48,
+        }),
+      );
+      const warm = await ms(() =>
+        listCatalogueCards({
+          pack: "mtg",
+          preferLang: "en",
+          locales: "preferred",
+          limit: 48,
+        }),
+      );
+      const missingWarm = await ms(() =>
+        listCatalogueCards({
+          pack: "mtg",
+          preferLang: "en",
+          locales: "preferred",
+          missingArtOnly: true,
+          limit: 48,
+        }),
+      );
+      expect(sqlCold).toBeLessThan(3_000);
+      expect(warm).toBeLessThan(3_000);
+      expect(missingWarm).toBeLessThan(5_000);
+      // eslint-disable-next-line no-console -- bench visibility
+      console.log(
+        `mtg sql=${sqlCold.toFixed(0)}ms cards warm=${warm.toFixed(0)}ms missingArt=${missingWarm.toFixed(0)}ms`,
+      );
+    },
+    120_000,
   );
 });
 

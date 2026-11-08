@@ -5,6 +5,8 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
+
 import {
   dbsJccCuratedDir,
   dbsJccSyncedSourcePath,
@@ -380,7 +382,7 @@ export function buildCarddassFrDbzLedgerFromScout(): {
       file: parsed.file,
       category: parsed.category,
       timestamp: row.timestamp,
-      waybackUrl: `https://web.archive.org/web/${row.timestamp}id_/${row.original}`,
+      waybackUrl: waybackRawUrl(row.timestamp, row.original),
     });
   }
 

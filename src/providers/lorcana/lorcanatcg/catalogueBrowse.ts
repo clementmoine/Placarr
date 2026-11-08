@@ -10,9 +10,11 @@ import path from "node:path";
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import { assetsCardUrl, cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
 import { packCardDir } from "@/lib/packPaths";
+import { listCatalogueArtBasenames } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
 import {
   listLorcanaCatalogueBrowsePage,
   listLorcanaTcgRowsForLanguage,
+  LORCANA_PACK_ID,
   lorcanaTcgDbPath,
   type LorcanaTcgSearchRow,
 } from "@/providers/lorcana/lorcanatcg/indexStore";
@@ -33,27 +35,9 @@ function catalogMtimeMs(): number {
   }
 }
 
-function localLorcanaArtUrl(
-  printKey: string,
-  lang: string,
-): string | null {
-  const id = cardDiskIdFromPrintKey(printKey, lang);
-  if (!id) return null;
-  const dir = packCardDir("lorcana", id);
-  for (const file of ["art.webp", "art.png", "art.jpg"] as const) {
-    try {
-      if (existsSync(path.join(dir, file))) {
-        return assetsCardUrl("lorcana", id, file);
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  return null;
-}
-
 /**
  * Local `/assets/…` face only — never CDN in the admin catalogue grid.
+ * Prefer indexed basename, else first `art.*` dump (lang-first folder).
  */
 export function resolveLorcanaCatalogueArtUrl(
   row: Pick<
@@ -67,19 +51,21 @@ export function resolveLorcanaCatalogueArtUrl(
   >,
 ): string {
   const lang = (row.lang ?? "en").trim().toLowerCase() || "en";
-  const artBasename = row.art?.trim() || null;
-  const diskId = artBasename
-    ? cardDiskIdFromPrintKey(row.printKey, lang)
-    : null;
-  if (artBasename && diskId) {
-    const abs = path.join(packCardDir("lorcana", diskId), artBasename);
+  const diskId = cardDiskIdFromPrintKey(row.printKey, lang);
+  if (!diskId) return "";
+  const dir = packCardDir(LORCANA_PACK_ID, diskId);
+  const preferred = row.art?.trim() || null;
+  if (preferred) {
     try {
-      if (existsSync(abs)) return assetsCardUrl("lorcana", diskId, artBasename);
+      if (existsSync(path.join(dir, preferred))) {
+        return assetsCardUrl(LORCANA_PACK_ID, diskId, preferred);
+      }
     } catch {
       /* fall through */
     }
   }
-  return localLorcanaArtUrl(row.printKey, lang) ?? "";
+  const first = listCatalogueArtBasenames(dir)[0];
+  return first ? assetsCardUrl(LORCANA_PACK_ID, diskId, first) : "";
 }
 
 function rowToCatalogueCard(row: LorcanaTcgSearchRow): CatalogueCardRow {

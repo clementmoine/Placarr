@@ -3,13 +3,14 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import sharp from "sharp";
+
 import {
   buildPokemonDiskArtAttachments,
   localPokemonCatalogueArtUrl,
   pokemonCardFolderId,
   resolvePokemonCatalogueArtFilename,
 } from "./paperCardDisk";
-import { recordPokemonFaceDecision } from "./faceChoice";
 
 /** Minimal 1×1 PNG — face ranking probes dims and rejects empty stubs. */
 const TINY_PNG = Buffer.from(
@@ -20,6 +21,26 @@ const TINY_PNG = Buffer.from(
 function writeFace(dir: string, name: string): void {
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, name), TINY_PNG);
+}
+
+async function writeFaceSized(
+  dir: string,
+  name: string,
+  width: number,
+  height: number,
+): Promise<void> {
+  mkdirSync(dir, { recursive: true });
+  const buf = await sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: { r: 40, g: 80, b: 120 },
+    },
+  })
+    .png()
+    .toBuffer();
+  writeFileSync(path.join(dir, name), buf);
 }
 
 describe("pokemonCardFolderId", () => {
@@ -79,13 +100,12 @@ describe("localPokemonCatalogueArtUrl", () => {
 });
 
 describe("buildPokemonDiskArtAttachments", () => {
-  it("emits one catalog cover per art.* and defaults to face.json winner", () => {
+  it("emits one catalog cover per art.* and defaults to ranked catalog dump", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "poke-multi-art-"));
     const cardDir = path.join(root, "fr", "2023sv", "004");
     writeFace(cardDir, "art.webp");
-    writeFace(cardDir, "art.mcdn.png");
+    await writeFaceSized(cardDir, "art.mcdn.png", 600, 840);
     writeFace(cardDir, "art.coleka.png");
-    recordPokemonFaceDecision(cardDir, "art", "art.mcdn.png");
 
     const { attachments, defaultUrl } = buildPokemonDiskArtAttachments({
       printKey: "pokemon:2023sv-4",
@@ -96,10 +116,8 @@ describe("buildPokemonDiskArtAttachments", () => {
     });
 
     expect(attachments).toHaveLength(3);
-    expect(attachments.every((a) => a.coverProvenance === "catalog")).toBe(
-      true,
-    );
     expect(attachments.every((a) => a.source === "tcgdex")).toBe(true);
+    // Larger catalog mcdn beats tiny live + listing coleka — face.json ignored.
     expect(defaultUrl).toBe(
       "/assets/pokemon/cards/fr/2023sv/004/art.mcdn.png",
     );
@@ -113,5 +131,29 @@ describe("buildPokemonDiskArtAttachments", () => {
         "pokemon-face-fr-mcdn",
       ].sort(),
     );
+  });
+
+  it("applies print_assets stamps only on the indexed winner", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "poke-stamp-winner-"));
+    const cardDir = path.join(root, "fr", "2023sv", "004");
+    await writeFaceSized(cardDir, "art.mcdn.png", 600, 840);
+    writeFace(cardDir, "art.coleka.png");
+
+    const { attachments } = buildPokemonDiskArtAttachments({
+      printKey: "pokemon:2023sv-4",
+      language: "fr",
+      source: "tcgdex",
+      cardsRoot: root,
+      indexedArt: "art.coleka.png",
+      artKind: "sample",
+      watermarked: true,
+    });
+
+    const coleka = attachments.find((a) => a.url?.includes("art.coleka.png"));
+    const mcdn = attachments.find((a) => a.url?.includes("art.mcdn.png"));
+    expect(coleka?.artKind).toBe("sample");
+    expect(coleka?.watermarked).toBe(true);
+    expect(mcdn?.artKind).toBe("dump");
+    expect(mcdn?.watermarked).toBe(false);
   });
 });

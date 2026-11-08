@@ -16,6 +16,7 @@ import { DBS_CG_GAME } from "../identity";
 const hooks = cardCatalogueHooks({
   packId: DBS_CG_PACK_ID,
   effectPackId: DBS_CG_EFFECT_PACK_ID,
+  printGame: DBS_CG_GAME,
   dbPath: dbsCgDbPath,
   runPipeline: withCardnexusPackFacesStep(
     { packId: DBS_CG_PACK_ID, printGame: DBS_CG_GAME },

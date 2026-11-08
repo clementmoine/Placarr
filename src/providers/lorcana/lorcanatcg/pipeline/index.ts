@@ -20,6 +20,7 @@ const LORCANA_PACK_ID = "lorcana";
 const hooks = cardCatalogueHooks({
   packId: LORCANA_PACK_ID,
   effectPackId: LORCANA_EFFECT_PACK_ID,
+  printGame: "lorcana",
   dbPath: lorcanaTcgDbPath,
   runPipeline: withCardnexusPackFacesStep(
     { packId: LORCANA_PACK_ID, printGame: "lorcana" },

@@ -200,27 +200,22 @@ describe("installArenaFaces", () => {
     expect(existsSync(path.join(leader, dbsFaceFilename("deckplanet")))).toBe(
       true,
     );
-    expect(
-      JSON.parse(readFileSync(path.join(leader, "face.json"), "utf8")).art,
-    ).toBe("art.deckplanet.webp");
+    expect(existsSync(path.join(leader, "art.deckplanet.webp"))).toBe(true);
     expect(existsSync(path.join(leader, "back.deckplanet.webp"))).toBe(true);
-    // A grouping variant is its own card folder, and it too names its source
-    // rather than holding a copy under a generic name.
+    // A grouping variant is its own card folder, and it too keeps the source
+    // dump rather than a copy under a generic name.
     expect(
-      JSON.parse(
-        readFileSync(
-          path.join(
-            packCardDir(DBS_CG_PACK_ID, {
-              set: "bt1",
-              lang: "en",
-              card: "011-spr",
-            }),
-            "face.json",
-          ),
-          "utf8",
+      existsSync(
+        path.join(
+          packCardDir(DBS_CG_PACK_ID, {
+            set: "bt1",
+            lang: "en",
+            card: "011-spr",
+          }),
+          "art.deckplanet.webp",
         ),
-      ).art,
-    ).toBe("art.deckplanet.webp");
+      ),
+    ).toBe(true);
     expect(
       existsSync(
         path.join(

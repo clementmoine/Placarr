@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractScanflipPageResultForTests,
   normalizeScanflipCardForTests,
+  parseScanflipExplorerHtml,
 } from "./client";
 
 // Re-export test hooks — added below in client via test-only exports.
@@ -50,5 +51,23 @@ describe("scanflip client normalize", () => {
     });
     expect(page?.page).toBe(2);
     expect(page?.data[0]?.code).toBe("LDD-F000");
+  });
+
+  it("parses SSR HTML tiles when pageContext JSON is gone", () => {
+    const html = `
+      totalCount:42245,
+      <img src="https://media.scanflip.fr/x/ldd.jpg" />
+      <span class="min-w-fit text-xs text-muted-foreground font-bold">LDD-F000</span>
+      <a href="/fr/yugioh/card/ldd-f000-scr-dragon-a-trois-cornes">x</a>
+    `;
+    const page = parseScanflipExplorerHtml(html, 1);
+    expect(page.totalCount).toBe(42245);
+    expect(page.data).toEqual([
+      expect.objectContaining({
+        code: "LDD-F000",
+        slug: "ldd-f000-scr-dragon-a-trois-cornes",
+        imageCdn: "https://media.scanflip.fr/x/ldd.jpg",
+      }),
+    ]);
   });
 });

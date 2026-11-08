@@ -14,7 +14,7 @@ vi.mock("@/lib/packPaths", async () => {
   };
 });
 
-import { catalogueArtQualityMarker } from "@/core/enrich/media/catalogueFaceRank";
+import { catalogueFaceQualityMarker } from "@/core/enrich/media/catalogueFaceRank";
 import { cardnexusPackCardDir } from "./fillPackFaces";
 
 describe("cardnexusPackCardDir", () => {
@@ -58,8 +58,10 @@ describe("cardnexusPackCardDir", () => {
 
 describe("catalogue face rank (criteria, not provider lists)", () => {
   it("treats cardnexus like any other unlabeled dump when dims are unknown", () => {
-    expect(catalogueArtQualityMarker("art.cardnexus.jpg")).toBe(50);
-    expect(catalogueArtQualityMarker("art.bandai.webp")).toBe(50);
-    expect(catalogueArtQualityMarker("art.coleka.webp")).toBe(50);
+    expect(catalogueFaceQualityMarker({ artFile: "art.cardnexus.jpg" })).toBe(
+      50,
+    );
+    expect(catalogueFaceQualityMarker({ artFile: "art.bandai.webp" })).toBe(50);
+    expect(catalogueFaceQualityMarker({ artFile: "art.coleka.webp" })).toBe(50);
   });
 });

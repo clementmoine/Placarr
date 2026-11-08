@@ -33,7 +33,12 @@ import {
   persistCardsIndexDoc,
 } from "@/providers/shared/cardCatalogue/cardsIndexDoc";
 import { resetCardsIndexOrientationCache } from "@/providers/shared/cardCatalogue/cardsIndexOrientation";
-import { CARD_FACE_DECISION_FILE } from "@/providers/shared/cardFaces";
+import {
+  createCardFaceChoice,
+  mergeWriteFaceDecision,
+} from "@/providers/shared/cardFaces";
+import { probeFaceFileDimensionsSync } from "@/providers/shared/faceFileDimensions";
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
 import {
   hashNarutoCuratedFile,
   hashNarutoCuratedJson,
@@ -583,40 +588,58 @@ export function colekaNinjaRanksRejectedFaceKeys(
 }
 
 /**
- * Face d'affichage préférée sur disque — au-dessus de Coleka (photos listing).
- * `art.reconstructed` puis `art.animecollection` ; sinon `null` (trou honnête).
+ * Display candidates above Coleka listing photos — ranked by shared criteria
+ * (`artKind` puts reconstructed above dump / AnimeCollection).
+ */
+const NINJA_RANKS_DISPLAY_SOURCES = ["reconstructed", "animecollection"] as const;
+const ninjaRanksDisplayChoice = createCardFaceChoice({
+  sources: NINJA_RANKS_DISPLAY_SOURCES,
+  coverProvenance: "catalog",
+});
+
+/**
+ * Face d'affichage préférée sur disque — hors Coleka. `null` = trou honnête.
  */
 export function preferredNinjaRanksDisplayArt(
   cardDir: string,
 ): string | null {
   if (!existsSync(cardDir)) return null;
-  const files = readdirSync(cardDir);
-  const pick = (re: RegExp) => files.find((name) => re.test(name)) ?? null;
-  return (
-    pick(/^art\.reconstructed\./i) ??
-    pick(/^art\.animecollection\./i) ??
-    null
-  );
+  let files: string[];
+  try {
+    files = readdirSync(cardDir);
+  } catch {
+    return null;
+  }
+  const stored: {
+    source: (typeof NINJA_RANKS_DISPLAY_SOURCES)[number];
+    file: string;
+    width: number;
+    height: number;
+  }[] = [];
+  for (const name of files) {
+    const parsed = ninjaRanksDisplayChoice.faceFileOf(name);
+    if (!parsed || parsed.role !== "art") continue;
+    const dims = probeFaceFileDimensionsSync(path.join(cardDir, name));
+    if (!dims) continue;
+    stored.push({
+      source: parsed.source,
+      file: name,
+      width: dims.width,
+      height: dims.height,
+    });
+  }
+  const best = ninjaRanksDisplayChoice.pickBestFace(stored);
+  if (!best) return null;
+  return stored.find((face) => face.source === best)?.file ?? null;
 }
 
-/** `face.json` — le rôle `/prints/…/face` lit ce sidecar, pas le basename Coleka. */
+/** Dig audit trail only — display resolve re-ranks; `face.json` is not SSOT. */
 function recordNinjaRanksFaceDecision(
   cardDir: string,
   artFile: string | null,
 ): void {
   if (!artFile || !existsSync(cardDir)) return;
-  const file = path.join(cardDir, CARD_FACE_DECISION_FILE);
-  let current: Record<string, string> = {};
-  let previous = "";
-  try {
-    previous = readFileSync(file, "utf8");
-    current = JSON.parse(previous) as Record<string, string>;
-  } catch {
-    /* first decision */
-  }
-  const next = `${JSON.stringify({ ...current, art: artFile }, null, 2)}\n`;
-  if (previous === next) return;
-  writeFileSync(file, next, "utf8");
+  mergeWriteFaceDecision(cardDir, { art: artFile });
 }
 
 /** Dossier carte — layout courant `cards/{lang}/{set}/{n}` puis legacy set-first. */
@@ -1296,8 +1319,7 @@ export function inkworksStagingDir(): string {
 }
 
 export function inkworksWaybackRawUrl(capture: InkworksCapture): string {
-  const ts = capture.timestamp.replace(/\D/g, "");
-  return `https://web.archive.org/web/${ts}id_/${capture.original}`;
+  return waybackRawUrl(capture.timestamp, capture.original);
 }
 
 /**

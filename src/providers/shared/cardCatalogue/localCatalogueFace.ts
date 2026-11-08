@@ -26,7 +26,7 @@ export function sqliteArtBasename(
 
 /**
  * First on-disk art file in a card folder. `prefer` wins when present
- * (sqlite basename / face.json decision).
+ * (sqlite basename / indexed winner).
  */
 export function probeLocalArtBasename(
   cardDir: string,
@@ -58,7 +58,7 @@ export type ResolveCatalogueLocalArtInput = {
   card: string;
   sqliteArt?: string | null;
   /**
-   * Pack-specific disk probe (DBS face.json, Pokémon Live remap…).
+   * Pack-specific disk probe (DBS resolve re-rank, Pokémon Live remap…).
    * When it returns a basename, that wins; otherwise fall through to
    * generic folder scan + sqlite basename.
    */

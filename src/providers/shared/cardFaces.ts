@@ -2,8 +2,9 @@
  * Which stored face a card shows, for any pack that keeps several.
  *
  * Every source that answers is kept as `art.<source>.<ext>`; the displayed
- * face is chosen by core criteria ([`pickBestCatalogueFace`]) — pixels +
- * provenance + filename markers — never by provider-name lists.
+ * face is chosen by Affiche observations ([`pickBestCatalogueFace`] →
+ * stamped `artKind` / `watermarked` / provenance + pixels) — never by
+ * provider-name lists.
  *
  * Language is a hard filter one level up (`cards/<set>/<lang>/`).
  */
@@ -12,6 +13,7 @@ import path from "node:path";
 
 import { resolveCoverProvenance } from "@/core/enrich/media/coverProvenance";
 import { pickBestCatalogueFace } from "@/core/enrich/media/catalogueFaceRank";
+import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 
 /**
  * Named files a catalogue folder can hold: `art.<source>.<ext>`,
@@ -43,8 +45,69 @@ export type CardFaceRole = (typeof CARD_FACE_ROLES)[number];
  */
 export const CARD_FACE_DECISION_FILE = "face.json";
 
+/**
+ * Dig audit sidecar writes — **off by default** (retired as display SSOT).
+ * Display resolve never needs this file. Opt in with
+ * `PLACARR_WRITE_FACE_JSON=1` (or `true` / `on` / `yes`) for dig trails.
+ */
+export function faceDecisionWritesEnabled(): boolean {
+  const raw = process.env.PLACARR_WRITE_FACE_JSON?.trim().toLowerCase();
+  if (!raw) return false;
+  return raw === "1" || raw === "true" || raw === "on" || raw === "yes";
+}
+
 /** One filename per role that has a winner. */
 export type FaceDecision = Partial<Record<CardFaceRole, string>>;
+
+/**
+ * Merge-write dig audit sidecar (`face.json`). No-op unless
+ * {@link faceDecisionWritesEnabled}. Shared by card / sealed / pack writers.
+ */
+export function mergeWriteFaceDecision(
+  destDir: string,
+  decision: FaceDecision,
+): void {
+  if (!faceDecisionWritesEnabled()) return;
+  const next: FaceDecision = {};
+  for (const [role, value] of Object.entries(decision)) {
+    const trimmed = value?.trim();
+    if (trimmed) next[role as CardFaceRole] = trimmed;
+  }
+  if (!Object.keys(next).length) return;
+
+  const file = path.join(destDir, CARD_FACE_DECISION_FILE);
+  let current: FaceDecision = {};
+  let previous = "";
+  try {
+    previous = readFileSync(file, "utf8");
+    current = JSON.parse(previous) as FaceDecision;
+  } catch {
+    /* first decision */
+  }
+  const body = `${JSON.stringify({ ...current, ...next }, null, 2)}\n`;
+  /*
+    Promote / sync rewrites an identical sidecar only bump mtime
+    (cloud sync = « modifié »).
+  */
+  if (previous === body) return;
+  writeFileSync(file, body, "utf8");
+}
+
+/**
+ * Dig promote: record a resolved winner basename (audit sidecar opt-in).
+ * Packs keep their own resolve/rank; this is the shared write step.
+ */
+export function promoteResolvedFace(opts: {
+  cardDir: string;
+  filename: string | null | undefined;
+  role?: CardFaceRole;
+}): string | null {
+  const file = opts.filename?.trim() || null;
+  if (!file) return null;
+  const role = opts.role ?? "art";
+  mergeWriteFaceDecision(opts.cardDir, { [role]: file });
+  return file;
+}
 
 export type StoredFace<S extends string> = {
   source: S;
@@ -52,6 +115,9 @@ export type StoredFace<S extends string> = {
   file?: string;
   width: number;
   height: number;
+  /** Ingest stamp — basename only fills gaps via {@link resolveFaceArtMetaForDig}. */
+  artKind?: string | null;
+  watermarked?: boolean | null;
 };
 
 export type CardFaceChoice<S extends string> = {
@@ -154,13 +220,23 @@ export function createCardFaceChoice<S extends string>(config: {
     lang = "fr",
   ): S | null => {
     const picked = pickBestCatalogueFace(
-      faces.map((face) => ({
-        id: face.source,
-        artFile: face.file ?? faceFilename(face.source),
-        width: face.width,
-        height: face.height,
-        coverProvenance: provenanceOf(face.source),
-      })),
+      faces.map((face) => {
+        const artFile = face.file ?? faceFilename(face.source);
+        const meta = resolveFaceArtMetaForDig({
+          artFile,
+          artKind: face.artKind,
+          watermarked: face.watermarked,
+        });
+        return {
+          id: face.source,
+          artFile,
+          width: face.width,
+          height: face.height,
+          coverProvenance: provenanceOf(face.source),
+          artKind: meta.artKind,
+          watermarked: meta.watermarked,
+        };
+      }),
       {
         areaDecidesBelow: areaFloor,
         tieBreakIds: tieBreakForLang(lang),
@@ -190,33 +266,16 @@ export function createCardFaceChoice<S extends string>(config: {
     `${JSON.stringify(decision, null, 2)}\n`;
 
   /**
-   * Record the winner for one role, keeping whatever the other role had.
-   *
-   * Read-modify-write because the two roles are decided at different moments —
-   * a local clone can settle the awakened side while the faces pass settles the
-   * front over HTTP — and neither should erase the other's answer.
+   * Optional dig audit trail — see {@link mergeWriteFaceDecision}.
+   * Read-modify-write so art / back / logo settled at different times keep
+   * each other's answers.
    */
   const recordFaceDecision = (
     cardDir: string,
     role: CardFaceRole,
     filename: string,
   ): void => {
-    const file = path.join(cardDir, CARD_FACE_DECISION_FILE);
-    let current: FaceDecision = {};
-    let previous = "";
-    try {
-      previous = readFileSync(file, "utf8");
-      current = JSON.parse(previous) as FaceDecision;
-    } catch {
-      /* first decision for this card */
-    }
-    const next = serializeFaceDecision({ ...current, [role]: filename });
-    /*
-      Promote passe sur tout le pack à chaque Sync : réécrire un face.json
-      identique ne fait que bouger le mtime (sync cloud = « modifié »).
-    */
-    if (previous === next) return;
-    writeFileSync(file, next, "utf8");
+    mergeWriteFaceDecision(cardDir, { [role]: filename });
   };
 
   return {

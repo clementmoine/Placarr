@@ -30,6 +30,7 @@ import { narutoShippudenDbPath, NARUTO_SHIPPUDEN_PACK_ID } from "./indexStore";
 const hooks = cardCatalogueHooks({
   packId: NARUTO_SHIPPUDEN_PACK_ID,
   effectPackId: NARUTO_SHIPPUDEN_EFFECT_PACK_ID,
+  printGame: "naruto",
   dbPath: narutoShippudenDbPath,
   runPipeline: async () => {
     const { migrateShippudenFromCarddass } = await import(

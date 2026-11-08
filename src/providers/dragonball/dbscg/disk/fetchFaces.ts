@@ -50,6 +50,7 @@ import {
   type DbscardsIndexEntry,
 } from "@/providers/shared/tcgcards/list";
 import { dbscardsIndexPath } from "@/providers/shared/tcgcards/scrapeList";
+import { promoteResolvedFace } from "@/providers/shared/cardFaces";
 import {
   dbsFaceFileOf,
   dbsFaceFilename,
@@ -496,7 +497,22 @@ function writeAtomic(destPath: string, buf: Buffer): void {
 }
 
 /**
- * Rank what this card holds and record the winner.
+ * Displayed art filename — re-rank by pixels + provenance every time.
+ * `face.json` is not SSOT (optional dig audit only).
+ */
+export async function resolveDbsArtFilename(
+  cardDir: string,
+  lang = "fr",
+): Promise<string | null> {
+  const stored = await readStoredFaces(cardDir);
+  const best = pickBestFace(stored, lang);
+  if (!best) return null;
+  const winner = stored.find((face) => face.source === best);
+  return winner?.file ?? dbsFaceFilename(best);
+}
+
+/**
+ * Rank what this card holds and optionally record the winner (dig audit).
  *
  * `lang` because the tie-break is per locale — Deckplanet is an English source
  * and has no business breaking a tie on a French card.
@@ -514,8 +530,11 @@ export async function promoteBestFace(
     point the decision at a `.webp` that may not exist.
   */
   const winner = stored.find((face) => face.source === best);
-  // Record the winner; never copy it. See `DBS_FACE_DECISION_FILE`.
-  recordFaceDecision(cardDir, "art", winner?.file ?? dbsFaceFilename(best));
+  // Optional dig audit — display resolve uses {@link resolveDbsArtFilename}.
+  promoteResolvedFace({
+    cardDir,
+    filename: winner?.file ?? dbsFaceFilename(best),
+  });
   return best;
 }
 

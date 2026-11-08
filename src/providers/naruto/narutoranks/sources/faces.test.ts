@@ -32,6 +32,11 @@ import {
   emptyCatalogIngestLedger,
 } from "@/providers/shared/catalogIngestLedger";
 
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 // —— animecollectionFaces ——
 {
   describe("ranksSetForAcPrintedLabel", () => {
@@ -256,9 +261,21 @@ import {
     it("prefers AnimeCollection over a glare Coleka dump on disk", () => {
       const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nr-prefer-"));
       roots.push(dir);
-      fs.writeFileSync(path.join(dir, "art.coleka.webp"), "glare");
-      fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), "clean");
-      expect(preferredNinjaRanksDisplayArt(dir)).toBe("art.animecollection.jpg");
+      fs.writeFileSync(path.join(dir, "art.coleka.webp"), PNG_1X1);
+      fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), PNG_1X1);
+      expect(preferredNinjaRanksDisplayArt(dir)).toBe(
+        "art.animecollection.jpg",
+      );
+    });
+
+    it("prefers reconstructed over AnimeCollection by artKind", () => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nr-recon-"));
+      roots.push(dir);
+      fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), PNG_1X1);
+      fs.writeFileSync(path.join(dir, "art.reconstructed.png"), PNG_1X1);
+      expect(preferredNinjaRanksDisplayArt(dir)).toBe(
+        "art.reconstructed.png",
+      );
     });
 
     it("rejette les photos Coleka reflétées NR-26 / 39 / 44", () => {
@@ -298,8 +315,8 @@ import {
         "0039",
       );
       fs.mkdirSync(cardDir, { recursive: true });
-      fs.writeFileSync(path.join(cardDir, "art.coleka.webp"), "glare");
-      fs.writeFileSync(path.join(cardDir, "art.animecollection.jpg"), "ac");
+      fs.writeFileSync(path.join(cardDir, "art.coleka.webp"), PNG_1X1);
+      fs.writeFileSync(path.join(cardDir, "art.animecollection.jpg"), PNG_1X1);
 
       installColekaNinjaRanks(index, {
         stagingDir: path.join(os.tmpdir(), "missing-nr39"),

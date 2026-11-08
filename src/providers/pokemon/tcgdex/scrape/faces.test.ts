@@ -110,10 +110,8 @@ describe("fillMcdnFacesForSet", () => {
     expect(seen[0]).toContain("/cards/full/30TH/30TH_FR_33.png");
     const cardDir = path.join(root, "fr", "me5-5", "033");
     expect(existsSync(path.join(cardDir, "art.mcdn.png"))).toBe(true);
-    const decision = JSON.parse(
-      readFileSync(path.join(cardDir, "face.json"), "utf8"),
-    ) as { art: string };
-    expect(decision.art).toBe("art.mcdn.png");
+    const { resolvePokemonArtFilename } = await import("../disk/faceChoice");
+    expect(resolvePokemonArtFilename(cardDir, "fr")).toBe("art.mcdn.png");
   });
 });
 
@@ -309,10 +307,8 @@ describe("fillPokemonComMcdoCampaign", () => {
     expect(report.failed).toBe(0);
     const cardDir = path.join(root, "en", "2023sv", "001");
     expect(existsSync(path.join(cardDir, "art.pokemoncom.png"))).toBe(true);
-    const decision = JSON.parse(
-      readFileSync(path.join(cardDir, "face.json"), "utf8"),
-    ) as { art: string };
-    expect(decision.art).toBe("art.pokemoncom.png");
+    const { resolvePokemonArtFilename } = await import("../disk/faceChoice");
+    expect(resolvePokemonArtFilename(cardDir, "en")).toBe("art.pokemoncom.png");
   });
 });
 
@@ -565,10 +561,6 @@ describe("resolvePokemonArtFilename", () => {
     writeFileSync(path.join(dir, "art.coleka.webp"), coleka);
     expect(resolvePokemonArtFilename(dir, "fr")).toBe("art.webp");
     expect(refreshPokemonFaceDecision(dir, "fr")).toBe("art.webp");
-    const decision = JSON.parse(
-      readFileSync(path.join(dir, "face.json"), "utf8"),
-    ) as { art: string };
-    expect(decision.art).toBe("art.webp");
   });
 
   it("picks coleka alone", async () => {

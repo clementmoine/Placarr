@@ -39,6 +39,23 @@ describe("cardCatalogueHooks", () => {
     expect(hooks.effectPack).toBe("test-effect");
   });
 
+  it("expose applyCorpusPromote seulement quand printGame est fourni", () => {
+    const without = cardCatalogueHooks({
+      packId: "test/pack",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline: async () => undefined,
+    });
+    expect(without.applyCorpusPromote).toBeUndefined();
+
+    const withGame = cardCatalogueHooks({
+      packId: "test/pack",
+      printGame: "naruto",
+      dbPath: () => "/introuvable.sqlite",
+      runPipeline: async () => undefined,
+    });
+    expect(typeof withGame.applyCorpusPromote).toBe("function");
+  });
+
   it("persiste cards/products du pipeline dans last-run (signal autonomie)", async () => {
     tmpDataRoot();
     const runPipeline = vi.fn().mockResolvedValue({ cards: 42, products: 3 });

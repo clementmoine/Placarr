@@ -1,17 +1,22 @@
 /**
  * Admin Catalogue browse for Magic — sqlite titles + local faces only
  * (no Scryfall CDN in the grid; densify via Sync / seed).
+ *
+ * Audit filters (« sans image ») use SQL empty `print_assets.art` — Scryfall
+ * CDN lives in `curated/art-urls.json`, not sqlite art basenames. Overscan +
+ * readdir on ~100k rows hung the admin grid; densify writes a basename only
+ * when a local `art.*` exists.
  */
 import { existsSync, statSync } from "node:fs";
 
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
-import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCatalogDb } from "@/lib/packPaths";
 import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
 import {
   createLocalPrintsIndex,
+  getLocalPrintsIndex,
   type LocalPrintSearchRow,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
@@ -83,6 +88,7 @@ function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
   };
 }
 
+/** Full materialize — tests / offline audits only; never admin default browse. */
 export function buildMtgCatalogueBrowseRows(): CatalogueCardRow[] {
   const index = createLocalPrintsIndex(MTG_PACK_ID);
   if (!index.hasIdentityCorpus()) return [];
@@ -126,60 +132,22 @@ export type MtgCatalogueBrowsePageInput = {
   incompleteOnly?: boolean;
 };
 
-function listMtgCatalogueBrowsePageSql(
-  input: Omit<
-    MtgCatalogueBrowsePageInput,
-    "incompleteOnly" | "missingArtOnly"
-  > & {
-    missingNameOnly?: boolean;
-  },
+export function listMtgCatalogueBrowsePage(
+  input: MtgCatalogueBrowsePageInput,
 ): { rows: CatalogueCardRow[]; total: number } {
-  const index = createLocalPrintsIndex(MTG_PACK_ID);
+  const index = getLocalPrintsIndex(MTG_PACK_ID);
   if (!index.hasIdentityCorpus()) return { rows: [], total: 0 };
-  const page = index.listBrowsePage(input);
+  const page = index.listBrowsePage({
+    langs: input.langs,
+    q: input.q,
+    offset: input.offset,
+    limit: input.limit,
+    missingArtOnly: input.missingArtOnly,
+    missingNameOnly: input.missingNameOnly,
+    incompleteOnly: input.incompleteOnly,
+  });
   return {
     total: page.total,
     rows: page.rows.map((row) => rowToCatalogueCard(row)),
   };
-}
-
-/**
- * Admin grid is local `/assets` only (no Scryfall CDN). Audit filters therefore
- * overscan identity rows and keep tiles still missing a local face / name —
- * Sync densify debt, not SQL `a.art IS NULL` alone (almost the whole corpus).
- */
-function listMtgCatalogueBrowseAuditPage(
-  input: MtgCatalogueBrowsePageInput,
-): { rows: CatalogueCardRow[]; total: number } {
-  return overscanFilterPage({
-    offset: input.offset,
-    limit: input.limit,
-    maxScan: 50_000,
-    chunk: 96,
-    fetchPage: (offset, limit) =>
-      listMtgCatalogueBrowsePageSql({
-        langs: input.langs,
-        q: input.q,
-        offset,
-        limit,
-        missingNameOnly: input.missingNameOnly || undefined,
-      }),
-    keep: (row) => {
-      if (input.incompleteOnly) {
-        return row.missingArt || !row.name?.trim();
-      }
-      if (input.missingArtOnly && !row.missingArt) return false;
-      if (input.missingNameOnly && row.name?.trim()) return false;
-      return true;
-    },
-  });
-}
-
-export function listMtgCatalogueBrowsePage(
-  input: MtgCatalogueBrowsePageInput,
-): { rows: CatalogueCardRow[]; total: number } {
-  if (input.incompleteOnly || input.missingArtOnly) {
-    return listMtgCatalogueBrowseAuditPage(input);
-  }
-  return listMtgCatalogueBrowsePageSql(input);
 }

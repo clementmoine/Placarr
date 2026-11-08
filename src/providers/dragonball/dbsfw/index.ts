@@ -4,12 +4,16 @@
  */
 import { parsePrintKey } from "@/core/identify/printKey";
 import { createDbsCatalogModule } from "@/providers/dragonball/shared/dbs/createDbsCatalogModule";
+import { buildCatalogueDiskFaceAttachments } from "@/providers/shared/cardCatalogue/catalogueDiskFaceAttachments";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { MetadataAdapterContext } from "@/types/providerModule";
 
 import { dbsFwPrintFacts } from "./facts";
 import {
+  DBS_FW_PACK_ID,
+  dbsFwCardFolder,
   dbsFwDbPath,
+  dbsFwLocalArtFilename,
   ensureDbsFwIndex,
   listDbsFwPrintSets,
 } from "./indexStore";
@@ -40,9 +44,29 @@ function resolveFromLocal(ctx: MetadataAdapterContext): MetadataResult | null {
   const title = row.fullName?.trim();
   if (!title) return null;
 
+  const lang = (row.lang || "en").toLowerCase();
+  const diskId = {
+    set: row.setCode.trim().toLowerCase(),
+    lang,
+    card: dbsFwCardFolder(row),
+  };
+  const preferredArt = dbsFwLocalArtFilename(row, lang);
+  const diskFaces = buildCatalogueDiskFaceAttachments({
+    packId: DBS_FW_PACK_ID,
+    diskId,
+    preferredArt,
+    providerId: PROVIDER_ID,
+    printGame: DBS_FW_GAME,
+    title,
+  });
+  const imageUrl = diskFaces.defaultUrl ?? row.imageUrl ?? undefined;
+
   return {
     title,
-    ...(row.imageUrl ? { imageUrl: row.imageUrl } : {}),
+    ...(imageUrl ? { imageUrl } : {}),
+    ...(diskFaces.attachments.length
+      ? { attachments: diskFaces.attachments }
+      : {}),
     facts: dbsFwPrintFacts(row, PROVIDER_ID),
     externalIds: {
       [PROVIDER_ID]: printKey,

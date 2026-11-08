@@ -80,6 +80,12 @@ export type InstallCardFaceOptions = {
   /** Nom du fichier à écrire, ex. `art.nikita.jpg` / `art.scanflip.webp`. */
   artName: string;
   url: string;
+  /**
+   * Dig observations for `print_assets` — when set, callers should pass them
+   * to {@link LocalPrintAssetWrite} instead of re-parsing the basename.
+   */
+  artKind?: string | null;
+  watermarked?: boolean | null;
   /** Retélécharge même si `artName` existe. */
   force?: boolean;
   /**
@@ -100,6 +106,8 @@ export type InstallCardFaceOutcome = {
   /** Fichier à référencer dans `writeAssets` (existant réutilisé ou écrit). */
   art: string;
   downloaded: boolean;
+  artKind?: string | null;
+  watermarked?: boolean | null;
 };
 
 /**
@@ -113,8 +121,13 @@ export async function installCardFace(
 ): Promise<InstallCardFaceOutcome | null> {
   mkdirSync(opts.destDir, { recursive: true });
 
+  const stamp = {
+    ...(opts.artKind != null ? { artKind: opts.artKind } : {}),
+    ...(opts.watermarked != null ? { watermarked: opts.watermarked } : {}),
+  };
+
   if (!opts.force && existsSync(path.join(opts.destDir, opts.artName))) {
-    return { art: opts.artName, downloaded: false };
+    return { art: opts.artName, downloaded: false, ...stamp };
   }
 
   const fetchImage =
@@ -132,7 +145,7 @@ export async function installCardFace(
     opts.webpQuality != null || (opts.rotateDegrees ?? 0) !== 0;
   if (!needsProcess) {
     writeFileSync(path.join(opts.destDir, opts.artName), buf);
-    return { art: opts.artName, downloaded: true };
+    return { art: opts.artName, downloaded: true, ...stamp };
   }
 
   let pipeline = sharp(buf).rotate(); // EXIF first
@@ -144,5 +157,5 @@ export async function installCardFace(
       ? await pipeline.webp({ quality: opts.webpQuality }).toBuffer()
       : await pipeline.jpeg({ quality: 92, mozjpeg: true }).toBuffer();
   writeFileSync(path.join(opts.destDir, opts.artName), out);
-  return { art: opts.artName, downloaded: true };
+  return { art: opts.artName, downloaded: true, ...stamp };
 }

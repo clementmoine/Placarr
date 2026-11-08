@@ -460,9 +460,7 @@ import { parseDataCarddassPrinted } from "../printKey";
         expect(index.lookupRow("datacarddass:dmp-016")?.art).toBe(
           "art.suruga.jpg",
         );
-        expect(
-          readFileSync(path.join(cardDir, "face.json"), "utf8"),
-        ).toContain("art.suruga.jpg");
+        expect(existsSync(path.join(cardDir, "art.suruga.jpg"))).toBe(true);
       } finally {
         if (previousData === undefined) delete process.env.PLACARR_DATA_DIR;
         else process.env.PLACARR_DATA_DIR = previousData;

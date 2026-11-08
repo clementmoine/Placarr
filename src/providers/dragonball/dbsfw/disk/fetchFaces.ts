@@ -83,6 +83,8 @@ export const DBS_FW_FACE_LANGS = ["en", "ja"] as const;
 export type FetchDbsFwFacesOptions = {
   force?: boolean;
   langs?: readonly string[];
+  /** Restrict to these set codes (e.g. `e` for Energy Markers). */
+  setCodes?: readonly string[];
   limit?: number;
   delayMs?: number;
 };
@@ -312,6 +314,9 @@ export async function fetchDbsFwFaces(
   const langs = (opts.langs?.length ? opts.langs : DBS_FW_FACE_LANGS).map((l) =>
     l.toLowerCase(),
   );
+  const setFilter = new Set(
+    (opts.setCodes ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean),
+  );
   const delayMs = opts.delayMs ?? 0;
   const stats = { ...empty };
   let throttledStreak = 0;
@@ -336,9 +341,12 @@ export async function fetchDbsFwFaces(
         `── fw faces [${lang}] : liste dbscards absente — Bandai cardlist seulement`,
       );
     }
-    const prints = opts.limit
-      ? loaded.prints.slice(0, opts.limit)
+    const scoped = setFilter.size
+      ? loaded.prints.filter((p) =>
+          setFilter.has(p.setCode.trim().toLowerCase()),
+        )
       : loaded.prints;
+    const prints = opts.limit ? scoped.slice(0, opts.limit) : scoped;
     stats.total += prints.length;
     let done = 0;
     let lastProgressAt = Date.now();

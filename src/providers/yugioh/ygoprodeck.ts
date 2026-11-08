@@ -276,7 +276,7 @@ export async function harvestYugiohYgoprodeck(opts: {
   };
 }
 
-function loadLedger(): YgoprodeckLedger | null {
+export function loadYgoprodeckLedger(): YgoprodeckLedger | null {
   for (const p of [ygoprodeckLedgerPath(), legacyYgoprodeckLedgerPath()]) {
     if (!existsSync(p)) continue;
     try {
@@ -306,7 +306,7 @@ export async function installYugiohYgoprodeck(
     languages?: ("en" | "fr")[];
   } = {},
 ): Promise<{ prints: number; titles: number; faces: number }> {
-  const ledger = loadLedger();
+  const ledger = loadYgoprodeckLedger();
   if (!ledger) return { prints: 0, titles: 0, faces: 0 };
 
   const langs = opts.languages ?? ["en", "fr"];

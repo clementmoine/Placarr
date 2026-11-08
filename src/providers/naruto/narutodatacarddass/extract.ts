@@ -277,6 +277,62 @@ export async function runNarutoDataCarddassPackPipeline(
             `── Data Carddass arcade : ${arcadeFaces.faces} face(s)${arcadeFaces.missing.length ? `, ${arcadeFaces.missing.length} manquante(s)` : ""}`,
           );
         }
+        if (!offline && !argv.includes("--skip-narutocardjp")) {
+          try {
+            const {
+              harvestNarutocardjpFaces,
+              installNarutocardjpFaces,
+            } = await import("@/providers/naruto/shared/narutocardjp/harvest");
+            const {
+              dataCarddassPrintKey,
+              parseDataCarddassPrinted,
+            } = await import("./printKey");
+            const harvested = await harvestNarutocardjpFaces({
+              packId: NARUTO_DATA_CARDDASS_PACK_ID,
+              line: "data-carddass",
+            });
+            console.log(
+              `── naruto-card.jp Data — ${harvested.hits} faces → ${harvested.path}`,
+            );
+            const installed = await installNarutocardjpFaces({
+              packId: NARUTO_DATA_CARDDASS_PACK_ID,
+              line: "data-carddass",
+              force,
+              resolveDest: (hit) => {
+                const parsed = parseDataCarddassPrinted(hit.printedRef);
+                if (!parsed) return null;
+                const printKey = dataCarddassPrintKey(
+                  parsed.set,
+                  parsed.number,
+                );
+                if (!printKey) return null;
+                return {
+                  set: parsed.set,
+                  lang: "ja",
+                  card: parsed.number,
+                  printKey,
+                };
+              },
+              writeAsset: (row) => {
+                index.writeAssets([
+                  {
+                    printKey: row.printKey,
+                    lang: row.lang,
+                    art: row.art,
+                    sourceUrl: row.sourceUrl,
+                  },
+                ]);
+              },
+            });
+            console.log(
+              `── naruto-card.jp Data install — ${installed.written} écrites, ${installed.skipped} skip, ${installed.failed} fail`,
+            );
+          } catch (err) {
+            console.warn(
+              `── naruto-card.jp Data — ${err instanceof Error ? err.message : err}`,
+            );
+          }
+        }
         const settled = await settleDataCarddassFaces({ index });
         if (settled.settled) {
           console.log(

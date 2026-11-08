@@ -16,7 +16,7 @@ describe("resolveSealedPackshotUrl", () => {
     void roots;
   });
 
-  it("prefers face.json art over a stale index gif", () => {
+  it("promotes to /face when any art.* dump exists (stale index gif ignored)", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-"));
     roots.push(root);
     vi.stubEnv("PLACARR_DATA_DIR", root);
@@ -31,10 +31,6 @@ describe("resolveSealedPackshotUrl", () => {
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "art.vialudibunda.jpg"), "jpg");
     writeFileSync(path.join(dir, "art.carddass.gif"), "gif");
-    writeFileSync(
-      path.join(dir, "face.json"),
-      `${JSON.stringify({ art: "art.vialudibunda.jpg" }, null, 2)}\n`,
-    );
 
     expect(
       resolveSealedPackshotUrl({
@@ -108,7 +104,7 @@ describe("backfillSealedProductPackshots", () => {
     vi.unstubAllEnvs();
   });
 
-  it("fills null image as /face from face.json", () => {
+  it("fills null image as /face when art.* dump exists", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-bf-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const dir = path.join(
@@ -121,10 +117,6 @@ describe("backfillSealedProductPackshots", () => {
     );
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "art.bandai-drive.png"), "png");
-    writeFileSync(
-      path.join(dir, "face.json"),
-      `${JSON.stringify({ art: "art.bandai-drive.png" }, null, 2)}\n`,
-    );
 
     const products = {
       a: {
@@ -148,7 +140,7 @@ describe("backfillSealedProductPackshots", () => {
     );
   });
 
-  it("rewrites mislabeled art.mercari to /face when face.json is art.reconstructed", () => {
+  it("rewrites mislabeled art.mercari to /face when reconstructed dump exists", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-mislabeled-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const products: Record<
@@ -167,10 +159,6 @@ describe("backfillSealedProductPackshots", () => {
           ? "art.reconstructed.png"
           : "art.reconstructed.jpg";
       writeFileSync(path.join(dir, art), "bytes");
-      writeFileSync(
-        path.join(dir, "face.json"),
-        `${JSON.stringify({ art }, null, 2)}\n`,
-      );
       products[slug] = {
         slug,
         lang: "fr",
@@ -189,7 +177,7 @@ describe("backfillSealedProductPackshots", () => {
     );
   });
 
-  it("rewrites a 404 index URL to /face when face.json points at a real packshot", () => {
+  it("rewrites a 404 index URL to /face when a real packshot dump exists", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "packshot-stale-"));
     vi.stubEnv("PLACARR_DATA_DIR", root);
     const dir = path.join(
@@ -202,10 +190,6 @@ describe("backfillSealedProductPackshots", () => {
     );
     mkdirSync(dir, { recursive: true });
     writeFileSync(path.join(dir, "art.reconstructed.png"), "png");
-    writeFileSync(
-      path.join(dir, "face.json"),
-      `${JSON.stringify({ art: "art.reconstructed.png" }, null, 2)}\n`,
-    );
 
     const products = {
       hobby: {

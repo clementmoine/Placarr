@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
 
 import {
   dbsJccCuratedDir,
@@ -64,7 +65,7 @@ function cardPagesFromScout(): Array<{
     best.set(printed.number, {
       timestamp: row.timestamp,
       original: row.original,
-      waybackUrl: `https://web.archive.org/web/${row.timestamp}id_/${row.original}`,
+      waybackUrl: waybackRawUrl(row.timestamp, row.original),
     });
   }
   return [...best.values()].sort((a, b) =>

@@ -10,6 +10,7 @@ import { narutoPackDbPath } from "@/providers/naruto/narutocarddass/indexStore";
 import { NARUTO_PACK_ID } from "@/providers/naruto/narutocarddass/identity";
 import { dbsCgDbPath } from "@/providers/dragonball/dbscg/indexStore";
 import { tcgdexDbPath } from "@/providers/pokemon/tcgdex/indexStore";
+import { clearLocalPrintsIndexSingletons } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
 vi.mock("@/lib/admin/catalogueCardPrices", () => ({
   catalogueCardPriceQuoteByPrintKey: async () => new Map(),
@@ -19,6 +20,7 @@ vi.mock("@/lib/admin/catalogueCardPrices", () => ({
 const buildCarddass = vi.hoisted(() => vi.fn());
 const buildDbsCg = vi.hoisted(() => vi.fn());
 const buildPokemon = vi.hoisted(() => vi.fn());
+const buildMtg = vi.hoisted(() => vi.fn());
 
 vi.mock("@/providers/naruto/narutocarddass/catalogueBrowse", async (importOriginal) => {
   const actual =
@@ -68,11 +70,27 @@ vi.mock("@/providers/pokemon/tcgdex/catalogueBrowse", async (importOriginal) => 
   };
 });
 
+vi.mock("@/providers/mtg/catalogueBrowse", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/providers/mtg/catalogueBrowse")>();
+  return {
+    ...actual,
+    buildMtgCatalogueBrowseRows: (...args: unknown[]) => {
+      buildMtg(...args);
+      return actual.buildMtgCatalogueBrowseRows(
+        ...(args as Parameters<typeof actual.buildMtgCatalogueBrowseRows>),
+      );
+    },
+  };
+});
+
 afterEach(() => {
   resetCatalogueCardsCache();
+  clearLocalPrintsIndexSingletons("mtg");
   buildCarddass.mockClear();
   buildDbsCg.mockClear();
   buildPokemon.mockClear();
+  buildMtg.mockClear();
 });
 
 describe.skipIf(!existsSync(tcgdexDbPath()))(
@@ -193,6 +211,40 @@ describe.skipIf(!existsSync(dbsCgDbPath()))(
       expect(page.total).toBeGreaterThan(0);
       expect(page.cards.length).toBeGreaterThan(0);
       expect(buildDbsCg).not.toHaveBeenCalled();
+    });
+  },
+);
+
+describe.skipIf(!existsSync("data/mtg/catalog.sqlite"))(
+  "catalogue SQL page contract — mtg",
+  () => {
+    it("listCatalogueCards does not call buildMtgCatalogueBrowseRows", async () => {
+      const page = await listCatalogueCards({
+        pack: "mtg",
+        preferLang: "en",
+        locales: "preferred",
+        limit: 24,
+      });
+      expect(page.total).toBeGreaterThan(50_000);
+      expect(page.cards.length).toBeGreaterThan(0);
+      expect(buildMtg).not.toHaveBeenCalled();
+    });
+
+    it("missingArtOnly stays on SQL page (no materialize)", async () => {
+      const page = await listCatalogueCards({
+        pack: "mtg",
+        preferLang: "en",
+        locales: "preferred",
+        missingArtOnly: true,
+        limit: 24,
+      });
+      expect(page.total).toBeGreaterThan(1_000);
+      expect(
+        page.cards
+          .filter((row) => row.kind === "face")
+          .every((row) => row.missingArt),
+      ).toBe(true);
+      expect(buildMtg).not.toHaveBeenCalled();
     });
   },
 );

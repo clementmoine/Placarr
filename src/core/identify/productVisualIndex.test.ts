@@ -87,10 +87,10 @@ describe("productKey helpers", () => {
 });
 
 describe("listProductArtFaces", () => {
-  it("prefers face.json winner first", () => {
+  it("ranks by criteria — official dump beats listing (face.json ignored)", () => {
     const dir = path.join(root, ...PACK.split("/"), "products", "booster-box", "fr");
-    expect(listProductArtFaces(dir)[0]).toBe("art.coleka.webp");
-    expect(listProductArtFaces(dir)).toContain("art.official.webp");
+    expect(listProductArtFaces(dir)[0]).toBe("art.official.webp");
+    expect(listProductArtFaces(dir)).toContain("art.coleka.webp");
   });
 });
 

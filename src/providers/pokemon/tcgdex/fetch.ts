@@ -127,6 +127,10 @@ export type TcgdexCard = {
   /** Prefer `high.webp` (then png/jpg via display fallback) when the CDN base is known. */
   imageUrl: string | null;
   thumbnailUrl: string | null;
+  /** Local face basename when known (`print_assets.art`). */
+  art?: string | null;
+  artKind?: string | null;
+  watermarked?: boolean | number | null;
   /** Cardmarket EUR cents — non-foil / normal listing. */
   cmPriceCents: number | null;
   /** Cardmarket EUR cents — holo / reverse / foil listing. */

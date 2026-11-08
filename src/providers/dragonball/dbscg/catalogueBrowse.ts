@@ -10,7 +10,6 @@ import {
   DBS_CG_PACK_ID,
   dbsCgCardFolder,
   dbsCgDbPath,
-  dbsCgLocalArtFilename,
   listDbsCgCatalogueBrowsePage,
   listDbsCgRowsForLanguage,
   type DbsCgBrowseRow,
@@ -35,17 +34,16 @@ function rowToCatalogueCard(row: DbsCgBrowseRow): CatalogueCardRow {
     number: row.number,
     grouping: row.grouping,
   });
+  /*
+    Browse walks the whole corpus — use cheap basename/folder scan only.
+    Pixel re-rank (`dbsCgLocalArtFilename`) stays on search / picker paths.
+  */
   const { artUrl, missingArt } = resolveCatalogueLocalArtUrl({
     packId: DBS_CG_PACK_ID,
     set,
     lang,
     card,
     sqliteArt: row.imageUrl,
-    resolveDiskFile: () =>
-      dbsCgLocalArtFilename(
-        { setCode: set, number: row.number, grouping: row.grouping },
-        lang,
-      ),
   });
   const name = row.fullName?.trim() || undefined;
   const label = name ? `${set}-${card} — ${name}` : `${set}-${card}`;

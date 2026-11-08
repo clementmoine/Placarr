@@ -5,7 +5,7 @@
  * pokemontcg.io keep `art.<source>.<ext>` like Naruto. Ranking = shared
  * cardFaces (pixels + provenance) — no FACE_PRIORITY name lists.
  */
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { probeFaceFileDimensionsSync } from "@/providers/shared/faceFileDimensions";
@@ -13,6 +13,7 @@ import {
   CARD_FACE_DECISION_FILE,
   CARD_FACE_ROLES,
   createCardFaceChoice,
+  promoteResolvedFace,
   type CardFaceRole,
   type FaceDecision,
   type StoredFace as SharedStoredFace,
@@ -99,8 +100,11 @@ function loadStoredPokemonFaces(
   for (const file of arts) {
     const source = pokemonFaceSourceOf(file);
     if (!source) continue;
-    const dims = probeFaceFileDimensionsSync(path.join(cardDir, file));
-    if (!dims) continue;
+    // Soft-fill when probe fails — a lone dump on disk must still win over remote.
+    const dims = probeFaceFileDimensionsSync(path.join(cardDir, file)) ?? {
+      width: 1,
+      height: 1,
+    };
     out.push({
       source,
       file,
@@ -112,8 +116,8 @@ function loadStoredPokemonFaces(
 }
 
 /**
- * Displayed art filename: face.json winner if still on disk, else re-rank by
- * pixels + provenance (dims probed from each dump).
+ * Displayed art filename — re-rank by pixels + provenance every time.
+ * `face.json` is not SSOT (kept as optional dig audit trail only).
  */
 export function resolvePokemonArtFilename(
   cardDir: string,
@@ -121,26 +125,8 @@ export function resolvePokemonArtFilename(
 ): string | null {
   const arts = listPokemonArtFiles(cardDir);
   if (arts.length === 0) return null;
-
-  const decisionPath = path.join(cardDir, POKEMON_FACE_DECISION_FILE);
-  if (existsSync(decisionPath)) {
-    try {
-      const raw = JSON.parse(readFileSync(decisionPath, "utf8")) as {
-        art?: string;
-      };
-      const named = raw.art?.trim();
-      // `art.webp` (live) is not `art.<source>.<ext>` — still honour it.
-      if (named && arts.includes(named) && pokemonFaceSourceOf(named)) {
-        return named;
-      }
-      const parsed = named
-        ? parsePokemonFaceDecision(readFileSync(decisionPath, "utf8"), "art")
-        : null;
-      if (parsed && arts.includes(parsed)) return parsed;
-    } catch {
-      /* re-rank */
-    }
-  }
+  // Lone dump — skip pixel probe (admin browse walks thousands of folders).
+  if (arts.length === 1) return arts[0]!;
 
   const faces = loadStoredPokemonFaces(cardDir, arts);
   const best = pickBestPokemonFace(faces, lang);
@@ -155,23 +141,13 @@ export function resolvePokemonArtFilename(
   );
 }
 
-/** Refresh face.json from files present in the card folder. */
+/** Refresh dig audit sidecar from files present in the card folder. */
 export function refreshPokemonFaceDecision(
   cardDir: string,
   lang = "fr",
 ): string | null {
-  const arts = listPokemonArtFiles(cardDir);
-  if (!arts.length) return null;
-  const faces = loadStoredPokemonFaces(cardDir, arts);
-  const best = pickBestPokemonFace(faces, lang);
-  let file: string | null = null;
-  if (best === "live") {
-    file = arts.find((f) => LIVE_ART_RE.test(f)) ?? null;
-  } else if (best) {
-    file = arts.find((f) => pokemonFaceSourceOf(f) === best) ?? null;
-  }
-  if (!file) file = resolvePokemonArtFilename(cardDir, lang);
-  if (!file) return null;
-  recordPokemonFaceDecision(cardDir, "art", file);
-  return file;
+  return promoteResolvedFace({
+    cardDir,
+    filename: resolvePokemonArtFilename(cardDir, lang),
+  });
 }

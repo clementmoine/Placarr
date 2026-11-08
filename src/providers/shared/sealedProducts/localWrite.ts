@@ -36,7 +36,7 @@ import {
 import type { PackCompositionField } from "./packCompositionTypes";
 import { resolveContentLayers } from "./contentLayers";
 import { persistSealedProductsIndex } from "./persistProductsIndex";
-import { writeSealedProductFaceDecision } from "./resolveProductFace";
+import { mergeWriteFaceDecision } from "@/providers/shared/cardFaces";
 
 export type LocalSealedWrite = {
   slug: string;
@@ -157,10 +157,10 @@ export function writeLocalSealedProducts(input: {
       installRole(destDir, "poster", extra.source, extra.posterPath);
     }
     if (artFile || backFile || logoFile) {
-      writeSealedProductFaceDecision(destDir, {
-        art: artFile,
-        back: backFile,
-        logo: logoFile,
+      mergeWriteFaceDecision(destDir, {
+        ...(artFile ? { art: artFile } : {}),
+        ...(backFile ? { back: backFile } : {}),
+        ...(logoFile ? { logo: logoFile } : {}),
       });
     }
     const preview = sealedKindIsOpaqueContents(spec.kind);

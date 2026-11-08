@@ -1,6 +1,6 @@
 /**
  * Packshot URL for a sealed SKU — role URLs (`…/face`), never embed `art.*`
- * basenames. Disk ranking stays in `face.json` + dumps.
+ * basenames. Disk ranking = catalogue criteria on dumps.
  */
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";

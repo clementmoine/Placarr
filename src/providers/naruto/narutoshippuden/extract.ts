@@ -63,6 +63,66 @@ export async function runNarutoShippudenPackPipeline(
     }
   }
 
+  if (!argv.includes("--offline") && !argv.includes("--skip-narutocardjp")) {
+    try {
+      const {
+        harvestNarutocardjpFaces,
+        installNarutocardjpFaces,
+      } = await import("@/providers/naruto/shared/narutocardjp/harvest");
+      const { diskIdFromPrintedReference } = await import("./search");
+      const { shippudenPrintKey } = await import("./pipeline/ledgers");
+      const { openNarutoShippudenDbForWrite } = await import("./indexStore");
+      const harvested = await harvestNarutocardjpFaces({
+        packId: "naruto/shippuden",
+        line: "shippuden",
+      });
+      console.log(
+        `── naruto-card.jp 疾風伝 — ${harvested.hits} faces → ${harvested.path}`,
+      );
+      const installed = await installNarutocardjpFaces({
+        packId: "naruto/shippuden",
+        line: "shippuden",
+        force: argv.includes("--force"),
+        resolveDest: (hit) => {
+          const diskId = diskIdFromPrintedReference(hit.printedRef);
+          if (!diskId) return null;
+          const printKey = shippudenPrintKey(diskId);
+          if (!printKey) return null;
+          const m = diskId.match(/^([a-z]+)(\d+)$/i);
+          if (!m) return null;
+          const family = m[1]!.toLowerCase();
+          return {
+            set: family,
+            lang: "ja",
+            card: diskId,
+            printKey,
+          };
+        },
+        writeAsset: (row) => {
+          try {
+            const db = openNarutoShippudenDbForWrite();
+            db.prepare(
+              `INSERT INTO print_assets (print_key, lang, art, source_url)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(print_key, lang) DO UPDATE SET
+                 art = excluded.art,
+                 source_url = COALESCE(excluded.source_url, print_assets.source_url)`,
+            ).run(row.printKey, row.lang, row.art, row.sourceUrl);
+          } catch {
+            /* index may be closed / missing mid-sync */
+          }
+        },
+      });
+      console.log(
+        `── naruto-card.jp install — ${installed.written} écrites, ${installed.skipped} skip, ${installed.failed} fail`,
+      );
+    } catch (err) {
+      console.warn(
+        `── naruto-card.jp — ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  }
+
   const summary = await refreshNarutoShippudenCatalog();
   console.log(`── Naruto Shippuden — catalogue rafraîchi`, summary);
 }

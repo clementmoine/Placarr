@@ -17,7 +17,10 @@ import {
   type CatalogCorpusSnapshot,
   statusFromLastRun,
 } from "@/providers/shared/catalogCorpus";
+import { applyCorpusPromotePrint } from "@/providers/shared/cardCatalogue/applyCorpusPromotePrint";
 import type {
+  CorpusPromoteApplyInput,
+  CorpusPromoteApplyResult,
   ProviderCatalogRefreshOpts,
   ProviderCatalogStatus,
 } from "@/types/providerModule";
@@ -29,6 +32,10 @@ export type CardCatalogueHooksInput = {
    * local TCG lines — factory packs pass `LocalTcgLineSpec.effectPackId`.
    */
   effectPackId?: string;
+  /**
+   * PrintKey game this corpus owns — enables admin promote → sqlite apply.
+   */
+  printGame?: string;
   /** Chemin de la base du pack — sa présence dit qu'il y a quelque chose. */
   dbPath: () => string;
   /**
@@ -66,6 +73,9 @@ export type CardCatalogueHooks = {
   effectPack?: string;
   status: () => ProviderCatalogStatus;
   refresh: (opts?: ProviderCatalogRefreshOpts) => Promise<void>;
+  applyCorpusPromote?: (
+    input: CorpusPromoteApplyInput,
+  ) => CorpusPromoteApplyResult;
 };
 
 function csvTokens(values: readonly string[] | undefined): string | null {
@@ -264,10 +274,23 @@ export function cardCatalogueHooks(
     }
   };
 
+  const printGame = input.printGame?.trim().toLowerCase() || null;
+  const applyCorpusPromote = printGame
+    ? (promote: CorpusPromoteApplyInput): CorpusPromoteApplyResult =>
+        applyCorpusPromotePrint({
+          packId: input.packId,
+          printGame,
+          printKey: promote.printKey,
+          title: promote.title,
+          language: promote.language,
+        })
+    : undefined;
+
   return {
     dataPack: input.packId,
     ...(input.effectPackId ? { effectPack: input.effectPackId } : {}),
     status,
     refresh,
+    ...(applyCorpusPromote ? { applyCorpusPromote } : {}),
   };
 }

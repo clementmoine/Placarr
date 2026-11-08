@@ -6,8 +6,6 @@
 import {
   existsSync,
   mkdirSync,
-  readFileSync,
-  readdirSync,
   statSync,
   unlinkSync,
   writeFileSync,
@@ -37,9 +35,7 @@ import {
 import { dataRoot } from "@/lib/runtimeData";
 
 import {
-  DBS_FACE_DECISION_FILE,
-  dbsFaceFileOf,
-  parseFaceDecision,
+  resolveDbsArtFilenameSync,
   type DbsFaceRole,
 } from "./disk/faceChoice";
 import { DBS_CG_GAME } from "./identity";
@@ -483,35 +479,9 @@ export function dbsCgLocalArtFilename(
     card: dbsCgCardFolder(print),
   });
 
-  /*
-    The ranking's own answer, written by the faces pass. Nothing is copied to a
-    generic `art.webp` any more: that name duplicated a file we already held and
-    froze a decision taken at download time. Reading the decision costs the same
-    one file access the old `existsSync` did.
-  */
-  const decision = path.join(cardDir, DBS_FACE_DECISION_FILE);
-  if (existsSync(decision)) {
-    try {
-      const named = parseFaceDecision(readFileSync(decision, "utf8"), role);
-      if (named && existsSync(path.join(cardDir, named))) return named;
-    } catch {
-      /* fall through to the scan */
-    }
-  }
-
-  /*
-    No decision recorded — a folder filled before this change, or one whose
-    pass was cut short. Take any source that is there rather than showing
-    nothing; the next pass will rank them properly.
-  */
-  try {
-    const found = readdirSync(cardDir)
-      .filter((name) => dbsFaceFileOf(name)?.role === role)
-      .sort();
-    if (found.length > 0) return found[0]!;
-  } catch {
-    /* no folder */
-  }
+  // Re-rank by pixels + provenance — `face.json` is dig audit only.
+  const ranked = resolveDbsArtFilenameSync(cardDir, lang, role);
+  if (ranked) return ranked;
 
   /*
     Older layouts really did hold these names. Kept readable rather than

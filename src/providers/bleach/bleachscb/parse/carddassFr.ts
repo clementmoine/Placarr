@@ -11,6 +11,7 @@ import {
 import path from "node:path";
 
 import { packCardDir } from "@/lib/packPaths";
+import { waybackRawUrl as waybackIdUrl } from "@/providers/shared/wayback/waybackRawUrl";
 
 import {
   BLEACH_SCB_PACK_ID,
@@ -84,10 +85,6 @@ const TYPE_FROM_DIR: Record<string, string> = {
 /** Exclusive face beats a dual Promo-N-M collage. */
 const FACE_SCORE_EXCLUSIVE = 2;
 const FACE_SCORE_COMPOSITE = 1;
-
-function waybackIdUrl(timestamp: string, original: string): string {
-  return `https://web.archive.org/web/${timestamp}id_/${original}`;
-}
 
 function stripHtml(s: string): string {
   return s

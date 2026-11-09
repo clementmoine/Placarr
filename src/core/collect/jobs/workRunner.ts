@@ -445,8 +445,20 @@ export async function executeBackgroundWorkJob(
     }, FOIL_LOCK_HEARTBEAT_MS);
     if (typeof heartbeat.unref === "function") heartbeat.unref();
     void touchBackgroundWorkJobLock(job.id);
-    try {
-      await mdl.catalog.refresh(catalogRefreshOptsFromPayload(catalogPayload));
+
+    /*
+      Admin Logs polls `data/<pack>/logs/foil-extract.log`. The enqueue route
+      only seeds « waiting for worker… » — tee console into that file so Sync
+      progress (scryfall-faces, seed, …) is visible like legacy foilExtract.
+    */
+    const { cataloguePackInfo } = await import("@/lib/admin/cataloguePacks");
+    const extractTarget = cataloguePackInfo(mdl.catalog.dataPack)?.extractTarget;
+    const { appendCatalogueExtractLog, appendCatalogueExtractLogSync } =
+      await import("@/lib/admin/catalogueExtractLog");
+    const { withConsoleTee } = await import("@/lib/admin/catalogueExtractRunner");
+
+    const runRefresh = async () => {
+      await mdl.catalog!.refresh(catalogRefreshOptsFromPayload(catalogPayload));
       // Corpus densified → soft-refresh shelf items sharing those printKeys.
       const { enqueuePrintCatalogPropagate } = await import(
         "@/core/collect/jobs/printCatalogPropagate"
@@ -459,6 +471,31 @@ export async function executeBackgroundWorkJob(
         console.log(
           `[catalogProviderSync] ${providerId}: propagated soft refresh to ${n} shelf item(s)`,
         );
+      }
+    };
+
+    try {
+      if (extractTarget) {
+        await appendCatalogueExtractLog(
+          extractTarget,
+          `status=running jobId=${job.id} provider=${providerId}`,
+        );
+        try {
+          await withConsoleTee(
+            (line) => appendCatalogueExtractLogSync(extractTarget, line),
+            runRefresh,
+          );
+          await appendCatalogueExtractLog(extractTarget, "status=done");
+        } catch (err) {
+          await appendCatalogueExtractLog(extractTarget, "status=failed");
+          await appendCatalogueExtractLog(
+            extractTarget,
+            err instanceof Error ? err.message : String(err),
+          );
+          throw err;
+        }
+      } else {
+        await runRefresh();
       }
     } finally {
       clearInterval(heartbeat);

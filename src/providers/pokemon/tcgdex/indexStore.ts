@@ -963,10 +963,11 @@ export function listTcgdexCatalogueBrowsePage(
     where.push("COALESCE(p.printed, 1) != 0");
   }
 
-  // SQL candidate = no indexed art AND no CDN base. Browse post-filter still
-  // drops rows that resolve on disk via `localPokemonCatalogueArtUrl`.
-  // (CDN-only without disk stays Sync debt until paper-faces densify.)
-  const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '') AND (p.image_base_url IS NULL OR TRIM(p.image_base_url) = '')`;
+  // SQL candidate = no local basename. `image_base_url` is Sync densify
+  // *input* only — CDN-only rows must stay visible as « sans image ».
+  // Browse post-filter still drops rows that resolve on disk via
+  // `localPokemonCatalogueArtUrl`.
+  const missingArtSql = `(a.art IS NULL OR TRIM(a.art) = '')`;
   const missingNameSql = `(t.name IS NULL OR TRIM(t.name) = '')`;
   if (opts.incompleteOnly) {
     where.push(`((${missingArtSql}) OR (${missingNameSql}))`);

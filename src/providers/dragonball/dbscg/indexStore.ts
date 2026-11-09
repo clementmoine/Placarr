@@ -25,6 +25,7 @@ import {
   printAssetsArtSql,
   printAssetsBackSql,
   printAssetsColumnNames,
+  printAssetsMissingLocalArtSql,
 } from "@/providers/shared/cardCatalogue/printAssetsCore";
 import { replaceSqliteLiveFile } from "@/providers/shared/sqliteLiveReplace";
 import {
@@ -413,7 +414,7 @@ export function listDbsCgCatalogueBrowsePage(
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];
   params.push(...langs);
-  const missingArtSql = `(${artSql} IS NULL OR TRIM(${artSql}) = '')`;
+  const missingArtSql = printAssetsMissingLocalArtSql(artSql);
   const missingNameSql = `(t.full_name IS NULL OR TRIM(t.full_name) = '')`;
   if (opts.incompleteOnly) {
     where.push(`((${missingArtSql}) OR (${missingNameSql}))`);

@@ -1937,6 +1937,9 @@ describe("same-number art fallback (Naruto)", () => {
       cataloguePackInfo("dragonball/fw")?.localeArt?.auditAfterLocalResolve,
     ).toBe(true);
     expect(
+      cataloguePackInfo("dragonball/cg")?.localeArt?.auditAfterLocalResolve,
+    ).toBe(true);
+    expect(
       cataloguePackInfo("dragonball/fw")?.localeArt?.bestFaceAcrossLocales,
     ).toBe(false);
     expect(cataloguePackInfo("dragonball/fw")?.catalogueLocales).toEqual([

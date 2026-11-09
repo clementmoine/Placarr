@@ -1,11 +1,12 @@
 /**
- * Admin Catalogue browse for Magic — sqlite titles + local faces only
- * (no Scryfall CDN in the grid; densify via Sync / seed).
+ * Admin Catalogue browse for Magic — sqlite titles + local faces, with
+ * Scryfall CDN soft-fill from `curated/art-urls.json` (same ledger as seed /
+ * decorateCandidate). Local `art.*` always wins.
  *
- * Audit filters (« sans image ») use SQL empty `print_assets.art` — Scryfall
- * CDN lives in `curated/art-urls.json`, not sqlite art basenames. Overscan +
- * readdir on ~100k rows hung the admin grid; densify writes a basename only
- * when a local `art.*` exists.
+ * Audit filters (« sans image » / incomplete) stay local-only so densify debt
+ * remains honest empty tiles. Default browse soft-fills CDN so the grid is
+ * usable before Sync densifies Scryfall → disk. Overscan + readdir on ~100k
+ * rows hung the admin grid — missingArtOnly is SQL empty `print_assets.art`.
  */
 import { existsSync, statSync } from "node:fs";
 
@@ -13,6 +14,7 @@ import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { assetsCardUrl } from "@/lib/packAssetUrls";
 import { packCatalogDb } from "@/lib/packPaths";
+import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
 import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
 import {
   createLocalPrintsIndex,
@@ -20,7 +22,12 @@ import {
   type LocalPrintSearchRow,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import { clearMtgArtUrlCache } from "./artUrls";
+import {
+  artUrlsMtimeMs,
+  clearMtgArtUrlCache,
+  loadMtgArtUrlMap,
+  resolveMtgArtUrl,
+} from "./artUrls";
 import { MTG_PACK_ID } from "./pack";
 
 type Cache = { stamp: string; rows: CatalogueCardRow[] };
@@ -37,17 +44,32 @@ function sqliteMtimeMs(): number {
 }
 
 function cacheStamp(): string {
-  return String(sqliteMtimeMs());
+  return `${sqliteMtimeMs()}:${artUrlsMtimeMs()}`;
 }
 
 function diskCardOf(row: LocalPrintSearchRow): string {
   return row.grouping ? `${row.number}-${row.grouping}` : row.number;
 }
 
-function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
+function remoteArtUrl(
+  printKey: string,
+  lang: string,
+): { url: string; artLang: string } | null {
+  const hit = resolveMtgArtUrl(loadMtgArtUrlMap(), printKey, lang);
+  if (!hit) return null;
+  if (catalogUrlMayStayRemote(hit.url) || /^https?:\/\//i.test(hit.url)) {
+    return hit;
+  }
+  return null;
+}
+
+function rowToCatalogueCard(
+  row: LocalPrintSearchRow,
+  opts?: { softFillCdn?: boolean },
+): CatalogueCardRow {
   const set = (row.setCode || row.cardType || "").trim() || "—";
   const diskCard = diskCardOf(row);
-  const { artUrl, artFile, missingArt } = resolveCatalogueLocalArtUrl({
+  const local = resolveCatalogueLocalArtUrl({
     packId: MTG_PACK_ID,
     set,
     lang: row.lang,
@@ -56,13 +78,26 @@ function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
   });
   const thumbRaw = row.thumb?.trim() || "";
   const thumbFile =
-    thumbRaw && thumbRaw !== artFile && !thumbRaw.includes("/")
+    thumbRaw && thumbRaw !== local.artFile && !thumbRaw.includes("/")
       ? thumbRaw
       : "";
   const name = row.fullName?.trim() || undefined;
   const label = name
     ? `${set} · ${diskCard} — ${name}`
     : `${set} · ${diskCard}`;
+
+  let artUrl = local.artUrl;
+  let missingArt = local.missingArt;
+  let artLocaleFrom: string | undefined;
+  if (local.missingArt && opts?.softFillCdn !== false) {
+    const remote = remoteArtUrl(row.printKey, row.lang);
+    if (remote) {
+      artUrl = remote.url;
+      missingArt = false;
+      if (remote.artLang !== row.lang) artLocaleFrom = remote.artLang;
+    }
+  }
+
   return {
     printKey: row.printKey,
     set,
@@ -83,12 +118,13 @@ function rowToCatalogueCard(row: LocalPrintSearchRow): CatalogueCardRow {
     ...(name ? { name } : {}),
     ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
     missingArt,
+    ...(artLocaleFrom ? { artLocaleFrom } : {}),
     languageSpecific: true,
     kind: "face",
   };
 }
 
-/** Full materialize — tests / offline audits only; never admin default browse. */
+/** Full materialize — densify offline audit (local faces only, no CDN). */
 export function buildMtgCatalogueBrowseRows(): CatalogueCardRow[] {
   const index = createLocalPrintsIndex(MTG_PACK_ID);
   if (!index.hasIdentityCorpus()) return [];
@@ -102,7 +138,7 @@ export function buildMtgCatalogueBrowseRows(): CatalogueCardRow[] {
   const byKeyLang = new Map<string, CatalogueCardRow>();
   for (const lang of locales) {
     for (const row of index.listRowsForLanguage(lang)) {
-      const card = rowToCatalogueCard(row);
+      const card = rowToCatalogueCard(row, { softFillCdn: false });
       byKeyLang.set(`${card.printKey}\0${card.lang}`, card);
     }
   }
@@ -137,6 +173,7 @@ export function listMtgCatalogueBrowsePage(
 ): { rows: CatalogueCardRow[]; total: number } {
   const index = getLocalPrintsIndex(MTG_PACK_ID);
   if (!index.hasIdentityCorpus()) return { rows: [], total: 0 };
+  const softFillCdn = !input.missingArtOnly && !input.incompleteOnly;
   const page = index.listBrowsePage({
     langs: input.langs,
     q: input.q,
@@ -148,6 +185,6 @@ export function listMtgCatalogueBrowsePage(
   });
   return {
     total: page.total,
-    rows: page.rows.map((row) => rowToCatalogueCard(row)),
+    rows: page.rows.map((row) => rowToCatalogueCard(row, { softFillCdn })),
   };
 }

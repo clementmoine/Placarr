@@ -83,6 +83,23 @@ export function printAssetsArtSql(
 }
 
 /**
+ * SQL predicate: no *local* face basename yet.
+ *
+ * HTTP(S) leftovers and path-like values in `art` count as missing (Sync
+ * densify debt) — same contract as {@link sqliteArtBasename} /
+ * `resolveCatalogueLocalArtUrl`. CDN bases on other columns
+ * (`image_base_url`, title `image_url`…) must not be OR-ed here.
+ */
+export function printAssetsMissingLocalArtSql(artExpr: string): string {
+  const e = artExpr.trim() || "NULL";
+  return `(${e} IS NULL OR TRIM(${e}) = ''
+    OR INSTR(${e}, '/') > 0
+    OR INSTR(${e}, CHAR(92)) > 0
+    OR LOWER(TRIM(${e})) LIKE 'http://%'
+    OR LOWER(TRIM(${e})) LIKE 'https://%')`;
+}
+
+/**
  * SQL expression for the back URL, preferring core `back` then legacy
  * `back_url`.
  */

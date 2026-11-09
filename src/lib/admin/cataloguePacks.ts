@@ -855,6 +855,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     hasFoilEffects: false,
     defaultScope: "all",
     catalogueLocales: ["fr", "en"],
+    /*
+      print_assets keeps Bandai SAMPLE HTTPS until densify stamps a basename;
+      « sans image » must hydrate after disk resolve (same as Fusion World).
+    */
+    localeArt: {
+      bestFaceAcrossLocales: false,
+      auditAfterLocalResolve: true,
+    },
     extractTarget: "dbs-cg",
     catalogueOnly: true,
     extractMarkers: [
@@ -1226,15 +1234,22 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extract: {
       prelude: [
         "Magic: The Gathering: Scryfall bulk all_cards → data/mtg",
-        "Titres multi-lang + artUrl CDN + dos classique ; scellé mtgcards.fr",
-        "Liste prix FR ; faces boutique : --mtgcards-faces",
+        "Titres multi-lang + art-urls CDN + dos classique ; scellé mtgcards.fr",
+        "Densify Scryfall → art.scryfall.* (scryfall-faces) ; boutique : --mtgcards-faces",
+      ],
+      pipelineSteps: [
+        "seed",
+        "scryfall-faces",
+        "products",
+        "documents",
+        "faces",
       ],
       timeoutMs: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
     },
     blurbFr:
-      "Catalogue Magic via Scryfall ; scellé + cotes mtgcards.fr (commander / avant-première).",
+      "Catalogue Magic via Scryfall ; faces densifiées au Sync ; scellé + cotes mtgcards.fr.",
     blurbEn:
-      "Magic catalogue via Scryfall; sealed + prices via mtgcards.fr (commander / prerelease).",
+      "Magic catalogue via Scryfall; faces densified on Sync; sealed + prices via mtgcards.fr.",
   },
 ];
 

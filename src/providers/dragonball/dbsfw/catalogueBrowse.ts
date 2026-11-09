@@ -4,6 +4,7 @@
 import { existsSync, statSync } from "node:fs";
 
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
+import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
 import {
   DBS_FW_FACE_LANGS,
@@ -106,6 +107,30 @@ export type DbsFwCatalogueBrowsePageInput = {
 export function listDbsFwCatalogueBrowsePageRows(
   input: DbsFwCatalogueBrowsePageInput,
 ): { rows: CatalogueCardRow[]; total: number } {
+  if (input.missingArtOnly || input.incompleteOnly) {
+    const { missingArtOnly: _a, incompleteOnly: _i, ...base } = input;
+    return overscanFilterPage({
+      offset: input.offset,
+      limit: input.limit,
+      maxScan: 50_000,
+      chunk: Math.max(input.limit, 256),
+      fetchPage: (offset, limit) => {
+        const page = listDbsFwCatalogueBrowsePage({
+          ...base,
+          offset,
+          limit,
+        });
+        return {
+          total: page.total,
+          rows: page.rows.map((row) => rowToCatalogueCard(row)),
+        };
+      },
+      keep: (row) =>
+        input.incompleteOnly
+          ? Boolean(row.missingArt || !row.name?.trim())
+          : Boolean(row.missingArt),
+    });
+  }
   const page = listDbsFwCatalogueBrowsePage(input);
   return {
     total: page.total,

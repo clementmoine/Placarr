@@ -228,6 +228,21 @@ describe.skipIf(!hasDb)("pokemon catalogue SQL browse page", () => {
     expect(viaRouter.total).toBe(small.total);
   });
 
+  it("missingArtOnly includes CDN-only densify debt (image_base_url alone ≠ art)", () => {
+    const missing = listPokemonCatalogueBrowsePage({
+      langs: ["fr"],
+      missingArtOnly: true,
+      offset: 0,
+      limit: 48,
+    });
+    // Previously AND-ed empty image_base_url → ~tens of rows. CDN-only debt
+    // without local a.art must surface for Sync paper-faces.
+    expect(missing.total).toBeGreaterThan(100);
+    expect(missing.rows.every((row) => row.missingArt && !row.artUrl)).toBe(
+      true,
+    );
+  });
+
   it(
     "foilOnly without q skips leading NonFoil rows (not a false-empty page)",
     async () => {

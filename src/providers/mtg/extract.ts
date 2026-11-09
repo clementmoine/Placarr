@@ -3,12 +3,14 @@
  *
  * 1. Download `all_cards` bulk (cached under staging/scryfall/)
  * 2. Seed printKeys + **every paper lang** titles + finishes + per-lang artUrl
- * 3. Classic card back → curated/cards/back.webp
- * 4. mtgcards.fr sealed SKUs + optional FR shop faces (TCG Cards family)
+ * 3. Densify Scryfall CDN → `art.scryfall.*` (`scryfall-faces`, on by default)
+ * 4. Classic card back → curated/cards/back.webp
+ * 5. mtgcards.fr sealed SKUs + optional FR shop faces (TCG Cards family)
  *
- * STEPS (`--only` / `--skip` / `--offline`) : `seed` · `faces` · `products` · `documents`.
- * Faces stay off by default (opt-in `--mtgcards-faces` or `--only …,faces`).
- */
+ * STEPS (`--only` / `--skip` / `--offline`) :
+ * `seed` · `scryfall-faces` · `faces` · `products` · `documents`.
+ * Shop faces (`faces`) stay off by default (opt-in `--mtgcards-faces`).
+ **/
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
@@ -39,11 +41,22 @@ const MAGIC_CARD_BACK_URL =
 
 const BULK_TYPE = "all_cards" as const;
 
-export const MTG_STEPS = ["seed", "faces", "products", "documents"] as const;
+export const MTG_STEPS = [
+  "seed",
+  "scryfall-faces",
+  "faces",
+  "products",
+  "documents",
+] as const;
 export type MtgStep = (typeof MTG_STEPS)[number];
 
 /** Network harvest only — Scryfall seed still runs from staging under `--offline`. */
-const MTG_ONLINE = new Set<MtgStep>(["faces", "products", "documents"]);
+const MTG_ONLINE = new Set<MtgStep>([
+  "scryfall-faces",
+  "faces",
+  "products",
+  "documents",
+]);
 /** Shop faces remain opt-in (same as former `--mtgcards-faces`). */
 const MTG_OFF_BY_DEFAULT = new Set<MtgStep>(["faces"]);
 
@@ -299,6 +312,26 @@ export async function runMtgPackPipeline(
             `── mtgcards.fr list — ${list.cards} tuiles, ${list.priced} cotes, ${list.pages} pages → ${list.file}`,
           );
         }
+      }
+
+      if (steps.includes("scryfall-faces") && !offline) {
+        const { fillScryfallCatalogueFaces } = await import(
+          "./harvest/fillScryfallFaces"
+        );
+        let lastLog = 0;
+        const scryfall = await fillScryfallCatalogueFaces({
+          index,
+          force,
+          limit: Number.isFinite(faceLimitRaw) ? faceLimitRaw : undefined,
+          onProgress: (done, total) => {
+            if (done - lastLog < 500 && done !== total) return;
+            lastLog = done;
+            console.log(`   scryfall-faces progress ${done}/${total}`);
+          },
+        });
+        console.log(
+          `── Scryfall faces — ${scryfall.written} écrites, ${scryfall.skipped} déjà là, ${scryfall.unknownPrint} hors catalogue, ${scryfall.failed} échecs (${scryfall.tried} tentées / ${scryfall.slots} slots)`,
+        );
       }
 
       if (steps.includes("faces") && !offline) {

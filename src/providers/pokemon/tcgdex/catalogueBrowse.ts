@@ -274,9 +274,9 @@ export function listPokemonCatalogueBrowsePage(
   }
   if (input.incompleteOnly || input.missingArtOnly) {
     /*
-      `a.art` / `image_base_url` empty ≠ no face: `localPokemonCatalogueArtUrl`
-      still finds on-disk harvests. Post-filter after resolve.
-      Candidate set is ~1–2k rows — scan them all for an honest total.
+      Empty `a.art` ≠ no face: `localPokemonCatalogueArtUrl` still finds
+      on-disk harvests. CDN `image_base_url` alone stays densify debt.
+      Post-filter after resolve for an honest total.
     */
     const { foilOnly: _f, identityOnly: _id, ...base } = input;
     return overscanFilterPage({

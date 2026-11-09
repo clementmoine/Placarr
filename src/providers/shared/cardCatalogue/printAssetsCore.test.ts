@@ -4,6 +4,7 @@ import {
   normalizePrintAssetColumns,
   printAssetsArtSql,
   printAssetsBackSql,
+  printAssetsMissingLocalArtSql,
 } from "./printAssetsCore";
 
 describe("normalizePrintAssetColumns", () => {
@@ -52,5 +53,14 @@ describe("printAssetsArtSql / printAssetsBackSql", () => {
     expect(printAssetsArtSql(new Set(["art"]))).toBe("a.art");
     expect(printAssetsBackSql(new Set(["back_url"]))).toBe("a.back_url");
     expect(printAssetsArtSql(new Set())).toBe("NULL");
+  });
+});
+
+describe("printAssetsMissingLocalArtSql", () => {
+  it("treats empty, http(s), and path-like art as missing", () => {
+    const sql = printAssetsMissingLocalArtSql("a.art");
+    expect(sql).toContain("a.art IS NULL");
+    expect(sql).toContain("LIKE 'https://%'");
+    expect(sql).toContain("INSTR(a.art, '/')");
   });
 });

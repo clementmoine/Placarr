@@ -4,6 +4,7 @@
 import { existsSync, statSync } from "node:fs";
 
 import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
+import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
 import {
   DBS_CG_FACE_LANGS,
@@ -107,6 +108,34 @@ export type DbsCgCatalogueBrowsePageInput = {
 export function listDbsCgCatalogueBrowsePageRows(
   input: DbsCgCatalogueBrowsePageInput,
 ): { rows: CatalogueCardRow[]; total: number } {
+  /*
+    SAMPLE HTTPS in print_assets.art looks like « has art » to SQL until a
+    basename is stamped. Candidate-scan then keep disk-honest missingArt.
+  */
+  if (input.missingArtOnly || input.incompleteOnly) {
+    const { missingArtOnly: _a, incompleteOnly: _i, ...base } = input;
+    return overscanFilterPage({
+      offset: input.offset,
+      limit: input.limit,
+      maxScan: 50_000,
+      chunk: Math.max(input.limit, 256),
+      fetchPage: (offset, limit) => {
+        const page = listDbsCgCatalogueBrowsePage({
+          ...base,
+          offset,
+          limit,
+        });
+        return {
+          total: page.total,
+          rows: page.rows.map((row) => rowToCatalogueCard(row)),
+        };
+      },
+      keep: (row) =>
+        input.incompleteOnly
+          ? Boolean(row.missingArt || !row.name?.trim())
+          : Boolean(row.missingArt),
+    });
+  }
   const page = listDbsCgCatalogueBrowsePage(input);
   return {
     total: page.total,

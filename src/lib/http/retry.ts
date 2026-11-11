@@ -67,6 +67,46 @@ export function retryAfterMs(err: unknown): number | null {
   return Math.min(ms, MAX_BACKOFF_MS);
 }
 
+/** Bulk harvests (TCGdex CDN…) can retry hundreds of times — throttle the warn. */
+const RETRY_WARN_WINDOW_MS = 15_000;
+const retryWarnState = {
+  lastAt: 0,
+  suppressed: 0,
+};
+
+/** Test hook — resets the throttled retry warn counter. */
+export function resetRetryWarnStateForTests(): void {
+  retryWarnState.lastAt = 0;
+  retryWarnState.suppressed = 0;
+}
+
+function formatRetryDetail(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status;
+    if (status) return `HTTP ${status}`;
+    if (err.code) return err.code;
+    return err.message || "axios";
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return "error";
+}
+
+function warnRetry(retriesLeft: number, err: unknown): void {
+  const now = Date.now();
+  if (now - retryWarnState.lastAt < RETRY_WARN_WINDOW_MS) {
+    retryWarnState.suppressed += 1;
+    return;
+  }
+  const detail = formatRetryDetail(err);
+  const extra =
+    retryWarnState.suppressed > 0
+      ? ` (+${retryWarnState.suppressed} similar since last warn)`
+      : "";
+  retryWarnState.suppressed = 0;
+  retryWarnState.lastAt = now;
+  console.warn(`Retrying... (${retriesLeft} left): ${detail}${extra}`);
+}
+
 /**
  * `retries` is the total number of attempts, not extra ones. Three is the
  * default because every attempt holds a background worker slot through its own
@@ -92,7 +132,7 @@ export async function retry<T>(
       // retryable network error — turning one abort into five.
       if (isAbortError(err)) throw err;
       if (attempt >= retries || !isRetryableError(err)) throw err;
-      console.warn(`Retrying... (${retries - attempt} left)`);
+      warnRetry(retries - attempt, err);
 
       const cap = Math.min(delayMs * 2 ** (attempt - 1), MAX_BACKOFF_MS);
       const jittered = Math.random() * cap;

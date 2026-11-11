@@ -1,11 +1,19 @@
 import axios from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { isRetryableError, retry, retryAfterMs } from "./retry";
+import {
+  isRetryableError,
+  resetRetryWarnStateForTests,
+  retry,
+  retryAfterMs,
+} from "./retry";
 
 describe("isRetryableError", () => {
   it("retries network failures and 5xx responses", () => {
     expect(isRetryableError(new axios.AxiosError("timeout"))).toBe(true);
+    expect(isRetryableError(new axios.AxiosError("write EPIPE", "EPIPE"))).toBe(
+      true,
+    );
     expect(
       isRetryableError(
         new axios.AxiosError("server", undefined, undefined, undefined, {
@@ -72,6 +80,23 @@ describe("retryAfterMs", () => {
 describe("retry", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    resetRetryWarnStateForTests();
+  });
+
+  it("throttles Retrying warns during a burst", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fn = vi
+      .fn()
+      .mockRejectedValueOnce(new axios.AxiosError("network", "ETIMEDOUT"))
+      .mockRejectedValueOnce(new axios.AxiosError("network", "ETIMEDOUT"))
+      .mockRejectedValueOnce(new axios.AxiosError("network", "ECONNRESET"))
+      .mockResolvedValue("ok");
+
+    await retry(fn, 4, 1);
+
+    expect(fn).toHaveBeenCalledTimes(4);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[0])).toMatch(/ETIMEDOUT/);
   });
 
   it("applies full jitter: the wait never exceeds the attempt cap", async () => {

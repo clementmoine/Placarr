@@ -1,4 +1,5 @@
 import { httpGet } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import type { DatabaseSync } from "node:sqlite";
 
 import { createSerializeAsync } from "@/lib/async";
@@ -119,12 +120,21 @@ function writeMetaInt(db: DatabaseSync, key: string, value: number): void {
   writeICollectIndexMeta(db, key, String(value));
 }
 
+/** Avoid keep-alive reuse — ICE often EPIPE on the next GET after a big XML. */
+const ICE_SITEMAP_HEADERS = {
+  ...ICE_HEADERS,
+  Connection: "close",
+} as const;
+
 export async function fetchICollectVideoGameSitemapUrls(): Promise<string[]> {
-  const response = await httpGet<string>(ICE_SITEMAP_MASTER, {
-    headers: ICE_HEADERS,
-    timeout: 20_000,
-    validateStatus: (status) => status >= 200 && status < 400,
-  });
+  const response = await retry(() =>
+    httpGet<string>(ICE_SITEMAP_MASTER, {
+      headers: ICE_SITEMAP_HEADERS,
+      timeout: 20_000,
+      noDedup: true,
+      validateStatus: (status) => status >= 200 && status < 400,
+    }),
+  );
   return parseVideoGameSitemapUrls(response.data);
 }
 
@@ -132,11 +142,19 @@ export async function ingestICollectSitemapByUrl(
   db: DatabaseSync,
   sitemapUrl: string,
 ): Promise<ICollectIngestStats> {
-  const response = await httpGet<string>(sitemapUrl, {
-    headers: ICE_HEADERS,
-    timeout: 120_000,
-    validateStatus: (status) => status >= 200 && status < 400,
-  });
+  // EPIPE / ECONNRESET on reused TLS sockets are common mid-pass; retry before
+  // failing the whole catalogProviderSync job.
+  const response = await retry(
+    () =>
+      httpGet<string>(sitemapUrl, {
+        headers: ICE_SITEMAP_HEADERS,
+        timeout: 120_000,
+        noDedup: true,
+        validateStatus: (status) => status >= 200 && status < 400,
+      }),
+    4,
+    800,
+  );
   return ingestICollectSitemapXml(db, response.data);
 }
 
@@ -149,11 +167,18 @@ export async function runICollectFullSitemapSync(
       url: string;
       stats: ICollectIngestStats;
     }) => void;
+    onSitemapError?: (info: {
+      index: number;
+      total: number;
+      url: string;
+      error: unknown;
+    }) => void;
   } = {},
 ): Promise<{
   sitemaps: number;
   barcodeUpserts: number;
   catalogUpserts: number;
+  failed: number;
 }> {
   const sitemapUrls = await fetchICollectVideoGameSitemapUrls();
   writeMetaInt(db, META_SITEMAP_TOTAL, sitemapUrls.length);
@@ -161,16 +186,31 @@ export async function runICollectFullSitemapSync(
 
   let barcodeUpserts = 0;
   let catalogUpserts = 0;
+  let failed = 0;
   for (const [index, sitemapUrl] of sitemapUrls.entries()) {
-    const stats = await ingestICollectSitemapByUrl(db, sitemapUrl);
-    barcodeUpserts += stats.barcodeUpserts;
-    catalogUpserts += stats.catalogUpserts;
-    options.onProgress?.({
-      index: index + 1,
-      total: sitemapUrls.length,
-      url: sitemapUrl,
-      stats,
-    });
+    try {
+      const stats = await ingestICollectSitemapByUrl(db, sitemapUrl);
+      barcodeUpserts += stats.barcodeUpserts;
+      catalogUpserts += stats.catalogUpserts;
+      options.onProgress?.({
+        index: index + 1,
+        total: sitemapUrls.length,
+        url: sitemapUrl,
+        stats,
+      });
+    } catch (error) {
+      failed += 1;
+      options.onSitemapError?.({
+        index: index + 1,
+        total: sitemapUrls.length,
+        url: sitemapUrl,
+        error,
+      });
+      console.warn(
+        `── iCollect sitemap ${index + 1}/${sitemapUrls.length} failed (continue): ${sitemapUrl}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   writeMetaInt(db, META_SITEMAP_CURSOR, 0);
@@ -184,6 +224,7 @@ export async function runICollectFullSitemapSync(
     sitemaps: sitemapUrls.length,
     barcodeUpserts,
     catalogUpserts,
+    failed,
   };
 }
 
@@ -585,9 +626,13 @@ export function maybeScheduleICollectCatalogSync(): void {
   state.syncScheduled = true;
 
   void enqueueBackgroundWorkJob({
-    kind: BACKGROUND_WORK_KIND.icollectCatalogSync,
-    payload: { tick: true },
+    kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+    payload: { providerId: "icollect", auto: true, tick: true },
     replaceOpenForKind: true,
+    replaceOpenPayloadMatch: {
+      path: ["providerId"],
+      equals: "icollect",
+    },
   })
     .then(() => {
       state.syncScheduled = false;

@@ -3,7 +3,8 @@
  *
  * One module covers every Placarr game CardNexus catalogues — plug-and-play
  * via the registry. faceChoice decides which visual wins when several sources
- * dump `art.<source>.*`.
+ * dump `art.<source>.*`. Sync densifies sealed via {@link runCardnexusPackSealedStep}
+ * (union into pack products; no invented GTINs).
  */
 import {
   createMetadataHealthCheck,
@@ -19,6 +20,7 @@ import {
   createPrintKeyPriceRefresh,
   dualFinishPriceRows,
 } from "@/providers/shared/createPrintKeyPriceModule";
+import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
 import type { ProviderModule } from "@/types/providerModule";
 
 import {
@@ -29,7 +31,10 @@ import {
 } from "./client";
 import { supportedPrintGames } from "./games";
 import { fetchCardnexusCardForPrintKey } from "./match";
-import type { CardnexusPriceCard } from "./prices";
+import {
+  primaryExternalSku,
+  type CardnexusPriceCard,
+} from "./prices";
 
 const PROBE_PRINT_KEY = "lorcana:12-223";
 const PROBE_NAME = "Jessie, Lively Cowgirl";
@@ -90,6 +95,60 @@ const refresh = createPrintKeyPriceRefresh<CardnexusPriceCard>({
     }),
 });
 
+function cardnexusSkuFacts(card: CardnexusPriceCard): MetadataFact[] {
+  const facts: MetadataFact[] = [];
+  const sku = primaryExternalSku(card.externalIds);
+  if (sku) {
+    facts.push({
+      kind: "external-id",
+      label: sku.source === "cardmarket" ? "Cardmarket" : "TCGPlayer",
+      value: String(sku.id),
+      source: "cardnexus",
+      confidence: 0.72,
+      priority: 48,
+    });
+  }
+  if (card.sourceUrl) {
+    facts.push({
+      kind: "external-link",
+      label: "CardNexus",
+      value: "Voir la fiche",
+      url: card.sourceUrl,
+      source: "cardnexus",
+      confidence: 0.7,
+      priority: 44,
+    });
+  }
+  return facts;
+}
+
+function mapCardnexusMetadata(card: CardnexusPriceCard): MetadataResult {
+  const imageUrl = card.imageUrl?.trim() || undefined;
+  const facts = cardnexusSkuFacts(card);
+  return {
+    title: card.name,
+    imageUrl,
+    externalIds: {
+      cardnexus: String(card.id),
+      ...(card.expansionCode
+        ? { cardnexusExpansion: card.expansionCode }
+        : {}),
+    },
+    attachments: imageUrl
+      ? [
+          {
+            type: "cover",
+            url: imageUrl,
+            source: "cardnexus",
+            role: "card-face",
+            title: card.name,
+          },
+        ]
+      : undefined,
+    facts: facts.length > 0 ? facts : undefined,
+  };
+}
+
 export const cardnexusModule: ProviderModule = {
   info: {
     id: "cardnexus",
@@ -101,9 +160,10 @@ export const cardnexusModule: ProviderModule = {
     canonical: false,
     referencePriceSource: true,
     minRequestIntervalMs: CARDNEXUS_MIN_INTERVAL_MS,
+    coverUrlHost: "img.cardnexus.com",
     websiteUrl: "https://cardnexus.com/",
     apiKeyDashboardUrl: "https://cardnexus.com/settings/api-keys",
-    notes: `Cotes marketplace EUR + visuels + SKUs (Cardmarket/TCGplayer) + scellés pour ${supportedPrintGames().join(", ")} (+ forks JA pokemon-japan / ygo-ocg). Match printKey → expansion + collector number. Clé ${CARDNEXUS_API_KEY_ENV} (docs.cardnexus.com).`,
+    notes: `Cotes marketplace EUR + visuels shelf/Sync + SKUs Cardmarket/TCGPlayer pour ${supportedPrintGames().join(", ")} (+ forks JA pokemon-japan / ygo-ocg). Match printKey → expansion + collector number. Scellés : densify Sync (prix/image) via listSealed* → products index (sans GTIN inventés). Clé ${CARDNEXUS_API_KEY_ENV} (docs.cardnexus.com).`,
   },
   healthCheck: cardnexusHealthCheck(),
   mappingProbe: {
@@ -126,6 +186,40 @@ export const cardnexusModule: ProviderModule = {
       fetchCardnexusCardForPrintKey(printKey),
     );
   },
+  createMetadataAdapter() {
+    return {
+      id: "cardnexus",
+      async resolve(ctx) {
+        if (ctx.type && ctx.type !== "tcg") return null;
+        if (!cardnexusApiKey()) return null;
+        const printKey =
+          ctx.printKey?.trim() ||
+          ctx.match?.printKey?.trim() ||
+          ctx.externalIds?.printKey?.trim() ||
+          null;
+        if (!printKey) return null;
+        const card = await fetchCardnexusCardForPrintKey(printKey, {
+          signal: ctx.signal,
+          requirePrices: false,
+        });
+        if (!card?.name) return null;
+        if (!card.imageUrl && !primaryExternalSku(card.externalIds)) {
+          // Price-only hit with no visual/SKU — leave cover to Sync faces.
+          if (!card.sourceUrl) return null;
+        }
+        return mapCardnexusMetadata(card);
+      },
+    };
+  },
+  isVerifiedCatalogProductUrl(url) {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, "");
+      if (host !== "cardnexus.com") return false;
+    } catch {
+      return false;
+    }
+    return /\/product\/\d+/i.test(url);
+  },
   refreshBarcodePriceOffers: refresh,
 };
 
@@ -141,6 +235,10 @@ export {
   runCardnexusPackFacesStep,
   withCardnexusPackFacesStep,
 } from "./fillPackFaces";
+export {
+  mapCardnexusSealedToEntry,
+  runCardnexusPackSealedStep,
+} from "./fillPackSealed";
 export {
   cardnexusGameIdForPrintGame,
   cardnexusGameIdsForPrint,

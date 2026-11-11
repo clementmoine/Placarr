@@ -234,8 +234,9 @@ export const playinModule = defineProvider({
     websiteUrl: "https://www.play-in.com/fr/",
     scrapeCatalogImageBaseUrl: "https://www.play-in.com",
     notes:
-      "Boutique FR : jeux de société (catalogue gamme 5 + JSON-LD) et cartes Lorcana à l'unité (`/fr/carte/…`, match printKey, prix EUR stock).",
+      "Boutique FR : jeux de société (catalogue gamme 5 + JSON-LD) et singles Lorcana uniquement (`/fr/carte/…`, family=18, match printKey, prix EUR stock). Autres gammes TCG du site non branchées.",
   },
+  printGames: ["lorcana"],
   evidence: {
     label: "Play-In",
     sourceWeight: 0.28,

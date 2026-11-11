@@ -158,15 +158,29 @@ export async function runDbsJccPackPipeline(
       `── nikita DBC JA — ${ja.cards.length} titre(s) → ${ja.outPath}`,
     );
 
-    const chitoro = await harvestDbsJccChitoroshopFaces();
-    console.log(
-      `── chitoroshop DBC JA — ${chitoro.faces} face(s) / ${chitoro.products} produit(s) → ${chitoro.path}`,
-    );
+    let chitoro: Awaited<ReturnType<typeof harvestDbsJccChitoroshopFaces>> | null =
+      null;
+    try {
+      chitoro = await harvestDbsJccChitoroshopFaces();
+      console.log(
+        `── chitoroshop DBC JA — ${chitoro.faces} face(s) / ${chitoro.products} produit(s) → ${chitoro.path}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── chitoroshop DBC JA — skip (${err instanceof Error ? err.message : err})`,
+      );
+    }
 
-    const hatatoy = await harvestDbsJccHatatoyFaces();
-    console.log(
-      `── hatatoy DBC JA — ${hatatoy.faces} face(s) / ${hatatoy.products} produit(s) → ${hatatoy.path}`,
-    );
+    try {
+      const hatatoy = await harvestDbsJccHatatoyFaces();
+      console.log(
+        `── hatatoy DBC JA — ${hatatoy.faces} face(s) / ${hatatoy.products} produit(s) → ${hatatoy.path}`,
+      );
+    } catch (err) {
+      console.warn(
+        `── hatatoy DBC JA — skip (${err instanceof Error ? err.message : err})`,
+      );
+    }
 
     const dcm = await harvestDbsJccDeckcardmania();
     console.log(

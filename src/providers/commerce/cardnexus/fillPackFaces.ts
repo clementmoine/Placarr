@@ -415,8 +415,11 @@ export async function runCardnexusPackFacesStep(opts: {
 }
 
 /**
- * Wrap a pack pipeline so Catalogue Sync fills CardNexus face gaps after
- * the harvest. Call from the owning provider module (not `providers/shared`).
+ * Wrap a pack pipeline so Catalogue Sync fills CardNexus face gaps (and
+ * sealed price/image densify) after the harvest. Call from the owning
+ * provider module (not `providers/shared`).
+ *
+ * Skip tokens: `cardnexus` (both), `faces-cardnexus`, `sealed-cardnexus`.
  */
 export function withCardnexusPackFacesStep<T>(
   opts: {
@@ -428,19 +431,33 @@ export function withCardnexusPackFacesStep<T>(
 ): (argv: string[]) => Promise<T> {
   return async (argv) => {
     const result = await runPipeline(argv);
-    const skip = argv.some(
-      (a, i) =>
-        a === "--skip" &&
-        String(argv[i + 1] ?? "")
-          .toLowerCase()
-          .split(",")
-          .some((t) => t.trim() === "cardnexus" || t.trim() === "faces-cardnexus"),
-    );
-    if (!skip) {
+    const skipTokens = argv.flatMap((a, i) => {
+      if (a !== "--skip") return [];
+      return String(argv[i + 1] ?? "")
+        .toLowerCase()
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    });
+    const skipAll = skipTokens.includes("cardnexus");
+    const skipFaces =
+      skipAll || skipTokens.includes("faces-cardnexus");
+    const skipSealed =
+      skipAll || skipTokens.includes("sealed-cardnexus");
+    const onLog = opts.onLog ?? ((line: string) => console.log(line));
+    if (!skipFaces) {
       await runCardnexusPackFacesStep({
         packId: opts.packId,
         printGame: opts.printGame,
-        onLog: opts.onLog ?? ((line) => console.log(line)),
+        onLog,
+      });
+    }
+    if (!skipSealed) {
+      const { runCardnexusPackSealedStep } = await import("./fillPackSealed");
+      await runCardnexusPackSealedStep({
+        packId: opts.packId,
+        printGame: opts.printGame,
+        onLog,
       });
     }
     return result;

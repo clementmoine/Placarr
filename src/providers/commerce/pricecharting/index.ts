@@ -30,6 +30,7 @@ import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 import { buildPriceChartingCatalogLink } from "./catalogLink";
 import { productNameFromPriceChartingGameUrl } from "./fetch";
+import { refreshPriceChartingPokemonOffers } from "./pokemonCardPrice";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import { barcodeSuggestsPalRegion } from "@/core/identify/normalize";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
@@ -64,7 +65,8 @@ const METADATA_PROBE_SAMPLES: BarcodeMetadataProbeSample[] = [
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 const PRICE_SOURCE = "PriceCharting";
-const PRICE_SHELF_TYPES = new Set(["games", "hardware"]);
+const PRICE_SHELF_TYPES = new Set(["games", "hardware", "tcg"]);
+const SCAN_PRICE_SHELF_TYPES = new Set(["games", "hardware"]);
 
 /**
  * Hardware catalog titles often already include the device ("Playstation 3
@@ -243,6 +245,9 @@ function mapPriceChartingMetadataResult(
 
 async function refreshPriceChartingOffers(ctx: BarcodePriceRefreshContext) {
   if (!PRICE_SHELF_TYPES.has(ctx.shelfType)) return [];
+  if (ctx.shelfType === "tcg") {
+    return refreshPriceChartingPokemonOffers(ctx);
+  }
   const mediaType = ctx.shelfType === "hardware" ? "hardware" : "games";
   const acceptanceTitles = [
     ctx.primaryName,
@@ -312,7 +317,7 @@ export const pricechartingModule = defineProvider({
     referencePriceSource: true,
     evidenceOnlyPriceRefresh: true,
     catalogDisplayTitleFallback: true,
-    types: ["games", "hardware"],
+    types: ["games", "hardware", "tcg"],
     capabilities: ["identify", "price", "cover"],
     auth: { kind: "none" },
     supplyMode: "api_live",
@@ -323,7 +328,8 @@ export const pricechartingModule = defineProvider({
     // inferProviderIdFromMediaUrl when the attachment row lost its stamp.
     coverUrlHost: "images.pricecharting.com",
     websiteUrl: "https://www.pricecharting.com/",
-    notes: "Prix de référence (jeux + systems/hardware PriceCharting).",
+    notes:
+      "Prix de référence (jeux + systems/hardware + TCG Ungraded Pokémon/Lorcana PriceCharting).",
   },
   evidence: {
     label: "PriceCharting",
@@ -538,7 +544,9 @@ export const pricechartingModule = defineProvider({
     ];
   },
   extractScanPriceOffers(payload, shelfType) {
-    if (!PRICE_SHELF_TYPES.has(shelfType) || !payload.pc?.prices) return [];
+    if (!SCAN_PRICE_SHELF_TYPES.has(shelfType) || !payload.pc?.prices) {
+      return [];
+    }
     return priceChartingScanOffers(payload.pc.prices);
   },
   refreshBarcodePriceOffers: refreshPriceChartingOffers,

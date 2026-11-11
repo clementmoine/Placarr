@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 
 import { cardnexusApiKey } from "./client";
 import {
@@ -60,7 +61,7 @@ export async function downloadCardnexusImage(
   imageUrl: string,
 ): Promise<Buffer | null> {
   const url = cardnexusImageDownloadUrl(imageUrl);
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: {
         "User-Agent": UA,
@@ -75,9 +76,7 @@ export async function downloadCardnexusImage(
     });
     if (!res.data || res.data.byteLength < 800) return null;
     return Buffer.from(res.data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 function existingCardnexusArt(cardDir: string): string | null {

@@ -112,9 +112,10 @@ describe("playinModule.refreshBarcodePriceOffers (tcg)", () => {
 });
 
 describe("playinModule info", () => {
-  it("declares tcg alongside boardgames", () => {
+  it("declares tcg alongside boardgames, Lorcana-only printGames", () => {
     expect(playinModule.info.types).toEqual(
       expect.arrayContaining(["boardgames", "tcg"]),
     );
+    expect(playinModule.printGames).toEqual(["lorcana"]);
   });
 });

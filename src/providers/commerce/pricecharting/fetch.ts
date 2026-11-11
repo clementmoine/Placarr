@@ -233,6 +233,27 @@ async function priceChartingGet(
  * Callers that still need HTML when the response is a fiche redirect receive
  * `html` / `finalUrl` from the network path only.
  */
+/**
+ * Search `type=prices` rows for a free-text query (TCG cards, title seeks).
+ * Reuses SearchYield evidence when fresh.
+ */
+export async function searchPriceChartingRows(
+  query: string,
+  options?: { evidenceOnly?: boolean },
+): Promise<PriceChartingSearchRow[]> {
+  const cleaned = query.replace(/\s+/g, " ").trim();
+  if (!cleaned) return [];
+  const searchUrl = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(cleaned)}&type=prices`;
+  return runWithPriceChartingFetchStore(async () => {
+    const loaded = await loadPriceChartingSearchRows(
+      searchUrl,
+      PRICECHARTING_HEADERS,
+      options,
+    );
+    return loaded.rows;
+  });
+}
+
 async function loadPriceChartingSearchRows(
   searchUrl: string,
   headers: Record<string, string> = PRICECHARTING_HEADERS,
@@ -926,7 +947,7 @@ function priceChartingTitleIdentityConflicts(
   );
 }
 
-function priceChartingTitleScore(
+export function priceChartingTitleScore(
   requestedName: string,
   catalogTitle: string,
 ): number {
@@ -1271,7 +1292,7 @@ function parseSearchRows(
   return rows;
 }
 
-function priceChartingGameUrl(gamePath: string): string {
+export function priceChartingGameUrl(gamePath: string): string {
   if (/^https?:\/\//i.test(gamePath)) return gamePath;
   return `https://www.pricecharting.com${gamePath.startsWith("/") ? gamePath : `/${gamePath}`}`;
 }
@@ -1281,9 +1302,9 @@ function priceChartingGameUrl(gamePath: string): string {
  * The offers page has the cover/title but not the price table — follow to the
  * real game URL when present.
  */
-async function resolvePriceChartingGamePath(
+export async function resolvePriceChartingGamePath(
   gamePath: string,
-  headers: Record<string, string>,
+  headers: Record<string, string> = PRICECHARTING_HEADERS,
 ): Promise<string> {
   if (!/\/offers\?/i.test(gamePath)) return gamePath;
   try {
@@ -2142,7 +2163,9 @@ export function parsePriceChartingPricesFromHtml(
   };
 
   const result: PriceChartingPrices = {};
-  const used = parsePrice("used_price");
+  // Video games: used = loose. Trading cards: the Ungraded column reuses
+  // `used_price` (Loose Price); some card templates also expose `ungraded_price`.
+  const used = parsePrice("used_price") ?? parsePrice("ungraded_price");
   const cib = parsePrice("complete_price");
   const priceNew = parsePrice("new_price");
 

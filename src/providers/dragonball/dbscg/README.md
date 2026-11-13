@@ -15,5 +15,6 @@
 | Scrape | `scrape/` |
 | Pipeline | `pipeline/index.ts` |
 | Curated | `curated/` — **DATA** |
+| CCG Trader (sets) | `sources/ccgtrader.ts` → `shared/ccgtrader` (`ingest: none`) |
 
 Registry id: `dbscg` (unchanged). Soft-nest: `providers/dragonball/dbscg/`.

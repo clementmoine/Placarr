@@ -15,6 +15,7 @@ import path from "node:path";
 
 import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { httpGet, type JsonObject } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import {
@@ -157,23 +158,30 @@ async function fetchEbayItemGroupItems(
   if (!credentials) return [];
   const token = await getEbayBrowseAccessToken(credentials);
   if (!token) return [];
-  const res = await httpGet<JsonObject>(
-    `https://api.ebay.com/buy/browse/v1/item/get_items_by_item_group?item_group_id=${encodeURIComponent(itemGroupId)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "X-EBAY-C-MARKETPLACE-ID": "EBAY_FR",
-        Accept: "application/json",
+  const items = await softRetryNull(async () => {
+    const res = await httpGet<JsonObject>(
+      `https://api.ebay.com/buy/browse/v1/item/get_items_by_item_group?item_group_id=${encodeURIComponent(itemGroupId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-EBAY-C-MARKETPLACE-ID": "EBAY_FR",
+          Accept: "application/json",
+        },
+        timeout: EBAY_REQUEST_TIMEOUT_MS,
+        noDedup: true,
+        validateStatus: () => true,
       },
-      timeout: EBAY_REQUEST_TIMEOUT_MS,
-      validateStatus: () => true,
-    },
-  );
-  if (res.status !== 200 || !res.data || typeof res.data !== "object") {
-    return [];
-  }
-  const items = (res.data as { items?: EbayGroupItem[] }).items;
-  return Array.isArray(items) ? items : [];
+    );
+    if (res.status >= 500) {
+      throw new Error(`eBay item group ${itemGroupId} → HTTP ${res.status}`);
+    }
+    if (res.status !== 200 || !res.data || typeof res.data !== "object") {
+      return [];
+    }
+    const rows = (res.data as { items?: EbayGroupItem[] }).items;
+    return Array.isArray(rows) ? rows : [];
+  }, 3, 500);
+  return items ?? [];
 }
 
 function variationsFromItemGroup(

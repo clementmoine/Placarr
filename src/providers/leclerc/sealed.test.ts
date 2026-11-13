@@ -443,6 +443,43 @@ describe.each([
   },
 );
 
+describe("leclerc disney26 collector-album (Vinted packshot)", () => {
+  it("ships curated face + back from the Vinted listing", () => {
+    const ledger = readLeclercSealedLedger("disney26");
+    const album = ledger?.products.find((p) => p.slug === "collector-album");
+    expect(album).toMatchObject({
+      kind: "coffret",
+      source: "vinted",
+      art: "art.vinted.jpg",
+      back: "back.vinted.jpg",
+      name: "Album — En route pour l'aventure !",
+      priceCents: 199,
+    });
+    const dir = path.join(
+      leclercCuratedProductsDir("disney26"),
+      "collector-album",
+      "fr",
+    );
+    expect(existsSync(path.join(dir, "art.vinted.jpg"))).toBe(true);
+    expect(existsSync(path.join(dir, "back.vinted.jpg"))).toBe(true);
+  });
+
+  it("writes collector-album into products-index with /face and /back", () => {
+    const out = ingestLeclercSealedProducts("disney26");
+    expect(out.written).toBeGreaterThanOrEqual(4);
+    const album = loadSealedProductsIndex("leclerc/disney26").products[
+      "leclerc/disney26::collector-album"
+    ];
+    expect(album).toMatchObject({
+      slug: "collector-album",
+      name: "Album — En route pour l'aventure !",
+      priceCents: 199,
+      image: "/assets/leclerc/disney26/products/collector-album/fr/face",
+      imageBack: "/assets/leclerc/disney26/products/collector-album/fr/back",
+    });
+  });
+});
+
 describe("leclerc disney26 fixeez-integrale (Vinted packshot)", () => {
   it("ships curated packshot + ledger SKU (24 Fixeez known bundle)", () => {
     const ledger = readLeclercSealedLedger("disney26");

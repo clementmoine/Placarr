@@ -20,6 +20,7 @@ import sharp from "sharp";
 import { trimLightImageMargins } from "@/core/enrich/media/imageTrim";
 import { httpGet } from "@/lib/http/httpClient";
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
+import { softRetryNull } from "@/lib/http/softRetry";
 import {
   packCardDir,
   packCardsDir,
@@ -263,19 +264,18 @@ async function downloadAnimeCollectionImage(
   url: string,
   referer: string,
 ): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: { "User-Agent": UA_SAFARI, Referer: referer },
       responseType: "arraybuffer",
       timeout: 40_000,
+      noDedup: true,
       validateStatus: (status: number) => status === 200,
     });
     const data = res.data;
     if (!data || data.byteLength < 200) return null;
     return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 async function downloadAnimeCollectionPrefer(
@@ -337,12 +337,11 @@ export async function harvestAnimeCollectionRanksFaces(
   let faces = ledger.faces ?? [];
 
   if (opts.refreshLedger || opts.force || !faces.length) {
-    const res = await httpGet(ledger.url, {
+    const html = await fetchTextWithFlareFallback(ledger.url, {
       headers: { "User-Agent": UA_SAFARI },
       timeout: 60_000,
     });
-    const html = String((res as { data?: unknown }).data ?? "");
-    faces = parseAnimeCollectionRanksFaces(html);
+    faces = parseAnimeCollectionRanksFaces(html ?? "");
   }
 
   // Enrich verso ids from detail AJAX (needed for first full archive).
@@ -351,16 +350,16 @@ export async function harvestAnimeCollectionRanksFaces(
     for (let i = 0; i < faces.length; i++) {
       const row = faces[i]!;
       if (!opts.force && row.backImageId) continue;
-      try {
-        const res = await httpGet(detailInfosUrl(row.acId), {
+      const detailHtml = await fetchTextWithFlareFallback(
+        detailInfosUrl(row.acId),
+        {
           headers: { "User-Agent": UA_SAFARI, Referer: referer },
           timeout: 30_000,
-        });
-        const detailHtml = String((res as { data?: unknown }).data ?? "");
+        },
+      );
+      if (detailHtml) {
         const backId = parseAnimeCollectionRanksBackImageId(detailHtml);
         if (backId) faces[i] = { ...row, backImageId: backId };
-      } catch {
-        /* verso optional */
       }
       await new Promise((r) => setTimeout(r, 40));
     }

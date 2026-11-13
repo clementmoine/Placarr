@@ -11,5 +11,6 @@
 | Catalogue browse | `catalogueBrowse.ts` (local face ‖ Scryfall CDN soft-fill) |
 | Finishes | `finishes.ts` |
 | Curated | `curated/` — **DATA** |
+| CCG Trader (sets) | `sources/ccgtrader.ts` → `shared/ccgtrader` (`ingest: none`) |
 
 Registry id unchanged.

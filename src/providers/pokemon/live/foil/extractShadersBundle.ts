@@ -15,6 +15,7 @@ import path from "node:path";
 
 import { writeLosslessRgbaWebp } from "@/lib/media/losslessWebp";
 import { extractShaderFragsFromBytes } from "@/lib/unity/shader";
+import { resolveLiveFoilName } from "@/providers/pokemon/live/foil/liveShaderName";
 import {
   iterClassTrees,
   loadUnityFs,
@@ -94,7 +95,9 @@ export async function extractShadersBundle(
   const foilNames: string[] = [];
 
   if (!opts.skipFrags) {
-    const extracted = extractShaderFragsFromBytes(bytes);
+    const extracted = extractShaderFragsFromBytes(bytes, {
+      resolveName: resolveLiveFoilName,
+    });
     for (const { foil, frag } of extracted) {
       foilNames.push(foil);
       const destName = `${foil}.frag`;

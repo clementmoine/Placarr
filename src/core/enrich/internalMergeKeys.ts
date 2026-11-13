@@ -15,6 +15,13 @@ const CACHED_FICHE_MERGE_FACT_KINDS = new Set([
   "source-url",
 ]);
 
+/**
+ * Cover rows the live providers re-emit. A stored pin must not re-enter the
+ * merge: its provenance was stamped on an older pass and outranks a fresh
+ * photo demotion of the same file (Coleka listing vs Carddass scan).
+ */
+const CACHED_FICHE_COVER_TYPES = new Set(["cover", "artwork", "image"]);
+
 export function isInternalMetadataMergeKey(
   providerId: string | null | undefined,
 ): boolean {
@@ -24,17 +31,31 @@ export function isInternalMetadataMergeKey(
 }
 
 /**
- * Drop catalog/display facts from the seeded fiche before merging with live
- * providers. Otherwise stale slots (Numéro `11`, Type `Pokémon`) outrank the
- * fresh TCGdex hit because the seed is applied last under the same source.
+ * Drop catalog/display facts and cover pins from the seeded fiche before
+ * merging with live providers. Otherwise stale slots (Numéro `11`, a Coleka
+ * photo still stamped `catalog`) outrank the fresh hit: the seed is applied
+ * beside the provider that just re-ranked the same file.
  */
 export function metadataForCachedFicheMerge<
-  T extends { facts?: ReadonlyArray<{ kind: string }> | null },
+  T extends {
+    facts?: ReadonlyArray<{ kind: string }> | null;
+    imageUrl?: string | null;
+    heroImageUrl?: string | null;
+    attachments?: ReadonlyArray<{ type?: string | null }> | null;
+  },
 >(metadata: T): T {
-  const facts = metadata.facts;
-  if (!facts?.length) return metadata;
+  const facts = metadata.facts?.filter((fact) =>
+    CACHED_FICHE_MERGE_FACT_KINDS.has(fact.kind),
+  );
+  const attachments = metadata.attachments?.filter(
+    (attachment) =>
+      !CACHED_FICHE_COVER_TYPES.has((attachment.type ?? "").toLowerCase()),
+  );
   return {
     ...metadata,
-    facts: facts.filter((fact) => CACHED_FICHE_MERGE_FACT_KINDS.has(fact.kind)),
+    facts,
+    attachments,
+    imageUrl: undefined,
+    heroImageUrl: undefined,
   };
 }

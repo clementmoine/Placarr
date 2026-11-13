@@ -48,51 +48,25 @@ describe("localizeImageForSubmit", () => {
     expect(uploadImage).not.toHaveBeenCalled();
   });
 
-  it("fetches referer-protected URLs via the proxy and uploads the blob", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: async () => new Blob(["jpeg-bytes"], { type: "image/jpeg" }),
-    });
+  it("passes proxy CDN URLs through for server-side localize (keeps Affiche pin)", async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(localizeImageFieldForSubmit(BOOKNODE)).resolves.toBe(
-      "/uploads/localized.jpg",
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      `/api/media/remote?url=${encodeURIComponent(BOOKNODE)}`,
-      { credentials: "same-origin" },
-    );
-    expect(uploadImage).toHaveBeenCalledOnce();
-    const uploadedFile = uploadImage.mock.calls[0]?.[0] as File;
-    expect(uploadedFile).toBeInstanceOf(File);
-    expect(uploadedFile.type).toBe("image/jpeg");
-  });
-
-  it("falls back to the original URL when proxy fetch fails", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({ ok: false, status: 404 }),
-    );
-
     await expect(localizeImageFieldForSubmit(BOOKNODE)).resolves.toBe(BOOKNODE);
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(uploadImage).not.toHaveBeenCalled();
   });
 
-  it("localizes proxy display paths back through the proxy", async () => {
+  it("passes proxy display paths through without a client Flare round-trip", async () => {
     const proxyPath = `/api/media/remote?url=${encodeURIComponent(BOOKNODE)}`;
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      blob: async () => new Blob(["jpeg-bytes"], { type: "image/jpeg" }),
-    });
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(localizeImageFieldForSubmit(proxyPath)).resolves.toBe(
-      "/uploads/localized.jpg",
+      proxyPath,
     );
-    expect(fetchMock).toHaveBeenCalledWith(proxyPath, {
-      credentials: "same-origin",
-    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(uploadImage).not.toHaveBeenCalled();
   });
 
   it("extracts canonical remote URLs from proxy paths", () => {

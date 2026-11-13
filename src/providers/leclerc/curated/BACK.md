@@ -32,6 +32,7 @@ Overlay curated `sources/leclerc-<set>-sealed.json` + packshots sous
 | `disney25` | `pochette` — 4 cartes ; Fixeez possible non garanti (`kind: booster`) | `products/disney25/pochette/fr/art.paninimania.jpg` |
 | `disney25` | `display` — stub (nb pochettes inconnu) | — |
 | `disney26` | `display` — présentoir caisse (studio) ; `packsContained` null | `art.packshot.png` |
+| `disney26` | `collector-album` — « En route pour l'aventure ! » ; **1,99€** ; EAN **8718973124716** (HRI dos, [Vinted 10600344731](https://www.vinted.com/items/10600344731-album-collector-disney-eleclerc-collection-disney-en-route-pour-laventure) ; check digit OK, barres non décodées à f800). Étiquette caisse collée en haut du dos, pas imprimée. | `art.vinted.jpg` + `back.vinted.jpg` |
 | `disney26` | `fixeez-integrale` — **L'intégrale des 24 Fixeez** (édition exclusive 2026) ; EAN **8718973125386** (lu sur carton) ; contenu connu = 24 Fixeez (pas aléatoire). Packshot clean reconstruit depuis annonces Vinted set complet. | `products/disney26/fixeez-integrale/fr/art.vinted.png` |
 | `marvel23` | `collector-album` — « Défie tes Héros » ; **1,99€** (Paninimania idm=7561) | `art.paninimania.jpg` + `back.paninimania.jpg` |
 | `marvel23` | `pochette` — 4 cartes (SKU distinct) | `products/marvel23/pochette/fr/art.paninimania.jpg` |

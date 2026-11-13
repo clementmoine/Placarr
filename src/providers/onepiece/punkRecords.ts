@@ -15,6 +15,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 import { toLosslessWebp } from "@/lib/media/losslessWebp";
 import {
   packCardDir,
@@ -265,16 +266,15 @@ export function buildOnepiecePrintWrites(
 }
 
 async function downloadJson(url: string): Promise<unknown | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<unknown>(url, {
       headers: { "User-Agent": UA, Accept: "application/json" },
       timeout: 120_000,
+      noDedup: true,
       validateStatus: (s: number) => s === 200,
     });
     return res.data ?? null;
-  } catch {
-    return null;
-  }
+  }, 4, 800);
 }
 
 async function downloadImage(

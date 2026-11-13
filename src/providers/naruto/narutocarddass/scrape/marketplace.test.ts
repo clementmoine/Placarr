@@ -1,11 +1,60 @@
-import { describe, expect, it } from "vitest";
+import axios from "axios";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { loadStorm3Ledger, storm3LedgerPath, ultrajeuxWaybackUrl } from "./marketplace";
+
+const h = vi.hoisted(() => ({
+  httpGet: vi.fn(),
+}));
+
+vi.mock("@/lib/http/httpClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/http/httpClient")>();
+  return {
+    ...actual,
+    httpGet: h.httpGet,
+  };
+});
+
+import {
+  fetchChitoroProducts,
+  loadStorm3Ledger,
+  storm3LedgerPath,
+  ultrajeuxWaybackUrl,
+} from "./marketplace";
 import { readNarutoCarddassSyncedSource } from "../syncedSources";
 
 const ledger = readNarutoCarddassSyncedSource("ultrajeux-s5.json");
+
+describe("fetchChitoroProducts", () => {
+  afterEach(() => {
+    h.httpGet.mockReset();
+    vi.restoreAllMocks();
+  });
+
+  it("soft-returns [] after Shopify 429 instead of aborting jap densify", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    h.httpGet.mockRejectedValue(
+      new axios.AxiosError(
+        "Request failed with status code 429",
+        "ERR_BAD_REQUEST",
+        undefined,
+        undefined,
+        {
+          status: 429,
+          statusText: "Too Many Requests",
+          headers: {},
+          config: {} as never,
+          data: { errors: ["Exceeded"] },
+        },
+      ),
+    );
+    await expect(fetchChitoroProducts()).resolves.toEqual([]);
+    expect(warn).toHaveBeenCalled();
+    // 429 is not retryable — one attempt then soft-empty.
+    expect(h.httpGet).toHaveBeenCalledTimes(1);
+  });
+});
 
 
 // —— scrapeStorm3 ——

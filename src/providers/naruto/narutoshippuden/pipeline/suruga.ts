@@ -42,9 +42,9 @@ const sleep = (ms: number) =>
 
 async function fetchSurugaHtml(url: string): Promise<string> {
   // Suruga serves Cloudflare on direct GET — same path as Data Carddass.
-  if (!process.env.FLARESOLVERR_URL?.trim()) {
+  if (!process.env.BYPARR_URL?.trim() && !process.env.FLARESOLVERR_URL?.trim()) {
     throw new Error(
-      "FLARESOLVERR_URL requis pour le crawl Suruga 疾風伝 (Cloudflare)",
+      "BYPARR_URL (ou FLARESOLVERR_URL) requis pour le crawl Suruga 疾風伝 (Cloudflare)",
     );
   }
   const html = await fetchTextWithFlareFallback(url, {

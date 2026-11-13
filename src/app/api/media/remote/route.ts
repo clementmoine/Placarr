@@ -15,6 +15,13 @@ import {
 /** Browser may keep a private copy; disk cache is the real win across requests. */
 const CACHE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+/**
+ * UI hero must not wait through stacked Flare unlock + download attempts
+ * (Booknode Cloudflare can burn ~90s and leave a blank cover). Miss → 404;
+ * disk cache / later Sync can still densify.
+ */
+const PROXY_FETCH_BUDGET_MS = 25_000;
+
 function imageResponse(
   buffer: Buffer,
   contentType: string,
@@ -30,6 +37,24 @@ function imageResponse(
       "X-Placarr-Image-Cache": cacheHit ? "HIT" : "MISS",
     },
   });
+}
+
+async function fetchWithinBudget<T>(
+  work: Promise<T>,
+  budgetMs: number,
+): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), budgetMs);
+        if (typeof timer.unref === "function") timer.unref();
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -56,28 +81,32 @@ export async function GET(req: NextRequest) {
     return imageResponse(cached.buffer, cached.contentType, true);
   }
 
-  let fetched = await fetchRemoteImageBuffer(
-    screenScraperMediaFetchUrl(rawUrl),
-    {
+  const startedAt = Date.now();
+  let fetched = await fetchWithinBudget(
+    fetchRemoteImageBuffer(screenScraperMediaFetchUrl(rawUrl), {
       allowSubThresholdFallback: true,
-    },
+    }),
+    PROXY_FETCH_BUDGET_MS,
   );
 
   // A stored ScreenScraper cover may point at a region the game doesn't have
   // (NOMEDIA): fall back to an actually-available cover so old items self-heal.
   if (!fetched) {
-    const altUrl = await resolveScreenScraperCoverFallback(rawUrl);
-    if (altUrl) {
-      const altCached = findCachedRemoteImageUpload(altUrl);
-      if (altCached) {
-        return imageResponse(altCached.buffer, altCached.contentType, true);
+    const remainingMs = PROXY_FETCH_BUDGET_MS - (Date.now() - startedAt);
+    if (remainingMs > 1_000) {
+      const altUrl = await resolveScreenScraperCoverFallback(rawUrl);
+      if (altUrl) {
+        const altCached = findCachedRemoteImageUpload(altUrl);
+        if (altCached) {
+          return imageResponse(altCached.buffer, altCached.contentType, true);
+        }
+        fetched = await fetchWithinBudget(
+          fetchRemoteImageBuffer(screenScraperMediaFetchUrl(altUrl), {
+            allowSubThresholdFallback: true,
+          }),
+          remainingMs,
+        );
       }
-      fetched = await fetchRemoteImageBuffer(
-        screenScraperMediaFetchUrl(altUrl),
-        {
-          allowSubThresholdFallback: true,
-        },
-      );
     }
   }
 

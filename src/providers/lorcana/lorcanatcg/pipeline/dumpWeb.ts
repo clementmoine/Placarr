@@ -16,6 +16,7 @@ import path from "node:path";
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import { lorcanaWebRecipeTextureStems } from "@/effects/lorcana/cssRecipes";
 import { ensureLorcanaSetLogoIndex } from "@/providers/lorcana/lorcanatcg/sources/setLogos";
 import {
@@ -27,6 +28,10 @@ import {
 const VIEWER_BASE = "https://cards.disneylorcana.com";
 const VIEWER_LOCALE = "fr-FR";
 const UA = "Placarr-lorcana-web/1.0";
+
+/** Viewer / CDN drops keep-alive (ECONNRESET) — same pattern as Bandai scrapes. */
+const FETCH_ATTEMPTS = 4;
+const FETCH_BACKOFF_MS = 800;
 
 const CSS_HREF_RE = /['"](\/assets\/(?:routes|index)-[^'"]+\.css)['"]/gi;
 const ASSET_URL_RE =
@@ -41,13 +46,31 @@ export type DumpLorcanaWebOptions = {
   root?: string;
 };
 
-async function fetchBytes(url: string): Promise<Buffer> {
-  const res = await httpGet<ArrayBuffer>(url, {
-    headers: { "User-Agent": UA },
-    timeout: 45_000,
-    responseType: "arraybuffer",
-  });
-  return Buffer.from(res.data);
+/**
+ * GET bytes with transient-network retries. `noDedup` so a failed attempt
+ * cannot poison the shared in-flight map for the next try.
+ */
+export async function fetchViewerBytes(url: string): Promise<Buffer> {
+  return retry(
+    async () => {
+      const res = await httpGet<ArrayBuffer>(url, {
+        headers: {
+          "User-Agent": UA,
+          // Prefer a fresh connection — Disney CDN sometimes RSTs keep-alive.
+          Connection: "close",
+        },
+        timeout: 45_000,
+        responseType: "arraybuffer",
+        noDedup: true,
+      });
+      if (!res.data || (res.data as ArrayBuffer).byteLength < 16) {
+        throw new Error(`empty response from ${url}`);
+      }
+      return Buffer.from(res.data);
+    },
+    FETCH_ATTEMPTS,
+    FETCH_BACKOFF_MS,
+  );
 }
 
 export function discoverCssPaths(html: string): string[] {
@@ -124,7 +147,7 @@ async function downloadAssets(
     const target = path.join(dest, name);
     const url = `${VIEWER_BASE.replace(/\/$/, "")}${assetPath}`;
     try {
-      const data = await fetchBytes(url);
+      const data = await fetchViewerBytes(url);
       fs.writeFileSync(target, data);
       written.push(name);
       sources[name] = url;
@@ -136,23 +159,29 @@ async function downloadAssets(
   return { written, sources };
 }
 
-async function scrapeViewer(): Promise<{
+export async function scrapeViewer(): Promise<{
   refs: Record<string, string>;
   allStems: Record<string, string>;
   cssSheets: string[];
 }> {
-  const html = (await fetchBytes(`${VIEWER_BASE}/${VIEWER_LOCALE}`)).toString(
-    "utf8",
-  );
+  const html = (
+    await fetchViewerBytes(`${VIEWER_BASE}/${VIEWER_LOCALE}`)
+  ).toString("utf8");
   const cssPaths = discoverCssPaths(html);
   console.log(`  CSS sheets: ${cssPaths.length}`);
+  if (cssPaths.length === 0) {
+    throw new Error(
+      `viewer HTML has no routes/index CSS links (${VIEWER_BASE}/${VIEWER_LOCALE})`,
+    );
+  }
   const merged: Record<string, string> = {};
   const allStems: Record<string, string> = {};
   const cssSheets: string[] = [];
+  const cssFailures: string[] = [];
   for (const cssPath of cssPaths) {
     try {
       const css = (
-        await fetchBytes(`${VIEWER_BASE.replace(/\/$/, "")}${cssPath}`)
+        await fetchViewerBytes(`${VIEWER_BASE.replace(/\/$/, "")}${cssPath}`)
       ).toString("utf8");
       cssSheets.push(css);
       const discovered = parseAllAssetStems(css);
@@ -167,8 +196,19 @@ async function scrapeViewer(): Promise<{
         if (!(stem in merged)) merged[stem] = asset;
       }
     } catch (err) {
+      cssFailures.push(cssPath);
       console.log(`  ATTENTION CSS ${cssPath}: ${err}`);
     }
+  }
+  if (cssSheets.length === 0) {
+    throw new Error(
+      `viewer CSS scrape failed for all sheets (${cssFailures.join(", ") || "none"})`,
+    );
+  }
+  if (cssFailures.length) {
+    console.log(
+      `  ATTENTION ${cssFailures.length}/${cssPaths.length} CSS sheet(s) failed after retries — continuing with ${cssSheets.length}`,
+    );
   }
   return { refs: merged, allStems, cssSheets };
 }
@@ -254,13 +294,18 @@ export async function dumpLorcanaWeb(
   let refs: Record<string, string> = {};
   let allStems: Record<string, string> = {};
   let cssSheets: string[] = [];
+  let scrapeError: string | null = null;
   try {
     const scraped = await scrapeViewer();
     refs = scraped.refs;
     allStems = scraped.allStems;
     cssSheets = scraped.cssSheets;
   } catch (err) {
-    console.log(`  Viewer scrape failed: ${err}`);
+    scrapeError = err instanceof Error ? err.message : String(err);
+    console.log(`  Viewer scrape failed after retries: ${scrapeError}`);
+    console.log(
+      `  Keeping on-disk recipes/textures under ${path.relative(dataBase, dest) || dest}`,
+    );
   }
 
   let recipes: LorcanaWebRecipesFile | null = null;
@@ -294,9 +339,21 @@ export async function dumpLorcanaWeb(
     console.log(`  ATTENTION set logos: ${err}`);
   }
   if (Object.keys(refs).length === 0) {
-    console.log("  No hashed foil assets found — store unchanged");
+    const reason =
+      scrapeError ??
+      (cssSheets.length === 0
+        ? "no hashed foil assets found"
+        : "CSS parsed but no image stems");
+    console.log(
+      scrapeError
+        ? "  Viewer unreachable — store unchanged (retry next Sync)"
+        : "  No hashed foil assets found — store unchanged",
+    );
     return {
       provider: "lorcanaweb",
+      ok: false,
+      skipped: true,
+      reason,
       files: 0,
       dest,
       setLogos,
@@ -309,10 +366,18 @@ export async function dumpLorcanaWeb(
   const { written, sources } = await downloadAssets(refs, dest);
   writeSourceJson(logsDir, sources, refs, unlisted);
   const rel = path.relative(dataBase, dest);
+  const missing = Object.keys(refs).length - written.length;
+  if (missing > 0) {
+    console.log(
+      `  ATTENTION ${missing}/${Object.keys(refs).length} texture(s) failed after retries`,
+    );
+  }
   console.log(`Terminé — ${written.length} fichier(s) → ${rel}`);
   return {
     provider: "lorcanaweb",
+    ok: missing === 0,
     files: written.length,
+    failed: missing,
     stems: Object.keys(refs).sort(),
     unlistedStems: unlisted,
     looks: recipes ? Object.keys(recipes.looks).sort() : [],

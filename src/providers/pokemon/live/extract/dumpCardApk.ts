@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "no
 import path from "node:path";
 
 import { dumpCardBackFromDataDir, dumpCardBackWebp } from "@/lib/unity/cardBack";
-import { loadUvRectFromJson } from "@/lib/unity/cardCrop";
+import { loadUvRectFromJson } from "@/core/render/unity/cardCrop";
 import {
   cardQuadFromExtractedData,
   type CardQuadPayload,

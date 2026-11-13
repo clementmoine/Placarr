@@ -16,6 +16,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 import { packCardsDir } from "@/lib/packPaths";
 import { pokemonSourcePath } from "@/providers/pokemon/syncedSources";
 import type { DbscardsIndexEntry } from "@/providers/shared/tcgcards/list";
@@ -426,37 +427,40 @@ export function pokemontcgIoImageUrls(
 }
 
 async function download(url: string): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: { "User-Agent": UA },
       responseType: "arraybuffer",
       timeout: 40_000,
-      validateStatus: (s) => s === 200,
-    });
-    if (!res.data || res.data.byteLength < 500) return null;
-    return Buffer.from(res.data);
-  } catch {
-    return null;
-  }
-}
-
-/** Shorter timeout for bulk catalogue face fill (many 404s on missing locales). */
-async function downloadTcgdexFace(url: string): Promise<Buffer | null> {
-  try {
-    const res = await httpGet<ArrayBuffer>(url, {
-      headers: { "User-Agent": UA },
-      responseType: "arraybuffer",
-      timeout: 12_000,
-      // CDN catalogue — parallel fill; hostLimiter would serialize ~8 req/s.
-      minIntervalMs: 0,
       noDedup: true,
       validateStatus: (s) => s === 200,
     });
     if (!res.data || res.data.byteLength < 500) return null;
     return Buffer.from(res.data);
-  } catch {
-    return null;
-  }
+  });
+}
+
+/** Shorter timeout for bulk catalogue face fill (many 404s on missing locales). */
+async function downloadTcgdexFace(url: string): Promise<Buffer | null> {
+  // 2 attempts + longer base backoff: assets.tcgdex.net often 503s under
+  // parallel fill — short retries just amplify the storm.
+  return softRetryNull(
+    async () => {
+      const res = await httpGet<ArrayBuffer>(url, {
+        headers: { "User-Agent": UA },
+        responseType: "arraybuffer",
+        timeout: 12_000,
+        // Pace a bit even in parallel workers — CDN rate-limits this egress.
+        minIntervalMs: 150,
+        noDedup: true,
+        validateStatus: (s) => s === 200,
+      });
+      if (!res.data || res.data.byteLength < 500) return null;
+      return Buffer.from(res.data);
+    },
+    2,
+    1_200,
+  );
 }
 
 export type PokemontcgFillReport = {
@@ -1376,7 +1380,9 @@ export async function fillTcgdexCatalogueFaces(
   }
 
   const downloadImage = opts.downloadImage ?? downloadTcgdexFace;
-  const concurrency = Math.max(1, Math.min(opts.concurrency ?? 6, 16));
+  // Default 3: 6 parallel GETs to assets.tcgdex.net (×3 langs) tripped enough
+  // timeouts to flood retry warns without speeding the wall-clock much.
+  const concurrency = Math.max(1, Math.min(opts.concurrency ?? 3, 16));
   let cursor = 0;
   let done = 0;
   const tallies = { written: 0, skipped: 0, failed: 0 };

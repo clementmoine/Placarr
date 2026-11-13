@@ -46,4 +46,38 @@ describe("metadataForCachedFicheMerge", () => {
     expect(isInternalMetadataMergeKey("__cached_fiche__")).toBe(true);
     expect(isInternalMetadataMergeKey(SKU_KEY_MERGE_KEY)).toBe(true);
   });
+
+  it("drops a stale cover pin so a fresh photo demotion can win", () => {
+    const seeded = metadataForCachedFicheMerge({
+      title: "Kin Tsuchi",
+      imageUrl: "/assets/naruto/carddass/cards/fr/s1/ni0057/art.coleka.webp",
+      heroImageUrl: "/assets/naruto/carddass/cards/fr/s1/ni0057/art.coleka.webp",
+      attachments: [
+        {
+          type: "cover",
+          url: "/assets/naruto/carddass/cards/fr/s1/ni0057/art.coleka.webp",
+          coverProvenance: "catalog",
+        },
+        {
+          type: "screenshot",
+          url: "/uploads/extra.jpg",
+        },
+      ],
+      facts: [
+        {
+          kind: "price" as const,
+          label: "Cote",
+          value: "0.10",
+          source: "narutocarddass",
+        },
+      ],
+    });
+
+    expect(seeded.imageUrl).toBeUndefined();
+    expect(seeded.heroImageUrl).toBeUndefined();
+    expect(seeded.attachments?.map((attachment) => attachment.type)).toEqual([
+      "screenshot",
+    ]);
+    expect(seeded.facts?.map((fact) => fact.kind)).toEqual(["price"]);
+  });
 });

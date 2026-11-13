@@ -205,23 +205,31 @@ function writeAtomic(destPath: string, buf: Buffer): void {
 type Download = { buf: Buffer | null; throttled: boolean };
 
 async function downloadFace(url: string): Promise<Download> {
-  try {
-    const res = await httpGet<Buffer>(url, {
-      headers: { "User-Agent": UA },
-      responseType: "arraybuffer",
-      timeout: DOWNLOAD_TIMEOUT_MS,
-      maxContentLength: MAX_FACE_BYTES,
-    });
-    const buf = res.data;
-    // A body too small to be an image is an error page wearing a `.webp` name.
-    if (!buf || buf.byteLength < MIN_WEBP_BYTES)
-      return { buf: null, throttled: false };
-    return { buf: Buffer.from(buf), throttled: false };
-  } catch (error) {
-    const status = (error as { response?: { status?: number } })?.response
-      ?.status;
-    return { buf: null, throttled: isSoftbanStatus(status) };
+  let last: Download = { buf: null, throttled: false };
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const res = await httpGet<Buffer>(url, {
+        headers: { "User-Agent": UA },
+        responseType: "arraybuffer",
+        timeout: DOWNLOAD_TIMEOUT_MS,
+        maxContentLength: MAX_FACE_BYTES,
+        noDedup: true,
+      });
+      const buf = res.data;
+      // A body too small to be an image is an error page wearing a `.webp` name.
+      if (!buf || buf.byteLength < MIN_WEBP_BYTES)
+        return { buf: null, throttled: false };
+      return { buf: Buffer.from(buf), throttled: false };
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      last = { buf: null, throttled: isSoftbanStatus(status) };
+      // Soft-ban: stop hammering. Other transient errors: retry.
+      if (last.throttled || attempt >= 3) return last;
+      await new Promise((r) => setTimeout(r, 400 * attempt));
+    }
   }
+  return last;
 }
 
 /**

@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import { dataRoot } from "@/lib/runtimeData";
 import { waybackRawUrl } from "@/providers/shared/wayback/waybackRawUrl";
 import {
@@ -637,15 +638,31 @@ export function identifyChitoroProducts(input: {
 }
 
 export async function fetchChitoroProducts(): Promise<ShopifyProduct[]> {
-  const response = await httpGet(COLLECTION, {
-    headers: { "User-Agent": UA },
-    timeout: 30_000,
-  });
-  const body = (response as { data?: unknown }).data;
-  const parsed = (typeof body === "string" ? JSON.parse(body) : body) as {
-    products?: ShopifyProduct[];
-  };
-  return parsed.products ?? [];
+  try {
+    // Shopify throttles this collection hard (429) during densify — soft-empty
+    // so locale `jap` can still finish CDX / Suruga / Fril face installs.
+    const response = await retry(
+      () =>
+        httpGet(COLLECTION, {
+          headers: { "User-Agent": UA },
+          timeout: 30_000,
+          noDedup: true,
+          validateStatus: (status) => status >= 200 && status < 400,
+        }),
+      3,
+      2_000,
+    );
+    const body = (response as { data?: unknown }).data;
+    const parsed = (typeof body === "string" ? JSON.parse(body) : body) as {
+      products?: ShopifyProduct[];
+    };
+    return parsed.products ?? [];
+  } catch (err) {
+    console.warn(
+      `── chitoroshop products.json — ${err instanceof Error ? err.message : err}`,
+    );
+    return [];
+  }
 }
 
 /** Écrit le relevé. Les visuels se rapatrient dans une seconde passe. */

@@ -147,6 +147,31 @@ describe("GET /api/media/remote", () => {
     expect(h.persistRemoteImageUpload).not.toHaveBeenCalled();
   });
 
+  it("returns 404 when upstream fetch exceeds the proxy budget", async () => {
+    vi.useFakeTimers();
+    try {
+      h.fetchRemoteImageBuffer.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve(null), 60_000);
+          }),
+      );
+
+      const pending = GET(
+        new NextRequest(
+          `http://localhost/api/media/remote?url=${encodeURIComponent(BOOKNODE_URL)}`,
+        ),
+      );
+      await vi.advanceTimersByTimeAsync(25_000);
+      const res = await pending;
+
+      expect(res.status).toBe(404);
+      expect(h.persistRemoteImageUpload).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("requires authentication", async () => {
     const { requireGuestOrHigher } = await import("@/lib/auth");
     vi.mocked(requireGuestOrHigher).mockResolvedValueOnce(

@@ -15,7 +15,7 @@ import path from "node:path";
 import type { AssetManager } from "unityfs-js";
 
 import { writeLosslessRgbaWebp } from "@/lib/media/losslessWebp";
-import { cropRgbaRect } from "@/lib/unity/cardCrop";
+import { cropRgbaRect } from "@/core/render/unity/cardCrop";
 import {
   resolveAssetManager,
   resourceBlobsFromAssetManager,

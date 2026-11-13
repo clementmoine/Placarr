@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 
 import {
   pokemonFaceFilename,
@@ -91,7 +92,7 @@ function existingDittobaseArt(cardDir: string): string | null {
 }
 
 async function downloadDittobaseFace(url: string): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: {
         "User-Agent": UA,
@@ -106,9 +107,7 @@ async function downloadDittobaseFace(url: string): Promise<Buffer | null> {
     });
     if (!res.data || res.data.byteLength < 1000) return null;
     return Buffer.from(res.data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 export function listDittobaseJaPrintTargets(opts?: {

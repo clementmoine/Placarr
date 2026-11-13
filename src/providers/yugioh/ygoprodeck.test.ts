@@ -37,9 +37,9 @@ describe("ygoprodeck expand", () => {
   });
 });
 
-describe("mirrorYgoprodeckEnFacesOntoPtSiblings", () => {
-  it("dérive en028 depuis pt028", () => {
-    expect("pt028".replace(/^pt/i, "en")).toBe("en028");
+describe("mirrorYgoprodeckEnFacesOntoLocaleSiblings", () => {
+  it("dérive en028 depuis pt028 / fr027", () => {
     expect(`en${"pt028".slice(2)}`).toBe("en028");
+    expect(`en${"fr027".slice(2)}`).toBe("en027");
   });
 });

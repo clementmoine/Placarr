@@ -3,17 +3,25 @@
  *
  * CDN: `…/pocket/{Set}/{Set}_{nnn}_EN.webp` (FR often 403 — EN art is the
  * available scan; write into the requested lang folder so FR catalogue resolves).
+ *
+ * Harvest targets every unprinted TCGdex row still missing local art (B1, A3b…),
+ * not a single hard-coded set — Pocket ships often.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 
 import {
   pokemonFaceFilename,
   refreshPokemonFaceDecision,
 } from "../../disk/faceChoice";
 import { pokemonPaperCardDir } from "../../disk/paperCardDisk";
+import {
+  listTcgdexUnprintedMissingArt,
+  syncTcgdexPrintAssetsFromDisk,
+} from "../../indexStore";
 
 const LIMITLESS_POCKET_CDN =
   "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket";
@@ -29,6 +37,15 @@ export type LimitlessPocketFillReport = {
   failed: number;
 };
 
+export type LimitlessPocketGapsReport = {
+  sets: LimitlessPocketFillReport[];
+  tried: number;
+  written: number;
+  skipped: number;
+  failed: number;
+  assetsSynced: number;
+};
+
 export function limitlessPocketFaceUrl(
   setId: string,
   localId: string,
@@ -40,8 +57,22 @@ export function limitlessPocketFaceUrl(
   return `${LIMITLESS_POCKET_CDN}/${set}/${set}_${n}_${locale}.webp`;
 }
 
+/**
+ * TCGdex Pocket CDN path carries Limitless casing (`…/tcgp/A3b/001`).
+ * Falls back to the sqlite set id when the base is missing / non-tcgp.
+ */
+export function limitlessPocketSetCodeFromImageBase(
+  imageBaseUrl: string | null | undefined,
+  fallbackSetId?: string,
+): string {
+  const raw = imageBaseUrl?.trim() ?? "";
+  const fromCdn = /assets\.tcgdex\.net\/[a-z]{2}\/tcgp\/([^/]+)/i.exec(raw);
+  if (fromCdn?.[1]) return fromCdn[1];
+  return (fallbackSetId ?? "").trim();
+}
+
 async function download(url: string): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: {
         "User-Agent": UA,
@@ -50,13 +81,12 @@ async function download(url: string): Promise<Buffer | null> {
       },
       responseType: "arraybuffer",
       timeout: 40_000,
+      noDedup: true,
       validateStatus: (s) => s === 200,
     });
     if (!res.data || res.data.byteLength < 500) return null;
     return Buffer.from(res.data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 export async function fillLimitlessPocketFacesForSet(opts: {
@@ -108,4 +138,59 @@ export async function fillLimitlessPocketFacesForSet(opts: {
     report.written += 1;
   }
   return report;
+}
+
+/**
+ * Densify every unprinted (Pocket) title still missing local art for `lang`.
+ * Groups by Limitless CDN set casing derived from `image_base_url`.
+ */
+export async function fillLimitlessPocketMissingFaces(opts: {
+  lang?: string;
+  force?: boolean;
+  cardsRoot?: string;
+  syncAssets?: boolean;
+} = {}): Promise<LimitlessPocketGapsReport> {
+  const lang = (opts.lang ?? "fr").trim().toLowerCase() || "fr";
+  const rows = listTcgdexUnprintedMissingArt({ lang });
+  const bySet = new Map<string, string[]>();
+  for (const row of rows) {
+    const setCode = limitlessPocketSetCodeFromImageBase(
+      row.imageBaseUrl,
+      row.setId,
+    );
+    if (!setCode) continue;
+    const list = bySet.get(setCode) ?? [];
+    list.push(row.localId);
+    bySet.set(setCode, list);
+  }
+
+  const sets: LimitlessPocketFillReport[] = [];
+  let tried = 0;
+  let written = 0;
+  let skipped = 0;
+  let failed = 0;
+  for (const [setId, localIds] of bySet) {
+    const report = await fillLimitlessPocketFacesForSet({
+      setId,
+      localIds,
+      lang,
+      force: opts.force,
+      cardsRoot: opts.cardsRoot,
+    });
+    sets.push(report);
+    tried += report.tried;
+    written += report.written;
+    skipped += report.skipped;
+    failed += report.failed;
+  }
+
+  const assetsSynced =
+    opts.syncAssets === false
+      ? 0
+      : syncTcgdexPrintAssetsFromDisk({
+          cardsRoot: opts.cardsRoot,
+          languages: [lang],
+        });
+
+  return { sets, tried, written, skipped, failed, assetsSynced };
 }

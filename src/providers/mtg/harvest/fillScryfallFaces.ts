@@ -107,6 +107,11 @@ function buildJobs(
   return { jobs, unknownPrint };
 }
 
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 export async function fillScryfallCatalogueFaces(opts: {
   index: LocalPrintsIndex;
   force?: boolean;
@@ -114,6 +119,12 @@ export async function fillScryfallCatalogueFaces(opts: {
   langs?: readonly string[];
   limit?: number;
   concurrency?: number;
+  /**
+   * Retries after a failed download (rate-limit / blip). Default 2 → 3 tries
+   * total. Transient Scryfall 429/5xx during bulk densify otherwise leave
+   * honest « sans image » holes despite a usable CDN URL.
+   */
+  retries?: number;
   /** Couture de test. */
   downloadImage?: (url: string) => Promise<Buffer | null>;
   onProgress?: (done: number, total: number) => void;
@@ -138,6 +149,7 @@ export async function fillScryfallCatalogueFaces(opts: {
   if (jobs.length === 0) return report;
 
   const concurrency = Math.max(1, Math.min(opts.concurrency ?? 4, 8));
+  const retries = Math.max(0, Math.min(opts.retries ?? 2, 5));
   const downloadImage =
     opts.downloadImage ??
     ((url: string) =>
@@ -146,6 +158,15 @@ export async function fillScryfallCatalogueFaces(opts: {
         timeoutMs: 40_000,
         minBytes: 800,
       }));
+
+  async function downloadWithRetry(url: string): Promise<Buffer | null> {
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      const buf = await downloadImage(url);
+      if (buf) return buf;
+      if (attempt < retries) await sleep(250 * (attempt + 1));
+    }
+    return null;
+  }
 
   const assets: LocalPrintAssetWrite[] = [];
   let cursor = 0;
@@ -195,7 +216,7 @@ export async function fillScryfallCatalogueFaces(opts: {
       force: opts.force,
       referer: "https://scryfall.com/",
       minBytes: 800,
-      fetchImage: downloadImage,
+      fetchImage: downloadWithRetry,
     });
     if (installed) {
       if (installed.downloaded) tallies.written += 1;

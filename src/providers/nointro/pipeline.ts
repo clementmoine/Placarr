@@ -13,12 +13,21 @@ import { isNoIntroDatSourceConfigured } from "./syncDatPack";
 export async function refreshNoIntroCatalog(
   opts?: ProviderCatalogRefreshOpts,
 ): Promise<void> {
+  // No DAT / pack configured → nothing to build. Soft-skip even for manual
+  // admin Sync so the job does not fail→retry (attempts spam) forever.
+  if (!isNoIntroDatSourceConfigured({ allowDownload: true })) {
+    console.warn(
+      "[No-Intro] sync skipped — set NOINTRO_DAT_PATH or NOINTRO_DAT_PACK / URL, then admin Local indexes",
+    );
+    return;
+  }
   const db = await buildNoIntroIndex({ allowDownload: true });
   if (db) return;
-  // Auto / Plex-like: missing DAT is a skip, not a failing job (no spam retries).
+  // Source configured but build still empty (bad path / empty zip / parse).
+  // Auto: keep soft (Plex-like). Manual: fail so admin sees the misconfig.
   if (opts?.auto) {
     console.warn(
-      "[No-Intro] auto sync skipped — set NOINTRO_DAT_PATH or NOINTRO_DAT_PACK / URL",
+      "[No-Intro] auto sync skipped — DAT source configured but index build returned empty",
     );
     return;
   }

@@ -506,11 +506,17 @@ async function runScrape(argv: readonly string[]): Promise<void> {
         concurrency: shared.concurrency,
         limit: shared.limit,
       });
-      await scrapeNarutoChitoroshopCards({
-        force: shared.force,
-        delayMs: shared.delayMs,
-        limit: shared.limit,
-      });
+      try {
+        await scrapeNarutoChitoroshopCards({
+          force: shared.force,
+          delayMs: shared.delayMs,
+          limit: shared.limit,
+        });
+      } catch (err) {
+        console.warn(
+          `── chitoroshop JA — ${err instanceof Error ? err.message : err}`,
+        );
+      }
       await scrapeNikitaCardlistFacts({});
       await scrapeNikitaShippudenFaces({});
       await scrapeFrilNarutoFaces({

@@ -866,7 +866,7 @@ export async function refreshBarcodePrices(
     include: { rawNames: true },
   });
 
-  console.log(
+  console.debug(
     `[Prices] Fetching fresh prices for barcode ${cleanedBarcode} (shelf type: ${shelfType})`,
   );
 
@@ -932,7 +932,7 @@ export async function refreshItemPrices(
     printKey,
   } = input;
 
-  console.log(
+  console.debug(
     `[Prices] Fetching title-based prices for item ${itemId} (shelf type: ${shelfType})`,
   );
 

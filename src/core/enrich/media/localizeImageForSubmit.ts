@@ -58,17 +58,6 @@ async function blobToUploadUrl(
   return uploadImage(file, options);
 }
 
-async function fetchRemoteImageBlob(url: string): Promise<Blob | null> {
-  const response = await fetch(fetchUrlForSubmit(url), {
-    credentials: "same-origin",
-  });
-  if (!response.ok) return null;
-
-  const blob = await response.blob();
-  if (!blob.type.startsWith("image/")) return null;
-  return blob;
-}
-
 async function dataUrlToUploadUrl(
   dataUrl: string,
   options: { trim?: boolean },
@@ -79,9 +68,9 @@ async function dataUrlToUploadUrl(
 }
 
 /**
- * Persist a form image field: an already-served local path unchanged, `File` uploaded as-is,
- * referer-protected remote URLs fetched via the UI proxy then uploaded. Other remote
- * URLs are left for the API's server-side localizer.
+ * Persist a form image field: local paths unchanged, `File` / data-URL uploaded,
+ * Referer-protected CDN URLs left for the API localizer (budget + optional
+ * remote fallback) so Affiche pins keep their provider row.
  */
 export async function localizeImageFieldForSubmit(
   value: FormImageValue,
@@ -104,13 +93,14 @@ export async function localizeImageFieldForSubmit(
     return trimmed;
   }
 
-  try {
-    const blob = await fetchRemoteImageBlob(trimmed);
-    if (!blob) return trimmed;
-    return blobToUploadUrl(blob, options);
-  } catch {
-    return trimmed;
-  }
+  /*
+    Affiche pin of a Referer/Cloudflare CDN (Booknode, …): do not Flare-fetch
+    here. The items API `downloadRemoteImage` localizes with a short budget and
+    may keep the remote URL (`remoteImageFallback`) — that preserves the
+    provider row the collector picked. A client-side twin rewrite or a second
+    8–90s Flare pass made Enregistrer slow and re-selected BDovore after save.
+  */
+  return trimmed;
 }
 
 /** @internal test hook */

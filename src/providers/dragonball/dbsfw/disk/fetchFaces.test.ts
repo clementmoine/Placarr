@@ -8,6 +8,7 @@ import { dbscardsPrintRef } from "@/providers/shared/tcgcards/tile";
 
 import {
   DBS_FW_FACE_SOURCES,
+  dbsFwFaceFileOf,
   dbsFwFaceFilename,
   pickBestFwFace,
 } from "./faceChoice";
@@ -113,7 +114,26 @@ describe("pickBestFwFace", () => {
       "dbscards",
       "bandai",
       "cardnexus",
+      "client",
     ]);
+  });
+
+  it("prefers the larger client face over the dbscards scan", () => {
+    expect(
+      pickBestFwFace(
+        [
+          { source: "dbscards", width: 400, height: 560 },
+          { source: "client", width: 512, height: 1024 },
+        ],
+        "en",
+      ),
+    ).toBe("client");
+    expect(dbsFwFaceFilename("client")).toBe("art.client.webp");
+    expect(dbsFwFaceFilename("client", "back")).toBe("back.client.webp");
+    expect(dbsFwFaceFileOf("layer.picture.webp")).toBeNull();
+    expect(dbsFwFaceFileOf("layer.text.webp")).toBeNull();
+    expect(dbsFwFaceFileOf("layer.frame.webp")).toBeNull();
+    expect(dbsFwFaceFileOf("layer.back-picture.webp")).toBeNull();
   });
 
   it("prefers the larger scan over Bandai's smaller one", () => {

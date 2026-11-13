@@ -13,6 +13,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 import { pokemonSourcePath } from "@/providers/pokemon/syncedSources";
 
 import {
@@ -67,7 +68,7 @@ export function loadPokecardexMcdoLedger(
 }
 
 async function downloadScan(url: string): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: {
         "User-Agent": UA,
@@ -76,14 +77,13 @@ async function downloadScan(url: string): Promise<Buffer | null> {
       },
       responseType: "arraybuffer",
       timeout: 40_000,
+      noDedup: true,
       validateStatus: (status: number) => status === 200,
     });
     const data = res.data;
     if (!data || data.byteLength < 500) return null;
     return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 export async function fillPokecardexMcdoCampaign(opts: {

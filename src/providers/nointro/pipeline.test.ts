@@ -46,14 +46,12 @@ describe("nointro catalog pipeline", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("manual refresh still throws when unconfigured", async () => {
+  it("manual refresh also soft-skips when unconfigured (no fail→retry spam)", async () => {
     delete process.env.NOINTRO_DAT_PATH;
     delete process.env.NOINTRO_DAT_PACK;
     delete process.env.NOINTRO_DAT_PACK_URL;
     process.env.NOINTRO_CACHE_DIR = "/tmp/placarr-nointro-pipeline-manual";
 
-    await expect(refreshNoIntroCatalog()).rejects.toThrow(
-      /No-Intro index build failed/,
-    );
+    await expect(refreshNoIntroCatalog()).resolves.toBeUndefined();
   });
 });

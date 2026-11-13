@@ -10,6 +10,8 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
+import { softRetryNull } from "@/lib/http/softRetry";
 
 import {
   pokemonFaceFilename,
@@ -101,7 +103,7 @@ function existingPokellectorArt(cardDir: string): string | null {
 }
 
 async function downloadPokellectorFace(url: string): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: {
         "User-Agent": UA,
@@ -115,9 +117,7 @@ async function downloadPokellectorFace(url: string): Promise<Buffer | null> {
     });
     if (!res.data || res.data.byteLength < 1000) return null;
     return Buffer.from(res.data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 export function listPokellectorJaPrintTargets(opts?: {
@@ -181,19 +181,12 @@ export async function fillPokellectorJaFaces(
   const downloadImage = opts.downloadImage ?? downloadPokellectorFace;
   const fetchSetHtml =
     opts.fetchSetHtml ??
-    (async (setPath: string) => {
-      try {
-        const res = await httpGet<string>(`${POKELLECTOR_ORIGIN}${setPath}`, {
-          headers: { "User-Agent": UA, Accept: "text/html" },
-          responseType: "text",
-          timeout: 30_000,
-          validateStatus: (s) => s === 200,
-        });
-        return typeof res.data === "string" ? res.data : null;
-      } catch {
-        return null;
-      }
-    });
+    (async (setPath: string) =>
+      fetchTextWithFlareFallback(`${POKELLECTOR_ORIGIN}${setPath}`, {
+        headers: { "User-Agent": UA, Accept: "text/html" },
+        responseType: "text",
+        timeout: 30_000,
+      }));
 
   const bySet = new Map<string, PokellectorPrintTarget[]>();
   for (const row of prints) {

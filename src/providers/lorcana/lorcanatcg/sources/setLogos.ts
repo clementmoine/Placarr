@@ -25,6 +25,7 @@ import path from "node:path";
 import { assetsPackFileUrl, packSealedProductsDir } from "@/lib/packPaths";
 import { foilPackDataDir } from "@/lib/runtimeData";
 import { httpGet } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import {
   readPackDocument,
   writePackDocument,
@@ -509,12 +510,19 @@ export function lorcanaCatalogueSetIdForProduct(input: {
 }
 
 async function fetchBytes(url: string): Promise<Buffer> {
-  const res = await httpGet<ArrayBuffer>(url, {
-    headers: { "User-Agent": UA },
-    timeout: 45_000,
-    responseType: "arraybuffer",
-  });
-  return Buffer.from(res.data);
+  return retry(
+    async () => {
+      const res = await httpGet<ArrayBuffer>(url, {
+        headers: { "User-Agent": UA },
+        timeout: 45_000,
+        responseType: "arraybuffer",
+        noDedup: true,
+      });
+      return Buffer.from(res.data);
+    },
+    3,
+    400,
+  );
 }
 
 function writeIndexFile(file: string, index: LorcanaSetLogoIndex): void {

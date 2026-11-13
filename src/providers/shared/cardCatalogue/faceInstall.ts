@@ -22,6 +22,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 import {
   catalogUrlMayStayRemote,
   catalogUrlRequiresLocalConservation,
@@ -56,7 +57,7 @@ export async function downloadCardFaceBytes(
   url: string,
   opts: DownloadCardFaceOptions = {},
 ): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: {
         "User-Agent": CARD_FACE_UA,
@@ -65,14 +66,13 @@ export async function downloadCardFaceBytes(
       },
       responseType: "arraybuffer",
       timeout: opts.timeoutMs ?? 40_000,
+      noDedup: true,
       ...(opts.maxRedirects != null ? { maxRedirects: opts.maxRedirects } : {}),
       validateStatus: (s) => s === 200,
     });
     const buf = Buffer.from(res.data as ArrayBuffer);
     return buf.byteLength >= (opts.minBytes ?? 800) ? buf : null;
-  } catch {
-    return null;
-  }
+  });
 }
 
 export type InstallCardFaceOptions = {

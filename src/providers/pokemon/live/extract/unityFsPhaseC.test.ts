@@ -12,10 +12,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import {
-  extractShaderFragsFromBytes,
-  toWebgl2Fragment,
-} from "@/lib/unity/shader";
+import { toWebgl2Fragment } from "@/core/render/unity/webglFragment";
+import { extractShaderFragsFromBytes } from "@/lib/unity/shader";
+import { resolveLiveFoilName } from "@/providers/pokemon/live/foil/liveShaderName";
 import { extractShadersBundle } from "@/providers/pokemon/live/foil/extractShadersBundle";
 import { foilPackDir, repoRoot } from "@/providers/shared/foilPaths";
 
@@ -47,7 +46,9 @@ describe("unity Shader (Node)", () => {
     const diskDir = path.join(repo, "data/pokemon/foil/shaders");
     if (!existsSync(bundle) || !existsSync(diskDir)) return;
 
-    const extracted = extractShaderFragsFromBytes(readFileSync(bundle));
+    const extracted = extractShaderFragsFromBytes(readFileSync(bundle), {
+      resolveName: resolveLiveFoilName,
+    });
     // CDN 1.42+ ships me5-5 leaves (PikachuFoil, ClassicFoil, RGBFoil, …).
     expect(extracted.length).toBeGreaterThanOrEqual(24);
 

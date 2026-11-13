@@ -878,9 +878,9 @@ export async function harvestSurugaDcd(
   ],
   maxPagesPerQuery = 26,
 ): Promise<void> {
-  if (!process.env.FLARESOLVERR_URL?.trim()) {
+  if (!process.env.BYPARR_URL?.trim() && !process.env.FLARESOLVERR_URL?.trim()) {
     throw new Error(
-      "FLARESOLVERR_URL requis pour le crawl Suruga (Cloudflare) — ex. http://127.0.0.1:8191",
+      "BYPARR_URL (ou FLARESOLVERR_URL) requis pour le crawl Suruga — ex. http://127.0.0.1:8191",
     );
   }
 

@@ -88,6 +88,41 @@ describe("fillScryfallCatalogueFaces", () => {
     expect(fr?.art).toBe("art.scryfall.jpg");
   });
 
+  it("retries a transient download miss before failing", async () => {
+    const index = createLocalPrintsIndex("mtg");
+    index.writePrints([
+      {
+        printKey: "mtg:lea-1",
+        setCode: "lea",
+        number: "1",
+        cardType: "lea",
+        titles: [{ lang: "en", fullName: "Ancestral Recall" }],
+      },
+    ]);
+
+    let attempts = 0;
+    const report = await fillScryfallCatalogueFaces({
+      index,
+      langs: ["en"],
+      retries: 2,
+      concurrency: 1,
+      downloadImage: async () => {
+        attempts += 1;
+        if (attempts < 3) return null;
+        return jpeg1x1;
+      },
+    });
+
+    expect(attempts).toBe(3);
+    expect(report.written).toBe(1);
+    expect(report.failed).toBe(0);
+    expect(
+      existsSync(
+        path.join(root, "data", "mtg", "cards", "en", "lea", "1", "art.scryfall.jpg"),
+      ),
+    ).toBe(true);
+  });
+
   it("skips when a local art.* already exists (no re-fetch)", async () => {
     const index = createLocalPrintsIndex("mtg");
     index.writePrints([

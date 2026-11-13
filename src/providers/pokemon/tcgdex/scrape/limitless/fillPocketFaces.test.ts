@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { limitlessPocketFaceUrl } from "./fillPocketFaces";
+import {
+  limitlessPocketFaceUrl,
+  limitlessPocketSetCodeFromImageBase,
+} from "./fillPocketFaces";
 
 describe("limitlessPocketFaceUrl", () => {
   it("pads collector numbers for Pocket CDN paths", () => {
@@ -10,5 +13,26 @@ describe("limitlessPocketFaceUrl", () => {
     expect(limitlessPocketFaceUrl("b2a", "131", "EN")).toBe(
       "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/b2a/b2a_131_EN.webp",
     );
+  });
+});
+
+describe("limitlessPocketSetCodeFromImageBase", () => {
+  it("keeps TCGdex Pocket casing for Limitless CDN", () => {
+    expect(
+      limitlessPocketSetCodeFromImageBase(
+        "https://assets.tcgdex.net/en/tcgp/A3b/001",
+        "a3b",
+      ),
+    ).toBe("A3b");
+    expect(
+      limitlessPocketSetCodeFromImageBase(
+        "https://assets.tcgdex.net/fr/tcgp/B1/014",
+      ),
+    ).toBe("B1");
+  });
+
+  it("falls back to set id when CDN base is absent", () => {
+    expect(limitlessPocketSetCodeFromImageBase(null, "b2a")).toBe("b2a");
+    expect(limitlessPocketSetCodeFromImageBase("")).toBe("");
   });
 });

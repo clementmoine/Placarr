@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { cropCardRgba, cropRgbaRect, loadUvRectFromJson } from "@/lib/unity/cardCrop";
+import { cropCardRgba, cropRgbaRect, loadUvRectFromJson } from "@/core/render/unity/cardCrop";
 import {
   decodeTexturesFromUnityFs,
   webglAstcFormat,

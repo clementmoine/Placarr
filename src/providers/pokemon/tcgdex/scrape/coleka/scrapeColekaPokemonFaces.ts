@@ -11,6 +11,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
 import { packStagingDir } from "@/lib/packPaths";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
 import {
@@ -188,19 +189,18 @@ async function downloadImage(
   url: string,
   referer: string,
 ): Promise<Buffer | null> {
-  try {
+  return softRetryNull(async () => {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: { "User-Agent": UA, Referer: referer },
       responseType: "arraybuffer",
       timeout: 40_000,
+      noDedup: true,
       validateStatus: (status: number) => status === 200,
     });
     const data = res.data;
     if (!data || data.byteLength < 500) return null;
     return Buffer.from(data);
-  } catch {
-    return null;
-  }
+  });
 }
 
 export type ColekaPokemonHarvestReport = {

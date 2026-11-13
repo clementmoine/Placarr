@@ -17,7 +17,7 @@ import {
   cropCardRgba,
   loadUvRectFromJson,
   type UvRect,
-} from "@/lib/unity/cardCrop";
+} from "@/core/render/unity/cardCrop";
 import { writeLosslessRgbaWebp } from "@/lib/media/losslessWebp";
 import { parseMaterialManifests } from "@/lib/unity/materialManifest";
 import { decodeTexturesFromUnityFs } from "@/lib/unity/texture2d";

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import sharp from "sharp";
 
 import { cardBackRgbaFromApk } from "@/lib/unity/cardBack";
-import { loadUvRectFromJson } from "@/lib/unity/cardCrop";
+import { loadUvRectFromJson } from "@/core/render/unity/cardCrop";
 import { buildKeyedCards } from "@/providers/pokemon/live/extract/buildRuntimeCards";
 import { buildMaterialSheetsFromBytes } from "@/providers/pokemon/live/foil/writeMaterialSheets";
 import {

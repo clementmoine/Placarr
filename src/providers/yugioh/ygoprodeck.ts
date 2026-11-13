@@ -11,6 +11,7 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -18,6 +19,7 @@ import {
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
+import { retry } from "@/lib/http/retry";
 import { packCardDir, packLogsDir, packStagingDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import {
@@ -124,11 +126,17 @@ async function fetchCardinfoPage(opts: {
   if (opts.format) params.set("format", opts.format);
   if (opts.language) params.set("language", opts.language);
   const url = `${YGOPRODECK_CARDINFO}?${params.toString()}`;
-  const res = await httpGet<{ data?: YgoprodeckCard[]; meta?: PageMeta }>(url, {
-    headers: { "User-Agent": UA, Accept: "application/json" },
-    timeout: 120_000,
-    validateStatus: (s) => s === 200,
-  });
+  const res = await retry(
+    () =>
+      httpGet<{ data?: YgoprodeckCard[]; meta?: PageMeta }>(url, {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+        timeout: 120_000,
+        noDedup: true,
+        validateStatus: (s) => s === 200,
+      }),
+    4,
+    800,
+  );
   return {
     data: res.data?.data ?? [],
     meta: res.data?.meta,
@@ -413,8 +421,8 @@ export async function installYugiohYgoprodeck(
   // Drop FR title rows previously minted on EN/PT collectors (translations ≠ FR prints).
   purgeYgoprodeckFrTitlesOnNonFrPrints(index);
 
-  // OTS PT rows often lack ScanFlip CDN; mirror EN sibling art onto FR.
-  const mirrored = mirrorYgoprodeckEnFacesOntoPtSiblings(index);
+  // OTS PT / FR regional rows often lack ScanFlip CDN; mirror EN sibling art.
+  const mirrored = mirrorYgoprodeckEnFacesOntoLocaleSiblings(index);
   faces += mirrored;
 
   return { prints, titles, faces };
@@ -443,10 +451,10 @@ export function purgeYgoprodeckFrTitlesOnNonFrPrints(
 }
 
 /**
- * `OP07-EN028` and `OP07-PT028` share art. ScanFlip may seed the PT print
- * with a Portuguese title but `imageCdn: null` — copy the EN ygoprodeck face.
+ * `OP07-EN028` shares art with `OP07-PT028` / `OP07-FR027`. ScanFlip may seed
+ * the locale print with a title but no CDN — copy the EN ygoprodeck face.
  */
-export function mirrorYgoprodeckEnFacesOntoPtSiblings(
+export function mirrorYgoprodeckEnFacesOntoLocaleSiblings(
   index: LocalPrintsIndex,
 ): number {
   const db = index.ensure();
@@ -460,10 +468,11 @@ export function mirrorYgoprodeckEnFacesOntoPtSiblings(
          FROM print_titles t
          JOIN prints p ON p.print_key = t.print_key
         WHERE t.lang = 'fr'
-          AND p.number LIKE 'pt%'
+          AND (lower(p.number) LIKE 'pt%' OR lower(p.number) LIKE 'fr%')
           AND NOT EXISTS (
                 SELECT 1 FROM print_assets a
-                 WHERE a.print_key = t.print_key AND a.lang = 'fr' AND a.art IS NOT NULL
+                 WHERE a.print_key = t.print_key AND a.lang = 'fr'
+                   AND a.art IS NOT NULL AND trim(a.art) != ''
               )`,
     )
     .all() as Array<{ printKey: string; setCode: string; number: string }>;
@@ -472,24 +481,31 @@ export function mirrorYgoprodeckEnFacesOntoPtSiblings(
   let mirrored = 0;
   for (const row of rows) {
     const setCode = row.setCode.trim().toLowerCase();
-    const ptNum = row.number.trim().toLowerCase();
-    if (!ptNum.startsWith("pt")) continue;
-    const enNum = `en${ptNum.slice(2)}`;
-    const enArt = path.join(
-      cardsRoot,
-      setCode,
-      "en",
-      enNum,
-      "art.ygoprodeck.webp",
-    );
-    if (!existsSync(enArt)) continue;
+    const localeNum = row.number.trim().toLowerCase();
+    const prefix = localeNum.startsWith("pt")
+      ? "pt"
+      : localeNum.startsWith("fr")
+        ? "fr"
+        : null;
+    if (!prefix) continue;
+    const enNum = `en${localeNum.slice(prefix.length)}`;
+    const enDir = packCardDir(YUGIOH_PACK_ID, {
+      set: setCode,
+      lang: "en",
+      card: enNum,
+    });
+    // Legacy layout leftover: cards/{set}/en/{num}/
+    const legacyEnDir = path.join(cardsRoot, setCode, "en", enNum);
+    const enArt =
+      resolveYgoprodeckArtFile(enDir) ?? resolveYgoprodeckArtFile(legacyEnDir);
+    if (!enArt) continue;
     const destDir = packCardDir(YUGIOH_PACK_ID, {
       set: setCode,
       lang: "fr",
-      card: ptNum,
+      card: localeNum,
     });
     mkdirSync(destDir, { recursive: true });
-    const artName = "art.ygoprodeck.webp";
+    const artName = path.basename(enArt);
     copyFileSync(enArt, path.join(destDir, artName));
     assets.push({
       printKey: row.printKey,
@@ -501,4 +517,30 @@ export function mirrorYgoprodeckEnFacesOntoPtSiblings(
   }
   if (assets.length) index.writeAssets(assets);
   return mirrored;
+}
+
+/** @deprecated Prefer {@link mirrorYgoprodeckEnFacesOntoLocaleSiblings}. */
+export function mirrorYgoprodeckEnFacesOntoPtSiblings(
+  index: LocalPrintsIndex,
+): number {
+  return mirrorYgoprodeckEnFacesOntoLocaleSiblings(index);
+}
+
+function resolveYgoprodeckArtFile(cardDir: string): string | null {
+  if (!existsSync(cardDir)) return null;
+  const preferred = path.join(cardDir, "art.ygoprodeck.webp");
+  if (existsSync(preferred)) return preferred;
+  try {
+    const hit = readdirSync(cardDir)
+      .filter(
+        (name) =>
+          /^art(\.|$)/i.test(name) &&
+          !name.endsWith(".json") &&
+          !name.startsWith("."),
+      )
+      .sort()[0];
+    return hit ? path.join(cardDir, hit) : null;
+  } catch {
+    return null;
+  }
 }

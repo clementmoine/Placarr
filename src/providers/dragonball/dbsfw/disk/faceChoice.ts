@@ -16,7 +16,12 @@ import {
   type StoredFace as SharedStoredFace,
 } from "@/providers/shared/cardFaces";
 
-export const DBS_FW_FACE_SOURCES = ["dbscards", "bandai", "cardnexus"] as const;
+export const DBS_FW_FACE_SOURCES = [
+  "dbscards",
+  "bandai",
+  "cardnexus",
+  "client",
+] as const;
 
 export type DbsFwFaceSource = (typeof DBS_FW_FACE_SOURCES)[number];
 

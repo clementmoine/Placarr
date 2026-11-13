@@ -62,6 +62,10 @@ import {
   coverRegionFromAgeRatingBoard,
   roleWithoutCollectorRegion,
 } from "@/core/enrich/media/collectorCoverRegion";
+import {
+  isLocalUploadImageSrc,
+  remoteImageNeedsProxy,
+} from "@/core/enrich/media/remoteImageDisplay";
 
 export interface MediaItem {
   url: string;
@@ -199,6 +203,41 @@ export function isHonoredUserCoverPin(item: MediaInput): boolean {
     return true;
   }
   return isExplicitUserCoverOverride(item);
+}
+
+/**
+ * Pinned / stored covers sometimes keep a CDN URL that needs `/api/media/remote`
+ * (Booknode Cloudflare, …) while enrichment already wrote the same face under
+ * `/uploads/`. Prefer the local twin for display so the hero is not blank while
+ * FlareSolverr spends ~90s failing the proxy.
+ */
+export function preferLocalDisplayCoverUrl(
+  pin: string,
+  item: MediaInput,
+  pool?: readonly ScoredAttachmentInput[],
+): string {
+  if (!remoteImageNeedsProxy(pin)) return pin;
+
+  const list =
+    pool && pool.length > 0 ? pool : (attachments(item) as ScoredAttachmentInput[]);
+  const pinAttachment = findAttachmentForUrl(list, pin);
+  const pinRole = pinAttachment?.role?.trim().toLowerCase() || null;
+  // Same-role local only — never steal a marketplace `/uploads` pin as twin of
+  // a FR Booknode jaquette (different role, different face).
+  for (const attachment of list) {
+    const url = attachment.url?.trim();
+    if (!url || !isLocalUploadImageSrc(url)) continue;
+    if (!COVER_GALLERY_TYPES.has(attachment.type)) continue;
+    const role = attachment.role?.trim().toLowerCase() || null;
+    if (pinRole) {
+      if (role !== pinRole) continue;
+    } else if (role) {
+      continue;
+    }
+    return url;
+  }
+
+  return pin;
 }
 
 /** User uploads always lead the cover picker / gallery, ahead of catalog art. */
@@ -1163,12 +1202,12 @@ export function getCoverImage(
     }) &&
     (!pinIsStaleEnrichmentOrphan || honorUserOverride)
   ) {
-    return pin;
+    return preferLocalDisplayCoverUrl(pin, item);
   }
 
   const metadataCover = resolveMetadataCoverUrl(item, uiLocale);
   if (metadataCover) {
-    return metadataCover;
+    return preferLocalDisplayCoverUrl(metadataCover, item);
   }
 
   const bestFromAttachments = pickBestCoverFromAttachments(
@@ -1176,11 +1215,13 @@ export function getCoverImage(
     metrics,
     options,
   );
-  if (bestFromAttachments) return bestFromAttachments;
+  if (bestFromAttachments) {
+    return preferLocalDisplayCoverUrl(bestFromAttachments, item);
+  }
 
   // Scan / pre-metadata cover: keep whatever is stored until a ranked default exists.
   if (pin && isUrlEligibleDefaultCover(pin, list)) {
-    return pin;
+    return preferLocalDisplayCoverUrl(pin, item);
   }
 
   return null;

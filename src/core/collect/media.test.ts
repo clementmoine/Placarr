@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getCoverImage,
+  preferLocalDisplayCoverUrl,
   resolveMetadataCoverUrl,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachments,
@@ -124,6 +125,36 @@ describe("getCoverImage", () => {
         },
       }),
     ).toBe("/uploads/canonical-cover.jpg");
+  });
+
+  it("prefers a local /uploads twin when a pinned cover is a proxy CDN URL", () => {
+    const booknode =
+      "https://cdn1.booknode.com/book_cover/1447/full/les-tresors-de-picsou-n50-1447063.jpg";
+    expect(
+      getCoverImage({
+        imageUrl: booknode,
+        coverMode: "pinned",
+        metadata: {
+          imageUrl: "/uploads/b867c12a1f27ffc32a56daef63de4915.jpg",
+          attachments: [
+            {
+              type: "cover",
+              source: "booknode",
+              url: booknode,
+              role: "fr",
+            },
+            {
+              type: "cover",
+              source: "bdovore",
+              url: "/uploads/b867c12a1f27ffc32a56daef63de4915.jpg",
+              role: "fr",
+              title: "Les trésors de Picsou n°50",
+            },
+          ],
+        },
+        shelf: { type: "books", name: "Les Trésors de Picsou" },
+      }),
+    ).toBe("/uploads/b867c12a1f27ffc32a56daef63de4915.jpg");
   });
 
   it("drops a stale localized crop when metadata.imageUrl no longer has a gallery row", () => {
@@ -1678,6 +1709,42 @@ describe("collapseCroppedUserPinWithCatalogOriginal", () => {
 });
 
 describe("mergeCoverAttachmentsForPicker Perso/jaquette twin", () => {
+  it("keeps Booknode in Affiche but prefers the local twin for display cover", () => {
+    const booknode =
+      "https://cdn1.booknode.com/book_cover/1447/full/les-tresors-de-picsou-n50-1447063.jpg";
+    const local = "/uploads/b867c12a1f27ffc32a56daef63de4915.jpg";
+    const item = {
+      imageUrl: booknode,
+      coverMode: "pinned" as const,
+      metadata: {
+        imageUrl: local,
+        attachments: [
+          {
+            type: "cover" as const,
+            source: "booknode",
+            url: booknode,
+            role: "fr",
+          },
+          {
+            type: "cover" as const,
+            source: "bdovore",
+            url: local,
+            role: "fr",
+            title: "Les trésors de Picsou n°50",
+          },
+        ],
+      },
+      shelf: { type: "books" as const, name: "Les Trésors de Picsou" },
+    };
+    const covers = mergeCoverAttachmentsForPicker(item, [], "fr").filter(
+      (a) => a.type === "cover",
+    );
+    expect(covers.some((a) => a.url === booknode)).toBe(true);
+    expect(covers.some((a) => a.url === local)).toBe(true);
+    expect(preferLocalDisplayCoverUrl(booknode, item)).toBe(local);
+    expect(getCoverImage(item)).toBe(local);
+  });
+
   it("does not show Perso and Jaquette for the same cropped NetGamesRetro cover", () => {
     const crop = "/uploads/gamecube_edited.jpg";
     const remote =

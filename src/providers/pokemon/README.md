@@ -14,4 +14,4 @@ Registry ids stay flat; folders nest by franchise.
 | Pack | Folders |
 | ---- | ------- |
 | `live/` | `cdn/`, `extract/`, `foil/`, `pipeline/` (index + rebuild + sync), `disk/` (live attachments) |
-| `tcgdex/` | `disk/` (paper card paths + face choice), `scrape/` (faces + Coleka + harvest) |
+| `tcgdex/` | `disk/` (paper card paths + face choice), `scrape/` (faces + Coleka + harvest), `sources/ccgtrader.ts` (set index, `ingest: none`) |

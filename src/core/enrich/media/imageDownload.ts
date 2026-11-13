@@ -93,6 +93,25 @@ export async function existingLocalizedUploadForUrl(
   return null;
 }
 
+async function fetchWithinBudget<T>(
+  work: Promise<T>,
+  budgetMs: number | undefined,
+): Promise<T | null> {
+  if (budgetMs == null || !(budgetMs > 0)) return work;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), budgetMs);
+        if (typeof timer.unref === "function") timer.unref();
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function downloadRemoteImage(
   url: string,
   options: {
@@ -101,6 +120,11 @@ export async function downloadRemoteImage(
     source?: string | null;
     itemId?: string;
     metadataId?: string;
+    /**
+     * Cap upstream Flare / CDN wait (Affiche Enregistrer). On timeout, keep the
+     * remote URL when the host declares `remoteImageFallback`.
+     */
+    budgetMs?: number;
   } = {},
 ): Promise<string | null> {
   if (!url) return null;
@@ -153,11 +177,14 @@ export async function downloadRemoteImage(
     }
 
     const original = providerOriginalImageUrl(url);
-    const fetched =
-      (await fetchRemoteImageBuffer(url)) ||
-      (original && original !== url
-        ? await fetchRemoteImageBuffer(original)
-        : null);
+    const fetched = await fetchWithinBudget(
+      (async () =>
+        (await fetchRemoteImageBuffer(url)) ||
+        (original && original !== url
+          ? await fetchRemoteImageBuffer(original)
+          : null))(),
+      options.budgetMs,
+    );
     if (!fetched) {
       return (
         (await existingLocalizedUploadForUrl(url)) ?? persistRemoteFallback()

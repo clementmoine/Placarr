@@ -8,5 +8,6 @@
 | Install (Scanflip) | `install/scanflip.ts` |
 | YGOPRODeck | `ygoprodeck.ts` |
 | Curated | `curated/` — **DATA** |
+| CCG Trader (sets) | `sources/ccgtrader.ts` → `shared/ccgtrader` (`ingest: none`) |
 
 Registry id unchanged.

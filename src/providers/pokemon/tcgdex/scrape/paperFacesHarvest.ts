@@ -31,7 +31,7 @@ import { fillAlamedyangJaFaces } from "./alamedyang/fillJaFaces";
 import { fillPokemonCardnexusFaces } from "./cardnexus/fillFaces";
 import { fillDittobaseJaFaces } from "./dittobase/fillJaFaces";
 import { fillLimitlessJaFaces } from "./limitless/fillJaFaces";
-import { fillLimitlessPocketFacesForSet } from "./limitless/fillPocketFaces";
+import { fillLimitlessPocketMissingFaces } from "./limitless/fillPocketFaces";
 import { fillPokecardexMcdoFaces } from "./pokecardex/fillMcdo";
 import { fillPokecardexRetailFaces } from "./pokecardex/fillSets";
 import { fillPokellectorJaFaces } from "./pokellector/fillJaFaces";
@@ -89,6 +89,8 @@ export async function runPokemonPaperFacesHarvest(
       // Mirror FR+EN+JA — JA catalogue gaps are mostly empty `print_assets`
       // despite TCGdex `/ja/` CDN existing for shared sets.
       langs: ["fr", "en", "ja"],
+      // assets.tcgdex.net 503s hard above ~2–3 parallel GETs from this egress.
+      concurrency: 2,
       onProgress: (done, total) => {
         if (done - lastLog < 500 && done !== total) return;
         lastLog = done;
@@ -213,22 +215,21 @@ export async function runPokemonPaperFacesHarvest(
     }
   }
 
-  console.log("── Pokémon paper faces — Limitless Pocket (B2a…)");
-  {
-    const localIds = Array.from({ length: 131 }, (_, i) =>
-      String(i + 1).padStart(3, "0"),
-    );
-    const pocket = await fillLimitlessPocketFacesForSet({
-      // CDN path is case-sensitive (`B2a_001_EN.webp`); disk folder lowercases.
-      setId: "B2a",
-      localIds,
-      lang: "fr",
-      force: opts.force,
-      cardsRoot: opts.cardsRoot,
-    });
+  console.log("── Pokémon paper faces — Limitless Pocket (unprinted gaps)");
+  const pocket = await fillLimitlessPocketMissingFaces({
+    lang: "fr",
+    force: opts.force,
+    cardsRoot: opts.cardsRoot,
+    // Final sync-from-disk below covers all langs.
+    syncAssets: false,
+  });
+  for (const set of pocket.sets) {
     console.log(
-      `   limitless pocket B2a: ${pocket.written} écrites / ${pocket.skipped} skip / ${pocket.failed} fail`,
+      `   limitless pocket ${set.setId}: ${set.written} écrites / ${set.skipped} skip / ${set.failed} fail`,
     );
+  }
+  if (pocket.sets.length === 0) {
+    console.log("   limitless pocket: 0 gaps");
   }
 
   console.log("── Pokémon paper faces — pkmcards.fr");

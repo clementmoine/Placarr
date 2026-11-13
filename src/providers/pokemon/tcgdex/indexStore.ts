@@ -1095,6 +1095,115 @@ export function patchTcgdexPrintImageBases(
   }
 }
 
+/**
+ * Unprinted (Pocket / misc) titles still without local `print_assets.art`.
+ * Limitless Pocket densify reads this — no hard-coded set list.
+ */
+export function listTcgdexUnprintedMissingArt(opts?: {
+  dbPath?: string;
+  lang?: string;
+  limit?: number;
+}): {
+  printKey: string;
+  setId: string;
+  localId: string;
+  imageBaseUrl: string | null;
+}[] {
+  const pathToDb = opts?.dbPath ?? tcgdexDbPath();
+  if (!existsSync(pathToDb)) return [];
+  const lang = (opts?.lang ?? "fr").trim().toLowerCase() || "fr";
+  const db = openTcgdexSqliteRead(pathToDb);
+  try {
+    const lim =
+      opts?.limit != null
+        ? Math.max(1, Math.min(Math.floor(opts.limit), 50_000))
+        : null;
+    const sql = `
+      SELECT p.print_key AS printKey,
+             p.set_id AS setId,
+             p.local_id AS localId,
+             p.image_base_url AS imageBaseUrl
+        FROM print_titles t
+        JOIN prints p ON p.print_key = t.print_key
+        LEFT JOIN print_assets a
+               ON a.print_key = t.print_key AND a.lang = t.lang
+       WHERE t.lang = ?
+         AND COALESCE(p.printed, 1) = 0
+         AND (a.art IS NULL OR TRIM(a.art) = '')
+       ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id
+       ${lim != null ? "LIMIT ?" : ""}
+    `;
+    return (
+      lim != null ? db.prepare(sql).all(lang, lim) : db.prepare(sql).all(lang)
+    ) as {
+      printKey: string;
+      setId: string;
+      localId: string;
+      imageBaseUrl: string | null;
+    }[];
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Printed titles missing local art whose `image_base_url` already points at
+ * the requested locale CDN segment — densify-ready without cross-locale copy.
+ */
+export function listTcgdexPrintsMissingArtWithLocaleCdn(opts: {
+  lang: string;
+  dbPath?: string;
+  limit?: number;
+}): {
+  printKey: string;
+  setId: string;
+  localId: string;
+  imageBaseUrl: string;
+}[] {
+  const pathToDb = opts.dbPath ?? tcgdexDbPath();
+  if (!existsSync(pathToDb)) return [];
+  const lang = opts.lang.trim().toLowerCase();
+  if (!lang) return [];
+  const db = openTcgdexSqliteRead(pathToDb);
+  try {
+    const lim =
+      opts.limit != null
+        ? Math.max(1, Math.min(Math.floor(opts.limit), 50_000))
+        : null;
+    const like = `%://assets.tcgdex.net/${lang}/%`;
+    const sql = `
+      SELECT p.print_key AS printKey,
+             p.set_id AS setId,
+             p.local_id AS localId,
+             p.image_base_url AS imageBaseUrl
+        FROM print_titles t
+        JOIN prints p ON p.print_key = t.print_key
+        LEFT JOIN print_assets a
+               ON a.print_key = t.print_key AND a.lang = t.lang
+       WHERE t.lang = ?
+         AND COALESCE(p.printed, 1) != 0
+         AND (a.art IS NULL OR TRIM(a.art) = '')
+         AND p.image_base_url IS NOT NULL
+         AND TRIM(p.image_base_url) != ''
+         AND p.image_base_url LIKE ?
+       ORDER BY LOWER(p.set_id), CAST(p.local_id AS INTEGER), p.local_id
+       ${lim != null ? "LIMIT ?" : ""}
+    `;
+    const rows =
+      lim != null
+        ? db.prepare(sql).all(lang, like, lim)
+        : db.prepare(sql).all(lang, like);
+    return rows as {
+      printKey: string;
+      setId: string;
+      localId: string;
+      imageBaseUrl: string;
+    }[];
+  } finally {
+    db.close();
+  }
+}
+
 /** JA printed titles still without any CDN base (for CDN HEAD backfill). */
 export function listTcgdexJaPrintsMissingImageBase(opts?: {
   dbPath?: string;

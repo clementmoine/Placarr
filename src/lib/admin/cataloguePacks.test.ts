@@ -1946,6 +1946,7 @@ describe("same-number art fallback (Naruto)", () => {
       "en",
       "ja",
     ]);
+    expect(cataloguePackInfo("dragonball/fw")?.hasFoilEffects).toBe(true);
     expect(cataloguePackInfo("onepiece")?.catalogueLocales).toEqual([
       "ja",
       "fr",

@@ -78,6 +78,12 @@ export function defineCatalogueOnlyPack(
       (finishShader
         ? (finish) => {
             const key = (finish ?? "").toLowerCase();
+            // Only known catalogue finishes (e.g. `foil`) get a house look.
+            // Playroom WebGL leaf ids (`foil-holo`, `tabac-holo`, …) must not
+            // fall through to flare — that painted Unity mode as CSS holofoil.
+            if (!finishSet.has(key)) {
+              return { finishShaderId: null, varnishShaderId: null };
+            }
             const mapped = finishShader[key] ?? null;
             return {
               finishShaderId: applyHouseFoilFallback(mapped, finish),

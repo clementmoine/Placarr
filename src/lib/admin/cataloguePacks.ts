@@ -899,7 +899,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     },
     labelFr: "Dragon Ball Fusion World",
     labelEn: "Dragon Ball Fusion World",
-    hasFoilEffects: false,
+    hasFoilEffects: true,
     /** EN printing + asia-en (filed as `ja`); no FR cardlist. */
     catalogueLocales: ["en", "ja"],
     /*
@@ -927,8 +927,10 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
       pipelineSteps: ["scrape", "dbscards", "products", "faces", "details"],
     },
-    blurbFr: "Catalogue Bandai Fusion World — faces SAMPLE, pas de dump foil",
-    blurbEn: "Bandai Fusion World catalogue — SAMPLE faces, no foil dump",
+    blurbFr:
+      "Catalogue Bandai Fusion World. Rendu : types du client (holo, tabac, parallèle, super parallèle) et masques.",
+    blurbEn:
+      "Bandai Fusion World catalogue. Render: client types (holo, tabac, parallel, super parallel) and masks.",
   },
   {
     id: "dragonball/lamincards",

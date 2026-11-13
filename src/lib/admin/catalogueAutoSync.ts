@@ -170,7 +170,7 @@ export async function maybeEnqueueCatalogueProviderSync(
   try {
     status = await mdl.catalog.status();
   } catch (error) {
-    // SQLite busy / transient IO must not kill the icollect supervise loop.
+    // SQLite busy / transient IO must not kill the catalog supervise loop.
     console.warn(
       `[catalogue sync] status failed for ${providerId}:`,
       error instanceof Error ? error.message : error,

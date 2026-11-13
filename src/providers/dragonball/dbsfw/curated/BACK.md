@@ -4,13 +4,20 @@
 | --------------- | ------------------------------------------------------------------------------------- |
 | Fichier data    | `cards/back.webp` (copie)                                                             |
 | URL             | `/assets/dragonball/fw/cards/back.webp`                                                      |
-| Taille          | 400×560 WebP                                                                          |
-| Source          | même octet que Masters : [dbscards.fr](https://www.dbscards.fr/) `original/back.webp` |
+| Taille          | 841×1186 WebP                                                                         |
+| Source          | client officiel, texture `Default` de `packdata_assets_card_sleeve.bundle`           |
 
-## Placeholder
+## Client
 
-Le dos physique Fusion World n’est pas vérifié. Bandai ne publie pas de sleeve
-back. Le CDN FW sert le même fichier que Masters — on l’installe ici pour que
-le Catalogue ait un verso, pas comme vérité physique.
+Le client Fusion World n’a pas un dos par carte. Le verso affiché quand une
+carte est retournée est la sleeve `Card/Sleeve/Default` : sept boules, filet
+orange, mention « DRAGON BALL SUPER CARD GAME ». Le gris autour de la carte
+est la marge de la sleeve ; on le rogne avant d’écrire `cards/back.webp`.
 
-Si un dos FW distinct est confirmé, remplacer curated et noter l’URL ici.
+L’ancien fichier CDN (400×560, même motif, octet Masters
+`original/back.webp`) reste dans `curated/cards/cdn-back.webp`. Ce n’est pas
+un `back.*`, donc le Sync ne l’installe pas comme un second verso.
+
+Le dos physique imprimé n’est toujours pas un scan séparé. Le dos d’une carte
+à deux faces (leader) est un autre visuel : `back.client.webp` à côté de
+l’impression, composé comme la face.

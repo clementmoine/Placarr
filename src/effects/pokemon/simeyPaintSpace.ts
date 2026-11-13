@@ -9,7 +9,15 @@
  * 3. scales toward the Simey target μ (contrast-preserving gain).
  *
  * Pure — no DOM. The client hook applies it on ImageData.
+ * Luminance itself lives in `@/core/render/foil/luminance`.
  */
+
+import {
+  luminanceRgb,
+  meanLuminanceRgba,
+} from "@/core/render/foil/luminance";
+
+export { luminanceRgb, meanLuminanceRgba };
 
 /** Typical poke-holo EN foil scan mean luminance (0–255). */
 export const SIMEY_FOIL_TARGET_MU = 26;
@@ -23,25 +31,6 @@ const DARK_ON_LIGHT_MU = 140;
 const LIGHT_ON_DARK_MU = 60;
 
 export type PaintPolarity = "lightOnDark" | "darkOnLight" | "ambiguous";
-
-/** Rec. 709 luma. */
-export function luminanceRgb(r: number, g: number, b: number): number {
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-export function meanLuminanceRgba(
-  data: ArrayLike<number>,
-  pixelCount = Math.floor(data.length / 4),
-): number {
-  if (pixelCount <= 0) return 0;
-  let sum = 0;
-  const n = Math.min(pixelCount, Math.floor(data.length / 4));
-  for (let i = 0; i < n; i++) {
-    const o = i * 4;
-    sum += luminanceRgb(data[o] ?? 0, data[o + 1] ?? 0, data[o + 2] ?? 0);
-  }
-  return sum / n;
-}
 
 export function detectPaintPolarity(meanMu: number): PaintPolarity {
   if (meanMu >= DARK_ON_LIGHT_MU) return "darkOnLight";

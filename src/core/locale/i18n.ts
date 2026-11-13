@@ -52,8 +52,28 @@ export async function getMessages(locale: Locale) {
   return nested ?? mod;
 }
 
+/**
+ * Message lookup. Walks nested objects (`sorting.name_asc`) and also accepts
+ * a dotted key stored flat next to its parent (`"view": "Vue"` plus
+ * `"view.active": "…"`). A string parent must not hide the flat sibling.
+ */
+export function resolveMessage(obj: unknown, path: string): string | undefined {
+  if (!path) return undefined;
+  const parts = path.split(".");
+  let current: unknown = obj;
+  for (let i = 0; i < parts.length; i++) {
+    if (!current || typeof current !== "object") return undefined;
+    const record = current as Record<string, unknown>;
+    const flat = parts.slice(i).join(".");
+    if (typeof record[flat] === "string") return record[flat];
+    const segment = parts[i];
+    if (segment === undefined || !(segment in record)) return undefined;
+    current = record[segment];
+  }
+  return typeof current === "string" ? current : undefined;
+}
+
 // Type-safe message key access
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getNestedValue(obj: any, path: string): string {
-  return path.split(".").reduce((current, key) => current?.[key], obj) || path;
+export function getNestedValue(obj: unknown, path: string): string {
+  return resolveMessage(obj, path) ?? path;
 }

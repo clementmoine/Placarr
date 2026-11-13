@@ -20,6 +20,7 @@ export {
 } from "@/lib/unity/materialManifest";
 export {
   decodeTexturesFromUnityFs,
+  decodeTextureTree,
   listTexture2D,
   decodeTextureFormat,
   canDecodeTextureFormat,
@@ -28,6 +29,7 @@ export {
   textureFormatId,
   astcBlockSize,
   webglAstcFormat,
+  webglS3tcFormat,
   type DecodedTexture2D,
 } from "@/lib/unity/texture2d";
 export {
@@ -37,7 +39,7 @@ export {
   type UvRect,
   type PixelRect,
   type CroppedRgba,
-} from "@/lib/unity/cardCrop";
+} from "@/core/render/unity/cardCrop";
 export {
   CARD_MESH_NAME,
   cardQuadFromObjText,
@@ -59,6 +61,19 @@ export {
   extractShaderFragFromTree,
   extractShaderFragsFromLoaded,
   extractShaderFragsFromBytes,
+  shaderNameFromPath,
   type ShaderTypeTree,
   type ExtractedShaderFrag,
+  type ShaderFragExtractOptions,
+  type ShaderFragNameInput,
 } from "@/lib/unity/shader";
+export {
+  metalSourcesFromBlob,
+  type MetalProgramSource,
+} from "@/lib/unity/metalBlob";
+export {
+  preferredMetalFragment,
+  translateMetalSource,
+  translatePreferredFragment,
+  type TranslatedMetal,
+} from "@/lib/unity/metalToGlsl";

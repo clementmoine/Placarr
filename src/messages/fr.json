@@ -321,7 +321,7 @@
     },
     "absence": {
       "title": "Présence",
-      "hint": "Sur l'étagère, sorti temporairement, recherché, ou déjà eu (récupérable).",
+      "hint": "Sur l'étagère, sorti temporairement, ou déjà eu (récupérable).",
       "presence": "Statut",
       "reason": "Raison",
       "since": "Depuis",
@@ -337,14 +337,11 @@
       "salePrice": "Prix de vente (€)",
       "note": "Note",
       "return": "Remettre",
-      "cancel": "Annuler → recherchée",
       "recover": "Récupéré",
-      "found": "Trouvé / sur l'étagère",
       "orderDuplicateWarning": "Tu as déjà {count, plural, one {une copie possédée} other {# copies possédées}} de ce tirage (ex. {name}).",
       "presences": {
         "owned": "Sur l'étagère",
         "away": "Absent (temporaire)",
-        "wanted": "Recherchée",
         "past": "Déjà eu"
       },
       "badge": {
@@ -381,8 +378,7 @@
         "consumed": "Consommé",
         "lost": "Perdu",
         "stolen": "Volé",
-        "past": "Déjà eu",
-        "wanted": "Recherchée"
+        "past": "Déjà eu"
       }
     },
     "trade": {
@@ -449,7 +445,7 @@
       "freeEntry": "Saisie libre",
       "freeEntryHint": "Nom, code-barres ou détails — hors catalogue.",
       "freeEntryTitle": "Saisie libre",
-      "freeEntryDescription": "Ajoute un objet sans passer par le catalogue. Si une copie absente ou recherchée correspond, on te le proposera.",
+      "freeEntryDescription": "Ajoute un objet sans passer par le catalogue. Si une copie absente correspond, on te le proposera.",
       "sealedHint": "Display, deck, booster… scellé du catalogue."
     },
     "bulkAdd": {
@@ -712,7 +708,7 @@
         "acquired": "Ajouté",
         "departed": "Parti",
         "returned": "Revenu",
-        "cancelled_to_wanted": "Annulé → recherché",
+        "cancelled_to_wanted": "Annulation d'attente",
         "received_from_order": "Reçu (attendu)",
         "recovered": "Récupéré",
         "opened": "Ouvert",
@@ -771,12 +767,11 @@
       "closeConfirmStay": "Rester",
       "closeConfirmLeave": "Fermer",
       "awaitedTitle": "Tu l'attendais ?",
-      "awaitedDescription": "{count} carte(s) de ta sélection correspondent à une copie déjà absente ou recherchée sur cette étagère.",
+      "awaitedDescription": "{count} carte(s) de ta sélection correspondent à une copie déjà absente sur cette étagère.",
       "awaitedReceive": "Recevoir {count}",
       "awaitedAddNew": "Ajouter comme nouvelles copies",
       "awaitedPartialFailure": "{failed} réception(s) ont échoué.",
       "awaitedKindOrdered": "En commande / attendue",
-      "awaitedKindWanted": "Recherchée",
       "awaitedKindAway": "Absente temporairement"
     },
     "checklistTitle": "Check-list",
@@ -795,14 +790,11 @@
     "checklistLanguage": "Langue",
     "checklistSettings": "Options d'affichage",
     "checklistShowOwned": "Afficher aussi les cartes déjà en liste",
-    "checklistShowPast": "Afficher les cartes déjà eues (vendues, jetées…)",
-    "checklistShowVirtual": "Afficher les cartes dans un scellé (virtuelles)",
-    "checklistOnlyVirtual": "Ne voir que les virtuelles",
-    "checklistPossessionView": "Compteur",
-    "checklistPossessionInHand": "En main",
-    "checklistPossessionCovered": "Tout possédé (scellé compris)",
+    "checklistShowAway": "Afficher les absents (commande, prêt…)",
+    "checklistShowPast": "Afficher les déjà eus (jetés, vendus…)",
+    "checklistShowVirtual": "Afficher les virtuelles (scellé)",
     "checklistAlreadyHad": "Déjà eu",
-    "checklistWanted": "Recherché",
+    "checklistAway": "Absent",
     "checklistVirtual": "Virtuel",
     "checklistMasterSet": "Master set (chaque finition séparément)",
     "checklistMasterSetSuggest": "Tu as {count} cartes avec plusieurs finitions — activer le master set pour les suivre séparément (normale / foil, etc.) ?",
@@ -810,8 +802,8 @@
     "checklistMasterSetSuggestDismiss": "Plus tard",
     "checklistAlwaysShowFinishLabels": "Afficher toutes les finitions",
     "checklistShowPrices": "Afficher les prix",
-    "checklistHideImputedPrices": "Masquer les prix approximés (~)",
-    "checklistHideZeroSealedExpectation": "Masquer les scellés sans cartes neuves estimées",
+    "checklistShowImputedPrices": "Afficher les prix approximés (~)",
+    "checklistShowZeroSealedExpectation": "Afficher les scellés sans cartes neuves estimées",
     "checklistUntaggedOwned": "{count} cartes sur l'étagère n'ont pas de finition — le master set les ignore tant que None ou Silver n'est pas renseigné sur chaque exemplaire.",
     "checklistSearch": "Rechercher une carte ou une extension…",
     "checklistSearchNoResults": "Aucune carte ne correspond à cette recherche.",
@@ -927,9 +919,8 @@
     "pricedOnly": "Avec estimation de prix",
     "duplicatesOnly": "Doublons seulement",
     "view": "Vue",
-    "view.active": "Collection active",
+    "view.active": "Toute la collection",
     "view.away": "Absents (prêt, commande…)",
-    "view.wanted": "Recherchées",
     "view.past": "Déjà eus",
     "view.all": "Tout",
     "view.duplicates": "Doublons seulement"

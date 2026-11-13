@@ -50,6 +50,7 @@ describe("check-list d'étagère", () => {
     expect(list.totals).toEqual({
       total: 4,
       owned: 2,
+      away: 0,
       virtual: 0,
       covered: 2,
       completion: 50,
@@ -60,29 +61,58 @@ describe("check-list d'étagère", () => {
     expect(s1.missing.map((m) => m.reference)).toEqual(["NI-002", "NI-003"]);
   });
 
-  it("marks past as déjà eu (not owned, not buy-missing) and wanted as missing", () => {
+  it("marks past as déjà eu (not owned, not buy-missing) and a hole as missing", () => {
     const list = buildShelfChecklist({
       sets,
       prints,
       owned: new Set(["k:1"]),
       alreadyHad: new Set(["k:2"]),
-      wanted: new Set(["k:3"]),
     });
     const s1 = list.sets.find((s) => s.id === "s1")!;
     expect(s1.cards.map((c) => [c.reference, c.presence, c.owned])).toEqual([
       ["NI-001", "owned", true],
       ["NI-002", "past", false],
-      ["NI-003", "wanted", false],
+      ["NI-003", "missing", false],
     ]);
     expect(s1.owned).toBe(1);
+    expect(s1.away).toBe(0);
     expect(s1.missing.map((m) => m.reference)).toEqual(["NI-003"]);
     expect(list.totals).toEqual({
       total: 4,
       owned: 1,
+      away: 0,
       virtual: 0,
       covered: 1,
       completion: 25,
       coveredCompletion: 25,
+    });
+  });
+
+  it("marks away as in-hand for % but not full owned checkbox", () => {
+    const list = buildShelfChecklist({
+      sets,
+      prints,
+      owned: new Set(["k:1"]),
+      away: new Set(["k:2"]),
+    });
+    const s1 = list.sets.find((s) => s.id === "s1")!;
+    expect(s1.cards.map((c) => [c.reference, c.presence, c.owned])).toEqual([
+      ["NI-001", "owned", true],
+      ["NI-002", "away", false],
+      ["NI-003", "missing", false],
+    ]);
+    expect(s1.owned).toBe(1);
+    expect(s1.away).toBe(1);
+    expect(s1.completion).toBe(67);
+    expect(s1.missing.map((m) => m.reference)).toEqual(["NI-003"]);
+    expect(list.totals).toEqual({
+      total: 4,
+      owned: 1,
+      away: 1,
+      virtual: 0,
+      covered: 2,
+      completion: 50,
+      coveredCompletion: 50,
     });
   });
 
@@ -108,6 +138,7 @@ describe("check-list d'étagère", () => {
     expect(list.totals).toEqual({
       total: 4,
       owned: 1,
+      away: 0,
       virtual: 1,
       covered: 2,
       completion: 25,
@@ -215,6 +246,7 @@ describe("check-list d'étagère", () => {
     expect(list.totals).toEqual({
       total: 0,
       owned: 0,
+      away: 0,
       virtual: 0,
       covered: 0,
       completion: 0,
@@ -390,6 +422,7 @@ describe("ordre retail puis promos", () => {
     expect(list.totals).toEqual({
       total: 4,
       owned: 2,
+      away: 0,
       virtual: 0,
       covered: 2,
       completion: 50,
@@ -507,6 +540,7 @@ describe("ordre retail puis promos", () => {
     expect(list.totals).toEqual({
       total: 4,
       owned: 2,
+      away: 0,
       virtual: 0,
       covered: 2,
       completion: 50,

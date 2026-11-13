@@ -47,10 +47,10 @@ enum AttachmentType {
 
 /// Physical presence of a shelf copy relative to the active collection.
 /// `past` = left the everyday shelf (sold, discarded, …) but always recoverable.
+/// Legacy `wanted` rows are rewritten to `away` by migration.
 enum ItemPresence {
   owned
   away
-  wanted
   past
 }
 
@@ -394,7 +394,7 @@ model ItemPresenceEvent {
   fromPresence ItemPresence
   toPresence   ItemPresence
   reason       AbsenceReason?
-  /// acquired | departed | returned | cancelled_to_wanted | received_from_order |
+  /// acquired | departed | returned | cancelled_to_wanted (historical) | received_from_order |
   /// recovered | opened | materialized | declared | contained | detached |
   /// grade_submitted | grade_updated
   kind         String

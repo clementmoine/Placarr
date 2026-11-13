@@ -296,6 +296,9 @@
 .chevronOpen {
   transform: rotate(90deg);
 }
+.chevronHidden {
+  visibility: hidden;
+}
 
 .setIcon {
   width: 1.5rem;
@@ -394,7 +397,7 @@
 }
 
 .pastBadge,
-.wantedBadge,
+.awayBadge,
 .virtualBadge {
   margin-left: 0.4rem;
   font-size: 0.65rem;
@@ -404,12 +407,9 @@
   vertical-align: middle;
 }
 
-.pastBadge {
+.pastBadge,
+.awayBadge {
   color: var(--muted-foreground);
-}
-
-.wantedBadge {
-  color: var(--primary);
 }
 
 .virtualBadge {
@@ -702,11 +702,17 @@
     border-color: #000;
     background: none !important;
     box-shadow: none !important;
+    opacity: 1 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
-  .checkboxOn::after {
-    content: "✓";
+  /*
+    Les fonds (plein / demi / hachuré) disparaissent à l'impression : on
+    dessine un glyphe en encre, comme le Markdown `[x]` / `[-]` / `[ ]`.
+  */
+  .checkboxOn::after,
+  .checkboxMixed::after,
+  .checkboxVirtual::after {
     position: absolute;
     inset: 0;
     display: flex;
@@ -716,6 +722,19 @@
     font-weight: 700;
     line-height: 1;
     color: #000;
+  }
+  .checkboxOn::after {
+    content: "✓";
+  }
+  .checkboxMixed::after,
+  .checkboxVirtual::after {
+    content: "–";
+  }
+  .pastBadge,
+  .awayBadge,
+  .virtualBadge {
+    color: #333;
+    font-weight: 700;
   }
 }
 

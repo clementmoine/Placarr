@@ -1,7 +1,8 @@
 import {
+  coerceItemPresence,
   isAbsenceReason,
   isAwaitingReceiptReason,
-  isItemPresence,
+  isItemAway,
   type AbsenceReason,
   type ItemPresence,
 } from "@/core/collect/itemAbsence";
@@ -50,13 +51,13 @@ export type ReceivableMatchQuery = {
 };
 
 /**
- * Items on the shelf that match this print identity and are waiting to arrive
- * (`away`) or sought (`wanted`) — candidates for « tu l’attendais ? ».
+ * Items on the shelf that match this print identity and are temporarily absent
+ * — candidates for « tu l’attendais ? ». A legacy `wanted` row counts as away.
  */
 export function isReceivablePresence(
   presence: ItemPresence | string | null | undefined,
 ): boolean {
-  return presence === "away" || presence === "wanted";
+  return isItemAway({ presence });
 }
 
 function itemMatchesQuery(
@@ -101,7 +102,7 @@ export function findReceivableShelfMatches(
   });
 }
 
-/** Barcode path (games / sealed / ScanFAB) — same away|wanted gate. */
+/** Barcode path (games / sealed / ScanFAB) — same away gate. */
 export function findReceivableByBarcode(
   items: readonly ReceivableShelfItem[],
   barcode: string | null | undefined,
@@ -162,17 +163,17 @@ export function resolveReceivableForCreate(
   );
 }
 
-/** Prefer awaiting-receipt (ordered/expected), then other away, then wanted. */
+/** Prefer awaiting-receipt (ordered/expected), then any other absent copy. */
 export function pickPreferredReceivableMatch(
   matches: readonly ReceivableShelfItem[],
 ): ReceivableShelfItem | null {
   if (matches.length === 0) return null;
   const awaiting = matches.find(
     (item) =>
-      item.presence === "away" && isAwaitingReceiptReason(item.absenceReason),
+      isItemAway(item) && isAwaitingReceiptReason(item.absenceReason),
   );
   if (awaiting) return awaiting;
-  const away = matches.find((item) => item.presence === "away");
+  const away = matches.find((item) => isItemAway(item));
   if (away) return away;
   return matches[0] ?? null;
 }
@@ -215,7 +216,7 @@ export function receivableMatchLabelFields(item: ReceivableShelfItem): {
   reason: AbsenceReason | null;
   detail: string | null;
 } {
-  const presence = isItemPresence(item.presence) ? item.presence : "owned";
+  const presence = coerceItemPresence(item.presence);
   const reason = isAbsenceReason(item.absenceReason)
     ? item.absenceReason
     : null;

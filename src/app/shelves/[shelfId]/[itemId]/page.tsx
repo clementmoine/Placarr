@@ -202,7 +202,11 @@ import {
   shelfListItemMissingAttachments,
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
-import { getItemValueEstimate } from "@/core/collect/value";
+import {
+  detailPriceChipIsObserved,
+  estimationFactDuplicatesPriceChip,
+  getItemValueEstimate,
+} from "@/core/collect/value";
 import {
   marketOfferConditionsForItem,
   shelfShowsItemCondition,
@@ -2382,10 +2386,18 @@ export default function ItemDetailsPage() {
       },
     );
     const observations = prices?.priceObservations || [];
-    const relevantObservations = observations.filter(
+    const marketObservations = observations.filter(
       (observation) =>
         observation.condition && conditions.includes(observation.condition),
     );
+    // A cote has no `new`/`foil` row. Attribute the chip to the estimate
+    // observations so it stays one source, not an unlabeled "prix constaté".
+    const relevantObservations =
+      marketObservations.length > 0 || !copyValue?.isEstimate
+        ? marketObservations
+        : observations.filter(
+            (observation) => observation.condition === "estimated",
+          );
     // Only sources that actually feed the grade shown — not every offer on the
     // item (avoids attributing NetGamesRetro retail to a PriceCharting link).
     const sources = Array.from(
@@ -2435,6 +2447,7 @@ export default function ItemDetailsPage() {
           (prices?.isReferencePriceOnly ?? false)),
     };
   }, [
+    copyValue?.isEstimate,
     item?.condition,
     item?.variant,
     prices,
@@ -2548,12 +2561,17 @@ export default function ItemDetailsPage() {
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
     const priceDisplayValue = formattedCopyValue ?? catalogEstimateDisplay;
+    const priceChipIsEstimate =
+      !detailPriceChipIsObserved({
+        hasAmount: Boolean(formattedCopyValue),
+        isEstimate: copyValue?.isEstimate === true,
+        isReferencePriceOnly: priceSourceSummary.isReferencePriceOnly,
+      }) && Boolean(priceDisplayValue);
 
     if (priceDisplayValue) {
-      const priceLabel =
-        formattedCopyValue && !priceSourceSummary.isReferencePriceOnly
-          ? t("items.info.observedPrice")
-          : t("items.info.estimatedValue");
+      const priceLabel = priceChipIsEstimate
+        ? t("items.info.estimatedValue")
+        : t("items.info.observedPrice");
       facts.push({
         kind: "estimated-value",
         label: priceLabel,
@@ -2564,10 +2582,17 @@ export default function ItemDetailsPage() {
         priority: 110,
       });
     }
-    facts.push(...usefulFacts.filter(isPrimaryInfoFact));
+    facts.push(
+      ...usefulFacts.filter(
+        (fact) =>
+          isPrimaryInfoFact(fact) &&
+          !estimationFactDuplicatesPriceChip(fact, priceChipIsEstimate),
+      ),
+    );
     return facts.sort(sortDetailFacts);
   }, [
     catalogEstimateDisplay,
+    copyValue?.isEstimate,
     formattedCopyValue,
     priceSourceSummary.count,
     priceSourceSummary.isReferencePriceOnly,
@@ -3082,9 +3107,7 @@ export default function ItemDetailsPage() {
                       const toneClass =
                         absence.tone === "away"
                           ? "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
-                          : absence.tone === "wanted"
-                            ? "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-                            : "border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
+                          : "border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
                       return (
                         <Badge
                           variant="outline"

@@ -1,5 +1,6 @@
 import {
   absenceSinceInputValue,
+  coerceItemPresence,
   isAbsenceReason,
   isItemPresence,
   priceCentsInputValue,
@@ -73,7 +74,7 @@ function commonText(values: readonly string[]): string {
 }
 
 function rowFromItem(item: BulkLifecycleSourceItem): ItemModalLifecycleFormSlice {
-  const presence = isItemPresence(item.presence) ? item.presence : "owned";
+  const presence = coerceItemPresence(item.presence);
   const base = emptyBulkLifecycleForm();
   if (presence === "owned") {
     return {

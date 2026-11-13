@@ -85,8 +85,6 @@ function absenceBadgeClass(tone: AbsenceBadgeTone) {
   switch (tone) {
     case "away":
       return "border-sky-400/35 bg-zinc-950/90 text-sky-200";
-    case "wanted":
-      return "border-violet-400/35 bg-zinc-950/90 text-violet-200";
     case "past":
       return "border-zinc-500/40 bg-zinc-950/90 text-zinc-300";
     default:

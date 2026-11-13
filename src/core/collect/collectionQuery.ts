@@ -82,7 +82,7 @@ export type ItemCollectionFilters = {
   pricedOnly: boolean;
   /**
    * Shelf grid presence / duplicates view. Display-only (not inside
-   * {@link filterCollectionItems}). Default hides `past` / `wanted`.
+   * {@link filterCollectionItems}). Default (`active`) applies no presence filter.
    */
   shelfView: ItemCollectionShelfView;
 };
@@ -352,11 +352,13 @@ export function parseItemCollectionFilters(searchParams: {
   const duplicatesParam = searchParams.get("duplicates");
   // Legacy `duplicates=1` → view=duplicates when `view` is absent.
   const shelfView: ItemCollectionShelfView =
-    isItemCollectionShelfView(viewParam)
-      ? viewParam
-      : duplicatesParam === "1" || duplicatesParam === "true"
-        ? "duplicates"
-        : parseItemCollectionShelfView(viewParam);
+    viewParam === "all"
+      ? DEFAULT_ITEM_COLLECTION_SHELF_VIEW
+      : isItemCollectionShelfView(viewParam)
+        ? viewParam
+        : duplicatesParam === "1" || duplicatesParam === "true"
+          ? "duplicates"
+          : parseItemCollectionShelfView(viewParam);
 
   return { condition, ratingMin, pricedOnly, shelfView };
 }

@@ -23,9 +23,6 @@ function pairVerb(
   if (isAwaitingReceiptReason(item.absenceReason)) {
     return t("items.printPicker.awaitedKindOrdered");
   }
-  if (item.presence === "wanted") {
-    return t("items.printPicker.awaitedKindWanted");
-  }
   return t("items.printPicker.awaitedKindAway");
 }
 
@@ -44,9 +41,7 @@ function pairDetailLine(
         ...(badge.price ? { price: badge.price } : {}),
         ...(badge.days ? { days: badge.days } : {}),
       })
-    : item.presence === "wanted"
-      ? t("items.absence.presences.wanted")
-      : t("items.absence.presences.away");
+    : t("items.absence.presences.away");
   const verb = pairVerb(item, t);
   return [verb, reasonKey ? t(reasonKey) : null, label]
     .filter(Boolean)

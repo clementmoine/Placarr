@@ -1,42 +1,42 @@
 /**
  * Presence → checklist ownership buckets.
  *
- * `past` and `wanted` must not inflate the owned set (buy advice / %). The
- * same change surfaces « déjà eu » so sold/discarded cards do not reappear as
- * « à acheter ». Virtuals (closed sealed) are a separate bucket — covered for
- * buy, not « en main ».
+ * `past` must not inflate the owned set (buy advice / %). The same change
+ * surfaces « déjà eu » so sold/discarded cards do not reappear as « à acheter ».
+ * `away` is its own bucket (filterable in the UI) but still counts as in-hand
+ * for completion. A legacy `wanted` row is read as `away`. Virtuals (closed
+ * sealed) are covered for buy, not « en main ».
  */
 import { ownershipSetFromPrintKey } from "@/core/collect/checklistOwnership";
 import {
   countsAsOwned,
+  isItemAway,
   isItemPast,
-  isItemWanted,
 } from "@/core/collect/itemAbsence";
-import type { ItemPresence } from "@/generated/prisma/browser";
 
 export type ChecklistCardPresence =
   | "owned"
+  | "away"
   | "virtual"
   | "past"
-  | "wanted"
   | "missing";
 
 export type ChecklistPresenceItem = {
   printKey: string | null;
   setCode?: string | null;
   variant?: string | null;
-  presence?: ItemPresence | null;
+  presence?: string | null;
 };
 
 export type ChecklistOwnershipBuckets = {
-  /** `owned` | `away` — counts for in-hand completion and buy exclusion. */
+  /** Physically on the shelf (`owned`). */
   owned: Set<string>;
+  /** Temporary absence — still in-hand for %, filterable in the UI. */
+  away: Set<string>;
   /** Covered by a closed sealed product — buy exclusion, not in-hand. */
   virtual: Set<string>;
   /** `past` — déjà eu ; exclude from buy missing. */
   alreadyHad: Set<string>;
-  /** `wanted` — seeking ; still in buy missing, intermediate checkbox. */
-  wanted: Set<string>;
 };
 
 /**
@@ -63,7 +63,7 @@ function ownershipKey(
 
 /**
  * Partition shelf items into checklist key buckets. When the same key appears
- * under several presences, precedence is owned → past → wanted.
+ * under several presences, precedence is owned → away → past.
  * `virtual` is merged separately (from sealed derivation).
  */
 export function partitionChecklistOwnership(
@@ -75,41 +75,41 @@ export function partitionChecklistOwnership(
 ): ChecklistOwnershipBuckets {
   const masterSet = Boolean(options.masterSet);
   const owned = new Set<string>();
+  const away = new Set<string>();
   const alreadyHad = new Set<string>();
-  const wanted = new Set<string>();
   const virtual = new Set<string>(options.virtualKeys ?? []);
 
   for (const item of items) {
     const key = ownershipKey(item, masterSet);
     if (!key) continue;
-    if (countsAsOwned(item)) owned.add(key);
+    if (isItemAway(item)) away.add(key);
+    else if (countsAsOwned(item)) owned.add(key);
     else if (isItemPast(item)) alreadyHad.add(key);
-    else if (isItemWanted(item)) wanted.add(key);
   }
 
   for (const key of owned) {
+    away.delete(key);
     alreadyHad.delete(key);
-    wanted.delete(key);
+    virtual.delete(key);
+  }
+  for (const key of away) {
+    alreadyHad.delete(key);
     virtual.delete(key);
   }
   for (const key of alreadyHad) {
-    wanted.delete(key);
-    virtual.delete(key);
-  }
-  for (const key of wanted) {
     virtual.delete(key);
   }
 
-  return { owned, virtual, alreadyHad, wanted };
+  return { owned, away, virtual, alreadyHad };
 }
 
 export function resolveChecklistCardPresence(
   print: { setId: string; printKey: string; finish?: string | null },
   buckets: {
     owned: ReadonlySet<string>;
+    away: ReadonlySet<string>;
     virtual: ReadonlySet<string>;
     alreadyHad: ReadonlySet<string>;
-    wanted: ReadonlySet<string>;
   },
   masterSet: boolean,
   isOwned: (
@@ -119,8 +119,8 @@ export function resolveChecklistCardPresence(
   ) => boolean,
 ): ChecklistCardPresence {
   if (isOwned(buckets.owned, print, masterSet)) return "owned";
+  if (isOwned(buckets.away, print, masterSet)) return "away";
   if (isOwned(buckets.alreadyHad, print, masterSet)) return "past";
-  if (isOwned(buckets.wanted, print, masterSet)) return "wanted";
   if (isOwned(buckets.virtual, print, masterSet)) return "virtual";
   return "missing";
 }
@@ -129,19 +129,23 @@ export function resolveChecklistCardPresence(
 export function checklistCardCountsAsMissing(
   presence: ChecklistCardPresence,
 ): boolean {
-  return presence === "missing" || presence === "wanted";
+  return presence === "missing";
 }
 
-/** Counts toward « en main » completion. */
+/** Counts toward « en main » completion (`owned` | `away`). */
 export function checklistCardCountsAsInHand(
   presence: ChecklistCardPresence,
 ): boolean {
-  return presence === "owned";
+  return presence === "owned" || presence === "away";
 }
 
 /** Counts toward « tout possédé (scellé compris) ». */
 export function checklistCardCountsAsCovered(
   presence: ChecklistCardPresence,
 ): boolean {
-  return presence === "owned" || presence === "virtual";
+  return (
+    presence === "owned" ||
+    presence === "away" ||
+    presence === "virtual"
+  );
 }

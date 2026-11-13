@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyAbsenceAction,
+  commitAbsenceWrite,
   absenceSinceInputValue,
   buildPresenceEvent,
   countsAsOwned,
@@ -45,10 +46,10 @@ describe("presenceForReason", () => {
 });
 
 describe("countsAsOwned", () => {
-  it("counts owned and away, not wanted or past", () => {
+  it("counts owned and away, including a legacy wanted row, not past", () => {
     expect(countsAsOwned({ presence: "owned" })).toBe(true);
     expect(countsAsOwned({ presence: "away" })).toBe(true);
-    expect(countsAsOwned({ presence: "wanted" })).toBe(false);
+    expect(countsAsOwned({ presence: "wanted" })).toBe(true);
     expect(countsAsOwned({ presence: "past" })).toBe(false);
     expect(countsAsOwned({})).toBe(true);
   });
@@ -102,7 +103,7 @@ describe("formatAbsenceBadge", () => {
     ).toEqual({ tone: "away", labelKey: "loaned_to", name: "Alice" });
   });
 
-  it("covers ordered / expected / sold / wanted", () => {
+  it("covers ordered / expected / sold, and reads legacy wanted as away", () => {
     expect(
       formatAbsenceBadge({
         presence: "away",
@@ -152,8 +153,8 @@ describe("formatAbsenceBadge", () => {
       name: "Luffy",
     });
     expect(formatAbsenceBadge({ presence: "wanted" })).toEqual({
-      tone: "wanted",
-      labelKey: "wanted",
+      tone: "away",
+      labelKey: "away",
     });
   });
 });
@@ -323,19 +324,6 @@ describe("applyAbsenceAction", () => {
     expect(countsAsOwned(fields)).toBe(false);
   });
 
-  it("cancels away → wanted keeping breadcrumbs", () => {
-    const current = applyAbsenceAction(ownedAbsenceState(), {
-      type: "depart",
-      reason: "ordered",
-      orderRef: "CMD-1",
-    }).fields;
-    const { fields, event } = applyAbsenceAction(current, { type: "cancel" });
-    expect(fields.presence).toBe("wanted");
-    expect(fields.absenceReason).toBe("ordered");
-    expect(fields.absenceOrderRef).toBe("CMD-1");
-    expect(event.kind).toBe("cancelled_to_wanted");
-  });
-
   it("recovers past → owned even after a sale", () => {
     const current = applyAbsenceAction(ownedAbsenceState(), {
       type: "depart",
@@ -350,8 +338,8 @@ describe("applyAbsenceAction", () => {
 
   it("rejects illegal transitions", () => {
     expect(() =>
-      applyAbsenceAction(ownedAbsenceState(), { type: "cancel" }),
-    ).toThrow(/cancel/);
+      applyAbsenceAction(ownedAbsenceState(), { type: "return" }),
+    ).toThrow(/return/);
     expect(() =>
       applyAbsenceAction(ownedAbsenceState(), { type: "recover" }),
     ).toThrow(/recover/);
@@ -359,12 +347,64 @@ describe("applyAbsenceAction", () => {
 });
 
 describe("inferPresenceEventKind / buildPresenceEvent", () => {
-  it("classifies recover and cancel", () => {
+  it("classifies recover and a departure", () => {
     expect(inferPresenceEventKind("past", "owned")).toBe("recovered");
-    expect(inferPresenceEventKind("away", "wanted")).toBe("cancelled_to_wanted");
     expect(
       buildPresenceEvent({ from: "owned", to: "away", reason: "loaned" }).kind,
     ).toBe("departed");
+  });
+});
+
+describe("commitAbsenceWrite", () => {
+  it("receives an awaited copy through the state machine", () => {
+    const current = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "ordered",
+      orderRef: "CMD-1",
+    }).fields;
+    const write = commitAbsenceWrite(current, { presence: "owned" });
+    expect(write?.fields).toEqual(ownedAbsenceState());
+    expect(write?.event?.kind).toBe("received_from_order");
+    expect(write?.event?.fromPresence).toBe("away");
+  });
+
+  it("recovers a past copy through the state machine", () => {
+    const current = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "sold",
+    }).fields;
+    const write = commitAbsenceWrite(current, { presence: "owned" });
+    expect(write?.event?.kind).toBe("recovered");
+  });
+
+  it("does not emit an event when only a note changes", () => {
+    const current = applyAbsenceAction(ownedAbsenceState(), {
+      type: "depart",
+      reason: "loaned",
+      recipient: "Alice",
+    }).fields;
+    const write = commitAbsenceWrite(current, {
+      presence: "away",
+      absenceReason: "loaned",
+      absenceRecipient: "Alice",
+      absenceNote: "rappel",
+      absenceSince: current.absenceSince,
+    });
+    expect(write?.event).toBeNull();
+    expect(write?.fields.absenceNote).toBe("rappel");
+    expect(write?.fields.presence).toBe("away");
+  });
+
+  it("reads a legacy wanted payload as an away departure", () => {
+    const write = commitAbsenceWrite(ownedAbsenceState(), {
+      presence: "wanted",
+      absenceReason: "ordered",
+      absenceOrderRef: "CMD-9",
+    });
+    expect(write?.fields.presence).toBe("away");
+    expect(write?.fields.absenceReason).toBe("ordered");
+    expect(write?.fields.absenceOrderRef).toBe("CMD-9");
+    expect(write?.event?.kind).toBe("departed");
   });
 });
 

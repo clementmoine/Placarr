@@ -21,37 +21,61 @@ describe("checklistPrefs", () => {
   it("keeps valid booleans and fills the rest", () => {
     expect(parseChecklistPrefs({ showOwned: false, masterSet: true })).toEqual({
       showOwned: false,
-      showPast: false,
+      showAway: true,
+      showPast: true,
       showVirtual: true,
-      onlyVirtual: false,
-      possessionView: "inHand",
       masterSet: true,
       masterSetSuggestDismissed: false,
       alwaysShowFinishLabels: false,
       showPrices: true,
-      hideImputedPrices: false,
-      hideZeroSealedExpectation: false,
+      showImputedPrices: true,
+      showZeroSealedExpectation: true,
     });
   });
 
-  it("round-trips showPast / showVirtual / possessionView", () => {
-    expect(parseChecklistPrefs({ showPast: true })).toMatchObject({
-      showPast: true,
+  it("round-trips showAway / showPast / showVirtual", () => {
+    expect(parseChecklistPrefs({ showPast: false })).toMatchObject({
+      showPast: false,
     });
     expect(
       parseChecklistPrefs({
+        showAway: false,
         showVirtual: false,
+      }),
+    ).toMatchObject({
+      showAway: false,
+      showVirtual: false,
+    });
+  });
+
+  it("migrates legacy hideImputed / hideZeroSealed to show*", () => {
+    expect(
+      parseChecklistPrefs({
+        hideImputedPrices: true,
+        hideZeroSealedExpectation: true,
+      }),
+    ).toMatchObject({
+      showImputedPrices: false,
+      showZeroSealedExpectation: false,
+    });
+    expect(
+      parseChecklistPrefs({
+        hideImputedPrices: false,
+        hideZeroSealedExpectation: false,
+      }),
+    ).toMatchObject({
+      showImputedPrices: true,
+      showZeroSealedExpectation: true,
+    });
+  });
+
+  it("ignores removed onlyVirtual / possessionView keys", () => {
+    expect(
+      parseChecklistPrefs({
         onlyVirtual: true,
         possessionView: "covered",
       }),
-    ).toMatchObject({
-      showVirtual: false,
-      onlyVirtual: true,
-      possessionView: "covered",
-    });
-    expect(parseChecklistPrefs({ possessionView: "nope" })).toMatchObject({
-      possessionView: "inHand",
-    });
+    ).toEqual(DEFAULT_CHECKLIST_PREFS);
   });
 
   it("migrates the previous finishLabelsOnlyWhenAmbiguous flag", () => {
@@ -76,29 +100,27 @@ describe("checklistPrefs", () => {
     const id = "shelf-test-prefs";
     writeChecklistPrefs(id, {
       showOwned: false,
+      showAway: false,
       showPast: true,
       showVirtual: false,
-      onlyVirtual: true,
-      possessionView: "covered",
       masterSet: true,
       masterSetSuggestDismissed: true,
       alwaysShowFinishLabels: true,
       showPrices: false,
-      hideImputedPrices: true,
-      hideZeroSealedExpectation: true,
+      showImputedPrices: false,
+      showZeroSealedExpectation: false,
     });
     expect(readChecklistPrefs(id)).toEqual({
       showOwned: false,
+      showAway: false,
       showPast: true,
       showVirtual: false,
-      onlyVirtual: true,
-      possessionView: "covered",
       masterSet: true,
       masterSetSuggestDismissed: true,
       alwaysShowFinishLabels: true,
       showPrices: false,
-      hideImputedPrices: true,
-      hideZeroSealedExpectation: true,
+      showImputedPrices: false,
+      showZeroSealedExpectation: false,
     });
   });
 });

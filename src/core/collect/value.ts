@@ -125,3 +125,30 @@ export function getItemValueEstimate(
 export function getEstimatedItemValueCents(item: ItemPriceValues) {
   return getItemValueEstimate(item)?.cents ?? null;
 }
+
+/**
+ * The fiche price chip is an observed market price only when the amount is a
+ * real sale, not a catalog cote. A `~` estimate must not be labeled as one.
+ */
+export function detailPriceChipIsObserved(input: {
+  hasAmount: boolean;
+  isEstimate: boolean;
+  isReferencePriceOnly: boolean;
+}): boolean {
+  return input.hasAmount && !input.isEstimate && !input.isReferencePriceOnly;
+}
+
+/**
+ * Dig `Estimation` facts are promoted to the same chip row as the hero price.
+ * When that hero is already the cote, the fact restates it.
+ */
+export function estimationFactDuplicatesPriceChip(
+  fact: { kind: string; label: string },
+  priceChipIsEstimate: boolean,
+): boolean {
+  return (
+    priceChipIsEstimate &&
+    fact.kind === "estimated-value" &&
+    /^estimation$/i.test(fact.label.trim())
+  );
+}

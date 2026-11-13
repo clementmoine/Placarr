@@ -321,7 +321,7 @@
     },
     "absence": {
       "title": "Presence",
-      "hint": "On the shelf, temporarily out, wanted, or past (always recoverable).",
+      "hint": "On the shelf, temporarily out, or past (always recoverable).",
       "presence": "Status",
       "reason": "Reason",
       "since": "Since",
@@ -337,14 +337,11 @@
       "salePrice": "Sale price (€)",
       "note": "Note",
       "return": "Put back",
-      "cancel": "Cancel → wanted",
       "recover": "Recovered",
-      "found": "Found / on shelf",
       "orderDuplicateWarning": "You already have {count, plural, one {an owned copy} other {# owned copies}} of this print (e.g. {name}).",
       "presences": {
         "owned": "On shelf",
         "away": "Away (temporary)",
-        "wanted": "Wanted",
         "past": "Past"
       },
       "badge": {
@@ -381,8 +378,7 @@
         "consumed": "Consumed",
         "lost": "Lost",
         "stolen": "Stolen",
-        "past": "Past",
-        "wanted": "Wanted"
+        "past": "Past"
       }
     },
     "trade": {
@@ -449,7 +445,7 @@
       "freeEntry": "Free entry",
       "freeEntryHint": "Name, barcode, or details — outside the catalogue.",
       "freeEntryTitle": "Free entry",
-      "freeEntryDescription": "Add an item without the catalogue. If an away or wanted copy matches, we’ll offer to receive it.",
+      "freeEntryDescription": "Add an item without the catalogue. If an away copy matches, we’ll offer to receive it.",
       "sealedHint": "Display, deck, booster… sealed from the catalogue."
     },
     "bulkAdd": {
@@ -712,7 +708,7 @@
         "acquired": "Acquired",
         "departed": "Left",
         "returned": "Returned",
-        "cancelled_to_wanted": "Cancelled → wanted",
+        "cancelled_to_wanted": "Wait cancelled",
         "received_from_order": "Received (awaited)",
         "recovered": "Recovered",
         "opened": "Opened",
@@ -771,12 +767,11 @@
       "closeConfirmStay": "Stay",
       "closeConfirmLeave": "Close",
       "awaitedTitle": "Were you waiting for this?",
-      "awaitedDescription": "{count} card(s) in your selection match a copy already away or wanted on this shelf.",
+      "awaitedDescription": "{count} card(s) in your selection match a copy already away on this shelf.",
       "awaitedReceive": "Receive {count}",
       "awaitedAddNew": "Add as new copies",
       "awaitedPartialFailure": "{failed} receive(s) failed.",
       "awaitedKindOrdered": "On order / expected",
-      "awaitedKindWanted": "Wanted",
       "awaitedKindAway": "Temporarily away"
     },
     "checklistTitle": "Checklist",
@@ -795,14 +790,11 @@
     "checklistLanguage": "Language",
     "checklistSettings": "Display options",
     "checklistShowOwned": "Also show cards already on the shelf",
-    "checklistShowPast": "Show cards already had (sold, discarded…)",
-    "checklistShowVirtual": "Show cards inside sealed products (virtual)",
-    "checklistOnlyVirtual": "Only show virtual cards",
-    "checklistPossessionView": "Counter",
-    "checklistPossessionInHand": "In hand",
-    "checklistPossessionCovered": "All owned (incl. sealed)",
+    "checklistShowAway": "Show away cards (ordered, loaned…)",
+    "checklistShowPast": "Show already-had cards (discarded, sold…)",
+    "checklistShowVirtual": "Show virtual cards (sealed)",
     "checklistAlreadyHad": "Already had",
-    "checklistWanted": "Wanted",
+    "checklistAway": "Away",
     "checklistVirtual": "Virtual",
     "checklistMasterSet": "Master set (each finish separately)",
     "checklistMasterSetSuggest": "You own {count} cards with multiple finishes — turn on master set to track each finish separately (regular / foil, etc.)?",
@@ -810,8 +802,8 @@
     "checklistMasterSetSuggestDismiss": "Not now",
     "checklistAlwaysShowFinishLabels": "Show all finishes",
     "checklistShowPrices": "Show prices",
-    "checklistHideImputedPrices": "Hide approximate prices (~)",
-    "checklistHideZeroSealedExpectation": "Hide sealed products with no estimated new cards",
+    "checklistShowImputedPrices": "Show approximate prices (~)",
+    "checklistShowZeroSealedExpectation": "Show sealed products with no estimated new cards",
     "checklistUntaggedOwned": "{count} cards on the shelf have no finish set — master set ignores them until you choose None or Silver on each copy.",
     "checklistSearch": "Search for a card or set…",
     "checklistSearchNoResults": "No cards match this search.",
@@ -927,9 +919,8 @@
     "pricedOnly": "With price estimate",
     "duplicatesOnly": "Duplicates only",
     "view": "View",
-    "view.active": "Active collection",
+    "view.active": "Entire collection",
     "view.away": "Away (loan, order…)",
-    "view.wanted": "Wanted",
     "view.past": "Past / once owned",
     "view.all": "Everything",
     "view.duplicates": "Duplicates only"

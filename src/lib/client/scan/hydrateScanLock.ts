@@ -36,7 +36,7 @@ export type OwnedScanHit = {
   /** True when we scanned a barcode the owned copy is missing. */
   completable: boolean;
   /**
-   * away / wanted copy — offer « Recevoir » instead of treating as already owned.
+   * Absent copy — offer « Recevoir » instead of treating it as already on the shelf.
    */
   receivable: boolean;
   presence?: string | null;

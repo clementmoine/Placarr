@@ -421,12 +421,12 @@ export async function buildChecklistForShelf(input: {
    * Master set : `setCode|printKey|finish` via {@link checklistSetOwnedKey}.
    */
   owned: ReadonlySet<string>;
+  /** Temporary absence — in-hand for %, filterable in the UI. */
+  away?: ReadonlySet<string>;
   /** Covered by closed sealed products — buy exclusion, not in-hand %. */
   virtual?: ReadonlySet<string>;
   /** `past` — déjà eu ; hors % et hors buy missing. */
   alreadyHad?: ReadonlySet<string>;
-  /** `wanted` — encore dans buy missing, case intermédiaire. */
-  wanted?: ReadonlySet<string>;
   language?: string | null;
   /** Nom d'étagère — borne au catalogue quand il est unique (Ninja Ranks…). */
   shelfName?: string | null;
@@ -665,9 +665,9 @@ export async function buildChecklistForShelf(input: {
     sets,
     prints,
     owned: expandOwned(input.owned),
+    away: expandOwned(input.away),
     virtual: expandOwned(input.virtual),
     alreadyHad: expandOwned(input.alreadyHad),
-    wanted: expandOwned(input.wanted),
     language,
     masterSet,
   });

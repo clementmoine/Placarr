@@ -225,6 +225,18 @@ describe("collectionQuery", () => {
 
     expect(
       parseItemCollectionFilters({
+        get: (key) => (key === "view" ? "all" : null),
+      }).shelfView,
+    ).toBe("active");
+
+    expect(
+      parseItemCollectionFilters({
+        get: (key) => (key === "view" ? "wanted" : null),
+      }).shelfView,
+    ).toBe("away");
+
+    expect(
+      parseItemCollectionFilters({
         get: (key) => (key === "condition" ? "loose" : null),
       }).condition,
     ).toBe("loose");

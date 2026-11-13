@@ -131,6 +131,7 @@ import {
 import {
   mergeCoverAttachmentsForPicker,
   getCoverImage,
+  preferLocalDisplayCoverUrl,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
 } from "@/core/collect/media";
@@ -222,7 +223,7 @@ export function ItemModal({
   shelfId: Shelf["id"];
   shelfType?: Shelf["type"];
   defaultTab?: "general" | "poster" | "background" | "info";
-  /** away / wanted copies — « tu l’attendais ? » before creating a duplicate. */
+  /** Absent copies — « tu l’attendais ? » before creating a duplicate. */
   receivableItems?: readonly ReceivableShelfItem[];
   /** Shelf copies used for ordered anti-doublon (owned twin warning). */
   identityPeerItems?: readonly ReceivableShelfItem[];
@@ -1136,9 +1137,24 @@ export function ItemModal({
    * gallery kept showing the first framing.
    */
   const displayUrlFor = useCallback(
-    (url: string): string =>
-      cropVersion && isEditDerivativeUrl(url) ? `${url}?v=${cropVersion}` : url,
-    [cropVersion],
+    (url: string): string => {
+      const mediaForPreview = {
+        imageUrl: item?.imageUrl ?? null,
+        metadata: item?.metadata ?? fetchedMetadata ?? null,
+        shelf: activeShelfForMedia,
+      };
+      const preview = preferLocalDisplayCoverUrl(url, mediaForPreview);
+      return cropVersion && isEditDerivativeUrl(preview)
+        ? `${preview}?v=${cropVersion}`
+        : preview;
+    },
+    [
+      activeShelfForMedia,
+      cropVersion,
+      fetchedMetadata,
+      item?.imageUrl,
+      item?.metadata,
+    ],
   );
 
   const finalBackgrounds = useMemo(() => {
@@ -1414,9 +1430,10 @@ export function ItemModal({
       locale,
     );
 
-    // "Par défaut" = top of the dynamic gallery ranking (same as displayed cover
-    // when the user has not explicitly picked one).
+    // "Par défaut" = same cover as the fiche (local twin preferred over CDN
+    // proxy URLs that paint blank Affiche tiles).
     const defaultCoverUrl =
+      getCoverImage(mediaForCover, locale) ??
       orderedCovers[0]?.url ??
       getCoverImage({ ...mediaForCover, imageUrl: null }, locale);
 
@@ -1950,6 +1967,9 @@ export function ItemModal({
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
+      // Keep the Affiche pick URL as-is (Booknode CDN stays Booknode). Do not
+      // rewrite to a same-role `/uploads` twin — that made Enregistrer stick the
+      // BDovore row after reopen. Proxy fetch is budgeted in localize + API.
       const imageUrl = await localizeImageFieldForSubmit(values.imageUrl);
       const backgroundImageUrl = await localizeImageFieldForSubmit(
         values.backgroundImageUrl,

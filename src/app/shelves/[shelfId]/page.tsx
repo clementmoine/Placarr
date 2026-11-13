@@ -136,6 +136,7 @@ import {
   formatAbsencePriceEuros,
   sumSoldAbsenceCents,
 } from "@/core/collect/itemAbsence";
+import { isReceivablePresence } from "@/core/collect/receivableMatches";
 import { formatCessionMarkdown } from "@/core/collect/cessionMarkdown";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
@@ -526,13 +527,13 @@ function ShelfComponent() {
     [shelf?.items],
   );
 
-  /** away / wanted copies — « tu l’attendais ? » before creating a duplicate. */
+  /** Absent copies — « tu l’attendais ? » before creating a duplicate. */
   const receivableItems = useMemo(
     () =>
       ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
         (item) =>
           (item.printKey || item.barcode) &&
-          (item.presence === "away" || item.presence === "wanted"),
+          isReceivablePresence(item.presence),
       ),
     [shelf?.items],
   );

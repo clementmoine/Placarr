@@ -327,16 +327,16 @@ function SinglesGrid({
 export function Advice({
   advice,
   cards,
-  hideZeroSealedExpectation,
-  hideImputedPrices = false,
+  showZeroSealedExpectation,
+  showImputedPrices = true,
   virtualCoveredCount = 0,
   t,
 }: {
   advice: SetAdvice;
   cards: readonly ChecklistPrint[];
-  hideZeroSealedExpectation: boolean;
-  /** Hors total / listes : cotes ~ traitées comme « sans cote ». */
-  hideImputedPrices?: boolean;
+  showZeroSealedExpectation: boolean;
+  /** Cotes ~ dans le total / listes. Off → traitées comme « sans cote ». */
+  showImputedPrices?: boolean;
   /** Prints exclus du missing car virtuels sous scellé fermé. */
   virtualCoveredCount?: number;
   t: Translate;
@@ -345,8 +345,8 @@ export function Advice({
   const [yieldLimit, setYieldLimit] = useState(YIELD_PAGE);
   const plan = useMemo(
     () =>
-      hideImputedPrices ? withoutImputedPrices(advice.plan) : advice.plan,
-    [advice.plan, hideImputedPrices],
+      showImputedPrices ? advice.plan : withoutImputedPrices(advice.plan),
+    [advice.plan, showImputedPrices],
   );
   const { singles, mixed, sealed, recommendation } = plan;
   const recommended = recommendation.track;
@@ -410,9 +410,9 @@ export function Advice({
   const hasMixedCart = mixed.items.length > 0;
 
   const metrics = (
-    hideZeroSealedExpectation
-      ? plan.skuMetrics.filter((m) => m.indeterminate || m.expectedNewCards > 0)
-      : plan.skuMetrics
+    showZeroSealedExpectation
+      ? plan.skuMetrics
+      : plan.skuMetrics.filter((m) => m.indeterminate || m.expectedNewCards > 0)
   )
     .slice()
     .sort((a, b) => {

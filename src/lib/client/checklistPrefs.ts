@@ -4,27 +4,24 @@
  * Master set off + afficher les possédées on au démarrage d'une licence ;
  * l'utilisateur peut basculer, et on mémorise. La suggestion master set peut
  * être écartée sans activer le mode.
+ *
+ * Toutes les cases d'affichage partagent la polarité « Afficher » (coché =
+ * visible / inclus).
  */
-
-/** Compteur / % : en main seul, ou tout possédé (scellé compris). */
-export type ChecklistPossessionView = "inHand" | "covered";
 
 export type ChecklistShelfPrefs = {
   showOwned: boolean;
+  /** Absents temporaires (commande, prêt…). */
+  showAway: boolean;
   /**
-   * Afficher les cartes « déjà eues » (`past`) avec badge. Défaut off — elles
-   * restent hors buy missing mais hors liste (cas typique : vendu / jeté).
+   * Cartes « déjà eues » (`past`) avec badge. Défaut on — hors buy missing.
    */
   showPast: boolean;
   /**
-   * Afficher les cartes virtuelles (dans un scellé fermé). Défaut on — hors
-   * buy missing, badge « virtuel ».
+   * Cartes virtuelles (dans un scellé fermé). Défaut on — hors buy missing,
+   * badge « virtuel » ; comptées dans la barre tant que la case est on.
    */
   showVirtual: boolean;
-  /** Ne lister que les virtuels. */
-  onlyVirtual: boolean;
-  /** Bascule compteur / barre de progression. */
-  possessionView: ChecklistPossessionView;
   masterSet: boolean;
   /** L'utilisateur a écarté la suggestion d'activer le master set. */
   masterSetSuggestDismissed: boolean;
@@ -37,29 +34,28 @@ export type ChecklistShelfPrefs = {
   /** Cotes par carte + panneau conseil d'achat. */
   showPrices: boolean;
   /**
-   * Masquer les cotes ~ (médiane de rareté) : hors total, comptées « sans
-   * cote ». Défaut off — elles restent dans le total avec le préfixe ~.
+   * Cotes ~ (médiane de rareté). Défaut on — dans le total avec le préfixe ~.
+   * Off : hors total, comptées « sans cote ».
    */
-  hideImputedPrices: boolean;
+  showImputedPrices: boolean;
   /**
-   * Conseil scellé : masquer les SKU à espérance 0 (déjà couverts / sans
-   * impact estimé). Défaut off — on liste tout, trié du plus rentable.
+   * Conseil scellé : SKU à espérance 0 (déjà couverts / sans impact estimé).
+   * Défaut on — on liste tout, trié du plus rentable.
    */
-  hideZeroSealedExpectation: boolean;
+  showZeroSealedExpectation: boolean;
 };
 
 export const DEFAULT_CHECKLIST_PREFS: ChecklistShelfPrefs = {
   showOwned: true,
-  showPast: false,
+  showAway: true,
+  showPast: true,
   showVirtual: true,
-  onlyVirtual: false,
-  possessionView: "inHand",
   masterSet: false,
   masterSetSuggestDismissed: false,
   alwaysShowFinishLabels: false,
   showPrices: true,
-  hideImputedPrices: false,
-  hideZeroSealedExpectation: false,
+  showImputedPrices: true,
+  showZeroSealedExpectation: true,
 };
 
 const STORAGE_PREFIX = "placarr.checklistPrefs.v1:";
@@ -72,30 +68,43 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function parsePossessionView(raw: unknown): ChecklistPossessionView {
-  return raw === "covered" ? "covered" : "inHand";
+function parseShowFlag(
+  raw: Record<string, unknown>,
+  key: keyof ChecklistShelfPrefs,
+  fallback: boolean,
+): boolean {
+  const value = raw[key];
+  if (typeof value === "boolean") return value;
+  return fallback;
+}
+
+/** Ancien `hideX: true` → `showX: false` ; clé absente → fallback. */
+function parseShowFromLegacyHide(
+  raw: Record<string, unknown>,
+  showKey: "showImputedPrices" | "showZeroSealedExpectation",
+  hideKey: "hideImputedPrices" | "hideZeroSealedExpectation",
+  fallback: boolean,
+): boolean {
+  if (typeof raw[showKey] === "boolean") return raw[showKey] as boolean;
+  if (typeof raw[hideKey] === "boolean") return !(raw[hideKey] as boolean);
+  return fallback;
 }
 
 export function parseChecklistPrefs(raw: unknown): ChecklistShelfPrefs {
   if (!isRecord(raw)) return { ...DEFAULT_CHECKLIST_PREFS };
   return {
-    showOwned:
-      typeof raw.showOwned === "boolean"
-        ? raw.showOwned
-        : DEFAULT_CHECKLIST_PREFS.showOwned,
-    showPast:
-      typeof raw.showPast === "boolean"
-        ? raw.showPast
-        : DEFAULT_CHECKLIST_PREFS.showPast,
-    showVirtual:
-      typeof raw.showVirtual === "boolean"
-        ? raw.showVirtual
-        : DEFAULT_CHECKLIST_PREFS.showVirtual,
-    onlyVirtual:
-      typeof raw.onlyVirtual === "boolean"
-        ? raw.onlyVirtual
-        : DEFAULT_CHECKLIST_PREFS.onlyVirtual,
-    possessionView: parsePossessionView(raw.possessionView),
+    showOwned: parseShowFlag(
+      raw,
+      "showOwned",
+      DEFAULT_CHECKLIST_PREFS.showOwned,
+    ),
+    showAway: parseShowFlag(raw, "showAway", DEFAULT_CHECKLIST_PREFS.showAway),
+    showPast: parseShowFlag(raw, "showPast", DEFAULT_CHECKLIST_PREFS.showPast),
+    showVirtual: parseShowFlag(
+      raw,
+      "showVirtual",
+      DEFAULT_CHECKLIST_PREFS.showVirtual,
+    ),
     masterSet:
       typeof raw.masterSet === "boolean"
         ? raw.masterSet
@@ -115,14 +124,18 @@ export function parseChecklistPrefs(raw: unknown): ChecklistShelfPrefs {
       typeof raw.showPrices === "boolean"
         ? raw.showPrices
         : DEFAULT_CHECKLIST_PREFS.showPrices,
-    hideImputedPrices:
-      typeof raw.hideImputedPrices === "boolean"
-        ? raw.hideImputedPrices
-        : DEFAULT_CHECKLIST_PREFS.hideImputedPrices,
-    hideZeroSealedExpectation:
-      typeof raw.hideZeroSealedExpectation === "boolean"
-        ? raw.hideZeroSealedExpectation
-        : DEFAULT_CHECKLIST_PREFS.hideZeroSealedExpectation,
+    showImputedPrices: parseShowFromLegacyHide(
+      raw,
+      "showImputedPrices",
+      "hideImputedPrices",
+      DEFAULT_CHECKLIST_PREFS.showImputedPrices,
+    ),
+    showZeroSealedExpectation: parseShowFromLegacyHide(
+      raw,
+      "showZeroSealedExpectation",
+      "hideZeroSealedExpectation",
+      DEFAULT_CHECKLIST_PREFS.showZeroSealedExpectation,
+    ),
   };
 }
 

@@ -8,9 +8,8 @@
  * `ItemContainmentLink` et colonnes SKU viennent à l'étape 2 — ici on prend
  * des vues abstraites pour figer les règles avant la migration.
  */
-import { countsAsOwned, isItemAway, isItemPast, isItemWanted } from "@/core/collect/itemAbsence";
+import { countsAsOwned, isItemAway, isItemPast } from "@/core/collect/itemAbsence";
 import { toContentsTree, type SealedContentsSource } from "@/core/collect/sealedContentsTree";
-import type { ItemPresence } from "@/generated/prisma/browser";
 
 export type ContainmentState = "sealed" | "partial" | "emptied";
 
@@ -73,7 +72,7 @@ export type VirtualProductView = SealedContentsSource & {
  * (sinon les contenus sont matérialisés / sortis).
  */
 export function canDeriveVirtualContents(input: {
-  presence?: ItemPresence | null;
+  presence?: string | null;
   openedAt?: Date | string | null;
   contentsKnown?: boolean | null;
   printsArePreview?: boolean | null;
@@ -96,7 +95,7 @@ export function canDeriveVirtualContents(input: {
  * - `contentsKnown=false` / preview → liste vide.
  */
 export function virtualContents(input: {
-  presence?: ItemPresence | null;
+  presence?: string | null;
   openedAt?: Date | string | null;
   product: VirtualProductView;
 }): VirtualContent[] {
@@ -167,7 +166,7 @@ export function virtualPrintKeySet(
 /**
  * Statut d'affichage unifié (checklist / grille).
  *
- * Priorité : exemplaire physique (owned → away → past → wanted) puis couverture
+ * Priorité : exemplaire physique (owned → away → past) puis couverture
  * virtuelle, sinon manquant. Un `past` physique gagne sur un virtuel (déjà eu
  * ne redevient pas « dans un scellé »).
  */
@@ -176,22 +175,20 @@ export type CollectionDisplayStatus =
   | "away"
   | "virtual"
   | "past"
-  | "wanted"
   | "missing";
 
 export function resolveCollectionDisplayStatus(input: {
   /** Présence d'un item physique pour ce print / SKU, si présent. */
-  presence?: ItemPresence | null;
+  presence?: string | null;
   /** Couvert par un scellé fermé owned|away (virtuels dérivés). */
   virtual?: boolean;
-  /** Item physique existe-t-il (même wanted/past) ? */
+  /** Item physique existe-t-il (même past) ? */
   hasPhysical?: boolean;
 }): CollectionDisplayStatus {
   const hasPhysical =
     input.hasPhysical ?? input.presence != null;
   if (hasPhysical) {
     if (isItemPast({ presence: input.presence })) return "past";
-    if (isItemWanted({ presence: input.presence })) return "wanted";
     if (isItemAway({ presence: input.presence })) return "away";
     if (countsAsOwned({ presence: input.presence })) return "owned";
   }
@@ -201,7 +198,7 @@ export function resolveCollectionDisplayStatus(input: {
 
 /**
  * Compte pour le compteur « tout possédé (scellé compris) » : reçu, away, ou
- * virtuel. Pas past / wanted / missing.
+ * virtuel. Pas past / missing.
  */
 export function countsTowardPossession(
   status: CollectionDisplayStatus,

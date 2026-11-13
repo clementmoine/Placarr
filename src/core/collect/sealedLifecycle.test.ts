@@ -149,7 +149,7 @@ describe("virtualContents", () => {
     ).toEqual([]);
   });
 
-  it("returns nothing for past / wanted parents", () => {
+  it("returns nothing for a past parent and reads a legacy wanted parent as away", () => {
     expect(
       virtualContents({
         presence: "past",
@@ -171,7 +171,7 @@ describe("virtualContents", () => {
           guaranteedPrints: [{ printKey: "game:1" }],
         }),
       }),
-    ).toEqual([]);
+    ).toEqual([{ kind: "print", printKey: "game:1", qty: 1 }]);
   });
 
   it("exposes child SKUs for a mixed bundle, not lottery prints", () => {
@@ -251,7 +251,7 @@ describe("resolveCollectionDisplayStatus", () => {
         presence: "wanted",
         virtual: true,
       }),
-    ).toBe("wanted");
+    ).toBe("away");
   });
 
   it("marks virtual when only covered by a sealed parent", () => {
@@ -272,7 +272,6 @@ describe("resolveCollectionDisplayStatus", () => {
     expect(countsTowardPossession("away")).toBe(true);
     expect(countsTowardPossession("virtual")).toBe(true);
     expect(countsTowardPossession("past")).toBe(false);
-    expect(countsTowardPossession("wanted")).toBe(false);
     expect(countsTowardPossession("missing")).toBe(false);
     expect(countsAsInHand("owned")).toBe(true);
     expect(countsAsInHand("virtual")).toBe(false);

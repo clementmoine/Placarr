@@ -147,11 +147,11 @@ export async function GET(
   const virtualKeys = virtualChecklistKeys(virtualPrintKeys, { masterSet });
 
   /*
-    Presence buckets: past/wanted must not inflate owned (buy + %), and past
+    Presence buckets: past must not inflate owned (buy + %), and past
     must surface as « déjà eu » in the same change or sold cards look missing.
     Virtuals exclude from buy missing without counting as in-hand.
   */
-  const { owned, virtual, alreadyHad, wanted } = partitionChecklistOwnership(
+  const { owned, away, virtual, alreadyHad } = partitionChecklistOwnership(
     matching,
     { masterSet, virtualKeys },
   );
@@ -159,9 +159,9 @@ export async function GET(
   const checklist = await buildChecklistForShelf({
     shelfType: shelf.type as MediaType,
     owned,
+    away,
     virtual,
     alreadyHad,
-    wanted,
     language,
     shelfName: shelf.name,
     masterSet,

@@ -1,20 +1,19 @@
 import {
+  coerceItemPresence,
   countsAsOwned,
-  isItemPresence,
   type ItemPresence,
 } from "@/core/collect/itemAbsence";
 
 /**
  * Shelf grid view — replaces the old « doublons seulement » toggle.
- * Default {@link DEFAULT_ITEM_COLLECTION_SHELF_VIEW} hides `past` / `wanted`
- * (plan: active shelf = owned + away).
+ * Default {@link DEFAULT_ITEM_COLLECTION_SHELF_VIEW} (« Toute la collection »)
+ * applies no presence filter. `all` is the same view, kept for old URLs.
+ * `duplicates` still limits itself to owned + temporarily away.
  */
 export const ITEM_COLLECTION_SHELF_VIEWS = [
   "active",
   "away",
-  "wanted",
   "past",
-  "all",
   "duplicates",
 ] as const;
 
@@ -35,6 +34,9 @@ export function isItemCollectionShelfView(
 export function parseItemCollectionShelfView(
   value: string | null | undefined,
 ): ItemCollectionShelfView {
+  if (value === "all") return DEFAULT_ITEM_COLLECTION_SHELF_VIEW;
+  // Old bookmarks for the removed « recherché » view land on absents.
+  if (value === "wanted") return "away";
   if (isItemCollectionShelfView(value)) return value;
   return DEFAULT_ITEM_COLLECTION_SHELF_VIEW;
 }
@@ -44,12 +46,13 @@ type PresenceFields = {
 };
 
 function itemPresence(item: PresenceFields): ItemPresence {
-  return isItemPresence(item.presence) ? item.presence : "owned";
+  return coerceItemPresence(item.presence);
 }
 
 /**
  * Whether a physical item belongs in the chosen shelf view.
- * `duplicates` uses the same membership as `active` (filter groups later).
+ * `active` keeps every presence. `duplicates` stays on owned + away,
+ * then groups are filtered.
  */
 export function itemMatchesShelfView(
   item: PresenceFields,
@@ -58,16 +61,13 @@ export function itemMatchesShelfView(
   const presence = itemPresence(item);
   switch (view) {
     case "active":
+      return true;
     case "duplicates":
       return countsAsOwned({ presence });
     case "away":
       return presence === "away";
-    case "wanted":
-      return presence === "wanted";
     case "past":
       return presence === "past";
-    case "all":
-      return true;
   }
 }
 

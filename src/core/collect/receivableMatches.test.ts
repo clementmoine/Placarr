@@ -26,7 +26,7 @@ describe("printIdentityKey", () => {
 });
 
 describe("findReceivableShelfMatches", () => {
-  it("matches away/wanted exact finish, ignores owned", () => {
+  it("matches away and a legacy wanted row, ignores owned", () => {
     const items = [
       { id: "owned", name: "A", ...base, presence: "owned" as const },
       {
@@ -71,7 +71,7 @@ describe("findReceivableShelfMatches", () => {
 });
 
 describe("pickPreferredReceivableMatch", () => {
-  it("prefers ordered over wanted", () => {
+  it("prefers an order over another absent copy", () => {
     const pick = pickPreferredReceivableMatch([
       {
         id: "w",
@@ -141,7 +141,7 @@ describe("findOwnedIdentityPeers", () => {
 });
 
 describe("findReceivableByBarcode", () => {
-  it("matches away/wanted with barcode variants, ignores owned", () => {
+  it("matches away and a legacy wanted row, ignores owned", () => {
     const items = [
       {
         id: "owned",

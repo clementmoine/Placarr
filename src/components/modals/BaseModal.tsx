@@ -89,12 +89,31 @@ export function BaseModal({
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) tryDismiss();
+    if (!open) {
+      // Opening a stacked dialog (awaited receive / confirm) can flip this
+      // root to "closed" while another [role=dialog] is still up — ignore.
+      if (document.querySelectorAll('[role="dialog"]').length > 1) return;
+      tryDismiss();
+    }
   };
 
   const blockDismissEvent = (
-    event: { preventDefault: () => void },
+    event: { preventDefault: () => void; target?: EventTarget | null },
   ): void => {
+    // Nested BaseModals (close confirm / awaited receipt) sit in another
+    // portal. Interacting with them fires interact-outside on this dialog —
+    // that must not run onDismissRequest ("Fermer sans ajouter" on Add).
+    const target = event.target;
+    if (target instanceof Element) {
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+      if (dialogs.length > 1) {
+        const topmost = dialogs[dialogs.length - 1];
+        if (topmost?.contains(target)) {
+          event.preventDefault();
+          return;
+        }
+      }
+    }
     if (onDismissRequest && !onDismissRequest()) {
       event.preventDefault();
     }

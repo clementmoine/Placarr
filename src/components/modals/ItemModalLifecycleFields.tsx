@@ -78,7 +78,6 @@ const ABSENCE_SOURCES = [
 function reasonsForPresence(presence: ItemPresence): readonly AbsenceReason[] {
   if (presence === "away") return TEMPORARY_ABSENCE_REASONS;
   if (presence === "past") return DEFINITIVE_ABSENCE_REASONS;
-  if (presence === "wanted") return ABSENCE_REASONS;
   return [];
 }
 
@@ -364,28 +363,15 @@ export function ItemModalLifecycleFields({
           </p>
           <div className="flex flex-wrap gap-1">
             {presence === "away" ? (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-semibold"
-                  onClick={setOwned}
-                >
-                  {t("items.absence.return")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-semibold"
-                  onClick={() => {
-                    setValue("presence", "wanted", { shouldDirty: true });
-                  }}
-                >
-                  {t("items.absence.cancel")}
-                </Button>
-              </>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs font-semibold"
+                onClick={setOwned}
+              >
+                {t("items.absence.return")}
+              </Button>
             ) : null}
             {presence === "past" ? (
               <Button
@@ -399,17 +385,6 @@ export function ItemModalLifecycleFields({
                 }}
               >
                 {t("items.absence.recover")}
-              </Button>
-            ) : null}
-            {presence === "wanted" ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs font-semibold"
-                onClick={setOwned}
-              >
-                {t("items.absence.found")}
               </Button>
             ) : null}
           </div>

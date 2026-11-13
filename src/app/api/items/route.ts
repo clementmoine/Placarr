@@ -41,8 +41,7 @@ import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { parseItemCondition } from "@/core/collect/condition";
 import {
   buildPresenceEvent,
-  isAwaitingReceiptReason,
-  normalizeItemAbsenceInput,
+  commitAbsenceWrite,
   ownedAbsenceState,
   parsePriceCents,
   type ItemAbsenceFields,
@@ -490,10 +489,15 @@ export async function POST(req: NextRequest) {
       // which detached the cover from its gallery attachment (losing source and
       // region) and could never be undone. Framing is the collector's call.
       if (imageUrl) {
-        localImageUrl = await downloadRemoteImage(imageUrl);
+        localImageUrl = await downloadRemoteImage(imageUrl, {
+          budgetMs: 8_000,
+        });
       }
       if (backgroundImageUrl) {
-        localBackgroundImageUrl = await downloadRemoteImage(backgroundImageUrl);
+        localBackgroundImageUrl = await downloadRemoteImage(
+          backgroundImageUrl,
+          { budgetMs: 8_000 },
+        );
       }
 
       const itemSlug = await allocateUniqueItemSlug(
@@ -502,8 +506,8 @@ export async function POST(req: NextRequest) {
         { print: { printKey, variant, language, setCode } },
       );
 
-      const absence: ItemAbsenceFields =
-        normalizeItemAbsenceInput({
+      const committed =
+        commitAbsenceWrite(null, {
           loanedTo: rawLoanedTo,
           loanedAt: rawLoanedAt,
           presence: rawPresence,
@@ -518,7 +522,8 @@ export async function POST(req: NextRequest) {
           absenceNote: rawAbsenceNote,
           absencePriceCents: rawAbsencePriceCents,
           absenceExpectedAt: rawAbsenceExpectedAt,
-        }) ?? ownedAbsenceState();
+        }) ?? { fields: ownedAbsenceState(), event: null };
+      const absence: ItemAbsenceFields = committed.fields;
 
       const grade: ItemGradeFields =
         mergeItemGrade(null, {
@@ -550,16 +555,7 @@ export async function POST(req: NextRequest) {
         extraSnapshot: sealedSnapshot,
       });
 
-      const departedEvent =
-        absence.presence !== "owned"
-          ? buildPresenceEvent({
-              from: "owned",
-              to: absence.presence,
-              reason: absence.absenceReason,
-              at: absence.absenceSince ?? undefined,
-              fields: absence,
-            })
-          : null;
+      const departedEvent = committed.event;
 
       const item = await prisma.item.create({
         data: {
@@ -795,12 +791,6 @@ export async function PATCH(req: NextRequest) {
         }
         data.condition = resolvedCondition;
       }
-      const absencePatch = normalizeItemAbsenceInput(
-        raw as Record<string, unknown>,
-      );
-      if (absencePatch) {
-        Object.assign(data, absencePatch);
-      }
       if ("purchasePriceCents" in raw) {
         data.purchasePriceCents = parsePriceCents(raw.purchasePriceCents);
       }
@@ -886,7 +876,10 @@ export async function PATCH(req: NextRequest) {
         const previousImageUrl = item.imageUrl;
         const selectedImageUrl =
           typeof data.imageUrl === "string" ? data.imageUrl : null;
-        data.imageUrl = await downloadRemoteImage(data.imageUrl);
+        // Affiche Enregistrer: don't block the modal on stacked Flare unlocks.
+        data.imageUrl = await downloadRemoteImage(data.imageUrl, {
+          budgetMs: 8_000,
+        });
         // Always sync — even when the URL is unchanged — so a source=user pin
         // realigns to the cover the collector just confirmed (e.g. re-selecting
         // the stored marketplace pin while display was stuck on another image).
@@ -905,6 +898,7 @@ export async function PATCH(req: NextRequest) {
       if (data.backgroundImageUrl) {
         data.backgroundImageUrl = await downloadRemoteImage(
           data.backgroundImageUrl,
+          { budgetMs: 8_000 },
         );
       }
 
@@ -919,26 +913,14 @@ export async function PATCH(req: NextRequest) {
         Object.assign(data, gradePatch);
       }
 
-      const presenceChanged =
-        absencePatch != null &&
-        (absencePatch.presence !== item.presence ||
-          absencePatch.absenceReason !== item.absenceReason);
-
-      const presenceEvent = presenceChanged
-        ? buildPresenceEvent({
-            from: item.presence,
-            to: absencePatch.presence,
-            reason: absencePatch.absenceReason,
-            at: absencePatch.absenceSince ?? undefined,
-            fields: absencePatch,
-            // Clearing absence to owned after an order/wait → received, not a loan return.
-            receiveFromOrder:
-              absencePatch.presence === "owned" &&
-              (item.presence === "wanted" ||
-                (item.presence === "away" &&
-                  isAwaitingReceiptReason(item.absenceReason))),
-          })
-        : null;
+      const absenceWrite = commitAbsenceWrite(
+        item,
+        raw as Record<string, unknown>,
+      );
+      if (absenceWrite) {
+        Object.assign(data, absenceWrite.fields);
+      }
+      const presenceEvent = absenceWrite?.event ?? null;
 
       const gradeChanged =
         gradePatch != null &&

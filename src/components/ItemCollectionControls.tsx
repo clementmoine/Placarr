@@ -66,7 +66,7 @@ type ItemCollectionViewFilterProps = {
 };
 
 /**
- * Shelf presence / duplicates view (active, away, past, wanted, all, duplicates).
+ * Shelf presence / duplicates view (active, away, past, duplicates).
  * Replaces the old « Doublons seulement » toggle.
  */
 export function ItemCollectionViewFilter({

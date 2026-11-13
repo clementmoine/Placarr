@@ -9,8 +9,8 @@ import {
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
 import {
   absenceSinceInputValue,
+  coerceItemPresence,
   isAbsenceReason,
-  isItemPresence,
   priceCentsInputValue,
   type ItemPresence,
 } from "@/core/collect/itemAbsence";
@@ -202,7 +202,7 @@ function formValuesFromMetadataPreview(
 }
 
 function absenceFieldsFromItem(item: ItemWithMetadata) {
-  const presence = isItemPresence(item.presence) ? item.presence : "owned";
+  const presence = coerceItemPresence(item.presence);
   if (presence === "owned") return emptyAbsenceFields();
   return {
     presence,

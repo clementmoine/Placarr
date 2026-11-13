@@ -267,8 +267,8 @@ export type ChecklistSetInput = {
 
 export type ChecklistCard = ChecklistPrint & {
   /**
-   * Vraiment possédé (`owned` | `away`) — case pleine, compte pour le %.
-   * Distinct de `presence === "past"` (déjà eu) / `"wanted"`.
+   * Sur l'étagère (`presence === "owned"`) — case pleine.
+   * Distinct de `away` / `past` / `virtual`.
    */
   owned: boolean;
   /** Statut d'affichage unifié pour la case / badge. */
@@ -277,13 +277,15 @@ export type ChecklistCard = ChecklistPrint & {
 
 export type ChecklistSet = ChecklistSetInput & {
   total: number;
-  /** En main (`owned` | `away`). */
+  /** Sur l'étagère (`presence === "owned"`). */
   owned: number;
+  /** Absents temporaires (`away`) — encore en main pour le %. */
+  away: number;
   /** Couvert hors en-main (virtuel dans un scellé fermé). */
   virtual: number;
-  /** owned + virtual — « tout possédé (scellé compris) ». */
+  /** owned + away + virtual — « tout possédé (scellé compris) ». */
   covered: number;
-  /** % en main. `0` quand le set est vide, jamais `NaN`. */
+  /** % en main (owned + away). `0` quand le set est vide, jamais `NaN`. */
   completion: number;
   /** % tout possédé (scellé compris). */
   coveredCompletion: number;
@@ -305,6 +307,7 @@ export type ShelfChecklist = {
   totals: {
     total: number;
     owned: number;
+    away: number;
     virtual: number;
     covered: number;
     completion: number;
@@ -447,22 +450,22 @@ export function buildShelfChecklist(input: {
   sets: readonly ChecklistSetInput[];
   prints: readonly ChecklistPrint[];
   owned: ReadonlySet<string>;
+  /** Temporary absence — in-hand for %, filterable in the UI. */
+  away?: ReadonlySet<string>;
   /** Covered by closed sealed products. */
   virtual?: ReadonlySet<string>;
   /** `past` — déjà eu ; hors % et hors buy missing. */
   alreadyHad?: ReadonlySet<string>;
-  /** `wanted` — encore dans buy missing, case intermédiaire. */
-  wanted?: ReadonlySet<string>;
   language?: string | null;
   /** Une ligne par finition ; possession exacte printKey×finish. */
   masterSet?: boolean;
 }): ShelfChecklist {
   const masterSet = Boolean(input.masterSet);
   const owned = input.owned;
+  const away = input.away ?? new Set<string>();
   const virtual = input.virtual ?? new Set<string>();
   const alreadyHad = input.alreadyHad ?? new Set<string>();
-  const wanted = input.wanted ?? new Set<string>();
-  const buckets = { owned, virtual, alreadyHad, wanted };
+  const buckets = { owned, away, virtual, alreadyHad };
   const bySet = new Map<string, ChecklistPrint[]>();
   for (const print of input.prints) {
     const rows = bySet.get(print.setId) ?? [];
@@ -474,6 +477,7 @@ export function buildShelfChecklist(input: {
   const setsWithoutCatalogue: ChecklistSetInput[] = [];
   let total = 0;
   let ownedCount = 0;
+  let awayCount = 0;
   let virtualCount = 0;
   /** Même id poussé par deux catalogues (lorcanajson + lorcanatcg). */
   const seenSetIds = new Set<string>();
@@ -499,13 +503,15 @@ export function buildShelfChecklist(input: {
           ...print,
           reference,
           presence,
-          owned: checklistCardCountsAsInHand(presence),
+          owned: presence === "owned",
         };
       })
       .sort(compareChecklistPrints);
     const missing = cards
       .filter((card) => checklistCardCountsAsMissing(card.presence))
       .map(({ owned: _owned, presence: _presence, ...print }) => print);
+    const onShelf = cards.filter((card) => card.presence === "owned").length;
+    const awayN = cards.filter((card) => card.presence === "away").length;
     const held = cards.filter((card) =>
       checklistCardCountsAsInHand(card.presence),
     ).length;
@@ -514,12 +520,14 @@ export function buildShelfChecklist(input: {
       checklistCardCountsAsCovered(card.presence),
     ).length;
     total += prints.length;
-    ownedCount += held;
+    ownedCount += onShelf;
+    awayCount += awayN;
     virtualCount += virt;
     sets.push({
       ...set,
       total: prints.length,
-      owned: held,
+      owned: onShelf,
+      away: awayN,
       virtual: virt,
       covered,
       completion: percent(held, prints.length),
@@ -555,16 +563,18 @@ export function buildShelfChecklist(input: {
     return a.label.localeCompare(b.label, "fr", { numeric: true });
   });
 
-  const coveredCount = ownedCount + virtualCount;
+  const inHandCount = ownedCount + awayCount;
+  const coveredCount = inHandCount + virtualCount;
   return {
     language: input.language ?? null,
     sets,
     totals: {
       total,
       owned: ownedCount,
+      away: awayCount,
       virtual: virtualCount,
       covered: coveredCount,
-      completion: percent(ownedCount, total),
+      completion: percent(inHandCount, total),
       coveredCompletion: percent(coveredCount, total),
     },
     setsWithoutCatalogue,

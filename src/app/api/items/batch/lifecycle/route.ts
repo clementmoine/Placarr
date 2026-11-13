@@ -2,8 +2,7 @@ import { type Prisma } from "@/generated/prisma/browser";
 import { NextRequest, NextResponse } from "next/server";
 
 import {
-  buildPresenceEvent,
-  normalizeItemAbsenceInput,
+  commitAbsenceWrite,
   parsePriceCents,
 } from "@/core/collect/itemAbsence";
 import { requireGuestOrHigher } from "@/lib/auth";
@@ -176,20 +175,11 @@ export async function PATCH(req: NextRequest) {
           if (key in patch) merged[key] = patch[key];
         }
 
-        const absencePatch = normalizeItemAbsenceInput(merged);
-        if (absencePatch) {
-          Object.assign(data, absencePatch);
-          const presenceChanged =
-            absencePatch.presence !== item.presence ||
-            absencePatch.absenceReason !== item.absenceReason;
-          if (presenceChanged) {
-            const event = buildPresenceEvent({
-              from: item.presence,
-              to: absencePatch.presence,
-              reason: absencePatch.absenceReason,
-              at: absencePatch.absenceSince ?? undefined,
-              fields: absencePatch,
-            });
+        const absenceWrite = commitAbsenceWrite(item, merged);
+        if (absenceWrite) {
+          Object.assign(data, absenceWrite.fields);
+          const event = absenceWrite.event;
+          if (event) {
             eventRows.push({
               itemId: item.id,
               at: event.at,

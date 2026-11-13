@@ -134,7 +134,7 @@ type PrintPickerModalProps = {
    */
   ownedPrints?: readonly OwnedPrintRef[];
   /**
-   * Copies `away` / `wanted` on this shelf — for « tu l’attendais ? » before
+   * Absent copies on this shelf — for « tu l’attendais ? » before
    * creating a duplicate.
    */
   receivableItems?: readonly ReceivableShelfItem[];
@@ -528,12 +528,16 @@ export function PrintPickerModal({
 
   const requestClose = useCallback((): boolean => {
     if (progress) return false;
+    // Nested BaseModals (awaited receive / close confirm) steal focus and
+    // fire the picker's interact-outside / onOpenChange(false). That is not a
+    // user dismiss — ignore without opening "Fermer sans ajouter".
+    if (awaitedPrompt != null || confirmCloseOpen) return false;
     if (needsCloseConfirm) {
       setConfirmCloseOpen(true);
       return false;
     }
     return true;
-  }, [progress, needsCloseConfirm]);
+  }, [progress, needsCloseConfirm, awaitedPrompt, confirmCloseOpen]);
 
   /*
     Catalogues are prefetched from the shelf page into a shared client cache.
@@ -1135,7 +1139,7 @@ export function PrintPickerModal({
     Séquentiel, et une carte ratée n'arrête pas les autres : on rend compte du
     nombre d'échecs à la fin plutôt que de laisser un lot à moitié posé sans
     rien dire. `onAdded()` n'est appelé qu'une fois, quand tout est retombé.
-    Si des copies away/wanted matchent → dialog « tu l’attendais ? » d’abord.
+    Si des copies absentes matchent → dialog « tu l’attendais ? » d’abord.
   */
   const addSelected = useCallback(async () => {
     const rows = activeSelection;

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  detailPriceChipIsObserved,
+  estimationFactDuplicatesPriceChip,
   getEstimatedItemValueCents,
   getItemValueEstimate,
 } from "@/core/collect/value";
@@ -193,5 +195,39 @@ describe("getItemValueEstimate", () => {
         priceNew: 25,
       }),
     ).toEqual({ cents: 25, isEstimate: false });
+  });
+});
+
+describe("detail price chip", () => {
+  it("does not call a catalog cote an observed price", () => {
+    expect(
+      detailPriceChipIsObserved({
+        hasAmount: true,
+        isEstimate: true,
+        isReferencePriceOnly: false,
+      }),
+    ).toBe(false);
+    expect(
+      detailPriceChipIsObserved({
+        hasAmount: true,
+        isEstimate: false,
+        isReferencePriceOnly: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("hides the Estimation fact when the chip already shows that cote", () => {
+    expect(
+      estimationFactDuplicatesPriceChip(
+        { kind: "estimated-value", label: "Estimation" },
+        true,
+      ),
+    ).toBe(true);
+    expect(
+      estimationFactDuplicatesPriceChip(
+        { kind: "estimated-value", label: "Estimation" },
+        false,
+      ),
+    ).toBe(false);
   });
 });

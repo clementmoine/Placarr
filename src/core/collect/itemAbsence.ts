@@ -2,11 +2,11 @@
  * Shelf absence — single notion that absorbs the old personal-loan note.
  *
  * `owned` = on the shelf. `away` = temporary out (still counts as owned for
- * checklists). `wanted` = sought after a cancelled wait. `past` = left the
- * active collection (sold, discarded, …) but always recoverable.
+ * checklists). `past` = left the active collection (sold, discarded, …) but
+ * always recoverable. Legacy `wanted` rows are read as `away`.
  */
 
-export const ITEM_PRESENCES = ["owned", "away", "wanted", "past"] as const;
+export const ITEM_PRESENCES = ["owned", "away", "past"] as const;
 export type ItemPresence = (typeof ITEM_PRESENCES)[number];
 
 export const TEMPORARY_ABSENCE_REASONS = [
@@ -116,6 +116,16 @@ export function isItemPresence(value: unknown): value is ItemPresence {
   return typeof value === "string" && PRESENCE_SET.has(value);
 }
 
+/**
+ * Stored presence. Legacy `wanted` (cancelled wait) collapses into `away`:
+ * absent is the only intermediate state.
+ */
+export function coerceItemPresence(value: unknown): ItemPresence {
+  if (value === "wanted") return "away";
+  if (isItemPresence(value)) return value;
+  return "owned";
+}
+
 export function isAbsenceReason(value: unknown): value is AbsenceReason {
   return typeof value === "string" && REASON_SET.has(value);
 }
@@ -149,28 +159,18 @@ export function presenceForReason(reason: AbsenceReason): "away" | "past" {
 
 /** Checklist / active-collection “I have this” — owned or temporarily away. */
 export function countsAsOwned(
-  item: Pick<ItemAbsenceFields, "presence"> | { presence?: ItemPresence | null },
+  item: { presence?: string | null },
 ): boolean {
-  const presence = item.presence ?? "owned";
+  const presence = coerceItemPresence(item.presence);
   return presence === "owned" || presence === "away";
 }
 
-export function isItemAway(
-  item: Pick<ItemAbsenceFields, "presence"> | { presence?: ItemPresence | null },
-): boolean {
-  return (item.presence ?? "owned") === "away";
+export function isItemAway(item: { presence?: string | null }): boolean {
+  return coerceItemPresence(item.presence) === "away";
 }
 
-export function isItemPast(
-  item: Pick<ItemAbsenceFields, "presence"> | { presence?: ItemPresence | null },
-): boolean {
-  return item.presence === "past";
-}
-
-export function isItemWanted(
-  item: Pick<ItemAbsenceFields, "presence"> | { presence?: ItemPresence | null },
-): boolean {
-  return item.presence === "wanted";
+export function isItemPast(item: { presence?: string | null }): boolean {
+  return coerceItemPresence(item.presence) === "past";
 }
 
 type LoanCompatFields = {
@@ -191,7 +191,7 @@ export function isItemOnLoan(item: LoanCompatFields): boolean {
 /** Borrower name for loan badges — absence model, with legacy loanedTo fallback. */
 export function loanRecipient(item: LoanCompatFields): string | null {
   if (
-    (item.presence ?? "owned") === "away" &&
+    coerceItemPresence(item.presence) === "away" &&
     item.absenceReason === "loaned"
   ) {
     const recipient = item.absenceRecipient?.trim();
@@ -204,7 +204,7 @@ export function loanRecipient(item: LoanCompatFields): string | null {
 /** Date for loan badges — absenceSince, with legacy loanedAt fallback. */
 export function loanSince(item: LoanCompatFields): Date | string | null {
   if (
-    (item.presence ?? "owned") === "away" &&
+    coerceItemPresence(item.presence) === "away" &&
     item.absenceReason === "loaned"
   ) {
     return item.absenceSince ?? null;
@@ -212,7 +212,7 @@ export function loanSince(item: LoanCompatFields): Date | string | null {
   return item.loanedAt ?? null;
 }
 
-export type AbsenceBadgeTone = "away" | "past" | "wanted";
+export type AbsenceBadgeTone = "away" | "past";
 
 /**
  * Compact shelf / fiche tag for non-owned presence.
@@ -276,7 +276,7 @@ export function resolveAbsenceReminder(
   item: AbsenceBadgeFields,
   now: Date = new Date(),
 ): Pick<AbsenceBadgeInfo, "labelKey" | "detail" | "days" | "name"> | null {
-  if ((item.presence ?? "owned") !== "away") return null;
+  if (coerceItemPresence(item.presence) !== "away") return null;
   const reason = isAbsenceReason(item.absenceReason)
     ? item.absenceReason
     : null;
@@ -378,7 +378,7 @@ export function sumSoldAbsenceCents(
 }
 
 /**
- * Badge for away / wanted / past. Owned → null.
+ * Badge for away / past. Owned → null.
  * Loan without recipient still shows « Prêté » (not silent).
  * Soft reminders (stale order / return due) override the away label when set.
  */
@@ -387,12 +387,8 @@ export function formatAbsenceBadge(
   opts?: { now?: Date },
 ): AbsenceBadgeInfo | null {
   if (!item) return null;
-  const presence = item.presence ?? "owned";
+  const presence = coerceItemPresence(item.presence);
   if (presence === "owned") return null;
-
-  if (presence === "wanted") {
-    return { tone: "wanted", labelKey: "wanted" };
-  }
 
   const reason = isAbsenceReason(item.absenceReason)
     ? item.absenceReason
@@ -596,13 +592,11 @@ export function inferPresenceEventKind(
   if (from === to) return "acquired";
   if (to === "owned") {
     if (from === "past") return "recovered";
-    if (from === "wanted" || opts?.receiveFromOrder) return "received_from_order";
+    if (opts?.receiveFromOrder) return "received_from_order";
     if (from === "away") return "returned";
     return "acquired";
   }
-  if (to === "wanted" && from === "away") return "cancelled_to_wanted";
   if ((to === "away" || to === "past") && from === "owned") return "departed";
-  if ((to === "away" || to === "past") && from === "wanted") return "departed";
   if (to === "past" && from === "away") return "departed";
   return "departed";
 }
@@ -654,7 +648,6 @@ export type AbsenceAction =
       expectedAt?: Date | string | null;
     }
   | { type: "return" }
-  | { type: "cancel" }
   | { type: "recover" }
   | { type: "receive"; fromOrder?: boolean };
 
@@ -669,13 +662,13 @@ function readCurrent(
   return {
     ...ownedAbsenceState(),
     ...current,
-    presence: current?.presence ?? "owned",
+    presence: coerceItemPresence(current?.presence),
   };
 }
 
 /**
  * Pure state machine for absence transitions.
- * Throws on illegal moves (e.g. cancel when not away).
+ * Throws on illegal moves (return / receive when not away, recover when not past).
  */
 export function applyAbsenceAction(
   current: Partial<ItemAbsenceFields> | null | undefined,
@@ -718,7 +711,7 @@ export function applyAbsenceAction(
   }
 
   if (action.type === "return" || action.type === "receive") {
-    if (fromPresence !== "away" && fromPresence !== "wanted") {
+    if (fromPresence !== "away") {
       throw new Error(`Cannot ${action.type} from presence ${fromPresence}`);
     }
     const fields = ownedAbsenceState();
@@ -737,27 +730,6 @@ export function applyAbsenceAction(
           action.type === "receive" || awaiting
             ? "received_from_order"
             : "returned",
-      }),
-    };
-  }
-
-  if (action.type === "cancel") {
-    if (fromPresence !== "away") {
-      throw new Error(`Cannot cancel from presence ${fromPresence}`);
-    }
-    const fields: ItemAbsenceFields = {
-      ...from,
-      presence: "wanted",
-      // Keep reason/details as breadcrumbs of what was cancelled.
-    };
-    return {
-      fields,
-      event: buildPresenceEvent({
-        from: "away",
-        to: "wanted",
-        reason: from.absenceReason,
-        fields: from,
-        kind: "cancelled_to_wanted",
       }),
     };
   }
@@ -800,6 +772,70 @@ function hasAbsencePayloadKey(raw: Record<string, unknown>): boolean {
 }
 
 /**
+ * Legacy stored `wanted` is absent. A payload that still sends it keeps its
+ * reason, or `expected` when none was given, so the row is not promoted to owned.
+ */
+function withoutLegacyWanted(
+  raw: Record<string, unknown>,
+): Record<string, unknown> {
+  if (raw.presence !== "wanted") return raw;
+  if (isAbsenceReason(raw.absenceReason)) {
+    return { ...raw, presence: "away" };
+  }
+  return { ...raw, presence: "away", absenceReason: "expected" };
+}
+
+export type AbsenceWrite = {
+  fields: ItemAbsenceFields;
+  /** Null when the write does not change presence or reason. */
+  event: ItemPresenceEventDraft | null;
+};
+
+/**
+ * Interpret a form / PATCH payload as one state-machine transition.
+ * Field-only edits (note, tracking) keep the current presence and emit no event.
+ */
+export function commitAbsenceWrite(
+  current: (Partial<ItemAbsenceFields> & { presence?: string | null }) | null | undefined,
+  raw: Record<string, unknown>,
+): AbsenceWrite | undefined {
+  const fields = normalizeItemAbsenceInput(withoutLegacyWanted(raw));
+  if (!fields) return undefined;
+  const from = readCurrent(current);
+  if (
+    fields.presence === from.presence &&
+    fields.absenceReason === from.absenceReason
+  ) {
+    return { fields, event: null };
+  }
+  if (fields.presence === "owned") {
+    if (from.presence === "owned") return { fields, event: null };
+    const action: AbsenceAction =
+      from.presence === "past"
+        ? { type: "recover" }
+        : isAwaitingReceiptReason(from.absenceReason)
+          ? { type: "receive" }
+          : { type: "return" };
+    return applyAbsenceAction(from, action);
+  }
+  if (!fields.absenceReason) return { fields, event: null };
+  return applyAbsenceAction(from, {
+    type: "depart",
+    reason: fields.absenceReason,
+    since: fields.absenceSince,
+    recipient: fields.absenceRecipient,
+    source: fields.absenceSource,
+    carrier: fields.absenceCarrier,
+    tracking: fields.absenceTracking,
+    orderRef: fields.absenceOrderRef,
+    orderUrl: fields.absenceOrderUrl,
+    note: fields.absenceNote,
+    priceCents: fields.absencePriceCents,
+    expectedAt: fields.absenceExpectedAt,
+  });
+}
+
+/**
  * Normalize PATCH/POST absence fields.
  * Returns undefined when neither absence nor legacy loan fields are present.
  * Empty loan / explicit presence=owned clears the absence.
@@ -807,6 +843,7 @@ function hasAbsencePayloadKey(raw: Record<string, unknown>): boolean {
 export function normalizeItemAbsenceInput(
   raw: Record<string, unknown>,
 ): ItemAbsenceFields | undefined {
+  raw = withoutLegacyWanted(raw);
   if (!hasAbsencePayloadKey(raw)) return undefined;
 
   // Legacy loan-only payload (UI not yet migrated).
@@ -843,27 +880,6 @@ export function normalizeItemAbsenceInput(
     return ownedAbsenceState();
   }
 
-  if (isItemPresence(raw.presence) && raw.presence === "wanted") {
-    return {
-      ...ownedAbsenceState(),
-      presence: "wanted",
-      absenceReason: reasonFromBody,
-      absenceSince:
-        parseDateInput(raw.absenceSince) ??
-        parseDateInput(raw.loanedAt) ??
-        startOfToday(),
-      absenceRecipient: recipient,
-      absenceSource: trimToNull(raw.absenceSource),
-      absenceCarrier: trimToNull(raw.absenceCarrier),
-      absenceTracking: trimToNull(raw.absenceTracking),
-      absenceOrderRef: trimToNull(raw.absenceOrderRef),
-      absenceOrderUrl: trimToNull(raw.absenceOrderUrl),
-      absenceNote: trimToNull(raw.absenceNote),
-      absencePriceCents: parsePriceCents(raw.absencePriceCents),
-      absenceExpectedAt: parseDateInput(raw.absenceExpectedAt),
-    };
-  }
-
   const reason =
     reasonFromBody ?? (recipient ? ("loaned" as const) : null);
 
@@ -871,8 +887,7 @@ export function normalizeItemAbsenceInput(
     return ownedAbsenceState();
   }
 
-  // Client presence cannot override the category implied by the reason
-  // (except wanted, handled above).
+  // Client presence cannot override the category implied by the reason.
   const resolvedPresence = presenceForReason(reason);
 
   return {

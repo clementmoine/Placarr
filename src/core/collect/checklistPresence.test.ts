@@ -10,7 +10,7 @@ import {
 } from "./checklistPresence";
 
 describe("partitionChecklistOwnership", () => {
-  it("puts owned/away in owned, past in alreadyHad, wanted in wanted", () => {
+  it("puts owned, away, and past in distinct buckets and reads legacy wanted as away", () => {
     const buckets = partitionChecklistOwnership(
       [
         { printKey: "game:a", setCode: "s1", presence: "owned" },
@@ -20,20 +20,20 @@ describe("partitionChecklistOwnership", () => {
       ],
       { masterSet: false },
     );
-    expect([...buckets.owned].sort()).toEqual([
-      checklistSetOwnedKey("s1", "game:a"),
-      checklistSetOwnedKey("s1", "game:b"),
-    ]);
+    expect([...buckets.owned]).toEqual([checklistSetOwnedKey("s1", "game:a")]);
+    expect([...buckets.away].sort()).toEqual(
+      [
+        checklistSetOwnedKey("s1", "game:b"),
+        checklistSetOwnedKey("s1", "game:d"),
+      ].sort(),
+    );
     expect([...buckets.alreadyHad]).toEqual([
       checklistSetOwnedKey("s1", "game:c"),
-    ]);
-    expect([...buckets.wanted]).toEqual([
-      checklistSetOwnedKey("s1", "game:d"),
     ]);
     expect([...buckets.virtual]).toEqual([]);
   });
 
-  it("merges virtual keys and drops them when physically owned/past/wanted", () => {
+  it("merges virtual keys and drops them when physically owned or past", () => {
     const ownedKey = checklistSetOwnedKey("s1", "game:a");
     const pastKey = checklistSetOwnedKey("s1", "game:c");
     const virtKey = checklistSetOwnedKey("s1", "game:v");
@@ -52,19 +52,35 @@ describe("partitionChecklistOwnership", () => {
     expect([...buckets.virtual]).toEqual([virtKey]);
   });
 
-  it("gives owned precedence over past/wanted for the same key", () => {
+  it("gives owned precedence over away and past for the same key", () => {
     const key = checklistSetOwnedKey("s1", "game:a");
     const buckets = partitionChecklistOwnership(
       [
         { printKey: "game:a", setCode: "s1", presence: "past" },
+        { printKey: "game:a", setCode: "s1", presence: "away" },
         { printKey: "game:a", setCode: "s1", presence: "owned" },
         { printKey: "game:a", setCode: "s1", presence: "wanted" },
       ],
       { masterSet: false },
     );
     expect([...buckets.owned]).toEqual([key]);
+    expect([...buckets.away]).toEqual([]);
     expect([...buckets.alreadyHad]).toEqual([]);
-    expect([...buckets.wanted]).toEqual([]);
+  });
+
+  it("gives away precedence over past for the same key", () => {
+    const key = checklistSetOwnedKey("s1", "game:a");
+    const buckets = partitionChecklistOwnership(
+      [
+        { printKey: "game:a", setCode: "s1", presence: "past" },
+        { printKey: "game:a", setCode: "s1", presence: "away" },
+        { printKey: "game:a", setCode: "s1", presence: "wanted" },
+      ],
+      { masterSet: false },
+    );
+    expect([...buckets.owned]).toEqual([]);
+    expect([...buckets.away]).toEqual([key]);
+    expect([...buckets.alreadyHad]).toEqual([]);
   });
 
   it("defaults missing presence to owned", () => {
@@ -82,15 +98,15 @@ describe("resolveChecklistCardPresence", () => {
   const print = { setId: "s1", printKey: "game:c", finish: null };
   const empty = {
     owned: new Set<string>(),
+    away: new Set<string>(),
     virtual: new Set<string>(),
     alreadyHad: new Set<string>(),
-    wanted: new Set<string>(),
   };
 
-  it("resolves owned / past / wanted / virtual / missing", () => {
+  it("resolves owned / away / past / virtual / missing", () => {
     const ownedKey = checklistSetOwnedKey("s1", "game:a");
+    const awayKey = checklistSetOwnedKey("s1", "game:b");
     const pastKey = checklistSetOwnedKey("s1", "game:c");
-    const wantedKey = checklistSetOwnedKey("s1", "game:d");
     const virtKey = checklistSetOwnedKey("s1", "game:v");
     expect(
       resolveChecklistCardPresence(
@@ -102,20 +118,20 @@ describe("resolveChecklistCardPresence", () => {
     ).toBe("owned");
     expect(
       resolveChecklistCardPresence(
+        { setId: "s1", printKey: "game:b", finish: null },
+        { ...empty, away: new Set([awayKey]) },
+        false,
+        isChecklistPrintOwned,
+      ),
+    ).toBe("away");
+    expect(
+      resolveChecklistCardPresence(
         print,
         { ...empty, alreadyHad: new Set([pastKey]) },
         false,
         isChecklistPrintOwned,
       ),
     ).toBe("past");
-    expect(
-      resolveChecklistCardPresence(
-        { setId: "s1", printKey: "game:d", finish: null },
-        { ...empty, wanted: new Set([wantedKey]) },
-        false,
-        isChecklistPrintOwned,
-      ),
-    ).toBe("wanted");
     expect(
       resolveChecklistCardPresence(
         { setId: "s1", printKey: "game:v", finish: null },
@@ -152,18 +168,20 @@ describe("resolveChecklistCardPresence", () => {
 });
 
 describe("checklistCardCountsAsMissing", () => {
-  it("keeps wanted in the buy pool and excludes past / virtual", () => {
+  it("keeps only missing in the buy pool", () => {
     expect(checklistCardCountsAsMissing("missing")).toBe(true);
-    expect(checklistCardCountsAsMissing("wanted")).toBe(true);
     expect(checklistCardCountsAsMissing("past")).toBe(false);
     expect(checklistCardCountsAsMissing("owned")).toBe(false);
+    expect(checklistCardCountsAsMissing("away")).toBe(false);
     expect(checklistCardCountsAsMissing("virtual")).toBe(false);
   });
 
   it("in-hand vs covered counters", () => {
     expect(checklistCardCountsAsInHand("owned")).toBe(true);
+    expect(checklistCardCountsAsInHand("away")).toBe(true);
     expect(checklistCardCountsAsInHand("virtual")).toBe(false);
     expect(checklistCardCountsAsCovered("owned")).toBe(true);
+    expect(checklistCardCountsAsCovered("away")).toBe(true);
     expect(checklistCardCountsAsCovered("virtual")).toBe(true);
     expect(checklistCardCountsAsCovered("past")).toBe(false);
   });

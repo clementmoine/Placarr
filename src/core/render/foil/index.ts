@@ -6,6 +6,7 @@ export type {
   FoilCssRecipe,
   FoilFilter,
   FoilMaterial,
+  FoilS3tcBinding,
   FoilTextureBinding,
   FoilTextureRole,
   FoilWrap,
@@ -18,8 +19,11 @@ export {
   foilTextureInternalFormat,
   getFoilCapabilities,
   preferAstcTextureUpload,
+  preferS3tcDxt5FormatName,
+  preferS3tcTextureUpload,
   probeFoilCapabilities,
   resetFoilCapabilitiesForTests,
+  s3tcFormatConstant,
   type FoilCapabilities,
 } from "./capabilities";
 export {

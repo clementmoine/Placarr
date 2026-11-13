@@ -1,5 +1,8 @@
 /**
- * Crop square card-slot textures to Live mesh UV rect (mirrors ``card_crop.py``).
+ * Crop a decoded Unity texture down to the card rectangle.
+ * `origin: "bottom-left"` matches a Unity `textureRect` on a top-left pixel
+ * buffer (after an ASTC flip). Square atlases use UV; non-square images pass
+ * through.
  */
 
 export type UvRect = {

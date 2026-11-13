@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrints";
 /**
  * Print search for the Fusion World local catalogue.
@@ -19,6 +22,9 @@ import { foldedLikePattern } from "@/providers/shared/sqliteFold";
 import type { PrintCandidate } from "@/types/providerModule";
 
 import { assetsCardUrl } from "@/lib/packAssetUrls";
+import { packCardDir } from "@/lib/packPaths";
+
+import { dbsFwCoverageMaskFile } from "./masks";
 
 import {
   DBS_FW_PACK_ID,
@@ -72,6 +78,24 @@ function localFwFileUrl(
   );
 }
 
+function localFwMaskUrl(row: DbsFwPrintDetail): string | null {
+  const lang = (row.lang || "en").toLowerCase();
+  const cardDir = packCardDir(DBS_FW_PACK_ID, {
+    set: row.setCode,
+    lang,
+    card: dbsFwCardFolder(row),
+  });
+  const file = dbsFwCoverageMaskFile((name) =>
+    existsSync(path.join(cardDir, name)),
+  );
+  if (!file) return null;
+  return assetsCardUrl(
+    DBS_FW_PACK_ID,
+    { set: row.setCode, lang, card: dbsFwCardFolder(row) },
+    file,
+  );
+}
+
 function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
   const finishes = DBS_FINISHES;
   const reference = formatDbsFwReference(row.setCode, row.number, row.grouping);
@@ -91,7 +115,7 @@ function toCandidate(row: DbsFwPrintDetail): PrintCandidate {
     language: row.lang,
     finishes,
     plainFinishes: finishes.filter((finish) => finish === PLAIN_FINISH),
-    foilMaskUrl: DBS_FW_FULL_FOIL_MASK_URL,
+    foilMaskUrl: localFwMaskUrl(row) ?? DBS_FW_FULL_FOIL_MASK_URL,
     effectPack: DBS_FW_EFFECT_PACK_ID,
   };
 }

@@ -210,7 +210,7 @@ Frost runtime (`FrostCard.frag`) sample Main→Front→Middle→Frame→Chara→
 
 Constantes produit isolées : `clientFacePolicy.ts`. Bake fill : `costRingBake.ts`. Fallback Frost/géométrie : `frostCostDisc.ts`, `costRingGeometry.ts`. Foil : `layer.frame` reste le rôle `frame` ; costRing n’est pas un binding foil.
 
-On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). Chaque couche est redimensionnée une seule fois sur la carte 63×88 (minify via `supersampleResize` 4×), puis écrite dans `art.client.webp`. Le chrome est la première tranche du tableau `Card_Battle_{Couleur}_Frame` dans `card_frame`. Le gemme chiffré vient de la plaque + badge `{Couleur}_01_cost{n}` (BC7). Une art 1:2 (512×1024) devient 512×715 (63×88). `pnpm exec tsx scripts/extractFusionWorldFaces.ts`.
+On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). Chaque couche est redimensionnée une seule fois sur la carte 63×88 (minify via `supersampleResize` 4×), puis écrite dans `art.client.webp`. Le chrome est la première tranche du tableau `Card_Battle_{Couleur}_Frame` dans `card_frame`. Le gemme chiffré vient de la plaque + badge `{Couleur}_01_cost{n}` (BC7). Une art 1:2 (512×1024) devient 512×715 (63×88). `pnpm exec tsx scripts/extractFusionWorldFaces.ts` — sans `--force`, un `art.client.webp` pré-split (sans `layer.picture` / `layer.text`, ou sans `layer.costRing` quand la carte a un coût) est réécrit (`isClientFaceExtractCurrent`).
 
 ## 7. Shaders — Metal traduit en GLSL ES 3.00
 
@@ -245,4 +245,24 @@ Lorcana. Les tests `src/lib/unity/metalToGlsl.test.ts` lisent le bundle
 local s’il est là et vérifient `UIHologram` et `Frost/Card`.
 
 Ce n’est pas une preuve pixel à pixel : c’est le même source, relu en
-GLSL. Le pack `dbs-fw` ne s’en sert pas encore.
+GLSL. Le pack `dbs-fw` sert `FrostCard.frag` / `UIHologram.frag` dans le
+FoilPlayroom (Catalogue → Fusion World → Rendu).
+
+### Sidecars compressés (S3TC / DXT)
+
+Le client Mac (`StandaloneOSX`) stocke les plaques foil en **DXT1/DXT5**,
+pas en ASTC (contrairement à Lorcana mobile). Extract :
+
+`pnpm exec tsx scripts/extractFusionWorldFoilTextures.ts [--force]`
+
+écrit `data/dragonball/fw/foil/textures/client-*.dxt{1,5}` et régénère
+`src/effects/dbsfw/s3tcSidecars.generated.ts`. Le renderer partagé
+(`FoilTextureBinding.s3tc`, même règle `!role` que l’ASTC Lorcana) les
+upload via `compressedTexImage2D` quand le GPU expose S3TC. **BC7**
+(`CardHologram`) reste raster WebP — pas de binding BC7 portable ici.
+`card_premiumtex` (uv_line_*, ef_flash*, …) est une bibliothèque VFX pour
+les slots Frost `_EffectsLayer*Tex` : dumpée en `client-*.webp` (+ DXT)
+par `extractFusionWorldFoilTextures`, branchée playroom (`effectsLayers` sur
+`foil-holo` / `superpara` + feuilles `effects-*`). `FrostCard.frag` garde
+`_EffectsLayer1Tex` (budget 16 samplers WebGL). `PARA_HOLO_Text_*` →
+`mask-holo-text.webp` via l’extract masks.

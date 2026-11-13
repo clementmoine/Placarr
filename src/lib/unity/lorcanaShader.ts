@@ -1,16 +1,11 @@
 /**
  * Lorcana Shader Graph variants → `.frag` (parity with ``dump_unity.py``).
- * Fragment strippers live in {@link ./shader} — this module owns graph maps.
+ * Fragment cleaning lives in `@/core/render/unity/webglFragment`. This module
+ * owns the Shader Graph keyword maps for this pack.
  */
 
-import { decompressBlock } from "unityfs-js/decoders/drivers/lz4.js";
-
-import {
-  toLorcanaWebgl2Fragment,
-  toWebgl2Fragment,
-} from "@/lib/unity/shader";
-
-export { toLorcanaWebgl2Fragment, toWebgl2Fragment };
+import { toWebgl2Fragment } from "@/core/render/unity/webglFragment";
+import { decompressPlatformBlobs } from "@/lib/unity/shader";
 
 const CARD_EFFECT_KEYS = ["Foil", "Varnish", "Holo"] as const;
 const SCROLL_TILT = "_SCROLLMODE_TILT";
@@ -43,17 +38,6 @@ type UnityShaderLike = {
   decompressedLengths?: unknown;
 };
 
-function flatNumbers(seq: unknown): number[] {
-  const out: number[] = [];
-  if (!seq) return out;
-  const list = Array.isArray(seq) ? seq : [seq];
-  for (const v of list) {
-    if (Array.isArray(v)) out.push(...v.map(Number));
-    else out.push(Number(v));
-  }
-  return out;
-}
-
 function isCardEffect(name: string): boolean {
   // Keep the known finish keywords; a brand-new finish whose shader name does
   // not contain one of these is surfaced via the foil gap audit instead of
@@ -62,21 +46,11 @@ function isCardEffect(name: string): boolean {
   return CARD_EFFECT_KEYS.some((k) => name.includes(k));
 }
 
-/** Decompressed shader blob — first platform chunk only (parity ``dump_unity.py``). */
-export function decompressShaderBlob(shader: UnityShaderLike): Uint8Array | null {
-  const blob = shader.compressedBlob;
-  if (!blob?.length) return null;
-
-  const off = flatNumbers(shader.offsets)[0];
-  const cl = flatNumbers(shader.compressedLengths)[0];
-  const dl = flatNumbers(shader.decompressedLengths)[0];
-  if (off == null || cl == null || dl == null || cl <= 0 || dl <= 0) return null;
-
-  const chunk = blob.subarray(off, off + cl);
-  if (cl === dl) return chunk;
-  const out = new Uint8Array(dl);
-  decompressBlock(chunk, out, 0, cl, 0);
-  return out;
+/** First platform chunk — parity with ``dump_unity.py``. */
+function firstPlatformBlob(shader: UnityShaderLike): Uint8Array | null {
+  const data = decompressPlatformBlobs(shader)[0]?.data;
+  if (!data?.length) return null;
+  return data;
 }
 
 export function blobEntryGlsl(data: Uint8Array, index: number): string | null {
@@ -168,7 +142,7 @@ export function extractLorcanaShaderFrags(
     const graph = String(pf?.name ?? "");
     if (!isCardEffect(graph) || !graph.startsWith("Shader Graphs/")) continue;
 
-    const data = decompressShaderBlob(shader);
+    const data = firstPlatformBlob(shader);
     if (!data?.length || !pf) continue;
 
     const variants = variantMap(pf);
@@ -194,7 +168,7 @@ export function extractLorcanaShaderFrags(
       if (isTime) fileName += `__${SCROLL_TIME}`;
       fileName += ".frag";
 
-      files.set(fileName, toLorcanaWebgl2Fragment(glsl));
+      files.set(fileName, toWebgl2Fragment(glsl, { stripControlChars: false }));
       if (isTilt) tiltVariants[key] = fileName;
       if (isTime) timeVariants[key] = fileName;
     }

@@ -5,6 +5,7 @@ import { PROVIDER_MODULES } from "@/core/catalog/registry";
 import { localizeMaskImage } from "@/core/enrich/media/maskDownload";
 import { localizePrintMasks } from "@/core/enrich/media/localizePrintMasks";
 import { listEffectPacks } from "@/effects";
+import { installDbsFwMaskIndex } from "@/providers/dragonball/dbsfw/maskIndex";
 // Server-side: installs the SQLite lookups the packs read Live faces from.
 import "@/effects/pokemon/cardFoilIndex";
 import "@/lib/foilMetaLoad.server";
@@ -83,6 +84,7 @@ export async function GET(req: Request) {
   // Fresh liveOwned + dump order (owned edits must not stick until restart).
   invalidateDumpedBundleListCache();
 
+  installDbsFwMaskIndex();
   const packArts: Record<string, Record<string, PlayroomArt[]>> = {};
   for (const pack of listEffectPacks()) {
     const forPack: Record<string, PlayroomArt[]> = {};

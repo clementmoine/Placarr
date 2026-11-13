@@ -652,6 +652,26 @@ export const DBS_FW_CLIENT_LAYER_FILES: Record<
 };
 
 /**
+ * True when on-disk basenames already match the Frost-like extract layout.
+ * Stale `art.client.webp` alone (pre–costRing split) is not current — re-run
+ * extract without `--force`. Costless faces never write `costRing`.
+ */
+export function isClientFaceExtractCurrent(
+  basenames: ReadonlySet<string>,
+  side: FwFaceSide,
+  expectsCostRing: boolean,
+): boolean {
+  const face = DBS_FW_CLIENT_FACE_FILES[side];
+  const layers = DBS_FW_CLIENT_LAYER_FILES[side];
+  if (!basenames.has(face)) return false;
+  if (!basenames.has(layers.picture) || !basenames.has(layers.text)) {
+    return false;
+  }
+  if (expectsCostRing && !basenames.has(layers.costRing)) return false;
+  return true;
+}
+
+/**
  * Fit a client texture onto the printed 63×88 card without enlarging.
  * A 1:2 art (512×1024) keeps its width and shrinks height → 512×715.
  * Widening to 733×1024 magnified DXT; minifying the tall axis hides it.

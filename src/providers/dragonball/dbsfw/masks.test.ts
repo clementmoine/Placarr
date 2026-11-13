@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   dbsFwCatalogueMaskUrl,
   dbsFwCoverageMaskFile,
+  dbsFwKnownCoverageMaskUrl,
   dbsFwLayerSurfaces,
   fusionWorldCardBundle,
   fusionWorldMaskTexture,
+  fusionWorldMaterialsParaPrint,
+  setDbsFwMaskUrls,
 } from "./masks";
 
 describe("fusionWorldCardBundle", () => {
@@ -45,6 +48,18 @@ describe("fusionWorldCardBundle", () => {
         "packdata_assets_card_series_fb01_fb01-004_para_1an.bundle",
       ),
     ).toMatchObject({ folder: "004-para-1an" });
+    expect(fusionWorldMaterialsParaPrint("E-106_PARA_Front")).toEqual({
+      set: "e",
+      number: "106",
+      folder: "106-p1",
+    });
+    expect(fusionWorldMaterialsParaPrint("FW_E-106_PARA_Holo")).toEqual({
+      set: "e",
+      number: "106",
+      folder: "106-p1",
+    });
+    expect(fusionWorldMaterialsParaPrint("E-106_Card")).toBeNull();
+    expect(fusionWorldMaterialsParaPrint("FB01-139_SUPERPARA_Front")).toBeNull();
   });
 });
 
@@ -74,6 +89,22 @@ describe("fusionWorldMaskTexture", () => {
     expect(fusionWorldMaskTexture("ST01-004_Text_En")).toBeNull();
     expect(fusionWorldMaskTexture("ST01-004_Thumbnail")).toBeNull();
   });
+
+  it("maps PARA_HOLO_Text overlays without treating them as face language plates", () => {
+    expect(fusionWorldMaskTexture("ST01-020_PARA_HOLO_Text_En")).toEqual({
+      file: "mask-holo-text.webp",
+      langs: ["en"],
+    });
+    expect(fusionWorldMaskTexture("ST01-020_PARA_HOLO_Text_Ja")).toEqual({
+      file: "mask-holo-text.webp",
+      langs: ["ja"],
+    });
+    expect(
+      fusionWorldCardBundle(
+        "packdata_assets_card_series_st01_st01-020_para_holo.bundle",
+      ),
+    ).toMatchObject({ folder: "020-para-holo", partial: false });
+  });
 });
 
 describe("catalogue mask urls", () => {
@@ -87,7 +118,33 @@ describe("catalogue mask urls", () => {
     expect(dbsFwCoverageMaskFile((file) => file === "mask-foil.webp")).toBe(
       "mask-foil.webp",
     );
+    expect(
+      dbsFwCoverageMaskFile(
+        (file) => file === "mask.webp" || file === "mask-foil.webp",
+      ),
+    ).toBe("mask-foil.webp");
+    expect(dbsFwCoverageMaskFile((file) => file === "mask-ef-01.webp")).toBe(
+      "mask-ef-01.webp",
+    );
     expect(dbsFwCoverageMaskFile(() => false)).toBeNull();
+    setDbsFwMaskUrls([
+      "/assets/dragonball/fw/cards/en/e/111-p1/mask.webp",
+      "/assets/dragonball/fw/cards/en/st01/004-p1/mask-foil.webp",
+      "/assets/dragonball/fw/cards/en/st01/004-p1/mask.webp",
+    ]);
+    expect(
+      dbsFwKnownCoverageMaskUrl(
+        "/assets/dragonball/fw/cards/en/e/111-p1/art.client.webp",
+        "mask-foil.webp",
+      ),
+    ).toBe("/assets/dragonball/fw/cards/en/e/111-p1/mask.webp");
+    expect(
+      dbsFwKnownCoverageMaskUrl(
+        "/assets/dragonball/fw/cards/en/st01/004-p1/art.client.webp",
+        "mask-foil.webp",
+      ),
+    ).toBe("/assets/dragonball/fw/cards/en/st01/004-p1/mask-foil.webp");
+    setDbsFwMaskUrls([]);
     expect(
       dbsFwLayerSurfaces(
         "/assets/dragonball/fw/cards/en/fb01/001/art.client.webp",
@@ -96,6 +153,7 @@ describe("catalogue mask urls", () => {
       frontUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.picture.webp",
       frameUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.frame.webp",
       inkUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.text.webp",
+      holoMaskUrl: "/assets/dragonball/fw/cards/en/fb01/001/mask.webp",
     });
     expect(
       dbsFwLayerSurfaces(

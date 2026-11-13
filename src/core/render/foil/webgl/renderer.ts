@@ -10,6 +10,8 @@ import {
   foilTextureInternalFormat,
   getFoilCapabilities,
   preferAstcTextureUpload,
+  preferS3tcTextureUpload,
+  s3tcFormatConstant,
 } from "@/core/render/foil/capabilities";
 import { foilClockSeconds, subscribeFoilFrame } from "../clock";
 
@@ -17,6 +19,7 @@ import type {
   FoilAstcBinding,
   FoilFilter,
   FoilMaterial,
+  FoilS3tcBinding,
   FoilTextureBinding,
   FoilWrap,
 } from "@/core/render/foil/types";
@@ -170,6 +173,23 @@ export function foilCosTime(
     Math.cos(seconds / 4),
     Math.cos(seconds / 2),
     Math.cos(seconds),
+  ];
+}
+
+/**
+ * Unity's `_SinTime`: `(sin(t/8), sin(t/4), sin(t/2), sin(t))`.
+ * Frost/Card reconstructs a holo angle via `1/max(|sin|,|cos|)` on `.yz` —
+ * leaving this at the WebGL zero default makes `1/|cos|` blow up whenever
+ * `cos(t/4)` or `cos(t/2)` crosses zero (black card + neon NaN edges).
+ */
+export function foilSinTime(
+  seconds: number,
+): readonly [number, number, number, number] {
+  return [
+    Math.sin(seconds / 8),
+    Math.sin(seconds / 4),
+    Math.sin(seconds / 2),
+    Math.sin(seconds),
   ];
 }
 
@@ -420,9 +440,15 @@ export const ROLE_TEXTURE_FALLBACK: Record<
 > = {
   art: [128, 128, 128, 255],
   foilMask: [255, 255, 255, 255],
+  // Unity unbound HoloMask is white (full rainbow), not transparent.
+  holoMask: [255, 255, 255, 255],
   varnishMask: [255, 255, 255, 255],
   secondVarnishMask: [0, 0, 0, 255],
   normals: [128, 128, 255, 255],
+  // Optional card layers. Transparent so a missing file leaves the face.
+  front: [0, 0, 0, 0],
+  frame: [0, 0, 0, 0],
+  ink: [0, 0, 0, 0],
 };
 
 const ROLE_FALLBACK = ROLE_TEXTURE_FALLBACK;
@@ -489,9 +515,16 @@ type ProgramBindings = {
   cameraPosLoc: WebGLUniformLocation | null;
   cameraPosSize: 3 | 4;
   cosTimeLoc: WebGLUniformLocation | null;
+  sinTimeLoc: WebGLUniformLocation | null;
   timeLoc: WebGLUniformLocation | null;
   deviceRotLoc: WebGLUniformLocation | null;
-  samplers: { location: WebGLUniformLocation; unit: number; slot: string }[];
+  samplers: {
+    location: WebGLUniformLocation;
+    unit: number;
+    slot: string;
+    /** Frost packs EffectsLayer into `sampler2DArray`. */
+    target: "2d" | "2d_array";
+  }[];
 };
 
 void WRAP_GL;
@@ -541,6 +574,8 @@ export function createWebglFoilRenderer(
    */
   let unsubscribeClock: (() => void) | null = null;
   const texturesBySlot = new Map<string, WebGLTexture>();
+  /** Slots uploaded as `TEXTURE_2D_ARRAY` (Frost EffectsLayer pack). */
+  const arraySlots = new Set<string>();
 
   function onVisibilityChange() {
     paused = document.visibilityState === "hidden";
@@ -578,29 +613,124 @@ export function createWebglFoilRenderer(
     return texture!;
   }
 
+  /** 1×1×1 array so unbound `sampler2DArray` slots stay complete (Frost EffectsLayer). */
+  function solidArrayTexture(
+    rgba: [number, number, number, number],
+  ): WebGLTexture {
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D_ARRAY, texture);
+    gl!.texImage3D(
+      gl!.TEXTURE_2D_ARRAY,
+      0,
+      gl!.RGBA,
+      1,
+      1,
+      1,
+      0,
+      gl!.RGBA,
+      gl!.UNSIGNED_BYTE,
+      new Uint8Array(rgba),
+    );
+    gl!.texParameteri(gl!.TEXTURE_2D_ARRAY, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR);
+    gl!.texParameteri(gl!.TEXTURE_2D_ARRAY, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
+    gl!.texParameteri(
+      gl!.TEXTURE_2D_ARRAY,
+      gl!.TEXTURE_WRAP_S,
+      gl!.CLAMP_TO_EDGE,
+    );
+    gl!.texParameteri(
+      gl!.TEXTURE_2D_ARRAY,
+      gl!.TEXTURE_WRAP_T,
+      gl!.CLAMP_TO_EDGE,
+    );
+    return texture!;
+  }
+
   function applySamplerState(
     binding: FoilTextureBinding | undefined,
-    options: { compressed?: boolean } = {},
+    options: { compressed?: boolean; target?: number } = {},
   ): void {
+    const target = options.target ?? gl!.TEXTURE_2D;
     const isRole = Boolean(binding?.role);
     const wrap = isRole ? "clamp" : (binding?.wrap ?? "repeat");
     // Compressed ASTC dumps are level-0 only — generateMipmap is illegal on
     // them, and a mip minFilter without a chain samples black.
-    const mipmaps = !options.compressed && !isRole && Boolean(binding?.mipmaps);
+    const mipmaps =
+      target === gl!.TEXTURE_2D &&
+      !options.compressed &&
+      !isRole &&
+      Boolean(binding?.mipmaps);
     const filter = binding?.filter ?? "bilinear";
-    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, wrapMode(gl!, wrap));
-    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, wrapMode(gl!, wrap));
+    gl!.texParameteri(target, gl!.TEXTURE_WRAP_S, wrapMode(gl!, wrap));
+    gl!.texParameteri(target, gl!.TEXTURE_WRAP_T, wrapMode(gl!, wrap));
     gl!.texParameteri(
-      gl!.TEXTURE_2D,
+      target,
       gl!.TEXTURE_MIN_FILTER,
       minFilter(gl!, filter, mipmaps),
     );
-    gl!.texParameteri(
-      gl!.TEXTURE_2D,
-      gl!.TEXTURE_MAG_FILTER,
-      magFilter(gl!, filter),
+    gl!.texParameteri(target, gl!.TEXTURE_MAG_FILTER, magFilter(gl!, filter));
+    if (mipmaps) gl!.generateMipmap(target);
+  }
+
+  async function uploadTextureArray(
+    layers: readonly FoilTextureBinding[],
+  ): Promise<WebGLTexture | null> {
+    if (layers.length === 0) return null;
+    const bitmaps: ImageBitmap[] = [];
+    for (const layer of layers) {
+      const file = layer.file;
+      if (!file) return null;
+      bitmaps.push(await fetchImageBitmap(textureBase + file));
+      if (destroyed) return null;
+    }
+    const width = bitmaps[0]!.width;
+    const height = bitmaps[0]!.height;
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D_ARRAY, texture);
+    const internal =
+      foilTextureInternalFormat({
+        linearOutput: material.linearOutput,
+        srgb: layers[0]?.srgb,
+      }) === "srgb8_alpha8"
+        ? gl!.SRGB8_ALPHA8
+        : gl!.RGBA;
+    gl!.texStorage3D(
+      gl!.TEXTURE_2D_ARRAY,
+      1,
+      internal,
+      width,
+      height,
+      bitmaps.length,
     );
-    if (mipmaps) gl!.generateMipmap(gl!.TEXTURE_2D);
+    for (let i = 0; i < bitmaps.length; i++) {
+      const bmp = bitmaps[i]!;
+      // Resize mismatch: upload into a canvas at layer-0 size.
+      let source: TexImageSource = bmp;
+      if (bmp.width !== width || bmp.height !== height) {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+        ctx.drawImage(bmp, 0, 0, width, height);
+        source = canvas;
+      }
+      gl!.texSubImage3D(
+        gl!.TEXTURE_2D_ARRAY,
+        0,
+        0,
+        0,
+        i,
+        width,
+        height,
+        1,
+        gl!.RGBA,
+        gl!.UNSIGNED_BYTE,
+        source,
+      );
+    }
+    applySamplerState(layers[0], { target: gl!.TEXTURE_2D_ARRAY });
+    return texture!;
   }
 
   function uploadTexture(
@@ -633,10 +763,11 @@ export function createWebglFoilRenderer(
 
   function uploadCompressedTexture(
     data: ArrayBuffer,
-    astc: FoilAstcBinding,
+    compressed: FoilAstcBinding | FoilS3tcBinding,
     binding: FoilTextureBinding | undefined,
+    resolveFormat: (name: string) => number | null,
   ): WebGLTexture | null {
-    const format = astcFormatConstant(gl!, astc.format);
+    const format = resolveFormat(compressed.format);
     if (format === null) return null;
 
     const texture = gl!.createTexture();
@@ -649,8 +780,8 @@ export function createWebglFoilRenderer(
         gl!.TEXTURE_2D,
         0,
         format,
-        astc.width,
-        astc.height,
+        compressed.width,
+        compressed.height,
         0,
         new Uint8Array(data),
       );
@@ -675,10 +806,18 @@ export function createWebglFoilRenderer(
         return surfaces.artUrl;
       case "foilMask":
         return surfaces.foilMaskUrl ?? null;
+      case "holoMask":
+        return surfaces.holoMaskUrl ?? surfaces.foilMaskUrl ?? null;
       case "varnishMask":
         return surfaces.varnishMaskUrl ?? null;
       case "secondVarnishMask":
         return surfaces.secondVarnishMaskUrl ?? null;
+      case "front":
+        return surfaces.frontUrl ?? null;
+      case "frame":
+        return surfaces.frameUrl ?? null;
+      case "ink":
+        return surfaces.inkUrl ?? null;
       default:
         return null;
     }
@@ -694,6 +833,25 @@ export function createWebglFoilRenderer(
       slot,
       solidTexture(fallback as [number, number, number, number]),
     );
+    arraySlots.delete(slot);
+
+    const layers = binding?.arrayLayers;
+    if (layers && layers.length > 0) {
+      try {
+        const arrayTex = await uploadTextureArray(layers);
+        if (destroyed) return;
+        if (arrayTex) {
+          texturesBySlot.set(slot, arrayTex);
+          arraySlots.add(slot);
+          return;
+        }
+      } catch {
+        // Replace the provisional 2D solid — array samplers need 2D_ARRAY.
+      }
+      texturesBySlot.set(slot, solidArrayTexture(UNBOUND_TEXTURE_FALLBACK));
+      arraySlots.add(slot);
+      return;
+    }
 
     const astc = binding?.astc;
     if (
@@ -709,7 +867,42 @@ export function createWebglFoilRenderer(
       try {
         const data = await fetchArrayBuffer(textureBase + astc.file);
         if (destroyed) return;
-        const compressed = uploadCompressedTexture(data, astc, binding);
+        const compressed = uploadCompressedTexture(
+          data,
+          astc,
+          binding,
+          (name) => astcFormatConstant(gl!, name),
+        );
+        if (compressed) {
+          texturesBySlot.set(slot, compressed);
+          return;
+        }
+      } catch {
+        // Fall through to PNG / WebP raster.
+      }
+    }
+
+    const s3tc = binding?.s3tc;
+    const caps = getFoilCapabilities();
+    if (
+      s3tc &&
+      !role &&
+      preferS3tcTextureUpload({
+        hasS3tcBinding: true,
+        hasRasterSibling: Boolean(binding?.file),
+        supportsS3tc: caps.supportsS3tc || caps.supportsS3tcSrgb,
+        forceRaster: foilForceRasterOverride(),
+      })
+    ) {
+      try {
+        const data = await fetchArrayBuffer(textureBase + s3tc.file);
+        if (destroyed) return;
+        const compressed = uploadCompressedTexture(
+          data,
+          s3tc,
+          binding,
+          (name) => s3tcFormatConstant(gl!, name),
+        );
         if (compressed) {
           texturesBySlot.set(slot, compressed);
           return;
@@ -740,8 +933,10 @@ export function createWebglFoilRenderer(
       if (
         info.name === "_Tilt" ||
         info.name === "_CosTime" ||
+        info.name === "_SinTime" ||
         info.name === "_DeviceRotationDegrees" ||
-        info.type === gl!.SAMPLER_2D
+        info.type === gl!.SAMPLER_2D ||
+        info.type === gl!.SAMPLER_2D_ARRAY
       ) {
         continue;
       }
@@ -817,16 +1012,28 @@ export function createWebglFoilRenderer(
 
   function collectSamplers(program: WebGLProgram): ProgramBindings["samplers"] {
     const samplers: ProgramBindings["samplers"] = [];
-    const names: string[] = [];
+    const entries: { name: string; target: "2d" | "2d_array" }[] = [];
     const uniformCount = gl!.getProgramParameter(program, gl!.ACTIVE_UNIFORMS);
     for (let i = 0; i < uniformCount; i++) {
       const info = gl!.getActiveUniform(program, i);
-      if (info && info.type === gl!.SAMPLER_2D) names.push(info.name);
+      if (!info) continue;
+      if (info.type === gl!.SAMPLER_2D) {
+        entries.push({ name: info.name, target: "2d" });
+      } else if (info.type === gl!.SAMPLER_2D_ARRAY) {
+        entries.push({ name: info.name, target: "2d_array" });
+      }
     }
-    names.sort();
-    names.forEach((name, unit) => {
-      const location = gl!.getUniformLocation(program, name);
-      if (location) samplers.push({ location, unit, slot: name });
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    entries.forEach((entry, unit) => {
+      const location = gl!.getUniformLocation(program, entry.name);
+      if (location) {
+        samplers.push({
+          location,
+          unit,
+          slot: entry.name,
+          target: entry.target,
+        });
+      }
     });
     return samplers;
   }
@@ -861,6 +1068,7 @@ export function createWebglFoilRenderer(
       cameraPosLoc: camera.loc,
       cameraPosSize: camera.size,
       cosTimeLoc: gl!.getUniformLocation(program, "_CosTime"),
+      sinTimeLoc: gl!.getUniformLocation(program, "_SinTime"),
       timeLoc: gl!.getUniformLocation(program, "_Time"),
       deviceRotLoc: gl!.getUniformLocation(program, "_DeviceRotationDegrees"),
       samplers: collectSamplers(program),
@@ -904,6 +1112,10 @@ export function createWebglFoilRenderer(
       const cos = foilCosTime(seconds);
       gl!.uniform4f(active.cosTimeLoc, cos[0], cos[1], cos[2], cos[3]);
     }
+    if (active.sinTimeLoc) {
+      const sin = foilSinTime(seconds);
+      gl!.uniform4f(active.sinTimeLoc, sin[0], sin[1], sin[2], sin[3]);
+    }
     if (active.timeLoc) {
       // Unity `_Time`: (t/20, t, t*2, t*3) — Live frags mostly read `.y`.
       gl!.uniform4f(
@@ -925,14 +1137,21 @@ export function createWebglFoilRenderer(
         Always bind — a missing slot (FlatSilver `_CCPatternTex` pathid 0)
         must not reuse the previous unit's texture. Transparent fallback
         matches Unity's unbound α≈0 so CC/spectrum gates stay off.
+        `sampler2DArray` needs a 2D_ARRAY object — a 2D solid leaves the unit
+        incomplete and Frost draws nothing (plain CSS art underneath).
       */
-      const texture =
-        texturesBySlot.get(sampler.slot) ??
-        solidTexture(UNBOUND_TEXTURE_FALLBACK);
-      if (!texturesBySlot.has(sampler.slot)) {
+      const wantsArray =
+        sampler.target === "2d_array" || arraySlots.has(sampler.slot);
+      let texture = texturesBySlot.get(sampler.slot);
+      if (!texture || (wantsArray && !arraySlots.has(sampler.slot))) {
+        texture = wantsArray
+          ? solidArrayTexture(UNBOUND_TEXTURE_FALLBACK)
+          : solidTexture(UNBOUND_TEXTURE_FALLBACK);
         texturesBySlot.set(sampler.slot, texture);
+        if (wantsArray) arraySlots.add(sampler.slot);
       }
-      gl!.bindTexture(gl!.TEXTURE_2D, texture);
+      const target = wantsArray ? gl!.TEXTURE_2D_ARRAY : gl!.TEXTURE_2D;
+      gl!.bindTexture(target, texture);
     }
 
     gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
@@ -1027,7 +1246,17 @@ export function createWebglFoilRenderer(
     }
 
     await Promise.all(
-      [...slots].map((slot) => loadSlotTexture(slot, material.textures[slot])),
+      [...slots].map(async (slot) => {
+        try {
+          await loadSlotTexture(slot, material.textures[slot]);
+        } catch (err) {
+          const role = material.textures[slot]?.role;
+          // A missing illustration, frame or text plate stays transparent.
+          // The face underneath is the card. Any other slot still fails the draw.
+          if (role === "front" || role === "frame" || role === "ink") return;
+          throw err;
+        }
+      }),
     );
     if (destroyed) return;
     activate(scrollMode);

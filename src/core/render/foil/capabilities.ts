@@ -1,6 +1,10 @@
 export type FoilCapabilities = {
   supportsWebgl2: boolean;
   supportsAstc: boolean;
+  /** WEBGL_compressed_texture_s3tc (DXT1/3/5). */
+  supportsS3tc: boolean;
+  /** WEBGL_compressed_texture_s3tc_srgb (DXT sRGB). */
+  supportsS3tcSrgb: boolean;
 };
 
 let cached: FoilCapabilities | null = null;
@@ -39,19 +43,31 @@ const ASTC_FORMAT_NAMES = [
 
 function probeOnce(): FoilCapabilities {
   if (typeof document === "undefined") {
-    return { supportsWebgl2: false, supportsAstc: false };
+    return {
+      supportsWebgl2: false,
+      supportsAstc: false,
+      supportsS3tc: false,
+      supportsS3tcSrgb: false,
+    };
   }
 
   const canvas = document.createElement("canvas");
   const gl = canvas.getContext("webgl2");
   if (!gl) {
-    return { supportsWebgl2: false, supportsAstc: false };
+    return {
+      supportsWebgl2: false,
+      supportsAstc: false,
+      supportsS3tc: false,
+      supportsS3tcSrgb: false,
+    };
   }
 
-  const ext = gl.getExtension("WEBGL_compressed_texture_astc");
   return {
     supportsWebgl2: true,
-    supportsAstc: ext !== null,
+    supportsAstc: gl.getExtension("WEBGL_compressed_texture_astc") !== null,
+    supportsS3tc: gl.getExtension("WEBGL_compressed_texture_s3tc") !== null,
+    supportsS3tcSrgb:
+      gl.getExtension("WEBGL_compressed_texture_s3tc_srgb") !== null,
   };
 }
 
@@ -85,6 +101,51 @@ export function astcFormatConstant(
 }
 
 /**
+ * Resolve an S3TC / S3TC-sRGB compressed format enum.
+ * Prefers sRGB DXT5 when the binding asks for sRGB and the extension exists.
+ */
+export function s3tcFormatConstant(
+  gl: WebGL2RenderingContext,
+  formatName: string,
+): number | null {
+  const srgb = gl.getExtension("WEBGL_compressed_texture_s3tc_srgb") as
+    | (Record<string, number> & {
+        COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT?: number;
+      })
+    | null;
+  if (srgb && typeof srgb[formatName] === "number") {
+    return srgb[formatName]!;
+  }
+  const linear = gl.getExtension("WEBGL_compressed_texture_s3tc") as
+    | (Record<string, number> & {
+        COMPRESSED_RGBA_S3TC_DXT5_EXT?: number;
+      })
+    | null;
+  if (linear && typeof linear[formatName] === "number") {
+    return linear[formatName]!;
+  }
+  return null;
+}
+
+/**
+ * Pick the best WebGL S3TC internal format name for a Unity DXT5 dump.
+ * sRGB when `m_ColorSpace === 1` and the sRGB extension is present.
+ */
+export function preferS3tcDxt5FormatName(opts: {
+  srgb: boolean;
+  supportsS3tcSrgb: boolean;
+  supportsS3tc: boolean;
+}): string | null {
+  if (opts.srgb && opts.supportsS3tcSrgb) {
+    return "COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT";
+  }
+  if (opts.supportsS3tc || opts.supportsS3tcSrgb) {
+    return "COMPRESSED_RGBA_S3TC_DXT5_EXT";
+  }
+  return null;
+}
+
+/**
  * Prefer ASTC dump over raster WebP/PNG when the GPU supports it.
  * `forceRaster` (smoke: `localStorage.placarrForceFoilRaster=1`) always
  * falls through to the lossless raster path for Network debugging.
@@ -100,6 +161,21 @@ export function preferAstcTextureUpload(opts: {
     opts.hasAstcBinding &&
     opts.hasRasterSibling &&
     opts.supportsAstc &&
+    !opts.forceRaster
+  );
+}
+
+/** Prefer raw DXT/S3TC dump over raster when the GPU can sample it. */
+export function preferS3tcTextureUpload(opts: {
+  hasS3tcBinding: boolean;
+  hasRasterSibling: boolean;
+  supportsS3tc: boolean;
+  forceRaster?: boolean;
+}): boolean {
+  return (
+    opts.hasS3tcBinding &&
+    opts.hasRasterSibling &&
+    opts.supportsS3tc &&
     !opts.forceRaster
   );
 }

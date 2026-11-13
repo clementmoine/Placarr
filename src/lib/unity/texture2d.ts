@@ -10,6 +10,8 @@
 import {
   decodeAstc,
   decodeBc1,
+  decodeBc3,
+  decodeBc7,
   decodeEtc1,
 } from "@arkntools/unity-js-tools";
 
@@ -26,6 +28,14 @@ import {
 export const TextureFormat = {
   /** BC1 / S3TC — Mac Live shadersbundle. */
   DXT1: 10,
+  /** BC3 / DXT5 — desktop masks and most card faces. */
+  DXT5: 12,
+  /** Uncompressed RGB8 — desktop sleeves and the default card back. */
+  RGB24: 3,
+  /** Uncompressed RGBA8. */
+  RGBA32: 4,
+  /** BC7 — a few desktop plates. */
+  BC7: 25,
   /** ETC1 RGB — Android Live CDN shadersbundle. */
   ETC_RGB4: 34,
   ASTC_RGB_4x4: 48,
@@ -66,6 +76,10 @@ export function astcBlockSize(format: number): number | null {
 export function canDecodeTextureFormat(format: number): boolean {
   return (
     format === TextureFormat.DXT1 ||
+    format === TextureFormat.DXT5 ||
+    format === TextureFormat.RGB24 ||
+    format === TextureFormat.RGBA32 ||
+    format === TextureFormat.BC7 ||
     format === TextureFormat.ETC_RGB4 ||
     ASTC_BLOCK[format] != null
   );
@@ -78,6 +92,27 @@ export function webglAstcFormat(format: number): string | null {
   return `COMPRESSED_RGBA_ASTC_${block}x${block}_KHR`;
 }
 
+/**
+ * Preferred WebGL S3TC format name for a Unity TextureFormat + color space.
+ * Caller still probes extensions — sRGB name needs `s3tc_srgb`.
+ */
+export function webglS3tcFormat(
+  format: number,
+  srgb: boolean,
+): string | null {
+  if (format === TextureFormat.DXT1) {
+    return srgb
+      ? "COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT"
+      : "COMPRESSED_RGBA_S3TC_DXT1_EXT";
+  }
+  if (format === TextureFormat.DXT5) {
+    return srgb
+      ? "COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT"
+      : "COMPRESSED_RGBA_S3TC_DXT5_EXT";
+  }
+  return null;
+}
+
 export type DecodedTexture2D = {
   name: string;
   width: number;
@@ -85,7 +120,7 @@ export type DecodedTexture2D = {
   format: number;
   /** sRGB when ``m_ColorSpace === 1``. */
   srgb: boolean;
-  /** RGBA8, Unity/top-left (vertical flip; ASTC also BGRA→RGBA). */
+  /** RGBA8, Unity/top-left (vertical flip; BCn/ASTC via BGRA→RGBA). */
   rgba: Buffer;
 };
 
@@ -140,7 +175,7 @@ export function decodeTextureFormat(
   format: number,
   name = "",
 ): Buffer {
-  // ETC1 / BC1: arkntools already returns RGBA8 — flip only.
+  // ETC1: arkntools returns RGBA8 — flip only.
   if (format === TextureFormat.ETC_RGB4) {
     return flipRgbaVertical(
       Buffer.from(decodeEtc1(data, width, height)),
@@ -148,20 +183,162 @@ export function decodeTextureFormat(
       height,
     );
   }
+  // BCn (DXT1/5, BC7): arkntools / texture2ddecoder expand to BGRA8.
   if (format === TextureFormat.DXT1) {
     return flipRgbaVertical(
-      Buffer.from(decodeBc1(data, width, height)),
+      bgraToRgba(Buffer.from(decodeBc1(data, width, height))),
       width,
       height,
     );
+  }
+  if (format === TextureFormat.DXT5) {
+    return flipRgbaVertical(
+      bgraToRgba(Buffer.from(decodeBc3(data, width, height))),
+      width,
+      height,
+    );
+  }
+  if (format === TextureFormat.BC7) {
+    return flipRgbaVertical(
+      bgraToRgba(Buffer.from(decodeBc7(data, width, height))),
+      width,
+      height,
+    );
+  }
+  if (format === TextureFormat.RGB24) {
+    const pixels = width * height;
+    const rgba = Buffer.alloc(pixels * 4);
+    const view = data.subarray(0, pixels * 3);
+    for (let i = 0; i < pixels; i++) {
+      rgba[i * 4] = view[i * 3] ?? 0;
+      rgba[i * 4 + 1] = view[i * 3 + 1] ?? 0;
+      rgba[i * 4 + 2] = view[i * 3 + 2] ?? 0;
+      rgba[i * 4 + 3] = 255;
+    }
+    return flipRgbaVertical(rgba, width, height);
+  }
+  if (format === TextureFormat.RGBA32) {
+    const bytes = width * height * 4;
+    return flipRgbaVertical(Buffer.from(data.subarray(0, bytes)), width, height);
   }
   const block = ASTC_BLOCK[format];
   if (block == null) {
     throw new Error(`Texture2D format ${format} not implemented (${name})`);
   }
-  // ASTC: arkntools ``decodeTexture`` convention is BGRA.
+  // ASTC: same BGRA8 convention as BCn.
   const decoded = Buffer.from(decodeAstc(data, width, height, block, block));
   return flipRgbaVertical(bgraToRgba(decoded), width, height);
+}
+
+function texturePayload(
+  tree: UnityTypeTree,
+  loaded: LoadedUnityFs,
+): Uint8Array | null {
+  const stream = streamInfo(tree);
+  if (stream) {
+    const blob = resolveResourceBlob(loaded, stream.path);
+    if (!blob) return null;
+    return blob.subarray(stream.offset, stream.offset + stream.size);
+  }
+  return inlineImageData(tree);
+}
+
+/** Byte length of one DXT1/DXT5/BC7 mip level. */
+export function dxtMipByteSize(
+  width: number,
+  height: number,
+  format: number,
+): number {
+  const block = Math.ceil(width / 4) * Math.ceil(height / 4);
+  if (format === TextureFormat.DXT1) return block * 8;
+  if (
+    format === TextureFormat.DXT5 ||
+    format === TextureFormat.BC7
+  ) {
+    return block * 16;
+  }
+  return 0;
+}
+
+/** Byte length of one uncompressed RGBA8 mip level. */
+export function rgbaMipByteSize(width: number, height: number): number {
+  return Math.max(1, width) * Math.max(1, height) * 4;
+}
+
+/**
+ * Mip level `level` (≥ 1) of a Texture2D, already flipped to top-left.
+ * The client builds these with a box filter; sampling them removes the
+ * 4×4 stair the GPU hides. DXT plates, BC7 badges (`Blue_01_cost1`) and
+ * RGBA32 rings (`Cost_01`) all ship a mip chain.
+ */
+export function decodeTextureMip(
+  tree: UnityTypeTree,
+  loaded: LoadedUnityFs,
+  level: number,
+): DecodedTexture2D | null {
+  const name =
+    (typeof tree.m_Name === "string" && tree.m_Name) ||
+    (typeof tree.name === "string" && tree.name) ||
+    "";
+  const width = Number(tree.m_Width ?? 0);
+  const height = Number(tree.m_Height ?? 0);
+  const format = Number(tree.m_TextureFormat ?? 0);
+  const mips = Number(tree.m_MipCount ?? 1);
+  if (!name || width < 8 || height < 8 || level < 1 || mips <= level) {
+    return null;
+  }
+  const payload = texturePayload(tree, loaded);
+  if (!payload?.byteLength) return null;
+
+  const compressed =
+    format === TextureFormat.DXT1 ||
+    format === TextureFormat.DXT5 ||
+    format === TextureFormat.BC7;
+  const rgba = format === TextureFormat.RGBA32;
+  if (!compressed && !rgba) return null;
+
+  let offset = 0;
+  let levelWidth = width;
+  let levelHeight = height;
+  for (let i = 0; i < level; i += 1) {
+    const bytes = compressed
+      ? dxtMipByteSize(levelWidth, levelHeight, format)
+      : rgbaMipByteSize(levelWidth, levelHeight);
+    if (!bytes || payload.byteLength < offset + bytes) return null;
+    offset += bytes;
+    levelWidth = Math.max(1, levelWidth >> 1);
+    levelHeight = Math.max(1, levelHeight >> 1);
+  }
+  const levelBytes = compressed
+    ? dxtMipByteSize(levelWidth, levelHeight, format)
+    : rgbaMipByteSize(levelWidth, levelHeight);
+  if (!levelBytes || payload.byteLength < offset + levelBytes) return null;
+  try {
+    return {
+      name,
+      width: levelWidth,
+      height: levelHeight,
+      format,
+      srgb: Number(tree.m_ColorSpace ?? 0) === 1,
+      rgba: decodeTextureFormat(
+        payload.subarray(offset, offset + levelBytes),
+        levelWidth,
+        levelHeight,
+        format,
+        name,
+      ),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Mip1 helper — see {@link decodeTextureMip}. */
+export function decodeTextureMip1(
+  tree: UnityTypeTree,
+  loaded: LoadedUnityFs,
+): DecodedTexture2D | null {
+  return decodeTextureMip(tree, loaded, 1);
 }
 
 /** Decode one Texture2D typetree; null when format/resS path fails. */
@@ -179,15 +356,7 @@ export function decodeTextureTree(
   if (!name || width <= 0 || height <= 0) return null;
   if (!canDecodeTextureFormat(format)) return null;
 
-  const stream = streamInfo(tree);
-  let payload: Uint8Array | null = null;
-  if (stream) {
-    const blob = resolveResourceBlob(loaded, stream.path);
-    if (!blob) return null;
-    payload = blob.subarray(stream.offset, stream.offset + stream.size);
-  } else {
-    payload = inlineImageData(tree);
-  }
+  const payload = texturePayload(tree, loaded);
   if (!payload?.byteLength) return null;
 
   try {
@@ -226,7 +395,11 @@ type UnityTextureObject = {
 };
 
 const FORMAT_BY_NAME: Record<string, number> = {
+  RGB24: TextureFormat.RGB24,
+  RGBA32: TextureFormat.RGBA32,
   DXT1: TextureFormat.DXT1,
+  DXT5: TextureFormat.DXT5,
+  BC7: TextureFormat.BC7,
   ETC_RGB4: TextureFormat.ETC_RGB4,
   ASTC_RGB_4x4: TextureFormat.ASTC_RGB_4x4,
   ASTC_RGB_5x5: TextureFormat.ASTC_RGB_5x5,

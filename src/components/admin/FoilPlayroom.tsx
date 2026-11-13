@@ -440,6 +440,59 @@ function materialHasRole(
   );
 }
 
+type PlayroomFaceMasks = {
+  maskUrl?: string | null;
+  varnishMaskUrl?: string | null;
+  secondVarnishMaskUrl?: string | null;
+};
+
+type PlayroomBorrowedMasks = {
+  foilMaskUrl?: string | null;
+  varnishMaskUrl?: string | null;
+  secondVarnishMaskUrl?: string | null;
+};
+
+/**
+ * Masks that belong on the face being drawn.
+ *
+ * A pack face is the subject. Another catalogue's sample must not fill a
+ * missing slot — that painted a Lorcana card into a Fusion World foil.
+ */
+export function playroomSurfaceUrls(input: {
+  packArt: PlayroomFaceMasks | null;
+  borrowed: PlayroomBorrowedMasks | null;
+  fallbackFoilMaskUrl?: string | null;
+  needsVarnishMask: boolean;
+  needsSecondVarnishMask: boolean;
+  suppressMask: boolean;
+}): {
+  maskUrl: string | null;
+  foilPlateUrl: string | null;
+  varnishMaskUrl: string | null;
+  secondVarnishMaskUrl: string | null;
+} {
+  const borrowed = input.packArt ? null : input.borrowed;
+  return {
+    maskUrl: input.suppressMask
+      ? null
+      : input.packArt
+        ? (input.packArt.maskUrl ?? null)
+        : (borrowed?.foilMaskUrl ?? input.fallbackFoilMaskUrl ?? null),
+    foilPlateUrl:
+      input.packArt?.secondVarnishMaskUrl ??
+      borrowed?.secondVarnishMaskUrl ??
+      null,
+    varnishMaskUrl: input.needsVarnishMask
+      ? (input.packArt?.varnishMaskUrl ?? borrowed?.varnishMaskUrl ?? null)
+      : null,
+    secondVarnishMaskUrl: input.needsSecondVarnishMask
+      ? (input.packArt?.secondVarnishMaskUrl ??
+        borrowed?.secondVarnishMaskUrl ??
+        null)
+      : null,
+  };
+}
+
 function MaterialTile({
   packId,
   materialName,
@@ -610,6 +663,19 @@ function MaterialTile({
 
   const own = adapted?.own;
   const sample = adapted?.sample;
+  const surfaces = playroomSurfaceUrls({
+    packArt: packArt ?? null,
+    borrowed: own ?? null,
+    fallbackFoilMaskUrl: pack?.fallbackFoilMaskUrl,
+    needsVarnishMask,
+    needsSecondVarnishMask,
+    suppressMask:
+      material?.webgl === false ||
+      (sealedBag &&
+        (finish === "sealed" ||
+          materialName === "sealed" ||
+          materialName === "sealed-adaptive")),
+  });
 
   return focusShell(
     cardFrame(
@@ -642,7 +708,13 @@ function MaterialTile({
         }
         finish={
           finish ??
-          (material?.webgl === false ? materialName : own?.finish ?? materialName)
+          (material?.webgl === false
+            ? materialName
+            : // WebGL leaf (Frost / Live dump): do not borrow another pack's
+              // catalogue finish — that routed Unity tiles through house flare.
+              material
+                ? null
+                : (own?.finish ?? materialName))
         }
         sealedBag={sealedBag}
         // Only pass varnish from the material under test — not from a random
@@ -654,40 +726,19 @@ function MaterialTile({
           put another card's mask over the displayed art — every Pokémon sample
           wore `swsh7-5_wp_fr_009` while its own `…_wp_…` sat unused on disk.
         */
-        maskUrl={
-          material?.webgl === false ||
-          // Packaging-only bags: no foil mask. Foil+bag demos keep theirs.
-          (sealedBag &&
-            (finish === "sealed" ||
-              materialName === "sealed" ||
-              materialName === "sealed-adaptive"))
-            ? null
-            : (packArt?.maskUrl ??
-              own?.foilMaskUrl ??
-              pack?.fallbackFoilMaskUrl ??
-              null)
-        }
+        maskUrl={surfaces.maskUrl}
+        // Pack face without a per-card mask still needs the kit fallback so
+        // Unity can start (otherwise every tile sits on CSS forever).
+        useMaskFallback={!surfaces.maskUrl}
         /*
           Ultra Gold / Scodix / SwSecret: full-card + raw `--foil-etch`.
           Radiant: invert etch → mask + paint.
         */
-        foilPlateUrl={
-          packArt?.secondVarnishMaskUrl ?? own?.secondVarnishMaskUrl ?? null
-        }
+        foilPlateUrl={surfaces.foilPlateUrl}
         // Plates are engravings of a specific print — when the pack supplies
         // the art, its plates must ride along (not another card's).
-        varnishMaskUrl={
-          needsVarnishMask
-            ? (packArt?.varnishMaskUrl ?? own?.varnishMaskUrl ?? null)
-            : null
-        }
-        secondVarnishMaskUrl={
-          needsSecondVarnishMask
-            ? (packArt?.secondVarnishMaskUrl ??
-              own?.secondVarnishMaskUrl ??
-              null)
-            : null
-        }
+        varnishMaskUrl={surfaces.varnishMaskUrl}
+        secondVarnishMaskUrl={surfaces.secondVarnishMaskUrl}
         varnishColor={needsVarnishMask ? (own?.varnishColor ?? null) : null}
         secondVarnishColor={
           needsSecondVarnishMask ? (own?.secondVarnishColor ?? null) : null
@@ -1013,7 +1064,16 @@ export function FoilPlayroom({
       }
       replaceParams((params) => {
         if (next === "foils") {
-          params.delete("scope");
+          /*
+            Empty scope = pack.defaultScope. Packs whose home tab is Cartes
+            (e.g. Fusion World) need an explicit `scope=foils` so Rendu
+            bookmarks and URL sync stay on the playroom.
+          */
+          if (catalogueInfo.defaultScope === "foils") {
+            params.delete("scope");
+          } else {
+            params.set("scope", "foils");
+          }
         } else if (next === "sealed") {
           params.set("scope", "sealed");
           params.delete("material");
@@ -1034,6 +1094,7 @@ export function FoilPlayroom({
       });
     },
     [
+      catalogueInfo.defaultScope,
       replaceParams,
       setBrowseScopeOptimistic,
       setLayoutOptimistic,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  playroomSurfaceUrls,
   printInfoFromSample,
   resolveEffectPackId,
   resolvePlayroomLayout,
@@ -80,6 +81,53 @@ describe("resolvePlayroomMaterial", () => {
 
   it("renvoie null sans matériaux", () => {
     expect(resolvePlayroomMaterial("SvHolo", [])).toBeNull();
+  });
+});
+
+describe("playroomSurfaceUrls", () => {
+  const lorcana = {
+    foilMaskUrl: "/assets/lorcana/cards/fr/9/205/mask.jpg",
+    varnishMaskUrl: "/assets/lorcana/cards/fr/9/205/varnish.jpg",
+    secondVarnishMaskUrl: "/assets/lorcana/cards/fr/9/205/varnish2.jpg",
+  };
+
+  it("keeps a foreign sample off a pack face that has no mask of its own", () => {
+    const urls = playroomSurfaceUrls({
+      packArt: { maskUrl: null },
+      borrowed: lorcana,
+      fallbackFoilMaskUrl: "/assets/dragonball/fw/full_foil_mask.webp",
+      needsVarnishMask: false,
+      needsSecondVarnishMask: false,
+      suppressMask: false,
+    });
+    expect(urls.maskUrl).toBeNull();
+    expect(urls.foilPlateUrl).toBeNull();
+    expect(urls.varnishMaskUrl).toBeNull();
+    expect(urls.secondVarnishMaskUrl).toBeNull();
+  });
+
+  it("uses the pack face mask when that print has one", () => {
+    expect(
+      playroomSurfaceUrls({
+        packArt: { maskUrl: "/assets/dragonball/fw/cards/en/st01/001/mask.webp" },
+        borrowed: lorcana,
+        needsVarnishMask: true,
+        needsSecondVarnishMask: true,
+        suppressMask: false,
+      }).maskUrl,
+    ).toBe("/assets/dragonball/fw/cards/en/st01/001/mask.webp");
+  });
+
+  it("borrows a sample only when the pack did not supply a face", () => {
+    expect(
+      playroomSurfaceUrls({
+        packArt: null,
+        borrowed: lorcana,
+        needsVarnishMask: false,
+        needsSecondVarnishMask: false,
+        suppressMask: false,
+      }).maskUrl,
+    ).toBe(lorcana.foilMaskUrl);
   });
 });
 

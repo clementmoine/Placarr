@@ -13,6 +13,7 @@ import {
   compositeCostFill,
   COST_FILL_DRAW_SIZE,
   isolateCostRingDisc,
+  isClientFaceExtractCurrent,
   clientFrameArrayCandidates,
   fusionWorldFaceLayer,
   premultiplyStraight,
@@ -25,6 +26,26 @@ describe("clientFacePixels", () => {
     expect(clientFacePixels(512, 1024)).toEqual({ width: 512, height: 715 });
     expect(clientFacePixels(733, 1024)).toEqual({ width: 733, height: 1024 });
     expect(clientFacePixels(800, 1024)).toEqual({ width: 800, height: 1024 });
+  });
+});
+
+describe("isClientFaceExtractCurrent", () => {
+  it("rejects pre-split art.client without Frost layers", () => {
+    expect(
+      isClientFaceExtractCurrent(new Set(["art.client.webp"]), "front", true),
+    ).toBe(false);
+  });
+
+  it("requires costRing only when the card has a cost badge", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+    ]);
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
+    expect(isClientFaceExtractCurrent(base, "front", true)).toBe(false);
+    base.add("layer.costRing.webp");
+    expect(isClientFaceExtractCurrent(base, "front", true)).toBe(true);
   });
 });
 

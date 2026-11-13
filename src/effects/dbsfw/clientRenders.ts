@@ -6,6 +6,19 @@
 
 const ASSET = "/assets/dragonball/fw";
 
+export type DbsFwEffectsLayer = {
+  /** `client-*.webp` under foil/textures — Frost `_EffectsLayer{N}Tex`. */
+  tex: string;
+  /** Optional motion plate (`_EffectsLayer{N}Motion`). */
+  motion?: string;
+};
+
+export type DbsFwPlayroomFace = {
+  /** Path under `cards/en/` (e.g. `st01/004-p1`). */
+  path: string;
+  label: string;
+};
+
 export type DbsFwClientRender = {
   id: string;
   label: string;
@@ -13,6 +26,11 @@ export type DbsFwClientRender = {
   files: readonly string[];
   /** Client fragment under `/shaders/`. Absent rows stay a still plate. */
   shader?: "FrostCard.frag" | "UIHologram.frag";
+  /**
+   * Catalogue print for FoilPlayroom — one distinct face per shader leaf
+   * (never reuse the same ST01 seed across finishes).
+   */
+  playroomFace?: DbsFwPlayroomFace;
   /**
    * Plate applied over the catalogue print.
    * `mask` gates where the foil sits. `map` only steers the holo, so a
@@ -25,20 +43,42 @@ export type DbsFwClientRender = {
    * The shader samples that file, not another card's plate.
    */
   cardMask?: string;
+  /**
+   * Optional Frost `_HoloMask` plate under `foil/textures/` when it must
+   * differ from {@link cardMask} (FoilType stamp vs rainbow coverage).
+   */
+  holoPlate?: string;
+  /**
+   * Premiumtex / VFX plates packed into `_EffectsLayersTex` (2D array).
+   * Count must match the recipe `EFFECTS_LAYER_COUNT`.
+   */
+  effectsLayers?: readonly DbsFwEffectsLayer[];
 };
+
+/** Absolute `/assets/…/art.client.webp` for a playroom face path. */
+export function dbsFwPlayroomFaceUrl(path: string): string {
+  return `${ASSET}/cards/en/${path.replace(/^\/+|\/+$/g, "")}/art.client.webp`;
+}
 
 export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
   {
     id: "card",
     label: "Carte",
     shader: "FrostCard.frag",
+    playroomFace: { path: "st01/020", label: "ST01-020 · branché" },
     files: ["client-st01-020-card.webp"],
   },
   {
     id: "foil-holo",
     label: "Foil holo",
     shader: "FrostCard.frag",
-    cardMask: "mask.webp",
+    playroomFace: { path: "st01/004-p1", label: "ST01-004 P1 · branché" },
+    // FoilType 2 stamps gold from FoilMask R/G — mask.webp is near-full gray
+    // and floods the plate yellow; mask-foil is the channel-packed stamp.
+    cardMask: "mask-foil.webp",
+    // Character-shaped grey plate. Frost does `1.0 - HoloMask.x` (dark → strong).
+    holoPlate: "client-st01-004-para-holo.webp",
+    // Card Foil_holo dump: EFFECTS_LAYER_COUNT_ZERO — no premiumtex layer.
     files: [
       "client-st01-004-para-front.webp",
       "client-st01-004-para-holo.webp",
@@ -50,13 +90,20 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
     id: "tabac-holo",
     label: "Tabac holo",
     shader: "FrostCard.frag",
+    playroomFace: {
+      path: "fs02/15-para-1an",
+      label: "FS02-15 PARA · branché",
+    },
     mask: "client-tabac-holo.webp",
+    // Card Tabac_holo: EFFECTS_LAYER_COUNT_ONE — premiumtex plate.
+    effectsLayers: [{ tex: "client-uv-shine.webp" }],
     files: ["client-st01-004-para-front.webp", "client-tabac-holo.webp"],
   },
   {
     id: "energy-holo",
     label: "Energy holo",
     shader: "FrostCard.frag",
+    playroomFace: { path: "fs09/03", label: "FS09-03 · branché" },
     mask: "client-energy-holo-map.webp",
     plate: "map",
     files: ["client-energy-holo-texture.webp", "client-energy-holo-map.webp"],
@@ -65,21 +112,36 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
     id: "para",
     label: "Parallèle",
     shader: "FrostCard.frag",
-    cardMask: "mask.webp",
+    playroomFace: { path: "e/111-p1", label: "E-111 P1 · branché" },
+    // E-111 Unity dump is Front+Holo only (Card/CardFIeld, no mask-foil).
+    // Frost does `1.0 - HoloMask.x` — the raw Holo plate is sparse white on
+    // black (foil accents); feed the inverted plate so black bg stays matte.
+    holoPlate: "client-e-111-para-holomask.webp",
     files: ["client-e-111-para-front.webp", "client-e-111-para-holo.webp"],
   },
   {
     id: "e106-para",
     label: "E-106 parallèle",
     shader: "FrostCard.frag",
-    cardMask: "mask.webp",
+    // Materials-only PARA (no series bundle). Front+Holo like E-111 — Frost
+    // does `1.0 - HoloMask.x`, so bind the inverted sibling plate.
+    playroomFace: { path: "e/106-p1", label: "E-106 P1 · branché" },
+    holoPlate: "client-fw-e-106-para-holomask.webp",
     files: ["client-e-106-para-front.webp", "client-fw-e-106-para-holo.webp"],
   },
   {
     id: "superpara",
     label: "Super parallèle",
     shader: "FrostCard.frag",
+    playroomFace: {
+      path: "fb01/139-superpara",
+      label: "FB01-139 SUPERPARA · branché",
+    },
     cardMask: "mask-ef-01.webp",
+    effectsLayers: [
+      { tex: "client-uv-shine.webp" },
+      { tex: "client-ef-flash01.webp" },
+    ],
     files: [
       "client-fb01-139-superpara-front.webp",
       "client-fb01-139-superpara-foil-en.webp",
@@ -92,14 +154,60 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
     ],
   },
   {
+    id: "effects-uv-shine",
+    label: "Effects · uv_shine",
+    shader: "FrostCard.frag",
+    playroomFace: {
+      path: "fb10/095-para-lp-cs27-2",
+      label: "FB10-095 PARA · branché",
+    },
+    // No FoilMask — showcase the premiumtex layer alone (FoilType 0).
+    effectsLayers: [{ tex: "client-uv-shine.webp" }],
+    files: ["client-uv-shine.webp"],
+  },
+  {
+    id: "effects-ef-flash",
+    label: "Effects · ef_flash01",
+    shader: "FrostCard.frag",
+    playroomFace: { path: "fb11/088-p1", label: "FB11-088 P1 · branché" },
+    effectsLayers: [{ tex: "client-ef-flash01.webp" }],
+    files: ["client-ef-flash01.webp"],
+  },
+  {
+    id: "effects-uv-rainbow",
+    label: "Effects · uv_line_rainbow",
+    shader: "FrostCard.frag",
+    playroomFace: {
+      path: "st01/046-para-ar",
+      label: "ST01-046 PARA · branché",
+    },
+    effectsLayers: [{ tex: "client-uv-line-rainbow.webp" }],
+    files: ["client-uv-line-rainbow.webp"],
+  },
+  {
     id: "card-hologram",
     label: "CardHologram",
     shader: "FrostCard.frag",
+    playroomFace: { path: "st01/001", label: "ST01-001 · branché" },
     mask: "client-cardhologram.webp",
     plate: "map",
     files: ["client-cardhologram.webp"],
   },
-  { id: "pakipaki", label: "PakipakiFoil", files: ["client-pakipakifoil.webp"] },
+  {
+    id: "pakipaki",
+    label: "PakipakiFoil",
+    shader: "FrostCard.frag",
+    playroomFace: {
+      path: "fb02/086-para-1anv",
+      label: "FB02-086 PARA · branché",
+    },
+    cardMask: "mask-foil.webp",
+    files: ["client-pakipakifoil.webp"],
+  },
+  // UIHologram.frag is a UI badge shader (mask α × _Color shimmer) — not
+  // Frost/Card. Tabac plate is fully opaque α, so binding it as a "card"
+  // finish painted a solid gold rectangle. Keep as plate inventory.
+  { id: "ui-hologram", label: "UIHologram", files: ["client-tabac-holo.webp"] },
   { id: "frame-mask", label: "CardFrameMask", files: ["client-cardframemask.webp"] },
   { id: "holo-map", label: "HoloMap", files: ["client-holomap.webp"] },
   { id: "holo-map-para", label: "HoloMap PARA", files: ["client-holomap-para.webp"] },

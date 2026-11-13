@@ -5,6 +5,7 @@ import {
   aspectCorrectSquareMotifUv,
   encodeLinearFoilOutput,
   foilCosTime,
+  foilSinTime,
   identityMatrixColumns,
   LIVE_CARD_ASPECT,
   restoreOpaqueFoilOutput,
@@ -38,6 +39,16 @@ describe("ROLE_TEXTURE_FALLBACK", () => {
     // Transparent would drop foil; white is the honest "mask unknown → full".
     expect(ROLE_TEXTURE_FALLBACK.foilMask).toEqual([255, 255, 255, 255]);
   });
+
+  it("holoMask unbound stays white (Unity null = full rainbow)", () => {
+    expect(ROLE_TEXTURE_FALLBACK.holoMask).toEqual([255, 255, 255, 255]);
+  });
+
+  it("illustration, frame and text stay transparent when the file is missing", () => {
+    expect(ROLE_TEXTURE_FALLBACK.front).toEqual([0, 0, 0, 0]);
+    expect(ROLE_TEXTURE_FALLBACK.frame).toEqual([0, 0, 0, 0]);
+    expect(ROLE_TEXTURE_FALLBACK.ink).toEqual([0, 0, 0, 0]);
+  });
 });
 
 describe("foilCosTime", () => {
@@ -48,6 +59,31 @@ describe("foilCosTime", () => {
     expect(b).toBeCloseTo(Math.cos(t / 4));
     expect(c).toBeCloseTo(Math.cos(t / 2));
     expect(d).toBeCloseTo(Math.cos(t));
+  });
+});
+
+describe("foilSinTime", () => {
+  it("suit la formule Unity (sin t/8, t/4, t/2, t)", () => {
+    const t = Math.PI / 3;
+    const [a, b, c, d] = foilSinTime(t);
+    expect(a).toBeCloseTo(Math.sin(t / 8));
+    expect(b).toBeCloseTo(Math.sin(t / 4));
+    expect(c).toBeCloseTo(Math.sin(t / 2));
+    expect(d).toBeCloseTo(Math.sin(t));
+  });
+
+  it("avec CosTime, max(|sin|,|cos|) sur .yz ne tombe jamais sous √2/2", () => {
+    // Frost divides by that max — SinTime=0 left |cos| free to cross 0.
+    for (let i = 0; i < 64; i++) {
+      const t = (i / 64) * Math.PI * 8;
+      const sin = foilSinTime(t);
+      const cos = foilCosTime(t);
+      for (const k of [1, 2] as const) {
+        expect(Math.max(Math.abs(sin[k]), Math.abs(cos[k]))).toBeGreaterThan(
+          0.7,
+        );
+      }
+    }
   });
 });
 

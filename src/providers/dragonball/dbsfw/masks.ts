@@ -65,16 +65,38 @@ export function fusionWorldCardBundle(fileName: string): FwCardBundle | null {
   };
 }
 
+/**
+ * PARA plates that live only in `card_materials` (no `*_para.bundle`).
+ * e.g. `E-106_PARA_Front`, `FW_E-106_PARA_Holo` → folder `e/106-p1`.
+ */
+export function fusionWorldMaterialsParaPrint(
+  textureName: string,
+): Pick<FwCardBundle, "set" | "number" | "folder"> | null {
+  const match = /^(?:fw_)?([a-z0-9]+)-(\d+)_para(?:_|$)/i.exec(
+    textureName.trim(),
+  );
+  if (!match) return null;
+  const set = match[1]!.toLowerCase();
+  const number = match[2]!;
+  return { set, number, folder: `${number}-p1` };
+}
+
 /** Mask file for one client texture, or null when the texture is not a mask. */
 export function fusionWorldMaskTexture(name: string): FwMaskTexture | null {
   const normalized = name.trim().toLowerCase();
-  if (!normalized || /text|thumb/.test(normalized)) return null;
+  if (!normalized || /thumb/.test(normalized)) return null;
+  // Face language plates (`*_Text_En`) — not PARA_HOLO_Text overlays.
+  if (/_text_(en|ja)$/.test(normalized) && !/holo_text/.test(normalized)) {
+    return null;
+  }
   if (!/holo|foil|ef_mask|alp/.test(normalized)) return null;
 
   let file = "mask.webp";
   const effect = /ef_mask(\d+)(_cf)?/.exec(normalized);
   if (effect) {
     file = `mask-ef-${effect[1]}${effect[2] ? "-cf" : ""}.webp`;
+  } else if (normalized.includes("holo_text")) {
+    file = "mask-holo-text.webp";
   } else if (normalized.includes("holo_field")) {
     file = "mask-field.webp";
   } else if (normalized.includes("holo")) {
@@ -104,6 +126,8 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
   frontUrl: string;
   frameUrl: string;
   inkUrl: string;
+  /** Denser plate for Frost `_HoloMask` when `_FoilMask` is a sparse stamp. */
+  holoMaskUrl: string | null;
 } | null {
   const back = /\/back\.[^/]+$/i.test(faceUrl);
   const picture = back ? "layer.back-picture.webp" : "layer.picture.webp";
@@ -113,7 +137,9 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
   const frameUrl = dbsFwCatalogueMaskUrl(faceUrl, frame);
   const inkUrl = dbsFwCatalogueMaskUrl(faceUrl, ink);
   if (!frontUrl || !frameUrl || !inkUrl) return null;
-  return { frontUrl, frameUrl, inkUrl };
+  // mask.webp is near-full grey; mask-foil is the FoilType stamp (sparse B).
+  const holoMaskUrl = dbsFwCatalogueMaskUrl(faceUrl, "mask.webp");
+  return { frontUrl, frameUrl, inkUrl, holoMaskUrl };
 }
 
 /** `…/cards/en/sb02/024/art.webp` → `…/cards/en/sb02/024/mask.webp`. */
@@ -126,12 +152,26 @@ export function dbsFwCatalogueMaskUrl(
   return `${match[1]}/${file}`;
 }
 
+/** Prefer foil plate when present; then holo; then superpara ef_mask chain. */
+const COVERAGE_MASK_ORDER = [
+  "mask-foil.webp",
+  "mask.webp",
+  "mask-ef-01.webp",
+  "mask-ef-00.webp",
+  "mask-ef-02.webp",
+  "mask-ef-03.webp",
+  "mask-ef-02-cf.webp",
+  "mask-ef-03-cf.webp",
+  "mask-field.webp",
+] as const;
+
 /** First coverage mask a print should wear, when that file is on disk. */
 export function dbsFwCoverageMaskFile(
   present: (file: string) => boolean,
 ): string | null {
-  if (present("mask.webp")) return "mask.webp";
-  if (present("mask-foil.webp")) return "mask-foil.webp";
+  for (const file of COVERAGE_MASK_ORDER) {
+    if (present(file)) return file;
+  }
   return null;
 }
 
@@ -150,4 +190,24 @@ export function dbsFwKnownMaskUrl(faceUrl: string, file: string): string | null 
   const url = dbsFwCatalogueMaskUrl(faceUrl, file);
   if (!url || !knownMaskUrls.has(url)) return null;
   return url;
+}
+
+/**
+ * Preferred stamp when present, else first coverage mask on disk for this
+ * face. E-111 para ships `mask.webp` (sparse) but no `mask-foil.webp` —
+ * binding a white/full fallback with FoilType 2 floods the card orange.
+ */
+export function dbsFwKnownCoverageMaskUrl(
+  faceUrl: string,
+  preferred?: string | null,
+): string | null {
+  if (!knownMaskUrls) return null;
+  if (preferred) {
+    const hit = dbsFwKnownMaskUrl(faceUrl, preferred);
+    if (hit) return hit;
+  }
+  const file = dbsFwCoverageMaskFile(
+    (candidate) => dbsFwKnownMaskUrl(faceUrl, candidate) != null,
+  );
+  return file ? dbsFwKnownMaskUrl(faceUrl, file) : null;
 }

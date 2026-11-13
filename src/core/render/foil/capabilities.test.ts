@@ -7,8 +7,11 @@ import {
   FOIL_SHARP_WIDTH_PX,
   getFoilCapabilities,
   preferAstcTextureUpload,
+  preferS3tcDxt5FormatName,
+  preferS3tcTextureUpload,
   probeFoilCapabilities,
   resetFoilCapabilitiesForTests,
+  s3tcFormatConstant,
 } from "./capabilities";
 
 describe("foil capabilities probe", () => {
@@ -23,6 +26,8 @@ describe("foil capabilities probe", () => {
     expect(probeFoilCapabilities()).toEqual({
       supportsWebgl2: false,
       supportsAstc: false,
+      supportsS3tc: false,
+      supportsS3tcSrgb: false,
     });
   });
 
@@ -35,6 +40,8 @@ describe("foil capabilities probe", () => {
     expect(probeFoilCapabilities()).toEqual({
       supportsWebgl2: false,
       supportsAstc: false,
+      supportsS3tc: false,
+      supportsS3tcSrgb: false,
     });
   });
 
@@ -48,6 +55,8 @@ describe("foil capabilities probe", () => {
     });
     expect(probeFoilCapabilities()).toEqual({
       supportsWebgl2: true,
+      supportsS3tc: false,
+      supportsS3tcSrgb: false,
       supportsAstc: false,
     });
   });
@@ -66,6 +75,32 @@ describe("foil capabilities probe", () => {
     expect(probeFoilCapabilities()).toEqual({
       supportsWebgl2: true,
       supportsAstc: true,
+      supportsS3tc: false,
+      supportsS3tcSrgb: false,
+    });
+  });
+
+  it("reports S3TC and S3TC-sRGB when those extensions are present", () => {
+    vi.stubGlobal("document", {
+      createElement: () => ({
+        getContext: () => ({
+          getExtension: (name: string) => {
+            if (name === "WEBGL_compressed_texture_s3tc") {
+              return { COMPRESSED_RGBA_S3TC_DXT5_EXT: 0x83f3 };
+            }
+            if (name === "WEBGL_compressed_texture_s3tc_srgb") {
+              return { COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT: 0x8c4f };
+            }
+            return null;
+          },
+        }),
+      }),
+    });
+    expect(probeFoilCapabilities()).toEqual({
+      supportsWebgl2: true,
+      supportsAstc: false,
+      supportsS3tc: true,
+      supportsS3tcSrgb: true,
     });
   });
 
@@ -151,6 +186,60 @@ describe("preferAstcTextureUpload", () => {
         hasRasterSibling: true,
         supportsAstc: true,
         forceRaster: true,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("s3tc helpers", () => {
+  it("prefers sRGB DXT5 when the sRGB extension is present", () => {
+    expect(
+      preferS3tcDxt5FormatName({
+        srgb: true,
+        supportsS3tcSrgb: true,
+        supportsS3tc: true,
+      }),
+    ).toBe("COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT");
+    expect(
+      preferS3tcDxt5FormatName({
+        srgb: true,
+        supportsS3tcSrgb: false,
+        supportsS3tc: true,
+      }),
+    ).toBe("COMPRESSED_RGBA_S3TC_DXT5_EXT");
+  });
+
+  it("resolves S3TC enums from the matching extension", () => {
+    const gl = {
+      getExtension: (name: string) => {
+        if (name === "WEBGL_compressed_texture_s3tc_srgb") {
+          return { COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT: 0x8c4f };
+        }
+        if (name === "WEBGL_compressed_texture_s3tc") {
+          return { COMPRESSED_RGBA_S3TC_DXT5_EXT: 0x83f3 };
+        }
+        return null;
+      },
+    } as unknown as WebGL2RenderingContext;
+    expect(s3tcFormatConstant(gl, "COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT")).toBe(
+      0x8c4f,
+    );
+    expect(s3tcFormatConstant(gl, "COMPRESSED_RGBA_S3TC_DXT5_EXT")).toBe(0x83f3);
+  });
+
+  it("prefers S3TC upload when GPU + dump + raster sibling are present", () => {
+    expect(
+      preferS3tcTextureUpload({
+        hasS3tcBinding: true,
+        hasRasterSibling: true,
+        supportsS3tc: true,
+      }),
+    ).toBe(true);
+    expect(
+      preferS3tcTextureUpload({
+        hasS3tcBinding: true,
+        hasRasterSibling: true,
+        supportsS3tc: false,
       }),
     ).toBe(false);
   });

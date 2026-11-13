@@ -8,7 +8,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { writeLosslessRgbaWebp } from "@/lib/media/losslessWebp";
-import { cropCardRgba, type UvRect } from "@/lib/unity/cardCrop";
+import { cropCardRgba, type UvRect } from "@/core/render/unity/cardCrop";
 import {
   resolveAssetManager,
   resourceBlobsFromAssetManager,

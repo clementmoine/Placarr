@@ -95,6 +95,12 @@ type FoilCardImageProps = {
    */
   liveFoilMask?: string | null;
   maskUrl?: string | null;
+  /**
+   * Shelf prints with no mask of their own still wear the pack's full foil.
+   * The playroom turns this off when the face is already chosen: a missing
+   * mask must not be replaced by another plate.
+   */
+  useMaskFallback?: boolean;
   /** Foil plate, intersected with the coverage mask — see `HoloCardImage`. */
   foilPlateUrl?: string | null;
   varnishMaskUrl?: string | null;
@@ -289,6 +295,7 @@ export function FoilCardImage({
   materialName,
   liveFoilMask,
   maskUrl,
+  useMaskFallback = true,
   foilPlateUrl,
   varnishMaskUrl,
   secondVarnishMaskUrl,
@@ -362,7 +369,8 @@ export function FoilCardImage({
   const packagingOnly = isSealedFinish(finish);
   const effectiveMaskUrl = packagingOnly
     ? null
-    : (maskUrl ?? pack?.fallbackFoilMaskUrl ?? null);
+    : (maskUrl ??
+      (useMaskFallback ? (pack?.fallbackFoilMaskUrl ?? null) : null));
   /**
    * Un matériau qui réclame un masque n'a rien à dessiner sans lui.
    *
@@ -393,15 +401,18 @@ export function FoilCardImage({
   // to pre-resolved ids when the pack is briefly missing from a stale cache.
   // Plain leaves (`webgl: false`, Live NonFoil) must stay shader-less even if
   // a stale `finish` prop names another print's foil.
-  // Shiny finish with no dedicated CSS → house flare (all TCG packs).
+  // Shiny finish with no dedicated CSS → house flare (all TCG packs) — except
+  // when the user forced Unity: then a CSS fallback must stay flat, not paint
+  // house holofoil over every WebGL leaf waiting on the pool / shader.
   // Packaging-only bags stay flat; foil+bag demos keep the shine.
+  const packCssId = fromPack.finishShaderId ?? cssFinishShaderId ?? null;
+  const forceUnity = preference === "webgl";
   const resolvedFinishShaderId =
     packagingOnly || material?.webgl === false || foilMaskMissing
       ? null
-      : applyHouseFoilFallback(
-          fromPack.finishShaderId ?? cssFinishShaderId ?? null,
-          finish,
-        );
+      : forceUnity && material
+        ? packCssId
+        : applyHouseFoilFallback(packCssId, finish);
   const cssRecipe =
     packagingOnly || material?.webgl === false || foilMaskMissing
       ? { finishShaderId: null, varnishShaderId: null, lenticularGrid: null }
@@ -613,6 +624,7 @@ export function FoilCardImage({
         const { createWebglFoilRenderer } =
           await import("@/core/render/foil/webgl");
         if (cancelled) return;
+        const layers = pack.layerSurfaces?.(imageUrl) ?? null;
         const renderer = createWebglFoilRenderer(
           canvas,
           material,
@@ -621,6 +633,10 @@ export function FoilCardImage({
             foilMaskUrl: effectiveMaskUrl,
             varnishMaskUrl,
             secondVarnishMaskUrl,
+            frontUrl: layers?.frontUrl ?? null,
+            frameUrl: layers?.frameUrl ?? null,
+            inkUrl: layers?.inkUrl ?? null,
+            holoMaskUrl: layers?.holoMaskUrl ?? null,
             hotFoilColor: parseCssColor(varnishColor),
             secondHotFoilColor: parseCssColor(secondVarnishColor),
           },

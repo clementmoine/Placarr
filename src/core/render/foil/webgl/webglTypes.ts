@@ -3,6 +3,11 @@ export type WebglFoilSurfaces = {
   foilMaskUrl?: string | null;
   varnishMaskUrl?: string | null;
   secondVarnishMaskUrl?: string | null;
+  /** Illustration, chrome and text stacked with the face. */
+  frontUrl?: string | null;
+  frameUrl?: string | null;
+  inkUrl?: string | null;
+  holoMaskUrl?: string | null;
   hotFoilColor?: readonly [number, number, number, number] | null;
   secondHotFoilColor?: readonly [number, number, number, number] | null;
 };

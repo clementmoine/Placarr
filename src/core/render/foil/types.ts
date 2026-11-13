@@ -2,7 +2,19 @@ export type FoilBackend = "webgl" | "css";
 export type FoilBackendPreference = "auto" | "webgl" | "css";
 
 export type FoilTextureRole =
-  "art" | "foilMask" | "varnishMask" | "secondVarnishMask" | "normals";
+  | "art"
+  | "foilMask"
+  /** Frost `_HoloMask` coverage (may differ from stamped `_FoilMask`). */
+  | "holoMask"
+  | "varnishMask"
+  | "secondVarnishMask"
+  | "normals"
+  /** Illustration under the shine. Missing → transparent, the face shows through. */
+  | "front"
+  /** Chrome around the illustration. Missing → transparent. */
+  | "frame"
+  /** Text and UI painted above the shine. Missing → transparent. */
+  | "ink";
 
 export type FoilWrap = "repeat" | "clamp" | "mirror" | "mirrorOnce";
 export type FoilFilter = "point" | "bilinear" | "trilinear";
@@ -15,6 +27,18 @@ export type FoilAstcBinding = {
   format: string;
 };
 
+/** Desktop Unity DXT1/DXT5 dump for `compressedTexImage2D` (S3TC). */
+export type FoilS3tcBinding = {
+  file: string;
+  width: number;
+  height: number;
+  /**
+   * GL compressed format constant name, e.g.
+   * `COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT` or `COMPRESSED_RGBA_S3TC_DXT5_EXT`.
+   */
+  format: string;
+};
+
 export type FoilTextureBinding = {
   file?: string;
   role?: FoilTextureRole;
@@ -23,6 +47,8 @@ export type FoilTextureBinding = {
   mipmaps?: boolean;
   aniso?: number;
   astc?: FoilAstcBinding;
+  /** Mac/desktop DXT dump — preferred over raster when S3TC is available. */
+  s3tc?: FoilS3tcBinding;
   /** Unity property name from the dump (Pocket / SPIR-V remaps). */
   unity?: string;
   /**
@@ -31,6 +57,12 @@ export type FoilTextureBinding = {
    * (normals / direction / noise) stay raw.
    */
   srgb?: boolean;
+  /**
+   * WebGL2 `TEXTURE_2D_ARRAY` layers (Frost EffectsLayer pack). When set,
+   * the renderer uploads each entry as one array slice; `file` / `role` on
+   * the parent binding are ignored.
+   */
+  arrayLayers?: readonly FoilTextureBinding[];
 };
 
 /**
@@ -117,6 +149,18 @@ export type EffectPackModule = {
   }): string | null;
   /** When catalogue prints have no foil mask (Pocket). */
   fallbackFoilMaskUrl?: string | null;
+  /**
+   * Per-card layers that sit with the face (illustration, chrome, text).
+   * A pack returns null when this image has none. Missing files stay
+   * transparent so the face underneath remains the card.
+   */
+  layerSurfaces?(imageUrl: string): {
+    frontUrl?: string | null;
+    frameUrl?: string | null;
+    inkUrl?: string | null;
+    /** Optional denser plate for Frost `_HoloMask` when foil stamp is sparse. */
+    holoMaskUrl?: string | null;
+  } | null;
   /**
    * When true for a mask URL, keep CSS and refuse WebGL. Unity MotifMask often
    * expects a structured facsimile (Lorcana Glitter), not a solid plate or an

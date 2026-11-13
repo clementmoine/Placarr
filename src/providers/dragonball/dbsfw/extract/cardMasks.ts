@@ -12,7 +12,11 @@ import { decodeTextureTree } from "@/lib/unity/texture2d";
 import { iterClassTrees, loadUnityFs } from "@/lib/unity/loadUnityFs";
 
 import { DBS_FW_FACE_LANGS, DBS_FW_PACK_ID } from "../indexStore";
-import { fusionWorldCardBundle, fusionWorldMaskTexture } from "../masks";
+import {
+  fusionWorldCardBundle,
+  fusionWorldMaskTexture,
+  fusionWorldMaterialsParaPrint,
+} from "../masks";
 
 export type FwMaskExtractStats = {
   bundles: number;
@@ -92,6 +96,80 @@ async function extractBundle(
   }
 }
 
+/**
+ * Energy-marker PARA holos (`FW_E-106_PARA_Holo`) live in card_materials only.
+ */
+export async function extractMaterialsParaMasks(
+  bundlesDir: string,
+  force: boolean,
+  stats: FwMaskExtractStats,
+): Promise<void> {
+  const materials = "packdata_assets_card_materials.bundle";
+  const materialsPath = path.join(bundlesDir, materials);
+  if (!existsSync(materialsPath)) return;
+  const seriesPara = new Set(
+    bundleNames(bundlesDir)
+      .map((name) => fusionWorldCardBundle(name))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c?.folder.endsWith("-p1")))
+      .map((c) => `${c.set}/${c.folder}`),
+  );
+  let loaded;
+  try {
+    loaded = loadUnityFs(readFileSync(materialsPath));
+  } catch {
+    stats.failed += 1;
+    return;
+  }
+  let found = false;
+  for (const tree of iterClassTrees(loaded, 28)) {
+    const name = String(tree.m_Name ?? tree.name ?? "");
+    const print = fusionWorldMaterialsParaPrint(name);
+    if (!print) continue;
+    const key = `${print.set}/${print.folder}`;
+    if (seriesPara.has(key)) continue;
+    const mask = fusionWorldMaskTexture(name);
+    if (!mask) continue;
+    found = true;
+    stats.masks += 1;
+    const dests = mask.langs
+      .filter((lang) =>
+        (DBS_FW_FACE_LANGS as readonly string[]).includes(lang),
+      )
+      .map((lang) =>
+        path.join(
+          packCardDir(DBS_FW_PACK_ID, {
+            set: print.set,
+            lang,
+            card: print.folder,
+          }),
+          mask.file,
+        ),
+      );
+    const pending = dests.filter((dest) => force || !existsSync(dest));
+    stats.skipped += dests.length - pending.length;
+    if (pending.length === 0) continue;
+    const decoded = decodeTextureTree(tree, loaded);
+    if (!decoded) {
+      stats.failed += 1;
+      continue;
+    }
+    for (const dest of pending) {
+      try {
+        await writeLosslessRgbaWebp(
+          decoded.rgba,
+          decoded.width,
+          decoded.height,
+          dest,
+        );
+        stats.written += 1;
+      } catch {
+        stats.failed += 1;
+      }
+    }
+  }
+  if (found) stats.bundles += 1;
+}
+
 export async function extractFusionWorldCardMasks(opts: {
   bundlesDir: string;
   force?: boolean;
@@ -115,5 +193,10 @@ export async function extractFusionWorldCardMasks(opts: {
       opts.onProgress?.(done, selected.length, stats);
     }
   }
+  await extractMaterialsParaMasks(
+    opts.bundlesDir,
+    opts.force === true,
+    stats,
+  );
   return stats;
 }

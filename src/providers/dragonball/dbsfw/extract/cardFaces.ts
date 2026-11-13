@@ -36,6 +36,7 @@ import {
   deriveCostRingGeometry,
   fusionWorldFaceLayer,
   isolateCostRingDisc,
+  isClientFaceExtractCurrent,
   premultiplyStraight,
   solidifyPlateInk,
   unpremultiplyStraight,
@@ -53,7 +54,10 @@ import {
 import { bakeCostRingFill } from "../costRingBake";
 import { dbsFwFactsFor } from "../harvest/factsStore";
 import { DBS_FW_PACK_ID } from "../indexStore";
-import { fusionWorldCardBundle } from "../masks";
+import {
+  fusionWorldCardBundle,
+  fusionWorldMaterialsParaPrint,
+} from "../masks";
 
 export type FwFaceExtractStats = {
   bundles: number;
@@ -436,6 +440,20 @@ async function extractBundle(
     }
   }
 
+  await writeCardFaceSides(card, sides, force, stats, frames);
+}
+
+async function writeCardFaceSides(
+  card: {
+    set: string;
+    number: string;
+    folder: string;
+  },
+  sides: Record<FwFaceSide, SideLayers>,
+  force: boolean,
+  stats: FwFaceExtractStats,
+  frames: FrameLibrary,
+): Promise<void> {
   for (const side of ["front", "back"] as const) {
     const slot = sides[side];
     if (!slot.picture) continue;
@@ -443,17 +461,28 @@ async function extractBundle(
     if (langs.length === 0) continue;
     stats.faces += langs.length;
     for (const lang of langs) {
-      const dest = path.join(
-        packCardDir(DBS_FW_PACK_ID, {
-          set: card.set,
-          lang,
-          card: card.folder,
-        }),
-        DBS_FW_CLIENT_FACE_FILES[side],
+      const cardDir = packCardDir(DBS_FW_PACK_ID, {
+        set: card.set,
+        lang,
+        card: card.folder,
+      });
+      const dest = path.join(cardDir, DBS_FW_CLIENT_FACE_FILES[side]);
+      const facts = dbsFwFactsFor(card.set, card.number);
+      const badgeName = clientBattleFrameName(
+        facts?.cardType ?? null,
+        facts?.color ?? null,
+        facts?.cost ?? null,
       );
-      if (existsSync(dest) && !force) {
-        stats.skipped += 1;
-        continue;
+      if (!force) {
+        const onDisk = existsSync(cardDir)
+          ? new Set(readdirSync(cardDir))
+          : new Set<string>();
+        if (
+          isClientFaceExtractCurrent(onDisk, side, badgeName != null)
+        ) {
+          stats.skipped += 1;
+          continue;
+        }
       }
       const text = slot.text[lang];
       if (!text) continue;
@@ -476,7 +505,6 @@ async function extractBundle(
           sized.height,
           path.join(path.dirname(dest), layers.picture),
         );
-        const facts = dbsFwFactsFor(card.set, card.number);
         const frameCard = {
           cardType: facts?.cardType ?? null,
           color: facts?.color ?? null,
@@ -490,11 +518,6 @@ async function extractBundle(
           chrome = frames.frame(name);
           if (chrome) break;
         }
-        const badgeName = clientBattleFrameName(
-          facts?.cardType ?? null,
-          facts?.color ?? null,
-          facts?.cost ?? null,
-        );
         const ring = badgeName
           ? await frames.ring(facts?.color ?? "")
           : null;
@@ -606,6 +629,87 @@ async function extractBundle(
   }
 }
 
+/**
+ * Energy-marker PARA plates (`E-106_PARA_*`) live in card_materials only —
+ * there is no `e_e-106_para.bundle`. Pull Front+Text into `{n}-p1`.
+ */
+async function extractMaterialsParaFaces(
+  bundlesDir: string,
+  force: boolean,
+  stats: FwFaceExtractStats,
+  frames: FrameLibrary,
+  match?: string,
+): Promise<void> {
+  const materials = "packdata_assets_card_materials.bundle";
+  const materialsPath = path.join(bundlesDir, materials);
+  if (!existsSync(materialsPath)) return;
+  // Skip when a dedicated series PARA bundle already covers that print.
+  const seriesPara = new Set(
+    bundleNames(bundlesDir)
+      .map((name) => fusionWorldCardBundle(name))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c?.folder.endsWith("-p1")))
+      .map((c) => `${c.set}/${c.folder}`),
+  );
+  let loaded;
+  try {
+    loaded = loadUnityFs(readFileSync(materialsPath));
+  } catch {
+    stats.failed += 1;
+    return;
+  }
+  const byKey = new Map<
+    string,
+    {
+      card: { set: string; number: string; folder: string };
+      sides: Record<FwFaceSide, SideLayers>;
+    }
+  >();
+  for (const tree of iterClassTrees(loaded, 28)) {
+    const name = String(tree.m_Name ?? tree.name ?? "");
+    const print = fusionWorldMaterialsParaPrint(name);
+    if (!print) continue;
+    if (match && !`${print.set}-${print.number}`.includes(match.toLowerCase())) {
+      continue;
+    }
+    const key = `${print.set}/${print.folder}`;
+    if (seriesPara.has(key)) continue;
+    const layer = fusionWorldFaceLayer(name);
+    if (!layer) continue;
+    const decoded = decodeTextureTree(tree, loaded);
+    if (!decoded) {
+      stats.failed += 1;
+      continue;
+    }
+    let entry = byKey.get(key);
+    if (!entry) {
+      entry = {
+        card: print,
+        sides: {
+          front: { picture: null, pictureName: "", text: {} },
+          back: { picture: null, pictureName: "", text: {} },
+        },
+      };
+      byKey.set(key, entry);
+    }
+    const pixels = {
+      rgba: decoded.rgba,
+      width: decoded.width,
+      height: decoded.height,
+    };
+    const slot = entry.sides[layer.side];
+    if (layer.kind === "picture") {
+      slot.picture = pixels;
+      slot.pictureName = name;
+    } else {
+      slot.text[layer.lang] = pixels;
+    }
+  }
+  stats.bundles += byKey.size > 0 ? 1 : 0;
+  for (const entry of byKey.values()) {
+    await writeCardFaceSides(entry.card, entry.sides, force, stats, frames);
+  }
+}
+
 export async function extractFusionWorldCardFaces(opts: {
   bundlesDir: string;
   force?: boolean;
@@ -641,6 +745,14 @@ export async function extractFusionWorldCardFaces(opts: {
       opts.onProgress?.(done, selected.length, stats);
     }
   }
+  // Materials-only PARA (e.g. E-106) — not matched by card_series bundle names.
+  await extractMaterialsParaFaces(
+    opts.bundlesDir,
+    opts.force === true,
+    stats,
+    frames,
+    opts.match,
+  );
   return stats;
 }
 

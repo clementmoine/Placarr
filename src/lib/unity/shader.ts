@@ -5,9 +5,15 @@
 
 import { decompressBlock } from "unityfs-js/decoders/drivers/lz4.js";
 
+import { toWebgl2Fragment } from "@/core/render/unity/webglFragment";
 import { iterClassTrees, loadUnityFs, type LoadedUnityFs } from "@/lib/unity/loadUnityFs";
+import {
+  preferredMetalFragment,
+  translateMetalSource,
+} from "@/lib/unity/metalToGlsl";
 
-const TPCI_PATH_RE = /TPCi\/Cards3D\/(?:HoloFoil|Standard)\/([A-Za-z0-9]+)/;
+export { toWebgl2Fragment };
+
 /** Unity ClassIDType.Shader */
 export const SHADER_CLASS_ID = 48;
 
@@ -26,6 +32,33 @@ export type ExtractedShaderFrag = {
   frag: string;
 };
 
+export type ShaderPlatformChunk = {
+  platform: number | null;
+  data: Uint8Array;
+};
+
+export type ShaderFragNameInput = {
+  parsedName: string;
+  chunks: ShaderPlatformChunk[];
+};
+
+export type ShaderFragExtractOptions = {
+  /**
+   * Stem written as the fragment name.
+   * Default: last segment of the parsed asset path.
+   * A pack whose foil id lives only inside the blob passes its own resolver.
+   */
+  resolveName?: (input: ShaderFragNameInput) => string | null;
+  /** Drop control bytes before compile. Shader Graph dumps pass false. */
+  stripControlChars?: boolean;
+};
+
+/** Last segment of a Unity asset path. Empty when the shader has no name. */
+export function shaderNameFromPath(parsedName: string): string | null {
+  const leaf = parsedName.split("/").pop()?.trim() ?? "";
+  return leaf || null;
+}
+
 function flat(seq: unknown): number[] {
   const out: number[] = [];
   if (!seq) return out;
@@ -42,20 +75,21 @@ function asBlob(data: number[] | Uint8Array | undefined): Uint8Array {
   return data instanceof Uint8Array ? data : new Uint8Array(data);
 }
 
-/** Decompress each platform chunk from a Shader typetree. */
+/** Decompress each platform chunk from a Shader typetree or object. */
 export function decompressPlatformBlobs(
   tree: ShaderTypeTree,
-): Array<{ platform: number | null; data: Uint8Array }> {
+): ShaderPlatformChunk[] {
   const blob = asBlob(tree.compressedBlob);
   const offs = flat(tree.offsets);
   const clens = flat(tree.compressedLengths);
   const dlens = flat(tree.decompressedLengths);
   const plats = flat(tree.platforms);
-  const out: Array<{ platform: number | null; data: Uint8Array }> = [];
+  const out: ShaderPlatformChunk[] = [];
   for (let i = 0; i < offs.length; i++) {
-    const off = offs[i]!;
-    const cl = clens[i]!;
-    const dl = dlens[i]!;
+    const off = offs[i];
+    const cl = clens[i];
+    const dl = dlens[i];
+    if (off == null || cl == null || dl == null || cl <= 0 || dl <= 0) continue;
     const chunk = blob.subarray(off, off + cl);
     let data: Uint8Array;
     if (cl === dl) {
@@ -88,76 +122,7 @@ export function glslPrograms(data: Uint8Array): string[] {
   return parts;
 }
 
-/**
- * Strip Unity ``#ifdef FRAGMENT`` guard for WebGL2 (Lorcana path — no
- * Pokémon char-filter; keeps graph punctuation dump_unity.py leaves alone).
- */
-export function toLorcanaWebgl2Fragment(src: string): string {
-  const i = src.indexOf("#ifdef FRAGMENT");
-  let frag = src.slice(i + "#ifdef FRAGMENT".length);
-  frag = frag.slice(0, frag.lastIndexOf("#endif")).replace(/^\n/, "");
-  frag = frag.replace(
-    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 1",
-    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 0",
-  );
-  frag = frag.replace(
-    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 1",
-    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 0",
-  );
-  return frag;
-}
-
-/** Strip Unity ``#ifdef FRAGMENT`` guard for WebGL2 (Pokémon — filters control chars). */
-export function toWebgl2Fragment(src: string): string {
-  let frag: string;
-  const i = src.indexOf("#ifdef FRAGMENT");
-  if (i >= 0) {
-    frag = src.slice(i + "#ifdef FRAGMENT".length);
-    const end = frag.lastIndexOf("#endif");
-    if (end >= 0) frag = frag.slice(0, end);
-    frag = frag.replace(/^\n/, "");
-  } else {
-    frag = src;
-    const stripped = frag.replace(/[\x00\x17\r\n\t ]+$/, "");
-    if (stripped.endsWith("#endif")) {
-      frag = stripped.slice(0, stripped.lastIndexOf("#endif"));
-    }
-  }
-  frag = [...frag]
-    .filter((ch) => ch === "\n" || ch === "\t" || ch.charCodeAt(0) >= 32)
-    .join("");
-  frag = frag.replace(
-    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 1",
-    "#define HLSLCC_ENABLE_UNIFORM_BUFFERS 0",
-  );
-  frag = frag.replace(
-    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 1",
-    "#define UNITY_SUPPORTS_UNIFORM_LOCATION 0",
-  );
-  return frag.trimEnd() + "\n";
-}
-
-function resolveFoilName(
-  parsedName: string,
-  chunks: Array<{ platform: number | null; data: Uint8Array }>,
-): string | null {
-  if (parsedName.startsWith("TPCi/Cards3D/")) {
-    return parsedName.split("/").pop() ?? null;
-  }
-  const searchIn = (buf: Uint8Array): string | null => {
-    const m = TPCI_PATH_RE.exec(new TextDecoder("utf-8", { fatal: false }).decode(buf));
-    return m?.[1] ?? null;
-  };
-  for (const { data } of chunks) {
-    const foil = searchIn(data);
-    if (foil) return foil;
-  }
-  return null;
-}
-
-function pickChosenBlob(
-  chunks: Array<{ platform: number | null; data: Uint8Array }>,
-): Uint8Array | null {
+function pickChosenBlob(chunks: ShaderPlatformChunk[]): Uint8Array | null {
   for (const { platform, data } of chunks) {
     const text = new TextDecoder("utf-8", { fatal: false }).decode(data);
     if (platform === 9 || text.includes("#version 300")) return data;
@@ -193,44 +158,76 @@ function pickFragmentSource(programs: string[]): string | null {
   return null;
 }
 
-/** Parse one Shader typetree into a foil stem + WebGL2 fragment body. */
+function shaderParsedName(tree: ShaderTypeTree): string {
+  const form = tree.m_ParsedForm as { m_Name?: string; name?: string } | undefined;
+  const alt = tree as ShaderTypeTree & {
+    parsedForm?: { name?: string; m_Name?: string };
+    name?: string;
+    m_Name?: string;
+  };
+  return String(
+    form?.m_Name ??
+      form?.name ??
+      alt.parsedForm?.m_Name ??
+      alt.parsedForm?.name ??
+      alt.m_Name ??
+      alt.name ??
+      "",
+  );
+}
+
+/** Parse one Shader typetree into a stem + WebGL2 fragment body. */
 export function extractShaderFragFromTree(
   tree: ShaderTypeTree,
+  options?: ShaderFragExtractOptions,
 ): ExtractedShaderFrag | null {
   const chunks = decompressPlatformBlobs(tree);
   const chosen = pickChosenBlob(chunks);
   if (!chosen || chosen.length === 0) return null;
 
-  const parsedName = String(tree.m_ParsedForm?.m_Name ?? "");
-  const foil = resolveFoilName(parsedName, chunks);
+  const parsedName = shaderParsedName(tree);
+  const resolveName = options?.resolveName ?? ((input) => shaderNameFromPath(input.parsedName));
+  const foil = resolveName({ parsedName, chunks });
   if (!foil) return null;
 
   const programs = glslPrograms(chosen);
   const rawFrag = pickFragmentSource(programs);
-  if (!rawFrag?.trim()) return null;
+  const metal = rawFrag?.trim()
+    ? null
+    : translateMetalSource(preferredMetalFragment(chosen) ?? "");
+  const source = rawFrag?.trim()
+    ? rawFrag
+    : metal?.stage === "fragment"
+      ? `#ifdef FRAGMENT\n${metal.glsl}\n#endif\n`
+      : null;
+  if (!source?.trim()) return null;
 
   return {
     foil,
     parsedName,
-    frag: toWebgl2Fragment(rawFrag),
+    frag: toWebgl2Fragment(source, {
+      stripControlChars: options?.stripControlChars !== false,
+    }),
   };
 }
 
-/** Extract TPCi card shader fragments from a loaded UnityFS bundle. */
+/** Extract card shader fragments from a loaded UnityFS bundle. */
 export function extractShaderFragsFromLoaded(
   loaded: LoadedUnityFs,
+  options?: ShaderFragExtractOptions,
 ): ExtractedShaderFrag[] {
   const out: ExtractedShaderFrag[] = [];
   for (const tree of iterClassTrees(loaded, SHADER_CLASS_ID)) {
-    const extracted = extractShaderFragFromTree(tree as ShaderTypeTree);
+    const extracted = extractShaderFragFromTree(tree as ShaderTypeTree, options);
     if (extracted) out.push(extracted);
   }
   return out;
 }
 
-/** Extract TPCi card shader fragments from raw UnityFS bytes. */
+/** Extract card shader fragments from raw UnityFS bytes. */
 export function extractShaderFragsFromBytes(
   data: Uint8Array | ArrayBuffer | Buffer,
+  options?: ShaderFragExtractOptions,
 ): ExtractedShaderFrag[] {
-  return extractShaderFragsFromLoaded(loadUnityFs(data));
+  return extractShaderFragsFromLoaded(loadUnityFs(data), options);
 }

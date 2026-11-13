@@ -91,6 +91,9 @@ prisma/*.sql.dump
 *.sqlite3
 *.sqlite-journal
 
+# Runtime densify / harvest logs (local operator runs)
+/logs/
+
 # Scripts et données de debug locaux
 /scratch/
 /tmp-ocr-run/

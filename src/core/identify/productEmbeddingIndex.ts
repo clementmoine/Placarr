@@ -11,7 +11,6 @@ import {
   readdirSync,
   readFileSync,
   statSync,
-  writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
@@ -27,6 +26,7 @@ import {
   shortlistPacksByCentroid,
   topKMilliDistances,
 } from "@/core/identify/cardEmbeddingSearch";
+import { embeddingCheckpointInterval } from "@/core/identify/embeddingCheckpoint";
 import {
   compactProductEmbeddingEntry,
   expandProductEmbeddingEntries,
@@ -41,6 +41,7 @@ import {
   listProductVisualIndexPackIds,
   loadProductVisualIndex,
 } from "@/core/identify/productVisualIndex";
+import { writeFileAtomic } from "@/lib/fs/writeFileAtomic";
 import { PRODUCT_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import { packDataDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
@@ -425,9 +426,72 @@ export function partitionProductEmbeddingWork(
   return { reuse, todo };
 }
 
+function entryFromProductVisual(
+  row: ProductVisualIndexEntry,
+  rowIndex: number,
+): ProductEmbeddingIndexEntry {
+  return {
+    productKey: row.productKey,
+    lang: row.lang,
+    slug: row.slug,
+    artRel: row.artRel,
+    row: rowIndex,
+    ...(row.fp ? { fp: row.fp } : {}),
+  };
+}
+
+/**
+ * Persist product embedding shards (json + f32 + f16). Atomic tmp→rename.
+ */
+export function persistProductEmbeddingIndex(
+  packId: string,
+  entries: readonly ProductEmbeddingIndexEntry[],
+  vectors: readonly Float32Array[],
+): ProductEmbeddingIndexMeta {
+  if (entries.length !== vectors.length) {
+    throw new Error(
+      `persistProductEmbeddingIndex: entries (${entries.length}) ≠ vectors (${vectors.length})`,
+    );
+  }
+  const matrix = new Float32Array(entries.length * CARD_EMBED_DIM);
+  for (let i = 0; i < vectors.length; i++) {
+    matrix.set(vectors[i]!, i * CARD_EMBED_DIM);
+  }
+  const centroid = computePackCentroid(matrix, entries.length, CARD_EMBED_DIM);
+  const meta: ProductEmbeddingIndexMeta = {
+    version: 1,
+    packId,
+    model: CARD_EMBED_MODEL,
+    dim: CARD_EMBED_DIM,
+    cropMode: "full",
+    builtAt: new Date().toISOString(),
+    entries: entries.map((e, row) => ({ ...e, row })),
+    centroid: Array.from(centroid),
+  };
+  const packRoot = packDataDir(packId);
+  mkdirSync(packRoot, { recursive: true });
+  writeFileAtomic(
+    productEmbeddingIndexMetaPath(packId),
+    JSON.stringify({
+      ...meta,
+      entries: meta.entries.map(compactProductEmbeddingEntry),
+    }),
+  );
+  writeFileAtomic(
+    productEmbeddingIndexBinPath(packId),
+    Buffer.from(matrix.buffer, matrix.byteOffset, matrix.byteLength),
+  );
+  const f16 = encodeFloat16Matrix(matrix);
+  writeFileAtomic(productEmbeddingIndexF16Path(packId), Buffer.from(f16));
+  indexCache.delete(packId);
+  return meta;
+}
+
 /**
  * Build embedding matrix from an existing product visual index.
  * Uses {@link embedFullFrameBuffer} — never art-band crop.
+ *
+ * Mid-build checkpoints flush canonical shards for crash-resume.
  */
 export async function buildProductEmbeddingIndex(opts: {
   packId: string;
@@ -435,6 +499,8 @@ export async function buildProductEmbeddingIndex(opts: {
   limit?: number;
   reuseExisting?: boolean;
   onProgress?: (done: number, total: number) => void;
+  onCheckpoint?: (vectorCount: number) => void;
+  checkpointEvery?: number;
 }): Promise<ProductEmbeddingIndexMeta> {
   const visual =
     opts.entries ?? loadProductVisualIndex(opts.packId)?.entries ?? [];
@@ -454,26 +520,56 @@ export async function buildProductEmbeddingIndex(opts: {
   );
 
   const packRoot = packDataDir(opts.packId);
-  const vectors: Float32Array[] = [];
-  const entries: ProductEmbeddingIndexEntry[] = [];
+  const progressTotal = reuse.length + todo.length;
   let attempted = 0;
   let firstError: unknown = null;
-  const progressTotal = reuse.length + todo.length;
 
-  for (const hit of reuse) {
-    const rowIndex = entries.length;
-    entries.push({
-      productKey: hit.row.productKey,
-      lang: hit.row.lang,
-      slug: hit.row.slug,
-      artRel: hit.row.artRel,
-      row: rowIndex,
-      ...(hit.row.fp ? { fp: hit.row.fp } : {}),
-    });
-    vectors.push(hit.vec);
+  for (const _hit of reuse) {
     attempted += 1;
     opts.onProgress?.(attempted, progressTotal);
   }
+
+  type Hit = { row: ProductVisualIndexEntry; vec: Float32Array };
+  const completed: Hit[] = [];
+  const checkpointEvery = embeddingCheckpointInterval(
+    todo.length,
+    opts.checkpointEvery,
+  );
+  let todoDone = 0;
+  let nextCheckpointAt = checkpointEvery;
+  let lastFlushedVectors = -1;
+  let flushChain: Promise<void> = Promise.resolve();
+
+  const flushSnapshot = (hits: readonly Hit[], announce: boolean) => {
+    const entries: ProductEmbeddingIndexEntry[] = [];
+    const vectors: Float32Array[] = [];
+    for (const hit of reuse) {
+      entries.push(entryFromProductVisual(hit.row, entries.length));
+      vectors.push(hit.vec);
+    }
+    for (const hit of hits) {
+      entries.push(entryFromProductVisual(hit.row, entries.length));
+      vectors.push(hit.vec);
+    }
+    if (!entries.length) return;
+    if (entries.length === lastFlushedVectors) return;
+    const meta = persistProductEmbeddingIndex(opts.packId, entries, vectors);
+    lastFlushedVectors = meta.entries.length;
+    if (announce) opts.onCheckpoint?.(meta.entries.length);
+  };
+
+  const scheduleCheckpoint = (force: boolean) => {
+    const crossed =
+      todoDone >= nextCheckpointAt || (force && todoDone > 0);
+    if (!crossed && !force) return;
+    while (todoDone >= nextCheckpointAt) {
+      nextCheckpointAt += checkpointEvery;
+    }
+    const snapshot = completed.slice();
+    flushChain = flushChain.then(() => {
+      flushSnapshot(snapshot, true);
+    });
+  };
 
   const embedded = await mapPool(todo, EMBED_CONCURRENCY, async (row) => {
     try {
@@ -483,27 +579,31 @@ export async function buildProductEmbeddingIndex(opts: {
       // Full-frame DINOv2 — never CARD_ART_BAND / embedArtBandBuffer.
       const vec = await embedFullFrameBuffer(raw);
       if (!vec || vec.length < CARD_EMBED_DIM) return null;
-      return { row, vec: vec.slice(0, CARD_EMBED_DIM) };
+      const hit: Hit = { row, vec: vec.slice(0, CARD_EMBED_DIM) };
+      completed.push(hit);
+      return hit;
     } catch (err) {
       if (!firstError) firstError = err;
       return null;
     } finally {
+      todoDone += 1;
       attempted += 1;
       opts.onProgress?.(attempted, progressTotal);
+      if (todoDone >= nextCheckpointAt) scheduleCheckpoint(false);
     }
   });
 
+  await flushChain;
+
+  const entries: ProductEmbeddingIndexEntry[] = [];
+  const vectors: Float32Array[] = [];
+  for (const hit of reuse) {
+    entries.push(entryFromProductVisual(hit.row, entries.length));
+    vectors.push(hit.vec);
+  }
   for (const hit of embedded) {
     if (!hit) continue;
-    const rowIndex = entries.length;
-    entries.push({
-      productKey: hit.row.productKey,
-      lang: hit.row.lang,
-      slug: hit.row.slug,
-      artRel: hit.row.artRel,
-      row: rowIndex,
-      ...(hit.row.fp ? { fp: hit.row.fp } : {}),
-    });
+    entries.push(entryFromProductVisual(hit.row, entries.length));
     vectors.push(hit.vec);
   }
 
@@ -527,39 +627,17 @@ export async function buildProductEmbeddingIndex(opts: {
     return prior.meta;
   }
 
-  const matrix = new Float32Array(entries.length * CARD_EMBED_DIM);
-  for (let i = 0; i < vectors.length; i++) {
-    matrix.set(vectors[i]!, i * CARD_EMBED_DIM);
+  if (entries.length === lastFlushedVectors) {
+    const loaded = loadProductEmbeddingIndex(opts.packId);
+    if (
+      loaded &&
+      productEmbeddingEntriesEqual(loaded.meta.entries, entries)
+    ) {
+      return loaded.meta;
+    }
   }
 
-  const centroid = computePackCentroid(matrix, entries.length, CARD_EMBED_DIM);
-  const meta: ProductEmbeddingIndexMeta = {
-    version: 1,
-    packId: opts.packId,
-    model: CARD_EMBED_MODEL,
-    dim: CARD_EMBED_DIM,
-    cropMode: "full",
-    builtAt: new Date().toISOString(),
-    entries,
-    centroid: Array.from(centroid),
-  };
-
-  mkdirSync(packRoot, { recursive: true });
-  writeFileSync(
-    productEmbeddingIndexMetaPath(opts.packId),
-    JSON.stringify({
-      ...meta,
-      entries: entries.map(compactProductEmbeddingEntry),
-    }),
-  );
-  writeFileSync(
-    productEmbeddingIndexBinPath(opts.packId),
-    Buffer.from(matrix.buffer, matrix.byteOffset, matrix.byteLength),
-  );
-  const f16 = encodeFloat16Matrix(matrix);
-  writeFileSync(productEmbeddingIndexF16Path(opts.packId), Buffer.from(f16));
-  indexCache.delete(opts.packId);
-  return meta;
+  return persistProductEmbeddingIndex(opts.packId, entries, vectors);
 }
 
 export function productEmbeddingEntriesEqual(

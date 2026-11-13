@@ -10,7 +10,6 @@ import {
   readdirSync,
   readFileSync,
   statSync,
-  writeFileSync,
 } from "node:fs";
 import path from "node:path";
 
@@ -43,6 +42,8 @@ import {
   type CardEmbeddingIndexEntry,
   type CardEmbeddingIndexEntryWire,
 } from "@/core/identify/cardEmbeddingEntry";
+import { embeddingCheckpointInterval } from "@/core/identify/embeddingCheckpoint";
+import { writeFileAtomic } from "@/lib/fs/writeFileAtomic";
 import { CARD_EMBED_SHARD_FILES } from "@/lib/packAssetUrls";
 import { packDataDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
@@ -71,6 +72,8 @@ const BIN_F16_NAME = CARD_EMBED_SHARD_FILES.f16;
 
 /** The ONNX encoder already multi-threads; keep workers low to avoid RAM spikes. */
 const EMBED_CONCURRENCY = 3;
+
+export { embeddingCheckpointInterval } from "@/core/identify/embeddingCheckpoint";
 
 export type LoadedIndex = {
   meta: CardEmbeddingIndexMeta;
@@ -491,6 +494,68 @@ export function partitionEmbeddingWork(
   return { reuse, todo };
 }
 
+function entryFromVisual(
+  row: CardVisualIndexEntry,
+  rowIndex: number,
+): CardEmbeddingIndexEntry {
+  return {
+    printKey: row.printKey,
+    lang: row.lang,
+    set: row.set,
+    card: row.card,
+    artRel: row.artRel,
+    row: rowIndex,
+    ...(row.fp ? { fp: row.fp } : {}),
+  };
+}
+
+/**
+ * Persist card embedding shards (json + f32 + f16). Atomic tmp→rename so a
+ * killed Sync never leaves a truncated matrix as the live index.
+ */
+export function persistCardEmbeddingIndex(
+  packId: string,
+  entries: readonly CardEmbeddingIndexEntry[],
+  vectors: readonly Float32Array[],
+): CardEmbeddingIndexMeta {
+  if (entries.length !== vectors.length) {
+    throw new Error(
+      `persistCardEmbeddingIndex: entries (${entries.length}) ≠ vectors (${vectors.length})`,
+    );
+  }
+  const matrix = new Float32Array(entries.length * CARD_EMBED_DIM);
+  for (let i = 0; i < vectors.length; i++) {
+    matrix.set(vectors[i]!, i * CARD_EMBED_DIM);
+  }
+  const centroid = computePackCentroid(matrix, entries.length, CARD_EMBED_DIM);
+  const meta: CardEmbeddingIndexMeta = {
+    version: 1,
+    packId,
+    model: CARD_EMBED_MODEL,
+    dim: CARD_EMBED_DIM,
+    builtAt: new Date().toISOString(),
+    entries: entries.map((e, row) => ({ ...e, row })),
+    centroid: Array.from(centroid),
+  };
+  const packRoot = packDataDir(packId);
+  mkdirSync(packRoot, { recursive: true });
+  writeFileAtomic(
+    cardEmbeddingIndexMetaPath(packId),
+    JSON.stringify({
+      ...meta,
+      entries: meta.entries.map(compactEmbeddingEntry),
+    }),
+  );
+  writeFileAtomic(
+    cardEmbeddingIndexBinPath(packId),
+    Buffer.from(matrix.buffer, matrix.byteOffset, matrix.byteLength),
+  );
+  const f16 = encodeFloat16Matrix(matrix);
+  writeFileAtomic(cardEmbeddingIndexF16Path(packId), Buffer.from(f16));
+  indexCache.delete(packId);
+  return meta;
+}
+
 /**
  * Build embedding matrix from an existing visual index (same artRel paths).
  * Invoked by Catalogue Sync via {@link runDataPackCardEmbeddingIndex}.
@@ -498,6 +563,9 @@ export function partitionEmbeddingWork(
  * With `reuseExisting` (default true), keeps vectors whose printKey+artRel
  * and face fingerprint still match — only new / moved / rewritten faces are
  * re-encoded, and nothing is written when the result equals the prior index.
+ *
+ * Mid-build checkpoints flush canonical shards so a worker restart can resume
+ * via {@link partitionEmbeddingWork} instead of restarting from zero.
  */
 export async function buildCardEmbeddingIndex(opts: {
   packId: string;
@@ -507,6 +575,10 @@ export async function buildCardEmbeddingIndex(opts: {
   /** Keep prior vectors for unchanged printKey+artRel (default true). */
   reuseExisting?: boolean;
   onProgress?: (done: number, total: number) => void;
+  /** Fired after each mid-run shard flush (vector count on disk). */
+  onCheckpoint?: (vectorCount: number) => void;
+  /** Test override for checkpoint cadence (production uses 1% / min 1000). */
+  checkpointEvery?: number;
 }): Promise<CardEmbeddingIndexMeta> {
   const visual =
     opts.entries ?? loadCardVisualIndex(opts.packId)?.entries ?? [];
@@ -522,27 +594,56 @@ export async function buildCardEmbeddingIndex(opts: {
   const { reuse, todo } = partitionEmbeddingWork(source, prior, reuseExisting);
 
   const packRoot = packDataDir(opts.packId);
-  const vectors: Float32Array[] = [];
-  const entries: CardEmbeddingIndexEntry[] = [];
+  const progressTotal = reuse.length + todo.length;
   let attempted = 0;
   let firstError: unknown = null;
-  const progressTotal = reuse.length + todo.length;
 
-  for (const hit of reuse) {
-    const rowIndex = entries.length;
-    entries.push({
-      printKey: hit.row.printKey,
-      lang: hit.row.lang,
-      set: hit.row.set,
-      card: hit.row.card,
-      artRel: hit.row.artRel,
-      row: rowIndex,
-      ...(hit.row.fp ? { fp: hit.row.fp } : {}),
-    });
-    vectors.push(hit.vec);
+  for (const _hit of reuse) {
     attempted += 1;
     opts.onProgress?.(attempted, progressTotal);
   }
+
+  type Hit = { row: CardVisualIndexEntry; vec: Float32Array };
+  const completed: Hit[] = [];
+  const checkpointEvery = embeddingCheckpointInterval(
+    todo.length,
+    opts.checkpointEvery,
+  );
+  let todoDone = 0;
+  let nextCheckpointAt = checkpointEvery;
+  let lastFlushedVectors = -1;
+  let flushChain: Promise<void> = Promise.resolve();
+
+  const flushSnapshot = (hits: readonly Hit[], announce: boolean) => {
+    const entries: CardEmbeddingIndexEntry[] = [];
+    const vectors: Float32Array[] = [];
+    for (const hit of reuse) {
+      entries.push(entryFromVisual(hit.row, entries.length));
+      vectors.push(hit.vec);
+    }
+    for (const hit of hits) {
+      entries.push(entryFromVisual(hit.row, entries.length));
+      vectors.push(hit.vec);
+    }
+    if (!entries.length) return;
+    if (entries.length === lastFlushedVectors) return;
+    const meta = persistCardEmbeddingIndex(opts.packId, entries, vectors);
+    lastFlushedVectors = meta.entries.length;
+    if (announce) opts.onCheckpoint?.(meta.entries.length);
+  };
+
+  const scheduleCheckpoint = (force: boolean) => {
+    const crossed =
+      todoDone >= nextCheckpointAt || (force && todoDone > 0);
+    if (!crossed && !force) return;
+    while (todoDone >= nextCheckpointAt) {
+      nextCheckpointAt += checkpointEvery;
+    }
+    const snapshot = completed.slice();
+    flushChain = flushChain.then(() => {
+      flushSnapshot(snapshot, true);
+    });
+  };
 
   const embedded = await mapPool(todo, EMBED_CONCURRENCY, async (row) => {
     try {
@@ -553,28 +654,31 @@ export async function buildCardEmbeddingIndex(opts: {
       if (!band) return null;
       const vec = await embedArtBandBuffer(band);
       if (!vec || vec.length < CARD_EMBED_DIM) return null;
-      return { row, vec: vec.slice(0, CARD_EMBED_DIM) };
+      const hit: Hit = { row, vec: vec.slice(0, CARD_EMBED_DIM) };
+      completed.push(hit);
+      return hit;
     } catch (err) {
       if (!firstError) firstError = err;
       return null;
     } finally {
+      todoDone += 1;
       attempted += 1;
       opts.onProgress?.(attempted, progressTotal);
+      if (todoDone >= nextCheckpointAt) scheduleCheckpoint(false);
     }
   });
 
+  await flushChain;
+
+  const entries: CardEmbeddingIndexEntry[] = [];
+  const vectors: Float32Array[] = [];
+  for (const hit of reuse) {
+    entries.push(entryFromVisual(hit.row, entries.length));
+    vectors.push(hit.vec);
+  }
   for (const hit of embedded) {
     if (!hit) continue;
-    const rowIndex = entries.length;
-    entries.push({
-      printKey: hit.row.printKey,
-      lang: hit.row.lang,
-      set: hit.row.set,
-      card: hit.row.card,
-      artRel: hit.row.artRel,
-      row: rowIndex,
-      ...(hit.row.fp ? { fp: hit.row.fp } : {}),
-    });
+    entries.push(entryFromVisual(hit.row, entries.length));
     vectors.push(hit.vec);
   }
 
@@ -600,40 +704,15 @@ export async function buildCardEmbeddingIndex(opts: {
     return prior.meta;
   }
 
-  const matrix = new Float32Array(entries.length * CARD_EMBED_DIM);
-  for (let i = 0; i < vectors.length; i++) {
-    matrix.set(vectors[i]!, i * CARD_EMBED_DIM);
+  if (entries.length === lastFlushedVectors) {
+    // Last checkpoint already wrote this exact set — reload meta for builtAt.
+    const loaded = loadCardEmbeddingIndex(opts.packId);
+    if (loaded && embeddingEntriesEqual(loaded.meta.entries, entries)) {
+      return loaded.meta;
+    }
   }
 
-  const centroid = computePackCentroid(matrix, entries.length, CARD_EMBED_DIM);
-  const meta: CardEmbeddingIndexMeta = {
-    version: 1,
-    packId: opts.packId,
-    model: CARD_EMBED_MODEL,
-    dim: CARD_EMBED_DIM,
-    builtAt: new Date().toISOString(),
-    entries,
-    centroid: Array.from(centroid),
-  };
-
-  mkdirSync(packRoot, { recursive: true });
-  // Compact on disk: `art` basename instead of full `cards/…/artRel` path.
-  writeFileSync(
-    cardEmbeddingIndexMetaPath(opts.packId),
-    JSON.stringify({
-      ...meta,
-      entries: entries.map(compactEmbeddingEntry),
-    }),
-  );
-  writeFileSync(
-    cardEmbeddingIndexBinPath(opts.packId),
-    Buffer.from(matrix.buffer, matrix.byteOffset, matrix.byteLength),
-  );
-  // On-device shard (~½ RAM) — same vectors; served via /assets/<pack>/…
-  const f16 = encodeFloat16Matrix(matrix);
-  writeFileSync(cardEmbeddingIndexF16Path(opts.packId), Buffer.from(f16));
-  indexCache.delete(opts.packId);
-  return meta;
+  return persistCardEmbeddingIndex(opts.packId, entries, vectors);
 }
 
 /** Same rows in the same order (printKey, lang, artRel, fp) — ignores `builtAt`. */

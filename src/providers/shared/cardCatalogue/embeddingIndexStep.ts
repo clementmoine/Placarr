@@ -40,6 +40,20 @@ function embeddingLooksFresh(packId: string): CardEmbeddingIndexMeta | null {
   return loaded.meta;
 }
 
+/** Dense Sync progress: every 1% and at least every 1000 faces. */
+export function shouldLogEmbeddingProgress(
+  done: number,
+  total: number,
+  lastPct: number,
+  lastDone: number,
+): boolean {
+  if (done === total) return true;
+  const pct = Math.floor((done / Math.max(1, total)) * 100);
+  if (pct !== lastPct) return true;
+  if (done - lastDone >= 1000) return true;
+  return false;
+}
+
 export async function runDataPackCardEmbeddingIndex(
   packId: string,
   opts?: {
@@ -78,6 +92,7 @@ export async function runDataPackCardEmbeddingIndex(
   );
 
   let lastPct = -1;
+  let lastDone = 0;
   const started = Date.now();
   const prior = reuseExisting ? loadCardEmbeddingIndex(packId) : null;
   const meta = await buildCardEmbeddingIndex({
@@ -86,11 +101,13 @@ export async function runDataPackCardEmbeddingIndex(
     limit: opts?.limit,
     reuseExisting,
     onProgress: (done, n) => {
-      const pct = Math.floor((done / Math.max(1, n)) * 100);
-      if (pct !== lastPct && (pct % 10 === 0 || done === n)) {
-        lastPct = pct;
-        log(`── card embedding index — ${done}/${n} (${pct}%)`);
-      }
+      if (!shouldLogEmbeddingProgress(done, n, lastPct, lastDone)) return;
+      lastPct = Math.floor((done / Math.max(1, n)) * 100);
+      lastDone = done;
+      log(`── card embedding index — ${done}/${n} (${lastPct}%)`);
+    },
+    onCheckpoint: (vectorCount) => {
+      log(`── card embedding index — checkpoint ${vectorCount} vectors`);
     },
   });
 

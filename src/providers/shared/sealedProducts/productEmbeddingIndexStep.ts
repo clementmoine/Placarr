@@ -16,6 +16,7 @@ import {
   loadProductVisualIndex,
   productVisualIndexPath,
 } from "@/core/identify/productVisualIndex";
+import { shouldLogEmbeddingProgress } from "@/providers/shared/cardCatalogue/embeddingIndexStep";
 
 function embeddingLooksFresh(packId: string): ProductEmbeddingIndexMeta | null {
   const visual = loadProductVisualIndex(packId);
@@ -75,6 +76,7 @@ export async function runDataPackProductEmbeddingIndex(
   );
 
   let lastPct = -1;
+  let lastDone = 0;
   const started = Date.now();
   const prior = reuseExisting ? loadProductEmbeddingIndex(packId) : null;
   const meta = await buildProductEmbeddingIndex({
@@ -83,11 +85,13 @@ export async function runDataPackProductEmbeddingIndex(
     limit: opts?.limit,
     reuseExisting,
     onProgress: (done, n) => {
-      const pct = Math.floor((done / Math.max(1, n)) * 100);
-      if (pct !== lastPct && (pct % 10 === 0 || done === n)) {
-        lastPct = pct;
-        log(`── product embedding index — ${done}/${n} (${pct}%)`);
-      }
+      if (!shouldLogEmbeddingProgress(done, n, lastPct, lastDone)) return;
+      lastPct = Math.floor((done / Math.max(1, n)) * 100);
+      lastDone = done;
+      log(`── product embedding index — ${done}/${n} (${lastPct}%)`);
+    },
+    onCheckpoint: (vectorCount) => {
+      log(`── product embedding index — checkpoint ${vectorCount} vectors`);
     },
   });
 

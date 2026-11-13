@@ -89,6 +89,7 @@ export const REGISTRY_COVER_IMAGE_EXACT_HOSTS = [
   "images.brickset.com",
   "imagedelivery.net",
   "images.pricecharting.com",
+  "img.cardnexus.com",
   "img.chasse-aux-livres.fr",
   "img.cdandlp.com",
   "lddb.com",

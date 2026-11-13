@@ -10,7 +10,15 @@ describe("resolveInteractiveWorkerConcurrency", () => {
     });
   });
 
-  it("defaults to 2 when FlareSolverr is configured", () => {
+  it("defaults to 2 when Byparr is configured", () => {
+    expect(
+      resolveInteractiveWorkerConcurrency({
+        BYPARR_URL: "http://localhost:8191",
+      }),
+    ).toEqual({ concurrency: 2, cappedForFlare: false });
+  });
+
+  it("still honors legacy FLARESOLVERR_URL for the concurrency cap", () => {
     expect(
       resolveInteractiveWorkerConcurrency({
         FLARESOLVERR_URL: "http://localhost:8191",

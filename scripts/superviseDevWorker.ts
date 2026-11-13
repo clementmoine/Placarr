@@ -15,7 +15,7 @@
  *
  * Usage (via package.json):
  *   pnpm worker:dev
- *   pnpm worker:icollect:dev
+ *   pnpm worker:catalog:dev
  */
 
 import { spawn, type ChildProcess } from "node:child_process";

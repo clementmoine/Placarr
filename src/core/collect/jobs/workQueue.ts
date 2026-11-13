@@ -28,8 +28,8 @@ export type BackgroundWorkKind =
 
 /**
  * Interactive enrich path. Also claims `catalogProviderSync` so a lone
- * `pnpm worker` (or Admin Sync / Tout rafraîchir without icollect) does not
- * leave catalogue jobs pending forever — icollect still prefers them when up.
+ * `pnpm worker` (or Admin Sync without the catalog pool) does not leave
+ * catalogue jobs pending forever — `pnpm worker:catalog` still prefers them.
  */
 export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.metadataRefresh,
@@ -40,13 +40,16 @@ export const INTERACTIVE_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.catalogProviderSync,
 ];
 
-/** Local index / catalog crawl — dedicated process (`pnpm worker:icollect`). */
-export const ICOLLECT_WORKER_KINDS: readonly BackgroundWorkKind[] = [
+/** Local index / catalog crawl — dedicated process (`pnpm worker:catalog`). */
+export const CATALOG_WORKER_KINDS: readonly BackgroundWorkKind[] = [
   BACKGROUND_WORK_KIND.icollectCatalogSync,
   BACKGROUND_WORK_KIND.launchboxIndexSync,
   BACKGROUND_WORK_KIND.nointroIndexSync,
   BACKGROUND_WORK_KIND.catalogProviderSync,
 ];
+
+/** @deprecated Use `CATALOG_WORKER_KINDS` — name kept for one release. */
+export const ICOLLECT_WORKER_KINDS = CATALOG_WORKER_KINDS;
 
 const KNOWN_WORKER_KINDS = new Set<string>(Object.values(BACKGROUND_WORK_KIND));
 
@@ -67,7 +70,7 @@ export function resolveWorkerKinds(
     return [...INTERACTIVE_WORKER_KINDS];
   }
   if (trimmed.toLowerCase() === "catalog") {
-    return [...ICOLLECT_WORKER_KINDS];
+    return [...CATALOG_WORKER_KINDS];
   }
 
   const kinds = trimmed
@@ -388,7 +391,7 @@ export async function claimNextBackgroundWorkJob(
         AND candidate."runAfter" <= NOW()
         ${kindsFilter}
         AND (
-          -- Never starve interactive metadata behind the iCollect catalog crawl.
+          -- Never starve interactive metadata behind a legacy catalog crawl tick.
           candidate."kind" <> ${BACKGROUND_WORK_KIND.icollectCatalogSync}
           OR NOT EXISTS (
             SELECT 1

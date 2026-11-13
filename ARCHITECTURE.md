@@ -53,7 +53,7 @@ Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et
 
 | `src/providers/`  | Une source = un dossier. `shared/` : fabriques et plomberie mutualisées (`defineProvider`, cardCatalogue, softban…)                               |
 | `src/effects/`    | Packs d'effets foil par TCG (contrat `EffectPackModule`, auto-enregistrement)                                                                     |
-| `src/lib/`        | Infrastructure : `http/` (client, retry, circuit breaker persisté, FlareSolverr), `admin/` (catalogue, foil status), `client/` (hooks React)     |
+| `src/lib/`        | Infrastructure : `http/` (client, retry, circuit breaker persisté, Byparr/Flare-compat), `admin/` (catalogue, foil status), `client/` (hooks React) |
 | `src/app/`        | Routes Next.js (pages + `api/`). L'admin catalogue vit sous `app/admin/`                                                                          |
 | `src/components/` | UI. `admin/` : playroom foil, catalogue browser                                                                                                   |
 | `data/`           | Données runtime **non commitées**, re-dérivables via les pipelines (voir `docs/data-layout.md`)                                                   |

@@ -1,0 +1,112 @@
+from __future__ import annotations
+
+import time
+from http.client import INTERNAL_SERVER_ERROR
+from typing import Any
+
+from playwright.sync_api import Cookie
+from pydantic import BaseModel, Field, field_validator
+from pydantic.alias_generators import to_camel
+
+from src import consts
+
+MS_PER_SECOND = 1000
+
+
+class LinkRequest(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    cmd: str = Field(
+        default="request.get",
+        description="Type of request, currently only supports GET requests. This string is purely for compatibility with FlareSolverr.",
+    )
+    url: str = Field(pattern=r"^https?://", default="https://")
+    max_timeout: int = Field(
+        default=60,
+        alias="maxTimeout",
+        description=(
+            "Maximum timeout for resolving the anti-bot challenge. Values below 1000 "
+            "are treated as seconds; values of 1000 or more as milliseconds, matching "
+            "FlareSolverr's maxTimeout parameter."
+        ),
+    )
+    block_media: bool = Field(
+        default=consts.BLOCK_MEDIA,
+        alias="blockMedia",
+        description="Block image, media, and font resources from loading.",
+    )
+    return_only_cookies: bool = Field(
+        default=consts.RETURN_ONLY_COOKIES,
+        alias="returnOnlyCookies",
+        description="Return only cookies, skip the page HTML content in the response.",
+    )
+    # Placarr: browser-fetch images after challenge (Booknode CDN TLS bind).
+    download: bool = Field(
+        default=False,
+        description="When true, browser-fetch images (see downloadUrls) after challenge solve.",
+    )
+    download_urls: list[str] | None = Field(
+        default=None,
+        alias="downloadUrls",
+        description="Optional selective image URLs; falls back to all <img> src on the page.",
+    )
+
+    @field_validator("max_timeout")
+    @classmethod
+    def normalize_max_timeout(cls, value: int) -> int:
+        """Normalize FlareSolverr-style millisecond values to seconds."""
+        if value >= MS_PER_SECOND:
+            return value // MS_PER_SECOND
+        return value
+
+
+class HealthcheckResponse(BaseModel):
+    model_config = {"alias_generator": to_camel, "populate_by_name": True}
+    msg: str = "Byparr is working!"
+    version: str = consts.VERSION
+    user_agent: str
+
+
+class DownloadedImage(BaseModel):
+    """FlareSolverr-compatible image payload (snake_case keys)."""
+
+    url: str
+    filename: str
+    mime_type: str
+    encoded_data: str
+
+
+class Solution(BaseModel):
+    model_config = {"alias_generator": to_camel, "populate_by_name": True}
+    url: str
+    status: int
+    cookies: list[Cookie] = []
+    user_agent: str = ""
+    headers: dict[str, Any] = {}
+    response: str = ""
+    content_type: str = Field(default="text/html", alias="contentType")
+    download: list[DownloadedImage] | None = None
+
+
+class LinkResponse(BaseModel):
+    model_config = {"alias_generator": to_camel, "populate_by_name": True}
+    status: str = "ok"
+    message: str
+    solution: Solution
+    start_timestamp: int
+    end_timestamp: int = Field(default_factory=lambda: int(time.time() * 1000))
+    version: str = consts.VERSION
+
+    @classmethod
+    def invalid(cls, url: str) -> LinkResponse:
+        """
+        Return an invalid LinkResponse with default error values.
+
+        This method is used to generate a response indicating an invalid request.
+        """
+        return cls(
+            status="error",
+            message="Invalid request",
+            solution=Solution(url=url, status=INTERNAL_SERVER_ERROR),
+            start_timestamp=int(time.time() * 1000),
+        )

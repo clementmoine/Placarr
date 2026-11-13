@@ -6,14 +6,14 @@
  * them (SKIP LOCKED) and runs work off the request event loop.
  *
  * Pools (set `WORKER_KINDS`):
- *   interactive (default) → metadataRefresh + priceRefresh + foilExtract
- *   catalog               → icollectCatalogSync only
+ *   interactive (default) → metadata + price + extract (+ catalog fallback)
+ *   catalog               → catalogProviderSync + legacy index kinds
  *   all / *               → every kind (legacy / debug)
  *
  *   pnpm worker
- *   pnpm worker:icollect
+ *   pnpm worker:catalog
  *   pnpm worker:dev          # superviseDevWorker (restart-on-exit)
- *   docker compose --profile dev up worker worker-icollect
+ *   docker compose --profile dev up worker worker-catalog
  */
 
 import "dotenv/config";
@@ -55,12 +55,27 @@ const STALE_SWEEP_MS = Number.parseInt(
   10,
 );
 
-/** Default pool: keep iCollect off the interactive enrich worker. */
+/** Default pool: keep heavy catalog crawls off the interactive enrich worker. */
 function resolveClaimKinds(): readonly BackgroundWorkKind[] | null {
   if (process.env.WORKER_KINDS?.trim()) {
     return resolveWorkerKinds(process.env.WORKER_KINDS);
   }
   return INTERACTIVE_WORKER_KINDS;
+}
+
+/** Item-grain kinds — claim/complete would drown stdout during shelf refresh. */
+const CHATTY_WORKER_KINDS = new Set<string>([
+  "metadataRefresh",
+  "priceRefresh",
+]);
+
+function workerLogVerbose(): boolean {
+  const raw = process.env.WORKER_LOG_VERBOSE?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+function shouldLogJobLifecycle(kind: string): boolean {
+  return workerLogVerbose() || !CHATTY_WORKER_KINDS.has(kind);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -74,10 +89,12 @@ async function processOneJob(): Promise<boolean> {
   const job = await claimNextBackgroundWorkJob(WORKER_ID, claimKinds);
   if (!job) return false;
 
-  console.info(`[Worker ${WORKER_ID}] claimed ${job.kind} ${job.id}`, {
-    itemId: job.itemId,
-    attempts: job.attempts,
-  });
+  if (shouldLogJobLifecycle(job.kind)) {
+    console.info(`[Worker ${WORKER_ID}] claimed ${job.kind} ${job.id}`, {
+      itemId: job.itemId,
+      attempts: job.attempts,
+    });
+  }
 
   try {
     if (await isBackgroundWorkJobCancelled(job.id)) {
@@ -89,7 +106,9 @@ async function processOneJob(): Promise<boolean> {
       return true;
     }
     await completeBackgroundWorkJob(job.id);
-    console.info(`[Worker ${WORKER_ID}] completed ${job.id}`);
+    if (shouldLogJobLifecycle(job.kind)) {
+      console.info(`[Worker ${WORKER_ID}] completed ${job.id}`);
+    }
   } catch (error) {
     if (isBackgroundWorkAbandonedError(error)) {
       await abandonBackgroundWorkJob(job.id, error.message);
@@ -195,7 +214,7 @@ async function main(): Promise<void> {
   );
   if (cappedForFlare) {
     console.warn(
-      `[Worker ${WORKER_ID}] capped concurrency for FlareSolverr (serial browser). Set WORKER_CONCURRENCY_FORCE=1 to override.`,
+      `[Worker ${WORKER_ID}] capped concurrency for Byparr (serial browser). Set WORKER_CONCURRENCY_FORCE=1 to override.`,
     );
   }
 
@@ -208,12 +227,12 @@ async function main(): Promise<void> {
 
   await sweepStaleLocks();
 
-  const { ICOLLECT_WORKER_KINDS } =
+  const { CATALOG_WORKER_KINDS } =
     await import("../src/core/collect/jobs/workQueue");
   const runsCatalogueAutoSync =
     !claimKinds ||
     claimKinds.some((kind) =>
-      (ICOLLECT_WORKER_KINDS as readonly string[]).includes(kind),
+      (CATALOG_WORKER_KINDS as readonly string[]).includes(kind),
     );
   if (runsCatalogueAutoSync) {
     const { startCatalogueAutoSyncLoop } =

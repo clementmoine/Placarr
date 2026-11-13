@@ -13,13 +13,18 @@ import {
 
 const mockedPost = vi.mocked(axios.post);
 
+function setTestSolverUrl(url: string) {
+  process.env.BYPARR_URL = url;
+  delete process.env.FLARESOLVERR_URL;
+}
+
 describe("flareSolverrDownloadImages", () => {
   beforeEach(() => {
     mockedPost.mockReset();
-    process.env.FLARESOLVERR_URL = "http://flare.test";
+    setTestSolverUrl("http://flare.test");
   });
 
-  it("decodes base64 image payloads from FlareSolverr download responses", async () => {
+  it("decodes base64 image payloads from Byparr download responses", async () => {
     mockedPost.mockResolvedValue({
       data: {
         status: "ok",
@@ -57,11 +62,15 @@ describe("flareSolverrDownloadImages", () => {
 describe("flareSolverrRequestGet", () => {
   beforeEach(() => {
     mockedPost.mockReset();
-    process.env.FLARESOLVERR_URL = "http://flare.test";
+    setTestSolverUrl("http://flare.test");
+    delete process.env.BYPARR_MAX_TIMEOUT_MS;
+    delete process.env.BYPARR_MAX_QUEUE_WAIT_MS;
+    delete process.env.FLARESOLVERR_MAX_TIMEOUT_MS;
+    delete process.env.FLARESOLVERR_MAX_QUEUE_WAIT_MS;
   });
 
-  it("caps the solve timeout it asks FlareSolverr for", async () => {
-    process.env.FLARESOLVERR_MAX_TIMEOUT_MS = "20000";
+  it("caps the solve timeout it asks Byparr for", async () => {
+    process.env.BYPARR_MAX_TIMEOUT_MS = "20000";
     mockedPost.mockResolvedValue({
       data: { status: "ok", solution: { status: 200, response: "<html/>" } },
     });
@@ -73,11 +82,11 @@ describe("flareSolverrRequestGet", () => {
       expect.objectContaining({ maxTimeout: 20_000 }),
       expect.objectContaining({ timeout: 25_000 }),
     );
-    delete process.env.FLARESOLVERR_MAX_TIMEOUT_MS;
+    delete process.env.BYPARR_MAX_TIMEOUT_MS;
   });
 
   it("skips the request when the queue wait exceeds the cap", async () => {
-    process.env.FLARESOLVERR_MAX_QUEUE_WAIT_MS = "40";
+    process.env.BYPARR_MAX_QUEUE_WAIT_MS = "40";
     mockedPost.mockImplementation(async () => {
       await new Promise((resolve) => setTimeout(resolve, 60));
       return {
@@ -95,10 +104,10 @@ describe("flareSolverrRequestGet", () => {
     expect(first).toBe("<html/>");
     expect(second).toBeNull();
     expect(mockedPost).toHaveBeenCalledTimes(1);
-    delete process.env.FLARESOLVERR_MAX_QUEUE_WAIT_MS;
+    delete process.env.BYPARR_MAX_QUEUE_WAIT_MS;
   });
 
-  it("serializes concurrent FlareSolverr requests", async () => {
+  it("serializes concurrent Byparr requests", async () => {
     let active = 0;
     let peak = 0;
     mockedPost.mockImplementation(async () => {

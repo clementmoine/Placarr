@@ -3,8 +3,8 @@
  *
  * Un site protégé (Cloudflare « just a moment »…) ne se fetch pas, il se
  * *résout* : un navigateur externe passe le challenge et rend le HTML ou les
- * cookies de session. L'implémentation du jour est FlareSolverr ; un
- * remplaçant API-compatible (Byparr…) ne touche que le câblage ci-dessous,
+ * cookies de session. L'implémentation du jour est Byparr (API FlareSolverr
+ * `/v1`) ; un autre sidecar compatible ne touche que le câblage ci-dessous,
  * pas les appelants — `scrapeFetch` ne connaît que cette interface.
  */
 import {
@@ -37,9 +37,9 @@ export interface ChallengeSolver {
 }
 
 /**
- * Implémentation par défaut : FlareSolverr. Les appels sont délégués à
- * l'invocation (pas au chargement du module) pour que les tests qui mockent
- * `@/lib/http/flareSolverr` interceptent aussi ce solver.
+ * Implémentation par défaut : Byparr via le client Flare-compatible. Les
+ * appels sont délégués à l'invocation (pas au chargement du module) pour que
+ * les tests qui mockent `@/lib/http/flareSolverr` interceptent aussi ce solver.
  */
 export const flareSolverrChallengeSolver: ChallengeSolver = {
   fetchHtml: (url, options) =>

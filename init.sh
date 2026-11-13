@@ -68,12 +68,13 @@ if [ "${ENABLE_WORKERS:-1}" = "1" ]; then
     "WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-6}"
 fi
 
-# iCollect catalog crawl. Set ENABLE_ICOLLECT_WORKER=0 to disable.
-if [ "${ENABLE_ICOLLECT_WORKER:-1}" = "1" ]; then
-  start_worker icollect \
-    "WORKER_ID=${WORKER_ID_ICOLLECT:-placarr-icollect-worker}" \
+# Catalog corpus crawl (Sync / local indexes). Set ENABLE_CATALOG_WORKER=0 to disable.
+# ENABLE_ICOLLECT_WORKER / WORKER_*_ICOLLECT remain accepted for one release.
+if [ "${ENABLE_CATALOG_WORKER:-${ENABLE_ICOLLECT_WORKER:-1}}" = "1" ]; then
+  start_worker catalog \
+    "WORKER_ID=${WORKER_ID_CATALOG:-${WORKER_ID_ICOLLECT:-placarr-catalog-worker}}" \
     "WORKER_KINDS=catalog" \
-    "WORKER_CONCURRENCY=${WORKER_ICOLLECT_CONCURRENCY:-1}"
+    "WORKER_CONCURRENCY=${WORKER_CATALOG_CONCURRENCY:-${WORKER_ICOLLECT_CONCURRENCY:-1}}"
 fi
 
 # Title-token DF from RawName / Item names — resolve loads the file, never Prisma.

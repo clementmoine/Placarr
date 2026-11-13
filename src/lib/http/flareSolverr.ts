@@ -17,9 +17,10 @@ export type FlareSolverrDownloadedImage = {
 };
 
 /**
- * FlareSolverr is typically a single remote browser. Parallel challenges just
- * queue there while each axios wait still occupies the Next event loop for
- * 45–90s — serialize outbound Flare calls so enrich fan-out cannot pile up.
+ * Challenge browser sidecar (Byparr, FlareSolverr-compatible /v1). Parallel
+ * challenges just queue there while each axios wait still occupies the Next
+ * event loop for 45–90s — serialize outbound calls so enrich fan-out cannot
+ * pile up.
  */
 const flareQueue = new AsyncQueue(1);
 
@@ -28,19 +29,30 @@ function envMs(name: string, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-/** Per-challenge solve budget handed to FlareSolverr itself. */
+function envMsOptional(name: string): number | null {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/** Per-challenge solve budget handed to the sidecar itself. */
 function flareMaxTimeoutMs(): number {
-  return envMs("FLARESOLVERR_MAX_TIMEOUT_MS", 30_000);
+  return (
+    envMsOptional("BYPARR_MAX_TIMEOUT_MS") ??
+    envMs("FLARESOLVERR_MAX_TIMEOUT_MS", 30_000)
+  );
 }
 
 /**
- * How long a caller may sit in the serial queue before giving up. Flare is one
- * browser, so a deep queue used to add its whole depth to an item's refresh
- * before the solve even started. The solve timeout each caller asks for is
- * unchanged — this only bounds the waiting.
+ * How long a caller may sit in the serial queue before giving up. The sidecar
+ * is one browser, so a deep queue used to add its whole depth to an item's
+ * refresh before the solve even started. The solve timeout each caller asks
+ * for is unchanged — this only bounds the waiting.
  */
 function flareMaxQueueWaitMs(): number {
-  return envMs("FLARESOLVERR_MAX_QUEUE_WAIT_MS", 45_000);
+  return (
+    envMsOptional("BYPARR_MAX_QUEUE_WAIT_MS") ??
+    envMs("FLARESOLVERR_MAX_QUEUE_WAIT_MS", 45_000)
+  );
 }
 
 let lastQueueWaitLogAt = 0;
@@ -50,11 +62,11 @@ function logQueueWaitSkip(waitedMs: number): void {
   if (now - lastQueueWaitLogAt < 60_000) return;
   lastQueueWaitLogAt = now;
   console.warn(
-    `[FlareSolverr] Skipped a request after ${Math.round(waitedMs / 1000)}s of queue wait (cap ${Math.round(flareMaxQueueWaitMs() / 1000)}s) — lower WORKER_CONCURRENCY or raise FLARESOLVERR_MAX_QUEUE_WAIT_MS`,
+    `[Byparr] Skipped a request after ${Math.round(waitedMs / 1000)}s of queue wait (cap ${Math.round(flareMaxQueueWaitMs() / 1000)}s) — lower WORKER_CONCURRENCY or raise BYPARR_MAX_QUEUE_WAIT_MS`,
   );
 }
 
-/** Rolling outcome counters for operator logs (Flare is serial — watch wait pressure). */
+/** Rolling outcome counters for operator logs (serial browser — watch wait pressure). */
 const flareStats = {
   attempts: 0,
   ok: 0,
@@ -72,13 +84,21 @@ function recordFlareOutcome(ok: boolean): void {
   }
   flareStats.lastLogAt = now;
   console.info(
-    `[FlareSolverr] outcomes attempts=${flareStats.attempts} ok=${flareStats.ok} fail=${flareStats.fail} (serial queue depth pressure → lower WORKER_CONCURRENCY if fail climbs)`,
+    `[Byparr] outcomes attempts=${flareStats.attempts} ok=${flareStats.ok} fail=${flareStats.fail} (serial queue depth pressure → lower WORKER_CONCURRENCY if fail climbs)`,
   );
 }
 
 function flareSolverrBaseUrl(): string | null {
-  const flaresolverrUrl = process.env.FLARESOLVERR_URL?.trim();
-  return flaresolverrUrl ? flaresolverrUrl.replace(/\/+$/, "") : null;
+  const url =
+    process.env.BYPARR_URL?.trim() || process.env.FLARESOLVERR_URL?.trim();
+  return url ? url.replace(/\/+$/, "") : null;
+}
+
+/** True when Byparr / Flare-compatible sidecar URL is configured. */
+export function isChallengeSolverConfigured(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return Boolean(env.BYPARR_URL?.trim() || env.FLARESOLVERR_URL?.trim());
 }
 
 /**

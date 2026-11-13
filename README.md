@@ -43,8 +43,8 @@ What you may actually want to change:
 | Variable                            | Default                    | Why you would touch it                                                                                                                  |
 | ----------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `ADMIN_PASSWORD` | `admin` | **Change before exposing an instance** — unlocks write access; browsing is public. |
-| `FLARESOLVERR_URL`                  | unset                      | Enables the Cloudflare-protected retailers. Without it they are skipped.                                                                |
-| `WORKER_CONCURRENCY`                | `6`                        | Jobs the `pnpm worker` process runs at once. Automatically capped to 3 when FlareSolverr is configured — one browser, one serial queue. |
+| `BYPARR_URL`                        | unset                      | Enables Cloudflare-protected retailers (Byparr sidecar). `FLARESOLVERR_URL` still works as a legacy alias.                              |
+| `WORKER_CONCURRENCY`                | `6`                        | Jobs the `pnpm worker` process runs at once. Automatically capped to 3 when Byparr is configured — one browser, one serial queue.       |
 | `BACKGROUND_IO_CONCURRENCY`         | `4`                        | In-process work the Next server does itself (a separate pool from the worker).                                                          |
 | `BACKGROUND_CPU_CONCURRENCY`        | `2`                        | Image localization (`sharp`). Raise only if the host has cores to spare.                                                                |
 | `PRISMA_PG_POOL_MAX`                | `10`                       | Connections per process. Keep (processes × pool) under Postgres `max_connections`.                                                      |
@@ -58,7 +58,7 @@ key reports as `blocked` and is skipped at runtime rather than failing a scan.
 ### Docker (`compose.yml` only)
 
 ```bash
-docker compose up -d             # db + FlareSolverr (hybrid Mac default)
+docker compose up -d --build     # db + Byparr w/ downloadUrls (hybrid Mac)
 pnpm dev:docker                  # + Next/workers in containers (--profile dev)
 docker compose --profile prod up -d   # + production placarr image
 ```

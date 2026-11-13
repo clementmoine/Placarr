@@ -292,7 +292,7 @@ export const furetModule = defineProvider({
     );
     if (metadata) return metadataProbe(metadata);
     return probeErrorResult(
-      process.env.FLARESOLVERR_URL?.trim()
+      process.env.BYPARR_URL?.trim() || process.env.FLARESOLVERR_URL?.trim()
         ? "No Furet listing for sample ISBN — Cloudflare/Flare may have blocked or HTML changed"
         : "No Furet listing — set FLARESOLVERR_URL (Cloudflare)",
       "empty",

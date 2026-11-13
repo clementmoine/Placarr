@@ -654,7 +654,7 @@ export const chasseauxlivresModule = defineProvider({
       );
     }
     return probeErrorResult(
-      process.env.FLARESOLVERR_URL?.trim()
+      process.env.BYPARR_URL?.trim() || process.env.FLARESOLVERR_URL?.trim()
         ? "No listing for sample ISBN — site HTML may have changed or blocked the request"
         : "No listing for sample ISBN — set FLARESOLVERR_URL for server-side scrape or run probe from an unblocked network",
       "empty",

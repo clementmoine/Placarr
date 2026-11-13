@@ -179,8 +179,8 @@ export async function harvestColekaDisney25Page1(
 }
 
 async function main(): Promise<void> {
-  if (!process.env.FLARESOLVERR_URL?.trim()) {
-    console.error("Set FLARESOLVERR_URL (e.g. http://127.0.0.1:8191)");
+  if (!process.env.BYPARR_URL?.trim() && !process.env.FLARESOLVERR_URL?.trim()) {
+    console.error("Set BYPARR_URL (e.g. http://127.0.0.1:8191)");
     process.exit(1);
   }
 

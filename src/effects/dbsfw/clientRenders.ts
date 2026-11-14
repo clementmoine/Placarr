@@ -126,22 +126,14 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
     id: "para",
     label: "Parallèle",
     shader: "FrostCard.frag",
+    // One leaf for the PARA model (FoilType 0, Front+Holo). E-111 is the
+    // demo print; materials-only PARA like E-106 resolve to this same leaf.
     playroomFace: { path: "e/111-p1", label: "E-111 P1 · branché" },
-    // E-111 Unity dump is Front+Holo only (Card/CardFIeld, no mask-foil).
+    // Unity dump is Front+Holo only (Card/CardFIeld, no mask-foil).
     // Frost does `1.0 - HoloMask.x` — the raw Holo plate is sparse white on
     // black (foil accents); feed the inverted plate so black bg stays matte.
     holoPlate: "client-e-111-para-holomask.webp",
     files: ["client-e-111-para-front.webp", "client-e-111-para-holo.webp"],
-  },
-  {
-    id: "e106-para",
-    label: "E-106 parallèle",
-    shader: "FrostCard.frag",
-    // Materials-only PARA (no series bundle). Front+Holo like E-111 — Frost
-    // does `1.0 - HoloMask.x`, so bind the inverted sibling plate.
-    playroomFace: { path: "e/106-p1", label: "E-106 P1 · branché" },
-    holoPlate: "client-fw-e-106-para-holomask.webp",
-    files: ["client-e-106-para-front.webp", "client-fw-e-106-para-holo.webp"],
   },
   {
     id: "superpara",

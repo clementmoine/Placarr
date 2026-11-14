@@ -151,27 +151,10 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
       EFFECTS_LAYER_COUNT: 0,
     },
   },
-  // E-111 / E-106 Unity dumps: materials Card + CardFIeld, plates Front+Holo.
-  // Not Card Foil_holo — FoilType 2 would stamp the orange gold wash with no
-  // mask-foil channel pack. Rainbow rides HoloMask; FoilType stays 0.
+  // PARA Unity dumps (E-111, materials-only E-106, …): Card + CardFIeld,
+  // plates Front+Holo. Not Card Foil_holo — FoilType 2 would stamp the orange
+  // gold wash with no mask-foil channel pack. Rainbow rides HoloMask; FoilType 0.
   para: {
-    profile: "holo",
-    keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_ZERO"],
-    holo: "covers",
-    floats: {
-      _HoloFoilEnabled: 1,
-      _FoilType: 0,
-      _FoilShadow: 0,
-      _ShowMiddleTex: 0,
-      _UseFrame: 1,
-      _UseFront: 1,
-      _RainbowScale: 2,
-      _RainbowColorMultiplier: 2,
-      EFFECTS_LAYER_COUNT: 0,
-    },
-  },
-  // Same Unity dump shape as para (E-111): Front+Holo, Card/CardFIeld — FoilType 0.
-  "e106-para": {
     profile: "holo",
     keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_ZERO"],
     holo: "covers",

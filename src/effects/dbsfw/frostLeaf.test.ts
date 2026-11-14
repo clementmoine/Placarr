@@ -37,7 +37,7 @@ describe("dbsFwFrostLeafForPrint", () => {
     ["dbsfw:st01-004-p1", "foil-holo"],
     ["dbsfw:st01-020", "card"],
     ["dbsfw:e-111-p1", "para"],
-    ["dbsfw:e-106-p1", "e106-para"],
+    ["dbsfw:e-106-p1", "para"],
     ["dbsfw:fb01-139-superpara", "superpara"],
     ["dbsfw:fb99-001-superpara", "superpara"],
     // Ordinary parallel — FoilType 0 (not foil-holo / orange flood)

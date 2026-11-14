@@ -197,16 +197,14 @@ describe("dbsFwEffectPack playroom arts", () => {
     expect(art?.maskUrl).toContain(`/textures/${row?.holoPlate}`);
   });
 
-  it("e106-para: materials PARA on e/106-p1 + FoilType 0 + inverted HoloMask", () => {
-    const row = DBS_FW_CLIENT_RENDERS.find((r) => r.id === "e106-para");
-    expect(row?.playroomFace?.path).toBe("e/106-p1");
-    expect(row?.holoPlate).toMatch(/holomask\.webp$/);
-    expect(row?.cardMask).toBeUndefined();
-    expect(dbsFwMaterialRecipe("e106-para")?.floats._FoilType).toBe(0);
-    const mat = dbsFwEffectPack.material?.("e106-para");
-    expect(mat?.textures._HoloMask?.file).toBe(row?.holoPlate);
-    const art = dbsFwEffectPack.playroomArtForMaterial?.("e106-para");
-    expect(art?.maskUrl).toContain(`/textures/${row?.holoPlate}`);
+  it("materials-only PARA (E-106) shares the unique para leaf — no second tile", () => {
+    expect(DBS_FW_CLIENT_RENDERS.find((r) => r.id === "e106-para")).toBeUndefined();
+    expect(dbsFwMaterialRecipe("e106-para")).toBeFalsy();
+    const mat = dbsFwEffectPack.resolveMaterialForPrint?.("foil", null, {
+      printKey: "dbsfw:e-106-p1",
+    });
+    expect(mat?.floats._FoilType).toBe(0);
+    expect(mat?.fragment).toContain("FrostCard");
   });
 
   it("superpara keeps ef_mask coverage + two packed effects layers", () => {

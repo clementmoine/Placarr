@@ -158,6 +158,15 @@ export type EffectPackModule = {
     frontUrl?: string | null;
     frameUrl?: string | null;
     inkUrl?: string | null;
+    /**
+     * Cost disc plate — WebGL composites onto `frameUrl` (Unity: between
+     * Frame and Chara).
+     */
+    costRingUrl?: string | null;
+    /**
+     * CostNumber gem — WebGL composites onto `inkUrl` (Unity: after Chara).
+     */
+    badgeUrl?: string | null;
     /** Optional denser plate for Frost `_HoloMask` when foil stamp is sparse. */
     holoMaskUrl?: string | null;
   } | null;

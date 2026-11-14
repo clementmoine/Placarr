@@ -15,12 +15,15 @@ import { decodeBc3 } from "@arkntools/unity-js-tools";
 
 import {
   bgraToRgba,
+  decodeTextureMip1,
   decodeTextureTree,
   flipRgbaVertical,
+  type DecodedTexture2D,
 } from "@/lib/unity/texture2d";
 import {
   iterClassTrees,
   loadUnityFs,
+  type LoadedUnityFs,
   type UnityTypeTree,
 } from "@/lib/unity/loadUnityFs";
 
@@ -38,6 +41,7 @@ import {
   isolateCostRingDisc,
   isClientFaceExtractCurrent,
   premultiplyStraight,
+  resolvePlateWithMip1,
   solidifyPlateInk,
   unpremultiplyStraight,
   type CostRingGeometry,
@@ -102,6 +106,31 @@ function dxt5MipChainBytes(width: number, height: number, mips: number): number 
     h = Math.max(1, h >> 1);
   }
   return total;
+}
+
+/**
+ * Mip0 + selective mip1 (DXT chrome / silhouette stairs). Catalogue faces
+ * that skip this keep the 4×4 tramage the GPU hides in-game.
+ */
+function decodeFaceTexture(
+  tree: UnityTypeTree,
+  loaded: LoadedUnityFs,
+): DecodedTexture2D | null {
+  const mip0 = decodeTextureTree(tree, loaded);
+  if (!mip0) return null;
+  const mip1 = decodeTextureMip1(tree, loaded);
+  if (!mip1) return mip0;
+  return {
+    ...mip0,
+    rgba: resolvePlateWithMip1(
+      mip0.rgba,
+      mip0.width,
+      mip0.height,
+      mip1.rgba,
+      mip1.width,
+      mip1.height,
+    ),
+  };
 }
 
 /**
@@ -177,7 +206,7 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
       const tree = textures.get(name);
       let decoded = null;
       try {
-        decoded = tree ? decodeTextureTree(tree, loaded) : null;
+        decoded = tree ? decodeFaceTexture(tree, loaded) : null;
       } catch {
         decoded = null;
       }
@@ -421,7 +450,7 @@ async function extractBundle(
     const name = String(tree.m_Name ?? tree.name ?? "");
     const layer = fusionWorldFaceLayer(name);
     if (!layer) continue;
-    const decoded = decodeTextureTree(tree, loaded);
+    const decoded = decodeFaceTexture(tree, loaded);
     if (!decoded) {
       stats.failed += 1;
       continue;
@@ -604,19 +633,27 @@ async function writeCardFaceSides(
           textPremul,
           true,
         );
+        // CostNumber plate — own layer for Frost restack (Frame→disc→Chara→badge).
         const badge = badgeName ? frames.badge(badgeName) : null;
         if (badge) {
+          const badgePremul = await resizeRgba(
+            badge,
+            sized.width,
+            sized.height,
+            "lanczos3",
+            true,
+          );
+          await writeLosslessRgbaWebp(
+            unpremultiplyStraight(badgePremul),
+            sized.width,
+            sized.height,
+            path.join(path.dirname(dest), layers.badge),
+          );
           composed = await compositeOver(
             composed,
             sized.width,
             sized.height,
-            await resizeRgba(
-              badge,
-              sized.width,
-              sized.height,
-              "lanczos3",
-              true,
-            ),
+            badgePremul,
             true,
           );
         }
@@ -675,7 +712,7 @@ async function extractMaterialsParaFaces(
     if (seriesPara.has(key)) continue;
     const layer = fusionWorldFaceLayer(name);
     if (!layer) continue;
-    const decoded = decodeTextureTree(tree, loaded);
+    const decoded = decodeFaceTexture(tree, loaded);
     if (!decoded) {
       stats.failed += 1;
       continue;

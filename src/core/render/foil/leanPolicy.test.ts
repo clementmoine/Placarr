@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  FOIL_EFFECTS_LEAN_TIME_X,
+  FOIL_EFFECTS_LEAN_TIME_Y,
+  foilEffectsClockSeconds,
+  foilEffectsLayersScroll,
+  foilEffectsLeanTimePhase,
   foilLeanAmplitude,
   foilScrollModeForInteraction,
   liveWebglTiltFromLight,
@@ -46,6 +51,50 @@ describe("foilLeanAmplitude", () => {
 
   it("falls back to 0.4 when dual-frag has no explicit factor", () => {
     expect(foilLeanAmplitude({ hasTimeSibling: true })).toBe(0.4);
+  });
+});
+
+describe("foilEffectsLeanTimePhase / clock", () => {
+  it("detects scrolling EffectsLayers from MotionSpeed", () => {
+    expect(foilEffectsLayersScroll({ _EffectsLayer1MotionSpeed: 0 })).toBe(
+      false,
+    );
+    expect(foilEffectsLayersScroll({ _EffectsLayer1MotionSpeed: 6 })).toBe(
+      true,
+    );
+  });
+
+  it("is 0 when no EffectsLayer is scrolling", () => {
+    expect(
+      foilEffectsLeanTimePhase([1, 0], { _EffectsLayer1MotionSpeed: 0 }),
+    ).toBe(0);
+  });
+
+  it("idle: wall clock advances with lean 0 (shimmer at rest)", () => {
+    expect(
+      foilEffectsClockSeconds(10, [0, 0], { _EffectsLayer1MotionSpeed: 6 }),
+    ).toBe(10);
+  });
+
+  it("tilt: lean phases _Time on top of the wall clock", () => {
+    expect(
+      foilEffectsLeanTimePhase([1, 0], { _EffectsLayer1MotionSpeed: 6 }),
+    ).toBeCloseTo(FOIL_EFFECTS_LEAN_TIME_X);
+    expect(
+      foilEffectsLeanTimePhase([0, 1], { _EffectsLayer2MotionSpeed: 12 }),
+    ).toBeCloseTo(FOIL_EFFECTS_LEAN_TIME_Y);
+    expect(
+      foilEffectsClockSeconds(10, [1, 0], { _EffectsLayer1MotionSpeed: 6 }),
+    ).toBeCloseTo(10 + FOIL_EFFECTS_LEAN_TIME_X);
+  });
+
+  it("still steers EffectsLayers when Holo is on", () => {
+    expect(
+      foilEffectsLeanTimePhase([1, 0], {
+        _HoloFoilEnabled: 1,
+        _EffectsLayer1MotionSpeed: 3,
+      }),
+    ).toBeCloseTo(FOIL_EFFECTS_LEAN_TIME_X);
   });
 });
 

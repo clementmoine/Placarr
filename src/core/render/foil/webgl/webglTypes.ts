@@ -7,6 +7,10 @@ export type WebglFoilSurfaces = {
   frontUrl?: string | null;
   frameUrl?: string | null;
   inkUrl?: string | null;
+  /** Cost disc — composited onto frame at load (Frost order). */
+  costRingUrl?: string | null;
+  /** CostNumber gem — composited onto ink at load (Frost order). */
+  badgeUrl?: string | null;
   holoMaskUrl?: string | null;
   hotFoilColor?: readonly [number, number, number, number] | null;
   secondHotFoilColor?: readonly [number, number, number, number] | null;

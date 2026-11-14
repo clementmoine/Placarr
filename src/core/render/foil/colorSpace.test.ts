@@ -23,11 +23,11 @@ describe("foilTextureInternalFormat / linear encode", () => {
     ).toBe("srgb8_alpha8");
     expect(
       foilTextureInternalFormat({ linearOutput: true, srgb: false }),
-    ).toBe("rgba");
+    ).toBe("rgba8");
     expect(
       foilTextureInternalFormat({ linearOutput: false, srgb: true }),
-    ).toBe("rgba");
-    expect(foilTextureInternalFormat({})).toBe("rgba");
+    ).toBe("rgba8");
+    expect(foilTextureInternalFormat({})).toBe("rgba8");
   });
 
   it("OETF-encodes Linear fragments only", () => {
@@ -86,7 +86,7 @@ describe("pack color-space goldens", () => {
             srgb: true,
           }),
           name,
-        ).toBe("rgba");
+        ).toBe("rgba8");
         expect(foilFragmentNeedsLinearEncode(m!.linearOutput), name).toBe(
           false,
         );

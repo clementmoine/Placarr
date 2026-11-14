@@ -76,13 +76,37 @@ describe("dbsFwEffectPack playroom arts", () => {
     expect(tabac?.floats.EFFECTS_LAYER_COUNT).toBe(1);
     expect(tabac?.floats._EffectsLayer1MotionSpeed).toBe(3);
     expect(tabac?.textures._EffectsLayersTex?.arrayLayers?.[0]?.file).toBe(
-      "client-uv-shine.webp",
+      "client-uv-pattern00.webp",
     );
+    expect(tabac?.textures._EffectsLayersMotion?.arrayLayers?.[0]?.file).toBe(
+      "client-ef-mask01.webp",
+    );
+    expect(tabac?.colors._EffectsLayer1Color?.[3]).toBeGreaterThan(0);
 
     const shine = dbsFwEffectPack.material?.("effects-uv-shine");
     expect(shine?.textures._EffectsLayersTex?.arrayLayers?.[0]?.file).toBe(
       "client-uv-shine.webp",
     );
+
+    const rainbow = dbsFwEffectPack.material?.("effects-uv-rainbow");
+    // FB02-036_front dump: COUNT_FIVE, Holo off, L1=uv_line_rainbow.
+    expect(rainbow?.textures._EffectsLayersTex?.arrayLayers).toHaveLength(5);
+    expect(rainbow?.textures._EffectsLayersTex?.arrayLayers?.[0]?.file).toBe(
+      "client-uv-line-rainbow.webp",
+    );
+    expect(rainbow?.textures._EffectsLayersMotion?.arrayLayers?.[0]?.file).toBe(
+      "/assets/dragonball/fw/cards/en/fb02/036/mask-ef-01.webp",
+    );
+    expect(rainbow?.textures._EffectsLayersMotion?.arrayLayers?.[4]?.file).toBe(
+      "/assets/dragonball/fw/cards/en/fb02/036/mask-ef-04.webp",
+    );
+    expect(rainbow?.keywords).toContain("EFFECTS_LAYER_COUNT_FIVE");
+    expect(rainbow?.floats.EFFECTS_LAYER_COUNT).toBe(5);
+    expect(rainbow?.floats._HoloFoilEnabled).toBe(0);
+    expect(rainbow?.colors._EffectsLayer1Color?.[0]).toBeGreaterThan(2);
+    expect(rainbow?.floats._EffectsLayer1MotionSpeed).toBe(6);
+    expect(rainbow?.floats._EffectsLayer5Rotation).toBe(50);
+    expect(rainbow?.floats._FoilType).toBe(0);
 
     const pakipaki = dbsFwEffectPack.material?.("pakipaki");
     expect(pakipaki?.floats._FoilPakipaki).toBe(1);

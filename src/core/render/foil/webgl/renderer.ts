@@ -3,6 +3,7 @@ import {
   fetchFragmentSource,
   fetchImageBitmap,
 } from "@/core/render/foil/cache";
+import { compositeOptionalOverlay } from "./layerComposite";
 import {
   astcFormatConstant,
   foilForceRasterOverride,
@@ -14,6 +15,7 @@ import {
   s3tcFormatConstant,
 } from "@/core/render/foil/capabilities";
 import { foilClockSeconds, subscribeFoilFrame } from "../clock";
+import { foilEffectsClockSeconds } from "../leanPolicy";
 
 import type {
   FoilAstcBinding,
@@ -622,7 +624,7 @@ export function createWebglFoilRenderer(
     gl!.texImage3D(
       gl!.TEXTURE_2D_ARRAY,
       0,
-      gl!.RGBA,
+      gl!.RGBA8,
       1,
       1,
       1,
@@ -680,20 +682,24 @@ export function createWebglFoilRenderer(
     for (const layer of layers) {
       const file = layer.file;
       if (!file) return null;
-      bitmaps.push(await fetchImageBitmap(textureBase + file));
+      // Absolute `/assets/…` (face-local ef_mask*) — do not prefix foil/textures.
+      const url = file.startsWith("/") ? file : textureBase + file;
+      bitmaps.push(await fetchImageBitmap(url));
       if (destroyed) return null;
     }
     const width = bitmaps[0]!.width;
     const height = bitmaps[0]!.height;
     const texture = gl!.createTexture();
     gl!.bindTexture(gl!.TEXTURE_2D_ARRAY, texture);
+    // Sized formats only — unsized RGBA makes texStorage3D INVALID_ENUM and
+    // the incomplete array samples (0,0,0,1), so EffectsLayers contribute 0.
     const internal =
       foilTextureInternalFormat({
         linearOutput: material.linearOutput,
         srgb: layers[0]?.srgb,
       }) === "srgb8_alpha8"
         ? gl!.SRGB8_ALPHA8
-        : gl!.RGBA;
+        : gl!.RGBA8;
     gl!.texStorage3D(
       gl!.TEXTURE_2D_ARRAY,
       1,
@@ -745,11 +751,11 @@ export function createWebglFoilRenderer(
         srgb: binding?.srgb,
       }) === "srgb8_alpha8"
         ? gl!.SRGB8_ALPHA8
-        : gl!.RGBA;
+        : gl!.RGBA8;
     gl!.texImage2D(
       gl!.TEXTURE_2D,
       0,
-      // Linear apps (Pokémon Live): sRGB→linear on sample. Raw RGBA keeps
+      // Linear apps (Pokémon Live): sRGB→linear on sample. Raw RGBA8 keeps
       // authored bytes (Gamma / data maps). Spectrum ×17.5 needs the decode
       // or SunLava neon-clamps; Direction sRGB softens UV the same way.
       internal,
@@ -800,7 +806,11 @@ export function createWebglFoilRenderer(
   function textureUrl(slot: string): string | null {
     const binding = material.textures[slot];
     if (!binding) return null;
-    if (binding.file) return textureBase + binding.file;
+    if (binding.file) {
+      return binding.file.startsWith("/")
+        ? binding.file
+        : textureBase + binding.file;
+    }
     switch (binding.role) {
       case "art":
         return surfaces.artUrl;
@@ -915,7 +925,23 @@ export function createWebglFoilRenderer(
     const url = textureUrl(slot);
     if (!url) return;
 
-    const image = await fetchImageBitmap(url);
+    let image = await fetchImageBitmap(url);
+    if (destroyed) return;
+    // Frost restack: cost disc between Frame and Chara; CostNumber after Chara.
+    // Catalogue keeps those as sibling files — fold them into frame / ink here.
+    if (role === "frame") {
+      image = await compositeOptionalOverlay(
+        image,
+        surfaces.costRingUrl,
+        fetchImageBitmap,
+      );
+    } else if (role === "ink") {
+      image = await compositeOptionalOverlay(
+        image,
+        surfaces.badgeUrl,
+        fetchImageBitmap,
+      );
+    }
     if (destroyed) return;
     const prepared =
       role === "foilMask" ? await recoverFoilMaskRgb(image) : image;
@@ -1108,22 +1134,24 @@ export function createWebglFoilRenderer(
         gl!.uniform3f(active.cameraPosLoc, cam[0], cam[1], cam[2]);
       }
     }
+    // Frost EffectsLayers: idle = wall `_Time` scroll; tilt = lean phase on top.
+    const clock = foilEffectsClockSeconds(seconds, tilt, material.floats);
     if (active.cosTimeLoc) {
-      const cos = foilCosTime(seconds);
+      const cos = foilCosTime(clock);
       gl!.uniform4f(active.cosTimeLoc, cos[0], cos[1], cos[2], cos[3]);
     }
     if (active.sinTimeLoc) {
-      const sin = foilSinTime(seconds);
+      const sin = foilSinTime(clock);
       gl!.uniform4f(active.sinTimeLoc, sin[0], sin[1], sin[2], sin[3]);
     }
     if (active.timeLoc) {
       // Unity `_Time`: (t/20, t, t*2, t*3) — Live frags mostly read `.y`.
       gl!.uniform4f(
         active.timeLoc,
-        seconds / 20,
-        seconds,
-        seconds * 2,
-        seconds * 3,
+        clock / 20,
+        clock,
+        clock * 2,
+        clock * 3,
       );
     }
     if (active.deviceRotLoc) {

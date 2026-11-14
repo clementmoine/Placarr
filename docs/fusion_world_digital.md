@@ -190,7 +190,7 @@ plus des exemples `ST01-004_PARA_Foil_En`, `ST01-004_PARA_Holo`,
 `card_premiumtex` est une bibliothèque d’effets (`uv_line_rainbow`,
 `ef_flash01`, `uv_shine`, `ef_flame00`), pas une face.
 
-La face catalogue est l’aplat `art.client.webp` : c’est l’image affichée, comme le scan Lorcana. Le foil ne s’en sert pas seul. À côté restent les calques `layer.picture.webp` (l’illustration, là où le brillant se pose), `layer.text.webp` (le texte, au-dessus) et `layer.frame.webp` (le cadre + costRing collé), plus le masque déjà extrait. Le shader les prend sur les rôles `front`, `ink` et `frame` ; un fichier absent reste transparent et la face aplatie se voit.
+La face catalogue est l’aplat `art.client.webp` : c’est l’image affichée, comme le scan Lorcana. Le foil ne s’en sert pas seul. À côté restent les calques `layer.picture.webp` (Front), `layer.frame.webp` (chrome), `layer.costRing.webp` (disque, collé sur Frame au load WebGL), `layer.text.webp` (Chara), `layer.badge.webp` (CostNumber, collé sur Chara/ink au load), plus le masque déjà extrait. Ordre Frost : Front→Frame→disc→Chara→CostNumber. Un fichier absent reste transparent et la face aplatie se voit.
 
 ### Recette flatten catalogue (aplat WebP)
 
@@ -208,9 +208,9 @@ Frost runtime (`FrostCard.frag`) sample Main→Front→Middle→Frame→Chara→
 
 **Géométrie costRing (dump-driven)** : dims / centre / outerDiam depuis `Cost_01` RGBA (`deriveCostRingGeometry`) ; fillSize = slot Frost 32 (`FROST_COST_FILL_SLOT`, pas `CostFrame` 226) ; offsets/scales Frost depuis `FrostCard.frag`. Scale on-card = `frostDiam / fillSize` (÷32 → ~0,625 @ 512). Pastille = `CostFrame_{Color}` (RGBA32, trim opaque → bake 4× SS) à `COST_FILL_DRAW_SIZE` (20). Isoler sur `outerDiam/2`.
 
-Constantes produit isolées : `clientFacePolicy.ts`. Bake fill : `costRingBake.ts`. Fallback Frost/géométrie : `frostCostDisc.ts`, `costRingGeometry.ts`. Foil : `layer.frame` reste le rôle `frame` ; costRing n’est pas un binding foil.
+Constantes produit isolées : `clientFacePolicy.ts`. Bake fill : `costRingBake.ts`. Fallback Frost/géométrie : `frostCostDisc.ts`, `costRingGeometry.ts`. Foil WebGL : `layerSurfaces` expose `costRingUrl` / `badgeUrl` ; le renderer les compose sur `frame` / `ink` (pas de samplers `_CostNumberTex` / disc séparés dans le budget portable).
 
-On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). Chaque couche est redimensionnée une seule fois sur la carte 63×88 (minify via `supersampleResize` 4×), puis écrite dans `art.client.webp`. Le chrome est la première tranche du tableau `Card_Battle_{Couleur}_Frame` dans `card_frame`. Le gemme chiffré vient de la plaque + badge `{Couleur}_01_cost{n}` (BC7). Une art 1:2 (512×1024) devient 512×715 (63×88). `pnpm exec tsx scripts/extractFusionWorldFaces.ts` — sans `--force`, un `art.client.webp` pré-split (sans `layer.picture` / `layer.text`, ou sans `layer.costRing` quand la carte a un coût) est réécrit (`isClientFaceExtractCurrent`).
+On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). Décode = mip0 + resolve sélectif vers mip1 Unity (`resolvePlateWithMip1` — chrome / silhouette DXT, le GPU cache ce tramage en jeu). Texte : `solidifyPlateInk` puis lanczos. Chaque couche est redimensionnée une seule fois sur la carte 63×88 (minify via `supersampleResize` 4×), puis écrite dans `art.client.webp`. Le chrome est la première tranche du tableau `Card_Battle_{Couleur}_Frame` dans `card_frame`. Le gemme chiffré vient de la plaque + badge `{Couleur}_01_cost{n}` (BC7). Une art 1:2 (512×1024) devient 512×715 (63×88). `pnpm exec tsx scripts/extractFusionWorldFaces.ts` — sans `--force`, un aplat pré-split (sans `layer.picture` / `layer.text`, ou sans `layer.costRing` / `layer.badge` quand la carte a un coût) est réécrit (`isClientFaceExtractCurrent`).
 
 ## 7. Shaders — Metal traduit en GLSL ES 3.00
 

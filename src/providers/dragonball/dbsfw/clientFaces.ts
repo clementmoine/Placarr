@@ -180,6 +180,60 @@ export function resolvePlateChromeMips(
 }
 
 /**
+ * Nearest upsample/downsample to an exact size. Used to bring Unity mip1
+ * up to mip0 resolution before {@link resolvePlateChromeMips}.
+ */
+export function scaleRgbaNearest(
+  src: Buffer,
+  srcWidth: number,
+  srcHeight: number,
+  destWidth: number,
+  destHeight: number,
+): Buffer {
+  if (srcWidth === destWidth && srcHeight === destHeight) return src;
+  const out = Buffer.alloc(destWidth * destHeight * 4);
+  for (let y = 0; y < destHeight; y += 1) {
+    const sy = Math.min(
+      srcHeight - 1,
+      Math.floor((y * srcHeight) / destHeight),
+    );
+    for (let x = 0; x < destWidth; x += 1) {
+      const sx = Math.min(
+        srcWidth - 1,
+        Math.floor((x * srcWidth) / destWidth),
+      );
+      const si = (sy * srcWidth + sx) * 4;
+      const di = (y * destWidth + x) * 4;
+      out[di] = src[si] ?? 0;
+      out[di + 1] = src[si + 1] ?? 0;
+      out[di + 2] = src[si + 2] ?? 0;
+      out[di + 3] = src[si + 3] ?? 0;
+    }
+  }
+  return out;
+}
+
+/**
+ * Prefer Unity mip1 on DXT chrome / silhouette stairs. `mip1` may be half
+ * resolution — it is nearest-upsampled to mip0 before the resolve.
+ */
+export function resolvePlateWithMip1(
+  mip0: Buffer,
+  mip0Width: number,
+  mip0Height: number,
+  mip1: Buffer | null,
+  mip1Width: number,
+  mip1Height: number,
+): Buffer {
+  if (!mip1 || mip1Width <= 0 || mip1Height <= 0) return mip0;
+  const up =
+    mip1Width === mip0Width && mip1Height === mip0Height
+      ? mip1
+      : scaleRgbaNearest(mip1, mip1Width, mip1Height, mip0Width, mip0Height);
+  return resolvePlateChromeMips(mip0, up, mip0Width, mip0Height);
+}
+
+/**
  * Area-average resize (Unity's continuous box mip at an arbitrary size).
  * Premultiplied so chrome alpha edges anti-alias instead of stair.
  */
@@ -635,26 +689,35 @@ export const DBS_FW_CLIENT_FACE_FILES = {
  */
 export const DBS_FW_CLIENT_LAYER_FILES: Record<
   FwFaceSide,
-  { picture: string; text: string; frame: string; costRing: string }
+  {
+    picture: string;
+    text: string;
+    frame: string;
+    costRing: string;
+    badge: string;
+  }
 > = {
   front: {
     picture: "layer.picture.webp",
     text: "layer.text.webp",
     frame: "layer.frame.webp",
     costRing: "layer.costRing.webp",
+    badge: "layer.badge.webp",
   },
   back: {
     picture: "layer.back-picture.webp",
     text: "layer.back-text.webp",
     frame: "layer.back-frame.webp",
     costRing: "layer.back-costRing.webp",
+    badge: "layer.back-badge.webp",
   },
 };
 
 /**
  * True when on-disk basenames already match the Frost-like extract layout.
- * Stale `art.client.webp` alone (pre–costRing split) is not current — re-run
- * extract without `--force`. Costless faces never write `costRing`.
+ * Stale `art.client.webp` alone (pre–costRing / badge split) is not current —
+ * re-run extract without `--force`. Costless faces never write `costRing` /
+ * `badge`.
  */
 export function isClientFaceExtractCurrent(
   basenames: ReadonlySet<string>,
@@ -668,6 +731,7 @@ export function isClientFaceExtractCurrent(
     return false;
   }
   if (expectsCostRing && !basenames.has(layers.costRing)) return false;
+  if (expectsCostRing && !basenames.has(layers.badge)) return false;
   return true;
 }
 

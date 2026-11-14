@@ -9,6 +9,8 @@ import {
   blendPlateMips,
   boxFilterRgba,
   clientPlateMipBlend,
+  resolvePlateWithMip1,
+  scaleRgbaNearest,
   resolvePlateChromeMips,
   compositeCostFill,
   COST_FILL_DRAW_SIZE,
@@ -36,7 +38,7 @@ describe("isClientFaceExtractCurrent", () => {
     ).toBe(false);
   });
 
-  it("requires costRing only when the card has a cost badge", () => {
+  it("requires costRing and badge when the card has a cost gem", () => {
     const base = new Set([
       "art.client.webp",
       "layer.picture.webp",
@@ -45,6 +47,8 @@ describe("isClientFaceExtractCurrent", () => {
     expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(false);
     base.add("layer.costRing.webp");
+    expect(isClientFaceExtractCurrent(base, "front", true)).toBe(false);
+    base.add("layer.badge.webp");
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(true);
   });
 });
@@ -178,6 +182,33 @@ describe("fusionWorldFaceLayer", () => {
     const out = boxFilterRgba(src, 4, 4, 2, 2);
     expect(out.length).toBe(2 * 2 * 4);
     expect([...out.subarray(0, 4)]).toEqual([255, 0, 0, 255]);
+  });
+
+  it("nearest-upsamples mip1 then resolves chrome stairs", () => {
+    const mip0 = Buffer.alloc(4 * 4 * 4, 0);
+    const mip1 = Buffer.alloc(2 * 2 * 4, 0);
+    // Checkerboard low-chroma stairs on mip0.
+    for (let y = 0; y < 4; y += 1) {
+      for (let x = 0; x < 4; x += 1) {
+        const i = (y * 4 + x) * 4;
+        const v = (x + y) % 2 === 0 ? 40 : 200;
+        mip0[i] = v;
+        mip0[i + 1] = v;
+        mip0[i + 2] = v;
+        mip0[i + 3] = 255;
+      }
+    }
+    for (let i = 0; i < mip1.length; i += 4) {
+      mip1[i] = 120;
+      mip1[i + 1] = 120;
+      mip1[i + 2] = 120;
+      mip1[i + 3] = 255;
+    }
+    const up = scaleRgbaNearest(mip1, 2, 2, 4, 4);
+    expect(up.length).toBe(4 * 4 * 4);
+    expect([...up.subarray(0, 4)]).toEqual([120, 120, 120, 255]);
+    const resolved = resolvePlateWithMip1(mip0, 4, 4, mip1, 2, 2);
+    expect([...resolved.subarray(0, 4)]).toEqual([120, 120, 120, 255]);
   });
 
   it("resolves DXT chrome / alpha stairs toward mip1, keeps flat gem fill", () => {

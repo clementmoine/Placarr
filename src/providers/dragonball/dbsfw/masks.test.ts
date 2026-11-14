@@ -153,6 +153,8 @@ describe("catalogue mask urls", () => {
       frontUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.picture.webp",
       frameUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.frame.webp",
       inkUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.text.webp",
+      costRingUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.costRing.webp",
+      badgeUrl: "/assets/dragonball/fw/cards/en/fb01/001/layer.badge.webp",
       holoMaskUrl: "/assets/dragonball/fw/cards/en/fb01/001/mask.webp",
     });
     expect(

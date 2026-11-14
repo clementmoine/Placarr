@@ -86,8 +86,13 @@ export {
 
 export {
   FOIL_DUAL_FRAG_TIME_FACTOR,
+  FOIL_EFFECTS_LEAN_TIME_X,
+  FOIL_EFFECTS_LEAN_TIME_Y,
   FOIL_LIVE_LEAN_AMPLITUDE,
   FOIL_MAX_TILT_DEG,
+  foilEffectsClockSeconds,
+  foilEffectsLayersScroll,
+  foilEffectsLeanTimePhase,
   foilLeanAmplitude,
   foilScrollModeForInteraction,
   liveWebglTiltFromLight,

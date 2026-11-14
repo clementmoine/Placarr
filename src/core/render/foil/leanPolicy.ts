@@ -92,3 +92,49 @@ export function foilScrollModeForInteraction(opts: {
   if (opts.hasTimeSibling && opts.isDriven) return "tilt";
   return "time";
 }
+
+/** Full-edge lean (±1) → seconds of `_Time` for EffectsLayer motion UVs. */
+export const FOIL_EFFECTS_LEAN_TIME_X = 0.85;
+export const FOIL_EFFECTS_LEAN_TIME_Y = 0.65;
+
+/** True when any Frost EffectsLayer scrolls from `_Time` (MotionSpeed≠0). */
+export function foilEffectsLayersScroll(
+  floats: Readonly<Record<string, number>>,
+): boolean {
+  for (let i = 1; i <= 6; i++) {
+    if ((floats[`_EffectsLayer${i}MotionSpeed`] ?? 0) !== 0) return true;
+  }
+  return false;
+}
+
+/**
+ * Frost/Card EffectsLayers have no `_Tilt`: when `MotionSpeed≠0` the plate UV
+ * is `motion.xy` scrolled by `_Time` (see FrostCard.frag).
+ *
+ * Dual drive (no provider forks):
+ * - **Idle**: wall-clock `_Time` always advances (Unity dump) — shimmer while
+ *   the card rests. Idle lean from `useFoilIdleLean` also steers the phase so
+ *   the plate breathes with the tip.
+ * - **Tilt**: pointer/device lean adds a `_Time` phase on top so inclinaison
+ *   shifts the scroll without freezing the clock under the cursor.
+ *
+ * Holo sheen (view/TBN) stays a separate `_HoloFoilEnabled` path; scrolling
+ * EffectsLayers still take this lean phase so rainbow/shine leaves react even
+ * when Holo is on.
+ */
+export function foilEffectsLeanTimePhase(
+  tilt: readonly [number, number],
+  floats: Readonly<Record<string, number>>,
+): number {
+  if (!foilEffectsLayersScroll(floats)) return 0;
+  return tilt[0] * FOIL_EFFECTS_LEAN_TIME_X + tilt[1] * FOIL_EFFECTS_LEAN_TIME_Y;
+}
+
+/** Wall clock + lean phase — what Frost EffectsLayers sample as `_Time`. */
+export function foilEffectsClockSeconds(
+  seconds: number,
+  tilt: readonly [number, number],
+  floats: Readonly<Record<string, number>>,
+): number {
+  return seconds + foilEffectsLeanTimePhase(tilt, floats);
+}

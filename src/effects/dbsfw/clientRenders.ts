@@ -9,8 +9,14 @@ const ASSET = "/assets/dragonball/fw";
 export type DbsFwEffectsLayer = {
   /** `client-*.webp` under foil/textures — Frost `_EffectsLayer{N}Tex`. */
   tex: string;
-  /** Optional motion plate (`_EffectsLayer{N}Motion`). */
+  /** Optional motion plate under foil/textures (`_EffectsLayer{N}Motion`). */
   motion?: string;
+  /**
+   * Face-local mask basename (e.g. `mask-ef-01.webp`) resolved next to
+   * {@link DbsFwClientRender.playroomFace} — Unity series ef_mask* that are
+   * not in the shared premiumtex library (ef_mask04).
+   */
+  faceMotion?: string;
 };
 
 export type DbsFwPlayroomFace = {
@@ -60,6 +66,12 @@ export function dbsFwPlayroomFaceUrl(path: string): string {
   return `${ASSET}/cards/en/${path.replace(/^\/+|\/+$/g, "")}/art.client.webp`;
 }
 
+/** Absolute `/assets/…/<face>/<file>` beside a playroom print. */
+export function dbsFwPlayroomFaceFileUrl(path: string, file: string): string {
+  const face = path.replace(/^\/+|\/+$/g, "");
+  return `${ASSET}/cards/en/${face}/${file.replace(/^\/+/, "")}`;
+}
+
 export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
   {
     id: "card",
@@ -95,8 +107,10 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
       label: "FS02-15 PARA · branché",
     },
     mask: "client-tabac-holo.webp",
-    // Card Tabac_holo: EFFECTS_LAYER_COUNT_ONE — premiumtex plate.
-    effectsLayers: [{ tex: "client-uv-shine.webp" }],
+    // Card Tabac_holo dump: Layer1Tex=uv_pattern00, Motion=ef_mask01.
+    effectsLayers: [
+      { tex: "client-uv-pattern00.webp", motion: "client-ef-mask01.webp" },
+    ],
     files: ["client-st01-004-para-front.webp", "client-tabac-holo.webp"],
   },
   {
@@ -162,6 +176,8 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
       label: "FB10-095 PARA · branché",
     },
     // No FoilMask — showcase the premiumtex layer alone (FoilType 0).
+    // Omit motion → tex reused as motion (α=1 gate). Tabac dump uses
+    // ef_mask01 motion; solo demos keep a full-alpha gate so the plate shows.
     effectsLayers: [{ tex: "client-uv-shine.webp" }],
     files: ["client-uv-shine.webp"],
   },
@@ -177,12 +193,25 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
     id: "effects-uv-rainbow",
     label: "Effects · uv_line_rainbow",
     shader: "FrostCard.frag",
+    // FB02-036_front Card dump (COUNT_FIVE). L1=uv_line_rainbow; Holo off —
+    // stack scrolls via `_Time`+motion (lean→time phase in the WebGL renderer).
     playroomFace: {
-      path: "st01/046-para-ar",
-      label: "ST01-046 PARA · branché",
+      path: "fb02/036",
+      label: "FB02-036 · branché",
     },
-    effectsLayers: [{ tex: "client-uv-line-rainbow.webp" }],
-    files: ["client-uv-line-rainbow.webp"],
+    effectsLayers: [
+      { tex: "client-uv-line-rainbow.webp", faceMotion: "mask-ef-01.webp" },
+      { tex: "client-uv-line1.webp", faceMotion: "mask-ef-01.webp" },
+      { tex: "client-ef-ocian.webp", faceMotion: "mask-ef-02.webp" },
+      { tex: "client-uv-pattern00.webp", faceMotion: "mask-ef-03.webp" },
+      { tex: "client-ef-ocian.webp", faceMotion: "mask-ef-04.webp" },
+    ],
+    files: [
+      "client-uv-line-rainbow.webp",
+      "client-uv-line1.webp",
+      "client-ef-ocian.webp",
+      "client-uv-pattern00.webp",
+    ],
   },
   {
     id: "card-hologram",

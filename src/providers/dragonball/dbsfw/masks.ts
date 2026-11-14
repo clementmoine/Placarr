@@ -126,6 +126,16 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
   frontUrl: string;
   frameUrl: string;
   inkUrl: string;
+  /**
+   * Cost disc (`Cost_01` + fill) — composited onto Frame at WebGL load
+   * (Unity draws it between Frame and Chara; not a Frost sampler).
+   */
+  costRingUrl: string | null;
+  /**
+   * CostNumber gem (`{Color}_01_cost{n}`) — composited onto Chara/ink
+   * (Frost `_CostNumberTex` after Chara).
+   */
+  badgeUrl: string | null;
   /** Denser plate for Frost `_HoloMask` when `_FoilMask` is a sparse stamp. */
   holoMaskUrl: string | null;
 } | null {
@@ -133,13 +143,22 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
   const picture = back ? "layer.back-picture.webp" : "layer.picture.webp";
   const frame = back ? "layer.back-frame.webp" : "layer.frame.webp";
   const ink = back ? "layer.back-text.webp" : "layer.text.webp";
+  const costRing = back ? "layer.back-costRing.webp" : "layer.costRing.webp";
+  const badge = back ? "layer.back-badge.webp" : "layer.badge.webp";
   const frontUrl = dbsFwCatalogueMaskUrl(faceUrl, picture);
   const frameUrl = dbsFwCatalogueMaskUrl(faceUrl, frame);
   const inkUrl = dbsFwCatalogueMaskUrl(faceUrl, ink);
   if (!frontUrl || !frameUrl || !inkUrl) return null;
   // mask.webp is near-full grey; mask-foil is the FoilType stamp (sparse B).
   const holoMaskUrl = dbsFwCatalogueMaskUrl(faceUrl, "mask.webp");
-  return { frontUrl, frameUrl, inkUrl, holoMaskUrl };
+  return {
+    frontUrl,
+    frameUrl,
+    inkUrl,
+    costRingUrl: dbsFwCatalogueMaskUrl(faceUrl, costRing),
+    badgeUrl: dbsFwCatalogueMaskUrl(faceUrl, badge),
+    holoMaskUrl,
+  };
 }
 
 /** `…/cards/en/sb02/024/art.webp` → `…/cards/en/sb02/024/mask.webp`. */

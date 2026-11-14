@@ -23,6 +23,12 @@ export type DbsFwMaterialRecipe = {
   /** Discriminating floats merged over {@link DBS_FW_CARD_FLOATS}. */
   floats: Readonly<Record<string, number>>;
   /**
+   * Colour overrides merged over {@link DBS_FW_CARD_COLORS}.
+   * Card Foil_holo dumps `_EffectsLayer1Color` as zero — COUNT>0 leaves
+   * must override or the layer multiplies to black.
+   */
+  colors?: Readonly<Record<string, readonly number[]>>;
+  /**
    * When true, bind shared HoloMap + Rainbow and coverage masks.
    * `map` plates only steer `_HoloMap` (no FoilMask/HoloMask).
    */
@@ -32,6 +38,36 @@ export type DbsFwMaterialRecipe = {
   /** Prefer CardHologram raster as map + championship gate. */
   championshipPlate?: boolean;
 };
+
+/** Card Tabac_holo dump — Layer1 tint (Foil_holo leaves this at 0). */
+export const DBS_FW_TABAC_EFFECTS_LAYER1_COLOR = [
+  0.6132075786590576,
+  0.6132075786590576,
+  0.6132075786590576,
+  0.5098039507865906,
+] as const;
+
+/** Solo premiumtex demos — full white so the plate's own chroma shows. */
+export const DBS_FW_EFFECTS_DEMO_LAYER1_COLOR = [1, 1, 1, 1] as const;
+
+/**
+ * FB02-036_front Card dump — EffectsLayer colours (HoloFoilEnabled=0,
+ * FoilType=0). L1 is `uv_line_rainbow`; stack is COUNT_FIVE.
+ */
+export const DBS_FW_FB02_036_LAYER_COLORS = {
+  _EffectsLayer1Color: [
+    3.0898327827453613, 1.6037734746932983, 4, 0.501960813999176,
+  ],
+  _EffectsLayer2Color: [
+    0.8990983963012695, 0.5323260426521301, 1.2134743928909302, 1,
+  ],
+  _EffectsLayer3Color: [
+    1.389282464981079, 1.03651762008667, 2.469008445739746, 1,
+  ],
+  _EffectsLayer4Color: [0.7688679099082947, 1, 0.8239918351173401, 1],
+  _EffectsLayer5Color: [0.9285712242126465, 0, 1, 1],
+  _EffectsLayer5Scale: [5, 5, 0, 0],
+} as const;
 
 /**
  * Playroom leaf id → recipe. Plate-only inventory rows are omitted
@@ -81,6 +117,9 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
     profile: "tabac",
     keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_ONE"],
     holo: "covers",
+    colors: {
+      _EffectsLayer1Color: DBS_FW_TABAC_EFFECTS_LAYER1_COLOR,
+    },
     floats: {
       _HoloFoilEnabled: 1,
       _FoilType: 0,
@@ -172,6 +211,9 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
     profile: "effects",
     keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_ONE"],
     holo: false,
+    colors: {
+      _EffectsLayer1Color: DBS_FW_EFFECTS_DEMO_LAYER1_COLOR,
+    },
     floats: {
       _HoloFoilEnabled: 0,
       _FoilType: 0,
@@ -179,7 +221,9 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
       _ShowMiddleTex: 0,
       _UseFrame: 1,
       _UseFront: 1,
-      _EffectsLayer1MotionSpeed: 3,
+      // Speed 0 → card UVs (Pivot/Scale); plate α gates via reused motion.
+      _EffectsLayer1MotionSpeed: 0,
+      _EffectsLayer1ColorMultiplier: 2,
       EFFECTS_LAYER_COUNT: 1,
     },
   },
@@ -187,6 +231,9 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
     profile: "effects",
     keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_ONE"],
     holo: false,
+    colors: {
+      _EffectsLayer1Color: DBS_FW_EFFECTS_DEMO_LAYER1_COLOR,
+    },
     floats: {
       _HoloFoilEnabled: 0,
       _FoilType: 0,
@@ -194,14 +241,20 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
       _ShowMiddleTex: 0,
       _UseFrame: 1,
       _UseFront: 1,
-      _EffectsLayer1MotionSpeed: 3,
+      _EffectsLayer1MotionSpeed: 0,
+      _EffectsLayer1ColorMultiplier: 2,
       EFFECTS_LAYER_COUNT: 1,
     },
   },
+  // FB02-036_front Card — full COUNT_FIVE stack (m_ValidKeywords).
+  // HoloFoilEnabled=0 / FoilType=0: EffectsLayers scroll via `_Time`+motion
+  // (Frost has no `_Tilt`). Idle = wall clock; tilt = lean→time phase on top
+  // (`foilEffectsClockSeconds`). L1=uv_line_rainbow.
   "effects-uv-rainbow": {
     profile: "effects",
-    keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_ONE"],
+    keywords: ["ARTWORK_ON", "EFFECTS_LAYER_COUNT_FIVE"],
     holo: false,
+    colors: { ...DBS_FW_FB02_036_LAYER_COLORS },
     floats: {
       _HoloFoilEnabled: 0,
       _FoilType: 0,
@@ -209,8 +262,22 @@ export const DBS_FW_MATERIAL_RECIPES: Readonly<
       _ShowMiddleTex: 0,
       _UseFrame: 1,
       _UseFront: 1,
-      _EffectsLayer1MotionSpeed: 3,
-      EFFECTS_LAYER_COUNT: 1,
+      _EffectsLayer1MotionSpeed: 6,
+      _EffectsLayer1ColorMultiplier: 2,
+      _EffectsLayer1Rotation: 0,
+      _EffectsLayer2MotionSpeed: 12,
+      _EffectsLayer2ColorMultiplier: 1,
+      _EffectsLayer2Rotation: 0,
+      _EffectsLayer3MotionSpeed: 2,
+      _EffectsLayer3ColorMultiplier: 2,
+      _EffectsLayer3Rotation: 0,
+      _EffectsLayer4MotionSpeed: 0,
+      _EffectsLayer4ColorMultiplier: 2,
+      _EffectsLayer4Rotation: 8,
+      _EffectsLayer5MotionSpeed: 4,
+      _EffectsLayer5ColorMultiplier: 2,
+      _EffectsLayer5Rotation: 50,
+      EFFECTS_LAYER_COUNT: 5,
     },
   },
   pakipaki: {

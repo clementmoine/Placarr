@@ -605,8 +605,10 @@ export function FoilCardImage({
   // a release blend so leaving the card is not a snap.
   // Sealed CSS faces also lean here (bag + card share one transform); plain
   // CSS foil still idles inside HoloCardImage.
+  // Idle lean (shared cos(t) sweep) keeps Frost EffectsLayers + CSS tip alive
+  // at rest; pause only while pointer/device drives, or when tip/idle are off.
   const { noteLean } = useFoilIdleLean(
-    isDriven || !tilt || (!useWebgl && !bagged),
+    isDriven || !tilt || !idle || (!useWebgl && !bagged),
     FOIL_MAX_TILT_DEG,
     (lean, glare) => applyLean(lean, { glare }),
   );
@@ -636,6 +638,8 @@ export function FoilCardImage({
             frontUrl: layers?.frontUrl ?? null,
             frameUrl: layers?.frameUrl ?? null,
             inkUrl: layers?.inkUrl ?? null,
+            costRingUrl: layers?.costRingUrl ?? null,
+            badgeUrl: layers?.badgeUrl ?? null,
             holoMaskUrl: layers?.holoMaskUrl ?? null,
             hotFoilColor: parseCssColor(varnishColor),
             secondHotFoilColor: parseCssColor(secondVarnishColor),

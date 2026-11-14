@@ -21,6 +21,7 @@ import { DBS_FW_CARD_COLORS, DBS_FW_CARD_FLOATS } from "./cardSheet";
 import {
   DBS_FW_CLIENT_RENDERS,
   dbsFwClientRenderUrl,
+  dbsFwPlayroomFaceFileUrl,
   dbsFwPlayroomFaceUrl,
   type DbsFwClientRender,
   type DbsFwEffectsLayer,
@@ -98,10 +99,14 @@ const PLATE = (file: string): FoilTextureBinding => {
 function effectsArrayBinding(
   layers: readonly DbsFwEffectsLayer[],
   kind: "tex" | "motion",
+  facePath?: string,
 ): FoilTextureBinding | null {
   if (layers.length === 0) return null;
   const plates = layers.map((layer) => {
     if (kind === "tex") return PLATE(layer.tex);
+    if (layer.faceMotion && facePath) {
+      return { file: dbsFwPlayroomFaceFileUrl(facePath, layer.faceMotion) };
+    }
     return layer.motion ? PLATE(layer.motion) : PLATE(layer.tex);
   });
   return { arrayLayers: plates };
@@ -148,14 +153,15 @@ function clientMaterial(row: DbsFwClientRender): FoilMaterial | null {
       : false);
   const covers = holoMode === "covers";
   const layers = row.effectsLayers ?? [];
+  const facePath = row.playroomFace?.path;
   const effectsTextures: Record<string, FoilTextureBinding> = {};
-  const texArray = effectsArrayBinding(layers, "tex");
+  const texArray = effectsArrayBinding(layers, "tex", facePath);
   if (texArray) {
     effectsTextures._EffectsLayersTex = texArray;
     // Frost always samples motion when layers are packed — reuse tex if
     // no dedicated motion plate (avoids binding a 2D solid as 2D_ARRAY).
     effectsTextures._EffectsLayersMotion =
-      effectsArrayBinding(layers, "motion") ?? texArray;
+      effectsArrayBinding(layers, "motion", facePath) ?? texArray;
   }
 
   let holoMap: FoilTextureBinding | undefined;
@@ -226,7 +232,17 @@ function clientMaterial(row: DbsFwClientRender): FoilMaterial | null {
       _AlphaToMaskAvailable: 0,
       _ShowMiddleTex: recipe?.floats._ShowMiddleTex ?? 0,
     },
-    colors: DBS_FW_CARD_COLORS,
+    colors: {
+      ...DBS_FW_CARD_COLORS,
+      ...(recipe?.colors
+        ? Object.fromEntries(
+            Object.entries(recipe.colors).map(([key, value]) => [
+              key,
+              [...value],
+            ]),
+          )
+        : {}),
+    },
   };
 }
 

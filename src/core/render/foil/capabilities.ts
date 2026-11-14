@@ -190,17 +190,21 @@ export function foilForceRasterOverride(): boolean {
 }
 
 /**
- * WebGL2 internal format for a foil texture upload.
+ * WebGL2 **sized** internal format for a foil texture upload.
  *
  * Live (Pokémon) sheets are authored Linear: sample sRGB→linear when the
  * binding opts in (`srgb`) and the material sets `linearOutput`, then the
- * fragment path OETF-encodes. Lorcana / Gamma dumps keep raw RGBA bytes.
+ * fragment path OETF-encodes. Lorcana / Gamma dumps keep raw RGBA8 bytes.
+ *
+ * Must be sized (`RGBA8` / `SRGB8_ALPHA8`): `texStorage3D` rejects unsized
+ * `RGBA` (INVALID_ENUM) and the array then samples as opaque black — Frost
+ * EffectsLayers look like a no-op.
  */
 export function foilTextureInternalFormat(opts: {
   linearOutput?: boolean;
   srgb?: boolean;
-}): "srgb8_alpha8" | "rgba" {
-  return opts.srgb && opts.linearOutput ? "srgb8_alpha8" : "rgba";
+}): "srgb8_alpha8" | "rgba8" {
+  return opts.srgb && opts.linearOutput ? "srgb8_alpha8" : "rgba8";
 }
 
 /** Frag prep: Linear packs need OETF encode; Gamma packs leave GLSL as-is. */

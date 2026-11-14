@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { DBS_FW_CLIENT_RENDERS } from "./clientRenders";
-import { dbsFwEffectPack } from "./index";
+import {
+  DBS_FW_FULL_FOIL_MASK_URL,
+  dbsFwEffectPack,
+  isDbsFwCssOnlyFoilMask,
+} from "./index";
 import { dbsFwMaterialRecipe } from "./materialRecipes";
 import { DBS_FW_S3TC_BY_WEBP } from "./s3tcSidecars.generated";
 
@@ -208,5 +212,17 @@ describe("dbsFwEffectPack playroom arts", () => {
         id,
       ).toBeNull();
     }
+  });
+
+  it("full_foil_mask is CSS-only (Lorcana-style); per-print masks stay WebGL-eligible", () => {
+    expect(isDbsFwCssOnlyFoilMask(DBS_FW_FULL_FOIL_MASK_URL)).toBe(true);
+    expect(dbsFwEffectPack.isCssOnlyFoilMask?.(DBS_FW_FULL_FOIL_MASK_URL)).toBe(
+      true,
+    );
+    expect(
+      isDbsFwCssOnlyFoilMask(
+        "/assets/dragonball/fw/cards/en/st01/004/mask.webp",
+      ),
+    ).toBe(false);
   });
 });

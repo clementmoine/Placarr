@@ -2,10 +2,14 @@
  * Fusion World effect pack — sleeve back, house foil on the shelf, and the
  * client shader in the Rendu tab (same FoilPlayroom grid as Lorcana / Pokémon).
  *
- * The face is the flattened client card. Illustration, frame and text are
- * separate layers the shader stacks, so the shine sits on the picture and
- * the text stays above it. A missing layer stays transparent. Bandai does not publish
- * a sleeve back; the verso is the Masters 7-ball image (see curated/BACK.md).
+ * Lorcana model: catalogue aplat `art.client.webp` for shelf/grid (CSS `flare`
+ * when a real mask exists); WebGL Frost stacks `layer.*` on detail / playroom.
+ * The white `full_foil_mask` is CSS-only — never bind Frost to a solid plate.
+ *
+ * Illustration, frame and text are separate layers the shader stacks, so the
+ * shine sits on the picture and the text stays above it. A missing layer stays
+ * transparent. Bandai does not publish a sleeve back; the verso is the Masters
+ * 7-ball image (see curated/BACK.md).
  */
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
 import type { FoilMaterial, FoilTextureBinding } from "@/core/render/foil/types";
@@ -34,6 +38,14 @@ export const DBS_FW_EFFECT_PACK_ID = "dbs-fw";
 const ASSET_BASE = "/assets/dragonball/fw";
 
 export const DBS_FW_FULL_FOIL_MASK_URL = `${ASSET_BASE}/full_foil_mask.webp`;
+
+/**
+ * Solid full-face plate only — per-print `mask.webp` / `mask-*.webp` drive
+ * WebGL. Matches Lorcana's `isCssOnlyFoilMask` gate in FoilCardImage.
+ */
+export function isDbsFwCssOnlyFoilMask(maskUrl: string): boolean {
+  return maskUrl === DBS_FW_FULL_FOIL_MASK_URL;
+}
 
 const FINISH_SHADER: Record<string, string> = {
   foil: "flare",
@@ -256,6 +268,8 @@ export const dbsFwEffectPack = defineCatalogueOnlyPack({
   fallbackFoilMaskUrl: DBS_FW_FULL_FOIL_MASK_URL,
   playroomArtForMaterial: (name) => artsFor(name)[0] ?? null,
 });
+
+dbsFwEffectPack.isCssOnlyFoilMask = isDbsFwCssOnlyFoilMask;
 
 /** Shader leaves first (branched), then plate-only inventory (inutilisé). */
 dbsFwEffectPack.listMaterials = () => {

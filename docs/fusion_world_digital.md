@@ -252,6 +252,19 @@ Source **standalone** : GUS (`project_id=254594`) → CDN Xsolla
 sous `data/dragonball/fw/staging/xsolla/` → dump foil. Aucun chemin
 `~/Library/…` : le Sync ne lit pas une install Mac.
 
+Fraîcheur Sync (`version.json` sous `staging/xsolla/`) :
+
+- **CDN** : si `version` + `buildId` GUS inchangés → pas de redownload /
+  re-extract 7z (volumes déjà présents).
+- **Kit foil** (`kit.shadersOk` / `texturesOk` / `masksOk` / `facesOk`) :
+  si le stamp kit est à jour pour cette version → on ne refait pas l’étape
+  (faces client `art.client` + layers inclus). Sinon extract avec skip
+  fichier-par-fichier (`isClientFaceExtractCurrent`, masks déjà présents).
+- **Bump de version CDN** : le stamp kit est effacé → shaders / textures /
+  masks / faces sont régénérés.
+- `--force` sur l’étape foil force le kit, **pas** le CDN (`forceCdn` seul
+  force le redownload).
+
 Soft-skip si GUS/CDN/7-Zip échouent.
 Manuel shaders seuls :
 

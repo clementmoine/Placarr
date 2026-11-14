@@ -166,7 +166,25 @@ export async function runDbsFwPackPipeline(
       if (result.skipped) {
         console.log(`── foil : skipped (${result.reason})`);
       } else {
-        console.log("── foil : ok");
+        const kit = result.kitSkipped;
+        const skippedBits = kit
+          ? [
+              kit.shaders && "shaders",
+              kit.textures && "textures",
+              kit.masks && "masks",
+              kit.faces && "faces",
+            ].filter(Boolean)
+          : [];
+        console.log(
+          `── foil : ok` +
+            (result.cdnReused ? " (cdn reused)" : "") +
+            (skippedBits.length
+              ? ` — kit skip: ${skippedBits.join(", ")}`
+              : "") +
+            (result.faces
+              ? ` — faces written=${result.faces.written} skipped=${result.faces.skipped}`
+              : ""),
+        );
       }
     }
     logCatalogueCheckpoint(step);

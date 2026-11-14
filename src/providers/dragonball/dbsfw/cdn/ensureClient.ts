@@ -26,12 +26,23 @@ import {
 } from "@/providers/dragonball/dbsfw/cdn/gus";
 import { requireSevenZipBinary } from "@/providers/dragonball/dbsfw/cdn/sevenZip";
 
+/** Which foil-kit steps finished for this client version. */
+export type FwFoilKitStamp = {
+  shadersOk?: boolean;
+  texturesOk?: boolean;
+  masksOk?: boolean;
+  facesOk?: boolean;
+  updatedAt?: string;
+};
+
 export type FwClientStamp = {
   version: string;
   buildId: string;
   stem: string;
   volumeCount: number;
   fetchedAt: string;
+  /** Cleared whenever the CDN client version/build changes. */
+  kit?: FwFoilKitStamp;
 };
 
 export type EnsureFwClientOpts = {
@@ -74,6 +85,52 @@ function readStamp(root: string): FwClientStamp | null {
 
 function writeStamp(root: string, stamp: FwClientStamp): void {
   writeFileSync(stampPath(root), `${JSON.stringify(stamp, null, 2)}\n`, "utf8");
+}
+
+export function readFwClientStamp(
+  stagingRoot?: string,
+): FwClientStamp | null {
+  return readStamp(stagingRoot ?? fwXsollaStagingRoot());
+}
+
+/**
+ * Merge foil-kit progress into the current CDN stamp (same version only).
+ */
+export function updateFwClientKit(
+  patch: Omit<FwFoilKitStamp, "updatedAt">,
+  stagingRoot?: string,
+): FwClientStamp | null {
+  const root = stagingRoot ?? fwXsollaStagingRoot();
+  const existing = readStamp(root);
+  if (!existing) return null;
+  const next: FwClientStamp = {
+    ...existing,
+    kit: {
+      ...existing.kit,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  writeStamp(root, next);
+  return next;
+}
+
+export type FwFoilKitStep = "shadersOk" | "texturesOk" | "masksOk" | "facesOk";
+
+/**
+ * True when Sync can skip a foil-kit step: same CDN stamp, step already ok,
+ * no force / partial filter.
+ */
+export function foilKitStepFresh(
+  stamp: FwClientStamp | null | undefined,
+  step: FwFoilKitStep,
+  opts: { force?: boolean; limit?: number; match?: string } = {},
+): boolean {
+  if (opts.force) return false;
+  if (opts.limit != null || (opts.match != null && opts.match !== "")) {
+    return false;
+  }
+  return stamp?.kit?.[step] === true;
 }
 
 async function downloadToFile(

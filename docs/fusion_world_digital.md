@@ -10,10 +10,10 @@ puis colle un préfixe CDN devant les chemins que ce manifeste lui donne.
 
 ## 1. Deux systèmes qu’il ne faut pas mélanger
 
-| Système | Fichier / hôte | Rôle |
-| --- | --- | --- |
+| Système                      | Fichier / hôte                                                                                              | Rôle                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | Coquille Electron (Squirrel) | `Contents/Resources/app-update.yml` : `provider: generic`, `url: http://localhost:8080/`, `channel: latest` | Mise à jour **du lanceur**, pas du jeu. Inutilisable pour prédire un build. |
-| Jeu | `https://gus.xsolla.com/updates` | Manifeste des morceaux. C’est la seule source de vérité. |
+| Jeu                          | `https://gus.xsolla.com/updates`                                                                            | Manifeste des morceaux. C’est la seule source de vérité.                    |
 
 CDN par défaut, en dur dans `LauncherElectron` (`setCDNOrigin`) :
 
@@ -30,14 +30,14 @@ Requête réellement émise (journal `LauncherElectron/logs/launcher_log.txt`) :
 https://gus.xsolla.com/updates?project_id=254594&region=&gds_version=1&platform=mac_os&stage&no_redistr=false
 ```
 
-| Paramètre | Nature | Valeur observée | D’où elle sort |
-| --- | --- | --- | --- |
-| `project_id` | fixe pour ce jeu | `254594` | `publisher_project_id` dans `Contents/Resources/config/launcher.json` (jeu id `278885`, lanceur `5140`) |
-| `platform` | fixe par OS | `mac_os` | le binaire. Un client Windows changerait cette valeur, donc le manifeste. |
-| `gds_version` | version **d’API** GUS | `1` | pas la version du jeu |
-| `region` | vide | | |
-| `stage` | vide | | |
-| `no_redistr` | fixe | `false` | |
+| Paramètre     | Nature                | Valeur observée | D’où elle sort                                                                                          |
+| ------------- | --------------------- | --------------- | ------------------------------------------------------------------------------------------------------- |
+| `project_id`  | fixe pour ce jeu      | `254594`        | `publisher_project_id` dans `Contents/Resources/config/launcher.json` (jeu id `278885`, lanceur `5140`) |
+| `platform`    | fixe par OS           | `mac_os`        | le binaire. Un client Windows changerait cette valeur, donc le manifeste.                               |
+| `gds_version` | version **d’API** GUS | `1`             | pas la version du jeu                                                                                   |
+| `region`      | vide                  |                 |                                                                                                         |
+| `stage`       | vide                  |                 |                                                                                                         |
+| `no_redistr`  | fixe                  | `false`         |                                                                                                         |
 
 Réponse : XML `application/xml`, racine `<actions version="0">`.
 Aucun jeton. Le `254594` est public dans le paquet du lanceur.
@@ -66,13 +66,13 @@ dérivé de `97`, ni de `254594`.
 {cdn}/{buildId}/full_games/full_game_/{stem}.7z.{index}.torrent
 ```
 
-| Composant | Aujourd’hui | À la prochaine mise à jour |
-| --- | --- | --- |
-| `cdn` | `https://gamebuild.launcher.xsolla.com` | le même, sauf si le binaire reçoit un autre `setCDNOrigin` |
-| `buildId` | `16741` | **nouveau**, lu dans le XML |
-| dossier fixe | `full_games/full_game_` | repris tel quel dans les liens actuels ; à relire, pas à supposer éternel |
-| `stem` | `full_game_dc856891b7c7d3021a5eba934e2e71de_` | **nouveau hash** dans le nom |
-| `index` | `001`…`009`, trois chiffres | autant d’actions `torrent_download` que le XML en liste |
+| Composant    | Aujourd’hui                                   | À la prochaine mise à jour                                                |
+| ------------ | --------------------------------------------- | ------------------------------------------------------------------------- |
+| `cdn`        | `https://gamebuild.launcher.xsolla.com`       | le même, sauf si le binaire reçoit un autre `setCDNOrigin`                |
+| `buildId`    | `16741`                                       | **nouveau**, lu dans le XML                                               |
+| dossier fixe | `full_games/full_game_`                       | repris tel quel dans les liens actuels ; à relire, pas à supposer éternel |
+| `stem`       | `full_game_dc856891b7c7d3021a5eba934e2e71de_` | **nouveau hash** dans le nom                                              |
+| `index`      | `001`…`009`, trois chiffres                   | autant d’actions `torrent_download` que le XML en liste                   |
 
 Morceaux `001`–`008` : 524 288 000 octets (500 Mio). Le `.009` : 348 684 244.
 Le dernier n’est pas plein : le nombre de volumes n’est pas un multiple fixe.
@@ -119,12 +119,12 @@ dossier `update/` a été retiré. L’application est
 `Contents/Resources/Data/` est un joueur Unity classique, pas le catalogue
 de cartes :
 
-| Fichier | Rôle | Taille |
-| --- | --- | --- |
-| `globalgamemanagers` + `.assets` + `.assets.resS` | scènes / managers | ~9 Mo |
-| `resources.assets` + `.resS` | ressources joueur | 17 Mo + 177 Mo |
+| Fichier                                                            | Rôle                    | Taille                |
+| ------------------------------------------------------------------ | ----------------------- | --------------------- |
+| `globalgamemanagers` + `.assets` + `.assets.resS`                  | scènes / managers       | ~9 Mo                 |
+| `resources.assets` + `.resS`                                       | ressources joueur       | 17 Mo + 177 Mo        |
 | `sharedassets0.assets`, `sharedassets1.assets`, `level0`, `level1` | scènes vides ou presque | < 60 Ko hors managers |
-| `il2cpp_data/`, `ScriptingAssemblies.json` | IL2CPP | |
+| `il2cpp_data/`, `ScriptingAssemblies.json`                         | IL2CPP                  |                       |
 
 Les faces, cadres et foils sont des **Addressables UnityFS**
 (`magic` `UnityFS`) :
@@ -134,19 +134,19 @@ Les faces, cadres et foils sont des **Addressables UnityFS**
 3 559 bundles, ~5,9 Go. Index : `aa/catalog.json` (29 Mo) et `settings.json`.
 Préfixe stable : `packdata_assets_…`.
 
-| Famille | Nombre | Contenu vu |
-| --- | --- | --- |
-| `card_series_*` sans suffixe foil | 2 364 | face ordinaire |
-| `*_para` | 442 | parallèle |
-| `*_superpara` | 26 | super parallèle |
-| `*_front` / `*_front_para` / `*_back_para` | 78 + 12 | recto ou dos seul |
-| autres queues (`para_1an`, `para_eve6`, `para_reward_…`) | le reste des 2 922 `card_series` | variantes de parallèle, pas un autre jeu |
-| `card_frame` | 1 × 24 Mo | cadres couleur / coût (`Red_01_cost1`, `BattleCard_…`) |
-| `card_sleeve` | 1 × 209 Mo | sleeves |
-| `card_materials` | 5 Mo | matériaux foil partagés |
-| `card_premiumtex` | 0,8 Mo | textures d’effet (lignes, flash, rainbow) |
-| `shader` | 7,3 Mo | shaders + textures holo partagées |
-| `effect_3deffect`, `effect_texture`, `effect_cardeffect` | 49 / 13 / 0,5 Mo | VFX de carte, pas le masque de face |
+| Famille                                                  | Nombre                           | Contenu vu                                             |
+| -------------------------------------------------------- | -------------------------------- | ------------------------------------------------------ |
+| `card_series_*` sans suffixe foil                        | 2 364                            | face ordinaire                                         |
+| `*_para`                                                 | 442                              | parallèle                                              |
+| `*_superpara`                                            | 26                               | super parallèle                                        |
+| `*_front` / `*_front_para` / `*_back_para`               | 78 + 12                          | recto ou dos seul                                      |
+| autres queues (`para_1an`, `para_eve6`, `para_reward_…`) | le reste des 2 922 `card_series` | variantes de parallèle, pas un autre jeu               |
+| `card_frame`                                             | 1 × 24 Mo                        | cadres couleur / coût (`Red_01_cost1`, `BattleCard_…`) |
+| `card_sleeve`                                            | 1 × 209 Mo                       | sleeves                                                |
+| `card_materials`                                         | 5 Mo                             | matériaux foil partagés                                |
+| `card_premiumtex`                                        | 0,8 Mo                           | textures d’effet (lignes, flash, rainbow)              |
+| `shader`                                                 | 7,3 Mo                           | shaders + textures holo partagées                      |
+| `effect_3deffect`, `effect_texture`, `effect_cardeffect` | 49 / 13 / 0,5 Mo                 | VFX de carte, pas le masque de face                    |
 
 Pas de fichier `.shader` ni de dossier `textures/` à plat. Les textures
 sont des objets `Texture2D` dans les bundles.
@@ -196,13 +196,13 @@ La face catalogue est l’aplat `art.client.webp` : c’est l’image affichée,
 
 Ordre produit (`CLIENT_FACE_COMPOSE_ORDER`) — proche Frost (Front→Frame→disc→Chara→CostNumber), sans coller le disc dans `_FrameTex` :
 
-| Calque | Source dump | Pos @ print | Taille | Ordre | Transform |
-|--------|-------------|-------------|--------|-------|-----------|
-| picture | `*_Card` Texture2D | 0,0 | card W×H | 1 | mip0 + `curePlateDxt` → `clientFacePixels` (63×88) |
-| frame | Texture2DArray slice0 mip0 | 0,0 | card W×H | 2 | `curePlateDxt` + resize chrome seul |
-| costRing | `Cost_01` + `CostFrame_{Color}` | Frost centre | scale×atlas | 3 | bake SS + `layer.costRing.webp` |
-| text | `*_Text_En` / `_Ja` | 0,0 | card W×H | 4 | `curePlateDxt` → `solidifyPlateInk` + lanczos |
-| badge | `{Color}_01_cost{n}` (BC7) | 0,0 | card W×H | 5 | full-face SS resize (pas de deblock DXT) |
+| Calque   | Source dump                     | Pos @ print  | Taille      | Ordre | Transform                                          |
+| -------- | ------------------------------- | ------------ | ----------- | ----- | -------------------------------------------------- |
+| picture  | `*_Card` Texture2D              | 0,0          | card W×H    | 1     | mip0 + `curePlateDxt` → `clientFacePixels` (63×88) |
+| frame    | Texture2DArray slice0 mip0      | 0,0          | card W×H    | 2     | `curePlateDxt` + resize chrome seul                |
+| costRing | `Cost_01` + `CostFrame_{Color}` | Frost centre | scale×atlas | 3     | bake SS + `layer.costRing.webp`                    |
+| text     | `*_Text_En` / `_Ja`             | 0,0          | card W×H    | 4     | `curePlateDxt` → `solidifyPlateInk` + lanczos      |
+| badge    | `{Color}_01_cost{n}` (BC7)      | 0,0          | card W×H    | 5     | full-face SS resize (pas de deblock DXT)           |
 
 Frost runtime (`FrostCard.frag`) sample Main→Front→Middle→Frame→Chara→CostNumber ; `Cost_01` / `CostFrame_*` **ne sont pas** des samplers Frost (disques procéduraux + `_CostNumberTex`). L’aplat catalogue garde le bake `Cost_01`+`CostFrame` en **calque séparé**.
 
@@ -229,24 +229,36 @@ Traduction dans `src/lib/unity/metalBlob.ts` et `metalToGlsl.ts`,
 branchée sur `extractShaderFragsFromBytes` quand le chunk n’a pas de
 GLSL. Le dialecte hlslcc couvert :
 
-| Metal | GLSL ES 3.00 |
-| --- | --- |
-| `[[ stage_in ]]`, `[[ buffer(n) ]]` | `in` aplati, `uniform` de struct |
-| `texture2d` / `texturecube` / `texture2d_array` `.sample` | `texture` / `textureLod` |
-| `bias(...)`, `level(...)` | biais de `texture`, `textureLod` |
-| `fma`, `rsqrt`, `saturate`, `select` | produit-somme, `inversesqrt`, `clamp`, `mix` |
-| `as_type<float>` | `intBitsToFloat` |
-| `discard_fragment`, `mtl_Position`, `SV_TARGET0` | `discard`, `gl_Position`, `fragColor` |
+| Metal                                                     | GLSL ES 3.00                                 |
+| --------------------------------------------------------- | -------------------------------------------- |
+| `[[ stage_in ]]`, `[[ buffer(n) ]]`                       | `in` aplati, `uniform` de struct             |
+| `texture2d` / `texturecube` / `texture2d_array` `.sample` | `texture` / `textureLod`                     |
+| `bias(...)`, `level(...)`                                 | biais de `texture`, `textureLod`             |
+| `fma`, `rsqrt`, `saturate`, `select`                      | produit-somme, `inversesqrt`, `clamp`, `mix` |
+| `as_type<float>`                                          | `intBitsToFloat`                             |
+| `discard_fragment`, `mtl_Position`, `SV_TARGET0`          | `discard`, `gl_Position`, `fragColor`        |
 
-Pour un shader qui a plusieurs variantes, le pipeline garde celle qui
-échantillonne un holo ou un masque (`HoloMap`, `_Mask`, `Foil`), sinon
-la plus longue. Le résultat passe par `toWebgl2Fragment`, comme Live et
-Lorcana. Les tests `src/lib/unity/metalToGlsl.test.ts` lisent le bundle
-local s’il est là et vérifient `UIHologram` et `Frost/Card`.
+`Frost/Card` a **82** fragments Metal (keywords `ARTWORK_ON` ×
+`EFFECTS_LAYER_COUNT_{ZERO…SIX}` + holo). L’extract historique ne gardait
+que la variante holo (`FrostCard.frag`) — les feuilles `effects-uv-shine`,
+`effects-ef-flash`, `effects-uv-rainbow`, `tabac`, `superpara` ne
+rééchantillonnaient pas `_EffectsLayersTex`.
+
+Extract multi-variantes (Mac + bundle) :
+
+`pnpm exec tsx scripts/extractFusionWorldShaders.ts [--force]`
+
+écrit `FrostCard.frag` (ZERO/holo) et
+`FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_{ONE,TWO,FIVE,…}.frag`.
+`clientMaterial` résout le basename via `frostCardFragmentForKeywords`.
+À l’upload WebGL, `packFrostEffectsLayers` regroupe `_EffectsLayerN*` en
+`sampler2DArray` si le frag legacy n’est pas encore packé. Les tests
+`frostCardVariants.test.ts` / `metalToGlsl.test.ts` couvrent la
+classification et le bundle local s’il est là.
 
 Ce n’est pas une preuve pixel à pixel : c’est le même source, relu en
-GLSL. Le pack `dbs-fw` sert `FrostCard.frag` / `UIHologram.frag` dans le
-FoilPlayroom (Catalogue → Fusion World → Rendu).
+GLSL. Le pack `dbs-fw` sert ces `.frag` dans le FoilPlayroom
+(Catalogue → Fusion World → Rendu).
 
 ### Sidecars compressés (S3TC / DXT)
 
@@ -260,9 +272,10 @@ pas en ASTC (contrairement à Lorcana mobile). Extract :
 (`FoilTextureBinding.s3tc`, même règle `!role` que l’ASTC Lorcana) les
 upload via `compressedTexImage2D` quand le GPU expose S3TC. **BC7**
 (`CardHologram`) reste raster WebP — pas de binding BC7 portable ici.
-`card_premiumtex` (uv_line_*, ef_flash*, …) est une bibliothèque VFX pour
+`card_premiumtex` (uv_line__, ef_flash_, …) est une bibliothèque VFX pour
 les slots Frost `_EffectsLayer*Tex` : dumpée en `client-*.webp` (+ DXT)
 par `extractFusionWorldFoilTextures`, branchée playroom (`effectsLayers` sur
-`foil-holo` / `superpara` + feuilles `effects-*`). `FrostCard.frag` garde
-`_EffectsLayer1Tex` (budget 16 samplers WebGL). `PARA_HOLO_Text_*` →
-`mask-holo-text.webp` via l’extract masks.
+`foil-holo` / `superpara` + feuilles `effects-*`). Les variantes COUNT
+packent les slots en `_EffectsLayersTex` / `_EffectsLayersMotion`
+(`sampler2DArray`, budget 16). `PARA_HOLO_Text_*` → `mask-holo-text.webp`
+via l’extract masks.

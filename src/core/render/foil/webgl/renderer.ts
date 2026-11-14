@@ -16,6 +16,7 @@ import {
 } from "@/core/render/foil/capabilities";
 import { foilClockSeconds, subscribeFoilFrame } from "../clock";
 import { foilEffectsClockSeconds } from "../leanPolicy";
+import { packFrostEffectsLayers } from "@/lib/unity/webglAdapt";
 
 import type {
   FoilAstcBinding,
@@ -249,8 +250,7 @@ export function aspectCorrectSquareMotifUv(
 ): string {
   if (!(aspect > 0)) return source;
   // FlatSilver / PikachuFoil GLES dumps rename MAT `_Tex_CC` → `_CCPatternTex`.
-  const hasCc =
-    source.includes("_Tex_CC") || source.includes("_CCPatternTex");
+  const hasCc = source.includes("_Tex_CC") || source.includes("_CCPatternTex");
   const hasStarDot =
     source.includes("_StarsTexture") ||
     source.includes("_TexDots") ||
@@ -678,17 +678,36 @@ export function createWebglFoilRenderer(
     layers: readonly FoilTextureBinding[],
   ): Promise<WebGLTexture | null> {
     if (layers.length === 0) return null;
-    const bitmaps: ImageBitmap[] = [];
+    // Per-layer fetch: one missing face motion must not blank the whole stack
+    // (rainbow ef_mask* under cards/en/…). Fallback = prior good layer, else
+    // 1×1 white so motion α gates stay open.
+    const bitmaps: (ImageBitmap | HTMLCanvasElement)[] = [];
+    let width = 0;
+    let height = 0;
+    let firstOk: ImageBitmap | null = null;
     for (const layer of layers) {
       const file = layer.file;
-      if (!file) return null;
-      // Absolute `/assets/…` (face-local ef_mask*) — do not prefix foil/textures.
+      if (!file) {
+        bitmaps.push(firstOk ?? solidCanvas(1, 1, [255, 255, 255, 255]));
+        continue;
+      }
       const url = file.startsWith("/") ? file : textureBase + file;
-      bitmaps.push(await fetchImageBitmap(url));
-      if (destroyed) return null;
+      try {
+        const bmp = await fetchImageBitmap(url);
+        if (destroyed) return null;
+        if (!firstOk) {
+          firstOk = bmp;
+          width = bmp.width;
+          height = bmp.height;
+        }
+        bitmaps.push(bmp);
+      } catch {
+        bitmaps.push(
+          firstOk ?? solidCanvas(width || 1, height || 1, [255, 255, 255, 255]),
+        );
+      }
     }
-    const width = bitmaps[0]!.width;
-    const height = bitmaps[0]!.height;
+    if (!firstOk || width <= 0 || height <= 0) return null;
     const texture = gl!.createTexture();
     gl!.bindTexture(gl!.TEXTURE_2D_ARRAY, texture);
     // Sized formats only — unsized RGBA makes texStorage3D INVALID_ENUM and
@@ -710,15 +729,20 @@ export function createWebglFoilRenderer(
     );
     for (let i = 0; i < bitmaps.length; i++) {
       const bmp = bitmaps[i]!;
-      // Resize mismatch: upload into a canvas at layer-0 size.
       let source: TexImageSource = bmp;
-      if (bmp.width !== width || bmp.height !== height) {
+      const bw =
+        "width" in bmp ? (bmp as ImageBitmap | HTMLCanvasElement).width : width;
+      const bh =
+        "height" in bmp
+          ? (bmp as ImageBitmap | HTMLCanvasElement).height
+          : height;
+      if (bw !== width || bh !== height) {
         const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (!ctx) return null;
-        ctx.drawImage(bmp, 0, 0, width, height);
+        ctx.drawImage(bmp as CanvasImageSource, 0, 0, width, height);
         source = canvas;
       }
       gl!.texSubImage3D(
@@ -737,6 +761,22 @@ export function createWebglFoilRenderer(
     }
     applySamplerState(layers[0], { target: gl!.TEXTURE_2D_ARRAY });
     return texture!;
+  }
+
+  function solidCanvas(
+    w: number,
+    h: number,
+    rgba: readonly [number, number, number, number],
+  ): HTMLCanvasElement {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, w);
+    canvas.height = Math.max(1, h);
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = `rgba(${rgba[0]},${rgba[1]},${rgba[2]},${rgba[3] / 255})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    return canvas;
   }
 
   function uploadTexture(
@@ -1179,13 +1219,7 @@ export function createWebglFoilRenderer(
     }
     if (active.timeLoc) {
       // Unity `_Time`: (t/20, t, t*2, t*3) — Live frags mostly read `.y`.
-      gl!.uniform4f(
-        active.timeLoc,
-        clock / 20,
-        clock,
-        clock * 2,
-        clock * 3,
-      );
+      gl!.uniform4f(active.timeLoc, clock / 20, clock, clock * 2, clock * 3);
     }
     if (active.deviceRotLoc) {
       gl!.uniform1f(active.deviceRotLoc, deviceRotation);
@@ -1263,7 +1297,13 @@ export function createWebglFoilRenderer(
   }
 
   const prepareFragment = (source: string): string => {
-    const aligned = alignFragmentVaryings(source);
+    // Legacy FrostCard kept `_EffectsLayerNTex` 2D samplers; pack into the
+    // array units materials bind as `_EffectsLayersTex` / Motion.
+    const packed =
+      /uniform\s+sampler2D\s+_EffectsLayer[1-6](Tex|Motion)\s*;/.test(source)
+        ? packFrostEffectsLayers(source)
+        : source;
+    const aligned = alignFragmentVaryings(packed);
     const opaque = restoreOpaqueFoilOutput(aligned);
     const isotropic = aspectCorrectSquareMotifUv(opaque);
     return foilFragmentNeedsLinearEncode(material.linearOutput)
@@ -1271,15 +1311,26 @@ export function createWebglFoilRenderer(
       : isotropic;
   };
 
+  async function loadFragmentSource(name: string): Promise<string> {
+    try {
+      return await fetchFragmentSource(shaderBase + name);
+    } catch (err) {
+      // Keyword variants (COUNT_ONE/FIVE) may not be extracted yet — fall
+      // back to the ZERO/holo leaf so WebGL still initialises.
+      if (name !== "FrostCard.frag" && /FrostCard__/.test(name)) {
+        return fetchFragmentSource(shaderBase + "FrostCard.frag");
+      }
+      throw err;
+    }
+  }
+
   const ready = (async () => {
     const tiltSrc = prepareFragment(
-      await fetchFragmentSource(shaderBase + material.fragment),
+      await loadFragmentSource(material.fragment),
     );
     if (destroyed) return;
     const timeSrc = material.fragmentTime
-      ? prepareFragment(
-          await fetchFragmentSource(shaderBase + material.fragmentTime),
-        )
+      ? prepareFragment(await loadFragmentSource(material.fragmentTime))
       : null;
     if (destroyed) return;
 

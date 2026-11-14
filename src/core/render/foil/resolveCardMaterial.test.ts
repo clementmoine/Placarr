@@ -42,7 +42,9 @@ describe("resolveFoilCardMaterial", () => {
       finish: "foil",
       printKey: "dbsfw:fb01-139-superpara",
     });
-    expect(mat?.fragment).toContain("FrostCard");
+    expect(mat?.fragment).toBe(
+      "FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_TWO.frag",
+    );
     expect(mat?.floats.EFFECTS_LAYER_COUNT).toBe(2);
     expect(
       resolveFoilCardMaterial({
@@ -95,9 +97,7 @@ describe("resolveFoilCardMaterial", () => {
     ).toContain("USESECONDTOPLAYER");
   });
 
-  it.skipIf(
-    !listLorcanaMaterialNames().includes("CardMagmaMetallicHotFoil"),
-  )(
+  it.skipIf(!listLorcanaMaterialNames().includes("CardMagmaMetallicHotFoil"))(
     "Lorcana pack upgrades to USESECONDTOPLAYER when second varnish is set",
     () => {
       registerEffectPack(lorcanaEffectPack);

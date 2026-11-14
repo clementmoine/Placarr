@@ -12,8 +12,12 @@
  * 7-ball image (see curated/BACK.md).
  */
 import { defineCatalogueOnlyPack } from "@/effects/defineCatalogueOnlyPack";
-import type { FoilMaterial, FoilTextureBinding } from "@/core/render/foil/types";
+import type {
+  FoilMaterial,
+  FoilTextureBinding,
+} from "@/core/render/foil/types";
 import type { PlayroomArt } from "@/effects/pokemon/playroomArt";
+import { frostCardFragmentForKeywords } from "@/lib/unity/frostCardVariants";
 
 import {
   dbsFwKnownCoverageMaskUrl,
@@ -115,20 +119,56 @@ const PLATE = (file: string): FoilTextureBinding => {
   return s3tc ? { file, s3tc } : { file };
 };
 
+function effectsLayerPlate(
+  layer: DbsFwEffectsLayer,
+  kind: "tex" | "motion",
+  facePath?: string,
+): FoilTextureBinding {
+  if (kind === "tex") return PLATE(layer.tex);
+  if (layer.faceMotion && facePath) {
+    return { file: dbsFwPlayroomFaceFileUrl(facePath, layer.faceMotion) };
+  }
+  return layer.motion ? PLATE(layer.motion) : PLATE(layer.tex);
+}
+
 function effectsArrayBinding(
   layers: readonly DbsFwEffectsLayer[],
   kind: "tex" | "motion",
   facePath?: string,
 ): FoilTextureBinding | null {
   if (layers.length === 0) return null;
-  const plates = layers.map((layer) => {
-    if (kind === "tex") return PLATE(layer.tex);
-    if (layer.faceMotion && facePath) {
-      return { file: dbsFwPlayroomFaceFileUrl(facePath, layer.faceMotion) };
-    }
-    return layer.motion ? PLATE(layer.motion) : PLATE(layer.tex);
+  return {
+    arrayLayers: layers.map((layer) =>
+      effectsLayerPlate(layer, kind, facePath),
+    ),
+  };
+}
+
+/**
+ * Bind both packed `sampler2DArray` slots (post-`packFrostEffectsLayers`) and
+ * legacy `_EffectsLayerN{Tex,Motion}` 2D names so either shipped frag works.
+ */
+function effectsTextureBindings(
+  layers: readonly DbsFwEffectsLayer[],
+  facePath?: string,
+): Record<string, FoilTextureBinding> {
+  if (layers.length === 0) return {};
+  const out: Record<string, FoilTextureBinding> = {};
+  const texArray = effectsArrayBinding(layers, "tex", facePath);
+  const motionArray =
+    effectsArrayBinding(layers, "motion", facePath) ?? texArray;
+  if (texArray) out._EffectsLayersTex = texArray;
+  if (motionArray) out._EffectsLayersMotion = motionArray;
+  layers.forEach((layer, i) => {
+    const n = i + 1;
+    out[`_EffectsLayer${n}Tex`] = effectsLayerPlate(layer, "tex", facePath);
+    out[`_EffectsLayer${n}Motion`] = effectsLayerPlate(
+      layer,
+      "motion",
+      facePath,
+    );
   });
-  return { arrayLayers: plates };
+  return out;
 }
 
 type ClientMaterialOpts = {
@@ -200,15 +240,14 @@ function clientMaterial(
   const covers = holoMode === "covers";
   const layers = row.effectsLayers ?? [];
   const facePath = row.playroomFace?.path;
-  const effectsTextures: Record<string, FoilTextureBinding> = {};
-  const texArray = effectsArrayBinding(layers, "tex", facePath);
-  if (texArray) {
-    effectsTextures._EffectsLayersTex = texArray;
-    // Frost always samples motion when layers are packed — reuse tex if
-    // no dedicated motion plate (avoids binding a 2D solid as 2D_ARRAY).
-    effectsTextures._EffectsLayersMotion =
-      effectsArrayBinding(layers, "motion", facePath) ?? texArray;
-  }
+  const effectsTextures = effectsTextureBindings(layers, facePath);
+  const keywords = [...(recipe?.keywords ?? ["ARTWORK_ON"])];
+  // Keyword → FrostCard variant (COUNT_ONE/TWO/FIVE). Legacy `row.shader`
+  // stays FrostCard.frag for ZERO; UIHologram is handled above.
+  const fragment =
+    row.shader === "FrostCard.frag"
+      ? frostCardFragmentForKeywords(keywords)
+      : row.shader;
 
   let holoMap: FoilTextureBinding | undefined;
   if (holoMode === "covers") {
@@ -248,10 +287,15 @@ function clientMaterial(
       }
     : {};
 
+  // Effects demos + catalogue: Main off (Unity Front/Frame/Chara stack).
+  // Other playroom leaves keep Main as a scan fallback when layers missing.
+  const useMainTex =
+    catalogue || recipe?.profile === "effects" || layers.length > 0 ? 0 : 1;
+
   return {
     graph: "Frost/Card",
-    keywords: [...(recipe?.keywords ?? ["ARTWORK_ON"])],
-    fragment: row.shader,
+    keywords,
+    fragment,
     webgl: true,
     textures: {
       _MainTex: { role: "art" },
@@ -268,10 +312,7 @@ function clientMaterial(
         _FoilType: covers ? DBS_FW_CARD_FLOATS._FoilType! : 0,
         EFFECTS_LAYER_COUNT: layers.length,
       }),
-      // Unity Card dump: Main off when Front/Frame/Chara stack. Catalogue
-      // layers exist beside art.client — keep Main as fallback only in
-      // playroom demos that may omit layerSurfaces.
-      _UseMainTex: catalogue ? 0 : 1,
+      _UseMainTex: useMainTex,
       _UseFront: 1,
       _UseFrame: 1,
       _UseFrame2: 0,

@@ -74,8 +74,12 @@ describe("dbsFwEffectPack playroom arts", () => {
 
     const tabac = dbsFwEffectPack.material?.("tabac-holo");
     // Coverage + stamp share the Tabac plate; steer map stays shared HoloMap.
-    expect(tabac?.textures._FoilMask?.s3tc?.file).toBe("client-tabac-holo.dxt1");
-    expect(tabac?.textures._HoloMask?.s3tc?.file).toBe("client-tabac-holo.dxt1");
+    expect(tabac?.textures._FoilMask?.s3tc?.file).toBe(
+      "client-tabac-holo.dxt1",
+    );
+    expect(tabac?.textures._HoloMask?.s3tc?.file).toBe(
+      "client-tabac-holo.dxt1",
+    );
     expect(tabac?.textures._HoloMap?.s3tc?.file).toBe("client-holomap.dxt5");
     expect(tabac?.floats.EFFECTS_LAYER_COUNT).toBe(1);
     expect(tabac?.floats._EffectsLayer1MotionSpeed).toBe(3);
@@ -88,12 +92,28 @@ describe("dbsFwEffectPack playroom arts", () => {
     expect(tabac?.colors._EffectsLayer1Color?.[3]).toBeGreaterThan(0);
 
     const shine = dbsFwEffectPack.material?.("effects-uv-shine");
+    expect(shine?.fragment).toBe(
+      "FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_ONE.frag",
+    );
+    expect(shine?.floats._UseMainTex).toBe(0);
     expect(shine?.textures._EffectsLayersTex?.arrayLayers?.[0]?.file).toBe(
       "client-uv-shine.webp",
+    );
+    expect(shine?.textures._EffectsLayer1Tex?.file).toBe(
+      "client-uv-shine.webp",
+    );
+
+    const flash = dbsFwEffectPack.material?.("effects-ef-flash");
+    expect(flash?.fragment).toBe(
+      "FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_ONE.frag",
     );
 
     const rainbow = dbsFwEffectPack.material?.("effects-uv-rainbow");
     // FB02-036_front dump: COUNT_FIVE, Holo off, L1=uv_line_rainbow.
+    expect(rainbow?.fragment).toBe(
+      "FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_FIVE.frag",
+    );
+    expect(rainbow?.floats._UseMainTex).toBe(0);
     expect(rainbow?.textures._EffectsLayersTex?.arrayLayers).toHaveLength(5);
     expect(rainbow?.textures._EffectsLayersTex?.arrayLayers?.[0]?.file).toBe(
       "client-uv-line-rainbow.webp",
@@ -142,7 +162,9 @@ describe("dbsFwEffectPack playroom arts", () => {
     for (const kw of recipe!.keywords) {
       expect(mat!.keywords, id).toContain(kw);
     }
-    const layers = DBS_FW_CLIENT_RENDERS.find((r) => r.id === id)?.effectsLayers;
+    const layers = DBS_FW_CLIENT_RENDERS.find(
+      (r) => r.id === id,
+    )?.effectsLayers;
     if (layers && layers.length > 0) {
       expect(mat!.textures._EffectsLayersTex?.arrayLayers).toHaveLength(
         layers.length,
@@ -150,7 +172,10 @@ describe("dbsFwEffectPack playroom arts", () => {
       expect(mat!.textures._EffectsLayersMotion?.arrayLayers).toHaveLength(
         layers.length,
       );
-    } else if (mat!.fragment === "FrostCard.frag") {
+    } else if (
+      mat!.fragment === "FrostCard.frag" ||
+      /EFFECTS_LAYER_COUNT_ZERO/.test(mat!.fragment)
+    ) {
       expect(mat!.textures._EffectsLayersTex).toBeUndefined();
     }
   });
@@ -195,9 +220,9 @@ describe("dbsFwEffectPack playroom arts", () => {
     expect(row?.effectsLayers).toHaveLength(2);
     const mat = dbsFwEffectPack.material?.("superpara");
     expect(mat?.floats.EFFECTS_LAYER_COUNT).toBe(2);
-    expect(mat?.textures._EffectsLayersTex?.arrayLayers?.map((l) => l.file)).toEqual(
-      ["client-uv-shine.webp", "client-ef-flash01.webp"],
-    );
+    expect(
+      mat?.textures._EffectsLayersTex?.arrayLayers?.map((l) => l.file),
+    ).toEqual(["client-uv-shine.webp", "client-ef-flash01.webp"]);
   });
 
   it("resolveCss maps shelf foil→flare but not WebGL leaf ids (no house holofoil)", () => {

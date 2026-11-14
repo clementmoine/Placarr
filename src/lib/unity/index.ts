@@ -80,3 +80,12 @@ export {
   translatePreferredFragment,
   type TranslatedMetal,
 } from "@/lib/unity/metalToGlsl";
+export {
+  frostCardFragmentForKeywords,
+  frostEffectsLayerCountKeyword,
+  frostEffectsLayerMax,
+} from "@/lib/unity/frostCardVariants";
+export {
+  extractFrostCardVariantFiles,
+  type FrostCardVariantFile,
+} from "@/lib/unity/frostCardExtract";

@@ -1,0 +1,644 @@
+/**
+ * Catalogue OPTCG depuis punk-records (sortie vegapull, multi-langues).
+ *
+ * Télécharge `cards_by_id.json` JA/FR/EN depuis GitHub → staging, pose les
+ * tirages (`onepiece:op01-001`) et les faces Bandai (`art.bandai.webp`).
+ */
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+import { httpGet } from "@/lib/http/httpClient";
+import { softRetryNull } from "@/lib/http/softRetry";
+import { toLosslessWebp } from "@/lib/media/losslessWebp";
+import {
+  packCardDir,
+  packCardsDir,
+  packLogsDir,
+  packStagingDir,
+} from "@/lib/packPaths";
+import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
+import type {
+  LocalPrintAssetWrite,
+  LocalPrintsIndex,
+  LocalPrintWrite,
+} from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import { cardDiskIdFromPrintKey } from "@/lib/packAssetUrls";
+import {
+  hashCatalogArtefactBytes,
+  packCatalogIngestLedgerPath,
+  recordCatalogPromoteAndPurgeStaging,
+} from "@/providers/shared/catalogIngestLedger";
+
+import { ONEPIECE_PACK_ID, ONEPIECE_PRINT_GAME } from "./pack";
+import {
+  formatOnepieceReference,
+  onepiecePrintIdentity,
+  onepiecePrintKey,
+} from "./printIdentity";
+
+const STAGING_FOLDER = "punk-records";
+const ARTEFACT_ID = "onepiece:punk-records";
+const SOURCE_ID = "bandai";
+const UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
+
+/** Locales punk-records → lang Placarr (original JA + FR + EN). */
+export const PUNK_RECORDS_LOCALES = [
+  { punk: "japanese", lang: "ja" },
+  { punk: "french", lang: "fr" },
+  { punk: "english", lang: "en" },
+] as const;
+
+export type PunkRecordsCard = {
+  cardId: string;
+  name: string;
+  rarity: string | null;
+  imgUrl: string | null;
+  category: string | null;
+};
+
+export type PunkRecordsLocaleIndex = {
+  lang: string;
+  cards: PunkRecordsCard[];
+};
+
+function punkRecordsRawUrl(punkLocale: string): string {
+  return `https://raw.githubusercontent.com/buhbbl/punk-records/main/${punkLocale}/index/cards_by_id.json`;
+}
+
+export function onepiecePunkStagingDir(): string {
+  return path.join(packStagingDir(ONEPIECE_PACK_ID), STAGING_FOLDER);
+}
+
+export function onepiecePunkDurableDir(): string {
+  return path.join(packLogsDir(ONEPIECE_PACK_ID), STAGING_FOLDER);
+}
+
+/** Prefer staging (fresh harvest), else durable logs copy. */
+export function resolvePunkRecordsDir(): string {
+  const staging = onepiecePunkStagingDir();
+  if (existsSync(path.join(staging, "fr.cards_by_id.json"))) return staging;
+  const durable = onepiecePunkDurableDir();
+  if (existsSync(path.join(durable, "fr.cards_by_id.json"))) return durable;
+  return staging;
+}
+
+export function ensurePunkRecordsDurable(stagingDir?: string): string {
+  const staging = stagingDir ?? onepiecePunkStagingDir();
+  const durable = onepiecePunkDurableDir();
+  mkdirSync(durable, { recursive: true });
+  for (const { lang } of PUNK_RECORDS_LOCALES) {
+    const name = `${lang}.cards_by_id.json`;
+    const src = path.join(staging, name);
+    if (!existsSync(src)) continue;
+    copyFileSync(src, path.join(durable, name));
+  }
+  return durable;
+}
+
+export function punkRecordsContentHash(dir?: string): string | null {
+  const root = dir ?? resolvePunkRecordsDir();
+  const fr = path.join(root, "fr.cards_by_id.json");
+  if (!existsSync(fr)) return null;
+  return hashCatalogArtefactBytes(readFileSync(fr));
+}
+
+/** After seed OK: durable JSON under logs/ + purge staging. */
+export function promoteAndPurgePunkRecordsStaging(opts?: {
+  stagingDir?: string;
+}): { purged: boolean; contentHash: string | null } {
+  const staging = opts?.stagingDir ?? onepiecePunkStagingDir();
+  const contentHash = punkRecordsContentHash(staging) ?? punkRecordsContentHash();
+  if (!contentHash) return { purged: false, contentHash: null };
+  ensurePunkRecordsDurable(staging);
+  recordCatalogPromoteAndPurgeStaging({
+    ledgerPath: packCatalogIngestLedgerPath(ONEPIECE_PACK_ID),
+    artefactId: ARTEFACT_ID,
+    contentHash,
+    stagingPath: staging,
+  });
+  return { purged: true, contentHash };
+}
+
+function decodeHtmlName(raw: string): string {
+  return raw
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&#(\d+);/g, (_, n: string) => String.fromCharCode(Number(n)))
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Parse `cards_by_id.json` — clés = id Bandai (`OP01-001_p1`).
+ */
+export function parsePunkRecordsCardsById(
+  json: unknown,
+): PunkRecordsCard[] {
+  if (!json || typeof json !== "object" || Array.isArray(json)) return [];
+  const out: PunkRecordsCard[] = [];
+  for (const [cardId, row] of Object.entries(
+    json as Record<string, unknown>,
+  )) {
+    if (!row || typeof row !== "object") continue;
+    const rec = row as Record<string, unknown>;
+    const id =
+      typeof rec.card_id === "string" && rec.card_id.trim()
+        ? rec.card_id.trim()
+        : cardId.trim();
+    if (!id || !onepiecePrintKey(id)) continue;
+    const imgUrl =
+      typeof rec.img_url === "string" ? rec.img_url.trim() || null : null;
+    const nameRaw =
+      typeof rec.name === "string"
+        ? rec.name
+        : typeof rec.card_id === "string"
+          ? rec.card_id
+          : id;
+    let name = decodeHtmlName(nameRaw);
+    // Bandai id echoed as name is not a title — keep the row if art exists.
+    if (name === id || name === decodeHtmlName(id)) name = "";
+    if (!name && !imgUrl) continue;
+    out.push({
+      cardId: id,
+      name,
+      rarity: typeof rec.rarity === "string" ? rec.rarity.trim() || null : null,
+      imgUrl,
+      category:
+        typeof rec.category === "string" ? rec.category.trim() || null : null,
+    });
+  }
+  return out.sort((a, b) => a.cardId.localeCompare(b.cardId));
+}
+
+/** `onepiece:op05-062-p1` → `onepiece:op05-062` (strip trailing `-pN` groups). */
+export function onepieceBasePrintKey(printKey: string): string | null {
+  const key = printKey.trim().toLowerCase();
+  if (!key.startsWith(`${ONEPIECE_PRINT_GAME}:`)) return null;
+  const base = key.replace(/(?:-p\d+)+$/i, "");
+  return base !== key ? base : null;
+}
+
+export function buildOnepiecePrintWrites(
+  locales: readonly PunkRecordsLocaleIndex[],
+): LocalPrintWrite[] {
+  const byKey = new Map<
+    string,
+    {
+      printKey: string;
+      setCode: string;
+      number: string;
+      grouping: string | null;
+      category: string | null;
+      sourceUrl: string | null;
+      titles: Map<string, { fullName: string; rarity: string | null }>;
+    }
+  >();
+
+  for (const locale of locales) {
+    for (const card of locale.cards) {
+      const identity = onepiecePrintIdentity(card.cardId);
+      const printKey = onepiecePrintKey(card.cardId);
+      if (!identity || !printKey) continue;
+      let row = byKey.get(printKey);
+      if (!row) {
+        row = {
+          printKey,
+          setCode: identity.set,
+          number: identity.number,
+          grouping: identity.grouping ?? null,
+          category: card.category,
+          sourceUrl: card.imgUrl,
+          titles: new Map(),
+        };
+        byKey.set(printKey, row);
+      }
+      if (!row.category && card.category) row.category = card.category;
+      if (!row.sourceUrl && card.imgUrl) row.sourceUrl = card.imgUrl;
+      if (card.name && !row.titles.has(locale.lang)) {
+        row.titles.set(locale.lang, {
+          fullName: card.name,
+          rarity: card.rarity,
+        });
+      }
+    }
+  }
+
+  // Parallels sometimes ship without a name in punk-records — inherit the base.
+  for (const row of byKey.values()) {
+    if (row.titles.size > 0) continue;
+    const baseKey = onepieceBasePrintKey(row.printKey);
+    if (!baseKey) continue;
+    const base = byKey.get(baseKey);
+    if (!base?.titles.size) continue;
+    for (const [lang, title] of base.titles) {
+      row.titles.set(lang, { ...title });
+    }
+    if (!row.category && base.category) row.category = base.category;
+  }
+
+  return [...byKey.values()]
+    .map((row) => ({
+      printKey: row.printKey,
+      setCode: row.setCode,
+      number: row.number,
+      cardType: row.setCode,
+      grouping: row.grouping,
+      category: row.category,
+      sourceUrl: row.sourceUrl,
+      titles: [...row.titles.entries()].map(([lang, t]) => ({
+        lang,
+        fullName: t.fullName,
+        rarity: t.rarity,
+      })),
+    }))
+    .sort((a, b) => a.printKey.localeCompare(b.printKey));
+}
+
+async function downloadJson(url: string): Promise<unknown | null> {
+  return softRetryNull(async () => {
+    const res = await httpGet<unknown>(url, {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+      timeout: 120_000,
+      noDedup: true,
+      validateStatus: (s: number) => s === 200,
+    });
+    return res.data ?? null;
+  }, 4, 800);
+}
+
+async function downloadImage(
+  url: string,
+  referer: string,
+): Promise<Buffer | null> {
+  return downloadCardFaceBytes(url, {
+    referer,
+    minBytes: 500,
+    timeoutMs: 40_000,
+  });
+}
+
+export type PunkRecordsHarvest = {
+  locales: number;
+  cards: number;
+  ok: number;
+  skip: number;
+  fail: number;
+};
+
+/**
+ * Revalidate punk-records indexes (LorcanaJSON / Pokémon CDN style).
+ *
+ * Always GETs upstream. Writes only when the payload moved (or `--force`).
+ * Skipping forever on a local staging file froze OPTCG on the first harvest.
+ */
+export async function harvestPunkRecords(
+  opts: { force?: boolean; stagingDir?: string } = {},
+): Promise<PunkRecordsHarvest> {
+  const staging = opts.stagingDir ?? onepiecePunkStagingDir();
+  mkdirSync(staging, { recursive: true });
+  let ok = 0;
+  let skip = 0;
+  let fail = 0;
+  let cards = 0;
+
+  for (const { punk, lang } of PUNK_RECORDS_LOCALES) {
+    const dest = path.join(staging, `${lang}.cards_by_id.json`);
+    const data = await downloadJson(punkRecordsRawUrl(punk));
+    if (!data || typeof data !== "object") {
+      fail += 1;
+      if (existsSync(dest)) {
+        try {
+          cards += Object.keys(JSON.parse(readFileSync(dest, "utf8"))).length;
+        } catch {
+          /* ignore */
+        }
+      }
+      continue;
+    }
+    const next = `${JSON.stringify(data)}\n`;
+    const count = Object.keys(data as object).length;
+    const prior =
+      !opts.force && existsSync(dest) ? readFileSync(dest, "utf8") : null;
+    if (prior === next) {
+      skip += 1;
+      cards += count;
+      continue;
+    }
+    writeFileSync(dest, next, "utf8");
+    ok += 1;
+    cards += count;
+    console.log(`   punk-records ${lang} — ${count} cartes`);
+  }
+
+  return {
+    locales: PUNK_RECORDS_LOCALES.length,
+    cards,
+    ok,
+    skip,
+    fail,
+  };
+}
+
+export function loadPunkRecordsLocales(
+  stagingDir = resolvePunkRecordsDir(),
+): PunkRecordsLocaleIndex[] {
+  const out: PunkRecordsLocaleIndex[] = [];
+  for (const { lang } of PUNK_RECORDS_LOCALES) {
+    const file = path.join(stagingDir, `${lang}.cards_by_id.json`);
+    if (!existsSync(file)) continue;
+    const cards = parsePunkRecordsCardsById(
+      JSON.parse(readFileSync(file, "utf8")),
+    );
+    out.push({ lang, cards });
+  }
+  return out;
+}
+
+/**
+ * Sets from punk-records staging (or a light FR fetch) — shelf picker must
+ * see extensions before the local sqlite harvest catches up.
+ */
+export async function listOnepieceRemoteSets(opts?: {
+  stagingDir?: string;
+  signal?: AbortSignal;
+}): Promise<{ id: string; label: string }[]> {
+  let locales = loadPunkRecordsLocales(
+    opts?.stagingDir ?? resolvePunkRecordsDir(),
+  );
+  if (!locales.length) {
+    try {
+      const res = await httpGet<unknown>(punkRecordsRawUrl("french"), {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+        timeout: 20_000,
+        signal: opts?.signal,
+      });
+      const cards = parsePunkRecordsCardsById(res.data);
+      if (cards.length) locales = [{ lang: "fr", cards }];
+    } catch {
+      return [];
+    }
+  }
+  const byId = new Map<string, string>();
+  for (const locale of locales) {
+    for (const card of locale.cards) {
+      const identity = onepiecePrintIdentity(card.cardId);
+      if (!identity?.set) continue;
+      const id = identity.set.trim().toLowerCase();
+      if (!id || byId.has(id)) continue;
+      byId.set(id, id.toUpperCase());
+    }
+  }
+  return [...byId.entries()].map(([id, label]) => ({ id, label }));
+}
+
+/**
+ * Titleless parallel keys (`…-pN`) inherit the base print's titles.
+ * Ghost parallels minted outside punk-records still get a name this way.
+ */
+export function densifyOnepieceParallelTitles(
+  index: LocalPrintsIndex,
+): { filled: number } {
+  const dbPath = index.dbPath();
+  if (!existsSync(dbPath)) return { filled: 0 };
+
+  const db = new DatabaseSync(dbPath, { readOnly: true });
+  const writes: LocalPrintWrite[] = [];
+  try {
+    const missing = (
+      db
+        .prepare(
+          `SELECT print_key AS printKey FROM prints p
+           WHERE print_key GLOB 'onepiece:*-p[0-9]*'
+             AND NOT EXISTS (
+               SELECT 1 FROM print_titles t WHERE t.print_key = p.print_key
+             )`,
+        )
+        .all() as Array<{ printKey: string }>
+    ).map((row) => row.printKey);
+
+    const titlesFor = db.prepare(
+      `SELECT lang, full_name AS fullName, rarity FROM print_titles WHERE print_key = ?`,
+    );
+    const printMeta = db.prepare(
+      `SELECT set_code AS setCode, number, grouping, category, source_url AS sourceUrl
+         FROM prints WHERE print_key = ?`,
+    );
+
+    for (const printKey of missing) {
+      const baseKey = onepieceBasePrintKey(printKey);
+      if (!baseKey) continue;
+      const titles = titlesFor.all(baseKey) as Array<{
+        lang: string;
+        fullName: string;
+        rarity: string | null;
+      }>;
+      if (!titles.length) continue;
+      const meta = printMeta.get(printKey) as
+        | {
+            setCode: string;
+            number: string;
+            grouping: string | null;
+            category: string | null;
+            sourceUrl: string | null;
+          }
+        | undefined;
+      if (!meta) continue;
+      writes.push({
+        printKey,
+        setCode: meta.setCode,
+        number: meta.number,
+        cardType: meta.setCode,
+        grouping: meta.grouping,
+        category: meta.category,
+        sourceUrl: meta.sourceUrl,
+        titles: titles.map((t) => ({
+          lang: t.lang,
+          fullName: t.fullName,
+          rarity: t.rarity,
+        })),
+      });
+    }
+  } finally {
+    db.close();
+  }
+
+  if (!writes.length) return { filled: 0 };
+  return { filled: index.writePrints(writes).prints };
+}
+
+export function seedOnepieceFromPunkRecords(
+  index: LocalPrintsIndex,
+  opts: { stagingDir?: string } = {},
+): { prints: number; titles: number } {
+  const locales = loadPunkRecordsLocales(
+    opts.stagingDir ?? onepiecePunkStagingDir(),
+  );
+  const writes = buildOnepiecePrintWrites(locales);
+  if (writes.length) index.writePrints(writes);
+  densifyOnepieceParallelTitles(index);
+  return {
+    prints: writes.length,
+    titles: writes.reduce((n, w) => n + w.titles.length, 0),
+  };
+}
+
+export type OnepieceFacesInstall = {
+  faces: number;
+  skip: number;
+  fail: number;
+};
+
+/**
+ * Pose `art.bandai.webp` sous `cards/{lang}/{set}/{card}/` (`packCardDir`).
+ * Préfère l'URL de la locale ; sinon emprunte une autre langue du ledger /
+ * `prints.source_url`.
+ */
+export async function installOnepieceBandaiFaces(
+  index: LocalPrintsIndex,
+  opts: {
+    force?: boolean;
+    stagingDir?: string;
+    delayMs?: number;
+    /** Restrict to these locale codes (`ja`, `fr`, `en`). */
+    langs?: readonly string[];
+    /** Restrict to these set codes (`eb05`, `op01`, …). */
+    sets?: readonly string[];
+    /** Restrict to these printKeys (gap-fill / audit). */
+    printKeys?: readonly string[];
+  } = {},
+): Promise<OnepieceFacesInstall> {
+  const locales = loadPunkRecordsLocales(
+    opts.stagingDir ?? resolvePunkRecordsDir(),
+  );
+  const langFilter = opts.langs?.length
+    ? new Set(opts.langs.map((l) => l.trim().toLowerCase()).filter(Boolean))
+    : null;
+  const setFilter = opts.sets?.length
+    ? new Set(opts.sets.map((s) => s.trim().toLowerCase()).filter(Boolean))
+    : null;
+  const keyFilter = opts.printKeys?.length
+    ? new Set(
+        opts.printKeys.map((k) => k.trim().toLowerCase()).filter(Boolean),
+      )
+    : null;
+  const byKeyLang = new Map<string, PunkRecordsCard>();
+  for (const locale of locales) {
+    for (const card of locale.cards) {
+      const printKey = onepiecePrintKey(card.cardId);
+      if (!printKey || !card.imgUrl) continue;
+      byKeyLang.set(`${printKey}:${locale.lang}`, card);
+    }
+  }
+
+  const writes = buildOnepiecePrintWrites(locales).filter((row) => {
+    if (setFilter && !setFilter.has(row.setCode.toLowerCase())) return false;
+    if (keyFilter && !keyFilter.has(row.printKey.toLowerCase())) return false;
+    return true;
+  });
+  let faces = 0;
+  let skip = 0;
+  let fail = 0;
+  let processed = 0;
+  const assets: LocalPrintAssetWrite[] = [];
+  const delayMs = opts.delayMs ?? 40;
+  const titleSlots = writes.flatMap((row) =>
+    row.titles
+      .filter((title) => !langFilter || langFilter.has(title.lang))
+      .map((title) => ({ row, title })),
+  );
+  const total = titleSlots.length;
+  console.log(`   faces — ${total} slot${total === 1 ? "" : "s"} (tirages × langues)`);
+
+  const progressEvery = total <= 250 ? 25 : 250;
+  const maybeProgress = () => {
+    if (processed === total || processed % progressEvery === 0) {
+      console.log(
+        `   faces ${processed}/${total} — ok=${faces} skip=${skip} fail=${fail}`,
+      );
+    }
+  };
+
+  for (const { row, title } of titleSlots) {
+      processed += 1;
+      const disk = cardDiskIdFromPrintKey(row.printKey, title.lang);
+      if (!disk) {
+        fail += 1;
+        maybeProgress();
+        continue;
+      }
+      // Contrat universel : cards/{lang}/{set}/{card}/ (pas set/lang).
+      const destDir = packCardDir(ONEPIECE_PACK_ID, disk);
+      mkdirSync(destDir, { recursive: true });
+      const art = `art.${SOURCE_ID}.webp`;
+      const dest = path.join(destDir, art);
+      if (!opts.force && existsSync(dest)) {
+        skip += 1;
+        assets.push({
+          printKey: row.printKey,
+          lang: title.lang,
+          art,
+          sourceUrl:
+            byKeyLang.get(`${row.printKey}:${title.lang}`)?.imgUrl ??
+            row.sourceUrl,
+        });
+        maybeProgress();
+        continue;
+      }
+
+      const preferred =
+        byKeyLang.get(`${row.printKey}:${title.lang}`) ??
+        [...byKeyLang.entries()].find(([k]) =>
+          k.startsWith(`${row.printKey}:`),
+        )?.[1];
+      const imgUrl = preferred?.imgUrl ?? row.sourceUrl;
+      if (!imgUrl) {
+        fail += 1;
+        maybeProgress();
+        continue;
+      }
+      const referer = imgUrl.includes("fr.onepiece")
+        ? "https://fr.onepiece-cardgame.com/cardlist/"
+        : imgUrl.includes("en.onepiece")
+          ? "https://en.onepiece-cardgame.com/cardlist/"
+          : "https://www.onepiece-cardgame.com/cardlist/";
+      const buf = await downloadImage(imgUrl, referer);
+      if (!buf) {
+        fail += 1;
+        maybeProgress();
+        continue;
+      }
+      // Bandai sert du PNG (EN) ou du WebP (FR) — on normalise en lossless WebP.
+      try {
+        writeFileSync(dest, await toLosslessWebp(buf));
+      } catch {
+        fail += 1;
+        maybeProgress();
+        continue;
+      }
+      faces += 1;
+      assets.push({
+        printKey: row.printKey,
+        lang: title.lang,
+        art,
+        sourceUrl: imgUrl,
+      });
+      maybeProgress();
+      if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
+  }
+
+  if (assets.length) index.writeAssets(assets);
+  return { faces, skip, fail };
+}
+
+export { formatOnepieceReference };

@@ -1,0 +1,69 @@
+{
+  "source": "s5-starter-qty-web-hunt",
+  "observed": "2026-10-01",
+  "kind": "research-dig",
+  "ingest": "none — still no qty / shared commons",
+  "trigger": "Poster exclusives locked (poster-starters-s5-2026-10-01.json) — re-hunt with named NI/TE/TA",
+  "queries": [
+    "La quête / Un nouveau départ + NI-218 Jiraya / NI-229 Kakashi / NI-197 Kuromaru",
+    "composition / contenu / ×2 / qty + starter S5",
+    "IT L'eredità del sogno mazzi 40 (mirror FR)",
+    "eBay / joueur.ch / UltraJeux product pages",
+    "Wayback cartes-naruto manga-news-78 + catalogue_s5.htm",
+    "forum-cartes-naruto / wonaruto / narutocarddassfrance"
+  ],
+  "hits": [
+    {
+      "id": "ultrajeux-1044-1045",
+      "finding": "Always 40 cards + « 25 exclusives » boilerplate — no names, no qty. Matches poster exclusive count."
+    },
+    {
+      "id": "manga-news-deck-serie-5",
+      "url": "https://www.manga-news.com/index.php/goodie/Naruto-Deck-Serie-5",
+      "finding": "Full S5 checklist dump (rarity Commune/Holo) — NOT starter lots. Title « Deck Serie 5 » is a false friend."
+    },
+    {
+      "id": "manga-news-78-wayback",
+      "url": "http://web.archive.org/web/20080919112624/http://www.cartes-naruto.com:80/manga-news-78-sortie-serie-5-naruto.html",
+      "finding": "Packshots + shop links only; spoilers Quartet/Tsunade-Jiraya — zero starter 40 list."
+    },
+    {
+      "id": "catalogue_s5",
+      "finding": "Wayback available=false ; CDX []. Still never captured."
+    },
+    {
+      "id": "liste_cartes_s5-stars",
+      "path": "staging/carddass-fr/pages/naruto__liste_cartes_s5.htm",
+      "finding": "HTML * /** polluted by adjacent revival image links (e.g. Sasuke/Kakashi/Kuromaru). Poster membership wins; NI-197 on Nouveau départ confirmed. Do not re-parse stars for guaranteedPrintKeys."
+    },
+    {
+      "id": "it-emporio-cardgameclub",
+      "finding": "IT starter sealed = 40 + 2 holo claim on box text; no printKey list for either mazzo."
+    },
+    {
+      "id": "forums-ebay-joueur",
+      "finding": "No sealed-open inventaire with qty. joueur.ch still sealed packshots only."
+    }
+  ],
+  "softSignalsNotIngested": [],
+  "ingestedFromThisPass": [
+    {
+      "id": "two-holos-among-exclusives",
+      "note": "User 2026-10-01 : rareté Holo annoncée → map finish. Quête NI-218+NI-313 ; Nouveau NI-219+NI-229 → products-contents guaranteedPrints."
+    }
+  ],
+  "pass2": "s5-starter-qty-web-hunt-pass2-2026-10-01.json — Coleka/DE/EN/JP traps, still no FR qty",
+  "pass3": "s5-starter-qty-web-hunt-pass3-2026-10-01.json — Parence SKU map 26469–26472; IT/ES/NCF; still no FR qty",
+  "pass4": "s5-leboncoin-vendeur-photos-2026-10-01.json — LBC Quête ouverte + posters ; still no qty list",
+  "stillNeeded": [
+    "P0 — Spread 40 cartes Quête/Nouveau avec qty (demander au vendeur LBC)",
+    "P0 — Pages intérieures livret si checklist deck (couverture seule reçue)",
+    "P1 — joueur.ch sealed photos livret",
+    "P2 — catalogue_s5.htm / Parence p-26471 WARC"
+  ],
+  "doNot": [
+    "Invent the 15 shared commons to reach 40",
+    "contentsKnown=true from exclusives alone",
+    "Trust liste_cartes_s5 star adjacency over poster"
+  ]
+}

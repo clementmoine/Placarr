@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import type { ItemPrices } from "@/lib/api/items";
 import type { MetadataResult } from "@/types/metadataProvider";

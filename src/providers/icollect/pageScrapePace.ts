@@ -1,4 +1,4 @@
-import axios from "axios";
+import { isAxiosError } from "@/lib/http/httpClient";
 
 export type ICollectFetchErrorKind = "rate_limited" | "transient" | "fatal";
 
@@ -49,7 +49,7 @@ function parseRetryAfterMs(value: unknown): number | null {
 export function classifyICollectFetchError(
   error: unknown,
 ): ICollectFetchErrorKind {
-  if (axios.isAxiosError(error)) {
+  if (isAxiosError(error)) {
     const status = error.response?.status;
     if (status === 429 || status === 403) return "rate_limited";
     if (status === 503 || status === 502 || status === 504) return "transient";
@@ -61,7 +61,7 @@ export function classifyICollectFetchError(
 }
 
 export function readICollectRetryAfterMs(error: unknown): number | null {
-  if (!axios.isAxiosError(error)) return null;
+  if (!isAxiosError(error)) return null;
   const header =
     error.response?.headers?.["retry-after"] ??
     error.response?.headers?.["Retry-After"];

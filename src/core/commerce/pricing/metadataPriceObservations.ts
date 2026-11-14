@@ -1,4 +1,7 @@
-import { formatProviderSourceLabel, isReferencePriceSource } from "@/core/catalog/catalog";
+import {
+  formatProviderSourceLabel,
+  isReferencePriceSource,
+} from "@/core/catalog/catalog";
 import type { MetadataFact } from "@/types/metadataProvider";
 
 import {
@@ -7,6 +10,10 @@ import {
   type PriceObservation,
   type SerializedPriceObservation,
 } from "./resolver";
+
+export type { CatalogEstimateObservationDisplay } from "./catalogEstimateDisplay";
+export { formatCatalogEstimateObservationRange } from "./catalogEstimateDisplay";
+
 
 function parseEuroAmountCents(token: string): number | null {
   const amount = Number.parseFloat(token.replace(",", "."));
@@ -84,6 +91,20 @@ export function parseCatalogEstimatePricing(
     if (minCents != null) return { minCents, displayValue };
   }
 
+  /*
+    Point estimate (« 5 € », « 0,10 € ») — côtes collectionneur / quotes
+    approximatives, pas seulement les fourchettes Bédéthèque.
+  */
+  const singleMatch = displayValue.match(
+    /^(\d+(?:[.,]\d+)?)\s*(?:€|euros?)?$/i,
+  );
+  if (singleMatch) {
+    const cents = parseEuroAmountCents(singleMatch[1]);
+    if (cents != null) {
+      return { minCents: cents, maxCents: cents, displayValue };
+    }
+  }
+
   return null;
 }
 
@@ -97,8 +118,7 @@ function parseEuroCents(value?: string | null): number | null {
 
 function isCatalogEstimateFact(fact: MetadataFact): boolean {
   return (
-    fact.kind === "price" &&
-    /^estimation$/i.test((fact.label ?? "").trim())
+    fact.kind === "price" && /^estimation$/i.test((fact.label ?? "").trim())
   );
 }
 
@@ -245,12 +265,16 @@ function dedupePriceObservations(
   return deduped;
 }
 
-function hasPriceSummary(prices: BarcodePricesResult | null | undefined): boolean {
+function hasPriceSummary(
+  prices: BarcodePricesResult | null | undefined,
+): boolean {
   if (!prices) return false;
   return (
     prices.priceNew != null ||
     prices.priceUsed != null ||
-    prices.priceUsedCIB != null
+    prices.priceUsedCIB != null ||
+    prices.priceEstimated != null ||
+    prices.priceEstimatedFoil != null
   );
 }
 
@@ -324,8 +348,6 @@ function mergeSourceLists(
 
   return { sources, labels };
 }
-
-export { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 
 function hasCatalogEstimateOffers(offers: PriceObservation[]): boolean {
   return offers.some(

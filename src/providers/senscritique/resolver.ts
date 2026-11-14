@@ -2,7 +2,7 @@ import {
   acceptRetailerCatalogCandidate,
   retailerSearchHitLimit,
 } from "@/core/commerce/retailer/metadataLookup";
-import { formatScore } from "@/core/enrich/searchUtils";
+import { formatScore } from "@/core/enrich/search/searchUtils";
 import {
   resolveGameAttachmentPlatformKey,
   withMetadataPlatformKeys,
@@ -67,7 +67,7 @@ function buildSensCritiqueFacts(product: SensCritiqueProduct): MetadataFact[] {
     facts.push({
       kind: "genre",
       label: "Genre",
-      value: product.genres.join(", "),
+      value: product.genres.join(" • "),
       source: "senscritique",
       confidence: 0.7,
       priority: 62,
@@ -160,7 +160,7 @@ export function sensCritiqueAliases(
 
 export function mapSensCritiqueMetadata(
   product: SensCritiqueProduct,
-  ctx: {
+  _ctx: {
     platform?: string | null;
     shelfName?: string | null;
   } = {},

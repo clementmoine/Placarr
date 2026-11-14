@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "pack": "naruto/mythos",
+  "updatedAt": "2026-11-07",
+  "skus": {
+    "kana-boruto-two-blue-vortex-tome-6": {
+      "source": "curated/sources/kana-boruto-tbv6-vv2-promo.json — tweet @NarutoMythosTCG + ISBN Kana 9782505142133",
+      "verifiedAt": "2026-11-07",
+      "notes": "Manga Kana Boruto Two Blue Vortex t.6 — **1 carte promo** Mythos `ks1promo-0133-vv2` (133/130 V) garantie dans le **premier tirage** uniquement. contentsKnown=true : composition inventoriée (1 carte fixe).",
+      "packsContained": 1,
+      "cardsPerPack": 1,
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "contentsKnown": true,
+      "containsPrintsIsPreview": false,
+      "declaredCardCount": 1,
+      "guaranteedPrintKeys": ["mythos:ks1promo-0133-vv2"]
+    }
+  }
+}

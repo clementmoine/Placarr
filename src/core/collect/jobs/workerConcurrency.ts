@@ -1,8 +1,10 @@
 /**
- * Interactive worker concurrency: I/O-bound enrich vs single FlareSolverr browser.
+ * Interactive worker concurrency: I/O-bound enrich vs single Byparr browser.
  */
 export function resolveInteractiveWorkerConcurrency(
-  env: NodeJS.ProcessEnv = process.env,
+  // Plain record, not `NodeJS.ProcessEnv`: Next declares NODE_ENV required
+  // there, which would force every caller to fake it.
+  env: Record<string, string | undefined> = process.env,
 ): { concurrency: number; cappedForFlare: boolean } {
   const raw = Number.parseInt(
     env.WORKER_CONCURRENCY ||
@@ -11,16 +13,16 @@ export function resolveInteractiveWorkerConcurrency(
       "",
     10,
   );
-  const flareConfigured = Boolean(env.FLARESOLVERR_URL?.trim());
-  const forceHighConcurrency = Boolean(
-    env.WORKER_CONCURRENCY_FORCE?.trim(),
+  const flareConfigured = Boolean(
+    env.BYPARR_URL?.trim() || env.FLARESOLVERR_URL?.trim(),
   );
-  // Default 6 drains manga/game backlogs when scrapes are direct. With Flare
+  const forceHighConcurrency = Boolean(env.WORKER_CONCURRENCY_FORCE?.trim());
+  // Default 6 drains manga/game backlogs when scrapes are direct. With Byparr
   // configured, default 2 — the remote browser is serial (AsyncQueue 1).
   const requested =
     Number.isFinite(raw) && raw > 0 ? raw : flareConfigured ? 2 : 6;
 
-  // Cap unless explicitly forced: concurrency 6 + Flare serial → 90s soft
+  // Cap unless explicitly forced: concurrency 6 + serial browser → 90s soft
   // timeouts and abandoned progressive stores (audit P2).
   if (flareConfigured && !forceHighConcurrency && requested > 3) {
     return { concurrency: 3, cappedForFlare: true };

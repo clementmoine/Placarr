@@ -1,5 +1,11 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "tw-animate-css";
+
+/* UI only — auto-scan of the repo walked providers, venvs and `data/`. */
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+/* Cover aspect / max-width strings live here, not in app/components. */
+@source "../lib/text/cardFormat.ts";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -125,11 +131,94 @@
    keyword makes the browser remember each card's real size once painted, so the
    trailing length is only a first-guess used for cards never yet revealed. */
 @utility cv-card-item {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 200px;
+  /* content-visibility:auto provoquait des repeints/pop-in au défilement
+     (desktop et mobile). On garde les cartes rendues en permanence. */
+  content-visibility: visible;
+}
+
+@media (pointer: coarse) {
+  .cv-card-item img {
+    transition: none !important;
+  }
 }
 
 @utility cv-card-shelf {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 150px;
+  content-visibility: visible;
+}
+
+/* Custom properties the foil recipes lean on. Registered so they interpolate
+   if anything ever transitions them. Idle sheen is a fake hover on the shared
+   foil clock (`idlePointerFromSeconds`) — `--combined` travels on its own
+   course there, because x+y on the anti-diagonal cancels. Reduced motion is
+   handled at the subscription site. */
+@property --colorX {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --colorY {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --combined {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+@property --opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/*
+  House `flare` = Pokémon TCG gallery `card__shine` lobe (tcg.pokemon.com),
+  motion like every other CSS foil: `--combined` from pointer / idle lean.
+  Mouse-out blends through `useFoilIdleLean` — no CSS timer that would restart
+  at 0% and snap. Travel: combined 0% → -100%; 100% → 0; 200% → +100%.
+*/
+.holo-flare-shimmer {
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+/* Gallery: wrapper translates; `::after` is the rotated soft white lobe. */
+.holo-flare-shimmer__sweep {
+  position: absolute;
+  inset: 0;
+  transform: translate(
+    calc(var(--combined, 100%) - 100%),
+    calc(var(--combined, 100%) - 100%)
+  );
+  will-change: transform;
+}
+
+.holo-flare-shimmer__sweep::after {
+  content: "";
+  position: absolute;
+  top: 40%;
+  left: -50%;
+  width: 200%;
+  height: 20%;
+  opacity: 0.7;
+  pointer-events: none;
+  /* Blend on the lobe only — full-layer soft-light fringes card corners. */
+  mix-blend-mode: soft-light;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    white,
+    rgba(255, 255, 255, 0)
+  );
+  transform: rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-flare-shimmer {
+    opacity: 0;
+  }
 }

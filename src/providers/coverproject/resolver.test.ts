@@ -105,7 +105,9 @@ describe("fetchFromCoverProject", () => {
           provenance: expect.objectContaining({
             providerId: "coverproject",
             sourceDocumentRole: "reference_record",
-            sourceUrl: "https://www.thecoverproject.net/",
+            sourceUrl: `https://www.thecoverproject.net/search_simple.php?name=${encodeURIComponent(
+              "The Legend of Zelda: Skyward Sword Nintendo Wii",
+            )}`,
             evidenceSignals: [
               "structured_data",
               "title_match",

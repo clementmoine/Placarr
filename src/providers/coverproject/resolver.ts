@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
   observationsFromMetadataResult,
@@ -34,7 +34,7 @@ async function fetchCoverFromCoverProjectSearch(
   for (const q of queries) {
     try {
       const searchUrl = `https://www.thecoverproject.net/search_simple.php?name=${encodeURIComponent(q)}`;
-      const res = await axios.get<string>(searchUrl, {
+      const res = await httpGet<string>(searchUrl, {
         headers: SEARCH_HEADERS,
         timeout: 12000,
       });
@@ -125,7 +125,10 @@ export async function fetchFromCoverProject(
         providerId: "coverproject",
         providerLabel: "Cover Project",
         sourceDocumentRole: "reference_record",
-        sourceUrl: "https://www.thecoverproject.net/",
+        // Search results for this title — not the site homepage.
+        sourceUrl: `https://www.thecoverproject.net/search_simple.php?name=${encodeURIComponent(
+          [name, platform].filter(Boolean).join(" ").trim() || name,
+        )}`,
         evidenceSignals,
         titleRole: "object_title",
         aliasRole: "provider_grouped_alias",

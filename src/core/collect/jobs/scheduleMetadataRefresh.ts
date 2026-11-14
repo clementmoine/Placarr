@@ -1,4 +1,4 @@
-import type { Type } from "@prisma/client";
+import type { Type } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
 import {
@@ -18,6 +18,7 @@ export type ScheduleItemMetadataRefreshInput = {
   barcode?: string | null;
   shelfName: string;
   clearRemoteCover?: boolean;
+  preserveUserCover?: boolean;
   bypassMetadataCache?: boolean;
   forceRefresh?: boolean;
   userId?: string | null;
@@ -82,6 +83,7 @@ function toMetadataRefreshPayload(
     shelfName: input.shelfName,
     barcode: input.barcode,
     clearRemoteCover: input.clearRemoteCover,
+    preserveUserCover: input.preserveUserCover,
     bypassMetadataCache: input.bypassMetadataCache,
     forceRefresh: input.forceRefresh,
     generation,
@@ -143,7 +145,8 @@ export function scheduleBatchItemMetadataRefresh(
             barcode: next.barcode,
             shelfType: shelf.type,
             shelfName: shelf.name,
-            bypassMetadataCache: false,
+            // Force a live provider pass: a prior miss must not poison the batch.
+            bypassMetadataCache: true,
             forceRefresh: true,
             userId: existing?.userId,
           },

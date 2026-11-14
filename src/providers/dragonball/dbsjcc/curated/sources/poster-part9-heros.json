@@ -1,0 +1,190 @@
+{
+  "source": "dbzcollection packshot part9-poster-1217 + Autres infos Deck héros",
+  "observed": "2026-10-04",
+  "page": "product art /assets/dragonball/jcc/products/part9-poster-1217/fr/art.dbzcollection.jpg",
+  "note": "Poster Série 9 Deck HÉROS : « 29 cartes » uniques + X2* (doubles) → 32. X2* lus sur le poster : D-401, D-526, D-603. Identité des 29 via canal dbzc « Deck héros ».",
+  "productSlug": "part9-starter-1216",
+  "uniqueCards": 29,
+  "declaredCardCount": 32,
+  "x2": [
+    "D-401",
+    "D-526",
+    "D-603"
+  ],
+  "cards": [
+    {
+      "printKey": "dbsjcc:part9-d0123",
+      "ref": "D-123",
+      "name": "Dragon ball à 1 étoile",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0124",
+      "ref": "D-124",
+      "name": "Dragon ball à 2 étoiles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0125",
+      "ref": "D-125",
+      "name": "Dragon ball à 3 étoiles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0126",
+      "ref": "D-126",
+      "name": "Dragon ball à 4 étoiles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0127",
+      "ref": "D-127",
+      "name": "Dragon ball à 5 étoiles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0128",
+      "ref": "D-128",
+      "name": "Dragon ball à 6 étoiles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0129",
+      "ref": "D-129",
+      "name": "Dragon ball à 7 étoiles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0138",
+      "ref": "D-138",
+      "name": "Great saiyaman",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0168",
+      "ref": "D-168",
+      "name": "Tenshinhan",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0170",
+      "ref": "D-170",
+      "name": "Mr satan",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0196",
+      "ref": "D-196",
+      "name": "Capsule Hoïpoï !!!",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0257",
+      "ref": "D-257",
+      "name": "Bubbles",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0289",
+      "ref": "D-289",
+      "name": "Je veux une culotte !",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0305",
+      "ref": "D-305",
+      "name": "Goku",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0373",
+      "ref": "D-373",
+      "name": "Bulma",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0380",
+      "ref": "D-380",
+      "name": "Karine",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0386",
+      "ref": "D-386",
+      "name": "Piccolo",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0401",
+      "ref": "D-401",
+      "name": "Clarté durable",
+      "qty": 2
+    },
+    {
+      "printKey": "dbsjcc:part9-d0461",
+      "ref": "D-461",
+      "name": "Goku",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0467",
+      "ref": "D-467",
+      "name": "Coeur calme, colère féroce",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0526",
+      "ref": "D-526",
+      "name": "Plume",
+      "qty": 2
+    },
+    {
+      "printKey": "dbsjcc:part9-d0527",
+      "ref": "D-527",
+      "name": "Tortue",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0603",
+      "ref": "D-603",
+      "name": "Pouvoir surpassé !",
+      "qty": 2
+    },
+    {
+      "printKey": "dbsjcc:part9-d0608",
+      "ref": "D-608",
+      "name": "Mémoire du futur",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0646",
+      "ref": "D-646",
+      "name": "Suno",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0666",
+      "ref": "D-666",
+      "name": "Grégory",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0668",
+      "ref": "D-668",
+      "name": "Mr popo",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0681",
+      "ref": "D-681",
+      "name": "Videl",
+      "qty": 1
+    },
+    {
+      "printKey": "dbsjcc:part9-d0823",
+      "ref": "D-823",
+      "name": "Yamcha",
+      "qty": 1
+    }
+  ]
+}

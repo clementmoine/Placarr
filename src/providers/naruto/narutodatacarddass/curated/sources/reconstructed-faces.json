@@ -1,0 +1,16 @@
+{
+  "source": "Scans fournis par le propriétaire du catalogue",
+  "observed": "2026-09-12",
+  "ingest": "art.reconstructed en affichage — scan master Figma fourni",
+  "sourceId": "reconstructed",
+  "lang": "ja",
+  "faces": [
+    {
+      "setCode": "dn",
+      "number": "141t",
+      "printed": "DN-141T",
+      "sourceFile": "curated/cards/dn/ja/141t/art.reconstructed.png",
+      "note": "DN-141T [爆レア] うずまきナルト (Narutimate Card Battle) — master Figma 489×716 fourni"
+    }
+  ]
+}

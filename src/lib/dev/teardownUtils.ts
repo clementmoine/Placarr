@@ -62,8 +62,8 @@ export function shouldRunBookBarcodeTeardown(
 ): boolean {
   return Boolean(
     ctx.barcode &&
-      (ctx.type === "books" ||
-        ctx.barcode.startsWith("978") ||
-        ctx.barcode.startsWith("979")),
+    (ctx.type === "books" ||
+      ctx.barcode.startsWith("978") ||
+      ctx.barcode.startsWith("979")),
   );
 }

@@ -1,0 +1,1345 @@
+import {
+  fetchArrayBuffer,
+  fetchFragmentSource,
+  fetchImageBitmap,
+} from "@/core/render/foil/cache";
+import { compositeOptionalOverlay } from "./layerComposite";
+import {
+  astcFormatConstant,
+  foilForceRasterOverride,
+  foilFragmentNeedsLinearEncode,
+  foilTextureInternalFormat,
+  getFoilCapabilities,
+  preferAstcTextureUpload,
+  preferS3tcTextureUpload,
+  s3tcFormatConstant,
+} from "@/core/render/foil/capabilities";
+import { foilClockSeconds, subscribeFoilFrame } from "../clock";
+import { foilEffectsClockSeconds } from "../leanPolicy";
+
+import type {
+  FoilAstcBinding,
+  FoilFilter,
+  FoilMaterial,
+  FoilS3tcBinding,
+  FoilTextureBinding,
+  FoilWrap,
+} from "@/core/render/foil/types";
+import { hotFoilStampUniforms } from "@/core/render/foil/backend";
+import {
+  cameraPosFromTilt,
+  lightDirectionFromTilt,
+  meshLeanWithRestBias,
+  restLightFromSheet,
+} from "./lightDirection";
+
+import type {
+  WebglFoilRenderer,
+  WebglFoilScrollMode,
+  WebglFoilSurfaces,
+} from "./webglTypes";
+
+export type {
+  WebglFoilRenderer,
+  WebglFoilScrollMode,
+  WebglFoilSurfaces,
+} from "./webglTypes";
+
+/**
+ * The mobile app's own foil shaders, run in the browser.
+ *
+ * Fragment programs under `${assetBase}/shaders/` are extracted from the app's
+ * GLES3 build — the exact GLSL dialect WebGL2 speaks. This file supplies what
+ * the engine supplied around them: a quad, the material's recorded uniforms,
+ * and the two scroll drivers (`_SCROLLMODE_TIME` at rest, `_SCROLLMODE_TILT`
+ * under the pointer / gyroscope).
+ *
+ * Everything here is name-driven off the program's own reflection
+ * (`getActiveUniform`): the renderer knows no shader by name and carries no
+ * per-effect logic.
+ */
+
+/**
+ * Live `Card` mesh width/height (`data/pokemon/foil/card-uv-rect.json`). Portrait
+ * UVs are not isometric: equal Δu/Δv map to unequal millimetres.
+ */
+export const LIVE_CARD_ASPECT = 0.7187859711391763;
+
+/**
+ * Half-height of the Live Card in the same world units as
+ * `_WorldSpaceCameraPos` `(0, 1.7, 1.3)`.
+ *
+ * Absolute view factors (FlatSilver `B·V`, AceFoil etch, …) need a
+ * card-sized quad under that camera — unit height exaggerates edge gates.
+ * SunLava's spectrum UV, however, `normalize(cross(dFdx,dFdy))`s the
+ * worldPos field, so this scale does **not** change its rest chroma; the
+ * soft “lean bottom” look is mesh tip + light orbit, not halfH.
+ */
+export const LIVE_CARD_HALF_HEIGHT = 0.12;
+
+/**
+ * Full-screen quad → UVs, plus Unity card varyings.
+ * Lorcana frags read `vs_INTERP*`; TCG Live HoloFoil reads `vs_TEXCOORD*`
+ * (TBN rows + world pos.w from the Live VS).
+ *
+ * `u_CardLean` tips the TBN like Live rotating the Card mesh. Without it,
+ * AceFoil's CrossTexture lattice (driven by WorldToObject·N → TBN dots) stays
+ * frozen — CSS only spins the canvas; clip-space geometry stayed flat.
+ */
+const VERTEX_SRC = `#version 300 es
+layout(location = 0) in vec2 position;
+uniform vec2 u_CardLean;
+out highp vec4 vs_INTERP0;
+out highp vec4 vs_INTERP2;
+out highp vec2 vs_TEXCOORD0;
+out highp vec4 vs_TEXCOORD1;
+out highp vec4 vs_TEXCOORD2;
+out highp vec4 vs_TEXCOORD3;
+// FlatSilver / SvUltra dumps also read a mesh normal + worldPos channel.
+out highp vec3 vs_NORMAL0;
+out highp vec4 vs_TEXCOORD4;
+void main() {
+  vec2 uv = position * 0.5 + 0.5;
+  vs_INTERP0 = vec4(uv, 0.0, 0.0);
+  vs_INTERP2 = vec4(1.0);
+  vs_TEXCOORD0 = uv;
+  // Unity packing: TEXCOORD<i> = (T.<i>, B.<i>, N.<i>, worldPos.<i>) —
+  // frags read normal as (T1.z, T2.z, T3.z), worldPos as (T1.w, T2.w, T3.w).
+  // Rest lean: T=(1,0,0), B=(0,0,1), N=(0,1,0) — same as MAT _LightDirection.
+  //
+  // worldPos must vary across the card: Live's HoloFoil frags derive a
+  // per-pixel view offset from dFdx/dFdy of it — a constant leaves
+  // inversesqrt(0) = ∞ and NaN shine/spectrum UVs (no gold-rainbow sweep).
+  // Tip local XZ with the same TBN so etch-view + lattice track the lean.
+  vec3 N = normalize(vec3(u_CardLean.x, 1.0, u_CardLean.y));
+  vec3 T = vec3(1.0, 0.0, 0.0) - N * N.x;
+  float tLen = length(T);
+  T = tLen > 1e-4 ? T / tLen : normalize(cross(vec3(0.0, 0.0, 1.0), N));
+  vec3 B = cross(T, N);
+  // Live Card mesh: width=X, height=Y, face=+Z (see cardQuadFromObjText).
+  // Remap face→+Y, height→+Z; uv.y grows toward clip/card top. Scale to
+  // {@link LIVE_CARD_HALF_HEIGHT} so camera (0,1.7,1.3) sees card-sized
+  // parallax (unit height blew out SunLava at rest).
+  float halfH = ${LIVE_CARD_HALF_HEIGHT};
+  vec3 local = vec3((uv.x - 0.5) * ${LIVE_CARD_ASPECT} * 2.0 * halfH, 0.0, (uv.y - 0.5) * 2.0 * halfH);
+  vec3 worldPos = T * local.x + B * local.z;
+  vs_TEXCOORD1 = vec4(T.x, B.x, N.x, worldPos.x);
+  vs_TEXCOORD2 = vec4(T.y, B.y, N.y, worldPos.y);
+  vs_TEXCOORD3 = vec4(T.z, B.z, N.z, worldPos.z);
+  vs_NORMAL0 = N;
+  vs_TEXCOORD4 = vec4(worldPos, 1.0);
+  gl_Position = vec4(position, 0.0, 1.0);
+}`;
+
+function compile(
+  gl: WebGL2RenderingContext,
+  type: number,
+  source: string,
+): WebGLShader {
+  const shader = gl.createShader(type);
+  if (!shader) throw new Error("createShader failed");
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    throw new Error(`shader compile: ${log}`);
+  }
+  return shader;
+}
+
+function linkProgram(
+  gl: WebGL2RenderingContext,
+  fragmentSrc: string,
+): WebGLProgram {
+  const linked = gl.createProgram();
+  if (!linked) throw new Error("createProgram failed");
+  gl.attachShader(linked, compile(gl, gl.VERTEX_SHADER, VERTEX_SRC));
+  gl.attachShader(linked, compile(gl, gl.FRAGMENT_SHADER, fragmentSrc));
+  gl.linkProgram(linked);
+  if (!gl.getProgramParameter(linked, gl.LINK_STATUS)) {
+    throw new Error(`link: ${gl.getProgramInfoLog(linked)}`);
+  }
+  return linked;
+}
+
+/**
+ * Unity's `_CosTime`: `(cos(t/8), cos(t/4), cos(t/2), cos(t))` with `t` in
+ * seconds — what the Time-scroll fragments read as their light driver.
+ */
+export function foilCosTime(
+  seconds: number,
+): readonly [number, number, number, number] {
+  return [
+    Math.cos(seconds / 8),
+    Math.cos(seconds / 4),
+    Math.cos(seconds / 2),
+    Math.cos(seconds),
+  ];
+}
+
+/**
+ * Unity's `_SinTime`: `(sin(t/8), sin(t/4), sin(t/2), sin(t))`.
+ * Frost/Card reconstructs a holo angle via `1/max(|sin|,|cos|)` on `.yz` —
+ * leaving this at the WebGL zero default makes `1/|cos|` blow up whenever
+ * `cos(t/4)` or `cos(t/2)` crosses zero (black card + neon NaN edges).
+ */
+export function foilSinTime(
+  seconds: number,
+): readonly [number, number, number, number] {
+  return [
+    Math.sin(seconds / 8),
+    Math.sin(seconds / 4),
+    Math.sin(seconds / 2),
+    Math.sin(seconds),
+  ];
+}
+
+/**
+ * Unity card fragments finish with α = 1/255 and RGB already multiplied by it —
+ * an encoding the app's blit undoes when it composites the render target. The
+ * browser paints the canvas as-is, so that α lets the tile behind
+ * (`bg-white` / edge gradient) bleed through as washed horizontal bands exactly
+ * where the foil mask is dense.
+ *
+ * Restore a normal opaque colour before link.
+ */
+export function restoreOpaqueFoilOutput(source: string): string {
+  let out = source;
+  /*
+    Live HoloFoil dumps often write coverage α then premultiply colour. Our
+    canvas composites over the page (not Unity's opaque RT) — restore opaque.
+  */
+  if (out.includes("0.00392156886")) {
+    out = out.replace(
+      /SV_TARGET0\.xyz = (\w+)\.www \* \1\.xyz;\s*SV_TARGET0\.w = \1\.w;/g,
+      "SV_TARGET0.xyz = $1.xyz;\n    SV_TARGET0.w = 1.0;",
+    );
+  }
+  /*
+    FlatSilver / SvUltra GLES dumps hardcode `SV_Target0.w = 0.0` (Unity wrote
+    colour into an opaque target and ignored α). On WebGL that makes the whole
+    foil canvas invisible — force opaque coverage.
+  */
+  out = out.replace(
+    /\bSV_Target0\.w\s*=\s*0(?:\.0)?\s*;/g,
+    "SV_Target0.w = 1.0;",
+  );
+  out = out.replace(
+    /\bSV_TARGET0\.w\s*=\s*0(?:\.0)?\s*;/g,
+    "SV_TARGET0.w = 1.0;",
+  );
+  return out;
+}
+
+/**
+ * Square / isotropic motifs (`TEX_CC_PB`, `TEX_StitchedRings`, stars, confetti
+ * dots, Radiant cross lattice, …) are authored for equal UV scales. Live frags
+ * use `vec2(s, s)`, which stretches them tall on the portrait card. CSS tiles
+ * in square pixels; scale.x *= aspect so WebGL matches that isotropy.
+ *
+ * - `_Tex_CC` / `_CCPatternTex` / stars / dots: equal `vs_TEXCOORD0` tilings
+ *   near `texture(…)`.
+ * - `_CrossTexture` / Squares direction: lattice math sits between scale and
+ *   sample — rewrite every equal `vs_TEXCOORD0.xy * vec2(s,s)` in those frags.
+ */
+export function aspectCorrectSquareMotifUv(
+  source: string,
+  aspect: number = LIVE_CARD_ASPECT,
+): string {
+  if (!(aspect > 0)) return source;
+  // FlatSilver / PikachuFoil GLES dumps rename MAT `_Tex_CC` → `_CCPatternTex`.
+  const hasCc =
+    source.includes("_Tex_CC") || source.includes("_CCPatternTex");
+  const hasStarDot =
+    source.includes("_StarsTexture") ||
+    source.includes("_TexDots") ||
+    source.includes("_T_noise_dots");
+  const hasCross = source.includes("_CrossTexture");
+  const hasSquareDir = source.includes("_T_Direction_RGB_Random");
+  if (!hasCc && !hasStarDot && !hasCross && !hasSquareDir) return source;
+
+  const motifSampler =
+    "_Tex_CC(?!_)|_CCPatternTex|_StarsTexture|_TexDots|_T_noise_dots";
+
+  // Equal vec2 → earliest texture(motif) within the next 1–3 lines.
+  // Non-greedy so two back-to-back CC samples (SunPillar) each match once.
+  let out = source.replace(
+    new RegExp(
+      String.raw`vs_TEXCOORD0\.xy \* vec2\(([0-9.eE+-]+),\s*\1\)((?:[^\n]*\n){1,3}?[^\n]*texture\((${motifSampler}))`,
+      "g",
+    ),
+    (_match, scale: string, tail: string) => {
+      const s = Number(scale);
+      if (!Number.isFinite(s)) return _match;
+      return `vs_TEXCOORD0.xy * vec2(${s * aspect}, ${s})${tail}`;
+    },
+  );
+
+  // Radiant / Ace cross lattice and Squares grid: scale is followed by rotate /
+  // trunc math, not an immediate texture(). Rewrite every equal TEXCOORD0 pair
+  // (`vec2(s,s)` → unequal args, so a second pass is a no-op).
+  if (hasCross || hasSquareDir) {
+    out = out.replace(
+      /vs_TEXCOORD0\.xy \* vec2\(([0-9.eE+-]+),\s*\1\)/g,
+      (_match, scale: string) => {
+        const s = Number(scale);
+        if (!Number.isFinite(s)) return _match;
+        return `vs_TEXCOORD0.xy * vec2(${s * aspect}, ${s})`;
+      },
+    );
+  }
+
+  if (!hasStarDot && !hasCross) return out;
+
+  // Equal vec4 xyxy — Cosmos / Galaxy star grids; Ace cross quantize.
+  out = out.replace(
+    /vs_TEXCOORD0\.xyxy \* vec4\(([0-9.eE+-]+),\s*\1,\s*\1,\s*\1\)/g,
+    (_match, scale: string) => {
+      const s = Number(scale);
+      if (!Number.isFinite(s)) return _match;
+      return `vs_TEXCOORD0.xyxy * vec4(${s * aspect}, ${s}, ${s * aspect}, ${s})`;
+    },
+  );
+
+  // Paired equals `vec4(sx,sx,sz,sz)` — CrackedIce stars / Ace 192×256 grid.
+  out = out.replace(
+    /vs_TEXCOORD0\.xyxy \* vec4\(([0-9.eE+-]+),\s*\1,\s*([0-9.eE+-]+),\s*\2\)/g,
+    (_match, sx: string, sz: string) => {
+      const a = Number(sx);
+      const b = Number(sz);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return _match;
+      // Already rewritten all-equal form keeps sx===sz numerically after
+      // aspect on x — skip if this still looks like the all-equal rewrite.
+      if (a === b * aspect || b === a * aspect) return _match;
+      return `vs_TEXCOORD0.xyxy * vec4(${a * aspect}, ${a}, ${b * aspect}, ${b})`;
+    },
+  );
+
+  return out;
+}
+
+/**
+ * FlatSilver / SvUltra declare `in highp vec4 vs_TEXCOORD0` while the shared
+ * quad VS emits `vec2` (and every other Live dump already expects `vec2`).
+ * WebGL2 rejects the type mismatch at link. Those two frags only swizzle
+ * `.xy` / `.xyxy` / `.x` / `.yy` — never `.zw` — so collapse the input.
+ */
+export function alignFragmentVaryings(source: string): string {
+  return source.replace(
+    /\bin\s+highp\s+vec4\s+vs_TEXCOORD0\s*;/g,
+    "in highp vec2 vs_TEXCOORD0;",
+  );
+}
+
+/**
+ * Identity columns for a `hlslcc_mtx4x4unity_*` vec4-array uniform.
+ *
+ * GL lists the whole array as one active uniform `name[0]` whose `size` is the
+ * element count: a single `uniform4f` write fills only column `first` and
+ * leaves the rest at zero — the frags' `normalize(WorldToObject · n)` then
+ * hits `inversesqrt(0)` = NaN and takes whole effect stages with it (Live's
+ * gold-rainbow spectrum sampled a corner texel through NaN UVs).
+ */
+export function identityMatrixColumns(first: number, size: number): number[] {
+  const identity = [
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1],
+  ] as const;
+  const cols = Math.max(size, 1);
+  const data: number[] = [];
+  for (let c = 0; c < cols; c++) {
+    data.push(...(identity[first + c] ?? [0, 0, 0, 0]));
+  }
+  return data;
+}
+
+/**
+ * Unity Linear pipeline: the fragment emits linear colour and the app's sRGB
+ * framebuffer encodes it in hardware. WebGL2's default framebuffer stores the
+ * value raw, so the encode has to live in the shader — wrap `main` and apply
+ * the exact sRGB OETF to the colour output (alpha stays linear coverage).
+ *
+ * No-op when the fragment's output declaration is not found.
+ */
+export function encodeLinearFoilOutput(source: string): string {
+  const out = /layout\(location = 0\) out \w+ vec4 (\w+);/.exec(source);
+  if (!out || !source.includes("void main()")) return source;
+  const target = out[1];
+  return (
+    source.replace("void main()", "void foil_linear_main()") +
+    `
+void main() {
+  foil_linear_main();
+  vec3 lin = max(${target}.xyz, vec3(0.0));
+  ${target}.xyz = mix(
+    lin * 12.92,
+    1.055 * pow(lin, vec3(1.0 / 2.4)) - 0.055,
+    step(vec3(0.0031308), lin)
+  );
+}
+`
+  );
+}
+
+const WRAP_GL: Record<FoilWrap, number> = {
+  repeat: 0,
+  clamp: 0,
+  mirror: 0,
+  mirrorOnce: 0,
+};
+
+function wrapMode(
+  gl: WebGL2RenderingContext,
+  wrap: FoilWrap | undefined,
+): number {
+  switch (wrap) {
+    case "clamp":
+      return gl.CLAMP_TO_EDGE;
+    case "mirror":
+    case "mirrorOnce":
+      return gl.MIRRORED_REPEAT;
+    case "repeat":
+    default:
+      return gl.REPEAT;
+  }
+}
+
+function minFilter(
+  gl: WebGL2RenderingContext,
+  filter: FoilFilter | undefined,
+  mipmaps: boolean | undefined,
+): number {
+  if (!mipmaps) {
+    return filter === "point" ? gl.NEAREST : gl.LINEAR;
+  }
+  if (filter === "trilinear") return gl.LINEAR_MIPMAP_LINEAR;
+  if (filter === "point") return gl.NEAREST_MIPMAP_NEAREST;
+  return gl.LINEAR_MIPMAP_NEAREST;
+}
+
+function magFilter(
+  gl: WebGL2RenderingContext,
+  filter: FoilFilter | undefined,
+): number {
+  return filter === "point" ? gl.NEAREST : gl.LINEAR;
+}
+
+/**
+ * Role defaults when the surface URL is missing.
+ *
+ * `varnishMask` (`_CardEtch`) must be **white**, not black: Live HoloFoil
+ * multiplies foil by `shine*0.35 + etch*etch` (Stamped, AceFoil, …). Unity's
+ * unbound etch is the builtin white texture — opaque black crushed gold into
+ * a dark green mud (etch term 0 → foil × ~0.35×shine only). Cold-foil /
+ * second varnish stays black so a missing plate stays off.
+ */
+export const ROLE_TEXTURE_FALLBACK: Record<
+  string,
+  [number, number, number, number]
+> = {
+  art: [128, 128, 128, 255],
+  foilMask: [255, 255, 255, 255],
+  // Unity unbound HoloMask is white (full rainbow), not transparent.
+  holoMask: [255, 255, 255, 255],
+  varnishMask: [255, 255, 255, 255],
+  secondVarnishMask: [0, 0, 0, 255],
+  normals: [128, 128, 255, 255],
+  // Optional card layers. Transparent so a missing file leaves the face.
+  front: [0, 0, 0, 0],
+  frame: [0, 0, 0, 0],
+  ink: [0, 0, 0, 0],
+};
+
+const ROLE_FALLBACK = ROLE_TEXTURE_FALLBACK;
+
+/**
+ * Unbound motif / optional slots (Unity pathid 0) must sample as transparent.
+ * Opaque black (α=255) falsely arms alpha-gated layers — e.g. FlatSilver keeps
+ * `_UseCCFoil=1` and `_Tex_CC_Spectrum=SVHolo2` while `_Tex_CC` is unbound; Live
+ * null-textures α≈0 so the CC rainbow stays off, but α=1 lit the whole card.
+ */
+export const UNBOUND_TEXTURE_FALLBACK: [number, number, number, number] = [
+  0, 0, 0, 0,
+];
+
+function recoverFoilMaskRgb(
+  image: ImageBitmap,
+): ImageBitmap | Promise<ImageBitmap> {
+  const probe = document.createElement("canvas");
+  probe.width = Math.min(image.width, 64);
+  probe.height = Math.min(image.height, 64);
+  const ctx = probe.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return image;
+  ctx.drawImage(image, 0, 0, probe.width, probe.height);
+  const { data } = ctx.getImageData(0, 0, probe.width, probe.height);
+  let whiteRgb = 0;
+  let alphaMin = 255;
+  let alphaMax = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] > 250 && data[i + 1] > 250 && data[i + 2] > 250) whiteRgb += 1;
+    alphaMin = Math.min(alphaMin, data[i + 3]);
+    alphaMax = Math.max(alphaMax, data[i + 3]);
+  }
+  const pixels = data.length / 4;
+  const alphaVary = alphaMax - alphaMin;
+  if (whiteRgb / pixels < 0.9 || alphaVary < 40) return image;
+
+  const full = document.createElement("canvas");
+  full.width = image.width;
+  full.height = image.height;
+  const fullCtx = full.getContext("2d");
+  if (!fullCtx) return image;
+  fullCtx.drawImage(image, 0, 0);
+  const fullData = fullCtx.getImageData(0, 0, full.width, full.height);
+  const px = fullData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const a = px[i + 3];
+    px[i] = a;
+    px[i + 1] = a;
+    px[i + 2] = a;
+  }
+  fullCtx.putImageData(fullData, 0, 0);
+  return createImageBitmap(full);
+}
+
+type ProgramBindings = {
+  program: WebGLProgram;
+  tiltLoc: WebGLUniformLocation | null;
+  /** Tips Live TBN in the VS (AceFoil lattice, etch view, …). */
+  cardLeanLoc: WebGLUniformLocation | null;
+  /** TCG Live HoloFoil: lean as a front-facing light vector. */
+  lightDirLoc: WebGLUniformLocation | null;
+  lightDirSize: 3 | 4;
+  /** View-dependent frags (SolidColor, …) — moved with lean each draw. */
+  cameraPosLoc: WebGLUniformLocation | null;
+  cameraPosSize: 3 | 4;
+  cosTimeLoc: WebGLUniformLocation | null;
+  sinTimeLoc: WebGLUniformLocation | null;
+  timeLoc: WebGLUniformLocation | null;
+  deviceRotLoc: WebGLUniformLocation | null;
+  samplers: {
+    location: WebGLUniformLocation;
+    unit: number;
+    slot: string;
+    /** Frost packs EffectsLayer into `sampler2DArray`. */
+    target: "2d" | "2d_array";
+  }[];
+};
+
+void WRAP_GL;
+
+function supportsAstcOnContext(gl: WebGL2RenderingContext): boolean {
+  return (
+    getFoilCapabilities().supportsAstc ||
+    gl.getExtension("WEBGL_compressed_texture_astc") !== null
+  );
+}
+
+export function createWebglFoilRenderer(
+  canvas: HTMLCanvasElement,
+  material: FoilMaterial,
+  surfaces: WebglFoilSurfaces,
+  assetBase: string,
+): WebglFoilRenderer {
+  const gl = canvas.getContext("webgl2", {
+    premultipliedAlpha: true,
+    alpha: true,
+  });
+  if (!gl || gl.isContextLost()) {
+    throw new Error("WebGL2 indisponible");
+  }
+
+  const shaderBase = `${assetBase}/shaders/`;
+  const textureBase = `${assetBase}/textures/`;
+
+  let tiltProgram: ProgramBindings | null = null;
+  let timeProgram: ProgramBindings | null = null;
+  let active: ProgramBindings | null = null;
+  // Always start on the clock. Live single-frag (Pokémon) reads `_Time` in the
+  // same program — defaulting to `"tilt"` left `_Time` frozen until React
+  // flipped the mode (and foil looked dead / stuck after hover). Lorcana
+  // dual-frag also wants Time at rest; hover swaps via setScrollMode.
+  let scrollMode: WebglFoilScrollMode = "time";
+  let destroyed = false;
+  let frame = 0;
+  let paused = document.visibilityState === "hidden";
+  let tilt: readonly [number, number] = [0, 0];
+  let deviceRotation = material.floats._DeviceRotationDegrees ?? 0;
+  /**
+   * Unsubscribe from the shared clock, when this renderer is animating.
+   *
+   * The origin is the clock's, not ours: cards created seconds apart while
+   * scrolling used to shimmer out of phase, because each captured its own.
+   */
+  let unsubscribeClock: (() => void) | null = null;
+  const texturesBySlot = new Map<string, WebGLTexture>();
+  /** Slots uploaded as `TEXTURE_2D_ARRAY` (Frost EffectsLayer pack). */
+  const arraySlots = new Set<string>();
+
+  function onVisibilityChange() {
+    paused = document.visibilityState === "hidden";
+    if (paused) {
+      if (frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      syncClock();
+      return;
+    }
+    if (scrollMode === "time" && active) scheduleDraw();
+  }
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  function solidTexture(rgba: [number, number, number, number]): WebGLTexture {
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D, texture);
+    gl!.texImage2D(
+      gl!.TEXTURE_2D,
+      0,
+      gl!.RGBA,
+      1,
+      1,
+      0,
+      gl!.RGBA,
+      gl!.UNSIGNED_BYTE,
+      new Uint8Array(rgba),
+    );
+    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR);
+    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
+    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE);
+    gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE);
+    return texture!;
+  }
+
+  /** 1×1×1 array so unbound `sampler2DArray` slots stay complete (Frost EffectsLayer). */
+  function solidArrayTexture(
+    rgba: [number, number, number, number],
+  ): WebGLTexture {
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D_ARRAY, texture);
+    gl!.texImage3D(
+      gl!.TEXTURE_2D_ARRAY,
+      0,
+      gl!.RGBA8,
+      1,
+      1,
+      1,
+      0,
+      gl!.RGBA,
+      gl!.UNSIGNED_BYTE,
+      new Uint8Array(rgba),
+    );
+    gl!.texParameteri(gl!.TEXTURE_2D_ARRAY, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR);
+    gl!.texParameteri(gl!.TEXTURE_2D_ARRAY, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
+    gl!.texParameteri(
+      gl!.TEXTURE_2D_ARRAY,
+      gl!.TEXTURE_WRAP_S,
+      gl!.CLAMP_TO_EDGE,
+    );
+    gl!.texParameteri(
+      gl!.TEXTURE_2D_ARRAY,
+      gl!.TEXTURE_WRAP_T,
+      gl!.CLAMP_TO_EDGE,
+    );
+    return texture!;
+  }
+
+  function applySamplerState(
+    binding: FoilTextureBinding | undefined,
+    options: { compressed?: boolean; target?: number } = {},
+  ): void {
+    const target = options.target ?? gl!.TEXTURE_2D;
+    const isRole = Boolean(binding?.role);
+    const wrap = isRole ? "clamp" : (binding?.wrap ?? "repeat");
+    // Compressed ASTC dumps are level-0 only — generateMipmap is illegal on
+    // them, and a mip minFilter without a chain samples black.
+    const mipmaps =
+      target === gl!.TEXTURE_2D &&
+      !options.compressed &&
+      !isRole &&
+      Boolean(binding?.mipmaps);
+    const filter = binding?.filter ?? "bilinear";
+    gl!.texParameteri(target, gl!.TEXTURE_WRAP_S, wrapMode(gl!, wrap));
+    gl!.texParameteri(target, gl!.TEXTURE_WRAP_T, wrapMode(gl!, wrap));
+    gl!.texParameteri(
+      target,
+      gl!.TEXTURE_MIN_FILTER,
+      minFilter(gl!, filter, mipmaps),
+    );
+    gl!.texParameteri(target, gl!.TEXTURE_MAG_FILTER, magFilter(gl!, filter));
+    if (mipmaps) gl!.generateMipmap(target);
+  }
+
+  async function uploadTextureArray(
+    layers: readonly FoilTextureBinding[],
+  ): Promise<WebGLTexture | null> {
+    if (layers.length === 0) return null;
+    const bitmaps: ImageBitmap[] = [];
+    for (const layer of layers) {
+      const file = layer.file;
+      if (!file) return null;
+      // Absolute `/assets/…` (face-local ef_mask*) — do not prefix foil/textures.
+      const url = file.startsWith("/") ? file : textureBase + file;
+      bitmaps.push(await fetchImageBitmap(url));
+      if (destroyed) return null;
+    }
+    const width = bitmaps[0]!.width;
+    const height = bitmaps[0]!.height;
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D_ARRAY, texture);
+    // Sized formats only — unsized RGBA makes texStorage3D INVALID_ENUM and
+    // the incomplete array samples (0,0,0,1), so EffectsLayers contribute 0.
+    const internal =
+      foilTextureInternalFormat({
+        linearOutput: material.linearOutput,
+        srgb: layers[0]?.srgb,
+      }) === "srgb8_alpha8"
+        ? gl!.SRGB8_ALPHA8
+        : gl!.RGBA8;
+    gl!.texStorage3D(
+      gl!.TEXTURE_2D_ARRAY,
+      1,
+      internal,
+      width,
+      height,
+      bitmaps.length,
+    );
+    for (let i = 0; i < bitmaps.length; i++) {
+      const bmp = bitmaps[i]!;
+      // Resize mismatch: upload into a canvas at layer-0 size.
+      let source: TexImageSource = bmp;
+      if (bmp.width !== width || bmp.height !== height) {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+        ctx.drawImage(bmp, 0, 0, width, height);
+        source = canvas;
+      }
+      gl!.texSubImage3D(
+        gl!.TEXTURE_2D_ARRAY,
+        0,
+        0,
+        0,
+        i,
+        width,
+        height,
+        1,
+        gl!.RGBA,
+        gl!.UNSIGNED_BYTE,
+        source,
+      );
+    }
+    applySamplerState(layers[0], { target: gl!.TEXTURE_2D_ARRAY });
+    return texture!;
+  }
+
+  function uploadTexture(
+    image: ImageBitmap,
+    binding: FoilTextureBinding | undefined,
+  ): WebGLTexture {
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D, texture);
+    const internal =
+      foilTextureInternalFormat({
+        linearOutput: material.linearOutput,
+        srgb: binding?.srgb,
+      }) === "srgb8_alpha8"
+        ? gl!.SRGB8_ALPHA8
+        : gl!.RGBA8;
+    gl!.texImage2D(
+      gl!.TEXTURE_2D,
+      0,
+      // Linear apps (Pokémon Live): sRGB→linear on sample. Raw RGBA8 keeps
+      // authored bytes (Gamma / data maps). Spectrum ×17.5 needs the decode
+      // or SunLava neon-clamps; Direction sRGB softens UV the same way.
+      internal,
+      gl!.RGBA,
+      gl!.UNSIGNED_BYTE,
+      image,
+    );
+    applySamplerState(binding);
+    return texture!;
+  }
+
+  function uploadCompressedTexture(
+    data: ArrayBuffer,
+    compressed: FoilAstcBinding | FoilS3tcBinding,
+    binding: FoilTextureBinding | undefined,
+    resolveFormat: (name: string) => number | null,
+  ): WebGLTexture | null {
+    const format = resolveFormat(compressed.format);
+    if (format === null) return null;
+
+    const texture = gl!.createTexture();
+    gl!.bindTexture(gl!.TEXTURE_2D, texture);
+    try {
+      while (gl!.getError() !== gl!.NO_ERROR) {
+        /* drain stale errors */
+      }
+      gl!.compressedTexImage2D(
+        gl!.TEXTURE_2D,
+        0,
+        format,
+        compressed.width,
+        compressed.height,
+        0,
+        new Uint8Array(data),
+      );
+      if (gl!.getError() !== gl!.NO_ERROR) {
+        gl!.deleteTexture(texture);
+        return null;
+      }
+      applySamplerState(binding, { compressed: true });
+      return texture;
+    } catch {
+      gl!.deleteTexture(texture);
+      return null;
+    }
+  }
+
+  function textureUrl(slot: string): string | null {
+    const binding = material.textures[slot];
+    if (!binding) return null;
+    if (binding.file) {
+      return binding.file.startsWith("/")
+        ? binding.file
+        : textureBase + binding.file;
+    }
+    switch (binding.role) {
+      case "art":
+        return surfaces.artUrl;
+      case "foilMask":
+        return surfaces.foilMaskUrl ?? null;
+      case "holoMask":
+        return surfaces.holoMaskUrl ?? surfaces.foilMaskUrl ?? null;
+      case "varnishMask":
+        return surfaces.varnishMaskUrl ?? null;
+      case "secondVarnishMask":
+        return surfaces.secondVarnishMaskUrl ?? null;
+      case "front":
+        return surfaces.frontUrl ?? null;
+      case "frame":
+        return surfaces.frameUrl ?? null;
+      case "ink":
+        return surfaces.inkUrl ?? null;
+      default:
+        return null;
+    }
+  }
+
+  async function loadSlotTexture(
+    slot: string,
+    binding: FoilTextureBinding | undefined,
+  ): Promise<void> {
+    const role = binding?.role;
+    const fallback = (role && ROLE_FALLBACK[role]) ?? UNBOUND_TEXTURE_FALLBACK;
+    texturesBySlot.set(
+      slot,
+      solidTexture(fallback as [number, number, number, number]),
+    );
+    arraySlots.delete(slot);
+
+    const layers = binding?.arrayLayers;
+    if (layers && layers.length > 0) {
+      try {
+        const arrayTex = await uploadTextureArray(layers);
+        if (destroyed) return;
+        if (arrayTex) {
+          texturesBySlot.set(slot, arrayTex);
+          arraySlots.add(slot);
+          return;
+        }
+      } catch {
+        // Replace the provisional 2D solid — array samplers need 2D_ARRAY.
+      }
+      texturesBySlot.set(slot, solidArrayTexture(UNBOUND_TEXTURE_FALLBACK));
+      arraySlots.add(slot);
+      return;
+    }
+
+    const astc = binding?.astc;
+    if (
+      astc &&
+      !role &&
+      preferAstcTextureUpload({
+        hasAstcBinding: true,
+        hasRasterSibling: Boolean(binding?.file),
+        supportsAstc: supportsAstcOnContext(gl!),
+        forceRaster: foilForceRasterOverride(),
+      })
+    ) {
+      try {
+        const data = await fetchArrayBuffer(textureBase + astc.file);
+        if (destroyed) return;
+        const compressed = uploadCompressedTexture(
+          data,
+          astc,
+          binding,
+          (name) => astcFormatConstant(gl!, name),
+        );
+        if (compressed) {
+          texturesBySlot.set(slot, compressed);
+          return;
+        }
+      } catch {
+        // Fall through to PNG / WebP raster.
+      }
+    }
+
+    const s3tc = binding?.s3tc;
+    const caps = getFoilCapabilities();
+    if (
+      s3tc &&
+      !role &&
+      preferS3tcTextureUpload({
+        hasS3tcBinding: true,
+        hasRasterSibling: Boolean(binding?.file),
+        supportsS3tc: caps.supportsS3tc || caps.supportsS3tcSrgb,
+        forceRaster: foilForceRasterOverride(),
+      })
+    ) {
+      try {
+        const data = await fetchArrayBuffer(textureBase + s3tc.file);
+        if (destroyed) return;
+        const compressed = uploadCompressedTexture(
+          data,
+          s3tc,
+          binding,
+          (name) => s3tcFormatConstant(gl!, name),
+        );
+        if (compressed) {
+          texturesBySlot.set(slot, compressed);
+          return;
+        }
+      } catch {
+        // Fall through to PNG / WebP raster.
+      }
+    }
+
+    const url = textureUrl(slot);
+    if (!url) return;
+
+    let image = await fetchImageBitmap(url);
+    if (destroyed) return;
+    // Frost restack: cost disc between Frame and Chara; CostNumber after Chara.
+    // Catalogue keeps those as sibling files — fold them into frame / ink here.
+    if (role === "frame") {
+      image = await compositeOptionalOverlay(
+        image,
+        surfaces.costRingUrl,
+        fetchImageBitmap,
+      );
+    } else if (role === "ink") {
+      image = await compositeOptionalOverlay(
+        image,
+        surfaces.badgeUrl,
+        fetchImageBitmap,
+      );
+    }
+    if (destroyed) return;
+    const prepared =
+      role === "foilMask" ? await recoverFoilMaskRgb(image) : image;
+    if (destroyed) return;
+    texturesBySlot.set(slot, uploadTexture(prepared, binding));
+  }
+
+  function bindStaticUniforms(program: WebGLProgram): void {
+    const uniformCount = gl!.getProgramParameter(program, gl!.ACTIVE_UNIFORMS);
+    for (let i = 0; i < uniformCount; i++) {
+      const info = gl!.getActiveUniform(program, i);
+      if (!info) continue;
+      const location = gl!.getUniformLocation(program, info.name);
+      if (!location) continue;
+      if (
+        info.name === "_Tilt" ||
+        info.name === "_CosTime" ||
+        info.name === "_SinTime" ||
+        info.name === "_DeviceRotationDegrees" ||
+        info.type === gl!.SAMPLER_2D ||
+        info.type === gl!.SAMPLER_2D_ARRAY
+      ) {
+        continue;
+      }
+
+      if (
+        surfaces.hotFoilColor &&
+        hotFoilStampUniforms(material).has(info.name)
+      ) {
+        const c = surfaces.hotFoilColor;
+        if (info.type === gl!.FLOAT_VEC3) {
+          gl!.uniform3f(location, c[0], c[1], c[2]);
+        } else if (info.type === gl!.FLOAT_VEC4) {
+          gl!.uniform4f(location, c[0], c[1], c[2], c[3] ?? 1);
+        }
+        continue;
+      }
+      if (surfaces.secondHotFoilColor && info.name === "_SecondHotFoilColor") {
+        const c = surfaces.secondHotFoilColor;
+        if (info.type === gl!.FLOAT_VEC3) {
+          gl!.uniform3f(location, c[0], c[1], c[2]);
+        } else if (info.type === gl!.FLOAT_VEC4) {
+          gl!.uniform4f(location, c[0], c[1], c[2], c[3] ?? 1);
+        }
+        continue;
+      }
+
+      const float = material.floats[info.name];
+      const color = material.colors[info.name];
+      if (info.type === gl!.FLOAT) {
+        if (float !== undefined) {
+          gl!.uniform1f(location, float);
+        } else if (info.name === "_OverallBrightness") {
+          // Unity dumps leave brightness in the material sheet; unset → 0
+          // blacks every Live HoloFoil leaf.
+          gl!.uniform1f(location, 1);
+        }
+      } else if (info.type === gl!.FLOAT_VEC2 && color) {
+        gl!.uniform2f(location, color[0], color[1]);
+      } else if (info.type === gl!.FLOAT_VEC3) {
+        if (color) {
+          gl!.uniform3f(location, color[0], color[1], color[2]);
+        } else if (info.name === "_WorldSpaceCameraPos") {
+          // Match `cameraPosFromTilt(0,0)` — +Z bias so FlatSilver flat-etch
+          // shine (world +Z normal) keeps N·V > 0.
+          const cam = cameraPosFromTilt(0, 0);
+          gl!.uniform3f(location, cam[0], cam[1], cam[2]);
+        }
+      } else if (info.type === gl!.FLOAT_VEC4) {
+        if (color) {
+          gl!.uniform4f(location, color[0], color[1], color[2], color[3]);
+        } else if (/_ST$/.test(info.name)) {
+          // Unity `*_ST` tiling/offset — identity when the dump sheet omitted it.
+          gl!.uniform4f(location, 1, 1, 0, 0);
+        } else if (info.name === "_Time" || info.name.startsWith("_Time[")) {
+          gl!.uniform4f(location, 0, 0, 0, 0);
+        } else if (info.name === "_WorldSpaceCameraPos") {
+          const cam = cameraPosFromTilt(0, 0);
+          gl!.uniform4f(location, cam[0], cam[1], cam[2], 1);
+        } else {
+          const mtx = info.name.match(
+            /^hlslcc_mtx4x4unity_(?:WorldToObject|ObjectToWorld)\[(\d+)\]$/,
+          );
+          if (mtx) {
+            gl!.uniform4fv(
+              location,
+              identityMatrixColumns(Number(mtx[1]), info.size),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  function collectSamplers(program: WebGLProgram): ProgramBindings["samplers"] {
+    const samplers: ProgramBindings["samplers"] = [];
+    const entries: { name: string; target: "2d" | "2d_array" }[] = [];
+    const uniformCount = gl!.getProgramParameter(program, gl!.ACTIVE_UNIFORMS);
+    for (let i = 0; i < uniformCount; i++) {
+      const info = gl!.getActiveUniform(program, i);
+      if (!info) continue;
+      if (info.type === gl!.SAMPLER_2D) {
+        entries.push({ name: info.name, target: "2d" });
+      } else if (info.type === gl!.SAMPLER_2D_ARRAY) {
+        entries.push({ name: info.name, target: "2d_array" });
+      }
+    }
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    entries.forEach((entry, unit) => {
+      const location = gl!.getUniformLocation(program, entry.name);
+      if (location) {
+        samplers.push({
+          location,
+          unit,
+          slot: entry.name,
+          target: entry.target,
+        });
+      }
+    });
+    return samplers;
+  }
+
+  function vecBinding(
+    program: WebGLProgram,
+    name: string,
+  ): { loc: WebGLUniformLocation | null; size: 3 | 4 } {
+    const loc = gl!.getUniformLocation(program, name);
+    if (!loc) return { loc: null, size: 3 };
+    const count = gl!.getProgramParameter(program, gl!.ACTIVE_UNIFORMS);
+    for (let i = 0; i < count; i++) {
+      const info = gl!.getActiveUniform(program, i);
+      if (!info || info.name.replace(/\[\d+\]$/, "") !== name) continue;
+      if (info.type === gl!.FLOAT_VEC4) return { loc, size: 4 };
+      return { loc, size: 3 };
+    }
+    return { loc, size: 3 };
+  }
+
+  function buildBindings(program: WebGLProgram): ProgramBindings {
+    gl!.useProgram(program);
+    bindStaticUniforms(program);
+    const light = vecBinding(program, "_LightDirection");
+    const camera = vecBinding(program, "_WorldSpaceCameraPos");
+    return {
+      program,
+      tiltLoc: gl!.getUniformLocation(program, "_Tilt"),
+      cardLeanLoc: gl!.getUniformLocation(program, "u_CardLean"),
+      lightDirLoc: light.loc,
+      lightDirSize: light.size,
+      cameraPosLoc: camera.loc,
+      cameraPosSize: camera.size,
+      cosTimeLoc: gl!.getUniformLocation(program, "_CosTime"),
+      sinTimeLoc: gl!.getUniformLocation(program, "_SinTime"),
+      timeLoc: gl!.getUniformLocation(program, "_Time"),
+      deviceRotLoc: gl!.getUniformLocation(program, "_DeviceRotationDegrees"),
+      samplers: collectSamplers(program),
+    };
+  }
+
+  function draw(seconds = foilClockSeconds()) {
+    frame = 0;
+    if (destroyed || !active || paused) return;
+    gl!.viewport(0, 0, canvas.width, canvas.height);
+    gl!.clearColor(0, 0, 0, 0);
+    gl!.clear(gl!.COLOR_BUFFER_BIT);
+    gl!.useProgram(active.program);
+
+    if (active.tiltLoc) gl!.uniform2f(active.tiltLoc, tilt[0], tilt[1]);
+    // Orbit MAT sheet rest (Stamped +Z, AceFoil +Y) — not a forced +Y.
+    const restLight = restLightFromSheet(material.colors._LightDirection);
+    if (active.cardLeanLoc) {
+      // Mesh tip matches CSS ±18°, plus Z-rest bias (SunLava soft / SunPillar).
+      const mesh = meshLeanWithRestBias(tilt[0], tilt[1], restLight);
+      gl!.uniform2f(active.cardLeanLoc, mesh[0], mesh[1]);
+    }
+    if (active.lightDirLoc) {
+      const dir = lightDirectionFromTilt(tilt[0], tilt[1], restLight);
+      if (active.lightDirSize === 4) {
+        gl!.uniform4f(active.lightDirLoc, dir[0], dir[1], dir[2], 0);
+      } else {
+        gl!.uniform3f(active.lightDirLoc, dir[0], dir[1], dir[2]);
+      }
+    }
+    if (active.cameraPosLoc) {
+      // Live lean contract: world camera stays at rest; mesh tip is u_CardLean.
+      const cam = cameraPosFromTilt(0, 0);
+      if (active.cameraPosSize === 4) {
+        gl!.uniform4f(active.cameraPosLoc, cam[0], cam[1], cam[2], 1);
+      } else {
+        gl!.uniform3f(active.cameraPosLoc, cam[0], cam[1], cam[2]);
+      }
+    }
+    // Frost EffectsLayers: idle = wall `_Time` scroll; tilt = lean phase on top.
+    const clock = foilEffectsClockSeconds(seconds, tilt, material.floats);
+    if (active.cosTimeLoc) {
+      const cos = foilCosTime(clock);
+      gl!.uniform4f(active.cosTimeLoc, cos[0], cos[1], cos[2], cos[3]);
+    }
+    if (active.sinTimeLoc) {
+      const sin = foilSinTime(clock);
+      gl!.uniform4f(active.sinTimeLoc, sin[0], sin[1], sin[2], sin[3]);
+    }
+    if (active.timeLoc) {
+      // Unity `_Time`: (t/20, t, t*2, t*3) — Live frags mostly read `.y`.
+      gl!.uniform4f(
+        active.timeLoc,
+        clock / 20,
+        clock,
+        clock * 2,
+        clock * 3,
+      );
+    }
+    if (active.deviceRotLoc) {
+      gl!.uniform1f(active.deviceRotLoc, deviceRotation);
+    }
+
+    for (const sampler of active.samplers) {
+      gl!.uniform1i(sampler.location, sampler.unit);
+      gl!.activeTexture(gl!.TEXTURE0 + sampler.unit);
+      /*
+        Always bind — a missing slot (FlatSilver `_CCPatternTex` pathid 0)
+        must not reuse the previous unit's texture. Transparent fallback
+        matches Unity's unbound α≈0 so CC/spectrum gates stay off.
+        `sampler2DArray` needs a 2D_ARRAY object — a 2D solid leaves the unit
+        incomplete and Frost draws nothing (plain CSS art underneath).
+      */
+      const wantsArray =
+        sampler.target === "2d_array" || arraySlots.has(sampler.slot);
+      let texture = texturesBySlot.get(sampler.slot);
+      if (!texture || (wantsArray && !arraySlots.has(sampler.slot))) {
+        texture = wantsArray
+          ? solidArrayTexture(UNBOUND_TEXTURE_FALLBACK)
+          : solidTexture(UNBOUND_TEXTURE_FALLBACK);
+        texturesBySlot.set(sampler.slot, texture);
+        if (wantsArray) arraySlots.add(sampler.slot);
+      }
+      const target = wantsArray ? gl!.TEXTURE_2D_ARRAY : gl!.TEXTURE_2D;
+      gl!.bindTexture(target, texture);
+    }
+
+    gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /** Follow the shared clock while animating; stop the moment we are not. */
+  function syncClock() {
+    const wants = scrollMode === "time" && !destroyed && !paused && !!active;
+    if (wants === Boolean(unsubscribeClock)) return;
+    if (wants) {
+      unsubscribeClock = subscribeFoilFrame((seconds) => draw(seconds));
+      return;
+    }
+    unsubscribeClock?.();
+    unsubscribeClock = null;
+  }
+
+  /**
+   * A one-off draw, for the tilt path and for state changes.
+   *
+   * The time path does not go through here — it is driven by the shared clock,
+   * which already ticks every frame.
+   */
+  function scheduleDraw() {
+    if (paused) return;
+    syncClock();
+    if (scrollMode === "time") return;
+    if (!frame) frame = requestAnimationFrame(() => draw());
+  }
+
+  function activate(mode: WebglFoilScrollMode) {
+    const next =
+      mode === "time"
+        ? (timeProgram ?? tiltProgram)
+        : (tiltProgram ?? timeProgram);
+    if (!next || next === active) {
+      scrollMode = mode;
+      scheduleDraw();
+      return;
+    }
+    active = next;
+    scrollMode = mode;
+    if (frame) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    }
+    scheduleDraw();
+  }
+
+  const prepareFragment = (source: string): string => {
+    const aligned = alignFragmentVaryings(source);
+    const opaque = restoreOpaqueFoilOutput(aligned);
+    const isotropic = aspectCorrectSquareMotifUv(opaque);
+    return foilFragmentNeedsLinearEncode(material.linearOutput)
+      ? encodeLinearFoilOutput(isotropic)
+      : isotropic;
+  };
+
+  const ready = (async () => {
+    const tiltSrc = prepareFragment(
+      await fetchFragmentSource(shaderBase + material.fragment),
+    );
+    if (destroyed) return;
+    const timeSrc = material.fragmentTime
+      ? prepareFragment(
+          await fetchFragmentSource(shaderBase + material.fragmentTime),
+        )
+      : null;
+    if (destroyed) return;
+
+    const tiltLinked = linkProgram(gl, tiltSrc);
+    tiltProgram = buildBindings(tiltLinked);
+    if (timeSrc) {
+      const timeLinked = linkProgram(gl, timeSrc);
+      timeProgram = buildBindings(timeLinked);
+    }
+
+    const quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+      gl.STATIC_DRAW,
+    );
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    const slots = new Set<string>();
+    for (const bindings of [tiltProgram, timeProgram]) {
+      if (!bindings) continue;
+      for (const sampler of bindings.samplers) slots.add(sampler.slot);
+    }
+
+    await Promise.all(
+      [...slots].map(async (slot) => {
+        try {
+          await loadSlotTexture(slot, material.textures[slot]);
+        } catch (err) {
+          const role = material.textures[slot]?.role;
+          // A missing illustration, frame or text plate stays transparent.
+          // The face underneath is the card. Any other slot still fails the draw.
+          if (role === "front" || role === "frame" || role === "ink") return;
+          throw err;
+        }
+      }),
+    );
+    if (destroyed) return;
+    activate(scrollMode);
+  })();
+
+  return {
+    ready,
+    setTilt(x: number, y: number) {
+      tilt = [x, y];
+      // Always redraw — even in `time` mode. Pointer hover used to land while
+      // the idle clock was still driving, and `scheduleDraw` bails in that
+      // mode, so the uniform change stayed invisible until the next tick (or
+      // forever, for fragments that only read `_Tilt` in the tilt program).
+      if (paused || destroyed) return;
+      syncClock();
+      if (!frame) frame = requestAnimationFrame(() => draw());
+    },
+    setLeanDegrees() {
+      // Lorcana's fragments scroll a phase from the normalised lean (`setTilt`);
+      // none of them takes an angle.
+    },
+    setScrollMode(mode: WebglFoilScrollMode) {
+      if (mode === scrollMode && active) {
+        scheduleDraw();
+        return;
+      }
+      activate(mode);
+    },
+    setDeviceRotationDegrees(degrees: number) {
+      deviceRotation = degrees;
+      scheduleDraw();
+    },
+    destroy() {
+      destroyed = true;
+      // Before anything else: a live subscription would keep the shared clock
+      // ticking for a renderer whose context is about to be lost.
+      unsubscribeClock?.();
+      unsubscribeClock = null;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (frame) cancelAnimationFrame(frame);
+      for (const texture of texturesBySlot.values()) {
+        gl.deleteTexture(texture);
+      }
+      texturesBySlot.clear();
+      // Do not `loseContext()`: React Strict Mode and backend switches remount
+      // the effect on the same <canvas>. A lost context then makes the next
+      // `getContext("webgl2")` compile with a null log (HotFoil especially).
+      // Programs/textures above are enough; the context dies with the element.
+      if (tiltProgram) gl.deleteProgram(tiltProgram.program);
+      if (timeProgram && timeProgram !== tiltProgram) {
+        gl.deleteProgram(timeProgram.program);
+      }
+      tiltProgram = null;
+      timeProgram = null;
+      active = null;
+    },
+  };
+}

@@ -1,0 +1,43 @@
+{
+  "source": "Naruto Mythos TCG (@NarutoMythosTCG) + Kana — insert Boruto TBV t.6",
+  "observed": "2026-11-06",
+  "kind": "research-dig",
+  "verdict": "confirmed",
+  "summary": "Carte promo Mythos 133/130 V (grouping vv2) fournie uniquement dans le premier tirage du tome 6 de Boruto Two Blue Vortex (Kana). Annonce officielle compte X @NarutoMythosTCG avec flyers FR/EN.",
+  "printKey": "mythos:ks1promo-0133-vv2",
+  "lang": "fr",
+  "printed": "133/130 V",
+  "grouping": "vv2",
+  "officialAnnouncement": {
+    "publisher": "Éditions Kana",
+    "product": "Boruto - Two Blue Vortex Tome 6",
+    "isbn": "9782505142133",
+    "releaseDate": "2026-09-04",
+    "printRun": "premier tirage",
+    "coverUrl": "https://bdi.dlpdomain.com/album/9782505142133-couv.jpg"
+  },
+  "proof": {
+    "tweet": {
+      "handle": "@NarutoMythosTCG",
+      "statusUrl": "https://x.com/NarutoMythosTCG/status/2094456658164391972",
+      "claimFr": "Retrouvez une carte promotionnelle Mythos TCG disponible uniquement dans le premier tirage du tome 6 de Boruto Two Blue Vortex ! Une carte de collection pour les joueurs de Naruto Myhtos TCG mais aussi pour les collectionneurs où tout simplement pour les fans de la série. Un exemplaire sera disponible dans chaque tome 6 de Boruto Two Blue Vortex, ne passez pas à côté !",
+      "claimEn": "An exclusive Mythos promo card is coming with KANA! Get your hands on a special Naruto Uzumaki Mythos promo card, available only inside Boruto Two Blue Vortex Volume 6. A unique collectible card for NARUTO Mythos TCG players and collectors, included with the volume launching on September 4, 2026. Don’t miss it!",
+      "media": [
+        {
+          "lang": "fr",
+          "url": "https://pbs.twimg.com/media/HREBOkgWcAA6NaJ?format=webp",
+          "local": "kana-boruto-tbv6/source.french.twitter.webp"
+        },
+        {
+          "lang": "en",
+          "url": "https://pbs.twimg.com/media/HREBOkmXAAEqOvJ?format=webp",
+          "local": "kana-boruto-tbv6/source.english.twitter.webp"
+        }
+      ]
+    },
+    "faceCrop": {
+      "local": "kana-boruto-tbv6/cropped.twitter.png",
+      "note": "Recadrage utilisateur depuis le flyer FR — face FR installée en art.kana.webp"
+    }
+  }
+}

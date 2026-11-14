@@ -3,14 +3,58 @@ import type { DetailFact } from "./playerFacts";
 import {
   consolidateTagLikeFactsByKind,
   dedupeTagLikeFacts,
+  displayFactCitationUrl,
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
+  isStoryDisplayFact,
   parseAgeFromFactValue,
   providerLinkDisplayLabel,
   sortProviderLinkFacts,
+  splitTagValues,
 } from "./displayFacts";
 
 describe("displayFacts", () => {
+  describe("displayFactCitationUrl", () => {
+    it("keeps dig deep links and drops shallow hubs", () => {
+      expect(
+        displayFactCitationUrl(
+          "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+        ),
+      ).toBe(
+        "https://narutocarddassfrance.1fr1.net/t544-les-cartes-promotionnelles",
+      );
+      expect(
+        displayFactCitationUrl("https://narutocarddassfrance.1fr1.net/"),
+      ).toBeUndefined();
+      expect(displayFactCitationUrl(null)).toBeUndefined();
+    });
+  });
+
+  describe("isStoryDisplayFact", () => {
+    it("recognizes dig storytelling encart kind", () => {
+      expect(isStoryDisplayFact({ kind: "story" })).toBe(true);
+      expect(isStoryDisplayFact({ kind: "category" })).toBe(false);
+    });
+  });
+
+
+  describe("splitTagValues", () => {
+    it("splits bullet, semicolon, and comma joined theme lists", () => {
+      expect(splitTagValues("Adventure; Stealth")).toEqual([
+        "Adventure",
+        "Stealth",
+      ]);
+      expect(splitTagValues("Action, Aventure")).toEqual([
+        "Action",
+        "Aventure",
+      ]);
+      expect(splitTagValues("Story • Assassin")).toEqual([
+        "Story",
+        "Assassin",
+      ]);
+    });
+  });
+
   describe("parseAgeFromFactValue", () => {
     it("extracts numeric age from rating strings", () => {
       expect(parseAgeFromFactValue("12+")).toBe(12);
@@ -182,6 +226,30 @@ describe("displayFacts", () => {
       expect(filtered[0]?.sourceCount).toBe(3);
     });
 
+    it("splits semicolon-joined genres into separate theme chips", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "genre",
+          label: "Genres",
+          value: "Adventure; Stealth",
+          source: "wikidata",
+          priority: 55,
+        },
+        {
+          kind: "tag",
+          label: "Thèmes",
+          value: "Story • Stealth",
+          source: "rawg",
+          priority: 50,
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0]?.kind).toBe("tag");
+      expect(filtered[0]?.value).toBe("Adventure • Stealth • Story");
+    });
+
     it("merges duplicate tag values across sources", () => {
       const facts: DetailFact[] = [
         {
@@ -237,6 +305,109 @@ describe("displayFacts", () => {
       });
     });
 
+    it("keeps TCG collector numbers (format) while hiding raw identifiers", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "identifier",
+          label: "Référence",
+          value: "Winterspell · 34 P3",
+          source: "lorcanajson",
+        },
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "34/P3",
+          source: "lorcanajson",
+        },
+        {
+          kind: "series",
+          label: "Extension",
+          value: "Winterspell",
+          source: "lorcanajson",
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            kind: "format",
+            label: "Numéro",
+            value: "34/P3",
+          }),
+          expect.objectContaining({
+            kind: "series",
+            label: "Extension",
+            value: "Winterspell",
+          }),
+        ]),
+      );
+      expect(filtered.some((fact) => fact.kind === "identifier")).toBe(false);
+    });
+
+    it("collapses duplicate Numéro / Type rows from a stale seed", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11",
+          source: "tcgdex",
+          priority: 303,
+        },
+        {
+          kind: "format",
+          label: "Numéro",
+          value: "11/108",
+          source: "tcgdex",
+          priority: 303,
+        },
+        {
+          kind: "category",
+          label: "Catégorie",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 32,
+        },
+        {
+          kind: "tag",
+          label: "Type",
+          value: "Feu",
+          source: "tcgdex",
+          priority: 31,
+        },
+        {
+          kind: "tag",
+          label: "Type",
+          value: "Pokémon",
+          source: "tcgdex",
+          priority: 26,
+        },
+        {
+          kind: "series",
+          label: "Extension",
+          value: "Évolutions",
+          source: "tcgdex",
+        },
+      ];
+
+      const filtered = filterRedundantDisplayFacts(facts);
+      expect(filtered.find((fact) => fact.label === "Numéro")?.value).toBe(
+        "11/108",
+      );
+      expect(filtered.filter((fact) => fact.label === "Numéro")).toHaveLength(
+        1,
+      );
+      expect(filtered.find((fact) => fact.label === "Type")?.value).toBe("Feu");
+      expect(
+        filtered.some(
+          (fact) => fact.value === "Pokémon" && fact.label === "Type",
+        ),
+      ).toBe(false);
+      expect(filtered.find((fact) => fact.label === "Catégorie")?.value).toBe(
+        "Pokémon",
+      );
+    });
+
     it("merges booknode tags and bedetheque genres into one theme row", () => {
       const facts: DetailFact[] = [
         {
@@ -283,6 +454,40 @@ describe("displayFacts", () => {
       expect(consolidated[0]?.value).toBe("Bluff • Déduction");
       expect(consolidated[0]?.label).toBe("Mécaniques");
     });
+
+    it("keeps labeled TCG collector tags as separate rows", () => {
+      const facts: DetailFact[] = [
+        { kind: "tag", label: "Rareté", value: "Rare", priority: 40 },
+        { kind: "tag", label: "Type", value: "Feu", priority: 31 },
+        { kind: "tag", label: "PV", value: "150", priority: 28 },
+        { kind: "tag", label: "Thème", value: "Classique", priority: 10 },
+        { kind: "genre", label: "Genre", value: "Combat", priority: 10 },
+      ];
+
+      const consolidated = consolidateTagLikeFactsByKind(facts);
+      expect(consolidated).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: "Rareté", value: "Rare" }),
+          expect.objectContaining({ label: "Type", value: "Feu" }),
+          expect.objectContaining({ label: "PV", value: "150" }),
+          expect.objectContaining({
+            kind: "tag",
+            label: "Thème",
+            value: "Classique • Combat",
+          }),
+        ]),
+      );
+      expect(consolidated).toHaveLength(4);
+    });
+
+    it("keeps a single Type when Feu and Pokémon both exist", () => {
+      const consolidated = consolidateTagLikeFactsByKind([
+        { kind: "tag", label: "Type", value: "Feu", priority: 31 },
+        { kind: "tag", label: "Type", value: "Pokémon", priority: 26 },
+      ]);
+      expect(consolidated).toHaveLength(1);
+      expect(consolidated[0]?.value).toBe("Feu");
+    });
   });
 
   describe("dedupeTagLikeFacts", () => {
@@ -297,14 +502,63 @@ describe("displayFacts", () => {
   });
 
   describe("providerLinkDisplayLabel", () => {
-    it("prefers providerLabel when present", () => {
+    it("prefers providerLabel when present and aligned with the URL", () => {
       const fact: DetailFact = {
         kind: "external-link",
         label: "BGG",
         value: "Voir",
+        url: "https://boardgamegeek.com/boardgame/1",
         providerLabel: "BoardGameGeek",
       };
       expect(providerLinkDisplayLabel(fact)).toBe("BoardGameGeek");
+    });
+
+    it("labels a Cardmarket fiche Cardmarket even when the feed is Lorcana.gg", () => {
+      const fact: DetailFact = {
+        kind: "external-link",
+        label: "Lorcana.gg",
+        value: "Voir la fiche",
+        url: "https://www.cardmarket.com/en/Lorcana/Products/Singles/The-First-Chapter/Ariel-On-Human-Legs",
+        providerLabel: "Lorcana.gg",
+        source: "lorcanagg",
+      };
+      expect(providerLinkDisplayLabel(fact)).toBe("Cardmarket");
+    });
+
+    it("keeps Lorcana.gg when the URL is on lorcana.gg", () => {
+      const fact: DetailFact = {
+        kind: "external-link",
+        label: "Lorcana.gg",
+        value: "Voir",
+        url: "https://lorcana.gg/cards/ariel-on-human-legs",
+        providerLabel: "Lorcana.gg",
+      };
+      expect(providerLinkDisplayLabel(fact)).toBe("Lorcana.gg");
+    });
+  });
+
+  describe("extractProviderLinkFacts", () => {
+    it("hides leaked __cached_fiche__ source chips", () => {
+      const facts: DetailFact[] = [
+        {
+          kind: "external-link",
+          label: "__cached_fiche__",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+          source: "__cached_fiche__",
+        },
+        {
+          kind: "external-link",
+          label: "PriceCharting",
+          value: "Voir la fiche",
+          url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+          source: "pricecharting",
+          providerLabel: "PriceCharting",
+        },
+      ];
+      const links = extractProviderLinkFacts(facts);
+      expect(links).toHaveLength(1);
+      expect(providerLinkDisplayLabel(links[0]!)).toBe("PriceCharting");
     });
   });
 

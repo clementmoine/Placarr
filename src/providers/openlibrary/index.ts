@@ -1,6 +1,5 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { createOpenLibraryResolver } from "./resolver";
 import { getOpenLibrarySuggestions } from "./suggestions";
 import {
@@ -8,15 +7,16 @@ import {
   shouldRunBookBarcodeTeardown,
 } from "@/lib/dev/teardownUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { BarcodeLookupType, ProviderModule } from "@/types/providerModule";
+import type { BarcodeLookupType } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 const fetchFromOpenLibrary = createOpenLibraryResolver();
 
 const BARCODE_TYPES: BarcodeLookupType[] = ["books", "generic"];
 
-export const openlibraryModule: ProviderModule = {
+export const openlibraryModule = defineProvider({
   info: {
     id: "openlibrary",
     label: "OpenLibrary",
@@ -32,6 +32,7 @@ export const openlibraryModule: ProviderModule = {
       "rating",
     ],
     auth: { kind: "none" },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "en",
     websiteUrl: "https://openlibrary.org/",
@@ -72,19 +73,6 @@ export const openlibraryModule: ProviderModule = {
       "books",
     );
   },
-  healthCheck: createMetadataHealthCheck(
-    "openlibrary",
-    "Open Library",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://openlibrary.org");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
   createMetadataAdapter() {
     return {
       id: "openlibrary",
@@ -95,6 +83,7 @@ export const openlibraryModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getOpenLibrarySuggestions(cleanedName),
+  // Barcode handler + metadata — pas seulement le défaut.
   testHandlers: {
     "openlibrary-barcode": {
       label: "Open Library - Barcode",
@@ -113,7 +102,7 @@ export const openlibraryModule: ProviderModule = {
   },
   collectMappingRawKeys: async () => {
     try {
-      const isbn = await axios.get(
+      const isbn = await httpGet<{ works?: Array<{ key?: string }> }>(
         "https://openlibrary.org/isbn/9780140328721.json",
         {
           timeout: 8000,
@@ -124,7 +113,7 @@ export const openlibraryModule: ProviderModule = {
         "",
       );
       if (!workKey) return Object.keys(isbn.data || {});
-      const ratings = await axios.get(
+      const ratings = await httpGet(
         `https://openlibrary.org/works/${workKey}/ratings.json`,
         { timeout: 8000 },
       );
@@ -144,6 +133,6 @@ export const openlibraryModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 export { createOpenLibraryResolver };

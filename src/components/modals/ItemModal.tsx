@@ -12,11 +12,20 @@ import {
   Settings,
   Image as ImageIcon,
   Maximize2,
+  Crop,
   HardDrive,
+  Trash2,
 } from "lucide-react";
 import { RemoteImage } from "@/components/RemoteImage";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -39,12 +48,40 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ItemPresenceTimeline } from "@/components/ItemPresenceTimeline";
+import { AwaitedReceiptDialog } from "@/components/modals/AwaitedReceiptDialog";
 import { BaseModal } from "@/components/modals/BaseModal";
 import { ImagePickerField } from "@/components/modals/ImagePickerField";
+import { ImageCropModal } from "@/components/modals/ImageCropModal";
+import {
+  findOwnedIdentityPeers,
+  resolveReceivableForCreate,
+  type ReceivableShelfItem,
+} from "@/core/collect/receivableMatches";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { usePrintVariant } from "@/lib/client/hooks/usePrintVariant";
+import { normalizeVariantOptions } from "@/core/enrich/variants";
+import { isServedLocalPath } from "@/lib/media/servedLocalPaths";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ConditionIcon, conditionToggleActiveClass } from "@/components/ConditionIcon";
+import {
+  ConditionIcon,
+  conditionToggleActiveClass,
+} from "@/components/ConditionIcon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { itemConditionsForShelfType } from "@/core/collect/condition";
+import {
+  itemConditionsForShelfType,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
+import {
+  ITEM_PRESENCES,
+  parsePriceCents,
+} from "@/core/collect/itemAbsence";
+import { GRADE_STATUSES } from "@/core/collect/itemGrade";
+import {
+  ItemModalLifecycleFields,
+  type ItemModalLifecycleFormSlice,
+} from "@/components/modals/ItemModalLifecycleFields";
+import type { Control, UseFormSetValue } from "react-hook-form";
 
 import { isUrl } from "@/lib/shared/isUrl";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -60,15 +97,27 @@ import {
   buildItemModalSessionInit,
   itemModalSessionKey,
 } from "@/lib/client/itemModalSession";
-import { deleteItem, getItem } from "@/lib/api/items";
+import {
+  deleteItem,
+  getItem,
+  getItemTrades,
+  removeItemMediaImage,
+  saveItem,
+  unlinkItemTrade,
+} from "@/lib/api/items";
 import { getShelf, getShelves } from "@/lib/api/shelves";
+import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import {
   itemsBarcodeLabelKey,
   itemsBarcodePlaceholderKey,
 } from "@/core/identify/shelfLabels";
-import { guessShelfFromBarcodeLookup, shelfSearchHintsFromBarcodePayload } from "@/core/identify/query";
+import {
+  guessShelfFromBarcodeLookup,
+  shelfSearchHintsFromBarcodePayload,
+} from "@/core/identify/query";
 import { isAbortError } from "@/lib/http/abort";
 import { shelfPath } from "@/lib/routing/slugs";
 
@@ -78,16 +127,19 @@ import {
   type Item,
   type Shelf,
   Condition,
-} from "@prisma/client";
+} from "@/generated/prisma/browser";
 import {
   mergeCoverAttachmentsForPicker,
   getCoverImage,
+  preferLocalDisplayCoverUrl,
   filterMetadataForShelfPlatform,
   backgroundPickerAttachmentsForItem,
 } from "@/core/collect/media";
+import { metadataForPrintKeyImagePicker } from "@/core/collect/printKeyGallery";
 import {
   findAttachmentForUrl,
-  stripCropSuffixFromUrl,
+  isEditDerivativeUrl,
+  stripEditSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import { localizeImageFieldForSubmit } from "@/core/enrich/media/localizeImageForSubmit";
@@ -105,7 +157,11 @@ import type {
   MetadataAttachment,
 } from "@/types/metadataProvider";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
-import { invalidateItemQueries } from "@/core/collect/queryCache";
+import {
+  invalidateItemQueries,
+  syncItemQueries,
+} from "@/core/collect/queryCache";
+import { filterAttachmentsRemovingUrl } from "@/core/collect/removeItemMediaImage.shared";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   Select,
@@ -154,6 +210,9 @@ export function ItemModal({
   shelfType,
   defaultTab,
   prefilledValues,
+  receivableItems = [],
+  identityPeerItems = [],
+  entryKind,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -164,11 +223,25 @@ export function ItemModal({
   shelfId: Shelf["id"];
   shelfType?: Shelf["type"];
   defaultTab?: "general" | "poster" | "background" | "info";
+  /** Absent copies — « tu l’attendais ? » before creating a duplicate. */
+  receivableItems?: readonly ReceivableShelfItem[];
+  /** Shelf copies used for ordered anti-doublon (owned twin warning). */
+  identityPeerItems?: readonly ReceivableShelfItem[];
+  /** Create path from the shelf add menu — shapes title/copy. */
+  entryKind?: "free";
   prefilledValues?: {
     name?: string;
     barcode?: string;
     imageUrl?: string | null;
     shelfId?: string;
+    printKey?: string | null;
+    /** Sealed catalogue skuKey (`packId::slug`) from scan / sealed picker. */
+    skuKey?: string | null;
+    language?: string | null;
+    setCode?: string | null;
+    variant?: string | null;
+    /** When true, prefer / lock the prefilled shelfId as a sure guess. */
+    shelfSure?: boolean;
     metadataPreview?: MetadataResult | null;
   };
 }) {
@@ -185,9 +258,32 @@ export function ItemModal({
 
     barcode: z.string().trim().optional(),
 
+    /** Free text: the vocabulary belongs to the provider, not to a local enum. */
+    variant: z.string().nullable().optional(),
+
     description: z.string().trim().optional(),
 
     condition: z.nativeEnum(Condition),
+
+    presence: z.enum(ITEM_PRESENCES),
+    absenceReason: z.string().trim().optional(),
+    absenceSince: z.string().trim().optional(),
+    absenceRecipient: z.string().trim().optional(),
+    absenceSource: z.string().trim().optional(),
+    absenceCarrier: z.string().trim().optional(),
+    absenceTracking: z.string().trim().optional(),
+    absenceOrderRef: z.string().trim().optional(),
+    absenceOrderUrl: z.string().trim().optional(),
+    absenceNote: z.string().trim().optional(),
+    absencePrice: z.string().trim().optional(),
+    absenceExpectedAt: z.string().trim().optional(),
+    purchasePrice: z.string().trim().optional(),
+    purchasedAt: z.string().trim().optional(),
+    gradeStatus: z.enum(GRADE_STATUSES),
+    gradeHouse: z.string().trim().optional(),
+    gradeLabel: z.string().trim().optional(),
+    gradeCertNo: z.string().trim().optional(),
+    gradedAt: z.string().trim().optional(),
 
     imageUrl: z
       .any()
@@ -195,12 +291,18 @@ export function ItemModal({
         (url) =>
           url == null ||
           url instanceof File ||
-          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          // Every path this app serves, not just `/uploads/`: a card from a
+          // local pack lives under `/assets/`, and rejecting it failed the
+          // whole form from a hidden tab — Enregistrer looked inert.
+          (typeof url === "string" && isServedLocalPath(url)) ||
           isUrl(url) ||
           /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
         t("items.invalidImage"),
       )
       .optional(),
+
+    /** Affiche policy — `auto` tracks ranking; `pinned` keeps an explicit pick. */
+    coverMode: z.enum(["auto", "pinned"]).nullable().optional(),
 
     backgroundImageUrl: z
       .any()
@@ -208,7 +310,10 @@ export function ItemModal({
         (url) =>
           url == null ||
           url instanceof File ||
-          (typeof url === "string" && url.startsWith("/uploads/")) ||
+          // Every path this app serves, not just `/uploads/`: a card from a
+          // local pack lives under `/assets/`, and rejecting it failed the
+          // whole form from a hidden tab — Enregistrer looked inert.
+          (typeof url === "string" && isServedLocalPath(url)) ||
           isUrl(url) ||
           /^data:image\/[a-zA-Z+]+;base64,[^\s]+$/.test(url),
         t("items.invalidImage"),
@@ -223,10 +328,31 @@ export function ItemModal({
       shelfId: prefilledValues?.shelfId || shelfId || "",
       name: prefilledValues?.name || "",
       imageUrl: prefilledValues?.imageUrl || null,
+      coverMode: null,
       backgroundImageUrl: null,
       description: "",
       barcode: prefilledValues?.barcode || "",
+      variant: null,
       condition: "used",
+      presence: "owned",
+      absenceReason: "",
+      absenceSince: "",
+      absenceRecipient: "",
+      absenceSource: "",
+      absenceCarrier: "",
+      absenceTracking: "",
+      absenceOrderRef: "",
+      absenceOrderUrl: "",
+      absenceNote: "",
+      absencePrice: "",
+      absenceExpectedAt: "",
+      purchasePrice: "",
+      purchasedAt: "",
+      gradeStatus: "raw",
+      gradeHouse: "",
+      gradeLabel: "",
+      gradeCertNo: "",
+      gradedAt: "",
     }),
     [shelfId, prefilledValues],
   );
@@ -284,13 +410,115 @@ export function ItemModal({
   // useWatch (abonnement par champ) au lieu de form.watch : API compatible
   // avec le compilateur React et re-rendus limités au champ concerné.
   const currentShelfId = useWatch({ control: form.control, name: "shelfId" });
+  const watchedPresence = useWatch({
+    control: form.control,
+    name: "presence",
+  });
+  const watchedAbsenceReason = useWatch({
+    control: form.control,
+    name: "absenceReason",
+  });
+  const watchedVariant = useWatch({ control: form.control, name: "variant" });
+
+  const orderDuplicateWarning = useMemo(() => {
+    if (watchedPresence !== "away") return null;
+    if (watchedAbsenceReason !== "ordered") return null;
+    const printKey =
+      item?.printKey?.trim() || prefilledValues?.printKey?.trim() || "";
+    if (!printKey) return null;
+    const peers = findOwnedIdentityPeers(identityPeerItems, {
+      printKey,
+      variant: watchedVariant ?? item?.variant ?? prefilledValues?.variant,
+      language: item?.language ?? prefilledValues?.language,
+      setCode: item?.setCode ?? prefilledValues?.setCode,
+      excludeId: item?.id ?? itemId ?? null,
+    });
+    if (peers.length === 0) return null;
+    return t("items.absence.orderDuplicateWarning", {
+      name: peers[0]!.name,
+      count: peers.length,
+    });
+  }, [
+    watchedPresence,
+    watchedAbsenceReason,
+    watchedVariant,
+    identityPeerItems,
+    item,
+    itemId,
+    prefilledValues,
+    t,
+  ]);
+
+  const clearAbsenceToOwned = useCallback(() => {
+    form.setValue("presence", "owned", { shouldDirty: true });
+    form.setValue("absenceReason", "", { shouldDirty: true });
+    form.setValue("absenceRecipient", "", { shouldDirty: true });
+    form.setValue("absenceSource", "", { shouldDirty: true });
+    form.setValue("absenceCarrier", "", { shouldDirty: true });
+    form.setValue("absenceTracking", "", { shouldDirty: true });
+    form.setValue("absenceOrderRef", "", { shouldDirty: true });
+    form.setValue("absenceOrderUrl", "", { shouldDirty: true });
+    form.setValue("absenceNote", "", { shouldDirty: true });
+    form.setValue("absencePrice", "", { shouldDirty: true });
+    form.setValue("absenceExpectedAt", "", { shouldDirty: true });
+    form.setValue("absenceSince", "", { shouldDirty: true });
+  }, [form]);
+
+  const [tradeRecoverOpen, setTradeRecoverOpen] = useState(false);
+  const [tradeRecoverBusy, setTradeRecoverBusy] = useState(false);
+
+  const handleRecoverPast = useCallback(() => {
+    if (
+      watchedAbsenceReason === "exchanged" &&
+      item?.id &&
+      !tradeRecoverOpen
+    ) {
+      setTradeRecoverOpen(true);
+      return;
+    }
+    clearAbsenceToOwned();
+  }, [
+    watchedAbsenceReason,
+    item?.id,
+    tradeRecoverOpen,
+    clearAbsenceToOwned,
+  ]);
+
+  const finishTradeRecover = useCallback(
+    async (breakLinks: boolean) => {
+      if (!item?.id) {
+        clearAbsenceToOwned();
+        setTradeRecoverOpen(false);
+        return;
+      }
+      setTradeRecoverBusy(true);
+      try {
+        if (breakLinks) {
+          const { links } = await getItemTrades(item.id, shelfId);
+          for (const link of links) {
+            await unlinkItemTrade(item.id, { linkId: link.id }, shelfId);
+          }
+        }
+        clearAbsenceToOwned();
+        setTradeRecoverOpen(false);
+      } catch {
+        toast.error(t("items.trade.unlinkFailed"));
+      } finally {
+        setTradeRecoverBusy(false);
+      }
+    },
+    [item?.id, shelfId, clearAbsenceToOwned, t],
+  );
 
   // Radix SelectValue stays blank until a matching SelectItem exists — seed the
   // current shelf so the trigger never flashes empty while the list loads.
+  // When the scan knows a shelf type, keep the picker on compatible shelves.
   const shelfOptions = useMemo(() => {
     type Opt = { id: string; name: string; type?: Shelf["type"] | null };
     const byId = new Map<string, Opt>();
+    const typeFilter = shelfType ?? null;
     for (const entry of shelves ?? []) {
+      if (typeFilter && entry.type && entry.type !== typeFilter) continue;
       byId.set(entry.id, {
         id: entry.id,
         name: entry.name,
@@ -325,6 +553,9 @@ export function ItemModal({
       shelf?.type ?? cachedCurrent?.type ?? shelfType,
     );
     seed(item?.shelfId, item?.shelf?.name, item?.shelf?.type);
+    // Always keep the currently selected / prefilled shelf visible even if
+    // type filter would hide it (user can still change type via that shelf).
+    seed(prefilledValues?.shelfId, null, typeFilter);
     return Array.from(byId.values()).sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );
@@ -334,6 +565,7 @@ export function ItemModal({
     shelf?.name,
     shelf?.type,
     shelfType,
+    prefilledValues?.shelfId,
     currentShelfId,
     item?.shelfId,
     item?.shelf?.name,
@@ -356,12 +588,21 @@ export function ItemModal({
         shelf?.name ??
         currentShelfId ??
         shelfId,
+      // Cover Affiche ranking targets this frame (square LD/vinyl vs DVD portrait).
+      cardFormat:
+        activeShelf?.cardFormat ??
+        item?.shelf?.cardFormat ??
+        shelf?.cardFormat ??
+        null,
     }),
     [
+      activeShelf?.cardFormat,
       activeShelf?.name,
       activeShelfType,
       currentShelfId,
+      item?.shelf?.cardFormat,
       item?.shelf?.name,
+      shelf?.cardFormat,
       shelf?.name,
       shelfId,
       shelves,
@@ -378,12 +619,107 @@ export function ItemModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReceivingAwaited, setIsReceivingAwaited] = useState(false);
+  const [awaitedPrompt, setAwaitedPrompt] = useState<{
+    match: ReceivableShelfItem;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload: any;
+  } | null>(null);
   const [nameSuggestion, setNameSuggestion] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [guessedShelfId, setGuessedShelfId] = useState<string | null>(null);
+  const [guessedShelfId, setGuessedShelfId] = useState<string | null>(
+    prefilledValues?.shelfSure ? prefilledValues.shelfId || null : null,
+  );
+
+  // Sure shelf from scan hydrate / barcode guess — apply once when empty.
+  useEffect(() => {
+    if (!isOpen || item) return;
+    const sureId =
+      (prefilledValues?.shelfSure && prefilledValues.shelfId) ||
+      guessedShelfId ||
+      null;
+    if (!sureId) return;
+    const current = form.getValues("shelfId");
+    if (current && current === sureId) return;
+    if (current && current !== (prefilledValues?.shelfId || "") && current !== shelfId) {
+      return;
+    }
+    form.setValue("shelfId", sureId, { shouldDirty: false });
+  }, [
+    form,
+    guessedShelfId,
+    isOpen,
+    item,
+    prefilledValues?.shelfId,
+    prefilledValues?.shelfSure,
+    shelfId,
+  ]);
+
+  // Bootstrap catalogue title when the form still shows a raw printKey.
+  useEffect(() => {
+    if (!isOpen || item) return;
+    const printKey = prefilledValues?.printKey?.trim();
+    if (!printKey) return;
+    const currentName = (form.getValues("name") || "").trim();
+    const looksLikeKey =
+      !currentName ||
+      currentName.toLowerCase() === printKey.toLowerCase();
+    if (!looksLikeKey) return;
+    // Hydrate already resolved a human title — keep it.
+    if (
+      prefilledValues?.name &&
+      prefilledValues.name.trim().toLowerCase() !== printKey.toLowerCase()
+    ) {
+      if (currentName.toLowerCase() === printKey.toLowerCase()) {
+        form.setValue("name", prefilledValues.name, { shouldDirty: false });
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const type = shelfType || "tcg";
+    const params = new URLSearchParams({ printKey, type });
+    if (prefilledValues?.language) {
+      params.set("language", prefilledValues.language);
+    }
+    void axios
+      .get(`/api/prints?${params.toString()}`)
+      .then((res) => {
+        if (cancelled) return;
+        const candidate = res.data?.candidate as
+          | { name?: string; title?: string }
+          | null
+          | undefined;
+        const title =
+          candidate?.name?.trim() || candidate?.title?.trim() || "";
+        if (!title) return;
+        const stillKey =
+          (form.getValues("name") || "").trim().toLowerCase() ===
+            printKey.toLowerCase() ||
+          !(form.getValues("name") || "").trim();
+        if (stillKey) {
+          form.setValue("name", title, { shouldDirty: false });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    form,
+    isOpen,
+    item,
+    prefilledValues?.language,
+    prefilledValues?.name,
+    prefilledValues?.printKey,
+    shelfType,
+  ]);
 
   const watchedName = useWatch({ control: form.control, name: "name" });
-  const watchedCondition = useWatch({ control: form.control, name: "condition" });
+  const watchedCondition = useWatch({
+    control: form.control,
+    name: "condition",
+  });
   const isNameMatchingSuggestion = useMemo(() => {
     if (!nameSuggestion) return false;
     const val = (watchedName || "").trim().toLowerCase();
@@ -431,6 +767,13 @@ export function ItemModal({
     key: string;
     init: ReturnType<typeof buildItemModalSessionInit>;
   } | null>(null);
+  /**
+   * Affiche tile / file pick in this modal session only. Enrichment must not
+   * mark `imageUrl` dirty (that stuck SensCritique as "selected" after refresh).
+   */
+  const [userPickedCoverUrl, setUserPickedCoverUrl] = useState<string | null>(
+    null,
+  );
   if (sessionKey !== sessionState?.key) {
     if (sessionKey) {
       const init = buildItemModalSessionInit({
@@ -438,8 +781,10 @@ export function ItemModal({
         prefilledValues,
         shelfId,
         activeShelfForMedia,
+        uiLocale: locale,
       });
       setSessionState({ key: sessionKey, init });
+      setUserPickedCoverUrl(null);
       setSuggestions(init.suggestions);
       setNameSuggestion(init.nameSuggestion);
       setActiveTab(defaultTab || "general");
@@ -451,10 +796,66 @@ export function ItemModal({
       setBgPage(1);
     } else if (!isOpen && sessionState !== null) {
       setSessionState(null);
+      setUserPickedCoverUrl(null);
     }
   }
 
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  /**
+   * Which image is being reframed, and which field it belongs to. The field
+   * matters: the same artwork can be both the cover and the background, and
+   * writing the result to `imageUrl` regardless meant cropping the background
+   * silently replaced the cover.
+   */
+  const [cropTarget, setCropTarget] = useState<{
+    url: string;
+    field: "imageUrl" | "backgroundImageUrl";
+  } | null>(null);
+
+  /**
+   * Whether the dedicated cover tab is available. When it is, the General tab
+   * must not offer a second cover picker: the two disagreed — the inline one
+   * showed the provider's remote original rather than the crop actually in
+   * force, and listed the same image twice (remote + localized), so touching it
+   * silently discarded the collector's framing. On a bare manual creation there
+   * are no tabs at all, and then it is the only picker there is.
+   */
+  /**
+   * Variants this object exists in, asked of the provider that owns the print.
+   *
+   * Not read from stored facts: `Metadata.facts` is rebuilt from field evidence
+   * after every store, so a structured fact would have to survive two separate
+   * allow-lists to reach the client — and it would be a copy that drifts. What a
+   * print exists as belongs to the provider.
+   *
+   * Rendered next to `condition` because the two are easy to confuse and must
+   * not be: the variant says *which* thing this is, the condition says how it
+   * has aged.
+   */
+  const printVariant = usePrintVariant(
+    isOpen ? item?.printKey : null,
+    item?.shelf?.type ?? shelfType,
+  );
+  const variantOptions = normalizeVariantOptions(printVariant?.finishes);
+
+  const hasCoverTab = Boolean(
+    item ||
+    fetchedMetadata ||
+    prefilledValues?.imageUrl ||
+    prefilledValues?.barcode,
+  );
+  /**
+   * When the crop on screen was applied. Re-cropping overwrites the same
+   * filename, so without a changing URL the browser and next/image keep serving
+   * the previous version — the thumbnail only refreshed on a full page reload.
+   *
+   * A timestamp, not a counter. A counter restarts at 1 in every modal, so the
+   * first crop of each session asked for `?v=1` again — the one URL already in
+   * the browser's cache from the session before, which is exactly when a
+   * collector re-crops. That made cropping look broken while the file on disk
+   * was perfectly correct.
+   */
+  const [cropVersion, setCropVersion] = useState(0);
 
   const applyMetadataPreviewToForm = useCallback(
     (
@@ -467,10 +868,10 @@ export function ItemModal({
       const forceOverwrite = options.forceOverwrite ?? false;
       const barcodeContext = options.barcodeContext;
 
-      setFetchedMetadata(
+      const filteredMetadata =
         filterMetadataForShelfPlatform(metadata, activeShelfForMedia) ??
-          metadata,
-      );
+        metadata;
+      setFetchedMetadata(filteredMetadata);
 
       const currentBarcode = (
         barcodeContext ||
@@ -501,17 +902,39 @@ export function ItemModal({
         }
       }
 
-      if (metadata.imageUrl) {
+      // Seed Affiche from the same ranking as the fiche — include item.imageUrl
+      // so honored user pins win; otherwise follow dynamic ranking / metadata.
+      const rankedCover = getCoverImage(
+        {
+          imageUrl: item?.imageUrl ?? null,
+          updatedAt: item?.updatedAt,
+          condition: item?.condition ?? null,
+          metadata: filteredMetadata,
+          shelf: activeShelfForMedia,
+        },
+        locale,
+      );
+      const coverCandidate = rankedCover || filteredMetadata.imageUrl;
+      if (coverCandidate) {
         const currentImageUrl = form.getValues("imageUrl");
         const canReplaceScanImage =
           activeShelfType === "games" &&
           hasPrefilledScanImage &&
           typeof currentImageUrl === "string" &&
           currentImageUrl.trim() === prefilledScanImageUrl;
-
-        if (forceOverwrite || !currentImageUrl || canReplaceScanImage) {
-          form.setValue("imageUrl", metadata.imageUrl, {
-            shouldDirty: true,
+        // Keep an in-session Affiche click; otherwise follow ranked cover without
+        // dirtying the field (dirty metadata pins stuck SensCritique as selected).
+        if (
+          userPickedCoverUrl &&
+          !forceOverwrite &&
+          !canReplaceScanImage &&
+          currentImageUrl
+        ) {
+          // user pick wins
+        } else {
+          setUserPickedCoverUrl(null);
+          form.setValue("imageUrl", coverCandidate, {
+            shouldDirty: Boolean(forceOverwrite || canReplaceScanImage),
           });
         }
       }
@@ -533,7 +956,12 @@ export function ItemModal({
       activeShelfType,
       form,
       hasPrefilledScanImage,
+      item?.condition,
+      item?.imageUrl,
+      item?.updatedAt,
+      locale,
       prefilledScanImageUrl,
+      userPickedCoverUrl,
     ],
   );
 
@@ -545,6 +973,7 @@ export function ItemModal({
   } = useItemModalMetadataMutations({
     activeShelfType,
     activeShelfName: activeShelf?.name ?? null,
+    printKey: item?.printKey ?? prefilledValues?.printKey ?? null,
     applyMetadataPreviewToForm,
     onSuggestionsLoaded: (cleanSuggestions, primary) => {
       setSuggestions(cleanSuggestions);
@@ -636,6 +1065,11 @@ export function ItemModal({
 
     const urls = new Set<string>();
     const list: {
+      /**
+       * The URL the form stores. Never carries a query: what the thumbnail
+       * loads is {@link displayUrlFor} of this, applied at render time, and a
+       * cache-busting `?v=` reaching `url` would be persisted by a save.
+       */
       url: string;
       type: string;
       label: string;
@@ -644,6 +1078,7 @@ export function ItemModal({
       galleryProvider?: string | null;
       gallerySourceNames?: string[];
       galleryDetail?: string | null;
+      proofUrl?: string | null;
     }[] = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -661,6 +1096,7 @@ export function ItemModal({
           type: a.type,
           role: a.role,
           title: a.title,
+          url: a.url,
           source: a.source,
           providerLabel: a.providerLabel,
           sourceNames: a.sourceNames,
@@ -688,19 +1124,63 @@ export function ItemModal({
     name: "backgroundImageUrl",
   });
 
+  /**
+   * Re-cropping rewrites the same filename, so the URL alone tells the browser
+   * nothing changed and the thumbnail stays stale until a reload. Display only —
+   * the form keeps the clean URL, and every comparison goes through
+   * `urlsReferToSameLocalizedImage`, which drops the query.
+   *
+   * Applied to **every** tile, at the point it is rendered. Stamping it only on
+   * the row whose URL had just changed meant a crop refreshed the thumbnail
+   * exactly once: as soon as one was saved, the stored attachment *was* the
+   * `_edited` file, so every later re-crop left the row's URL untouched and the
+   * gallery kept showing the first framing.
+   */
+  const displayUrlFor = useCallback(
+    (url: string): string => {
+      const mediaForPreview = {
+        imageUrl: item?.imageUrl ?? null,
+        metadata: item?.metadata ?? fetchedMetadata ?? null,
+        shelf: activeShelfForMedia,
+      };
+      const preview = preferLocalDisplayCoverUrl(url, mediaForPreview);
+      return cropVersion && isEditDerivativeUrl(preview)
+        ? `${preview}?v=${cropVersion}`
+        : preview;
+    },
+    [
+      activeShelfForMedia,
+      cropVersion,
+      fetchedMetadata,
+      item?.imageUrl,
+      item?.metadata,
+    ],
+  );
+
   const finalBackgrounds = useMemo(() => {
     const list = [...availableBackgrounds];
 
-    if (
-      currentBackgroundUrl &&
-      typeof currentBackgroundUrl === "string" &&
-      !availableBackgrounds.some((img) => img.url === currentBackgroundUrl)
-    ) {
-      list.unshift({
-        url: currentBackgroundUrl,
-        type: "custom",
-        label: t("items.editTabs.chooseImage"),
-      });
+    if (currentBackgroundUrl && typeof currentBackgroundUrl === "string") {
+      /**
+       * A crop and the file it came from are one gallery row, not two. Matching
+       * on the exact URL made cropping a background add a second, unlabelled
+       * tile beside the original instead of re-framing it in place — the same
+       * twin-matching the poster tab already does.
+       */
+      const rowIndex = list.findIndex((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentBackgroundUrl),
+      );
+      if (rowIndex >= 0) {
+        if (list[rowIndex]!.url !== currentBackgroundUrl) {
+          list[rowIndex] = { ...list[rowIndex]!, url: currentBackgroundUrl };
+        }
+      } else {
+        list.unshift({
+          url: currentBackgroundUrl,
+          type: "custom",
+          label: t("items.editTabs.chooseImage"),
+        });
+      }
     }
 
     return list;
@@ -716,8 +1196,14 @@ export function ItemModal({
   );
 
   const availableImages = useMemo(() => {
-    const rawMetadata =
-      itemId && item?.metadata
+    const printKey = item?.printKey ?? null;
+    const rawMetadata = printKey
+      ? metadataForPrintKeyImagePicker(
+          item?.metadata,
+          fetchedMetadata,
+          printKey,
+        )
+      : itemId && item?.metadata
         ? item.metadata
         : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
@@ -743,6 +1229,9 @@ export function ItemModal({
       height?: number | null;
       meanLuminance?: number | null;
       darkPixelRatio?: number | null;
+      sourceUrl?: string | null;
+      artKind?: string | null;
+      watermarked?: boolean | null;
     }> = [];
 
     const displayLocale: AttachmentDisplayLocale =
@@ -765,6 +1254,9 @@ export function ItemModal({
       height?: number | null;
       meanLuminance?: number | null;
       darkPixelRatio?: number | null;
+      sourceUrl?: string | null;
+      artKind?: string | null;
+      watermarked?: boolean | null;
     }) => {
       if (!entry.url) return;
       const existingIndex = attachments.findIndex((attachment) =>
@@ -806,6 +1298,9 @@ export function ItemModal({
         height: entry.height,
         meanLuminance: entry.meanLuminance,
         darkPixelRatio: entry.darkPixelRatio,
+        sourceUrl: entry.sourceUrl,
+        artKind: entry.artKind,
+        watermarked: entry.watermarked,
       });
     };
 
@@ -821,11 +1316,11 @@ export function ItemModal({
       if (attachment.url) metadataImageUrls.add(attachment.url);
     }
 
-    // The stored cover is cropped to a new "_crop" file, so its URL no longer
+    // The stored cover is cropped to a new "_edited" file, so its URL no longer
     // matches the gallery attachment it was derived from. Index attachments by
     // their crop-normalized URL so the cover still inherits its real provenance
     // (source + region role) instead of looking like an orphan.
-    const stripCrop = stripCropSuffixFromUrl;
+    const stripCrop = stripEditSuffixFromUrl;
     const attachmentByNormalizedUrl = new Map<string, MetadataAttachment>();
     for (const attachment of metadata?.attachments || []) {
       if (attachment.url) {
@@ -893,6 +1388,9 @@ export function ItemModal({
           source: matchingAttachment?.source || "metadata",
           role: matchingAttachment?.role,
           title: matchingAttachment?.title,
+          sourceUrl: matchingAttachment?.sourceUrl,
+          artKind: matchingAttachment?.artKind,
+          watermarked: matchingAttachment?.watermarked,
           ...attachmentTraitsOf(matchingAttachment),
         });
       }
@@ -909,6 +1407,9 @@ export function ItemModal({
             source: attachment.source,
             role: attachment.role,
             title: attachment.title,
+            sourceUrl: attachment.sourceUrl,
+            artKind: attachment.artKind,
+            watermarked: attachment.watermarked,
             ...attachmentTraitsOf(attachment),
           });
         }
@@ -929,18 +1430,20 @@ export function ItemModal({
       locale,
     );
 
-    // "Par défaut" = top of the dynamic gallery ranking (same as displayed cover
-    // when the user has not explicitly picked one).
+    // "Par défaut" = same cover as the fiche (local twin preferred over CDN
+    // proxy URLs that paint blank Affiche tiles).
     const defaultCoverUrl =
+      getCoverImage(mediaForCover, locale) ??
       orderedCovers[0]?.url ??
       getCoverImage({ ...mediaForCover, imageUrl: null }, locale);
 
-    return orderedCovers.map((attachment) => {
+    const rows = orderedCovers.map((attachment) => {
       const gallery = getAttachmentGalleryLabels(
         {
           type: attachment.type,
           role: attachment.role,
           title: attachment.title,
+          url: attachment.url,
           source: attachment.source,
           providerLabel: attachment.providerLabel,
           sourceNames: attachment.sourceNames,
@@ -953,10 +1456,7 @@ export function ItemModal({
       const label =
         attachment.source === "barcode"
           ? t("items.editTabs.scannedImage")
-          : defaultCoverUrl &&
-              urlsReferToSameLocalizedImage(defaultCoverUrl, attachment.url)
-            ? t("items.editTabs.defaultMetadataImage")
-            : gallery.caption;
+          : gallery.caption;
 
       return {
         url: attachment.url,
@@ -967,8 +1467,33 @@ export function ItemModal({
         galleryProvider: gallery.provider,
         gallerySourceNames: gallery.sourceNames,
         galleryDetail: gallery.detail,
+        proofUrl: sanitizePublicCitationUrl(attachment.sourceUrl),
+        isAppChoice: false as boolean,
       };
     });
+
+    // Dedicated auto tile (same preview bytes as engine top when dumps exist).
+    if (defaultCoverUrl) {
+      const proof = orderedCovers[0]
+        ? sanitizePublicCitationUrl(
+            (orderedCovers[0] as { sourceUrl?: string | null }).sourceUrl,
+          )
+        : null;
+      rows.unshift({
+        url: defaultCoverUrl,
+        type: "cover",
+        label: t("items.editTabs.appChoiceCover"),
+        source: "app-choice",
+        role: "app-choice",
+        galleryProvider: null,
+        gallerySourceNames: [t("items.editTabs.appChoiceCover")],
+        galleryDetail: t("items.editTabs.appChoiceCoverDetail"),
+        proofUrl: proof,
+        isAppChoice: true,
+      });
+    }
+
+    return rows;
   }, [
     itemId,
     item,
@@ -982,23 +1507,91 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
-  const [pendingUploadPreviewUrl, setPendingUploadPreviewUrl] = useState<
-    string | null
-  >(null);
+  const currentCoverMode = useWatch({ control: form.control, name: "coverMode" });
+  // Checkmark = in-session Affiche pick, else the same cover as the fiche.
+  const afficheSelectedCoverUrl = useMemo(() => {
+    if (currentImageUrl instanceof File) return null;
+    if (userPickedCoverUrl) return userPickedCoverUrl;
+    return (
+      getCoverImage(
+        {
+          imageUrl: item?.imageUrl ?? null,
+          coverMode: currentCoverMode ?? item?.coverMode ?? null,
+          updatedAt: item?.updatedAt,
+          condition: watchedCondition ?? item?.condition ?? null,
+          metadata: item?.metadata ?? fetchedMetadata ?? null,
+          shelf: activeShelfForMedia,
+        },
+        locale,
+      ) ||
+      (typeof currentImageUrl === "string" ? currentImageUrl : null)
+    );
+  }, [
+    activeShelfForMedia,
+    currentCoverMode,
+    currentImageUrl,
+    fetchedMetadata,
+    item?.condition,
+    item?.coverMode,
+    item?.imageUrl,
+    item?.metadata,
+    item?.updatedAt,
+    locale,
+    userPickedCoverUrl,
+    watchedCondition,
+  ]);
 
+  // Keep form.imageUrl aligned with the fiche when the user has not picked
+  // a cover in this session (clears enrichment-dirtied SensCritique pins).
   useEffect(() => {
-    if (!(currentImageUrl instanceof File)) {
-      setPendingUploadPreviewUrl(null);
+    if (!isOpen || userPickedCoverUrl) return;
+    if (currentImageUrl instanceof File) return;
+    if (
+      typeof afficheSelectedCoverUrl !== "string" ||
+      !afficheSelectedCoverUrl
+    ) {
       return;
     }
-    const previewUrl = URL.createObjectURL(currentImageUrl);
-    setPendingUploadPreviewUrl(previewUrl);
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [currentImageUrl]);
+    if (
+      typeof currentImageUrl === "string" &&
+      urlsReferToSameLocalizedImage(currentImageUrl, afficheSelectedCoverUrl)
+    ) {
+      return;
+    }
+    form.setValue("imageUrl", afficheSelectedCoverUrl, { shouldDirty: false });
+  }, [
+    afficheSelectedCoverUrl,
+    currentImageUrl,
+    form,
+    isOpen,
+    userPickedCoverUrl,
+  ]);
+  // Preview URL for a freshly picked file. Derived from the File rather than
+  // pushed through setState from an effect, so choosing an image costs one
+  // render instead of two; the effect owns the revoke, and each URL it sees
+  // gets its own cleanup when the File changes.
+  const pendingUploadPreviewUrl = useMemo(
+    () =>
+      currentImageUrl instanceof File
+        ? URL.createObjectURL(currentImageUrl)
+        : null,
+    [currentImageUrl],
+  );
+
+  useEffect(() => {
+    if (!pendingUploadPreviewUrl) return;
+    return () => URL.revokeObjectURL(pendingUploadPreviewUrl);
+  }, [pendingUploadPreviewUrl]);
 
   const finalImages = useMemo(() => {
-    const rawMetadata =
-      itemId && item?.metadata
+    const printKey = item?.printKey ?? null;
+    const rawMetadata = printKey
+      ? metadataForPrintKeyImagePicker(
+          item?.metadata,
+          fetchedMetadata,
+          printKey,
+        )
+      : itemId && item?.metadata
         ? item.metadata
         : (item?.metadata ?? fetchedMetadata);
     const metadata = filterMetadataForShelfPlatform(
@@ -1008,6 +1601,26 @@ export function ItemModal({
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
     const list = [...availableImages];
+
+    /**
+     * A crop and the file it came from are the same gallery row, so twin-matching
+     * treats one as "already there" and the row keeps whichever URL it happened
+     * to hold. That row must show the *selected* framing, in both directions:
+     * cropping showed no change at all, and reverting kept showing the crop
+     * because saving repoints the stored attachment at the cropped file.
+     * The row keeps its own provenance — only the URL follows the selection.
+     */
+    if (
+      typeof currentImageUrl === "string" &&
+      currentImageUrl.startsWith("/uploads/")
+    ) {
+      const rowIndex = list.findIndex((img) =>
+        urlsReferToSameLocalizedImage(img.url, currentImageUrl),
+      );
+      if (rowIndex >= 0 && list[rowIndex]!.url !== currentImageUrl) {
+        list[rowIndex] = { ...list[rowIndex]!, url: currentImageUrl };
+      }
+    }
 
     if (pendingUploadPreviewUrl) {
       list.unshift({
@@ -1040,6 +1653,7 @@ export function ItemModal({
               type: provenance.type,
               role: provenance.role,
               title: provenance.title,
+              url: provenance.url ?? currentImageUrl,
               source: provenance.source,
               providerLabel: attachmentTraitsOf(provenance).providerLabel,
               gridStyleCoverLabelsSource:
@@ -1047,7 +1661,13 @@ export function ItemModal({
             },
             displayLocale,
           )
-        : null;
+        : getAttachmentGalleryLabels(
+            {
+              type: "cover",
+              url: currentImageUrl,
+            },
+            displayLocale,
+          );
 
       list.unshift({
         url: currentImageUrl,
@@ -1067,7 +1687,7 @@ export function ItemModal({
     currentImageUrl,
     pendingUploadPreviewUrl,
     itemId,
-    item?.metadata,
+    item,
     fetchedMetadata,
     activeShelfForMedia,
     locale,
@@ -1151,7 +1771,20 @@ export function ItemModal({
             preferredShelfId: form.getValues("shelfId") || shelfId || null,
           });
 
-          setGuessedShelfId(shelfGuess?.shelfId ?? null);
+          const nextGuessId = shelfGuess?.shelfId ?? null;
+          setGuessedShelfId(nextGuessId);
+          // Auto-apply barcode shelf guess (QuickScan parity) when the form
+          // still holds the initial / empty shelf.
+          if (nextGuessId && shelfGuess?.isGuessed !== false) {
+            const current = form.getValues("shelfId");
+            if (
+              !current ||
+              current === shelfId ||
+              current === (prefilledValues?.shelfId || "")
+            ) {
+              form.setValue("shelfId", nextGuessId, { shouldDirty: false });
+            }
+          }
         }
 
         if (
@@ -1262,10 +1895,15 @@ export function ItemModal({
     ],
   );
 
+  // Latest-callback refs. Assigned after commit — writing a ref during render
+  // is not allowed — which is early enough: the only readers are post-commit
+  // microtasks in the session-bootstrap effect below.
   const handleBarcodeChangeRef = useRef(handleBarcodeChange);
-  handleBarcodeChangeRef.current = handleBarcodeChange;
   const fetchMetadataPreviewRef = useRef(fetchMetadataPreview);
-  fetchMetadataPreviewRef.current = fetchMetadataPreview;
+  useEffect(() => {
+    handleBarcodeChangeRef.current = handleBarcodeChange;
+    fetchMetadataPreviewRef.current = fetchMetadataPreview;
+  });
 
   const handleLogoChange = async (file: File | string | null) => {
     if (file != null) {
@@ -1273,25 +1911,91 @@ export function ItemModal({
         if (!file.type.startsWith("image/")) {
           toast.error(t("items.invalidImageFile"));
           form.setValue("imageUrl", null);
+          setUserPickedCoverUrl(null);
           return;
         }
+        setUserPickedCoverUrl(null);
         form.setValue("imageUrl", file);
       } else {
+        setUserPickedCoverUrl(file);
         form.setValue("imageUrl", file);
       }
     } else {
+      setUserPickedCoverUrl(null);
       form.setValue("imageUrl", null);
     }
   };
 
+  const lookupReceivableCandidates = useCallback(
+    async (query: {
+      printKey?: string | null;
+      barcode?: string | null;
+    }): Promise<ReceivableShelfItem[]> => {
+      if (receivableItems.length > 0) return [...receivableItems];
+      const printKey = query.printKey?.trim();
+      const barcode = query.barcode?.trim();
+      if (!printKey && !barcode) return [];
+      try {
+        const { data } = await axios.get<ReceivableShelfItem[]>("/api/items", {
+          params: barcode
+            ? { q: barcode, barcodeExact: "true", includeMetadata: "false" }
+            : { q: printKey, includeMetadata: "false" },
+        });
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    },
+    [receivableItems],
+  );
+
+  const finishCreateSubmit = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async (updatedItem: any, valuesShelfId: string) => {
+      await onSubmit(updatedItem);
+      if (itemId) {
+        void invalidateItemQueries(queryClient, itemId, [
+          shelfId,
+          valuesShelfId,
+        ]);
+      }
+      onClose();
+    },
+    [itemId, onClose, onSubmit, queryClient, shelfId],
+  );
+
   const handleSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
+      // Keep the Affiche pick URL as-is (Booknode CDN stays Booknode). Do not
+      // rewrite to a same-role `/uploads` twin — that made Enregistrer stick the
+      // BDovore row after reopen. Proxy fetch is budgeted in localize + API.
       const imageUrl = await localizeImageFieldForSubmit(values.imageUrl);
       const backgroundImageUrl = await localizeImageFieldForSubmit(
         values.backgroundImageUrl,
         { trim: false },
       );
+
+      const {
+        purchasePrice,
+        absencePrice,
+        gradeHouse,
+        gradeLabel,
+        gradeCertNo,
+        gradedAt,
+        absenceReason,
+        absenceSince,
+        absenceRecipient,
+        absenceSource,
+        absenceCarrier,
+        absenceTracking,
+        absenceOrderRef,
+        absenceOrderUrl,
+        absenceNote,
+        absenceExpectedAt,
+        purchasedAt,
+        ...restValues
+      } = values;
 
       // Form payload forwarded to the parent's onSubmit. It carries a scalar
       // `shelfId` (and a raw `id`), which Prisma's *checked* create/update input
@@ -1299,25 +2003,74 @@ export function ItemModal({
       // adapts it before hitting Prisma. `any` is load-bearing at that boundary.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedItem: any = {
-        ...values,
+        ...restValues,
         id: item ? item?.id : undefined,
         imageUrl: imageUrl,
+        coverMode: restValues.coverMode ?? null,
         backgroundImageUrl: backgroundImageUrl,
+        purchasePriceCents: parsePriceCents(purchasePrice),
+        purchasedAt: purchasedAt?.trim() || null,
+        absenceReason: absenceReason?.trim() || null,
+        absenceSince: absenceSince?.trim() || null,
+        absenceRecipient: absenceRecipient?.trim() || null,
+        absenceSource: absenceSource?.trim() || null,
+        absenceCarrier: absenceCarrier?.trim() || null,
+        absenceTracking: absenceTracking?.trim() || null,
+        absenceOrderRef: absenceOrderRef?.trim() || null,
+        absenceOrderUrl: absenceOrderUrl?.trim() || null,
+        absenceNote: absenceNote?.trim() || null,
+        absencePriceCents: parsePriceCents(absencePrice),
+        absenceExpectedAt: absenceExpectedAt?.trim() || null,
+        gradeHouse: gradeHouse?.trim() || null,
+        gradeLabel: gradeLabel?.trim() || null,
+        gradeCertNo: gradeCertNo?.trim() || null,
+        gradedAt: gradedAt?.trim() || null,
         // Create-from-scan: persist the preview so the item page keeps gallery /
         // facts while background enrichment runs (otherwise only the chosen cover survives).
+        // Print identity must travel with the create (ScanFAB / PrintPicker) —
+        // local catalogue adapters resolve only by printKey, never by name.
         ...(item
           ? {}
-          : { metadataPreview: fetchedMetadata ?? prefilledValues?.metadataPreview ?? null }),
+          : {
+              metadataPreview:
+                fetchedMetadata ?? prefilledValues?.metadataPreview ?? null,
+              ...(prefilledValues?.printKey
+                ? { printKey: prefilledValues.printKey }
+                : {}),
+              ...(prefilledValues?.skuKey
+                ? {
+                    kind: "sealed",
+                    skuKey: prefilledValues.skuKey,
+                    skuName: prefilledValues.name ?? undefined,
+                    skuLanguage: prefilledValues.language ?? undefined,
+                  }
+                : {}),
+              ...(prefilledValues?.language
+                ? { language: prefilledValues.language }
+                : {}),
+              ...(prefilledValues?.setCode
+                ? { setCode: prefilledValues.setCode }
+                : {}),
+            }),
       };
 
-      await onSubmit(updatedItem);
-      if (itemId) {
-        void invalidateItemQueries(queryClient, itemId, [
-          shelfId,
-          values.shelfId,
-        ]);
+      if (!item) {
+        const createQuery = {
+          printKey: prefilledValues?.printKey ?? null,
+          variant: values.variant ?? prefilledValues?.variant ?? null,
+          language: prefilledValues?.language ?? null,
+          setCode: prefilledValues?.setCode ?? null,
+          barcode: values.barcode?.trim() || null,
+        };
+        const candidates = await lookupReceivableCandidates(createQuery);
+        const match = resolveReceivableForCreate(candidates, createQuery);
+        if (match) {
+          setAwaitedPrompt({ match, payload: updatedItem });
+          return;
+        }
       }
-      onClose();
+
+      await finishCreateSubmit(updatedItem, values.shelfId);
     } catch (error) {
       if (!isAbortError(error)) {
         console.error("Error submitting form:", error);
@@ -1328,6 +2081,49 @@ export function ItemModal({
     }
   };
 
+  const confirmReceiveAwaited = useCallback(async () => {
+    if (!awaitedPrompt) return;
+    setIsReceivingAwaited(true);
+    try {
+      const updated = await saveItem({
+        id: awaitedPrompt.match.id,
+        presence: "owned",
+        currentShelfId: shelfId,
+      } as Parameters<typeof saveItem>[0]);
+      await invalidateItemQueries(queryClient, updated.id, [
+        shelfId,
+        updated.shelfId,
+      ]);
+      toast.success(t("scanner.receiveSuccess"));
+      setAwaitedPrompt(null);
+      onClose();
+    } catch (error) {
+      if (!isAbortError(error)) {
+        console.error(error);
+        toast.error(t("scanner.receiveFailed"));
+      }
+    } finally {
+      setIsReceivingAwaited(false);
+    }
+  }, [awaitedPrompt, onClose, queryClient, shelfId, t]);
+
+  const confirmAddAsNewAwaited = useCallback(async () => {
+    if (!awaitedPrompt) return;
+    const { payload } = awaitedPrompt;
+    setAwaitedPrompt(null);
+    setIsSubmitting(true);
+    try {
+      await finishCreateSubmit(payload, String(payload.shelfId || shelfId));
+    } catch (error) {
+      if (!isAbortError(error)) {
+        console.error("Error submitting form:", error);
+        toast.error(t("items.saveFailed"));
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [awaitedPrompt, finishCreateSubmit, shelfId, t]);
+
   const handleDelete = async () => {
     if (!item?.id) return;
     setIsDeleting(true);
@@ -1337,6 +2133,131 @@ export function ItemModal({
       setIsDeleting(false);
     }
   };
+
+  const [removingMediaUrl, setRemovingMediaUrl] = useState<string | null>(null);
+
+  const handleRemoveMediaImage = useCallback(
+    async (
+      url: string,
+      field: "imageUrl" | "backgroundImageUrl" = "imageUrl",
+    ) => {
+      const target = url.trim();
+      if (!target || removingMediaUrl) return;
+      setRemovingMediaUrl(target);
+
+      const clearLocalSelection = (nextCover: string | null) => {
+        const current = form.getValues(field);
+        if (
+          typeof current === "string" &&
+          urlsReferToSameLocalizedImage(current, target)
+        ) {
+          form.setValue(field, field === "imageUrl" ? nextCover : null, {
+            shouldDirty: true,
+          });
+        }
+        if (
+          userPickedCoverUrl &&
+          urlsReferToSameLocalizedImage(userPickedCoverUrl, target)
+        ) {
+          setUserPickedCoverUrl(nextCover);
+        }
+      };
+
+      try {
+        if (!itemId) {
+          setFetchedMetadata((previous) => {
+            if (!previous) return previous;
+            const attachments = filterAttachmentsRemovingUrl(
+              previous.attachments ?? [],
+              target,
+            );
+            const nextImageUrl =
+              previous.imageUrl &&
+              urlsReferToSameLocalizedImage(previous.imageUrl, target)
+                ? (attachments.find((attachment) =>
+                    ["cover", "artwork", "image"].includes(attachment.type),
+                  )?.url ?? null)
+                : (previous.imageUrl ?? null);
+            clearLocalSelection(nextImageUrl);
+            return {
+              ...previous,
+              attachments,
+              imageUrl: nextImageUrl ?? undefined,
+            };
+          });
+          toast.success(t("items.editTabs.removeImageSuccess"));
+          return;
+        }
+
+        const response = await removeItemMediaImage(itemId, target, shelfId);
+        if (response.item) {
+          await syncItemQueries(queryClient, response.item, [shelfId]);
+        }
+        if (response.clearedCover || field === "imageUrl") {
+          const current = form.getValues("imageUrl");
+          if (
+            typeof current === "string" &&
+            urlsReferToSameLocalizedImage(current, target)
+          ) {
+            form.setValue("imageUrl", response.nextImageUrl, {
+              shouldDirty: true,
+            });
+          }
+        }
+        if (response.clearedBackground || field === "backgroundImageUrl") {
+          const current = form.getValues("backgroundImageUrl");
+          if (
+            typeof current === "string" &&
+            urlsReferToSameLocalizedImage(current, target)
+          ) {
+            form.setValue(
+              "backgroundImageUrl",
+              response.nextBackgroundImageUrl,
+              { shouldDirty: true },
+            );
+          }
+        }
+        if (
+          userPickedCoverUrl &&
+          urlsReferToSameLocalizedImage(userPickedCoverUrl, target)
+        ) {
+          setUserPickedCoverUrl(response.nextImageUrl);
+        }
+        setFetchedMetadata((previous) => {
+          if (!previous) return previous;
+          return {
+            ...previous,
+            attachments: filterAttachmentsRemovingUrl(
+              previous.attachments ?? [],
+              target,
+            ),
+            imageUrl:
+              previous.imageUrl &&
+              urlsReferToSameLocalizedImage(previous.imageUrl, target)
+                ? (response.nextImageUrl ?? undefined)
+                : previous.imageUrl,
+          };
+        });
+        toast.success(t("items.editTabs.removeImageSuccess"));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("Error removing media image:", error);
+          toast.error(t("items.editTabs.removeImageFailed"));
+        }
+      } finally {
+        setRemovingMediaUrl(null);
+      }
+    },
+    [
+      form,
+      itemId,
+      queryClient,
+      removingMediaUrl,
+      shelfId,
+      t,
+      userPickedCoverUrl,
+    ],
+  );
 
   const handleClose = () => {
     reset();
@@ -1434,12 +2355,18 @@ export function ItemModal({
           <span className="block text-left">
             {item
               ? `${t("items.editItem")} : ${item.name}`
-              : t("items.addNewItem")}
+              : entryKind === "free"
+                ? t("items.addMenu.freeEntryTitle")
+                : t("items.addNewItem")}
           </span>
         }
         description={
           <span className="block text-left">
-            {item ? t("items.editItemDetails") : t("items.createNewItem")}
+            {item
+              ? t("items.editItemDetails")
+              : entryKind === "free"
+                ? t("items.addMenu.freeEntryDescription")
+                : t("items.createNewItem")}
           </span>
         }
         size="xl"
@@ -1453,10 +2380,7 @@ export function ItemModal({
           >
             <div className="flex flex-1 overflow-hidden flex-col min-h-0">
               {/* Sidebar for tabs (when editing, when metadata available, or when coming from a scan) */}
-              {(item ||
-                fetchedMetadata ||
-                prefilledValues?.imageUrl ||
-                prefilledValues?.barcode) && (
+              {hasCoverTab && (
                 <div className="w-[calc(100%-2rem)] mx-auto mt-3 bg-zinc-200/50 dark:bg-zinc-900/60 border border-border/60 p-1 flex gap-1 rounded-xl shrink-0 overflow-x-auto backdrop-blur-md">
                   <button
                     type="button"
@@ -1464,7 +2388,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "general"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1487,7 +2411,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "poster"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1510,7 +2434,7 @@ export function ItemModal({
                     className={cn(
                       "group flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg select-none cursor-pointer whitespace-nowrap transition-all flex-1 border border-transparent",
                       activeTab === "background"
-                        ? "bg-white text-zinc-950 dark:bg-zinc-850 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
+                        ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-700/50"
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-300/30 dark:hover:bg-zinc-800/40",
                     )}
                   >
@@ -1605,94 +2529,97 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Barcode */}
-                    <FormField
-                      control={form.control}
-                      name="barcode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t(itemsBarcodeLabelKey(shelfType))}
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex relative items-center">
-                              <Input
-                                type="text"
-                                className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
-                                placeholder={t(
-                                  itemsBarcodePlaceholderKey(shelfType),
-                                )}
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  debounce(() =>
-                                    handleBarcodeChange(e.target.value),
-                                  );
-                                }}
-                              />
-                              <ScannerButton
-                                className="absolute right-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-                                onScan={(barcode) => {
-                                  form.setValue("barcode", barcode);
-                                  handleBarcodeChange(barcode);
-                                }}
-                              />
-                            </div>
-                          </FormControl>
-                          {matches.length > 1 && (
-                            <div className="mt-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-fade-in shadow-xs">
-                              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-2">
-                                <SparklesIcon className="size-3.5" />
-                                {t("items.multipleMatchesTitle")}
-                              </span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {matches.map((m) => (
-                                  <Button
-                                    key={m.name}
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(
-                                      "text-xs px-3 py-1.5 h-auto rounded-lg font-semibold transition-all border select-none cursor-pointer",
-                                      selectedMatch?.name === m.name
-                                        ? "bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700 hover:text-white dark:bg-amber-500 dark:border-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:hover:border-amber-400 dark:hover:text-zinc-950"
-                                        : "bg-background border-border hover:bg-accent text-muted-foreground hover:text-foreground",
-                                    )}
-                                    onClick={() => {
-                                      setSelectedMatch(m);
-                                      setSuggestions(m.suggestions);
-                                      setNameSuggestion(m.name);
-                                      form.setValue("name", m.name);
-
-                                      // Overwrite cover and background for the new match selection
-                                      form.setValue(
-                                        "imageUrl",
-                                        m.coverUrl || null,
-                                        { shouldDirty: true },
-                                      );
-                                      form.setValue(
-                                        "backgroundImageUrl",
-                                        null,
-                                        { shouldDirty: true },
-                                      );
-
-                                      fetchMetadataPreview(
-                                        m.name,
-                                        form.getValues("barcode") || "",
-                                        true,
-                                      );
-                                    }}
-                                  >
-                                    {m.name}
-                                  </Button>
-                                ))}
+                    {/* Nothing on this shelf carries a barcode: the field, and the
+                        scanner inside it, would only ever come up empty. */}
+                    {!usesPrintSearch(shelfType) && (
+                      <FormField
+                        control={form.control}
+                        name="barcode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t(itemsBarcodeLabelKey(shelfType))}
+                            </FormLabel>
+                            <FormControl>
+                              <div className="flex relative items-center">
+                                <Input
+                                  type="text"
+                                  className="pr-11 bg-zinc-50/50 dark:bg-zinc-950/20 border-border/80 rounded-xl focus-visible:border-amber-500/80 focus-visible:ring-amber-500/20 focus-visible:ring-[3px] transition-all duration-200 text-xs sm:text-sm h-10"
+                                  placeholder={t(
+                                    itemsBarcodePlaceholderKey(shelfType),
+                                  )}
+                                  {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    debounce(() =>
+                                      handleBarcodeChange(e.target.value),
+                                    );
+                                  }}
+                                />
+                                <ScannerButton
+                                  className="absolute right-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                                  onScan={(barcode) => {
+                                    form.setValue("barcode", barcode);
+                                    handleBarcodeChange(barcode);
+                                  }}
+                                />
                               </div>
-                            </div>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            </FormControl>
+                            {matches.length > 1 && (
+                              <div className="mt-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-fade-in shadow-xs">
+                                <span className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-2">
+                                  <SparklesIcon className="size-3.5" />
+                                  {t("items.multipleMatchesTitle")}
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {matches.map((m) => (
+                                    <Button
+                                      key={m.name}
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className={cn(
+                                        "text-xs px-3 py-1.5 h-auto rounded-lg font-semibold transition-all border select-none cursor-pointer",
+                                        selectedMatch?.name === m.name
+                                          ? "bg-amber-600 border-amber-600 text-white hover:bg-amber-700 hover:border-amber-700 hover:text-white dark:bg-amber-500 dark:border-amber-500 dark:text-zinc-950 dark:hover:bg-amber-400 dark:hover:border-amber-400 dark:hover:text-zinc-950"
+                                          : "bg-background border-border hover:bg-accent text-muted-foreground hover:text-foreground",
+                                      )}
+                                      onClick={() => {
+                                        setSelectedMatch(m);
+                                        setSuggestions(m.suggestions);
+                                        setNameSuggestion(m.name);
+                                        form.setValue("name", m.name);
+
+                                        // Overwrite cover and background for the new match selection
+                                        form.setValue(
+                                          "imageUrl",
+                                          m.coverUrl || null,
+                                          { shouldDirty: true },
+                                        );
+                                        form.setValue(
+                                          "backgroundImageUrl",
+                                          null,
+                                          { shouldDirty: true },
+                                        );
+
+                                        fetchMetadataPreview(
+                                          m.name,
+                                          form.getValues("barcode") || "",
+                                          true,
+                                        );
+                                      }}
+                                    >
+                                      {m.name}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     {/* Name */}
                     <FormField
@@ -1862,82 +2789,149 @@ export function ItemModal({
                       )}
                     />
 
-                    {/* Condition */}
-                    <FormField
-                      control={form.control}
-                      name="condition"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            {t("items.condition")}
-                          </FormLabel>
-                          <FormControl>
-                            <ToggleGroup
-                              size="sm"
-                              type="single"
-                              variant="outline"
-                              className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
-                              value={field.value}
-                              onValueChange={(value) => {
-                                // Radix allows clearing a single toggle — keep one grade selected.
-                                if (value) field.onChange(value);
-                              }}
-                            >
-                              {itemConditionsForShelfType(activeShelfType).map(
-                                (condition) => {
-                                const isActive = field.value === condition;
-                                return (
+                    <ItemModalLifecycleFields
+                      control={
+                        form.control as unknown as Control<ItemModalLifecycleFormSlice>
+                      }
+                      setValue={
+                        form.setValue as unknown as UseFormSetValue<ItemModalLifecycleFormSlice>
+                      }
+                      t={t}
+                      orderDuplicateWarning={orderDuplicateWarning}
+                      onRecover={handleRecoverPast}
+                    />
+                    {item?.id ? (
+                      <ItemPresenceTimeline
+                        itemId={item.id}
+                        shelfId={shelfId}
+                        maxEvents={3}
+                        compact
+                      />
+                    ) : null}
+
+                    {/* Condition — hidden for TCG (finish is the copy axis). */}
+                    {shelfShowsItemCondition(activeShelfType) && (
+                      <FormField
+                        control={form.control}
+                        name="condition"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t("items.condition")}
+                            </FormLabel>
+                            <FormControl>
+                              <ToggleGroup
+                                size="sm"
+                                type="single"
+                                variant="outline"
+                                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                                value={field.value}
+                                onValueChange={(value) => {
+                                  // Radix allows clearing a single toggle — keep one grade selected.
+                                  if (value) field.onChange(value);
+                                }}
+                              >
+                                {itemConditionsForShelfType(
+                                  activeShelfType,
+                                ).map((condition) => {
+                                  const isActive = field.value === condition;
+                                  return (
+                                    <ToggleGroupItem
+                                      key={condition}
+                                      value={condition}
+                                      aria-label={condition}
+                                      className={cn(
+                                        "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
+                                        isActive
+                                          ? conditionToggleActiveClass(
+                                              condition,
+                                            )
+                                          : "bg-transparent hover:text-foreground",
+                                      )}
+                                    >
+                                      <ConditionIcon condition={condition} />
+                                      <span className="shrink-0 font-medium">
+                                        {t(`items.conditions.${condition}`)}
+                                      </span>
+                                    </ToggleGroupItem>
+                                  );
+                                })}
+                              </ToggleGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* One option is not a choice, so it is not offered. */}
+                    {variantOptions.length > 1 && (
+                      <FormField
+                        control={form.control}
+                        name="variant"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {t("items.variant")}
+                            </FormLabel>
+                            <FormControl>
+                              <ToggleGroup
+                                size="sm"
+                                type="single"
+                                variant="outline"
+                                className="flex w-full flex-wrap gap-2 p-1 bg-zinc-200/50 dark:bg-zinc-900/60 rounded-xl border border-border/40"
+                                value={field.value ?? ""}
+                                onValueChange={(value) =>
+                                  // Re-clicking the active option clears it, so a
+                                  // variant set by mistake can be taken back.
+                                  field.onChange(value ? value : null)
+                                }
+                              >
+                                {variantOptions.map((option) => (
                                   <ToggleGroupItem
-                                    key={condition}
-                                    value={condition}
-                                    aria-label={condition}
-                                    className={cn(
-                                      "flex flex-auto py-2.5 px-3 gap-1.5 text-xs font-bold rounded-lg transition-all duration-200 border border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-muted-foreground cursor-pointer select-none",
-                                      isActive
-                                        ? conditionToggleActiveClass(condition)
-                                        : "bg-transparent hover:text-foreground",
-                                    )}
+                                    key={option}
+                                    value={option}
+                                    className="flex-1 gap-1.5 rounded-lg border-0 text-xs data-[state=on]:bg-white data-[state=on]:text-zinc-950 data-[state=on]:shadow-sm dark:data-[state=on]:bg-zinc-800 dark:data-[state=on]:text-zinc-50"
                                   >
-                                    <ConditionIcon condition={condition} />
                                     <span className="shrink-0 font-medium">
-                                      {t(`items.conditions.${condition}`)}
+                                      {localizeFinishLabel(option, t)}
                                     </span>
                                   </ToggleGroupItem>
-                                );
-                              },
-                              )}
-                            </ToggleGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                                ))}
+                              </ToggleGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
-                    {/* Premium Cover Selector inside General tab */}
-                    <FormField
-                      control={form.control}
-                      name="imageUrl"
-                      render={({ field }) => (
-                        <ImagePickerField
-                          value={field.value}
-                          onChange={field.onChange}
-                          onFileChange={handleLogoChange}
-                          label={t("items.cover")}
-                          placeholder="Pas de couverture"
-                          chooseImageText={t("items.editTabs.chooseImage")}
-                          enterUrlText={t("items.editTabs.enterUrl")}
-                          urlPlaceholderText={t(
-                            "items.editTabs.urlPlaceholder",
-                          )}
-                          suggestedImagesText="Images suggérées"
-                          invalidUrlText={t("items.invalidImage")}
-                          suggestions={finalImages}
-                          onViewMore={() => setActiveTab("poster")}
-                          aspectRatio={itemAspectRatio}
-                          contain={true}
-                        />
-                      )}
-                    />
+                    {/* Only when there is no cover tab to own this. */}
+                    {!hasCoverTab && (
+                      <FormField
+                        control={form.control}
+                        name="imageUrl"
+                        render={({ field }) => (
+                          <ImagePickerField
+                            value={field.value}
+                            onChange={field.onChange}
+                            onFileChange={handleLogoChange}
+                            label={t("items.cover")}
+                            placeholder="Pas de couverture"
+                            chooseImageText={t("items.editTabs.chooseImage")}
+                            enterUrlText={t("items.editTabs.enterUrl")}
+                            urlPlaceholderText={t(
+                              "items.editTabs.urlPlaceholder",
+                            )}
+                            suggestedImagesText="Images suggérées"
+                            invalidUrlText={t("items.invalidImage")}
+                            suggestions={finalImages}
+                            aspectRatio={itemAspectRatio}
+                            contain={true}
+                          />
+                        )}
+                      />
+                    )}
                   </div>
                 )}
 
@@ -1962,6 +2956,7 @@ export function ItemModal({
                                   toast.error(t("items.invalidImageFile"));
                                   return;
                                 }
+                                setUserPickedCoverUrl(null);
                                 form.setValue("imageUrl", file);
                                 toast.success(t("common.success"));
                               }
@@ -2041,38 +3036,63 @@ export function ItemModal({
                                 currentPosterPage * 12,
                               )
                               .map((img, i) => {
-                                const selectedCoverUrl = currentImageUrl;
-                                const isSelected =
-                                  pendingUploadPreviewUrl != null
-                                    ? img.url === pendingUploadPreviewUrl
-                                    : typeof selectedCoverUrl === "string" &&
+                                const selectedCoverUrl =
+                                  pendingUploadPreviewUrl ??
+                                  afficheSelectedCoverUrl;
+                                const mode =
+                                  currentCoverMode ??
+                                  item?.coverMode ??
+                                  (userPickedCoverUrl ? "pinned" : "auto");
+                                const isAppChoice = Boolean(
+                                  "isAppChoice" in img && img.isAppChoice,
+                                );
+                                const isSelected = pendingUploadPreviewUrl
+                                  ? typeof selectedCoverUrl === "string" &&
+                                    urlsReferToSameLocalizedImage(
+                                      selectedCoverUrl,
+                                      img.url,
+                                    )
+                                  : mode === "auto"
+                                    ? isAppChoice
+                                    : !isAppChoice &&
+                                      typeof selectedCoverUrl === "string" &&
                                       urlsReferToSameLocalizedImage(
                                         selectedCoverUrl,
                                         img.url,
                                       );
+                                const pickCover = () => {
+                                  const nextMode = isAppChoice
+                                    ? "auto"
+                                    : "pinned";
+                                  form.setValue("coverMode", nextMode, {
+                                    shouldDirty: true,
+                                  });
+                                  setUserPickedCoverUrl(
+                                    isAppChoice ? null : img.url,
+                                  );
+                                  form.setValue("imageUrl", img.url, {
+                                    shouldDirty: true,
+                                  });
+                                };
                                 return (
                                   <div
                                     key={i}
                                     role="button"
                                     tabIndex={0}
-                                    onClick={() =>
-                                      form.setValue("imageUrl", img.url, {
-                                        shouldDirty: true,
-                                      })
-                                    }
+                                    onClick={pickCover}
                                     onKeyDown={(event) => {
                                       if (
                                         event.key === "Enter" ||
                                         event.key === " "
                                       ) {
                                         event.preventDefault();
-                                        form.setValue("imageUrl", img.url, {
-                                          shouldDirty: true,
-                                        });
+                                        pickCover();
                                       }
                                     }}
                                     className={cn(
                                       "group relative overflow-hidden rounded-xl border-2 bg-white text-left transition-all duration-200 outline-none flex flex-col items-center justify-center cursor-pointer",
+                                      isAppChoice &&
+                                        "border-dashed border-zinc-400 dark:border-zinc-500",
                                       isSelected
                                         ? "border-amber-600 dark:border-amber-500 shadow-md ring-2 ring-amber-600/30"
                                         : "border-border/60 hover:border-border hover:shadow-sm",
@@ -2080,7 +3100,7 @@ export function ItemModal({
                                     style={{ aspectRatio: itemAspectRatio }}
                                   >
                                     <RemoteImage
-                                      src={img.url}
+                                      src={displayUrlFor(img.url)}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
@@ -2093,9 +3113,45 @@ export function ItemModal({
                                         e.stopPropagation();
                                         setZoomImageUrl(img.url);
                                       }}
-                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer"
+                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Maximize2 className="size-3.5" />
+                                    </button>
+
+                                    {/* Hover Crop Button */}
+                                    <button
+                                      type="button"
+                                      title={t("items.cropImage.action")}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCropTarget({
+                                          url: img.url,
+                                          field: "imageUrl",
+                                        });
+                                      }}
+                                      className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
+                                    >
+                                      <Crop className="size-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      title={t("items.editTabs.removeImage")}
+                                      disabled={removingMediaUrl === img.url}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleRemoveMediaImage(
+                                          img.url,
+                                          "imageUrl",
+                                        );
+                                      }}
+                                      className="absolute bottom-20 right-2 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {removingMediaUrl === img.url ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="size-3.5" />
+                                      )}
                                     </button>
 
                                     {/* Selected overlay checkmark */}
@@ -2121,6 +3177,11 @@ export function ItemModal({
                                             : [])
                                         }
                                         detail={img.galleryDetail}
+                                        proofUrl={
+                                          "proofUrl" in img
+                                            ? img.proofUrl
+                                            : null
+                                        }
                                       />
                                     </div>
 
@@ -2325,7 +3386,7 @@ export function ItemModal({
                                     )}
                                   >
                                     <RemoteImage
-                                      src={img.url}
+                                      src={displayUrlFor(img.url)}
                                       alt={img.label}
                                       sizes="180px"
                                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -2338,9 +3399,45 @@ export function ItemModal({
                                         e.stopPropagation();
                                         setZoomImageUrl(img.url);
                                       }}
-                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer"
+                                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
                                     >
                                       <Maximize2 className="size-3.5" />
+                                    </button>
+
+                                    {/* Hover Crop Button */}
+                                    <button
+                                      type="button"
+                                      title={t("items.cropImage.action")}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCropTarget({
+                                          url: img.url,
+                                          field: "backgroundImageUrl",
+                                        });
+                                      }}
+                                      className="absolute bottom-11 right-2 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer"
+                                    >
+                                      <Crop className="size-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      title={t("items.editTabs.removeImage")}
+                                      disabled={removingMediaUrl === img.url}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handleRemoveMediaImage(
+                                          img.url,
+                                          "backgroundImageUrl",
+                                        );
+                                      }}
+                                      className="absolute bottom-20 right-2 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-md active:scale-95 transition-all opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 z-30 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {removingMediaUrl === img.url ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="size-3.5" />
+                                      )}
                                     </button>
 
                                     {/* Selected overlay checkmark */}
@@ -2366,6 +3463,11 @@ export function ItemModal({
                                             : [])
                                         }
                                         detail={img.galleryDetail}
+                                        proofUrl={
+                                          "proofUrl" in img
+                                            ? img.proofUrl
+                                            : null
+                                        }
                                       />
                                     </div>
 
@@ -2507,6 +3609,91 @@ export function ItemModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Reframing a gallery image also picks it: you cropped it to use it —
+          for the field it was cropped from, not always the cover. */}
+      <ImageCropModal
+        imageUrl={cropTarget?.url ?? null}
+        isOpen={!!cropTarget}
+        role={
+          cropTarget?.field === "backgroundImageUrl" ? "background" : "cover"
+        }
+        onClose={() => setCropTarget(null)}
+        onCropped={(url) => {
+          form.setValue(cropTarget?.field ?? "imageUrl", url, {
+            shouldDirty: true,
+          });
+          setCropVersion(Date.now());
+        }}
+      />
+
+      <AwaitedReceiptDialog
+        isOpen={awaitedPrompt != null}
+        pairs={
+          awaitedPrompt
+            ? [
+                {
+                  queryIndex: 0,
+                  query: {
+                    printKey: awaitedPrompt.match.printKey || "",
+                    title: awaitedPrompt.match.name,
+                  },
+                  match: awaitedPrompt.match,
+                },
+              ]
+            : []
+        }
+        isReceiving={isReceivingAwaited}
+        onClose={() => setAwaitedPrompt(null)}
+        onReceive={confirmReceiveAwaited}
+        onAddAsNew={confirmAddAsNewAwaited}
+      />
+
+      <BaseModal
+        isOpen={tradeRecoverOpen}
+        onClose={() => {
+          if (!tradeRecoverBusy) setTradeRecoverOpen(false);
+        }}
+        size="sm"
+        title={t("items.trade.recoverTitle")}
+        description={t("items.trade.recoverHint")}
+        cancelLabel={t("common.cancel")}
+        onCancel={() => {
+          if (!tradeRecoverBusy) setTradeRecoverOpen(false);
+        }}
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={tradeRecoverBusy}
+              onClick={() => setTradeRecoverOpen(false)}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={tradeRecoverBusy}
+              onClick={() => void finishTradeRecover(true)}
+            >
+              {t("items.trade.recoverBreak")}
+            </Button>
+            <Button
+              type="button"
+              disabled={tradeRecoverBusy}
+              onClick={() => void finishTradeRecover(false)}
+            >
+              {tradeRecoverBusy ? (
+                <Loader2 className="size-4 animate-spin mr-1.5" />
+              ) : null}
+              {t("items.trade.recoverKeep")}
+            </Button>
+          </div>
+        }
+      >
+        <div className="hidden" />
+      </BaseModal>
     </>
   );
 }

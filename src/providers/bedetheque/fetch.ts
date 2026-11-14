@@ -201,7 +201,10 @@ export function parseBedethequeCreditedRoles(
   return Array.from(byRole.entries()).map(([role, names]) => ({ role, names }));
 }
 
-function parseBedethequePageCount(html: string, infoFields: Record<string, string>) {
+function parseBedethequePageCount(
+  html: string,
+  infoFields: Record<string, string>,
+) {
   const fromSchema = Number.parseInt(
     html.match(/itemprop=["']numberOfPages["'][^>]*>(\d+)/i)?.[1] || "",
     10,
@@ -347,7 +350,10 @@ const URL_TOME_NUMERO_ISSUE_RE = new RegExp(
   `-Tome-(${ALBUM_URL_ISSUE_PATTERN})-Numero-`,
   "i",
 );
-const URL_TOME_ISSUE_RE = new RegExp(`-Tome-(${ALBUM_URL_ISSUE_PATTERN})-`, "i");
+const URL_TOME_ISSUE_RE = new RegExp(
+  `-Tome-(${ALBUM_URL_ISSUE_PATTERN})-`,
+  "i",
+);
 
 /**
  * Composite h2 position label: `{pre}<span class="numa">{label}</span>` gives
@@ -486,7 +492,9 @@ export function pickBedethequeHorsSerieAlbumPath(
     }
   }
 
-  return bestScore >= ALBUM_TITLE_MIN_SIMILARITY ? (best?.albumPath ?? null) : null;
+  return bestScore >= ALBUM_TITLE_MIN_SIMILARITY
+    ? (best?.albumPath ?? null)
+    : null;
 }
 
 function bedethequeAlbumsPageUrl(series: BedethequeSeriesCandidate): string {
@@ -812,7 +820,11 @@ async function fetchBedethequeAlbumForTitle(
       );
       if (!album) continue;
 
-      if (issueNumber && album.issueNumber && album.issueNumber !== issueNumber) {
+      if (
+        issueNumber &&
+        album.issueNumber &&
+        album.issueNumber !== issueNumber
+      ) {
         continue;
       }
 

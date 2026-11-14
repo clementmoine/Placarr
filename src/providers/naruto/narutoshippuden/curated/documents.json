@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://www.carddas.com/naruto/cardgame/rule/school_rule.pdf",
+    "localPath": "../carddass/staging/carddas-jp/www.carddas.com/naruto/cardgame/rule/school_rule.pdf",
+    "lang": "ja",
+    "kind": "rulebook",
+    "title": "school rule (疾風伝 忍者学校)"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/cardgame/rule/school_playseat.pdf",
+    "localPath": "../carddass/staging/carddas-jp/www.carddas.com/naruto/cardgame/rule/school_playseat.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "school playseat (疾風伝)"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/manga_2.pdf",
+    "localPath": "../carddass/staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/manga_2.pdf",
+    "lang": "ja",
+    "kind": "rulebook",
+    "title": "manga 2 (疾風伝 忍者学校)"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/rule/rulepdf/naruto_play.pdf",
+    "localPath": "../carddass/staging/carddas-jp/www.carddas.com/naruto/rule/rulepdf/naruto_play.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "naruto play (疾風伝 playmat)"
+  },
+  {
+    "url": "https://www.carddas.com/naruto/cardgame/rule/naruto_rulebook.pdf",
+    "localPath": "../carddass/staging/carddas-jp/www.carddas.com/naruto/cardgame/rule/naruto_rulebook.pdf",
+    "lang": "ja",
+    "kind": "rulebook",
+    "title": "naruto rulebook (疾風伝 Ver. 1.0)"
+  }
+]

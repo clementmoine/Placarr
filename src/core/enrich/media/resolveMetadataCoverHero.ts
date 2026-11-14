@@ -10,7 +10,6 @@ import {
 } from "@/core/enrich/media/attachmentDisplayScore";
 import { isUrlEligibleDefaultCover } from "@/core/enrich/media/coverUrl";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/imageMetrics";
-import { cropImageIfNeeded } from "@/core/enrich/media/imageTrim";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 
 export async function resolveMetadataCoverAndHero(input: {
@@ -34,7 +33,7 @@ export async function resolveMetadataCoverAndHero(input: {
     previousLocalCover,
     requestedPlatformKey,
   } = input;
-  let finalStorableAttachments = input.finalStorableAttachments;
+  const finalStorableAttachments = input.finalStorableAttachments;
   const formattedMetadata = { imageUrl: input.formattedImageUrl };
 
   const canonicalCoverCandidate = finalStorableAttachments.find(
@@ -51,7 +50,10 @@ export async function resolveMetadataCoverAndHero(input: {
       : undefined;
   const metadataCoverFallback =
     formattedMetadata.imageUrl &&
-    isUrlEligibleDefaultCover(formattedMetadata.imageUrl, finalStorableAttachments)
+    isUrlEligibleDefaultCover(
+      formattedMetadata.imageUrl,
+      finalStorableAttachments,
+    )
       ? formattedMetadata.imageUrl
       : null;
   const scoredImageUrl =
@@ -82,25 +84,10 @@ export async function resolveMetadataCoverAndHero(input: {
     { requestedPlatformKey },
   );
 
-  const croppedImageUrl = selectedImageUrl
-    ? await cropImageIfNeeded(selectedImageUrl, { minMarginPixels: 30 })
-    : null;
-
-  // Cropping writes a new "_crop" file, so the cover URL stored on the item /
-  // metadata would no longer match any gallery attachment. Repoint the source
-  // attachment at the cropped file so the cover keeps its provenance
-  // (source + region role) instead of surfacing as an orphan "Scan" image.
-  if (
-    croppedImageUrl &&
-    selectedImageUrl &&
-    croppedImageUrl !== selectedImageUrl
-  ) {
-    const coverAttachment = finalStorableAttachments.find(
-      (attachment) => attachment.url === selectedImageUrl,
-    );
-    if (coverAttachment) coverAttachment.url = croppedImageUrl;
-  }
-
+  // The cover is stored as the provider served it. Cropping here used to write a
+  // derived "_edited" file and repoint the attachment at it, which severed the
+  // cover from its provenance and could not be undone — framing belongs to the
+  // collector, not to enrichment. See `suggestCropBox` for the assisted flow.
 
   // Computed wide hero/background: the sharpest landscape image we have (reuses
   // the display scorer + the metrics already gathered above). Null when nothing
@@ -110,10 +97,10 @@ export async function resolveMetadataCoverAndHero(input: {
     imageMetricsByUrl,
   );
 
-
   return {
     selectedImageUrl: selectedImageUrl ?? null,
-    croppedImageUrl: croppedImageUrl ?? null,
+    // Named for the old crop step; it now carries the cover exactly as chosen.
+    croppedImageUrl: selectedImageUrl ?? null,
     heroImageUrl: heroImageUrl ?? null,
     finalStorableAttachments,
   };

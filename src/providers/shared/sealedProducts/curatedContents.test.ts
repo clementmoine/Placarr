@@ -1,0 +1,453 @@
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import {
+  guessSealedKindFromSlug,
+  guessSealedSetCodeFromSlug,
+  mergeCuratedSealedContents,
+  seedPackCompositionFromProfile,
+} from "./curatedContents";
+import type { SealedProductEntry } from "./indexFormat";
+import { isSkuPackComposition } from "./boosterComposition";
+import lorcanaComposition from "@/providers/lorcana/lorcanajson/curated/booster-composition.json";
+import type { BoosterCompositionFile } from "./boosterComposition";
+
+const roots: string[] = [];
+afterEach(() => {
+  for (const root of roots.splice(0)) {
+    rmSync(root, { recursive: true, force: true });
+  }
+  vi.unstubAllEnvs();
+});
+
+function stubPack(packId: string, curated: unknown) {
+  const root = mkdtempSync(path.join(os.tmpdir(), "curated-sealed-"));
+  roots.push(root);
+  vi.stubEnv("PLACARR_DATA_DIR", root);
+  const dir = path.join(root, ...packId.split("/"), "curated");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    path.join(dir, "products-contents.json"),
+    `${JSON.stringify(curated)}\n`,
+  );
+}
+
+function entry(partial: Partial<SealedProductEntry> & { slug: string }): SealedProductEntry {
+  return {
+    path: "",
+    kind: "booster",
+    behavior: "random_pack",
+    category: "boosters",
+    name: partial.slug,
+    image: null,
+    imageBack: null,
+    setLogo: null,
+    setCode: null,
+    lang: null,
+    releaseDate: null,
+    priceCents: null,
+    cardsPerPack: null,
+    packsContained: null,
+    guaranteedPrints: [],
+    randomPoolScope: "unknown",
+    randomPoolPrints: [],
+    declaredCardCount: null,
+    setCardCount: null,
+    contentsKnown: false,
+    containsPrintsIsPreview: true,
+    prints: [],
+    ...partial,
+  };
+}
+
+describe("seedPackCompositionFromProfile", () => {
+  it("copies slots onto a random_pack SKU still null", () => {
+    const file = lorcanaComposition as BoosterCompositionFile;
+    const seeded = seedPackCompositionFromProfile(
+      entry({ slug: "booster-set-3", catalogueSetId: "3" }),
+      file.default,
+    );
+    expect(isSkuPackComposition(seeded.packComposition)).toBe(true);
+    if (!isSkuPackComposition(seeded.packComposition)) return;
+    expect(seeded.packComposition.slots.length).toBeGreaterThan(0);
+  });
+
+  it("does not overwrite an explicit curated composition", () => {
+    const file = lorcanaComposition as BoosterCompositionFile;
+    const custom = {
+      ...file.default,
+      slots: [
+        {
+          id: "only",
+          count: 1,
+          kind: "dedicated" as const,
+          rarities: ["Common"],
+        },
+      ],
+    };
+    const first = seedPackCompositionFromProfile(
+      entry({
+        slug: "collector",
+        packComposition: {
+          slots: custom.slots,
+          rarityHits: {},
+          provenance: "official" as const,
+        },
+      }),
+      file.default,
+    );
+    expect(first.packComposition).toMatchObject({
+      slots: [{ id: "only", count: 1 }],
+    });
+  });
+
+  it("does not seed a gift-box mixed_bundle with opaque multi-set packs", () => {
+    const file = lorcanaComposition as BoosterCompositionFile;
+    const gift = seedPackCompositionFromProfile(
+      entry({
+        slug: "coffret-cadeau-balthazar-picsou",
+        kind: "collector_box",
+        behavior: "mixed_bundle",
+        packsContained: 5,
+        packsBySet: null,
+        catalogueSetId: "10",
+      }),
+      file.default,
+    );
+    expect(gift.packComposition == null).toBe(true);
+  });
+});
+
+describe("mergeCuratedSealedContents", () => {
+  it("seeds packComposition from booster-composition.json on disk", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "curated-sealed-"));
+    roots.push(root);
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    const dir = path.join(root, "lorcana", "curated");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      path.join(dir, "products-contents.json"),
+      `${JSON.stringify({
+        version: 1,
+        pack: "lorcana",
+        updatedAt: "2026-10-20",
+        byKind: {
+          booster: {
+            source: "test",
+            verifiedAt: "2026-10-20",
+            cardsPerPack: 12,
+            packsContained: 1,
+            randomPoolScope: "set",
+          },
+        },
+        skus: {},
+      })}\n`,
+    );
+    writeFileSync(
+      path.join(dir, "booster-composition.json"),
+      `${JSON.stringify(lorcanaComposition)}\n`,
+    );
+    const merged = mergeCuratedSealedContents("lorcana", {
+      a: entry({ slug: "booster-inklands", catalogueSetId: "3" }),
+    });
+    expect(isSkuPackComposition(merged.a?.packComposition)).toBe(true);
+  });
+
+  it("does not let SKU cardsPerPack:null wipe byKind pack size (Hyperia trove)", () => {
+    stubPack("lorcana", {
+      version: 1,
+      pack: "lorcana",
+      updatedAt: "2026-10-19",
+      byKind: {
+        trove: {
+          source: "test",
+          verifiedAt: "2026-10-19",
+          packsContained: 8,
+          cardsPerPack: 12,
+          randomPoolScope: "none",
+        },
+      },
+      skus: {
+        "coffret-tresor-des-illumineurs-set-14-hyperia-city": {
+          source: "test",
+          verifiedAt: "2026-10-19",
+          packsContained: 8,
+          cardsPerPack: null,
+          containsPrintsIsPreview: true,
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("lorcana", {
+      "lorcana::trove14": entry({
+        slug: "coffret-tresor-des-illumineurs-set-14-hyperia-city",
+        kind: "trove",
+        behavior: "mixed_bundle",
+        cardsPerPack: null,
+        packsContained: 8,
+      }),
+    });
+    expect(merged["lorcana::trove14"]?.cardsPerPack).toBe(12);
+  });
+
+  it("applies byKind then sku overrides", () => {
+    stubPack("lorcana", {
+      version: 1,
+      pack: "lorcana",
+      updatedAt: "2026-08-26",
+      byKind: {
+        booster: {
+          source: "test",
+          verifiedAt: "2026-08-26",
+          cardsPerPack: 12,
+          packsContained: 1,
+          randomPoolScope: "set",
+        },
+      },
+      skus: {
+        "special-booster": {
+          source: "test",
+          verifiedAt: "2026-08-26",
+          cardsPerPack: 6,
+          randomPoolScope: "listed",
+          randomPoolPrintKeys: ["lorcana:1-1"],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("lorcana", {
+      a: entry({ slug: "normal-booster" }),
+      b: entry({ slug: "special-booster" }),
+    });
+    expect(merged.a?.cardsPerPack).toBe(12);
+    expect(merged.a?.randomPoolScope).toBe("set");
+    expect(merged.b?.cardsPerPack).toBe(6);
+    expect(merged.b?.randomPoolScope).toBe("listed");
+    expect(merged.b?.randomPoolPrints[0]?.printKey).toBe("lorcana:1-1");
+  });
+
+  it("applies blister_case byKind as pack_container with 24 packs", () => {
+    stubPack("lorcana", {
+      version: 1,
+      pack: "lorcana",
+      updatedAt: "2026-09-14",
+      byKind: {
+        blister_case: {
+          source: "test",
+          verifiedAt: "2026-09-14",
+          packsContained: 24,
+          randomPoolScope: "none",
+          behavior: "pack_container",
+          contentsKnown: false,
+        },
+      },
+      skus: {},
+    });
+    const merged = mergeCuratedSealedContents("lorcana", {
+      carton: entry({
+        slug: "booster-blister-carton-demo",
+        kind: "blister_case",
+        behavior: "pack_container",
+        category: "boosters-blister",
+      }),
+    });
+    expect(merged.carton?.packsContained).toBe(24);
+    expect(merged.carton?.randomPoolScope).toBe("none");
+    expect(merged.carton?.behavior).toBe("pack_container");
+  });
+
+  it("applies structured guaranteedPrints with qty and finish", () => {
+    stubPack("naruto/carddass", {
+      version: 1,
+      pack: "naruto/carddass",
+      updatedAt: "2026-08-30",
+      skus: {
+        "starter-demo": {
+          source: "test",
+          verifiedAt: "2026-08-30",
+          contentsKnown: true,
+          guaranteedPrints: [
+            { printKey: "naruto:ni-0001", qty: 2, finish: "holo" },
+            { printKey: "naruto:ni-0002", qty: 1 },
+          ],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("naruto/carddass", {
+      a: entry({ slug: "starter-demo", kind: "deck", behavior: "known_bundle" }),
+    });
+    expect(merged.a?.guaranteedPrints).toEqual([
+      {
+        name: "naruto:ni-0001",
+        slug: "naruto:ni-0001",
+        ref: null,
+        printKey: "naruto:ni-0001",
+        qty: 2,
+        finish: "holo",
+      },
+      {
+        name: "naruto:ni-0002",
+        slug: "naruto:ni-0002",
+        ref: null,
+        printKey: "naruto:ni-0002",
+        qty: 1,
+      },
+    ]);
+    expect(merged.a?.contentsKnown).toBe(true);
+  });
+
+  it("honors explicit contentsKnown=false with partial guaranteedPrints", () => {
+    stubPack("naruto/carddass", {
+      version: 1,
+      pack: "naruto/carddass",
+      updatedAt: "2026-10-01",
+      skus: {
+        "starter-partial": {
+          source: "test",
+          verifiedAt: "2026-10-01",
+          contentsKnown: false,
+          containsPrintsIsPreview: false,
+          declaredCardCount: 40,
+          guaranteedPrints: [
+            { printKey: "naruto:ni-0218", qty: 1, finish: "holo" },
+            { printKey: "naruto:ni-0313", qty: 1 },
+          ],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("naruto/carddass", {
+      a: entry({
+        slug: "starter-partial",
+        kind: "deck",
+        behavior: "known_bundle",
+      }),
+    });
+    expect(merged.a?.guaranteedPrints).toHaveLength(2);
+    expect(merged.a?.contentsKnown).toBe(false);
+    expect(merged.a?.containsPrintsIsPreview).toBe(false);
+  });
+
+  it("merges guaranteedProducts for multi-SKU bundles", () => {
+    stubPack("naruto/carddass", {
+      version: 1,
+      pack: "naruto/carddass",
+      updatedAt: "2026-09-09",
+      skus: {
+        "pack-demo": {
+          source: "test",
+          verifiedAt: "2026-09-09",
+          contentsKnown: true,
+          guaranteedProducts: [
+            { slug: "starter-a", qty: 1 },
+            { slug: "booster-s1", qty: 2 },
+          ],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("naruto/carddass", {
+      a: entry({
+        slug: "pack-demo",
+        kind: "deck_bundle",
+        behavior: "mixed_bundle",
+      }),
+    });
+    expect(merged.a?.guaranteedProducts).toEqual([
+      { slug: "starter-a", qty: 1 },
+      { slug: "booster-s1", qty: 2 },
+    ]);
+    expect(merged.a?.contentsKnown).toBe(true);
+  });
+
+  it("does not wipe ingest guaranteedPrints with empty curated keys", () => {
+    stubPack("dragonball/cg", {
+      version: 1,
+      pack: "dragonball/cg",
+      updatedAt: "2026-09-13",
+      skus: {
+        "sd01-the-awakening": {
+          source: "legacy stub",
+          verifiedAt: "2026-08-26",
+          contentsKnown: false,
+          guaranteedPrintKeys: [],
+        },
+      },
+    });
+    const existing = [
+      {
+        name: "x",
+        slug: "x",
+        ref: "sd1-01",
+        printKey: "dbscg:sd1-01",
+      },
+    ];
+    const merged = mergeCuratedSealedContents("dragonball/cg", {
+      a: entry({
+        slug: "sd01-the-awakening",
+        kind: "deck",
+        behavior: "known_bundle",
+        guaranteedPrints: existing,
+        contentsKnown: false,
+      }),
+    });
+    expect(merged.a?.guaranteedPrints).toEqual(existing);
+  });
+
+  it("guesses deck kind + setCode for infix -starter- slugs (dbsjcc dual decks)", () => {
+    expect(guessSealedKindFromSlug("part4-starter-forces-du-mal")).toBe("deck");
+    expect(guessSealedSetCodeFromSlug("part4-starter-forces-du-mal")).toBe(
+      "part4",
+    );
+    expect(guessSealedKindFromSlug("part5-starter-resistance")).toBe("deck");
+    expect(guessSealedSetCodeFromSlug("ss5-starter")).toBe("ss5");
+    expect(guessSealedKindFromSlug("part5-booster-1202")).toBe("booster");
+  });
+
+  it("mints dual-deck stubs as deck with setCode, not coffret", () => {
+    stubPack("dragonball/jcc", {
+      version: 1,
+      pack: "dragonball/jcc",
+      updatedAt: "2026-10-15",
+      skus: {
+        "part4-starter-forces-du-mal": {
+          source: "test",
+          verifiedAt: "2026-10-15",
+          contentsKnown: true,
+          guaranteedPrintKeys: ["dbsjcc:part4-d0024"],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("dragonball/jcc", {});
+    const row = merged["dragonball/jcc::part4-starter-forces-du-mal"];
+    expect(row?.kind).toBe("deck");
+    expect(row?.setCode).toBe("part4");
+    expect(row?.category).toBe("starter-deck");
+  });
+
+  it("mints curated SKUs that have inventory but are absent from the index", () => {
+    stubPack("naruto/carddass", {
+      version: 1,
+      pack: "naruto/carddass",
+      updatedAt: "2026-10-08",
+      skus: {
+        "starter-pays-du-vent": {
+          source: "test",
+          verifiedAt: "2026-10-08",
+          contentsKnown: true,
+          guaranteedPrintKeys: ["naruto:ni-0001", "naruto:ni-0008"],
+        },
+        "starter-empty-stub": {
+          source: "test",
+          verifiedAt: "2026-10-08",
+          guaranteedPrintKeys: [],
+        },
+      },
+    });
+    const merged = mergeCuratedSealedContents("naruto/carddass", {});
+    expect(
+      merged["naruto/carddass::starter-pays-du-vent"]?.guaranteedPrints?.map(
+        (p) => p.printKey,
+      ),
+    ).toEqual(["naruto:ni-0001", "naruto:ni-0008"]);
+    expect(merged["naruto/carddass::starter-empty-stub"]).toBeUndefined();
+  });
+});

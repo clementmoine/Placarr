@@ -81,9 +81,6 @@ export async function promoteBdovoreSeriesEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Bdovore] Failed to promote durable series evidence:",
-      error,
-    );
+    console.warn("[Bdovore] Failed to promote durable series evidence:", error);
   }
 }

@@ -7,7 +7,7 @@
  * - photo utilisateur locale = override explicite
  */
 
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 import type { Locale } from "@/types/i18n";
 import { getBestLocale } from "@/core/locale/utils";
 
@@ -22,7 +22,7 @@ import {
   rankCoverGalleryAttachments,
   scoreAttachmentForDisplay,
   shouldShowCoverAttachmentOnShelf,
-  isMarketplaceCoverRole,
+  isWeakDisplayCoverPin,
   coverLocaleRankForAttachment,
   type AttachmentDisplayScoreOptions,
   type AttachmentImageMetrics,
@@ -34,7 +34,7 @@ import {
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import type { MetadataAttachment } from "@/types/metadataProvider";
 import { stampAttachmentsMissingPlatformKey } from "@/core/enrich/media/platformKeyStamp";
-import { isVideoGamePlatformKey } from "@/core/identify/platforms/platforms";
+import { isVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
 import { detectShelfGamePlatformKey } from "@/core/enrich/platform";
 import { discoveredBarcodeMatchesRequestedPlatform } from "@/core/enrich/discoveredBarcode";
 import { attachmentTitleAllowedForItem } from "@/core/enrich/media/attachmentTitleAllowed";
@@ -45,17 +45,27 @@ import {
   type PlaceholderCoverSignals,
 } from "@/core/enrich/media/coverPlaceholder";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/coverResolution";
+import { expectedCoverAspectRatioForShelf } from "@/lib/text/cardFormat";
+import {
+  isDiskCardArtUrl,
+  isPrintRoleAssetUrl,
+} from "@/lib/packAssetUrls";
 import {
   findAttachmentForUrl,
   isCoverEligibleAttachmentType,
+  isEditDerivativeUrl,
   isUrlEligibleDefaultCover,
-  stripCropSuffixFromUrl,
+  stripEditSuffixFromUrl,
   urlsReferToSameLocalizedImage,
 } from "@/core/enrich/media/coverUrl";
 import {
   coverRegionFromAgeRatingBoard,
   roleWithoutCollectorRegion,
 } from "@/core/enrich/media/collectorCoverRegion";
+import {
+  isLocalUploadImageSrc,
+  remoteImageNeedsProxy,
+} from "@/core/enrich/media/remoteImageDisplay";
 
 export interface MediaItem {
   url: string;
@@ -74,6 +84,8 @@ export interface MediaItem {
   strictShelfPlatformCoverSource?: boolean;
   collectorCoverRegionFromAgeRatingSource?: boolean;
   coverProvenance?: string | null;
+  /** Per-source cover ranking nudge (providerSourceTraits), stamped at storage. */
+  providerImageScoreAdjustment?: number;
   // Persisted at enrichment from the original image URL; the platform-aware cover
   // ranking's load-bearing signal once the URL is a local /uploads path.
   platformKey?: string | null;
@@ -88,11 +100,21 @@ export interface MediaItem {
   height?: number | null;
   meanLuminance?: number | null;
   darkPixelRatio?: number | null;
+  /** Public proof URL for Affiche chips (Attachment.sourceUrl). */
+  sourceUrl?: string | null;
+  /** Ingest-stamped face kind — ranking must not re-parse basenames. */
+  artKind?: string | null;
+  watermarked?: boolean | null;
 }
 
 export interface MediaInput {
   imageUrl?: string | null;
   updatedAt?: Date | string | null;
+  /**
+   * Affiche policy: `auto` | `pinned`. When set, overrides timestamp heuristics
+   * for whether refresh may replace `imageUrl`. See `coverMode.ts`.
+   */
+  coverMode?: string | null;
   /** Item grade — loose games prefer disc art as the displayed cover. */
   condition?: string | null;
   metadata?: {
@@ -105,6 +127,8 @@ export interface MediaInput {
   shelf?: {
     type?: string | null;
     name?: string | null;
+    /** Shelf card frame — drives cover aspect-fit ranking. */
+    cardFormat?: string | null;
   } | null;
 }
 
@@ -113,15 +137,23 @@ function isUserUploadedImage(url?: string | null): boolean {
   return url.startsWith("/") || url.startsWith("data:");
 }
 
+/**
+ * Progressive enrichment often stamps a ranked catalog cover onto
+ * `item.imageUrl` a moment after `lastFetched` while `metadata.imageUrl` still
+ * points at another provider. That must not lock Affiche / the fiche as a
+ * "user pick". Real gallery saves happen later (see media tests: hours gap).
+ */
+const ENRICHMENT_IMAGE_SYNC_GRACE_MS = 30_000;
+
 /** Cover saved manually after the last enrichment — do not auto-heal over it. */
 export function isExplicitUserCoverOverride(item: MediaInput): boolean {
   if (!item.imageUrl) return false;
   const lastFetched = item.metadata?.lastFetched;
   const updatedAt = item.updatedAt;
   if (!lastFetched || !updatedAt) return false;
-  if (new Date(updatedAt).getTime() <= new Date(lastFetched).getTime()) {
-    return false;
-  }
+  const ageMs =
+    new Date(updatedAt).getTime() - new Date(lastFetched).getTime();
+  if (ageMs <= 0) return false;
   // Enrichment often syncs item.imageUrl to metadata.imageUrl right after
   // writing lastFetched, which bumps updatedAt — that is not a gallery pick.
   const metadataCover = item.metadata?.imageUrl?.trim();
@@ -131,14 +163,31 @@ export function isExplicitUserCoverOverride(item: MediaInput): boolean {
   ) {
     return false;
   }
+  // Same race with a *different* catalog row (e.g. Chasse ranked cover vs
+  // SensCritique metadata.imageUrl) within the enrichment settle window.
+  if (ageMs < ENRICHMENT_IMAGE_SYNC_GRACE_MS) {
+    const pin = item.imageUrl.trim();
+    const matchesCatalog = (item.metadata?.attachments ?? []).some(
+      (attachment) =>
+        attachment.url &&
+        attachment.source !== "user" &&
+        urlsReferToSameLocalizedImage(attachment.url, pin),
+    );
+    if (matchesCatalog) return false;
+  }
   return true;
 }
 
 /**
  * Durable user cover: either a persisted `source: "user"` gallery attachment, or
  * a post-enrichment override. Survives metadata refresh (unlike timestamp-only).
+ * Explicit `coverMode` wins: `auto` never honors; `pinned` always does.
  */
 export function isHonoredUserCoverPin(item: MediaInput): boolean {
+  const mode = (item.coverMode || "").trim().toLowerCase();
+  if (mode === "auto") return false;
+  if (mode === "pinned") return Boolean(item.imageUrl?.trim());
+
   const pin = item.imageUrl?.trim();
   if (!pin) return false;
   const list = attachments(item);
@@ -156,6 +205,41 @@ export function isHonoredUserCoverPin(item: MediaInput): boolean {
   return isExplicitUserCoverOverride(item);
 }
 
+/**
+ * Pinned / stored covers sometimes keep a CDN URL that needs `/api/media/remote`
+ * (Booknode Cloudflare, …) while enrichment already wrote the same face under
+ * `/uploads/`. Prefer the local twin for display so the hero is not blank while
+ * FlareSolverr spends ~90s failing the proxy.
+ */
+export function preferLocalDisplayCoverUrl(
+  pin: string,
+  item: MediaInput,
+  pool?: readonly ScoredAttachmentInput[],
+): string {
+  if (!remoteImageNeedsProxy(pin)) return pin;
+
+  const list =
+    pool && pool.length > 0 ? pool : (attachments(item) as ScoredAttachmentInput[]);
+  const pinAttachment = findAttachmentForUrl(list, pin);
+  const pinRole = pinAttachment?.role?.trim().toLowerCase() || null;
+  // Same-role local only — never steal a marketplace `/uploads` pin as twin of
+  // a FR Booknode jaquette (different role, different face).
+  for (const attachment of list) {
+    const url = attachment.url?.trim();
+    if (!url || !isLocalUploadImageSrc(url)) continue;
+    if (!COVER_GALLERY_TYPES.has(attachment.type)) continue;
+    const role = attachment.role?.trim().toLowerCase() || null;
+    if (pinRole) {
+      if (role !== pinRole) continue;
+    } else if (role) {
+      continue;
+    }
+    return url;
+  }
+
+  return pin;
+}
+
 /** User uploads always lead the cover picker / gallery, ahead of catalog art. */
 function pinUserCoversFirst(
   ranked: ScoredAttachmentInput[],
@@ -164,7 +248,7 @@ function pinUserCoversFirst(
     ranked
       .filter((attachment) => normalizeSourceKey(attachment.source) !== "user")
       .map((attachment) =>
-        attachment.url ? stripCropSuffixFromUrl(attachment.url) : "",
+        attachment.url ? stripEditSuffixFromUrl(attachment.url) : "",
       )
       .filter(Boolean),
   );
@@ -172,9 +256,7 @@ function pinUserCoversFirst(
   const rest: ScoredAttachmentInput[] = [];
   for (const attachment of ranked) {
     if (attachment.source === "user") {
-      const key = attachment.url
-        ? stripCropSuffixFromUrl(attachment.url)
-        : "";
+      const key = attachment.url ? stripEditSuffixFromUrl(attachment.url) : "";
       // Honor pin sharing the catalog file must not appear as a leading "Perso"
       // card — URL dedupe already prefers the provider row.
       if (key && catalogKeys.has(key)) {
@@ -208,6 +290,10 @@ function coverDisplayOptions(
       item.shelf?.type === "games"
         ? detectShelfGamePlatformKey(item.shelf?.name)
         : undefined,
+    expectedCoverAspectRatio: expectedCoverAspectRatioForShelf(
+      item.shelf?.cardFormat,
+      item.shelf?.type,
+    ),
     ...(resolvedLocale ? { uiLocale: resolvedLocale } : {}),
     ...(preferDiscCover ? { preferDiscCover: true } : {}),
     ...(preferSystemOnlyCover ? { preferSystemOnlyCover: true } : {}),
@@ -658,7 +744,7 @@ function dedupeAttachmentsByImageUrl(
 
   for (const attachment of list) {
     if (!attachment.url) continue;
-    const key = stripCropSuffixFromUrl(attachment.url);
+    const key = stripEditSuffixFromUrl(attachment.url);
     const existing = byKey.get(key);
     if (!existing) {
       byKey.set(key, attachment);
@@ -683,11 +769,36 @@ function dedupeAttachmentsByImageUrl(
 }
 
 function isLocalCropUploadUrl(url: string): boolean {
-  return url.startsWith("/uploads/") && /_crop\.[^.]+$/i.test(url);
+  return url.startsWith("/uploads/") && isEditDerivativeUrl(url);
 }
 
 /**
- * Affiche picker: a Perso `/uploads/…_crop` pin beside its remote catalog
+ * Affiche: `/prints/…/face` is the HTTP/shelf stem for the same bytes as
+ * `/cards/…/art.*`. When disk art dumps are already in the gallery, drop the
+ * print-role twin so the picker shows one face per source — not a duplicate.
+ */
+export function collapsePrintRoleTwinWithDiskArt(
+  list: ScoredAttachmentInput[],
+): ScoredAttachmentInput[] {
+  const hasDiskArt = list.some(
+    (attachment) =>
+      attachment.url &&
+      COVER_GALLERY_TYPES.has(attachment.type) &&
+      isDiskCardArtUrl(attachment.url),
+  );
+  if (!hasDiskArt) return list;
+  return list.filter(
+    (attachment) =>
+      !(
+        attachment.url &&
+        COVER_GALLERY_TYPES.has(attachment.type) &&
+        isPrintRoleAssetUrl(attachment.url)
+      ),
+  );
+}
+
+/**
+ * Affiche picker: a Perso `/uploads/…_edited` pin beside its remote catalog
  * jaquette (failed remote→local fold) is the same art twice. Keep the crop as
  * the display URL and inherit catalog provenance; drop the redundant remote.
  */
@@ -758,9 +869,7 @@ export function collapseCroppedUserPinWithCatalogOriginal(
     title: catalog.title ?? userCrop.title,
   };
 
-  const drop = new Set(
-    [userCrop.url, catalog.url].filter(Boolean) as string[],
-  );
+  const drop = new Set([userCrop.url, catalog.url].filter(Boolean) as string[]);
   return [
     merged,
     ...attachments.filter(
@@ -788,13 +897,13 @@ function orderRankedCoversWithMetadataPin(
     (attachment) =>
       attachment.url &&
       attachment !== pinAttachment &&
-      !isMarketplaceCoverRole(attachment.role) &&
+      !isWeakDisplayCoverPin(attachment) &&
       COVER_GALLERY_TYPES.has(attachment.type),
   );
 
   if (
     pinAttachment &&
-    isMarketplaceCoverRole(pinAttachment.role) &&
+    isWeakDisplayCoverPin(pinAttachment) &&
     hasRegionalCatalog
   ) {
     return dedupeAttachmentsByImageUrl(ranked);
@@ -875,13 +984,11 @@ export function resolveMetadataCoverUrl(
 
   if (
     pinAttachment &&
-    isMarketplaceCoverRole(pinAttachment.role) &&
+    isWeakDisplayCoverPin(pinAttachment) &&
     coverPool.length > 0
   ) {
     const bestRegional = pickBestCoverFromAttachments(
-      coverPool.filter(
-        (attachment) => !isMarketplaceCoverRole(attachment.role),
-      ),
+      coverPool.filter((attachment) => !isWeakDisplayCoverPin(attachment)),
       persistedImageMetricsByUrl(item),
       options,
     );
@@ -890,18 +997,32 @@ export function resolveMetadataCoverUrl(
 
   // Enrichment may stamp metadata.imageUrl to a high-scoring NTSC box (Geedie US)
   // while the gallery already has a better locale match (HDJV FR). Prefer the
-  // locale-ranked catalog cover over that stale regional pin.
+  // locale-ranked catalog cover over that stale regional pin. Same locale + better
+  // score also wins (square LD sleeve vs tall TMDB poster left as the pin).
   if (pinAttachment && coverPool.length > 0) {
     const metrics = persistedImageMetricsByUrl(item);
     const bestUrl = pickBestCoverFromAttachments(coverPool, metrics, options);
     if (bestUrl && !urlsReferToSameLocalizedImage(bestUrl, pin)) {
       const bestAttachment = findAttachmentForUrl(coverPool, bestUrl);
-      if (
-        bestAttachment &&
-        coverLocaleRankForAttachment(bestAttachment, options) <
-          coverLocaleRankForAttachment(pinAttachment, options)
-      ) {
-        return bestUrl;
+      if (bestAttachment) {
+        const bestLocale = coverLocaleRankForAttachment(bestAttachment, options);
+        const pinLocale = coverLocaleRankForAttachment(pinAttachment, options);
+        if (bestLocale < pinLocale) return bestUrl;
+        if (
+          bestLocale === pinLocale &&
+          scoreAttachmentForDisplay(
+            bestAttachment,
+            metrics?.get(bestUrl),
+            options,
+          ) >
+            scoreAttachmentForDisplay(
+              pinAttachment,
+              metrics?.get(pinAttachment.url),
+              options,
+            )
+        ) {
+          return bestUrl;
+        }
       }
     }
   }
@@ -926,10 +1047,12 @@ export function orderedCoverAttachmentsForDisplay(
   );
   if (covers.length === 0) return [];
   const ranked = rankCoverGalleryAttachments(
-    collapseCroppedUserPinWithCatalogOriginal(covers, item.imageUrl, {
-      metadataImageUrl: item.metadata?.imageUrl,
-      preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
-    }),
+    collapsePrintRoleTwinWithDiskArt(
+      collapseCroppedUserPinWithCatalogOriginal(covers, item.imageUrl, {
+        metadataImageUrl: item.metadata?.imageUrl,
+        preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
+      }),
+    ),
     persistedImageMetricsByUrl(item),
     options,
   );
@@ -939,9 +1062,7 @@ export function orderedCoverAttachmentsForDisplay(
   }
   const pin = resolveMetadataCoverUrl(item, uiLocale);
 
-  return pinUserCoversFirst(
-    orderRankedCoversWithMetadataPin(ranked, pin),
-  );
+  return pinUserCoversFirst(orderRankedCoversWithMetadataPin(ranked, pin));
 }
 
 /** Merge enrichment order with transient picker entries (scan / local crop). */
@@ -964,13 +1085,15 @@ export function mergeCoverAttachmentsForPicker(
     options,
   );
   const ranked = rankCoverGalleryAttachments(
-    collapseCroppedUserPinWithCatalogOriginal(
-      dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
-      item.imageUrl,
-      {
-        metadataImageUrl: item.metadata?.imageUrl,
-        preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
-      },
+    collapsePrintRoleTwinWithDiskArt(
+      collapseCroppedUserPinWithCatalogOriginal(
+        dedupeAttachmentsByImageUrl([...itemCovers, ...pickerCovers]),
+        item.imageUrl,
+        {
+          metadataImageUrl: item.metadata?.imageUrl,
+          preserveExplicitUserOverride: isExplicitUserCoverOverride(item),
+        },
+      ),
     ),
     persistedImageMetricsByUrl(item),
     options,
@@ -1079,12 +1202,12 @@ export function getCoverImage(
     }) &&
     (!pinIsStaleEnrichmentOrphan || honorUserOverride)
   ) {
-    return pin;
+    return preferLocalDisplayCoverUrl(pin, item);
   }
 
   const metadataCover = resolveMetadataCoverUrl(item, uiLocale);
   if (metadataCover) {
-    return metadataCover;
+    return preferLocalDisplayCoverUrl(metadataCover, item);
   }
 
   const bestFromAttachments = pickBestCoverFromAttachments(
@@ -1092,11 +1215,13 @@ export function getCoverImage(
     metrics,
     options,
   );
-  if (bestFromAttachments) return bestFromAttachments;
+  if (bestFromAttachments) {
+    return preferLocalDisplayCoverUrl(bestFromAttachments, item);
+  }
 
   // Scan / pre-metadata cover: keep whatever is stored until a ranked default exists.
   if (pin && isUrlEligibleDefaultCover(pin, list)) {
-    return pin;
+    return preferLocalDisplayCoverUrl(pin, item);
   }
 
   return null;
@@ -1167,7 +1292,14 @@ export function getGalleryImages(
       resolvedDefault,
       item.imageUrl ?? "",
     );
-    if (!alreadyListed || !item.imageUrl) {
+    const hasDiskArt =
+      [...seen].some((url) => isDiskCardArtUrl(url)) ||
+      attachments(item).some(
+        (attachment) =>
+          attachment.url && isDiskCardArtUrl(attachment.url),
+      );
+    const printTwin = hasDiskArt && isPrintRoleAssetUrl(resolvedDefault);
+    if ((!alreadyListed || !item.imageUrl) && !printTwin) {
       add({ url: resolvedDefault, type: "cover" });
     }
   }
@@ -1180,8 +1312,8 @@ export function getGalleryImages(
   ranked.filter((attachment) => attachment.type === "logo").forEach(add);
   ranked.filter((attachment) => attachment.type === "image").forEach(add);
 
-  // Cover ranking omits box backs/spines so they never win the default cover
-  // slot — still list them in the page gallery (PriceCharting #images, etc.).
+  // Sleeve backs already trail fronts in Affiche ranking; re-append any
+  // remaining physical faces (spine, …) that ranking still omits.
   for (const attachment of attachments(item)) {
     if (!attachment.url) continue;
     const { kind } = resolveAttachmentSemantics({
@@ -1190,7 +1322,8 @@ export function getGalleryImages(
       title: attachment.title,
       source: attachment.source,
     });
-    if (!isPhysicalNonCoverKind(kind) || kind === "disc") continue;
+    if (!isPhysicalNonCoverKind(kind) || kind === "disc" || kind === "back")
+      continue;
     add({
       url: attachment.url,
       type: attachment.type,
@@ -1203,7 +1336,15 @@ export function getGalleryImages(
   }
 
   if (item.imageUrl && !seen.has(item.imageUrl)) {
-    add({ url: item.imageUrl, type: "image" });
+    const hasDiskArt =
+      [...seen].some((url) => isDiskCardArtUrl(url)) ||
+      attachments(item).some(
+        (attachment) =>
+          attachment.url && isDiskCardArtUrl(attachment.url),
+      );
+    if (!(hasDiskArt && isPrintRoleAssetUrl(item.imageUrl))) {
+      add({ url: item.imageUrl, type: "image" });
+    }
   }
 
   return max ? result.slice(0, max) : result;

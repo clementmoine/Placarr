@@ -1,0 +1,313 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  alignFragmentVaryings,
+  aspectCorrectSquareMotifUv,
+  encodeLinearFoilOutput,
+  foilCosTime,
+  foilSinTime,
+  identityMatrixColumns,
+  LIVE_CARD_ASPECT,
+  restoreOpaqueFoilOutput,
+  ROLE_TEXTURE_FALLBACK,
+  UNBOUND_TEXTURE_FALLBACK,
+} from "./renderer";
+
+describe("UNBOUND_TEXTURE_FALLBACK", () => {
+  it("reste transparent (α=0) — pas noir opaque qui arme les couches CC", () => {
+    expect(UNBOUND_TEXTURE_FALLBACK).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe("ROLE_TEXTURE_FALLBACK", () => {
+  it("CardEtch / varnishMask unbound is Unity white (foil multiply identity)", () => {
+    /*
+      Every Live HoloFoil frag samples `_CardEtch` and multiplies foil by
+      something like `shine*0.35 + etch*etch`. Unity's unbound etch is the
+      builtin white texture. Opaque black zeroed the etch term → foil ×
+      ~0.35×shine only (Stamped gold went dark green; same crush on AceFoil,
+      Rainbow, SunPillar, …).
+    */
+    expect(ROLE_TEXTURE_FALLBACK.varnishMask).toEqual([255, 255, 255, 255]);
+  });
+
+  it("second varnish / cold-foil unbound stays off (opaque black)", () => {
+    expect(ROLE_TEXTURE_FALLBACK.secondVarnishMask).toEqual([0, 0, 0, 255]);
+  });
+
+  it("foilMask unbound stays white (full plate) — never transparent", () => {
+    // Transparent would drop foil; white is the honest "mask unknown → full".
+    expect(ROLE_TEXTURE_FALLBACK.foilMask).toEqual([255, 255, 255, 255]);
+  });
+
+  it("holoMask unbound stays white (Unity null = full rainbow)", () => {
+    expect(ROLE_TEXTURE_FALLBACK.holoMask).toEqual([255, 255, 255, 255]);
+  });
+
+  it("illustration, frame and text stay transparent when the file is missing", () => {
+    expect(ROLE_TEXTURE_FALLBACK.front).toEqual([0, 0, 0, 0]);
+    expect(ROLE_TEXTURE_FALLBACK.frame).toEqual([0, 0, 0, 0]);
+    expect(ROLE_TEXTURE_FALLBACK.ink).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe("foilCosTime", () => {
+  it("suit la formule Unity (cos t/8, t/4, t/2, t)", () => {
+    const t = Math.PI / 3;
+    const [a, b, c, d] = foilCosTime(t);
+    expect(a).toBeCloseTo(Math.cos(t / 8));
+    expect(b).toBeCloseTo(Math.cos(t / 4));
+    expect(c).toBeCloseTo(Math.cos(t / 2));
+    expect(d).toBeCloseTo(Math.cos(t));
+  });
+});
+
+describe("foilSinTime", () => {
+  it("suit la formule Unity (sin t/8, t/4, t/2, t)", () => {
+    const t = Math.PI / 3;
+    const [a, b, c, d] = foilSinTime(t);
+    expect(a).toBeCloseTo(Math.sin(t / 8));
+    expect(b).toBeCloseTo(Math.sin(t / 4));
+    expect(c).toBeCloseTo(Math.sin(t / 2));
+    expect(d).toBeCloseTo(Math.sin(t));
+  });
+
+  it("avec CosTime, max(|sin|,|cos|) sur .yz ne tombe jamais sous √2/2", () => {
+    // Frost divides by that max — SinTime=0 left |cos| free to cross 0.
+    for (let i = 0; i < 64; i++) {
+      const t = (i / 64) * Math.PI * 8;
+      const sin = foilSinTime(t);
+      const cos = foilCosTime(t);
+      for (const k of [1, 2] as const) {
+        expect(Math.max(Math.abs(sin[k]), Math.abs(cos[k]))).toBeGreaterThan(
+          0.7,
+        );
+      }
+    }
+  });
+});
+
+describe("alignFragmentVaryings", () => {
+  it("réduit FlatSilver/SvUltra TEXCOORD0 vec4 → vec2 (lien VS partagé)", () => {
+    const source = `in highp  vec4 vs_TEXCOORD0;
+in highp  vec3 vs_NORMAL0;
+in highp  vec4 vs_TEXCOORD4;
+u_xlat0.xy = vs_TEXCOORD0.xy;`;
+    const patched = alignFragmentVaryings(source);
+    expect(patched).toContain("in highp vec2 vs_TEXCOORD0;");
+    expect(patched).not.toMatch(/in\s+highp\s+vec4\s+vs_TEXCOORD0/);
+    expect(patched).toContain("in highp  vec3 vs_NORMAL0;");
+  });
+
+  it("laisse intact un frag déjà en vec2", () => {
+    const source = "in highp vec2 vs_TEXCOORD0;";
+    expect(alignFragmentVaryings(source)).toBe(source);
+  });
+});
+
+describe("restoreOpaqueFoilOutput", () => {
+  it("remet une couleur opaque à la place de l'encodage α=1/255 Unity", () => {
+    const source = `
+    u_xlat0.w = 0.00392156886;
+    u_xlat1.xyz = vs_INTERP2.xyz;
+    u_xlat0 = u_xlat0 * u_xlat1;
+    SV_TARGET0.xyz = u_xlat0.www * u_xlat0.xyz;
+    SV_TARGET0.w = u_xlat0.w;
+    return;
+}`;
+    const patched = restoreOpaqueFoilOutput(source);
+    expect(patched).toContain("SV_TARGET0.xyz = u_xlat0.xyz;");
+    expect(patched).toContain("SV_TARGET0.w = 1.0;");
+    expect(patched).not.toContain("u_xlat0.www * u_xlat0.xyz");
+  });
+
+  it("laisse intact un fragment sans cet encodage", () => {
+    const source = "SV_TARGET0 = vec4(1.0);";
+    expect(restoreOpaqueFoilOutput(source)).toBe(source);
+  });
+
+  it("forces opaque α when FlatSilver/SvUltra hardcode SV_Target0.w = 0", () => {
+    const source = `
+    SV_Target0.xyz = u_xlat0.xyz;
+    SV_Target0.w = 0.0;
+    return;
+}`;
+    const patched = restoreOpaqueFoilOutput(source);
+    expect(patched).toContain("SV_Target0.w = 1.0;");
+    expect(patched).not.toMatch(/SV_Target0\.w\s*=\s*0(?:\.0)?\s*;/);
+  });
+});
+
+describe("aspectCorrectSquareMotifUv", () => {
+  it("corrige le tiling égal FlatSilver (_Tex_CC Poké Ball)", () => {
+    const source = `
+    u_xlat6.xy = vs_TEXCOORD0.xy * vec2(1.25, 1.25) + u_xlat6.xy;
+    u_xlat16_6 = texture(_Tex_CC, u_xlat6.xy);
+    u_xlat32.xy = vs_TEXCOORD0.xy * vec2(0.699999988, 0.699999988);
+    u_xlat16_9.xyz = texture(_Tex_CC_Glitter, u_xlat32.xy).xyz;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${1.25 * LIVE_CARD_ASPECT}, 1.25)`,
+    );
+    // Glitter stays Live-equal — noise, not a circle plate.
+    expect(patched).toContain(
+      "vs_TEXCOORD0.xy * vec2(0.699999988, 0.699999988)",
+    );
+  });
+
+  it("corrige les deux samples SunPillar Northern Cross", () => {
+    const source = `
+    u_xlat1.xy = vs_TEXCOORD0.xy * vec2(3.0, 3.0) + u_xlat1.xy;
+    u_xlat16_1.x = texture(_CCPatternTex, u_xlat1.xy).x;
+    u_xlat13.xz = vs_TEXCOORD0.xy * vec2(3.0, 3.0) + u_xlat13.xz;
+    u_xlat16_13.x = texture(_CCPatternTex, u_xlat13.xz).y;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    const needle = `vs_TEXCOORD0.xy * vec2(${3.0 * LIVE_CARD_ASPECT}, 3)`;
+    expect(patched.split(needle)).toHaveLength(3);
+  });
+
+  it("no-op sans _Tex_CC / _CCPatternTex", () => {
+    const source = "vs_TEXCOORD0.xy * vec2(1.25, 1.25);";
+    expect(aspectCorrectSquareMotifUv(source)).toBe(source);
+  });
+
+  it("corrige PikachuFoil / FlatSilver _CCPatternTex (StitchedRings, Poké Ball)", () => {
+    const source = `
+    u_xlat21.xy = vs_TEXCOORD0.xy * vec2(1.5, 1.5) + u_xlat21.xy;
+    u_xlat16_2.xyz = texture(_CCPatternTex, u_xlat21.xy).xyz;
+    u_xlat3.xy = vs_TEXCOORD0.xy * vec2(6.0, 6.0) + vec2(u_xlat31);
+    u_xlat16_3.xyz = texture(_TexDots, u_xlat3.xy).xyz;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${1.5 * LIVE_CARD_ASPECT}, 1.5)`,
+    );
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${6.0 * LIVE_CARD_ASPECT}, 6)`,
+    );
+  });
+
+  it("corrige les étoiles Galaxy (vec2 + vec4)", () => {
+    const source = `
+    u_xlat0.xy = vs_TEXCOORD0.xy * vec2(0.5, 0.5);
+    u_xlat16_0.xyz = texture(_StarsTexture, u_xlat0.xy).xyz;
+    u_xlat4 = vs_TEXCOORD0.xyxy * vec4(1.5, 1.5, 1.5, 1.5) + vec4(0.1);
+    u_xlat0.xy = vs_TEXCOORD0.xy * vec2(4.0, 4.0) + u_xlat0.xx;
+    u_xlat0.xy = u_xlat0.xy + vec2(-0.5, -0.5);
+    u_xlat16_0.xyz = texture(_T_noise_dots, u_xlat0.xy).xyz;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${0.5 * LIVE_CARD_ASPECT}, 0.5)`,
+    );
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xyxy * vec4(${1.5 * LIVE_CARD_ASPECT}, 1.5, ${1.5 * LIVE_CARD_ASPECT}, 1.5)`,
+    );
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${4.0 * LIVE_CARD_ASPECT}, 4)`,
+    );
+  });
+
+  it("corrige _TexDots confetti", () => {
+    const source = `
+    u_xlat2.xy = vs_TEXCOORD0.xy * vec2(2.0, 2.0) + u_xlat1.xx;
+    u_xlat16_2.xyz = texture(_TexDots, u_xlat2.xy).xyz;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${2.0 * LIVE_CARD_ASPECT}, 2)`,
+    );
+  });
+
+  it("corrige RadiantHolo even when CrossTexture is far from the scale", () => {
+    const source = `
+    uniform mediump sampler2D _CrossTexture;
+    void main() {
+      u_xlat0.xy = vs_TEXCOORD0.xy * vec2(2.0, 2.0);
+      u_xlat1.x = dot(u_xlat0.xy, vec2(0.707106769, 0.707106769));
+      u_xlat1.y = dot(u_xlat0.xy, vec2(-0.707106769, 0.707106769));
+      u_xlat0.xy = trunc(u_xlat1.xy * vec2(35.8999977, 35.8999977));
+      u_xlat16_0.xy = texture(_CrossTexture, u_xlat0.xy).xy;
+    }
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${2.0 * LIVE_CARD_ASPECT}, 2)`,
+    );
+    // Post-rotate lattice density stays Live-equal.
+    expect(patched).toContain("vec2(35.8999977, 35.8999977)");
+  });
+
+  it("corrige AceFoil vec4(192,192,256,256) pour CrossTexture", () => {
+    const source = `
+    uniform mediump sampler2D _CrossTexture;
+    u_xlat0 = vs_TEXCOORD0.xyxy * vec4(192.0, 192.0, 256.0, 256.0);
+    u_xlat16_0.xy = texture(_CrossTexture, u_xlat0.xy).xy;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xyxy * vec4(${192.0 * LIVE_CARD_ASPECT}, 192, ${256.0 * LIVE_CARD_ASPECT}, 256)`,
+    );
+  });
+
+  it("corrige Squares direction grid", () => {
+    const source = `
+    uniform mediump sampler2D _T_Direction_RGB_Random;
+    u_xlat0.xy = vs_TEXCOORD0.xy * vec2(18.0, 18.0);
+    u_xlat16_0.xyz = texture(_T_Direction_RGB_Random, u_xlat0.xy).xyz;
+`;
+    const patched = aspectCorrectSquareMotifUv(source);
+    expect(patched).toContain(
+      `vs_TEXCOORD0.xy * vec2(${18.0 * LIVE_CARD_ASPECT}, 18)`,
+    );
+  });
+});
+
+describe("encodeLinearFoilOutput", () => {
+  const source = `#version 300 es
+precision highp float;
+layout(location = 0) out mediump vec4 SV_Target0;
+void main()
+{
+    SV_Target0 = vec4(0.5);
+    return;
+}`;
+
+  it("enveloppe main et encode la sortie linéaire en sRGB", () => {
+    const patched = encodeLinearFoilOutput(source);
+    expect(patched).toContain("void foil_linear_main()");
+    // Un seul vrai main — le wrapper.
+    expect(patched.match(/void main\(\)/g)).toHaveLength(1);
+    expect(patched).toContain("foil_linear_main();");
+    // La courbe sRGB exacte, sur la variable de sortie du fragment.
+    expect(patched).toContain("SV_Target0.xyz = mix(");
+    expect(patched).toContain("1.055 * pow(lin, vec3(1.0 / 2.4)) - 0.055");
+    // L'alpha (couverture) reste linéaire.
+    expect(patched).not.toContain("SV_Target0.w =");
+  });
+
+  it("reste un no-op sans déclaration de sortie reconnue", () => {
+    const bare = "void main() { }";
+    expect(encodeLinearFoilOutput(bare)).toBe(bare);
+  });
+});
+
+describe("identityMatrixColumns", () => {
+  it("remplit les 4 colonnes depuis l'unique uniform actif name[0] (size 4)", () => {
+    // GL n'expose qu'une entrée pour tout le tableau vec4[4] : n'écrire que
+    // la colonne 0 laissait WorldToObject aux 3/4 nul → normalize(0) → NaN.
+    expect(identityMatrixColumns(0, 4)).toEqual([
+      1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+    ]);
+  });
+
+  it("couvre un déclarant partiel name[2] (size 2)", () => {
+    expect(identityMatrixColumns(2, 2)).toEqual([0, 0, 1, 0, 0, 0, 0, 1]);
+  });
+
+  it("borne les colonnes hors matrice à zéro", () => {
+    expect(identityMatrixColumns(3, 2)).toEqual([0, 0, 0, 1, 0, 0, 0, 0]);
+  });
+});

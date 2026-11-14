@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "pack": "yugioh",
+  "updatedAt": "2026-09-19",
+  "byKind": {
+    "booster": {
+      "source": "ygocards.fr boosters — pool = set (non attesté carte-à-carte)",
+      "verifiedAt": "2026-09-19",
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "Gamble = set lottery. cardsPerPack variable (core TCG 9 ≠ Speed Duel / structure) — pas de byKind inventé."
+    },
+    "display": {
+      "source": "ygocards.fr displays — libellé « Boîte de N boosters »",
+      "verifiedAt": "2026-09-19",
+      "packsContained": 24,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Majorité 24 ; SKU override si libellé 36 (ex. Duellistes Légendaires)."
+    }
+  },
+  "skus": {}
+}

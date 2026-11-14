@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 
 import { RegisterForm } from "./register-form";
@@ -15,6 +18,36 @@ import {
 
 export default function RegisterPage() {
   const { t } = useLocale();
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/register")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { open?: boolean } | null) => {
+        if (cancelled) return;
+        if (!data?.open) {
+          router.replace("/auth/login");
+          return;
+        }
+        setReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) router.replace("/auth/login");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (!ready) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen p-4 w-screen flex-col items-center justify-center">

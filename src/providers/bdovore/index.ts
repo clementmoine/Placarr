@@ -20,8 +20,8 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 import {
   fetchBdovoreAlbumByEan,
@@ -282,14 +282,22 @@ async function refreshBdovoreOffers(ctx: BarcodePriceRefreshContext) {
   ]);
 }
 
-export const bdovoreModule: ProviderModule = {
+export const bdovoreModule = defineProvider({
   info: {
     id: "bdovore",
     label: "BDovore",
     types: ["books"],
     nameDatabase: true,
-    capabilities: ["identify", "cover", "rating", "people", "releaseDate", "price"],
+    capabilities: [
+      "identify",
+      "cover",
+      "rating",
+      "people",
+      "releaseDate",
+      "price",
+    ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -346,7 +354,8 @@ export const bdovoreModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  suggestDatabaseTitles: ({ cleanedName }) => getBdovoreSuggestions(cleanedName),
+  suggestDatabaseTitles: ({ cleanedName }) =>
+    getBdovoreSuggestions(cleanedName),
   healthCheck: createMetadataHealthCheck("bdovore", "BDovore", async () => {
     const start = Date.now();
     const isUp = await pingUrl("https://www.bdovore.com/");
@@ -385,4 +394,4 @@ export const bdovoreModule: ProviderModule = {
     );
   },
   refreshBarcodePriceOffers: refreshBdovoreOffers,
-};
+});

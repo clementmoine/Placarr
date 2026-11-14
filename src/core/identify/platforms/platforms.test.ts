@@ -48,9 +48,7 @@ describe("videoGamePlatforms", () => {
       "neogeo",
     );
     expect(
-      detectVideoGamePlatformKey(
-        "Garou: Mark of the Wolves sur NEOGEO AES+",
-      ),
+      detectVideoGamePlatformKey("Garou: Mark of the Wolves sur NEOGEO AES+"),
     ).toBe("neogeo");
   });
 
@@ -75,9 +73,7 @@ describe("videoGamePlatforms", () => {
 
   it("builds trailing / sequel-before-platform matchers from the same registry", () => {
     expect(
-      createTrailingVideoGamePlatformSuffixMatcher().test(
-        "Tekken 7 sur PS4",
-      ),
+      createTrailingVideoGamePlatformSuffixMatcher().test("Tekken 7 sur PS4"),
     ).toBe(true);
     expect(
       createTrailingVideoGamePlatformSuffixMatcher().test(

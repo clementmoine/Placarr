@@ -1,4 +1,3 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import {
@@ -16,16 +15,22 @@ import type {
 import type {
   BarcodePriceRefreshContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
-import { matchBarcodes, matchPrimaryBarcode } from "@/core/catalog/matchContext";
+import {
+  matchBarcodes,
+  matchPrimaryBarcode,
+} from "@/core/catalog/matchContext";
 
-import { fetchBedethequeMetadata, fetchBedethequeAlbumByUrl, getBedethequeSuggestions, isKnownBedethequePriceEstimate } from "./fetch";
+import {
+  fetchBedethequeMetadata,
+  fetchBedethequeAlbumByUrl,
+  getBedethequeSuggestions,
+  isKnownBedethequePriceEstimate,
+} from "./fetch";
 import { collectBedethequeMappingRawKeys } from "./fetch";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
-import {
-  pinnedProviderRecordUrl,
-} from "@/providers/shared/pinnedRecord";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 export {
   fetchBedethequeMetadata,
@@ -57,7 +62,10 @@ function buildBedethequePriceFacts(
     });
   }
 
-  if (album.priceEstimate && isKnownBedethequePriceEstimate(album.priceEstimate)) {
+  if (
+    album.priceEstimate &&
+    isKnownBedethequePriceEstimate(album.priceEstimate)
+  ) {
     facts.push({
       kind: "price",
       label: "Estimation",
@@ -106,8 +114,8 @@ async function refreshBedethequeOffers(ctx: BarcodePriceRefreshContext) {
   const barcodes = matchBarcodes(ctx);
   const queries = Array.from(
     new Set(
-      [ctx.primaryName, ...ctx.fallbackNames, ...barcodes].filter(
-        (query) => query?.trim(),
+      [ctx.primaryName, ...ctx.fallbackNames, ...barcodes].filter((query) =>
+        query?.trim(),
       ),
     ),
   );
@@ -390,7 +398,7 @@ function mapBedethequeMetadata(
   };
 }
 
-export const bedethequeModule: ProviderModule = {
+export const bedethequeModule = defineProvider({
   info: {
     id: "bedetheque",
     label: "Bédéthèque",
@@ -405,6 +413,7 @@ export const bedethequeModule: ProviderModule = {
       "price",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -467,19 +476,7 @@ export const bedethequeModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getBedethequeSuggestions(cleanedName),
-  healthCheck: createMetadataHealthCheck(
-    "bedetheque",
-    "Bédéthèque",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.bedetheque.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
+  // healthCheck : défaut defineProvider (ping de info.websiteUrl).
   testHandlers: {
     "bedetheque-metadata": {
       label: "Bédéthèque - Metadata",
@@ -510,4 +507,4 @@ export const bedethequeModule: ProviderModule = {
     return collectBedethequeMappingRawKeys(ctx.name);
   },
   refreshBarcodePriceOffers: refreshBedethequeOffers,
-};
+});

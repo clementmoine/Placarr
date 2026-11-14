@@ -1,0 +1,535 @@
+{
+  "observed": "2026-09-13",
+  "source": "suruga-ya.jp search via FlareSolverr",
+  "query": "NARUTO カードゲーム {printed} (category=5)",
+  "scope": "truly-faceless base prints remaining after N-US fix + eBay reinstall (excl. -promo / prerelease)",
+  "probed": 97,
+  "hits": [],
+  "orphanHits": 0,
+  "samples": [
+    {
+      "printed": "忍-327",
+      "strictQueryIds": 0,
+      "looseQueryFalsePositives": [
+        "GU353279 Union Arena",
+        "663036670 figure"
+      ],
+      "note": "strict empty; loose = noise"
+    },
+    {
+      "printed": "術-356",
+      "strictQueryIds": 0
+    },
+    {
+      "printed": "作-337",
+      "strictQueryIds": 1,
+      "confirmed": null,
+      "note": "1 unrelated listing"
+    },
+    {
+      "printed": "PR作-29",
+      "strictQueryIds": 0
+    },
+    {
+      "printed": "OP忍-1",
+      "strictQueryIds": 0
+    },
+    {
+      "printed": "忍-417",
+      "strictQueryIds": 0
+    }
+  ],
+  "partialBatch": {
+    "note": "probeSurugaMissingVol1 ran ~69/97 strict searches via Flare (all ok HTTP, zero parse hits) before stop; sample families confirm empty stock",
+    "flareAttemptsOk": 69,
+    "loggedHits": 0
+  },
+  "conclusion": "Suruga-ya currently has no Carddass stock for these orphan refs. Broader queries only surface false positives (other TCGs / figures). Need eBay/Fril/Mercari dig or wait for restock.",
+  "remaining": [
+    {
+      "printKey": "naruto:ni-0309",
+      "number": "ni0309",
+      "printed": "忍-309"
+    },
+    {
+      "printKey": "naruto:ni-0327",
+      "number": "ni0327",
+      "printed": "忍-327"
+    },
+    {
+      "printKey": "naruto:ni-0332",
+      "number": "ni0332",
+      "printed": "忍-332"
+    },
+    {
+      "printKey": "naruto:ni-0333",
+      "number": "ni0333",
+      "printed": "忍-333"
+    },
+    {
+      "printKey": "naruto:ni-0338",
+      "number": "ni0338",
+      "printed": "忍-338"
+    },
+    {
+      "printKey": "naruto:ni-0345",
+      "number": "ni0345",
+      "printed": "忍-345"
+    },
+    {
+      "printKey": "naruto:ni-0346",
+      "number": "ni0346",
+      "printed": "忍-346"
+    },
+    {
+      "printKey": "naruto:ni-0349",
+      "number": "ni0349",
+      "printed": "忍-349"
+    },
+    {
+      "printKey": "naruto:ni-0363",
+      "number": "ni0363",
+      "printed": "忍-363"
+    },
+    {
+      "printKey": "naruto:ni-0370",
+      "number": "ni0370",
+      "printed": "忍-370"
+    },
+    {
+      "printKey": "naruto:ni-0373",
+      "number": "ni0373",
+      "printed": "忍-373"
+    },
+    {
+      "printKey": "naruto:ni-0376",
+      "number": "ni0376",
+      "printed": "忍-376"
+    },
+    {
+      "printKey": "naruto:ni-0382",
+      "number": "ni0382",
+      "printed": "忍-382"
+    },
+    {
+      "printKey": "naruto:ni-0397",
+      "number": "ni0397",
+      "printed": "忍-397"
+    },
+    {
+      "printKey": "naruto:ni-0398",
+      "number": "ni0398",
+      "printed": "忍-398"
+    },
+    {
+      "printKey": "naruto:ni-0399",
+      "number": "ni0399",
+      "printed": "忍-399"
+    },
+    {
+      "printKey": "naruto:ni-0400",
+      "number": "ni0400",
+      "printed": "忍-400"
+    },
+    {
+      "printKey": "naruto:ni-0401",
+      "number": "ni0401",
+      "printed": "忍-401"
+    },
+    {
+      "printKey": "naruto:ni-0402",
+      "number": "ni0402",
+      "printed": "忍-402"
+    },
+    {
+      "printKey": "naruto:ni-0403",
+      "number": "ni0403",
+      "printed": "忍-403"
+    },
+    {
+      "printKey": "naruto:ni-0404",
+      "number": "ni0404",
+      "printed": "忍-404"
+    },
+    {
+      "printKey": "naruto:ni-0405",
+      "number": "ni0405",
+      "printed": "忍-405"
+    },
+    {
+      "printKey": "naruto:ni-0406",
+      "number": "ni0406",
+      "printed": "忍-406"
+    },
+    {
+      "printKey": "naruto:ni-0407",
+      "number": "ni0407",
+      "printed": "忍-407"
+    },
+    {
+      "printKey": "naruto:ni-0408",
+      "number": "ni0408",
+      "printed": "忍-408"
+    },
+    {
+      "printKey": "naruto:ni-0412",
+      "number": "ni0412",
+      "printed": "忍-412"
+    },
+    {
+      "printKey": "naruto:ni-0413",
+      "number": "ni0413",
+      "printed": "忍-413"
+    },
+    {
+      "printKey": "naruto:ni-0414",
+      "number": "ni0414",
+      "printed": "忍-414"
+    },
+    {
+      "printKey": "naruto:ni-0415",
+      "number": "ni0415",
+      "printed": "忍-415"
+    },
+    {
+      "printKey": "naruto:ni-0416",
+      "number": "ni0416",
+      "printed": "忍-416"
+    },
+    {
+      "printKey": "naruto:ni-0417",
+      "number": "ni0417",
+      "printed": "忍-417"
+    },
+    {
+      "printKey": "naruto:opni-0001",
+      "number": "opni0001",
+      "printed": "OP忍-1"
+    },
+    {
+      "printKey": "naruto:opni-0002",
+      "number": "opni0002",
+      "printed": "OP忍-2"
+    },
+    {
+      "printKey": "naruto:opni-0005",
+      "number": "opni0005",
+      "printed": "OP忍-5"
+    },
+    {
+      "printKey": "naruto:prcl-0001",
+      "number": "prcl0001",
+      "printed": "PR依-1"
+    },
+    {
+      "printKey": "naruto:prki-0001",
+      "number": "prki0001",
+      "printed": "PR騎-1"
+    },
+    {
+      "printKey": "naruto:prni-0007",
+      "number": "prni0007",
+      "printed": "PR-忍-7"
+    },
+    {
+      "printKey": "naruto:prni-0009",
+      "number": "prni0009",
+      "printed": "PR忍-9"
+    },
+    {
+      "printKey": "naruto:prni-0011",
+      "number": "prni0011",
+      "printed": "PR忍-11"
+    },
+    {
+      "printKey": "naruto:prni-0013",
+      "number": "prni0013",
+      "printed": "PR忍-13"
+    },
+    {
+      "printKey": "naruto:prni-0014",
+      "number": "prni0014",
+      "printed": "PR忍-14"
+    },
+    {
+      "printKey": "naruto:prni-0015",
+      "number": "prni0015",
+      "printed": "PR忍-15"
+    },
+    {
+      "printKey": "naruto:prni-0018",
+      "number": "prni0018",
+      "printed": "PR忍-18"
+    },
+    {
+      "printKey": "naruto:prni-0019",
+      "number": "prni0019",
+      "printed": "PR忍-19"
+    },
+    {
+      "printKey": "naruto:prta-0002",
+      "number": "prta0002",
+      "printed": "PR-作戦-2"
+    },
+    {
+      "printKey": "naruto:prta-0004",
+      "number": "prta0004",
+      "printed": "PR-作戦-4"
+    },
+    {
+      "printKey": "naruto:prta-0005",
+      "number": "prta0005",
+      "printed": "PR-作戦-5"
+    },
+    {
+      "printKey": "naruto:prta-0008",
+      "number": "prta0008",
+      "printed": "PR作-8"
+    },
+    {
+      "printKey": "naruto:prta-0013",
+      "number": "prta0013",
+      "printed": "PR作-13"
+    },
+    {
+      "printKey": "naruto:prta-0018",
+      "number": "prta0018",
+      "printed": "PR作-18"
+    },
+    {
+      "printKey": "naruto:prta-0019",
+      "number": "prta0019",
+      "printed": "PR作-19"
+    },
+    {
+      "printKey": "naruto:prta-0022",
+      "number": "prta0022",
+      "printed": "PR作-22"
+    },
+    {
+      "printKey": "naruto:prta-0023",
+      "number": "prta0023",
+      "printed": "PR作-23"
+    },
+    {
+      "printKey": "naruto:prta-0025",
+      "number": "prta0025",
+      "printed": "PR作-25"
+    },
+    {
+      "printKey": "naruto:prta-0026",
+      "number": "prta0026",
+      "printed": "PR作-26"
+    },
+    {
+      "printKey": "naruto:prta-0027",
+      "number": "prta0027",
+      "printed": "PR作-27"
+    },
+    {
+      "printKey": "naruto:prta-0028",
+      "number": "prta0028",
+      "printed": "PR作-28"
+    },
+    {
+      "printKey": "naruto:prta-0029",
+      "number": "prta0029",
+      "printed": "PR作-29"
+    },
+    {
+      "printKey": "naruto:prte-0001",
+      "number": "prte0001",
+      "printed": "PR術-1"
+    },
+    {
+      "printKey": "naruto:prte-0002",
+      "number": "prte0002",
+      "printed": "PR術-2"
+    },
+    {
+      "printKey": "naruto:ta-0271",
+      "number": "ta0271",
+      "printed": "作-271"
+    },
+    {
+      "printKey": "naruto:ta-0288",
+      "number": "ta0288",
+      "printed": "作-288"
+    },
+    {
+      "printKey": "naruto:ta-0299",
+      "number": "ta0299",
+      "printed": "作-299"
+    },
+    {
+      "printKey": "naruto:ta-0310",
+      "number": "ta0310",
+      "printed": "作-310"
+    },
+    {
+      "printKey": "naruto:ta-0311",
+      "number": "ta0311",
+      "printed": "作-311"
+    },
+    {
+      "printKey": "naruto:ta-0312",
+      "number": "ta0312",
+      "printed": "作-312"
+    },
+    {
+      "printKey": "naruto:ta-0316",
+      "number": "ta0316",
+      "printed": "作-316"
+    },
+    {
+      "printKey": "naruto:ta-0320",
+      "number": "ta0320",
+      "printed": "作-320"
+    },
+    {
+      "printKey": "naruto:ta-0326",
+      "number": "ta0326",
+      "printed": "作-326"
+    },
+    {
+      "printKey": "naruto:ta-0327",
+      "number": "ta0327",
+      "printed": "作-327"
+    },
+    {
+      "printKey": "naruto:ta-0331",
+      "number": "ta0331",
+      "printed": "作-331"
+    },
+    {
+      "printKey": "naruto:ta-0334",
+      "number": "ta0334",
+      "printed": "作-334"
+    },
+    {
+      "printKey": "naruto:ta-0336",
+      "number": "ta0336",
+      "printed": "作-336"
+    },
+    {
+      "printKey": "naruto:ta-0337",
+      "number": "ta0337",
+      "printed": "作-337"
+    },
+    {
+      "printKey": "naruto:te-0278",
+      "number": "te0278",
+      "printed": "術-278"
+    },
+    {
+      "printKey": "naruto:te-0281",
+      "number": "te0281",
+      "printed": "術-281"
+    },
+    {
+      "printKey": "naruto:te-0287",
+      "number": "te0287",
+      "printed": "術-287"
+    },
+    {
+      "printKey": "naruto:te-0290",
+      "number": "te0290",
+      "printed": "術-290"
+    },
+    {
+      "printKey": "naruto:te-0291",
+      "number": "te0291",
+      "printed": "術-291"
+    },
+    {
+      "printKey": "naruto:te-0295",
+      "number": "te0295",
+      "printed": "術-295"
+    },
+    {
+      "printKey": "naruto:te-0310",
+      "number": "te0310",
+      "printed": "術-310"
+    },
+    {
+      "printKey": "naruto:te-0319",
+      "number": "te0319",
+      "printed": "術-319"
+    },
+    {
+      "printKey": "naruto:te-0320",
+      "number": "te0320",
+      "printed": "術-320"
+    },
+    {
+      "printKey": "naruto:te-0325",
+      "number": "te0325",
+      "printed": "術-325"
+    },
+    {
+      "printKey": "naruto:te-0326",
+      "number": "te0326",
+      "printed": "術-326"
+    },
+    {
+      "printKey": "naruto:te-0327",
+      "number": "te0327",
+      "printed": "術-327"
+    },
+    {
+      "printKey": "naruto:te-0329",
+      "number": "te0329",
+      "printed": "術-329"
+    },
+    {
+      "printKey": "naruto:te-0333",
+      "number": "te0333",
+      "printed": "術-333"
+    },
+    {
+      "printKey": "naruto:te-0337",
+      "number": "te0337",
+      "printed": "術-337"
+    },
+    {
+      "printKey": "naruto:te-0338",
+      "number": "te0338",
+      "printed": "術-338"
+    },
+    {
+      "printKey": "naruto:te-0344",
+      "number": "te0344",
+      "printed": "術-344"
+    },
+    {
+      "printKey": "naruto:te-0345",
+      "number": "te0345",
+      "printed": "術-345"
+    },
+    {
+      "printKey": "naruto:te-0346",
+      "number": "te0346",
+      "printed": "術-346"
+    },
+    {
+      "printKey": "naruto:te-0349",
+      "number": "te0349",
+      "printed": "術-349"
+    },
+    {
+      "printKey": "naruto:te-0350",
+      "number": "te0350",
+      "printed": "術-350"
+    },
+    {
+      "printKey": "naruto:te-0355",
+      "number": "te0355",
+      "printed": "術-355"
+    },
+    {
+      "printKey": "naruto:te-0356",
+      "number": "te0356",
+      "printed": "術-356"
+    }
+  ]
+}

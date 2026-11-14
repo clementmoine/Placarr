@@ -1,0 +1,715 @@
+{
+  "version": 1,
+  "pack": "dragonball/heroes",
+  "updatedAt": "2026-09-20",
+  "byKind": {
+    "booster": {
+      "source": "dragon-ball-official.com Extra Booster Pack 3/4 + retail BOX listings",
+      "verifiedAt": "2026-09-20",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "notes": "SDBH Extra / Selection boosters : 3 cartes / sachet (attestation Bandai / retail). Pool set catalogue non mappé (`ebp*` ≠ `h*`/`hg*`) — loterie à renseigner (listed) ou mapper quand attesté."
+    },
+    "display": {
+      "source": "retail BOX Extra Booster / Selection Pack (20 packs)",
+      "verifiedAt": "2026-09-20",
+      "packsContained": 20,
+      "cardsPerPack": null,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "BOX typique = 20 packs × 3 cartes."
+    },
+    "deck": {
+      "source": "carddass.com/dbh goods — Starter Pack Namek / Burst + Amazon packshots",
+      "verifiedAt": "2026-09-20",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Starters fixes 7 cartes (UGMPS / BMPS) ; listes partielles jusqu'à avatar attesté."
+    },
+    "collector_box": {
+      "source": "Amazon JP/CA — Official 9-pocket anniversary binder sets",
+      "verifiedAt": "2026-09-20",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Binder + recharges + cartes promo / avatar / sleeves — inventaire attesté sur la boîte, printKeys à brancher."
+    }
+  },
+  "skus": {
+    "extra-booster-pack-1": {
+      "source": "https://en.dragon-ball-official.com/news/01_2004.html (famille EBP) + Meccha Extra Display Vol.01 + eBay 325367937821",
+      "verifiedAt": "2026-09-20",
+      "notes": "Extra Booster Pack 1 — 3 cartes / pack, 40 types (texte pack). Packshot eBay (UI Goku). Pool set catalogue non mappé (ebp*/bps).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 40,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-1-box": {
+      "source": "https://meccha-japan.com/fr/display/57938-extra-display-vol-01-super-dragon-ball-heroes-tcg.html + eBay 325367937821",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Extra Booster Pack 1 / Extra Display Vol.01 — 20 packs × 3. Packshot eBay open display.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-2": {
+      "source": "https://www.nippontcg.fr/…/extra-booster-pack-2-pums12-display… + Chitoroshop Vol.02",
+      "verifiedAt": "2026-09-20",
+      "notes": "Extra Booster Pack 2 (PUMS12 line) — 3 cartes / pack, 40 types. Pool set catalogue non mappé.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 40,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-2-box": {
+      "source": "https://www.nippontcg.fr/nos-displays/displays-japonais/super-dragon-ball-heroes-extra-booster-pack-2-pums12-display-japonais-scelle-booster-box-officielle",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Extra Booster Pack 2 — 20 packs × 3 (NipponTCG / Chitoroshop Vol.02).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-3": {
+      "source": "https://en.dragon-ball-official.com/news/01_2004.html + Amazon CA B0C5593VG4 packshot",
+      "verifiedAt": "2026-09-20",
+      "notes": "Extra Booster Pack 3 — 3 cartes / pack, 40 types (texte boîte). Pool set catalogue non mappé (ebp*/bps).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 40,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-3-box": {
+      "source": "https://www.amazon.ca/-/fr/BANDAI-Dragon-Heroes-boosters-suppl%C3%A9mentaires/dp/B0C5593VG4",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Extra Booster Pack 3 — 20 packs × 3 (display retail).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-4": {
+      "source": "https://en.dragon-ball-official.com/news/01_2515.html + https://www.carddass.com/dbh/sdbh_mm/products/extra_booster_4/ + Amazon CA B0CQY3LR45",
+      "verifiedAt": "2026-09-20",
+      "notes": "Extra Booster Pack 4 — 3 cartes / pack, 40 types (Bandai official). Pool set catalogue non mappé (ebp*/bps).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 40,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-4-box": {
+      "source": "https://www.amazon.fr/Bandai-Dragon-Heroes-Booster-paquets/dp/B0CQY3LR45",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Extra Booster Pack 4 — 20 packs × 3.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "extra-booster-pack-box": {
+      "source": "retail BOX Extra Booster Pack (20 packs)",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX générique 20 packs × 3 — préférer ebpN-box quand le set est connu.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-4": {
+      "source": "https://toy-let.com/products/sdbh-big-bang-mission-ver-4",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.4 (BMT4) — 3 cartes / pack (ligne BMT). Packshot toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-4-box": {
+      "source": "https://toy-let.com/products/sdbh-big-bang-mission-ver-4",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.4 (BMT4) — 20 packs. Packshot toy-let (ex-Chitoroshop).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-5": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-big-bang-mission-ver-5-hk",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.5 (BMT5) — BOX listing toy-let (1 image → pack+box).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-5-box": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-5-booster-box-20-packs",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.5 (BMT5) — 20 packs. Packshot Rappcollect (pack + display ; 全117種).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-6": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-big-bang-mission-ver-6-hk",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.6 (BMT6) — BOX listing toy-let (1 image → pack+box).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-6-box": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-big-bang-mission-ver-6-hk",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.6 (BMT6) — 20 packs. Packshot BOX manquant : retailers n’affichent que la face booster.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-7": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdhb-big-bang-mission-ver-7",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.7 (BMT7) — packshots toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-7-box": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdhb-big-bang-mission-ver-7",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.7 (BMT7) — 20 packs.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-8": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-8-booster-box-20-packs",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.8 (BMT8) — 3 cartes / pack, 全87種. Packshot Rappcollect (pack + display).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 87,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-8-box": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-8-booster-box-20-packs",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.8 (BMT8) — 20 packs. Packshot Rappcollect.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-9": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-9",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.9 (BMT9) — 3 cartes / pack, 全85種. Packshot toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 85,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-9-box": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-ver-9-booster-box-20-packs",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.9 (BMT9) — 20 packs. Packshot Rappcollect (pack + display).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-10": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-10",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.10 (BMT10) — packshots toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-10-box": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-10",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.10 (BMT10) — 20 packs.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-11": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-11",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.11 (BMT11) — 3 cartes / pack, 全94種. Promo pack+box toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 94,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-11-box": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-11",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.11 (BMT11) — 20 packs. Même promo toy-let (pack + display).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-12": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-12",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.12 (BMT12) — packshots toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-12-box": {
+      "source": "https://toy-let.com/products/super-dragonball-heroes-sdbh-big-bang-mission-ver-12",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.12 (BMT12) — 20 packs.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "evolution-pack-vol-1": {
+      "source": "https://toy-let.com/products/sdbh-evolution-pack-vol-1",
+      "verifiedAt": "2026-09-20",
+      "notes": "Evolution Pack Vol.1 (EVT1) — 3 cartes / pack (texte collage). Packshot pack seul + collage BOX (toy-let).",
+      "packsContained": 1,
+      "cardsPerPack": 3,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "evolution-pack-vol-1-box": {
+      "source": "https://toy-let.com/products/sdbh-evolution-pack-vol-1",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Evolution Pack Vol.1 (EVT1) — display 20 packs typique.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "evolution-pack-vol-3": {
+      "source": "https://toy-let.com/products/sdbh-evolution-pack-vol-3",
+      "verifiedAt": "2026-09-20",
+      "notes": "Evolution Pack Vol.3 (EVT3) — composition exacte non attestée. Packshot toy-let (alt 800px ; master JPG 225px).",
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "evolution-pack-vol-3-box": {
+      "source": "https://toy-let.com/products/sdbh-evolution-pack-vol-3",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Evolution Pack Vol.3 (EVT3) — display 20 packs typique ; même art produit toy-let.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "bigbang-star-2-box": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heroes-bigbang-star-2-booster-box",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Bigbang Star 2 — Chitoroshop packshot.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "super-warrior-gathering-box": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heroes-super-warrior-gathering-booster-box",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Super Warrior Gathering — Chitoroshop packshot.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "pums3-pack": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heores-pums3-pack",
+      "verifiedAt": "2026-09-20",
+      "notes": "Premium Special Pack PUMS3 — composition exacte non attestée ici.",
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "pums4-pack": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heores-pums4-pack",
+      "verifiedAt": "2026-09-20",
+      "notes": "Premium Special Pack PUMS4.",
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "pums6-pack": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heores-pums6-pack",
+      "verifiedAt": "2026-09-20",
+      "notes": "Premium Special Pack PUMS6.",
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "pums13-pack": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heores-pums13-pack",
+      "verifiedAt": "2026-09-20",
+      "notes": "Premium Special Pack PUMS13.",
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "pums14-pack": {
+      "source": "https://chitoroshop.com/products/super-dragon-ball-heores-pums14-pack",
+      "verifiedAt": "2026-09-20",
+      "notes": "Premium Special Pack PUMS14.",
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack": {
+      "source": "https://toy-let.com/products/sdbh-selection-pack-vol-1",
+      "verifiedAt": "2026-09-20",
+      "notes": "Selection Pack Vol.1 (SP01) — 3 cartes / pack ; pool ~30 types. Pool set catalogue non mappé (sp*/bps).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack-box": {
+      "source": "https://toy-let.com/products/sdbh-selection-pack-vol-1",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Selection Pack Vol.1 (SP01) — 20 packs × 3. Packshot toy-let.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack-vol-2": {
+      "source": "https://toy-let.com/products/sdh-selection-pack-vol-2",
+      "verifiedAt": "2026-09-20",
+      "notes": "Selection Pack Vol.2 (SP02) — 3 cartes / pack. Packshot toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack-vol-2-box": {
+      "source": "https://toy-let.com/products/sdh-selection-pack-vol-2",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Selection Pack Vol.2 (SP02) — 20 packs × 3.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack-vol-3": {
+      "source": "https://toy-let.com/products/sdbh-selection-pack-vol-3",
+      "verifiedAt": "2026-09-20",
+      "notes": "Selection Pack Vol.3 (SP03) — 3 cartes / pack. Packshot toy-let.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "booster-selection-pack-vol-3-box": {
+      "source": "https://toy-let.com/products/sdbh-selection-pack-vol-3",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Selection Pack Vol.3 (SP03) — 20 packs × 3.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-bravery": {
+      "source": "https://sec.carddass.com/club/products/detail/4549660401124000",
+      "verifiedAt": "2026-09-20",
+      "notes": "Ultimate Booster 激突する武勇 — 3 cartes / pack, 全30種類 (texte officiel Carddass). Catalog thumbs 560px sous carddass/ ; packshot retail Amazon en primary.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 30,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-bravery-box": {
+      "source": "https://sec.carddass.com/club/products/detail/4549660401124000",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Ultimate Booster Bravery — display 20 packs typique. Official catalog image _2.jpg (560px) mirrored under carddass/.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-power-breakthrough": {
+      "source": "https://www.amazon.fr/Dragon-Ultimate-Booster-Pack-Power-Breakthrough/dp/B07MD15T5S",
+      "verifiedAt": "2026-09-20",
+      "notes": "Ultimate Booster Power Breakthrough — 3 cartes / pack, ~30 types.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 30,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-power-breakthrough-box": {
+      "source": "https://www.amazon.fr/Dragon-Ultimate-Booster-Pack-Power-Breakthrough/dp/B07MD15T5S",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Ultimate Booster Power Breakthrough — display 20 packs typique.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-new-clash": {
+      "source": "https://pt-fullahead.com/shopdetail/000000050213/",
+      "verifiedAt": "2026-09-20",
+      "notes": "Ultimate Booster 新たなる激闘 — 3 cartes / pack, 全30種 (pack text). Packshot Full Ahead ; collage Carddass club non utilisé en primary.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 30,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-new-clash-box": {
+      "source": "https://pt-fullahead.com/shopdetail/000000050128/",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Ultimate Booster New Clash — 20 packs. Packshot BOX manquant : Full Ahead n’affiche que la face booster.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-super-warrior": {
+      "source": "https://pt-fullahead.com/shopdetail/000000050216/",
+      "verifiedAt": "2026-09-20",
+      "notes": "Ultimate Booster 超戦士集結 — 3 cartes / pack, 全30種. Packshot Full Ahead (JAN Carddass 4549660305644000).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 30,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-super-warrior-box": {
+      "source": "https://pt-fullahead.com/shopdetail/000000050129/",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Ultimate Booster Super Warrior — display 20 packs. Packshot display Full Ahead (UI Goku).",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "ultimate-booster-dbh": {
+      "source": "https://pt-fullahead.com/shopdetail/000000050141/",
+      "verifiedAt": "2026-09-20",
+      "notes": "Dragon Ball Heroes Ultimate Booster Pack (HUM-*) — 3 cartes / pack, 全30種. Packshot Full Ahead.",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 30,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-1": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-1-booster-box",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.1 (BMT1) — 3 cartes / pack, 全100種. Packshot Rappcollect (pack + display).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 100,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-1-box": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-1-booster-box",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.1 (BMT1) — 20 packs. Packshot Rappcollect.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-2": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-2-booster-box",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.2 (BMT2) — 3 cartes / pack, 全86種. Packshot Rappcollect (pack + display).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "declaredCardCount": 86,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-2-box": {
+      "source": "https://rappcollect.com/products/super-dragon-ball-heroes-big-bang-mission-2-booster-box",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.2 (BMT2) — 20 packs. Packshot Rappcollect.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-3": {
+      "source": "https://toy-let.com/products/sdbhe-big-bang-mission-ver-3",
+      "verifiedAt": "2026-09-20",
+      "notes": "Big Bang Mission Vol.3 (BMT3) — 3 cartes / pack. Packshot toy-let (ex-Amazon B08R5TB4VN).",
+      "cardsPerPack": 3,
+      "packsContained": 1,
+      "randomPoolScope": "unknown",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "big-bang-booster-pack-3-box": {
+      "source": "https://toy-let.com/products/sdbhe-big-bang-mission-ver-3",
+      "verifiedAt": "2026-09-20",
+      "notes": "BOX Big Bang Mission Vol.3 (BMT3) — 20 packs.",
+      "cardsPerPack": null,
+      "packsContained": 20,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "starter-pack-namek-battle": {
+      "source": "https://xn--dbh-cj4e260f.xyz/startar-ugmps-list/ + Amazon CA B0BS8ML1D1 + carddass.com",
+      "verifiedAt": "2026-09-20",
+      "notes": "Pack fixe 7 cartes : UGMPS-01…06 ×1 attestés ; +1 avatar (ID soft). Packshot Amazon. Dig: curated/sources/namek-starter-ugmps-2026-09-13.json.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 7,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false,
+      "guaranteedPrintKeys": [
+        "dbh:ugmps-01",
+        "dbh:ugmps-02",
+        "dbh:ugmps-03",
+        "dbh:ugmps-04",
+        "dbh:ugmps-05",
+        "dbh:ugmps-06"
+      ],
+      "guaranteedPrints": [
+        { "printKey": "dbh:ugmps-01", "qty": 1 },
+        { "printKey": "dbh:ugmps-02", "qty": 1 },
+        { "printKey": "dbh:ugmps-03", "qty": 1 },
+        { "printKey": "dbh:ugmps-04", "qty": 1 },
+        { "printKey": "dbh:ugmps-05", "qty": 1 },
+        { "printKey": "dbh:ugmps-06", "qty": 1 }
+      ]
+    },
+    "starter-pack-burst": {
+      "source": "https://www.amazon.ca/-/fr/Bandai-Super-Dragon-Heroes-Starter/dp/B09B22PVT9",
+      "verifiedAt": "2026-09-20",
+      "notes": "Starter Pack Burst — 7 cartes fixes (BMPS, dont Gogeta BM BMPS-17 holo) + guide. PrintKeys BMPS à brancher.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 7,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "starter-pack-ultimate-silver": {
+      "source": "https://sec.carddass.com/club/products/detail/4549660505686000",
+      "verifiedAt": "2026-09-20",
+      "notes": "Starter Pack アルティメットシルバー — 7 cartes / 7 types, tous argent foil + 必勝の書 (texte officiel). Preview fiche : BMPS-01…05 ; 2 IDs restants soft. Packshot officiel Carddass.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 7,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "starter-pack-xeno-gold": {
+      "source": "https://sec.carddass.com/club/products/detail/4549660505693000",
+      "verifiedAt": "2026-09-20",
+      "notes": "Starter Pack ゼノゴールド — companion officiel du Ultimate Silver (sortie 2020-03). 7 cartes attendues ; checklist soft. Packshot officiel Carddass.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 7,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "binder-12th-anniversary-ultra-god": {
+      "source": "https://www.amazon.ca/-/fr/BANDAI-Classeur-officiel-pochettes-anniversaire/dp/B0B8RDYXHG",
+      "verifiedAt": "2026-09-20",
+      "notes": "12th Anniversary Ultra God Mission Set — binder 9 poches + 11 recharges + 13 battle + 1 avatar + 30 sleeves. PrintKeys promo à brancher.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 14,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    },
+    "binder-13th-anniversary-cell": {
+      "source": "https://www.amazon.co.jp/-/en/dp/B0CFLBGK35",
+      "verifiedAt": "2026-09-20",
+      "notes": "13th Anniversary Cell Arc binder set — binder + 10 recharges + 13 foil + avatar + 30 sleeves.",
+      "behavior": "known_bundle",
+      "randomPoolScope": "none",
+      "declaredCardCount": 14,
+      "contentsKnown": false,
+      "containsPrintsIsPreview": false
+    }
+  }
+}

@@ -15,6 +15,8 @@ const PROVIDER_ID = "freakxy";
 export type FreakxySearchEvidenceHit = {
   name: string;
   coverUrl?: string | null;
+  priceCents?: number | null;
+  sourceUrl?: string | null;
 };
 
 function isFreakxySearchHits(
@@ -29,7 +31,13 @@ function isFreakxySearchHits(
       record.name.trim().length > 0 &&
       (record.coverUrl === undefined ||
         record.coverUrl === null ||
-        typeof record.coverUrl === "string")
+        typeof record.coverUrl === "string") &&
+      (record.priceCents === undefined ||
+        record.priceCents === null ||
+        typeof record.priceCents === "number") &&
+      (record.sourceUrl === undefined ||
+        record.sourceUrl === null ||
+        typeof record.sourceUrl === "string")
     );
   });
 }
@@ -77,9 +85,6 @@ export async function promoteFreakxySearchEvidence(
       ttlMs: PROVIDER_EVIDENCE_SEARCH_TTL_MS,
     });
   } catch (error) {
-    console.warn(
-      "[Freakxy] Failed to promote durable search evidence:",
-      error,
-    );
+    console.warn("[Freakxy] Failed to promote durable search evidence:", error);
   }
 }

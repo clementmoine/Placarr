@@ -1,20 +1,23 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
 
 import { createKeyHealthCheck } from "@/core/catalog/healthUtils";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataProviderAdapter } from "@/types/providerModule";
-import { cleanSearchQuery, formatScore } from "@/core/enrich/searchUtils";
+import {
+  cleanSearchQuery,
+  formatScore,
+} from "@/core/enrich/search/searchUtils";
 import { createTMDBResolver } from "./resolver";
 import { getTMDBSuggestions } from "./suggestions";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
 const fetchFromTMDB = createTMDBResolver({
   formatScore,
   cleanSearchQuery,
 });
 
-export const tmdbModule: ProviderModule = {
+export const tmdbModule = defineProvider({
   info: {
     id: "tmdb",
     label: "TMDB",
@@ -31,6 +34,7 @@ export const tmdbModule: ProviderModule = {
       "people",
     ],
     auth: { kind: "key", env: ["TMDB_API_KEY"], free: true },
+    supplyMode: "api_live",
     canonical: true,
     defaultLanguage: "fr",
     websiteUrl: "https://www.themoviedb.org/",
@@ -61,13 +65,7 @@ export const tmdbModule: ProviderModule = {
     ["TMDB_API_KEY"],
     (key) => `https://api.themoviedb.org/3/configuration?api_key=${key}`,
   ),
-  testHandlers: {
-    "tmdb-metadata": {
-      label: "TMDB - Metadata",
-      kind: "metadata",
-      run: (query) => fetchFromTMDB(query),
-    },
-  },
+  metadataSearch: (query) => fetchFromTMDB(query),
   buildTeardownMetadataTasks(ctx) {
     return teardownMetadataWhen(
       ctx,
@@ -84,7 +82,7 @@ export const tmdbModule: ProviderModule = {
     const key = process.env.TMDB_API_KEY;
     if (!key) return [];
     try {
-      const search = await axios.get(
+      const search = await httpGet<{ results?: JsonObject[] }>(
         "https://api.themoviedb.org/3/search/movie",
         {
           params: { query: "Aladdin", api_key: key, language: "fr-FR" },
@@ -93,7 +91,7 @@ export const tmdbModule: ProviderModule = {
       );
       const id = search.data?.results?.[0]?.id;
       if (!id) return Object.keys(search.data?.results?.[0] || {});
-      const details = await axios.get(
+      const details = await httpGet<JsonObject>(
         `https://api.themoviedb.org/3/movie/${id}`,
         {
           params: { api_key: key, language: "fr-FR" },
@@ -105,6 +103,7 @@ export const tmdbModule: ProviderModule = {
       return [];
     }
   },
+  barcodeLookupSlots: { tmdb: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.tmdb;
     if (!hit?.title) return [];
@@ -123,6 +122,16 @@ export const tmdbModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 export { createTMDBResolver, parseTMDBSeriesIntent } from "./resolver";
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `tmdb` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    tmdb: BarcodeMetadataHit | null;
+  }
+}

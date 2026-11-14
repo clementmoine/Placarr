@@ -23,9 +23,7 @@ export type IzneoSearchEvidenceHit = {
   genreName?: string;
 };
 
-function isIzneoSearchHits(
-  value: unknown,
-): value is IzneoSearchEvidenceHit[] {
+function isIzneoSearchHits(value: unknown): value is IzneoSearchEvidenceHit[] {
   if (!Array.isArray(value)) return false;
   return value.every((row) => {
     if (!row || typeof row !== "object") return false;

@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   aliasesExcludingTitle,
   catalogAliasesFromNames,
-  collectMergedSearchAliases,
   promoteTitleKeepingAliases,
 } from "@/core/enrich/aliases";
+import { collectMergedSearchAliases } from "@/core/enrich/aliasesSearch";
 
 describe("catalogAliasesFromNames", () => {
   it("keeps official alternates distinct from the display title", () => {
@@ -52,6 +52,86 @@ describe("metadataAliases", () => {
     ).toEqual(["Wrc 4"]);
   });
 
+  it("surfaces regional cover titles (TCG multi-lang jaquettes)", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Ariel - Sur des jambes humaines",
+        metadataTitle: "Ariel - Sur des jambes humaines",
+        aliases: null,
+        attachments: [
+          {
+            type: "cover",
+            role: "fr",
+            title: "Ariel - Sur des jambes humaines",
+          },
+          { type: "cover", role: "en", title: "Ariel - On Human Legs" },
+          {
+            type: "cover",
+            role: "de",
+            title: "Arielle - Auf menschlichen Beinen",
+          },
+          {
+            type: "foilMask",
+            role: "en",
+            title: "Ariel - On Human Legs — masque holographique",
+          },
+        ],
+      }),
+    ).toEqual(["Ariel - On Human Legs", "Arielle - Auf menschlichen Beinen"]);
+  });
+
+  it("drops gallery face labels and region-role covers from Aussi connu sous", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Another Code : Two Memories",
+        metadataTitle: "Another Code : Two Memories",
+        aliases: ["Trace Memory", "Main Image", "Box - Front"],
+        attachments: [
+          { type: "cover", role: "us", title: "Main Image" },
+          { type: "cover", role: "eu", title: "Box - Front" },
+          { type: "cover", role: "fr", title: "Recto de la pochette" },
+          { type: "cover", role: "en", title: "Trace Memory" },
+        ],
+      }),
+    ).toEqual(["Trace Memory"]);
+  });
+
+  it("drops Mythos promo flyer captions from Aussi connu sous", async () => {
+    const { displayAliasesForItem } = await import("@/core/enrich/aliases");
+    expect(
+      displayAliasesForItem({
+        name: "Naruto Uzumaki",
+        metadataTitle: "Naruto Uzumaki",
+        aliases: [
+          "Naruto Uzumaki — Ninja Art! Summoning Jutsu!",
+          "Annonce promo Mythos (flyer FR)",
+          "Annonce promo Mythos (flyer EN)",
+        ],
+        attachments: [
+          {
+            type: "cover",
+            role: "mythos-proof-flyer-fr",
+            title: "Annonce promo Mythos (flyer FR)",
+            url: "/assets/naruto/mythos/cards/fr/ks1promo/0133-vv2/proof.french.twitter.webp",
+          },
+          {
+            type: "cover",
+            role: "mythos-proof-flyer-en",
+            title: "Annonce promo Mythos (flyer EN)",
+            url: "/assets/naruto/mythos/cards/en/ks1promo/0133-vv2/proof.english.twitter.webp",
+          },
+          {
+            type: "cover",
+            role: "en",
+            title: "Naruto Uzumaki — Ninja Art! Summoning Jutsu!",
+          },
+        ],
+      }),
+    ).toEqual(["Naruto Uzumaki — Ninja Art! Summoning Jutsu!"]);
+  });
+
   it("does not repeat the display name as an alias", async () => {
     const { displayAliasesForItem } = await import("@/core/enrich/aliases");
     expect(
@@ -64,9 +144,8 @@ describe("metadataAliases", () => {
   });
 
   it("drops placeholder, platform-prefixed, and bracket stub aliases", async () => {
-    const { displayAliasesForItem, aliasesExcludingTitle } = await import(
-      "@/core/enrich/aliases"
-    );
+    const { displayAliasesForItem, aliasesExcludingTitle } =
+      await import("@/core/enrich/aliases");
     expect(
       displayAliasesForItem({
         name: "Prototype",

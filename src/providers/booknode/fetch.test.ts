@@ -235,7 +235,10 @@ describe("Booknode provider", () => {
           }),
         };
       }
-      if (url.includes("tintin_en_amerique") || url.includes("tintin_au_congo")) {
+      if (
+        url.includes("tintin_en_amerique") ||
+        url.includes("tintin_au_congo")
+      ) {
         throw new Error(`Should not fetch non-winner fiche: ${url}`);
       }
       throw new Error(`Unexpected URL ${url}`);

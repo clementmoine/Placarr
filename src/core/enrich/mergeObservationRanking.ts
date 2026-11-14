@@ -356,4 +356,3 @@ export function pickBestMetadataObservationTitle(
     return a.value.localeCompare(b.value, "en");
   })[0]?.value;
 }
-

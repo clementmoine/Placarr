@@ -10,6 +10,9 @@ const h = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
+  itemPresenceEvent: {
+    create: vi.fn(),
+  },
   shelf: { findUnique: vi.fn() },
   metadata: { update: vi.fn() },
   resolveShelfId: vi.fn(),
@@ -23,10 +26,27 @@ const h = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth", () => ({
   requireGuestOrHigher: h.requireGuestOrHigher,
+  collectionUserIdFor: async (user: { id: string; role: string }) =>
+    user.role === "guest" ? "owner-1" : user.id,
+  getCollectionOwnerId: async () => "owner-1",
+  canReadOwnedRow: (
+    auth: { id: string; role: string },
+    rowUserId: string,
+    collectionOwnerId: string | null,
+  ) => {
+    if (auth.role === "admin") return true;
+    if (auth.id === rowUserId) return true;
+    return (
+      auth.role === "guest" &&
+      collectionOwnerId != null &&
+      rowUserId === collectionOwnerId
+    );
+  },
 }));
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     item: h.item,
+    itemPresenceEvent: h.itemPresenceEvent,
     shelf: h.shelf,
     metadata: h.metadata,
     backgroundWorkJob: {
@@ -71,7 +91,10 @@ vi.mock("@/lib/routing/slugs", () => ({
   slugifyItemName: (s: string) => `slug-${s}`,
 }));
 vi.mock("@/core/collect/search", () => ({
-  buildItemSearchConditions: () => [],
+  buildExactBarcodeSearchCondition: () => null,
+}));
+vi.mock("@/core/collect/searchFolded", () => ({
+  buildItemSearchConditionsFolded: async () => [],
 }));
 vi.mock(
   "@/core/collect/jobs/scheduleMetadataRefresh",
@@ -131,6 +154,7 @@ beforeEach(() => {
     h.item.create,
     h.item.update,
     h.item.delete,
+    h.itemPresenceEvent.create,
     h.shelf.findUnique,
     h.resolveShelfId,
     h.resolveItemId,
@@ -165,12 +189,12 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     expect(res.status).toBe(401);
   });
 
-  it("403 sur l'item d'un autre user dans une étagère privée", async () => {
+  it("403 sur l'item d'un autre user", async () => {
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findUnique.mockResolvedValue({
       id: "i1",
       userId: "u2",
-      shelf: { isPublic: false },
+      shelf: {},
     });
 
     const res = await GET(get("/api/items?id=i1"));
@@ -178,13 +202,13 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     expect(res.status).toBe(403);
   });
 
-  it("autorise l'item d'un autre user si l'étagère est publique", async () => {
-    h.requireGuestOrHigher.mockResolvedValue(USER);
+  it("autorise le guest sur la collection du propriétaire", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(GUEST);
     h.item.findUnique.mockResolvedValue({
       id: "i1",
-      userId: "u2",
+      userId: "owner-1",
       shelfId: "s1",
-      shelf: { isPublic: true },
+      shelf: {},
     });
 
     const res = await GET(get("/api/items?id=i1"));
@@ -208,6 +232,15 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
     await GET(get("/api/items?includeMetadata=false"));
 
     expect(h.item.findMany.mock.calls[0][0].where.userId).toBe("u1");
+  });
+
+  it("le guest liste les items du propriétaire", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(GUEST);
+    h.item.findMany.mockResolvedValue([]);
+
+    await GET(get("/api/items?includeMetadata=false"));
+
+    expect(h.item.findMany.mock.calls[0][0].where.userId).toBe("owner-1");
   });
 
   it("admin voit tous les items (pas de filtre userId)", async () => {
@@ -252,9 +285,8 @@ describe("GET /api/items — autorisation & cloisonnement", () => {
   });
 
   it("attache les prix aux listes d'items", async () => {
-    const { summarizeListItemPrices } = await import(
-      "@/core/commerce/pricing/itemDisplay"
-    );
+    const { summarizeListItemPrices } =
+      await import("@/core/commerce/pricing/itemDisplay");
 
     h.requireGuestOrHigher.mockResolvedValue(USER);
     h.item.findMany.mockResolvedValue([
@@ -334,6 +366,65 @@ describe("POST /api/items — autorisation", () => {
 
     expect(res.status).toBe(200);
     expect(h.item.create.mock.calls[0][0].data.userId).toBe("u1");
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          itemId: "i1",
+          kind: "acquired",
+        }),
+      }),
+    );
+  });
+
+  it("crée un scellé avec skuKey, kind=sealed et snapshot acquired", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.shelf.findUnique.mockResolvedValue({
+      type: "tcg",
+      userId: "u1",
+      name: "Lorcana",
+    });
+    h.item.create.mockResolvedValue({ id: "i-sealed", shelf: { type: "tcg" } });
+    h.downloadRemoteImage.mockResolvedValue("/uploads/booster.webp");
+
+    const res = await POST(
+      withBody("POST", {
+        shelfId: "s1",
+        name: "Booster Chapter 1",
+        kind: "sealed",
+        skuKey: "lorcana::booster-chapter-1",
+        skuName: "Booster Chapter 1",
+        skuLanguage: "fr",
+        catalogueKind: "booster",
+        imageUrl: "https://cdn.example/booster.jpg",
+        purchasePriceCents: 499,
+        condition: "new",
+        fetchMetadata: false,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.item.create.mock.calls[0][0].data).toMatchObject({
+      kind: "sealed",
+      skuKey: "lorcana::booster-chapter-1",
+      skuName: "Booster Chapter 1",
+      skuLanguage: "fr",
+      purchasePriceCents: 499,
+      condition: "new",
+      userId: "u1",
+    });
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          itemId: "i-sealed",
+          kind: "acquired",
+          snapshot: expect.objectContaining({
+            skuKey: "lorcana::booster-chapter-1",
+            catalogueKind: "booster",
+            purchasePriceCents: 499,
+          }),
+        }),
+      }),
+    );
   });
 
   it("seed le metadataPreview du scan puis enqueue le refresh", async () => {
@@ -355,7 +446,11 @@ describe("POST /api/items — autorisation", () => {
       title: "Giana Sisters",
       imageUrl: "https://example.com/cover.jpg",
       attachments: [
-        { type: "cover", source: "screenscraper", url: "https://example.com/cover.jpg" },
+        {
+          type: "cover",
+          source: "screenscraper",
+          url: "https://example.com/cover.jpg",
+        },
       ],
     };
 
@@ -442,6 +537,75 @@ describe("PATCH /api/items — autorisation", () => {
     );
     expect(invalid.status).toBe(400);
     expect(h.item.update).not.toHaveBeenCalled();
+  });
+
+  it("enregistre une note de prêt (à qui + quand) via le modèle absence", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelfId: "s1",
+      presence: "owned",
+      absenceReason: null,
+      shelf: { type: "games" },
+    });
+    h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
+
+    const res = await PATCH(
+      withBody("PATCH", {
+        id: "i1",
+        loanedTo: "Alice",
+        loanedAt: "2026-09-01",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.item.update.mock.calls[0][0].data).toMatchObject({
+      presence: "away",
+      absenceReason: "loaned",
+      absenceRecipient: "Alice",
+      absenceSince: expect.any(Date),
+    });
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        itemId: "i1",
+        kind: "departed",
+        toPresence: "away",
+        reason: "loaned",
+      }),
+    });
+  });
+
+  it("efface l'absence quand le destinataire de prêt est vide", async () => {
+    h.requireGuestOrHigher.mockResolvedValue(USER);
+    h.item.findUnique.mockResolvedValue({
+      userId: "u1",
+      shelfId: "s1",
+      presence: "away",
+      absenceReason: "loaned",
+      absenceRecipient: "Alice",
+      shelf: { type: "games" },
+    });
+    h.item.update.mockResolvedValue({ id: "i1", shelf: { type: "games" } });
+
+    const res = await PATCH(
+      withBody("PATCH", { id: "i1", loanedTo: "", loanedAt: "2026-09-01" }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(h.item.update.mock.calls[0][0].data).toMatchObject({
+      presence: "owned",
+      absenceReason: null,
+      absenceRecipient: null,
+      absenceSince: null,
+    });
+    expect(h.itemPresenceEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        itemId: "i1",
+        kind: "returned",
+        fromPresence: "away",
+        toPresence: "owned",
+      }),
+    });
   });
 
   it("met à jour le titre dans les métadonnées de l'item si elles existent", async () => {

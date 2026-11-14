@@ -1,0 +1,33 @@
+{
+  "observed": "2026-09-04",
+  "source": "ebay.com active+sold (logged-in)",
+  "faces": [
+    {
+      "printedRef": "依-44",
+      "lang": "ja",
+      "title": "Hikaru Tsuki Client-44 NARUTO Card Game 2006 BANDAI Carddass",
+      "listing": "https://www.ebay.com/itm/196788200834",
+      "imageId": "Z0QAAOSwU9ZnLGSm",
+      "url": "https://i.ebayimg.com/images/g/Z0QAAOSwU9ZnLGSm/s-l1600.webp",
+      "staging": "staging/ebay/cl0044-ja.webp",
+      "ingest": true,
+      "note": "ebay.com dig JA orphan Client-N 2026-09-04"
+    },
+    {
+      "printedRef": "依-45",
+      "lang": "ja",
+      "title": "Michiru Tsuki Client-45 NARUTO Card Game 2006 BANDAI Carddass",
+      "listing": "https://www.ebay.com/itm/196788201757",
+      "imageId": "IyoAAOSww2lnLGTO",
+      "url": "https://i.ebayimg.com/images/g/IyoAAOSww2lnLGTO/s-l1600.webp",
+      "staging": "staging/ebay/cl0045-ja.webp",
+      "ingest": true,
+      "note": "ebay.com dig JA orphan Client-N 2026-09-04"
+    }
+  ],
+  "note": "Sold/active NI/TE/TA orphans still absent on .com. Client-N latin titles found for 依-44/45.",
+  "after": {
+    "missingArtTiles": 570,
+    "trulyFacelessJa": 110
+  }
+}

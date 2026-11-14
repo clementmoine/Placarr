@@ -2,11 +2,13 @@ import {
   resolveLocaleRegion,
   type LocaleRegion,
 } from "@/core/locale/preference";
+import { FACE_SITE_DUMP_LABELS } from "@/providers/shared/faceDumpSiteLabels";
 
 export type AttachmentDisplayLocale = "fr" | "en";
 
 export type AttachmentDisplayKind =
   | "cover"
+  | "face"
   | "back"
   | "disc"
   | "spine"
@@ -18,6 +20,7 @@ export type AttachmentDisplayKind =
   | "logo"
   | "artwork"
   | "banner"
+  | "flyer"
   | "image"
   | "barcode";
 
@@ -26,6 +29,11 @@ export type AttachmentLabelInput = {
   role?: string | null;
   title?: string | null;
   source?: string | null;
+  /**
+   * Asset URL — used when role is missing to recover a print language from
+   * `/assets/…/prints/{stem}-{lang}/face` (TCG live face roles).
+   */
+  url?: string | null;
   /**
    * Provider display label (registry `info.label`) stamped onto the attachment
    * server-side (see `@/core/catalog/sourceTraits`). The chip label reads
@@ -59,6 +67,7 @@ const KIND_LABELS: Record<
 > = {
   fr: {
     cover: "Jaquette",
+    face: "Face",
     back: "Dos",
     disc: "Disque",
     spine: "Tranche",
@@ -70,11 +79,13 @@ const KIND_LABELS: Record<
     logo: "Logo",
     artwork: "Artwork",
     banner: "Bannière",
+    flyer: "Flyer",
     image: "Image",
     barcode: "Scan",
   },
   en: {
     cover: "Cover",
+    face: "Face",
     back: "Back",
     disc: "Disc",
     spine: "Spine",
@@ -86,6 +97,7 @@ const KIND_LABELS: Record<
     logo: "Logo",
     artwork: "Artwork",
     banner: "Banner",
+    flyer: "Flyer",
     image: "Image",
     barcode: "Scan",
   },
@@ -110,6 +122,41 @@ const REGION_LABELS: Record<
     uk: "United Kingdom",
     us: "United States",
     jp: "Japan",
+  },
+};
+
+/**
+ * ISO 639-1 print languages (TCG cards, multi-lang covers).
+ *
+ * Bare roles like `de` / `it` are also country codes that the region resolver
+ * folds into "Europe" for game boxes — fine for ranking, wrong on the Affiche
+ * chip when the attachment is a German or Italian *language* printing.
+ */
+const LANGUAGE_LABELS: Record<
+  AttachmentDisplayLocale,
+  Record<string, string>
+> = {
+  fr: {
+    fr: "Français",
+    en: "Anglais",
+    de: "Allemand",
+    it: "Italien",
+    es: "Espagnol",
+    pt: "Portugais",
+    nl: "Néerlandais",
+    ja: "Japonais",
+    zh: "Chinois",
+  },
+  en: {
+    fr: "French",
+    en: "English",
+    de: "German",
+    it: "Italian",
+    es: "Spanish",
+    pt: "Portuguese",
+    nl: "Dutch",
+    ja: "Japanese",
+    zh: "Chinese",
   },
 };
 
@@ -221,7 +268,7 @@ function parseKindFromTitle(
   }
   if (/\bmain image 2\b/.test(normalized)) return "back";
   if (/\bmain image 3\b/.test(normalized)) return "disc";
-  if (/\bmain image 1\b/.test(normalized)) return "cover";
+  if (/\bmain image(?:\s*1)?\b/.test(normalized)) return "cover";
   if (/box\s*-\s*spine/.test(normalized)) return "spine";
   if (/\bspine\b|spine\s*\/\s*sides\b/.test(normalized)) return "spine";
   if (/\bdisc\b|fanart\s*-\s*disc/.test(normalized)) return "disc";
@@ -236,13 +283,55 @@ function parseKindFromTitle(
   ) {
     return "cover";
   }
+  if (/\bbox\s+(?:view|art|front art|back art)\b/.test(normalized)) {
+    return "cover";
+  }
+  // HDJV French gallery face labels (role is often `fr`, not a print language).
+  if (/^recto(?:\s+de\s+la\s+pochette)?$/.test(normalized)) return "cover";
+  if (/^verso(?:\s+de\s+la\s+pochette)?$/.test(normalized)) return "back";
   if (/fanart\s*-\s*background/.test(normalized)) return "background";
   if (/clear\s*logo/.test(normalized)) return "logo";
   if (/screenshot/.test(normalized)) return "screenshot";
   if (/\bbanner\b/.test(normalized)) return "banner";
+  if (/\bflyer\b|\bannonce\b/.test(normalized)) return "flyer";
   if (/fanart/.test(normalized)) return "artwork";
 
   return null;
+}
+
+/**
+ * True when `title` is only a gallery face label (LaunchBox "Box - Front",
+ * PriceCharting "Main Image", HDJV "Recto de la pochette") — never a display
+ * alias / "Aussi connu sous" name.
+ */
+export function isAttachmentFaceLabelTitle(title?: string | null): boolean {
+  const normalized = normalizeToken(title);
+  if (!normalized) return false;
+  // Whole-string labels only — avoid rejecting real titles that merely contain
+  // "disc" / "screenshot" as a word.
+  if (
+    /^(?:main image(?:\s+\d+)?|box view|box art|box front art|box back art|box\s*-\s*(?:front|back|spine|3d)(?:\s*-\s*reconstructed)?|cart\s*-\s*(?:front|back|3d)|fanart\s*-\s*box\s*-\s*front|cover\s*\(\s*back\s*\)(?:\s*\[[^\]]+\])?|recto(?:\s+de\s+la\s+pochette)?|verso(?:\s+de\s+la\s+pochette)?|spine(?:\s*\/\s*sides)?|disc|disque(?:\s+du\s+jeu)?|media\s+du\s+jeu|clear logo|screenshot|banner|back(?:\s+cover)?|rear cover)$/.test(
+      normalized,
+    )
+  ) {
+    return true;
+  }
+  // Promo proof captions ("Annonce promo Mythos (flyer FR)") — gallery media,
+  // never "Aussi connu sous".
+  if (
+    /^annonce\b/.test(normalized) ||
+    /\(.*\bflyer\b.*\)$/.test(normalized) ||
+    /(?:^|[\s\-–—])flyer(?:\s+(?:fr|en|de|it|es|ja|zh))?\s*$/.test(normalized)
+  ) {
+    return true;
+  }
+  // Compound product captions that end with a face label suffix.
+  return (
+    parseKindFromTitle(normalized) !== null &&
+    /(?:^|[\s\-–—])(?:main image(?:\s+\d+)?|box\s*-\s*(?:front|back|spine|3d)|recto(?:\s+de\s+la\s+pochette)?|verso(?:\s+de\s+la\s+pochette)?)$/.test(
+      normalized,
+    )
+  );
 }
 
 function parseRegionToken(token?: string | null): LocaleRegion | null {
@@ -315,7 +404,32 @@ function parseKindFromRole(role?: string | null): AttachmentDisplayKind | null {
     return "artwork";
   }
   if (normalized === "front") return "cover";
+  // TCG promo announcement / proof flyer (`mythos-proof-flyer-fr`, …).
+  if (/(?:^|-)(?:proof-)?flyer(?:-|$)/.test(normalized)) return "flyer";
+  // Catalogue card face (`mythos-face-fr`, `pokemon-face-live`, …).
+  if (/(?:^|-)face(?:-|$)/.test(normalized)) return "face";
 
+  return null;
+}
+
+/**
+ * Catalogue face / back from pack asset URLs — works for absolute
+ * (`https://localhost:3000/assets/…`) and site-root (`/assets/…`) forms.
+ *
+ * TCG providers store disk faces as `type: "cover"`; without this, Affiche
+ * labels them « Jaquette » instead of « Face ».
+ */
+function parseKindFromUrl(url?: string | null): AttachmentDisplayKind | null {
+  const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
+  if (/\/prints\/[^/]+\/(?:face|thumb|face-b)(?:\/|$)/i.test(path)) {
+    return /\/face-b(?:\/|$)/i.test(path) ? "back" : "face";
+  }
+  // `/assets/<pack>/cards/{a}/{b}/{card}/back.*` or `art.*` / `face.*`
+  // (lang/set/card or set/lang/card — both Ninja Ranks / Pokémon / Lorcana).
+  if (/\/cards\/[^/]+\/[^/]+\/[^/]+\/back\./i.test(path)) return "back";
+  if (/\/cards\/[^/]+\/[^/]+\/[^/]+\/(?:art|face)\./i.test(path)) return "face";
+  if (/\bproof\.[^/]*\.(?:twitter|flyer)\./i.test(path)) return "flyer";
+  if (/\/proof\./i.test(path) && /flyer|twitter/i.test(path)) return "flyer";
   return null;
 }
 
@@ -359,9 +473,14 @@ export function resolveAttachmentDisplayKind(
 ): AttachmentDisplayKind {
   if (input.source === "barcode") return "barcode";
 
+  // Role + URL first: TCG catalogue faces are typed `cover` in metadata but
+  // carry `*-face-*` roles / `/cards|prints/…` URLs. Title-first wrongly kept
+  // them as « Jaquette » whenever a gallery caption looked cover-like, and
+  // bare `type: cover` won when role was missing.
   return (
-    parseKindFromTitle(input.title) ||
     parseKindFromRole(input.role) ||
+    parseKindFromUrl(input.url) ||
+    parseKindFromTitle(input.title) ||
     parseKindFromType(input.type)
   );
 }
@@ -385,10 +504,16 @@ export function resolveAttachmentSemantics(input: AttachmentLabelInput): {
 export function isCoverCandidateKind(kind: AttachmentDisplayKind): boolean {
   return (
     kind === "cover" ||
+    kind === "face" ||
     kind === "cover3d" ||
     kind === "grid" ||
     kind === "grid3d"
   );
+}
+
+/** Promo announcement / proof flyer — never the shelf default face. */
+export function isPromoFlyerKind(kind: AttachmentDisplayKind): boolean {
+  return kind === "flyer";
 }
 
 export function isPhysicalNonCoverKind(kind: AttachmentDisplayKind): boolean {
@@ -429,6 +554,148 @@ export function formatAttachmentRegionLabel(
   return REGION_LABELS[locale][region];
 }
 
+const PRINT_LANGUAGE_CODES = new Set(Object.keys(LANGUAGE_LABELS.fr));
+
+/**
+ * ISO print language embedded in a TCG face/flyer role
+ * (`mythos-face-fr`, `mythos-proof-flyer-en`, `pokemon-face-fr-live`).
+ * Leaves ScreenScraper region compounds (`back-eu`, `back-fr`) alone.
+ */
+export function parsePrintLanguageCodeFromRole(
+  role?: string | null,
+): string | null {
+  const normalized = normalizeToken(role);
+  if (!normalized) return null;
+  if (!normalized.includes("-")) {
+    return PRINT_LANGUAGE_CODES.has(normalized) ? normalized : null;
+  }
+  // …-face-fr / …-face-fr-kana / …-flyer-en / …-proof-flyer-fr
+  const faceOrFlyer = normalized.match(
+    /(?:^|-)(?:proof-)?(?:face|flyer)-([a-z]{2})(?:-|$)/,
+  );
+  if (faceOrFlyer?.[1] && PRINT_LANGUAGE_CODES.has(faceOrFlyer[1])) {
+    return faceOrFlyer[1];
+  }
+  return null;
+}
+
+/**
+ * Language from a catalogue face URL:
+ * - live print role `/assets/…/prints/{stem}-{lang}/face`
+ * - disk art `/assets/…/cards/{lang}/{set}/{card}/…` (`assetsCardUrl`)
+ * - disk art `/assets/…/cards/{set}/{lang}/{card}/…` (Ninja Ranks AC dumps)
+ */
+export function parsePrintLanguageCodeFromUrl(
+  url?: string | null,
+): string | null {
+  const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
+  const printMatch = path.match(
+    /\/prints\/[^/]+-([a-z]{2})\/(?:face|thumb)(?:\/|$)/i,
+  );
+  const printCode = printMatch?.[1]?.toLowerCase() ?? "";
+  if (PRINT_LANGUAGE_CODES.has(printCode)) return printCode;
+
+  const cardsMatch = path.match(/\/cards\/([^/]+)\/([^/]+)\/([^/]+)\//i);
+  if (!cardsMatch) return null;
+  const first = cardsMatch[1]!.toLowerCase();
+  const second = cardsMatch[2]!.toLowerCase();
+  const firstIsLang = PRINT_LANGUAGE_CODES.has(first);
+  const secondIsLang = PRINT_LANGUAGE_CODES.has(second);
+  // Canonical `assetsCardUrl`: lang / set / card.
+  if (firstIsLang && !secondIsLang) return first;
+  // Ninja Ranks animecollection: set / lang / card (`ff/fr/0006`).
+  if (secondIsLang && !firstIsLang) return second;
+  if (firstIsLang) return first;
+  if (secondIsLang) return second;
+  return null;
+}
+
+/**
+ * Label for a print language role. Bare ISO (`de`, `en`) or TCG face/flyer
+ * compounds (`mythos-face-fr`). Returns null for region compounds (`back-eu`).
+ */
+export function formatAttachmentLanguageLabel(
+  role?: string | null,
+  locale: AttachmentDisplayLocale = "fr",
+  url?: string | null,
+): string | null {
+  const code =
+    parsePrintLanguageCodeFromRole(role) ??
+    parsePrintLanguageCodeFromUrl(url);
+  if (!code) return null;
+  return LANGUAGE_LABELS[locale][code] ?? null;
+}
+
+/**
+ * In-pipeline dump channels under a real metadata provider (TCGdex Live,
+ * Mythos Promo / Kana). Stay on the Face detail line, provider keeps the chip.
+ */
+const FACE_CHANNEL_DUMPS = new Set([
+  "live",
+  "promo",
+  "kana",
+  "reconstructed",
+  "mcdn",
+]);
+
+/** Raw dump token from role (`…-face-fr-kana`) or disk basename (`art.coleka.webp`). */
+function parseFaceDumpToken(
+  role?: string | null,
+  url?: string | null,
+): string | null {
+  const normalizedRole = normalizeToken(role);
+  if (normalizedRole) {
+    const match = normalizedRole.match(/(?:^|-)face-[a-z]{2}-([a-z0-9]+)$/);
+    const fromRole = match?.[1]?.trim();
+    if (fromRole && fromRole !== "art") return fromRole;
+  }
+  const path = (url || "").trim().split(/[?#]/, 1)[0] ?? "";
+  // `art.animecollection.jpg` → animecollection; bare `art.webp` → no dump.
+  const fromUrl = path.match(
+    /\/(?:art|face|back)\.([a-z0-9]+)\.[a-z0-9]+$/i,
+  )?.[1];
+  const token = fromUrl?.trim().toLowerCase() ?? "";
+  if (!token || token === "art" || token === "face" || token === "back") {
+    return null;
+  }
+  return token;
+}
+
+/**
+ * Dump channel label for the Face detail line (`Live` / `Promo` / `Kana`).
+ * Site dumps are handled as the source chip instead.
+ */
+function parseFaceSourceDetail(
+  role?: string | null,
+  url?: string | null,
+): string | null {
+  const token = parseFaceDumpToken(role, url);
+  if (!token || FACE_SITE_DUMP_LABELS[token]) return null;
+  if (!FACE_CHANNEL_DUMPS.has(token)) return titleCaseSourceToken(token);
+  return titleCaseSourceToken(token);
+}
+
+/** True when the role dump token is just echoing the attachment source chip. */
+function faceSourceEchoesProvider(
+  faceSource: string,
+  sourceNames: string[],
+  sourceTag?: string | null,
+): boolean {
+  const token = normalizeToken(faceSource);
+  if (!token) return true;
+  const tag = normalizeToken(sourceTag);
+  if (tag && (tag === token || tag.includes(token) || token.includes(tag))) {
+    return true;
+  }
+  return sourceNames.some((name) => {
+    const label = normalizeToken(name);
+    return (
+      Boolean(label) &&
+      (label === token || label.includes(token) || token.includes(label))
+    );
+  });
+}
+
 export function getAttachmentGalleryLabels(
   input: AttachmentLabelInput,
   locale: AttachmentDisplayLocale = "fr",
@@ -441,17 +708,41 @@ export function getAttachmentGalleryLabels(
   caption: string;
 } {
   const kindKey = resolveAttachmentDisplayKind(input);
-  const regionKey = resolveAttachmentDisplayRegion(input);
+  const language = formatAttachmentLanguageLabel(
+    input.role,
+    locale,
+    input.url,
+  );
+  const regionKey = language ? null : resolveAttachmentDisplayRegion(input);
   const kind = formatAttachmentKindLabel(kindKey, locale);
-  const region = formatAttachmentRegionLabel(regionKey, locale);
-  const sourceNames = formatAttachmentSourceNames(input);
+  const region = language ?? formatAttachmentRegionLabel(regionKey, locale);
+  const dumpToken = parseFaceDumpToken(input.role, input.url);
+  const siteDumpLabel = dumpToken
+    ? FACE_SITE_DUMP_LABELS[normalizeToken(dumpToken)] ?? null
+    : null;
+  // Catalogue line providers stamp `providerLabel` ("Naruto Ninja Ranks") while
+  // the bytes come from AnimeCollection / Coleka / … — prefer the dump site.
+  const sourceNames = siteDumpLabel
+    ? [siteDumpLabel]
+    : formatAttachmentSourceNames(input);
   const provider = sourceNames[0] ?? null;
   const styleLabel =
     input.gridStyleCoverLabelsSource &&
     (kindKey === "grid" || kindKey === "grid3d")
       ? parseSteamGridDbStyleLabel(input.title)
       : null;
-  const detail = [kind, region, styleLabel].filter(Boolean).join(" · ");
+  const rawFaceSource =
+    kindKey === "face" || kindKey === "cover"
+      ? parseFaceSourceDetail(input.role, input.url)
+      : null;
+  const faceSource =
+    rawFaceSource &&
+    !faceSourceEchoesProvider(rawFaceSource, sourceNames, input.source)
+      ? rawFaceSource
+      : null;
+  const detail = [kind, region, styleLabel, faceSource]
+    .filter(Boolean)
+    .join(" · ");
 
   return {
     provider,

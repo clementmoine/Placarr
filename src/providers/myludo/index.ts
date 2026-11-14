@@ -3,14 +3,13 @@ import {
   mappingRawKeysFromFetch,
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
 import { barcodeSourceFactsFromFields } from "@/core/identify/evidence/sourceFacts";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type {
   BarcodeLookupType,
   MetadataAdapterContext,
   MetadataProviderAdapter,
-  ProviderModule,
 } from "@/types/providerModule";
 
 import {
@@ -23,7 +22,7 @@ import { createMyLudoResolver, mapMyLudoMetadata } from "./resolver";
 const fetchFromMyLudo = createMyLudoResolver();
 const BARCODE_TYPES: BarcodeLookupType[] = ["boardgames", "generic"];
 
-export const myludoModule: ProviderModule = {
+export const myludoModule = defineProvider({
   info: {
     id: "myludo",
     label: "MyLudo",
@@ -38,10 +37,12 @@ export const myludoModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
     websiteUrl: "https://www.myludo.fr/",
+    scrapeCatalogImageBaseUrl: "https://www.myludo.fr",
     notes:
       "Base communautaire FR : API interne (recherche EAN, fiche jeu, galerie).",
   },
@@ -58,15 +59,6 @@ export const myludoModule: ProviderModule = {
       },
     } satisfies MetadataProviderAdapter;
   },
-  healthCheck: createMetadataHealthCheck("myludo", "MyLudo", async () => {
-    const start = Date.now();
-    const isUp = await pingUrl("https://www.myludo.fr/");
-    return {
-      ok: isUp,
-      latency: Date.now() - start,
-      error: isUp ? null : "Host unreachable",
-    };
-  }),
   testHandlers: {
     "myludo-metadata": {
       label: "MyLudo - Metadata",
@@ -128,6 +120,7 @@ export const myludoModule: ProviderModule = {
     if (!hit) return [];
     return mappingRawKeysFromFetch(() => fetchMyLudoGame(hit.url));
   },
+  barcodeLookupSlots: { myludo: () => null },
   buildBarcodeSources(payload) {
     const hit = payload.myludo;
     if (!hit?.title?.trim()) return [];
@@ -145,6 +138,16 @@ export const myludoModule: ProviderModule = {
       },
     ];
   },
-};
+});
 
 export { createMyLudoResolver, fetchMyLudoGame, searchMyLudoHits };
+
+import type { BarcodeMetadataHit } from "@/core/identify/lookup/payload";
+
+// This module owns the `myludo` barcode-lookup slot: it declares its type here
+// and its empty value in `info.barcodeLookupSlots`, so core enumerates none.
+declare module "@/core/identify/lookup/payload" {
+  interface BarcodeLookupSlots {
+    myludo: BarcodeMetadataHit | null;
+  }
+}

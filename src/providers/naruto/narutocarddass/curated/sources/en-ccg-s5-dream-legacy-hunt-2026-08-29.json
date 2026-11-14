@@ -1,0 +1,44 @@
+{
+  "source": "en-ccg-s5-dream-legacy-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "sunnystore.json → booster-s5-en art/back ; sealed-contents.json booster-s5-en 9 ; pas de crawl",
+  "verdict": {
+    "line": "Bandai USA EN CCG Dream Legacy (setCode s5) — not FR Carddass Serie 5 (slug booster-s5)",
+    "packMath": "Verso printed: 9 cards = 6C + 2U + 1R ; Parallel Holographic randomly inserted 1:1 ; Gold Foil 1:6. Shop text « 10 cartas » is wrong.",
+    "ids": "UPC 045557145996 ; Package © 2007 ; Bandai America / MADE IN CHINA ; face art Tsunade"
+  },
+  "sources": [
+    {
+      "id": "sunnystore-booster-s5-en",
+      "url": "https://sunnystore.es/en/products/blister-naruto-ccg-dream-legacy-tsunade-bandai-booster-pack-sealed",
+      "claims": [
+        "THE DREAM LEGACY BOOSTER SERIES!",
+        "EACH COLLECTIBLE CARD PACK INCLUDES: 9 randomly selected cards (6 common, 2 uncommon, 1 rare)",
+        "Parallel Holographic card randomly inserted (1:1 pack)",
+        "Gold Foil cards randomly inserted (1:6 packs)",
+        "UPC 045557145996",
+        "Shop body also said « 1 SOBRE/10 CARTAS » — rejected vs printed verso"
+      ],
+      "region": "US/EN",
+      "set": "s5",
+      "staging": [
+        "staging/sunnystore/booster-s5-en-01.jpg",
+        "staging/sunnystore/booster-s5-en-02.jpg"
+      ]
+    }
+  ],
+  "skuMapping": {
+    "booster-s5-en": {
+      "lang": "EN",
+      "cardsPerPack": 9,
+      "packsContained": 1,
+      "ean": "045557145996",
+      "note": "Early EN CCG 9-card packs (≠ late EN 10, ≠ Carddass FR 8)"
+    }
+  },
+  "notDone": [
+    "Confirm whether Parallel 1:1 is among the 9 or an extra physical card (verso lists 9 + insert odds separately)",
+    "Other early EN art variants (non-Tsunade Dream Legacy faces) if pasted"
+  ]
+}

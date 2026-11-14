@@ -43,9 +43,9 @@ describe("chocobonplan durableEvidence", () => {
     });
 
     const searchUrl = chocoBonPlanSearchEvidenceUrl("Ball x Pit");
-    await expect(
-      readChocoBonPlanSearchEvidence(searchUrl),
-    ).resolves.toEqual(hits);
+    await expect(readChocoBonPlanSearchEvidence(searchUrl)).resolves.toEqual(
+      hits,
+    );
 
     putProviderEvidence.mockResolvedValueOnce(undefined);
     await promoteChocoBonPlanSearchEvidence(searchUrl, hits);

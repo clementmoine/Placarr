@@ -30,7 +30,7 @@ export function resolveImageRemoteHostLists(): ImageRemoteHostLists {
 }
 
 export function isAllowedNextImageRemoteUrl(url: string): boolean {
-  if (url.startsWith("/uploads/")) return true;
+  if (url.startsWith("/uploads/") || url.startsWith("/assets/")) return true;
   if (!looksLikeRemoteImageUrl(url)) return false;
   if (!/^https:\/\//i.test(url)) return false;
   try {

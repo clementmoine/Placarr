@@ -1,4 +1,5 @@
-import axios from "axios";
+import { isAbortError } from "@/lib/http/abort";
+import { httpGet } from "@/lib/http/httpClient";
 
 import {
   fullSetSearchEvidenceUrl,
@@ -172,7 +173,7 @@ export async function searchFullSet(
   }
 
   try {
-    const response = await axios.get(`${BASE_URL}/recherche.php`, {
+    const response = await httpGet(`${BASE_URL}/recherche.php`, {
       params: { q: cleaned },
       headers: HEADERS,
       timeout: 12_000,
@@ -182,7 +183,7 @@ export async function searchFullSet(
     await promoteFullSetSearchEvidence(searchUrl, hits);
     return hits;
   } catch (error) {
-    if (!axios.isCancel(error)) {
+    if (!isAbortError(error)) {
       console.error(
         "[FullSet] Search request failed:",
         error instanceof Error ? error.message : error,
@@ -197,14 +198,14 @@ export async function fetchFullSetItem(
   signal?: AbortSignal,
 ): Promise<FullSetItem | null> {
   try {
-    const response = await axios.get(url, {
+    const response = await httpGet(url, {
       headers: HEADERS,
       timeout: 12_000,
       signal,
     });
     return parseFullSetItemHtml(String(response.data), url);
   } catch (error) {
-    if (!axios.isCancel(error)) {
+    if (!isAbortError(error)) {
       console.error(
         "[FullSet] Item request failed:",
         error instanceof Error ? error.message : error,

@@ -32,8 +32,7 @@ export function specificSubtitleTokens(title: string): string[] {
         .slice(1)
         .flatMap((segment) => normalizeDisplayTitle(segment))
         .filter(
-          (token) =>
-            token.length > 3 && !VOLUME_LABEL_NOISE_TOKENS.has(token),
+          (token) => token.length > 3 && !VOLUME_LABEL_NOISE_TOKENS.has(token),
         ),
     ),
   );
@@ -55,7 +54,10 @@ export function albumSpecificDistinctiveTokens(title: string): string[] {
   return tokens.slice(1);
 }
 
-function albumTokenCoverage(required: string[], candidateTitle: string): number {
+function albumTokenCoverage(
+  required: string[],
+  candidateTitle: string,
+): number {
   if (required.length === 0) return 1;
   const candidateTokens = catalogMatchTokenSet(candidateTitle);
   const matched = required.filter((token) =>
@@ -113,4 +115,3 @@ export function sameVolumeAlbumSubtitleConflicts(
 
   return sawVolumeAlignedCandidate;
 }
-

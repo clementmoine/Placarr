@@ -1,7 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
-import { cleanCode } from "@/core/identify/query";
+import { normalizeForTokens } from "@/core/enrich/titles/normalize";
 import { stripVolumeMarkersKeepingNumber } from "@/core/enrich/titles/volumeNumber";
+import { cleanCode } from "@/core/identify/query";
 
 const MIN_AND_TOKEN_LENGTH = 2;
 
@@ -56,6 +57,8 @@ function buildPhraseVariants(value: string): string[] {
   const normalizedSpacing = trimmed.replace(/\s+/g, " ");
   const tokens = normalizedSpacing.split(" ").filter(Boolean);
   const phrases = new Set<string>([normalizedSpacing]);
+  // « 7 Épées » → also seek « 7 epees » when the store is ASCII-only.
+  phrases.add(normalizeForTokens(normalizedSpacing));
 
   if (tokens.length > 0 && tokens.length <= 4) {
     const tokenVariants = tokens.map(buildTokenVariants);
@@ -71,7 +74,10 @@ function buildPhraseVariants(value: string): string[] {
         .slice(0, 24);
     }
 
-    combinations.forEach((phrase) => phrases.add(phrase));
+    combinations.forEach((phrase) => {
+      phrases.add(phrase);
+      phrases.add(normalizeForTokens(phrase));
+    });
   }
 
   const cleanBarcode = normalizedSpacing.replace(/[^\d]/g, "");
@@ -101,6 +107,10 @@ function fieldContainsConditions(
     { name: { contains: term, mode } },
     { description: { contains: term, mode } },
     { barcode: { contains: term, mode } },
+    // TCG / Carddass: collectors search by number ("250", "d0250") while the
+    // display title is often just the character name.
+    { printKey: { contains: term, mode } },
+    { slug: { contains: term, mode } },
     { metadata: { is: { title: { contains: term, mode } } } },
     { metadata: { is: { sourceQuery: { contains: term, mode } } } },
     { metadata: { is: { aliases: { contains: term, mode } } } },
@@ -188,13 +198,17 @@ export function itemMatchesSearchQuery(
   const trimmed = searchTerm.trim();
   if (!trimmed) return true;
 
+  // Accents folded so « 7 epees » matches « 7 Épées » (shelf + optimistic UI).
   const normalizedHaystacks = haystacks
     .map((value) => value.trim())
     .filter(Boolean)
-    .map((value) => value.toLowerCase());
+    .map((value) => normalizeForTokens(value));
 
-  const haystackContains = (needle: string) =>
-    normalizedHaystacks.some((value) => value.includes(needle.toLowerCase()));
+  const haystackContains = (needle: string) => {
+    const folded = normalizeForTokens(needle);
+    if (!folded) return true;
+    return normalizedHaystacks.some((value) => value.includes(folded));
+  };
 
   const phraseVariants = buildPhraseVariants(trimmed);
   if (phraseVariants.some((phrase) => haystackContains(phrase))) {
@@ -220,6 +234,8 @@ export function itemSearchHaystacks(item: {
   name?: string | null;
   description?: string | null;
   barcode?: string | null;
+  printKey?: string | null;
+  slug?: string | null;
   metadata?: {
     title?: string | null;
     aliases?: string[] | string | null;
@@ -232,6 +248,8 @@ export function itemSearchHaystacks(item: {
     item.name,
     item.description,
     item.barcode,
+    item.printKey,
+    item.slug,
     item.metadata?.title,
     item.metadata?.sourceQuery,
   ];

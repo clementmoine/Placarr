@@ -1,0 +1,45 @@
+{
+  "source": "leboncoin-s5-vendeur-photos",
+  "observed": "2026-10-01",
+  "kind": "research-dig",
+  "ingest": "none for qty — archive packshots only",
+  "staging": "data/naruto/carddass/staging/leboncoin/s5-vendeur-2026-10-01/",
+  "origin": "Photos vendeur Leboncoin (Downloads UUID jpeg 2026-10-01 14:49–14:56)",
+  "files": [
+    {
+      "file": "01-jp-vol2-misc.jpeg",
+      "finding": "JP Card Game 巻ノ二 / promo — hors Carddass FR S5."
+    },
+    {
+      "file": "02-starters-s1-s4-lot.jpeg",
+      "finding": "7 starters FR S1–S4 (Pays du Vent, Maître Hokage, S2×2, S4×3). Texte boîte répété : « DECK DE 40 CARTES DONT 2 CARTES HOLOGRAPHIQUES ». Pas S5."
+    },
+    {
+      "file": "03-poster-starters-s5-50cartes.jpeg",
+      "finding": "Poster starters S5 (même artefact que poster-starters-s5). Texte : « 50 cartes incluses dans les Decks » = union exclusives Quête+Nouveau (25+25), pas 50/deck. Aucune qty ×N lisible."
+    },
+    {
+      "file": "04-la-quete-ouverte-livret.jpeg",
+      "finding": "Starter La Quête ouvert Ref. 05124 : boîte + jetons + livret règles (sommaire, pas liste 40) + verso checklist plié. Confirme 40 cartes / 2 holos. Pas d’inventaire spread ni page composition."
+    },
+    {
+      "file": "05-poster-boosters-s5-92cartes.jpeg",
+      "finding": "Poster boosters S5 — « 92 cartes additionnelles » hors starters. Checklist série, pas contenu starter."
+    }
+  ],
+  "confirmedAgain": [
+    "declaredCardCount=40 + 2 holos (boîte Quête + lot S1–S4)",
+    "Ref 05124 = La Quête",
+    "Poster starters = 50 exclusives union (déjà dans poster-starters-s5-2026-10-01.json)"
+  ],
+  "stillMissingForContentsKnown": [
+    "Spread / inventaire des 40 cartes Quête (et Nouveau départ) avec quantités",
+    "Page livret listant le deck si elle existe (sommaire seul photographié)",
+    "Verso boîte si listing imprimé"
+  ],
+  "askSeller": [
+    "Photo du paquet de 40 cartes étalé (ou liste NI/TE/TA avec ×2)",
+    "Pages intérieures du livret si checklist deck",
+    "Idem pour Un nouveau départ si dispo"
+  ]
+}

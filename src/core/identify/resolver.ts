@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 import {
   buildCachedBarcodePayload,
   cleanCompiledResultForResponse,
@@ -32,7 +32,7 @@ import { createBarcodeLookupTaskBuilders } from "@/core/catalog/barcode";
 import { collectScanPriceOffers } from "@/core/catalog/barcodePrices";
 import { persistBarcodePrices } from "@/core/commerce/pricing/resolver";
 import { PROVIDER_MODULES } from "@/core/catalog/catalog";
-import type { BarcodeCache } from "@prisma/client";
+import type { BarcodeCache } from "@/generated/prisma/browser";
 import { METADATA_OBSERVATION_SCHEMA_VERSION } from "@/core/enrich/observations";
 
 // Registry-derived evidence labels of providers whose ONLY media type is the

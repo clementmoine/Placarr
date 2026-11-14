@@ -1,0 +1,50 @@
+{
+  "source": "suruga-ya product detail paste",
+  "observed": "2026-09-13",
+  "range": "GG644324…GG644328",
+  "urls": [
+    "https://www.suruga-ya.jp/product/detail/GG644324",
+    "https://www.suruga-ya.jp/product/detail/GG644325",
+    "https://www.suruga-ya.jp/product/detail/GG644326",
+    "https://www.suruga-ya.jp/product/detail/GG644327",
+    "https://www.suruga-ya.jp/product/detail/GG644328"
+  ],
+  "listings": [
+    {
+      "id": "GG644324",
+      "printed": "忍-333",
+      "diskId": "ni0333",
+      "title": "はたけカカシ",
+      "orphanBefore": true
+    },
+    {
+      "id": "GG644325",
+      "printed": "忍-339",
+      "diskId": "ni0339",
+      "title": "砂瀑の我愛羅",
+      "orphanBefore": false
+    },
+    {
+      "id": "GG644326",
+      "printed": "術-17",
+      "diskId": "te0017",
+      "title": "変わり身の術",
+      "orphanBefore": false
+    },
+    {
+      "id": "GG644327",
+      "printed": "作-234",
+      "diskId": "ta0234",
+      "title": "サスケ奪還チーム",
+      "orphanBefore": false
+    },
+    {
+      "id": "GG644328",
+      "printed": "騎-2",
+      "diskId": "ki0002",
+      "title": "ハイド",
+      "orphanBefore": false,
+      "note": "Gelel knight — parser now accepts 騎"
+    }
+  ]
+}

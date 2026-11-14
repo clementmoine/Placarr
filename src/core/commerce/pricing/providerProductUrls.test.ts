@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { providerProductUrlsFromMetadataFacts } from "@/core/catalog/catalog";
-import { providerProductUrlsForKey } from "@/core/commerce/pricing/providerProductUrls";
+import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import type { MetadataFact } from "@/types/metadataProvider";
 
 describe("providerProductUrlsFromMetadataFacts", () => {
@@ -70,6 +70,27 @@ describe("providerProductUrlsFromMetadataFacts", () => {
         value: "Q123",
         url: "https://www.wikidata.org/wiki/Q123",
         source: "wikidata",
+      },
+    ];
+
+    expect(providerProductUrlsFromMetadataFacts(facts)).toEqual([]);
+  });
+
+  it("ignores attribution websiteUrl chips (site roots are not product fiches)", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "LorcanaJSON",
+        value: "Voir la fiche",
+        url: "https://lorcanajson.org/",
+        source: "lorcanajson",
+      },
+      {
+        kind: "external-link",
+        label: "NetGamesRetro",
+        value: "Voir la fiche",
+        url: "https://www.netgamesretro.com",
+        source: "netgamesretro",
       },
     ];
 

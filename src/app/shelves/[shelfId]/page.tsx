@@ -22,11 +22,14 @@ import {
   Pizza,
   Search,
   ChevronDown,
+  ChevronRight,
   ListPlus,
   ScanLine,
+  Package,
   Layers,
   Check,
   ArrowRightLeft,
+  Pencil,
   RefreshCw,
   Loader2,
   X,
@@ -55,17 +58,65 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
-import { ItemCollectionSortSelect } from "@/components/ItemCollectionControls";
-import { ItemModal } from "@/components/modals/ItemModal";
 import {
-  BulkAddModal,
-  type BulkAddTab,
-} from "@/components/modals/BulkAddModal";
-import { BulkMoveModal } from "@/components/modals/BulkMoveModal";
-import { BulkDeleteModal } from "@/components/modals/BulkDeleteModal";
+  filterDuplicateGroups,
+  groupCopies,
+} from "@/core/collect/groupCopies";
+import {
+  ItemCollectionSortSelect,
+  ItemCollectionViewFilter,
+} from "@/components/ItemCollectionControls";
+import dynamic from "next/dynamic";
+import type { BulkAddTab } from "@/components/modals/BulkAddModal";
 import { ScannerButton } from "@/components/ScannerButton";
-import { ShelfModal } from "@/components/modals/ShelfModal";
 import { ScanFAB } from "@/components/ScanFAB";
+
+const ItemModal = dynamic(
+  () =>
+    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
+const PrintPickerModal = dynamic(
+  () =>
+    import("@/components/modals/PrintPickerModal").then(
+      (m) => m.PrintPickerModal,
+    ),
+  { ssr: false },
+);
+const SealedPickerModal = dynamic(
+  () =>
+    import("@/components/modals/SealedPickerModal").then(
+      (m) => m.SealedPickerModal,
+    ),
+  { ssr: false },
+);
+const BulkAddModal = dynamic(
+  () =>
+    import("@/components/modals/BulkAddModal").then((m) => m.BulkAddModal),
+  { ssr: false },
+);
+const BulkMoveModal = dynamic(
+  () =>
+    import("@/components/modals/BulkMoveModal").then((m) => m.BulkMoveModal),
+  { ssr: false },
+);
+const BulkDeleteModal = dynamic(
+  () =>
+    import("@/components/modals/BulkDeleteModal").then(
+      (m) => m.BulkDeleteModal,
+    ),
+  { ssr: false },
+);
+const BulkEditModal = dynamic(
+  () =>
+    import("@/components/modals/BulkEditModal").then((m) => m.BulkEditModal),
+  { ssr: false },
+);
+const ShelfModal = dynamic(
+  () =>
+    import("@/components/modals/ShelfModal").then((m) => m.ShelfModal),
+  { ssr: false },
+);
 
 import { saveItem, refreshItemsBatch } from "@/lib/api/items";
 import { useDebounce } from "@/lib/client/hooks/useDebounce";
@@ -75,12 +126,26 @@ import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
 import { itemPath, slugify } from "@/lib/routing/slugs";
-import { syncItemQueries, syncShelfQueries, invalidateShelfQueries } from "@/core/collect/queryCache";
+import {
+  syncItemQueries,
+  syncShelfQueries,
+  invalidateShelfQueries,
+} from "@/core/collect/queryCache";
+import {
+  countsAsOwned,
+  formatAbsencePriceEuros,
+  sumSoldAbsenceCents,
+} from "@/core/collect/itemAbsence";
+import { isReceivablePresence } from "@/core/collect/receivableMatches";
+import { formatCessionMarkdown } from "@/core/collect/cessionMarkdown";
 import { itemIdsInVisibleRange } from "@/core/collect/selectionRange";
 import {
+  filterItemsByShelfView,
+  parseItemCollectionFilters,
   parseItemCollectionSort,
   queryCollectionItems,
   summarizeCollectionEstimatedValue,
+  type ItemCollectionShelfView,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useRefetchShelfItemsWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
@@ -89,8 +154,11 @@ import { metadataBusyRefetchInterval } from "@/core/collect/enrichment";
 import type { ItemMetadataIdleFields } from "@/core/collect/useRefetchItemWhenMetadataIdle";
 import { releaseStuckOverlayLocks } from "@/lib/dev/overlayLock";
 
-import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount } from "@/types/shelves";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
+import { prefetchPrintCatalogues } from "@/lib/client/printCataloguesCache";
+import { itemsAddLabelKey, itemsCountNounKey } from "@/core/identify/shelfLabels";
 import type { ItemWithMetadata } from "@/types/items";
 
 const itemSearchSchema = z.object({
@@ -107,6 +175,8 @@ type ShelfGridItemProps = {
   selectionMode: boolean;
   isSelected: boolean;
   canSelect: boolean;
+  /** How many copies this tile stands for. 1 means it stands for itself. */
+  copyCount: number;
   onSelect: (itemId: string, options?: { shiftKey?: boolean }) => void;
 };
 
@@ -118,6 +188,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
   selectionMode,
   isSelected,
   canSelect,
+  copyCount,
   onSelect,
 }: ShelfGridItemProps) {
   const { t } = useLocale();
@@ -125,10 +196,11 @@ const ShelfGridItem = memo(function ShelfGridItem({
   const card = (
     <ItemCard
       {...item}
+      copyCount={copyCount}
       shelfType={shelf?.type}
       shelfName={shelf?.name}
       cardFormat={shelf?.cardFormat}
-      priority={index < 4}
+      priority={index < 16}
     />
   );
 
@@ -176,6 +248,8 @@ const ShelfGridItem = memo(function ShelfGridItem({
         damping: 30,
       }}
       className={cn(
+        // Skip layout/paint for off-screen cards on large shelves (Lorcana…).
+        "[content-visibility:auto] [contain-intrinsic-size:auto_220px]",
         "group relative block w-full rounded-2xl",
         isSelected &&
           "ring-2 ring-primary ring-offset-2 ring-offset-background",
@@ -185,9 +259,7 @@ const ShelfGridItem = memo(function ShelfGridItem({
         <button
           type="button"
           aria-pressed={isSelected}
-          onClick={(event) =>
-            onSelect(item.id, { shiftKey: event.shiftKey })
-          }
+          onClick={(event) => onSelect(item.id, { shiftKey: event.shiftKey })}
           className="block w-full text-left"
         >
           {card}
@@ -209,13 +281,18 @@ function ShelfComponent() {
   const shelfId = params.shelfId as Shelf["id"];
 
   const [editingItemId, setEditingItemId] = useState<Item["id"]>();
-  const [visibleModal, setVisibleModal] = useState<"shelf" | "item" | "bulk">();
+  const [visibleModal, setVisibleModal] = useState<
+    "shelf" | "item" | "itemFree" | "bulk" | "sealed"
+  >();
   const [bulkInitialTab, setBulkInitialTab] = useState<BulkAddTab>("names");
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const searchParams = useSearchParams();
   const sortParam = searchParams.get("sort");
   const [sortBy, setSortBy] = useState<ItemCollectionSort>(
     parseItemCollectionSort(sortParam),
+  );
+  const [shelfView, setShelfView] = useState<ItemCollectionShelfView>(
+    () => parseItemCollectionFilters(searchParams).shelfView,
   );
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
@@ -225,6 +302,7 @@ function ShelfComponent() {
   const selectionAnchorIdRef = useRef<string | null>(null);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const router = useRouter();
   const q = searchParams.get("q") || "";
@@ -239,16 +317,6 @@ function ShelfComponent() {
 
   const queryClient = useQueryClient();
 
-  // L'état local suit le paramètre d'URL : ajusté pendant le render (pattern
-  // « adjust state when props change ») ; seule l'écriture du store externe
-  // react-hook-form reste dans un effect.
-  const paramsKey = searchParams.toString();
-  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
-  if (prevParamsKey !== paramsKey) {
-    setPrevParamsKey(paramsKey);
-    setSearchQuery(q);
-    setSortBy(parseItemCollectionSort(searchParams.get("sort")));
-  }
   useEffect(() => {
     form.setValue("search", q);
   }, [q, form]);
@@ -280,9 +348,7 @@ function ShelfComponent() {
       const items = (query.state.data as { items?: unknown[] } | undefined)
         ?.items;
       if (!Array.isArray(items)) return false;
-      return metadataBusyRefetchInterval(
-        items as ItemMetadataIdleFields[],
-      );
+      return metadataBusyRefetchInterval(items as ItemMetadataIdleFields[]);
     },
     refetchIntervalInBackground: true,
     placeholderData: (previousData) => {
@@ -313,17 +379,45 @@ function ShelfComponent() {
             updatedAt: new Date(),
             shelfId: shelfId,
             description: null,
+            printKey: null,
+            setCode: null,
+            variant: null,
+            language: null,
             barcode: null,
             condition: "new",
             metadataId: null,
             metadataRefreshStartedAt: null,
             metadataRefreshGeneration: 0,
+            presence: "owned",
+            absenceReason: null,
+            absenceSince: null,
+            absenceRecipient: null,
+            absenceSource: null,
+            absenceCarrier: null,
+            absenceTracking: null,
+            absenceOrderRef: null,
+            absenceOrderUrl: null,
+            absenceNote: null,
+            absencePriceCents: null,
+            absenceExpectedAt: null,
             userId: shelf?.userId || "",
           }),
         ),
       };
     },
   });
+
+  // L'état local suit le paramètre d'URL (+ type d'étagère pour le défaut TCG) :
+  // ajusté pendant le render (pattern « adjust state when props change »).
+  const paramsKey = searchParams.toString();
+  const sortSourceKey = `${paramsKey}|${shelf?.type ?? ""}`;
+  const [prevSortSourceKey, setPrevSortSourceKey] = useState(sortSourceKey);
+  if (prevSortSourceKey !== sortSourceKey) {
+    setPrevSortSourceKey(sortSourceKey);
+    setSearchQuery(q);
+    setSortBy(parseItemCollectionSort(searchParams.get("sort"), shelf?.type));
+    setShelfView(parseItemCollectionFilters(searchParams).shelfView);
+  }
 
   useDocumentTitle(shelf?.name);
   useRefetchShelfItemsWhenMetadataIdle(queryClient, shelf?.items, shelfId);
@@ -350,10 +444,17 @@ function ShelfComponent() {
     mutationFn: saveItem,
     onSuccess: (item, variables) => {
       const isCreate = !("id" in variables && variables.id);
+      const itemShelfSlug =
+        "shelf" in item &&
+        item.shelf &&
+        typeof item.shelf === "object" &&
+        "slug" in item.shelf
+          ? (item.shelf.slug as string | null | undefined)
+          : undefined;
       void syncItemQueries(
         queryClient,
         item,
-        [item.shelfId, shelfId, item.shelf?.slug],
+        [item.shelfId, shelfId, itemShelfSlug],
         { isCreate },
       );
     },
@@ -373,16 +474,106 @@ function ShelfComponent() {
     });
   }, [shelf, sortBy]);
 
+  /** Presence / duplicates view — default hides past & wanted. */
+  const viewItems = useMemo(
+    () => filterItemsByShelfView(sortedItems, shelfView),
+    [sortedItems, shelfView],
+  );
+
+  /**
+   * Copies of the same object share a tile.
+   *
+   * `Item` stays one physical copy — each has its own condition, price and
+   * loan — so this is purely a display fold, applied after sorting so a group
+   * appears where its first copy did. See `docs/tcg_support.md` §4.
+   */
+  const groupedItems = useMemo(() => {
+    const groups = groupCopies(viewItems);
+    return shelfView === "duplicates" ? filterDuplicateGroups(groups) : groups;
+  }, [viewItems, shelfView]);
+
+  const visibleItemCount = useMemo(
+    () =>
+      shelfView === "duplicates"
+        ? groupedItems.reduce((sum, group) => sum + group.copies.length, 0)
+        : viewItems.length,
+    [shelfView, groupedItems, viewItems.length],
+  );
+
+  /*
+    Ce que l'étagère tient déjà, pour que le sélecteur de tirages le dise avant
+    qu'on rachète en double. Dérivé des items de la page plutôt que refetché :
+    elle les a sous la main, et deux sources divergeraient dès le premier ajout.
+  */
+  /** Une étagère sans tirage n'a rien à compter : pas de check-list. */
+  const hasPrintItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).some(
+        (item) => item.printKey,
+      ),
+    [shelf?.items],
+  );
+
+  const ownedPrints = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[])
+        .filter((item) => item.printKey && countsAsOwned(item))
+        .map((item) => ({
+          printKey: item.printKey,
+          variant: item.variant,
+          language: item.language,
+          setCode: item.setCode,
+        })),
+    [shelf?.items],
+  );
+
+  /** Absent copies — « tu l’attendais ? » before creating a duplicate. */
+  const receivableItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
+        (item) =>
+          (item.printKey || item.barcode) &&
+          isReceivablePresence(item.presence),
+      ),
+    [shelf?.items],
+  );
+
+  /** All print/barcode copies — ordered anti-doublon vs owned twins. */
+  const identityPeerItems = useMemo(
+    () =>
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
+        (item) => Boolean(item.printKey || item.barcode),
+      ),
+    [shelf?.items],
+  );
+
   const totalValue = useMemo(() => {
-    if (!shelf?.items) return { total: 0, includesEstimates: false };
-    const items = shelf.items as unknown as ItemWithMetadata[];
-    return summarizeCollectionEstimatedValue(
-      queryCollectionItems(items, {
-        sortBy: "name_asc",
-        shelfType: shelf.type,
-      }),
-      shelf.type,
+    if (!shelf) return { total: 0, includesEstimates: false };
+    return summarizeCollectionEstimatedValue(viewItems, shelf.type);
+  }, [shelf, viewItems]);
+
+  const soldStats = useMemo(() => {
+    if (shelfView !== "past") return null;
+    const stats = sumSoldAbsenceCents(
+      (shelf?.items ?? []) as unknown as ItemWithMetadata[],
     );
+    if (stats.count === 0) return null;
+    return stats;
+  }, [shelf?.items, shelfView]);
+
+  const downloadCessionMarkdown = useCallback(() => {
+    if (!shelf) return;
+    const md = formatCessionMarkdown({
+      shelfName: shelf.name,
+      items: (shelf.items ?? []) as unknown as ItemWithMetadata[],
+    });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slugify(shelf.name) || "shelf"}-deja-eus.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }, [shelf]);
 
   const handleModalClose = useCallback(() => {
@@ -402,6 +593,22 @@ function ShelfComponent() {
     },
     [shelfMutate],
   );
+
+  /**
+   * Nothing on this shelf carries a barcode, so every scan affordance is dead
+   * weight here — worse, the scan FAB pre-fills the current shelf and would
+   * file a boxed product among the singles.
+   */
+  const isPrintSearchShelf = usesPrintSearch(shelf?.type);
+  /** Adding to a barcode-less shelf goes through the print picker instead. */
+  const usesPrintPicker = isPrintSearchShelf && !editingItemId;
+  const addItemLabel = t(itemsAddLabelKey(shelf?.type));
+
+  // Warm print catalogues before the user opens the picker — filters ready, no skeleton.
+  useEffect(() => {
+    if (!isPrintSearchShelf || !shelf?.type) return;
+    prefetchPrintCatalogues(shelf.type);
+  }, [isPrintSearchShelf, shelf?.type]);
 
   const handleItemModalSubmit = useCallback(
     async (item: Prisma.ItemCreateInput | Prisma.ItemUpdateInput) => {
@@ -458,7 +665,7 @@ function ShelfComponent() {
 
   const handleModalOpen = useCallback(
     (
-      modal: "shelf" | "item" | "bulk",
+      modal: "shelf" | "item" | "itemFree" | "bulk" | "sealed",
       id?: Item["id"],
       bulkTab?: BulkAddTab,
     ) => {
@@ -473,7 +680,10 @@ function ShelfComponent() {
   );
 
   const openModalFromAddMenu = useCallback(
-    (modal: "item" | "bulk", bulkTab: BulkAddTab = "names") => {
+    (
+      modal: "item" | "itemFree" | "bulk" | "sealed",
+      bulkTab: BulkAddTab = "names",
+    ) => {
       setAddMenuOpen(false);
       window.setTimeout(() => {
         releaseStuckOverlayLocks();
@@ -499,12 +709,18 @@ function ShelfComponent() {
     [selectedItemIds],
   );
 
+  const selectedItems = useMemo(() => {
+    const all = (shelf?.items ?? []) as unknown as ItemWithMetadata[];
+    return all.filter((item) => item.id && selectedItemIds.has(item.id));
+  }, [shelf?.items, selectedItemIds]);
+
   const exitSelectionMode = useCallback(() => {
     setSelectionMode(false);
     setSelectedItemIds(new Set());
     selectionAnchorIdRef.current = null;
     setMoveModalOpen(false);
     setDeleteModalOpen(false);
+    setEditModalOpen(false);
   }, []);
 
   // Escape mirrors the single "close" affordance in the selection bar.
@@ -517,10 +733,14 @@ function ShelfComponent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectionMode, exitSelectionMode]);
 
-  const visibleItemIds = useMemo(
-    () => sortedItems.map((item) => item.id).filter(Boolean) as string[],
-    [sortedItems],
-  );
+  const visibleItemIds = useMemo(() => {
+    if (shelfView === "duplicates") {
+      return groupedItems.flatMap((group) =>
+        group.copies.map((copy) => copy.id).filter(Boolean),
+      ) as string[];
+    }
+    return viewItems.map((item) => item.id).filter(Boolean) as string[];
+  }, [shelfView, groupedItems, viewItems]);
 
   // Single entry point: (re)enter selection and toggle / range-select.
   // Plain click toggles and sets the Shift anchor; Shift+click selects the
@@ -584,6 +804,17 @@ function ShelfComponent() {
   );
 
   const handleBulkDeleteSuccess = useCallback(
+    (result: { count: number; sourceShelfIds: string[] }) => {
+      exitSelectionMode();
+      void invalidateShelfQueries(queryClient, result.sourceShelfIds);
+      queryClient.invalidateQueries({ queryKey: ["shelves"] });
+      queryClient.invalidateQueries({ queryKey: ["collectionItems"] });
+      queryClient.invalidateQueries({ queryKey: ["searchItems"] });
+    },
+    [exitSelectionMode, queryClient],
+  );
+
+  const handleBulkEditSuccess = useCallback(
     (result: { count: number; sourceShelfIds: string[] }) => {
       exitSelectionMode();
       void invalidateShelfQueries(queryClient, result.sourceShelfIds);
@@ -675,13 +906,52 @@ function ShelfComponent() {
             onClose={handleModalClose}
             onSubmit={handleShelfModalSubmit}
           />
+          {/* Cards have no barcode: adding one starts from a print search,
+              not from the scan-oriented item form. Editing keeps the normal
+              form, which is about the copy rather than the printing. */}
           <ItemModal
             shelfId={resolvedShelfId}
             shelfType={shelf?.type}
             itemId={editingItemId}
-            isOpen={visibleModal === "item"}
+            isOpen={
+              visibleModal === "itemFree" ||
+              (visibleModal === "item" && !usesPrintPicker)
+            }
             onClose={handleModalClose}
             onSubmit={handleItemModalSubmit}
+            receivableItems={receivableItems}
+            identityPeerItems={identityPeerItems}
+            entryKind={
+              visibleModal === "itemFree" && !editingItemId
+                ? "free"
+                : undefined
+            }
+          />
+          {shelf?.type && (
+            <PrintPickerModal
+              shelfId={resolvedShelfId}
+              shelfType={shelf.type}
+              shelfName={shelf?.name}
+              ownedPrints={ownedPrints}
+              receivableItems={receivableItems}
+              isOpen={visibleModal === "item" && usesPrintPicker}
+              onClose={handleModalClose}
+              onAdded={() => {
+                void queryClient.invalidateQueries({
+                  queryKey: ["shelf", shelfId],
+                });
+              }}
+            />
+          )}
+          <SealedPickerModal
+            shelfId={resolvedShelfId}
+            isOpen={visibleModal === "sealed"}
+            onClose={handleModalClose}
+            onAdded={() => {
+              void queryClient.invalidateQueries({
+                queryKey: ["shelf", shelfId],
+              });
+            }}
           />
           {visibleModal === "bulk" && (
             <BulkAddModal
@@ -708,11 +978,19 @@ function ShelfComponent() {
             sourceShelfId={resolvedShelfId}
             onSuccess={handleBulkDeleteSuccess}
           />
+          <BulkEditModal
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            itemIds={selectedItemIdsArray}
+            items={selectedItems}
+            sourceShelfId={resolvedShelfId}
+            onSuccess={handleBulkEditSuccess}
+          />
         </>
       )}
 
       {/* Content */}
-      <div className="overflow-y-auto">
+      <div className="overflow-y-auto min-h-0 flex-1">
         <div
           className={cn(
             "flex-1 p-4 md:p-6 flex flex-col gap-6 max-w-7xl w-full mx-auto animate-fade-in duration-300",
@@ -723,13 +1001,14 @@ function ShelfComponent() {
               : "pb-24 md:pb-6",
           )}
         >
-          {/* Shelf header — title + primary actions only */}
-          <div className="flex items-center justify-between gap-3 mt-2 w-full">
+          {/* Shelf header — title + primary actions only.
+              Mobile: stack so the name can breathe; sm+: one row. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-2 w-full">
             <div className="flex min-w-0 items-center gap-3">
               <span className="shrink-0 text-foreground dark:text-white">
                 <ShelfTypeIcon type={shelf?.type} className="size-8" />
               </span>
-              <h1 className="truncate text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-none">
+              <h1 className="min-w-0 text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground dark:text-white leading-tight sm:leading-none sm:truncate">
                 {shelf?.name || "..."}
               </h1>
             </div>
@@ -739,21 +1018,19 @@ function ShelfComponent() {
             {isAuthenticated && !isGuest && canEdit && (
               <div
                 className={cn(
-                  "flex items-center gap-2 shrink-0 select-none",
+                  "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:shrink-0 select-none",
                   selectionMode && "invisible pointer-events-none",
                 )}
                 aria-hidden={selectionMode || undefined}
               >
                 <Button
                   variant="secondary"
-                  className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-3 sm:px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
+                  className="w-full sm:w-auto justify-center bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer flex items-center gap-1.5"
                   onClick={() => handleModalOpen("shelf")}
                   tabIndex={selectionMode ? -1 : undefined}
                 >
                   <Wrench className="size-4" />
-                  <span className="hidden sm:inline">
-                    {t("shelves.editShelf")}
-                  </span>
+                  {t("shelves.editShelf")}
                 </Button>
 
                 <DropdownMenu
@@ -763,45 +1040,101 @@ function ShelfComponent() {
                 >
                   <DropdownMenuTrigger asChild>
                     <Button
-                      className="rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                      className="w-full sm:w-auto justify-center rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
                       tabIndex={selectionMode ? -1 : undefined}
                     >
                       <Plus className="size-4" />
-                      {t("items.addItem")}
+                      {addItemLabel}
                       <ChevronDown className="size-4 opacity-80" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl">
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("item")}
-                    >
-                      <Plus className="size-4 mr-2" />
-                      {t("items.addItem")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("bulk", "names")}
-                    >
-                      <ListPlus className="size-4 mr-2" />
-                      {t("items.bulkAdd.menuLabel")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer font-medium"
-                      onSelect={() => openModalFromAddMenu("bulk", "scan")}
-                    >
-                      <ScanLine className="size-4 mr-2" />
-                      {t("items.bulkAdd.tabScan")}
-                    </DropdownMenuItem>
-                    {shelf?.type === "books" && (
+                  <DropdownMenuContent
+                    align="end"
+                    className="rounded-xl min-w-[16rem] p-1.5"
+                  >
+                    {isPrintSearchShelf ? (
+                      <>
+                        <DropdownMenuItem
+                          className="cursor-pointer items-start gap-2.5 py-2.5"
+                          onSelect={() => openModalFromAddMenu("item")}
+                        >
+                          <Search className="size-4 mt-0.5 shrink-0" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="font-semibold leading-tight">
+                              {t("items.addMenu.catalogue")}
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground leading-snug">
+                              {t("items.addMenu.catalogueHint")}
+                            </span>
+                          </span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer items-start gap-2.5 py-2.5"
+                          onSelect={() => openModalFromAddMenu("itemFree")}
+                        >
+                          <Plus className="size-4 mt-0.5 shrink-0" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="font-semibold leading-tight">
+                              {t("items.addMenu.freeEntry")}
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground leading-snug">
+                              {t("items.addMenu.freeEntryHint")}
+                            </span>
+                          </span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer items-start gap-2.5 py-2.5"
+                          onSelect={() => openModalFromAddMenu("sealed")}
+                        >
+                          <Package className="size-4 mt-0.5 shrink-0" />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="font-semibold leading-tight">
+                              {t("items.sealedPicker.menuLabel")}
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground leading-snug">
+                              {t("items.addMenu.sealedHint")}
+                            </span>
+                          </span>
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
                       <DropdownMenuItem
                         className="cursor-pointer font-medium"
-                        onSelect={() => openModalFromAddMenu("bulk", "series")}
+                        onSelect={() => openModalFromAddMenu("item")}
                       >
-                        <Layers className="size-4 mr-2" />
-                        {t("items.bulkSeries.menuLabel")}
+                        <Plus className="size-4 mr-2" />
+                        {t("items.addMenu.freeEntry")}
                       </DropdownMenuItem>
                     )}
+                    {!isPrintSearchShelf ? (
+                      <>
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() => openModalFromAddMenu("bulk", "names")}
+                        >
+                          <ListPlus className="size-4 mr-2" />
+                          {t("items.bulkAdd.menuLabel")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer font-medium"
+                          onSelect={() => openModalFromAddMenu("bulk", "scan")}
+                        >
+                          <ScanLine className="size-4 mr-2" />
+                          {t("items.bulkAdd.tabScan")}
+                        </DropdownMenuItem>
+                        {shelf?.type === "books" && (
+                          <DropdownMenuItem
+                            className="cursor-pointer font-medium"
+                            onSelect={() =>
+                              openModalFromAddMenu("bulk", "series")
+                            }
+                          >
+                            <Layers className="size-4 mr-2" />
+                            {t("items.bulkSeries.menuLabel")}
+                          </DropdownMenuItem>
+                        )}
+                      </>
+                    ) : null}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -835,12 +1168,14 @@ function ShelfComponent() {
                                 handleSearchChange(e);
                               }}
                             />
-                            <ScannerButton
-                              className="absolute right-1 rounded-xl"
-                              onScan={(barcode) => {
-                                handleSearch({ search: barcode });
-                              }}
-                            />
+                            {!isPrintSearchShelf && (
+                              <ScannerButton
+                                className="absolute right-1 rounded-xl"
+                                onScan={(barcode) => {
+                                  handleSearch({ search: barcode });
+                                }}
+                              />
+                            )}
                           </div>
                         </FormControl>
                       </FormItem>
@@ -850,37 +1185,83 @@ function ShelfComponent() {
               </Form>
             </div>
 
-            <div className="w-full sm:w-[220px] shrink-0">
-              <ItemCollectionSortSelect
-                value={sortBy}
+            <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">
+              <ItemCollectionViewFilter
+                value={shelfView}
                 onValueChange={(value) => {
-                  setSortBy(value);
-                  replaceCollectionParams({ sort: value });
+                  setShelfView(value);
+                  replaceCollectionParams({
+                    view: value === "active" ? null : value,
+                    duplicates: null,
+                  });
                 }}
               />
+              <div className="w-full sm:w-[220px]">
+                <ItemCollectionSortSelect
+                  value={sortBy}
+                  shelfType={shelf?.type}
+                  onValueChange={(value) => {
+                    setSortBy(value);
+                    replaceCollectionParams({ sort: value });
+                  }}
+                />
+              </div>
             </div>
           </div>
 
           {/* Items Grid */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
-            <h2 className="text-xl font-semibold">
-              {sortedItems.length || 0}{" "}
-              {sortedItems.length === 1 ? "item" : "items"}
-            </h2>
+          <div className="flex flex-wrap items-end justify-between gap-4 mt-2">
+            <div className="min-w-0 flex flex-col gap-0.5">
+              <h2 className="text-xl font-semibold">
+                {visibleItemCount || 0}{" "}
+                {t(itemsCountNounKey(shelf?.type, visibleItemCount || 0))}
+              </h2>
+              {hasPrintItems && (
+                <a
+                  href={`/shelves/${encodeURIComponent(shelfId)}/checklist`}
+                  className="inline-flex w-fit items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t("items.checklistOpen")}
+                  <ChevronRight className="size-3.5 opacity-70" />
+                </a>
+              )}
+            </div>
 
-            {totalValue.total > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
-                <span>Valeur estimée :</span>
-                <span className="font-extrabold text-sm">
-                  {totalValue.includesEstimates ? "~" : ""}
-                  {totalValue.total.toFixed(2)} €
-                </span>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              {shelfView === "past" ? (
+                <button
+                  type="button"
+                  onClick={downloadCessionMarkdown}
+                  className="px-3 py-1.5 rounded-full text-xs font-bold border border-border/70 bg-background/80 text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer shadow-sm"
+                >
+                  {t("items.cession.export")}
+                </button>
+              ) : null}
+              {soldStats ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shadow-sm backdrop-blur-md">
+                  <span>{t("items.cession.salesLabel")}</span>
+                  <span className="font-extrabold text-sm">
+                    {formatAbsencePriceEuros(soldStats.cents)}
+                  </span>
+                  <span className="opacity-70 font-semibold">
+                    ({t("items.cession.salesCount", { count: soldStats.count })})
+                  </span>
+                </div>
+              ) : null}
+              {totalValue.total > 0 && shelfView !== "past" && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
+                  <span>Valeur estimée :</span>
+                  <span className="font-extrabold text-sm">
+                    {totalValue.includesEstimates ? "~" : ""}
+                    {totalValue.total.toFixed(2)} €
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           <LayoutGroup id="shelf-grid">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mt-4">
-              {sortedItems.map((item, index) =>
+              {groupedItems.map(({ key, lead: item, copies }, index) =>
                 isLoading || !item.id ? (
                   <Skeleton
                     key={`skeleton-${index}`}
@@ -891,8 +1272,9 @@ function ShelfComponent() {
                   />
                 ) : (
                   <ShelfGridItem
-                    key={item.id}
+                    key={key}
                     item={item}
+                    copyCount={copies.length}
                     index={index}
                     shelf={shelf}
                     resolvedShelfId={resolvedShelfId}
@@ -906,26 +1288,36 @@ function ShelfComponent() {
 
               {/* Plus Add Item Card in the items grid — keep the slot while
                   selecting so layout animations do not reflow the whole grid. */}
-              {!isLoading &&
-                isAuthenticated &&
-                !isGuest &&
-                canEdit && (
-                  <motion.button
-                    layout={!selectionMode}
-                    layoutId="add-item-btn"
-                    onClick={() => handleModalOpen("item")}
-                    tabIndex={selectionMode ? -1 : undefined}
-                    aria-hidden={selectionMode || undefined}
-                    className={cn(
-                      "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
-                      selectionMode && "invisible pointer-events-none",
-                    )}
-                    style={{ aspectRatio: skeletonAspectRatio }}
-                  >
+              {!isLoading && isAuthenticated && !isGuest && canEdit && (
+                <motion.button
+                  layout={!selectionMode}
+                  layoutId="add-item-btn"
+                  onClick={() => handleModalOpen("item")}
+                  tabIndex={selectionMode ? -1 : undefined}
+                  aria-hidden={selectionMode || undefined}
+                  aria-label={
+                    isPrintSearchShelf
+                      ? t("items.addMenu.catalogue")
+                      : addItemLabel
+                  }
+                  className={cn(
+                    "w-full flex flex-col items-center justify-center border border-dashed border-border/80 dark:border-zinc-800/80 rounded-2xl bg-zinc-50/5 hover:bg-zinc-100/10 dark:bg-zinc-950/5 dark:hover:bg-zinc-900/10 transition-all duration-300 gap-2 text-muted-foreground hover:text-foreground cursor-pointer text-sm font-bold shadow-sm select-none",
+                    selectionMode && "invisible pointer-events-none",
+                  )}
+                  style={{ aspectRatio: skeletonAspectRatio }}
+                >
+                  {isPrintSearchShelf ? (
+                    <Search className="size-5 text-primary" />
+                  ) : (
                     <Plus className="size-5 text-primary" />
-                    <span>{t("items.addItem")}</span>
-                  </motion.button>
-                )}
+                  )}
+                  <span>
+                    {isPrintSearchShelf
+                      ? t("items.addMenu.catalogue")
+                      : addItemLabel}
+                  </span>
+                </motion.button>
+              )}
             </div>
           </LayoutGroup>
 
@@ -1000,6 +1392,19 @@ function ShelfComponent() {
                 type="button"
                 variant="outline"
                 size="sm"
+                className="rounded-xl gap-1.5 px-2.5 sm:px-3"
+                disabled={selectedItemIds.size === 0}
+                onClick={() => setEditModalOpen(true)}
+              >
+                <Pencil className="size-4" />
+                <span className="hidden sm:inline">
+                  {t("items.bulkEdit.action")}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 className="rounded-xl gap-1.5 px-2.5 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
                 disabled={selectedItemIds.size === 0}
                 onClick={() => setDeleteModalOpen(true)}
@@ -1024,7 +1429,25 @@ function ShelfComponent() {
         </div>
       )}
 
-      {!selectionMode && <ScanFAB />}
+      {!selectionMode &&
+        (isPrintSearchShelf ? (
+          /* Scanning is meaningless here, but the shortcut is not: the same
+             corner offers the flow that does work — searching a printing. */
+          <div className="fixed bottom-24 sm:bottom-6 right-6 z-40">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleModalOpen("item")}
+              aria-label={t("items.addMenu.catalogue")}
+              title={t("items.addMenu.catalogue")}
+              className="size-14 rounded-full bg-primary text-primary-foreground shadow-xl flex items-center justify-center focus:outline-none cursor-pointer border border-primary-foreground/10"
+            >
+              <Search className="size-6" />
+            </motion.button>
+          </div>
+        ) : (
+          <ScanFAB />
+        ))}
     </div>
   );
 }

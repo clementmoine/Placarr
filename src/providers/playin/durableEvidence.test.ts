@@ -66,4 +66,20 @@ describe("playin durableEvidence", () => {
     );
     expect(putProviderEvidence).not.toHaveBeenCalled();
   });
+
+  it("accepts Lorcana card search URLs", async () => {
+    const url =
+      "https://www.play-in.com/fr/recherche?q=Ariel&type=card&searchType=CARDS&family=18";
+    const hits = [
+      {
+        url: "https://www.play-in.com/fr/carte/51053/ariel-sur-des-jambes-humaines",
+        productId: "51053",
+      },
+    ];
+    putProviderEvidence.mockResolvedValueOnce(undefined);
+    await promotePlayInSearchEvidence(url, hits);
+    expect(putProviderEvidence).toHaveBeenCalledWith(
+      expect.objectContaining({ url, yieldJson: hits }),
+    );
+  });
 });

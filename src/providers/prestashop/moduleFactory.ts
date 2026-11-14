@@ -1,6 +1,7 @@
 import { createScrapeCatalogModule } from "@/providers/shared/scrapeCatalogModuleFactory";
 
 import {
+  PrestashopAccessDeniedError,
   fetchPrestashopBarcodeProduct,
   searchPrestashopProduct,
 } from "./fetch";
@@ -26,6 +27,8 @@ export const createPrestashopModule =
       barcode: "3558380126133",
     },
     createResolver: createPrestashopResolver,
+    // La plateforme reconnaît son propre refus ; la fabrique n'a pas à savoir.
+    isAccessDenied: (error) => error instanceof PrestashopAccessDeniedError,
     searchProduct: (config, name, barcode) =>
       searchPrestashopProduct(config, name, barcode),
     fetchBarcodeProduct: fetchPrestashopBarcodeProduct,

@@ -1,14 +1,16 @@
-import axios from "axios";
+import { httpGet, type JsonObject } from "@/lib/http/httpClient";
+import type { MetadataAttachment } from "@/types/metadataProvider";
+
+import { fetchCoverArtArchiveAttachments } from "./coverArtArchive";
 
 /**
  * MusicBrainz — base de données musicale ouverte et faisant autorité.
  * Lookup par code-barres (EAN/UPC d'une édition). Gratuit, sans clé d'API,
  * mais un User-Agent identifiable est obligatoire (sinon 403).
  *
- * Sert de source CANONIQUE pour le nom des albums (évite de retomber sur des
- * titres d'annonces eBay). Pas de couverture ici (Cover Art Archive redirige
- * vers des hôtes non whitelistés par next/image) : la pochette vient d'ailleurs
- * (Deezer), MusicBrainz fournit le nom de référence.
+ * Source CANONIQUE pour le nom des albums. Pochettes typed via Cover Art
+ * Archive (Front / Back / Spine dédiée / Medium) — `archive.org` allowlisté
+ * pour les redirects CAA. Deezer reste un fallback de pochette front.
  */
 
 const MB_BASE = "https://musicbrainz.org/ws/2";
@@ -21,6 +23,8 @@ export interface MusicBrainzResult {
   artist: string | null;
   releaseDate: string | null;
   imageUrl: string | null;
+  /** CAA-typed faces (front / back / spine / disc) when present. */
+  attachments?: MetadataAttachment[];
   mbid: string;
   score?: number | null;
   country?: string | null;
@@ -78,7 +82,7 @@ function aliasNamesFromMbPayload(payload: unknown): string[] {
 
 async function fetchMusicBrainzReleaseAliases(mbid: string): Promise<string[]> {
   try {
-    const res = await axios.get(`${MB_BASE}/release/${mbid}`, {
+    const res = await httpGet(`${MB_BASE}/release/${mbid}`, {
       params: { inc: "aliases", fmt: "json" },
       headers: { "User-Agent": USER_AGENT },
       timeout: 8000,
@@ -96,7 +100,7 @@ export async function fetchFromMusicBrainz(
   if (!clean) return null;
 
   try {
-    const res = await axios.get(`${MB_BASE}/release/`, {
+    const res = await httpGet<JsonObject>(`${MB_BASE}/release/`, {
       params: { query: `barcode:${clean}`, fmt: "json", limit: 5 },
       headers: { "User-Agent": USER_AGENT },
       timeout: 8000,
@@ -161,13 +165,17 @@ export async function fetchFromMusicBrainz(
     const releaseTitle =
       typeof best.title === "string" ? best.title.trim() : "";
     const aliases = await fetchMusicBrainzReleaseAliases(best.id);
+    const attachments = await fetchCoverArtArchiveAttachments(best.id);
+    const frontUrl =
+      attachments.find((a) => a.role === "front")?.url ?? null;
 
     return {
       title: formatMusicTitle(artist, releaseTitle),
       releaseTitle: releaseTitle || null,
       artist,
       releaseDate: best.date || null,
-      imageUrl: null,
+      imageUrl: frontUrl,
+      attachments: attachments.length > 0 ? attachments : undefined,
       mbid: best.id,
       score: typeof best.score === "number" ? best.score : null,
       country: best.country || null,

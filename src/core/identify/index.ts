@@ -9,3 +9,4 @@ export * from "./shelfLabels";
 export * from "./titleUtils";
 export * from "./evidence";
 export * from "./lookup";
+export * from "./scanObservations";

@@ -1,0 +1,43 @@
+{
+  "source": "en-ccg-tp3-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "sunnystore.json → booster-tp3 art/back ; sealed-contents.json booster-tp3 10 ; display photo archival only",
+  "verdict": {
+    "line": "Bandai USA EN CCG Tournament Pack 3 (chibi) — setCode tp3 (Drive 21.5), not Carddass Serie 3",
+    "packMath": "Verso printed: 10 cards = 6 common + 2 uncommon + 1 rare + 1 special insert (Parallel Holographic / Gold Foil Super Rare)",
+    "ids": "UPC 045557236182 ; open display Item #23818 (archival, no display SKU yet)"
+  },
+  "sources": [
+    {
+      "id": "sunnystore-booster-tp3-en",
+      "url": "https://sunnystore.es/en/products/naruto-ccg-bandai-sealed-booster-pack-ingles",
+      "claims": [
+        "CHIBI TOURNAMENT PACK SERIES 3 (INGLÉS)",
+        "EACH COLLECTIBLE CARD PACK INCLUDES: 10 randomly selected cards (6 common, 2 uncommon, 1 rare, and 1 special insert…)",
+        "UPC 045557236182",
+        "Bandai America / MADE IN CHINA / Package © 2011"
+      ],
+      "region": "US/EN",
+      "set": "tp3",
+      "staging": [
+        "staging/sunnystore/booster-tp3-01.jpg",
+        "staging/sunnystore/booster-tp3-02.jpg"
+      ],
+      "archival": ["staging/sunnystore/booster-tp3-display.jpg"]
+    }
+  ],
+  "skuMapping": {
+    "booster-tp3": {
+      "lang": "EN",
+      "cardsPerPack": 10,
+      "packsContained": 1,
+      "ean": "045557236182",
+      "note": "Chibi TP3 single — US 10-card math"
+    }
+  },
+  "notDone": [
+    "Mint display-tp3 if closed-box packshot appears (open Item #23818 is not enough)",
+    "TP1 / TP2 / TP4 sealed singles if packshots pasted"
+  ]
+}

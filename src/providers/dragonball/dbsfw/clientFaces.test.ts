@@ -46,6 +46,8 @@ describe("isClientFaceExtractCurrent", () => {
       "art.client.webp",
       "layer.picture.webp",
       "layer.text.webp",
+      "layer.picture.dxt5",
+      "layers.s3tc.json",
     ]);
     expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(false);
@@ -53,6 +55,19 @@ describe("isClientFaceExtractCurrent", () => {
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(false);
     base.add("layer.badge.webp");
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(true);
+  });
+
+  it("requires picture DXT + layers.s3tc.json for front WebGL sidecars", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+    ]);
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(false);
+    base.add("layer.picture.dxt5");
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(false);
+    base.add("layers.s3tc.json");
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
   });
 });
 

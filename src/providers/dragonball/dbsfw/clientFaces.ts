@@ -833,6 +833,10 @@ export const DBS_FW_CLIENT_LAYER_FILES: Record<
     frame: string;
     costRing: string;
     badge: string;
+    /** Raw Unity DXT5 mip0 — WebGL Front prefers this over the cured WebP. */
+    pictureS3tc: string;
+    frameS3tc: string;
+    textS3tc: string;
   }
 > = {
   front: {
@@ -841,6 +845,9 @@ export const DBS_FW_CLIENT_LAYER_FILES: Record<
     frame: "layer.frame.webp",
     costRing: "layer.costRing.webp",
     badge: "layer.badge.webp",
+    pictureS3tc: "layer.picture.dxt5",
+    frameS3tc: "layer.frame.dxt5",
+    textS3tc: "layer.text.dxt5",
   },
   back: {
     picture: "layer.back-picture.webp",
@@ -848,14 +855,20 @@ export const DBS_FW_CLIENT_LAYER_FILES: Record<
     frame: "layer.back-frame.webp",
     costRing: "layer.back-costRing.webp",
     badge: "layer.back-badge.webp",
+    pictureS3tc: "layer.back-picture.dxt5",
+    frameS3tc: "layer.back-frame.dxt5",
+    textS3tc: "layer.back-text.dxt5",
   },
 };
+
+/** Per-face S3TC dims/format for WebGL (`picture` required; frame/text archive). */
+export const DBS_FW_LAYERS_S3TC_META = "layers.s3tc.json";
 
 /**
  * True when on-disk basenames already match the Frost-like extract layout.
  * Stale `art.client.webp` alone (pre–costRing / badge split) is not current —
  * re-run extract without `--force`. Costless faces never write `costRing` /
- * `badge`.
+ * `badge`. Picture DXT + `layers.s3tc.json` required for WebGL Front S3TC.
  */
 export function isClientFaceExtractCurrent(
   basenames: ReadonlySet<string>,
@@ -870,6 +883,10 @@ export function isClientFaceExtractCurrent(
   }
   if (expectsCostRing && !basenames.has(layers.costRing)) return false;
   if (expectsCostRing && !basenames.has(layers.badge)) return false;
+  if (side === "front") {
+    if (!basenames.has(layers.pictureS3tc)) return false;
+    if (!basenames.has(DBS_FW_LAYERS_S3TC_META)) return false;
+  }
   return true;
 }
 

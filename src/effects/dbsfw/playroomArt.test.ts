@@ -225,4 +225,25 @@ describe("dbsFwEffectPack playroom arts", () => {
       ),
     ).toBe(false);
   });
+
+  it("resolveMaterialForPrint maps printKey seeds / superpara; foil alone → foil-holo", () => {
+    expect(dbsFwEffectPack.resolveMaterial("foil", null)?.fragment).toContain(
+      "FrostCard",
+    );
+    expect(
+      dbsFwEffectPack.resolveMaterialForPrint("foil", null, {
+        printKey: "dbsfw:fb01-139-superpara",
+      })?.floats.EFFECTS_LAYER_COUNT,
+    ).toBe(2);
+    expect(
+      dbsFwEffectPack.resolveMaterialForPrint("foil", null, {
+        printKey: "dbsfw:e-111-p1",
+      }),
+    ).not.toBeNull();
+    expect(
+      dbsFwEffectPack.resolveMaterialForPrint("normal", null, {
+        printKey: "dbsfw:st01-004-p1",
+      }),
+    ).toBeNull();
+  });
 });

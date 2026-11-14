@@ -31,7 +31,10 @@ import {
   type DbsFwEffectsLayer,
 } from "./clientRenders";
 import { dbsFwMaterialRecipe } from "./materialRecipes";
+import { dbsFwFrostLeafForPrint } from "./frostLeaf";
 import { DBS_FW_S3TC_BY_WEBP } from "./s3tcSidecars.generated";
+
+export { dbsFwFrostLeafForPrint, dbsFwCatalogueFacePath } from "./frostLeaf";
 
 export const DBS_FW_EFFECT_PACK_ID = "dbs-fw";
 
@@ -292,5 +295,9 @@ dbsFwEffectPack.resolveMaterial = (finish) =>
   (finish ?? "").trim().toLowerCase() === "foil" && foilRow
     ? clientMaterial(foilRow)
     : null;
-dbsFwEffectPack.resolveMaterialForPrint = (finish) =>
-  dbsFwEffectPack.resolveMaterial(finish, null);
+dbsFwEffectPack.resolveMaterialForPrint = (finish, _varnish, opts) => {
+  if ((finish ?? "").trim().toLowerCase() !== "foil") return null;
+  const leaf = dbsFwFrostLeafForPrint(opts?.printKey ?? null);
+  const row = rendersById.get(leaf) ?? foilRow;
+  return row ? clientMaterial(row) : null;
+};

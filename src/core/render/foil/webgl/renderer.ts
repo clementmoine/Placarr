@@ -922,6 +922,39 @@ export function createWebglFoilRenderer(
       }
     }
 
+    // Catalogue Front: prefer layer.picture.dxt5 (absolute /assets URL) when
+    // S3TC is available — GPU bilinear matches Unity; cured WebP is fallback.
+    if (
+      role === "front" &&
+      surfaces.frontS3tc &&
+      preferS3tcTextureUpload({
+        hasS3tcBinding: true,
+        hasRasterSibling: Boolean(surfaces.frontUrl),
+        supportsS3tc: caps.supportsS3tc || caps.supportsS3tcSrgb,
+        forceRaster: foilForceRasterOverride(),
+      })
+    ) {
+      try {
+        const file = surfaces.frontS3tc.file;
+        const data = await fetchArrayBuffer(
+          file.startsWith("/") ? file : textureBase + file,
+        );
+        if (destroyed) return;
+        const compressed = uploadCompressedTexture(
+          data,
+          surfaces.frontS3tc,
+          binding,
+          (name) => s3tcFormatConstant(gl!, name),
+        );
+        if (compressed) {
+          texturesBySlot.set(slot, compressed);
+          return;
+        }
+      } catch {
+        // Fall through to layer.picture.webp.
+      }
+    }
+
     const url = textureUrl(slot);
     if (!url) return;
 

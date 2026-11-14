@@ -627,6 +627,13 @@ export function FoilCardImage({
           await import("@/core/render/foil/webgl");
         if (cancelled) return;
         const layers = pack.layerSurfaces?.(imageUrl) ?? null;
+        const { fetchCatalogueFrontS3tc } =
+          await import("@/core/render/foil/layerS3tc");
+        const frontS3tc =
+          layers?.frontS3tc ??
+          (await fetchCatalogueFrontS3tc(imageUrl)) ??
+          null;
+        if (cancelled) return;
         const renderer = createWebglFoilRenderer(
           canvas,
           material,
@@ -641,6 +648,7 @@ export function FoilCardImage({
             costRingUrl: layers?.costRingUrl ?? null,
             badgeUrl: layers?.badgeUrl ?? null,
             holoMaskUrl: layers?.holoMaskUrl ?? null,
+            frontS3tc,
             hotFoilColor: parseCssColor(varnishColor),
             secondHotFoilColor: parseCssColor(secondVarnishColor),
           },

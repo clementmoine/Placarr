@@ -373,6 +373,51 @@ export function decodeTextureTree(
   }
 }
 
+/** Raw DXT1/DXT5 mip0 for `compressedTexImage2D` (catalogue layer sidecars). */
+export type RawS3tcMip0 = {
+  data: Uint8Array;
+  width: number;
+  height: number;
+  /** Unity TextureFormat id (DXT1 / DXT5). */
+  format: number;
+  srgb: boolean;
+  /** WebGL compressed format constant name. */
+  glFormat: string;
+};
+
+/**
+ * Mip0 compressed bytes from a Texture2D typetree. Null when the plate is
+ * not DXT or the stream is short.
+ */
+export function rawS3tcMip0FromTree(
+  tree: UnityTypeTree,
+  loaded: LoadedUnityFs,
+): RawS3tcMip0 | null {
+  const width = Number(tree.m_Width ?? 0);
+  const height = Number(tree.m_Height ?? 0);
+  const format = Number(tree.m_TextureFormat ?? 0);
+  if (width <= 0 || height <= 0) return null;
+  if (format !== TextureFormat.DXT1 && format !== TextureFormat.DXT5) {
+    return null;
+  }
+  const srgb = Number(tree.m_ColorSpace ?? 0) === 1;
+  const glFormat = webglS3tcFormat(format, srgb);
+  if (!glFormat) return null;
+  const payload = texturePayload(tree, loaded);
+  const mip0 = dxtMipByteSize(width, height, format);
+  if (!payload?.byteLength || mip0 <= 0 || payload.byteLength < mip0) {
+    return null;
+  }
+  return {
+    data: payload.subarray(0, mip0),
+    width,
+    height,
+    format,
+    srgb,
+    glFormat,
+  };
+}
+
 type StreamDataRef = {
   offset?: number | bigint;
   size?: number | bigint;

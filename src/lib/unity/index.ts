@@ -21,6 +21,7 @@ export {
 export {
   decodeTexturesFromUnityFs,
   decodeTextureTree,
+  rawS3tcMip0FromTree,
   listTexture2D,
   decodeTextureFormat,
   canDecodeTextureFormat,
@@ -30,7 +31,9 @@ export {
   astcBlockSize,
   webglAstcFormat,
   webglS3tcFormat,
+  dxtMipByteSize,
   type DecodedTexture2D,
+  type RawS3tcMip0,
 } from "@/lib/unity/texture2d";
 export {
   cropCardRgba,

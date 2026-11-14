@@ -1,3 +1,5 @@
+import type { FoilS3tcBinding } from "@/core/render/foil/types";
+
 export type WebglFoilSurfaces = {
   artUrl: string;
   foilMaskUrl?: string | null;
@@ -12,6 +14,11 @@ export type WebglFoilSurfaces = {
   /** CostNumber gem — composited onto ink at load (Frost order). */
   badgeUrl?: string | null;
   holoMaskUrl?: string | null;
+  /**
+   * Catalogue Front DXT sidecar (`file` may be an absolute `/assets/…` URL).
+   * Uploaded when S3TC is available; otherwise `frontUrl` WebP is used.
+   */
+  frontS3tc?: FoilS3tcBinding | null;
   hotFoilColor?: readonly [number, number, number, number] | null;
   secondHotFoilColor?: readonly [number, number, number, number] | null;
 };

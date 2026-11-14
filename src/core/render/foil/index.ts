@@ -33,6 +33,12 @@ export {
 } from "./resolveCardMaterial";
 
 export {
+  fetchCatalogueFrontS3tc,
+  resolveCatalogueFrontS3tc,
+  type CatalogueLayerS3tcMeta,
+} from "./layerS3tc";
+
+export {
   fetchArrayBuffer,
   fetchFragmentSource,
   fetchImageBitmap,

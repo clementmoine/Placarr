@@ -4,7 +4,7 @@
  * illustration and stored beside the catalogue print.
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import sharp from "sharp";
@@ -17,6 +17,10 @@ import {
   bgraToRgba,
   decodeTextureTree,
   flipRgbaVertical,
+  rawS3tcMip0FromTree,
+  webglS3tcFormat,
+  TextureFormat,
+  type RawS3tcMip0,
 } from "@/lib/unity/texture2d";
 import {
   iterClassTrees,
@@ -34,6 +38,7 @@ import {
   DBS_FW_CLIENT_FACE_FILES,
   DBS_FW_CLIENT_LAYER_FILES,
   DBS_FW_COST_RING,
+  DBS_FW_LAYERS_S3TC_META,
   deriveCostRingGeometry,
   fusionWorldFaceLayer,
   isolateCostRingDisc,
@@ -74,10 +79,19 @@ type DecodedLayer = {
   height: number;
 };
 
+type S3tcPlate = {
+  data: Buffer;
+  width: number;
+  height: number;
+  format: string;
+};
+
 type SideLayers = {
   picture: DecodedLayer | null;
   pictureName: string;
+  pictureS3tc: S3tcPlate | null;
   text: Partial<Record<"en" | "ja", DecodedLayer>>;
+  textS3tc: Partial<Record<"en" | "ja", S3tcPlate>>;
 };
 
 const FRAME_BUNDLE = FRAME_BUNDLE_NAME;
@@ -85,9 +99,24 @@ const FRAME_BUNDLE = FRAME_BUNDLE_NAME;
 type FrameLibrary = {
   badge: (name: string) => DecodedLayer | null;
   frame: (name: string) => DecodedLayer[] | null;
+  /** Raw slice-0 DXT for the named frame array (archive / future WebGL). */
+  frameS3tc: (name: string) => S3tcPlate | null;
   ring: (color: string) => Promise<DecodedLayer | null>;
   ringGeometry: () => CostRingGeometry | null;
 };
+
+function s3tcPlateFromRaw(raw: RawS3tcMip0): S3tcPlate {
+  return {
+    data: Buffer.from(raw.data),
+    width: raw.width,
+    height: raw.height,
+    format: raw.glFormat,
+  };
+}
+
+function writeS3tcPlate(dir: string, file: string, plate: S3tcPlate): void {
+  writeFileSync(path.join(dir, file), plate.data);
+}
 
 function dxt5LevelBytes(width: number, height: number): number {
   return Math.ceil(width / 4) * Math.ceil(height / 4) * 16;
@@ -120,7 +149,10 @@ function cureDecodedLayer(layer: DecodedLayer): DecodedLayer {
  * {@link curePlateDxt} stands in for that filter on CPU.
  * Mip data after slice 0 is ignored — stacking other slices cuts text.
  */
-function decodeFrameArray(tree: UnityTypeTree): DecodedLayer[] | null {
+function decodeFrameArray(tree: UnityTypeTree): {
+  slices: DecodedLayer[];
+  s3tc: S3tcPlate | null;
+} | null {
   // m_Format is Unity GraphicsFormat (e.g. 100 = BC3_SRGB), not TextureFormat.
   const format = Number(tree.m_Format ?? 0);
   if (!FRAME_ARRAY_DXT5_GRAPHICS.has(format)) return null;
@@ -138,22 +170,36 @@ function decodeFrameArray(tree: UnityTypeTree): DecodedLayer[] | null {
   if (data.byteLength < mip0 || (chain > 0 && data.byteLength < chain && data.byteLength < mip0 * depth)) {
     return null;
   }
+  const srgb = format === 100; // BC3_SRGB GraphicsFormat
+  const glFormat = webglS3tcFormat(TextureFormat.DXT5, srgb);
+  const s3tc: S3tcPlate | null = glFormat
+    ? {
+        data: Buffer.from(data.subarray(0, mip0)),
+        width,
+        height,
+        format: glFormat,
+      }
+    : null;
   const raw = bgraToRgba(
     Buffer.from(decodeBc3(data.subarray(0, mip0), width, height)),
   );
   const flipped = flipRgbaVertical(raw, width, height);
-  return [
-    cureDecodedLayer({
-      rgba: flipped,
-      width,
-      height,
-    }),
-  ];
+  return {
+    slices: [
+      cureDecodedLayer({
+        rgba: flipped,
+        width,
+        height,
+      }),
+    ],
+    s3tc,
+  };
 }
 
 const emptyLibrary: FrameLibrary = {
   badge: () => null,
   frame: () => null,
+  frameS3tc: () => null,
   ring: async () => null,
   ringGeometry: () => null,
 };
@@ -180,6 +226,7 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
   }
   const badges = new Map<string, DecodedLayer | null>();
   const frames = new Map<string, DecodedLayer[] | null>();
+  const frameS3tcs = new Map<string, S3tcPlate | null>();
   const rings = new Map<string, Promise<DecodedLayer | null>>();
   let ringGeom: CostRingGeometry | null = null;
   return {
@@ -209,9 +256,17 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
       if (hit !== undefined) return hit;
       // Prefer inventory hit; builders may list names absent from this dump.
       const tree = arrays.get(name);
-      const slices = tree ? decodeFrameArray(tree) : null;
-      frames.set(name, slices);
-      return slices;
+      const decoded = tree ? decodeFrameArray(tree) : null;
+      frames.set(name, decoded?.slices ?? null);
+      frameS3tcs.set(name, decoded?.s3tc ?? null);
+      return decoded?.slices ?? null;
+    },
+    frameS3tc(name) {
+      if (!frameS3tcs.has(name)) {
+        // Populate via frame() so cured + raw stay in sync.
+        this.frame(name);
+      }
+      return frameS3tcs.get(name) ?? null;
     },
     ring(color) {
       const fillName = clientCostFillName(color);
@@ -427,8 +482,20 @@ async function extractBundle(
   }
 
   const sides: Record<FwFaceSide, SideLayers> = {
-    front: { picture: null, pictureName: "", text: {} },
-    back: { picture: null, pictureName: "", text: {} },
+    front: {
+      picture: null,
+      pictureName: "",
+      pictureS3tc: null,
+      text: {},
+      textS3tc: {},
+    },
+    back: {
+      picture: null,
+      pictureName: "",
+      pictureS3tc: null,
+      text: {},
+      textS3tc: {},
+    },
   };
   for (const tree of iterClassTrees(loaded, 28)) {
     const name = String(tree.m_Name ?? tree.name ?? "");
@@ -440,6 +507,7 @@ async function extractBundle(
       continue;
     }
     const slot = sides[layer.side];
+    const rawS3tc = rawS3tcMip0FromTree(tree, loaded);
     // Picture / text are DXT5 — cure tramage before resize (not mip1).
     const pixels = cureDecodedLayer({
       rgba: decoded.rgba,
@@ -449,8 +517,10 @@ async function extractBundle(
     if (layer.kind === "picture") {
       slot.picture = pixels;
       slot.pictureName = name;
+      slot.pictureS3tc = rawS3tc ? s3tcPlateFromRaw(rawS3tc) : null;
     } else {
       slot.text[layer.lang] = pixels;
+      if (rawS3tc) slot.textS3tc[layer.lang] = s3tcPlateFromRaw(rawS3tc);
     }
   }
 
@@ -504,6 +574,11 @@ async function writeCardFaceSides(
         const picture = slot.picture;
         const sized = clientFacePixels(picture.width, picture.height);
         const layers = DBS_FW_CLIENT_LAYER_FILES[side];
+        const cardDirName = path.dirname(dest);
+        const s3tcMeta: Record<
+          string,
+          { file: string; width: number; height: number; format: string }
+        > = {};
         // Lanczos in sRGB byte space (Unity FilterMode.Bilinear ≈ cubic was
         // softer on glyphs; linear filtering cut gem edge energy ~40%).
         const pictureSized = await resizeRgba(
@@ -517,8 +592,27 @@ async function writeCardFaceSides(
           pictureSized,
           sized.width,
           sized.height,
-          path.join(path.dirname(dest), layers.picture),
+          path.join(cardDirName, layers.picture),
         );
+        if (slot.pictureS3tc) {
+          writeS3tcPlate(cardDirName, layers.pictureS3tc, slot.pictureS3tc);
+          s3tcMeta.picture = {
+            file: layers.pictureS3tc,
+            width: slot.pictureS3tc.width,
+            height: slot.pictureS3tc.height,
+            format: slot.pictureS3tc.format,
+          };
+        }
+        const textS3tc = slot.textS3tc[lang];
+        if (textS3tc) {
+          writeS3tcPlate(cardDirName, layers.textS3tc, textS3tc);
+          s3tcMeta.text = {
+            file: layers.textS3tc,
+            width: textS3tc.width,
+            height: textS3tc.height,
+            format: textS3tc.format,
+          };
+        }
         const frameCard = {
           cardType: facts?.cardType ?? null,
           color: facts?.color ?? null,
@@ -528,9 +622,22 @@ async function writeCardFaceSides(
           side,
         };
         let chrome: DecodedLayer[] | null = null;
+        let chromeS3tc: S3tcPlate | null = null;
         for (const name of clientFrameArrayCandidates(frameCard)) {
           chrome = frames.frame(name);
-          if (chrome) break;
+          if (chrome) {
+            chromeS3tc = frames.frameS3tc(name);
+            break;
+          }
+        }
+        if (chromeS3tc) {
+          writeS3tcPlate(cardDirName, layers.frameS3tc, chromeS3tc);
+          s3tcMeta.frame = {
+            file: layers.frameS3tc,
+            width: chromeS3tc.width,
+            height: chromeS3tc.height,
+            format: chromeS3tc.format,
+          };
         }
         const ring = badgeName
           ? await frames.ring(facts?.color ?? "")
@@ -556,7 +663,7 @@ async function writeCardFaceSides(
               frameSized,
               sized.width,
               sized.height,
-              path.join(path.dirname(dest), layers.frame),
+              path.join(cardDirName, layers.frame),
             );
             composed = await compositeOver(
               composed,
@@ -581,7 +688,7 @@ async function writeCardFaceSides(
             ringLayer,
             sized.width,
             sized.height,
-            path.join(path.dirname(dest), layers.costRing),
+            path.join(cardDirName, layers.costRing),
           );
           composed = await compositeOver(
             composed,
@@ -609,7 +716,7 @@ async function writeCardFaceSides(
           unpremultiplyStraight(textPremul),
           sized.width,
           sized.height,
-          path.join(path.dirname(dest), layers.text),
+          path.join(cardDirName, layers.text),
         );
         composed = await compositeOver(
           composed,
@@ -632,7 +739,7 @@ async function writeCardFaceSides(
             unpremultiplyStraight(badgePremul),
             sized.width,
             sized.height,
-            path.join(path.dirname(dest), layers.badge),
+            path.join(cardDirName, layers.badge),
           );
           composed = await compositeOver(
             composed,
@@ -643,6 +750,13 @@ async function writeCardFaceSides(
           );
         }
         await writeLosslessRgbaWebp(composed, sized.width, sized.height, dest);
+        if (side === "front" && s3tcMeta.picture) {
+          writeFileSync(
+            path.join(cardDirName, DBS_FW_LAYERS_S3TC_META),
+            `${JSON.stringify(s3tcMeta, null, 2)}\n`,
+            "utf8",
+          );
+        }
         stats.written += 1;
       } catch {
         stats.failed += 1;
@@ -707,8 +821,20 @@ async function extractMaterialsParaFaces(
       entry = {
         card: print,
         sides: {
-          front: { picture: null, pictureName: "", text: {} },
-          back: { picture: null, pictureName: "", text: {} },
+          front: {
+            picture: null,
+            pictureName: "",
+            pictureS3tc: null,
+            text: {},
+            textS3tc: {},
+          },
+          back: {
+            picture: null,
+            pictureName: "",
+            pictureS3tc: null,
+            text: {},
+            textS3tc: {},
+          },
         },
       };
       byKey.set(key, entry);
@@ -718,12 +844,15 @@ async function extractMaterialsParaFaces(
       width: decoded.width,
       height: decoded.height,
     });
+    const rawS3tc = rawS3tcMip0FromTree(tree, loaded);
     const slot = entry.sides[layer.side];
     if (layer.kind === "picture") {
       slot.picture = pixels;
       slot.pictureName = name;
+      slot.pictureS3tc = rawS3tc ? s3tcPlateFromRaw(rawS3tc) : null;
     } else {
       slot.text[layer.lang] = pixels;
+      if (rawS3tc) slot.textS3tc[layer.lang] = s3tcPlateFromRaw(rawS3tc);
     }
   }
   stats.bundles += byKey.size > 0 ? 1 : 0;

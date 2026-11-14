@@ -169,6 +169,11 @@ export type EffectPackModule = {
     badgeUrl?: string | null;
     /** Optional denser plate for Frost `_HoloMask` when foil stamp is sparse. */
     holoMaskUrl?: string | null;
+    /**
+     * Absolute `/assets/…/layer.picture.dxt5` (+ dims/format). Preferred for
+     * Front when the GPU exposes S3TC; raster `frontUrl` remains the fallback.
+     */
+    frontS3tc?: FoilS3tcBinding | null;
   } | null;
   /**
    * When true for a mask URL, keep CSS and refuse WebGL. Unity MotifMask often

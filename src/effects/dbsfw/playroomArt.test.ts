@@ -246,4 +246,27 @@ describe("dbsFwEffectPack playroom arts", () => {
       }),
     ).toBeNull();
   });
+
+  it("catalogue materials use per-print mask roles and MainTex off (Unity stack)", () => {
+    const para = dbsFwEffectPack.resolveMaterialForPrint("foil", null, {
+      printKey: "dbsfw:fb01-001-p1",
+    });
+    expect(para?.floats._FoilType).toBe(0);
+    expect(para?.floats._UseMainTex).toBe(0);
+    expect(para?.textures._FoilMask).toBeUndefined();
+    expect(para?.textures._HoloMask).toEqual({ role: "holoMask" });
+
+    const stamp = dbsFwEffectPack.resolveMaterialForPrint("foil", null, {
+      printKey: "dbsfw:st01-004-p1",
+    });
+    expect(stamp?.floats._FoilType).toBe(2);
+    expect(stamp?.floats._UseMainTex).toBe(0);
+    expect(stamp?.textures._FoilMask).toEqual({ role: "foilMask" });
+    expect(stamp?.textures._HoloMask).toEqual({ role: "holoMask" });
+
+    // Playroom seed keeps the shared ST01 holo plate (not catalogue roles).
+    const playroom = dbsFwEffectPack.material?.("foil-holo");
+    expect(playroom?.floats._UseMainTex).toBe(1);
+    expect(playroom?.textures._HoloMask?.file).toContain("st01-004-para-holo");
+  });
 });

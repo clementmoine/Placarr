@@ -34,7 +34,7 @@ describe("resolveFoilCardMaterial", () => {
     ).toBeNull();
   });
 
-  it("DBSFW finish+printKey uses resolveMaterialForPrint leaf (superpara)", async () => {
+  it("DBSFW finish+printKey uses resolveMaterialForPrint leaf (superpara / para)", async () => {
     const { dbsFwEffectPack } = await import("@/effects/dbsfw");
     registerEffectPack(dbsFwEffectPack);
     const mat = resolveFoilCardMaterial({
@@ -44,6 +44,13 @@ describe("resolveFoilCardMaterial", () => {
     });
     expect(mat?.fragment).toContain("FrostCard");
     expect(mat?.floats.EFFECTS_LAYER_COUNT).toBe(2);
+    expect(
+      resolveFoilCardMaterial({
+        pack: dbsFwEffectPack,
+        finish: "foil",
+        printKey: "dbsfw:fb01-001-p1",
+      })?.floats._FoilType,
+    ).toBe(0);
     expect(
       resolveFoilCardMaterial({
         pack: dbsFwEffectPack,

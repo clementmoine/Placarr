@@ -34,7 +34,11 @@ import { dbsFwMaterialRecipe } from "./materialRecipes";
 import { dbsFwFrostLeafForPrint } from "./frostLeaf";
 import { DBS_FW_S3TC_BY_WEBP } from "./s3tcSidecars.generated";
 
-export { dbsFwFrostLeafForPrint, dbsFwCatalogueFacePath } from "./frostLeaf";
+export {
+  dbsFwFrostLeafForPrint,
+  dbsFwCatalogueFacePath,
+  dbsFwFolderLooksParallel,
+} from "./frostLeaf";
 
 export const DBS_FW_EFFECT_PACK_ID = "dbs-fw";
 
@@ -127,9 +131,23 @@ function effectsArrayBinding(
   return { arrayLayers: plates };
 }
 
-function clientMaterial(row: DbsFwClientRender): FoilMaterial | null {
+type ClientMaterialOpts = {
+  /**
+   * Catalogue product path: bind FoilMask/HoloMask via roles (per-print
+   * URLs from FoilCardImage / layerSurfaces) and keep `_UseMainTex: 0`
+   * like Unity when Front/Frame/Chara are stacked. Playroom keeps seed
+   * plates (ST01 holo, inverted PARA holomask, …).
+   */
+  catalogue?: boolean;
+};
+
+function clientMaterial(
+  row: DbsFwClientRender,
+  opts?: ClientMaterialOpts,
+): FoilMaterial | null {
   if (!row.shader) return null;
   const recipe = dbsFwMaterialRecipe(row.id);
+  const catalogue = Boolean(opts?.catalogue);
   if (row.shader === "UIHologram.frag") {
     return {
       graph: "UIHologram",
@@ -151,14 +169,27 @@ function clientMaterial(row: DbsFwClientRender): FoilMaterial | null {
   // FoilMask stays `role: foilMask` when cardMask is set — the playroom
   // must pass a sparse catalogue/holo URL (see maskForFace). Binding the
   // grey holo plate as FoilMask (foil-holo) floods FoilType 2 yellow again.
-  const mask: FoilTextureBinding | null = row.cardMask
-    ? { role: "foilMask" }
-    : row.mask
-      ? PLATE(row.mask)
-      : null;
-  const holoCoverage: FoilTextureBinding | null = row.holoPlate
-    ? PLATE(row.holoPlate)
-    : mask;
+  // Catalogue: always role-bind FoilMask when the recipe stamps (FoilType>0)
+  // or the leaf declares cardMask — never a shared ST01 holo plate.
+  const foilType = recipe?.floats._FoilType ?? 0;
+  const mask: FoilTextureBinding | null = catalogue
+    ? foilType > 0 || row.cardMask
+      ? { role: "foilMask" }
+      : row.mask
+        ? PLATE(row.mask)
+        : null
+    : row.cardMask
+      ? { role: "foilMask" }
+      : row.mask
+        ? PLATE(row.mask)
+        : null;
+  // Catalogue HoloMask = per-print mask.webp via layerSurfaces; playroom
+  // keeps dump plates (ST01 para-holo, inverted E-111, …).
+  const holoCoverage: FoilTextureBinding | null = catalogue
+    ? { role: "holoMask" }
+    : row.holoPlate
+      ? PLATE(row.holoPlate)
+      : mask;
   const holoMode =
     recipe?.holo ??
     (mask != null || holoCoverage != null
@@ -200,8 +231,7 @@ function clientMaterial(row: DbsFwClientRender): FoilMaterial | null {
         ...(covers && coverage
           ? {
               // FoilType stamps gold from FoilMask when >0; HoloMask.x gates
-              // rainbow. Para has holoPlate only (no mask) → no FoilMask bind,
-              // so ROLE white never floods orange under FoilType 0.
+              // rainbow. Para has no FoilMask bind under FoilType 0.
               ...(mask ? { _FoilMask: mask } : {}),
               _HoloMask: coverage,
               _MasksTex: coverage,
@@ -238,8 +268,10 @@ function clientMaterial(row: DbsFwClientRender): FoilMaterial | null {
         _FoilType: covers ? DBS_FW_CARD_FLOATS._FoilType! : 0,
         EFFECTS_LAYER_COUNT: layers.length,
       }),
-      // Catalogue faces always stack front/frame/ink (dump templates often 0).
-      _UseMainTex: 1,
+      // Unity Card dump: Main off when Front/Frame/Chara stack. Catalogue
+      // layers exist beside art.client — keep Main as fallback only in
+      // playroom demos that may omit layerSurfaces.
+      _UseMainTex: catalogue ? 0 : 1,
       _UseFront: 1,
       _UseFrame: 1,
       _UseFrame2: 0,
@@ -299,5 +331,6 @@ dbsFwEffectPack.resolveMaterialForPrint = (finish, _varnish, opts) => {
   if ((finish ?? "").trim().toLowerCase() !== "foil") return null;
   const leaf = dbsFwFrostLeafForPrint(opts?.printKey ?? null);
   const row = rendersById.get(leaf) ?? foilRow;
-  return row ? clientMaterial(row) : null;
+  // Per-print FoilMask/HoloMask roles + MainTex off (Unity stack).
+  return row ? clientMaterial(row, { catalogue: true }) : null;
 };

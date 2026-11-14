@@ -9,9 +9,12 @@ import {
   blendPlateMips,
   boxFilterRgba,
   clientPlateMipBlend,
+  curePlateDxt,
+  deblockPlateDxt,
   resolvePlateWithMip1,
   scaleRgbaNearest,
   resolvePlateChromeMips,
+  softenPlateChrome,
   compositeCostFill,
   COST_FILL_DRAW_SIZE,
   isolateCostRingDisc,
@@ -159,6 +162,32 @@ describe("fusionWorldFaceLayer", () => {
     const solid = solidifyPlateInk(rgba, 6, 1);
     expect([...solid.subarray(0, 4)]).toEqual([255, 255, 255, 250]);
     expect([...solid.subarray(5 * 4, 6 * 4)]).toEqual([16, 12, 8, 240]);
+  });
+
+  it("clears the black/metal stair inside a DXT block and leaves a dark panel block", () => {
+    const block = Buffer.alloc(4 * 4 * 4);
+    for (let i = 0; i < 8; i += 1) block.set([10, 8, 8, 255], i * 4);
+    for (let i = 8; i < 16; i += 1) block.set([160, 158, 162, 255], i * 4);
+    const fixed = deblockPlateDxt(block, 4, 4);
+    expect([...fixed.subarray(0, 4)]).toEqual([160, 158, 162, 255]);
+    expect([...fixed.subarray(8 * 4, 9 * 4)]).toEqual([160, 158, 162, 255]);
+
+    const panel = Buffer.alloc(4 * 4 * 4);
+    for (let i = 0; i < 16; i += 1) panel.set([16, 12, 10, 255], i * 4);
+    expect([...deblockPlateDxt(panel, 4, 4).subarray(0, 4)]).toEqual([
+      16, 12, 10, 255,
+    ]);
+  });
+
+  it("softens mid-tone chrome without blurring white ink", () => {
+    const rgba = Buffer.alloc(3 * 3 * 4);
+    for (let i = 0; i < 9; i += 1) rgba.set([120, 118, 122, 255], i * 4);
+    rgba.set([255, 255, 255, 255], 4 * 4);
+    const soft = softenPlateChrome(rgba, 3, 3);
+    expect([...soft.subarray(0, 4)]).toEqual([120, 118, 122, 255]);
+    expect([...soft.subarray(4 * 4, 5 * 4)]).toEqual([255, 255, 255, 255]);
+    const cured = curePlateDxt(rgba, 3, 3);
+    expect([...cured.subarray(4 * 4, 5 * 4)]).toEqual([255, 255, 255, 255]);
   });
 
   it("blends Unity mip levels for the catalogue plate width", () => {

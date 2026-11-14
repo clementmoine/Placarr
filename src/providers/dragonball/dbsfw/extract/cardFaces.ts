@@ -15,15 +15,12 @@ import { decodeBc3 } from "@arkntools/unity-js-tools";
 
 import {
   bgraToRgba,
-  decodeTextureMip1,
   decodeTextureTree,
   flipRgbaVertical,
-  type DecodedTexture2D,
 } from "@/lib/unity/texture2d";
 import {
   iterClassTrees,
   loadUnityFs,
-  type LoadedUnityFs,
   type UnityTypeTree,
 } from "@/lib/unity/loadUnityFs";
 
@@ -33,6 +30,7 @@ import {
   clientCostRingOffset,
   clientFacePixels,
   clientFrameArrayCandidates,
+  curePlateDxt,
   DBS_FW_CLIENT_FACE_FILES,
   DBS_FW_CLIENT_LAYER_FILES,
   DBS_FW_COST_RING,
@@ -41,7 +39,6 @@ import {
   isolateCostRingDisc,
   isClientFaceExtractCurrent,
   premultiplyStraight,
-  resolvePlateWithMip1,
   solidifyPlateInk,
   unpremultiplyStraight,
   type CostRingGeometry,
@@ -108,34 +105,19 @@ function dxt5MipChainBytes(width: number, height: number, mips: number): number 
   return total;
 }
 
-/**
- * Mip0 + selective mip1 (DXT chrome / silhouette stairs). Catalogue faces
- * that skip this keep the 4×4 tramage the GPU hides in-game.
- */
-function decodeFaceTexture(
-  tree: UnityTypeTree,
-  loaded: LoadedUnityFs,
-): DecodedTexture2D | null {
-  const mip0 = decodeTextureTree(tree, loaded);
-  if (!mip0) return null;
-  const mip1 = decodeTextureMip1(tree, loaded);
-  if (!mip1) return mip0;
+/** Mip0 decode + CPU bilinear stand-in for DXT chrome/ink stairs. */
+function cureDecodedLayer(layer: DecodedLayer): DecodedLayer {
   return {
-    ...mip0,
-    rgba: resolvePlateWithMip1(
-      mip0.rgba,
-      mip0.width,
-      mip0.height,
-      mip1.rgba,
-      mip1.width,
-      mip1.height,
-    ),
+    rgba: curePlateDxt(layer.rgba, layer.width, layer.height),
+    width: layer.width,
+    height: layer.height,
   };
 }
 
 /**
  * Slice 0 of a frame Texture2DArray. Catalogue faces keep the 512-wide
- * mip0 (height shrinks to 63×88); Unity bilinear-filters the Y minify.
+ * mip0 (height shrinks to 63×88); Unity bilinear-filters the Y minify —
+ * {@link curePlateDxt} stands in for that filter on CPU.
  * Mip data after slice 0 is ignored — stacking other slices cuts text.
  */
 function decodeFrameArray(tree: UnityTypeTree): DecodedLayer[] | null {
@@ -159,12 +141,13 @@ function decodeFrameArray(tree: UnityTypeTree): DecodedLayer[] | null {
   const raw = bgraToRgba(
     Buffer.from(decodeBc3(data.subarray(0, mip0), width, height)),
   );
+  const flipped = flipRgbaVertical(raw, width, height);
   return [
-    {
-      rgba: flipRgbaVertical(raw, width, height),
+    cureDecodedLayer({
+      rgba: flipped,
       width,
       height,
-    },
+    }),
   ];
 }
 
@@ -206,7 +189,8 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
       const tree = textures.get(name);
       let decoded = null;
       try {
-        decoded = tree ? decodeFaceTexture(tree, loaded) : null;
+        // CostNumber badges are BC7 — no DXT deblock; SS happens at resize.
+        decoded = tree ? decodeTextureTree(tree, loaded) : null;
       } catch {
         decoded = null;
       }
@@ -450,17 +434,18 @@ async function extractBundle(
     const name = String(tree.m_Name ?? tree.name ?? "");
     const layer = fusionWorldFaceLayer(name);
     if (!layer) continue;
-    const decoded = decodeFaceTexture(tree, loaded);
+    const decoded = decodeTextureTree(tree, loaded);
     if (!decoded) {
       stats.failed += 1;
       continue;
     }
     const slot = sides[layer.side];
-    const pixels = {
+    // Picture / text are DXT5 — cure tramage before resize (not mip1).
+    const pixels = cureDecodedLayer({
       rgba: decoded.rgba,
       width: decoded.width,
       height: decoded.height,
-    };
+    });
     if (layer.kind === "picture") {
       slot.picture = pixels;
       slot.pictureName = name;
@@ -712,7 +697,7 @@ async function extractMaterialsParaFaces(
     if (seriesPara.has(key)) continue;
     const layer = fusionWorldFaceLayer(name);
     if (!layer) continue;
-    const decoded = decodeFaceTexture(tree, loaded);
+    const decoded = decodeTextureTree(tree, loaded);
     if (!decoded) {
       stats.failed += 1;
       continue;
@@ -728,11 +713,11 @@ async function extractMaterialsParaFaces(
       };
       byKey.set(key, entry);
     }
-    const pixels = {
+    const pixels = cureDecodedLayer({
       rgba: decoded.rgba,
       width: decoded.width,
       height: decoded.height,
-    };
+    });
     const slot = entry.sides[layer.side];
     if (layer.kind === "picture") {
       slot.picture = pixels;

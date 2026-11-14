@@ -198,11 +198,11 @@ Ordre produit (`CLIENT_FACE_COMPOSE_ORDER`) — proche Frost (Front→Frame→di
 
 | Calque | Source dump | Pos @ print | Taille | Ordre | Transform |
 |--------|-------------|-------------|--------|-------|-----------|
-| picture | `*_Card` Texture2D | 0,0 | card W×H | 1 | `clientFacePixels` (63×88) |
-| frame | Texture2DArray slice0 mip0 | 0,0 | card W×H | 2 | resize chrome seul |
+| picture | `*_Card` Texture2D | 0,0 | card W×H | 1 | mip0 + `curePlateDxt` → `clientFacePixels` (63×88) |
+| frame | Texture2DArray slice0 mip0 | 0,0 | card W×H | 2 | `curePlateDxt` + resize chrome seul |
 | costRing | `Cost_01` + `CostFrame_{Color}` | Frost centre | scale×atlas | 3 | bake SS + `layer.costRing.webp` |
-| text | `*_Text_En` / `_Ja` | 0,0 | card W×H | 4 | solidify + lanczos |
-| badge | `{Color}_01_cost{n}` (BC7) | 0,0 | card W×H | 5 | full-face resize (runtime : BPTC si dispo) |
+| text | `*_Text_En` / `_Ja` | 0,0 | card W×H | 4 | `curePlateDxt` → `solidifyPlateInk` + lanczos |
+| badge | `{Color}_01_cost{n}` (BC7) | 0,0 | card W×H | 5 | full-face SS resize (pas de deblock DXT) |
 
 Frost runtime (`FrostCard.frag`) sample Main→Front→Middle→Frame→Chara→CostNumber ; `Cost_01` / `CostFrame_*` **ne sont pas** des samplers Frost (disques procéduraux + `_CostNumberTex`). L’aplat catalogue garde le bake `Cost_01`+`CostFrame` en **calque séparé**.
 
@@ -210,7 +210,7 @@ Frost runtime (`FrostCard.frag`) sample Main→Front→Middle→Frame→Chara→
 
 Constantes produit isolées : `clientFacePolicy.ts`. Bake fill : `costRingBake.ts`. Fallback Frost/géométrie : `frostCostDisc.ts`, `costRingGeometry.ts`. Foil WebGL : `layerSurfaces` expose `costRingUrl` / `badgeUrl` ; le renderer les compose sur `frame` / `ink` (pas de samplers `_CostNumberTex` / disc séparés dans le budget portable).
 
-On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). Décode = mip0 + resolve sélectif vers mip1 Unity (`resolvePlateWithMip1` — chrome / silhouette DXT, le GPU cache ce tramage en jeu). Texte : `solidifyPlateInk` puis lanczos. Chaque couche est redimensionnée une seule fois sur la carte 63×88 (minify via `supersampleResize` 4×), puis écrite dans `art.client.webp`. Le chrome est la première tranche du tableau `Card_Battle_{Couleur}_Frame` dans `card_frame`. Le gemme chiffré vient de la plaque + badge `{Couleur}_01_cost{n}` (BC7). Une art 1:2 (512×1024) devient 512×715 (63×88). `pnpm exec tsx scripts/extractFusionWorldFaces.ts` — sans `--force`, un aplat pré-split (sans `layer.picture` / `layer.text`, ou sans `layer.costRing` / `layer.badge` quand la carte a un coût) est réécrit (`isClientFaceExtractCurrent`).
+On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). Décode = **mip0 seul** ; le tramage DXT 4×4 (chrome / ink) est traité côté CPU par `deblockPlateDxt` + `softenPlateChrome` (`curePlateDxt`, calqué sur `m_FilterMode = 1`) — **pas** Unity mip1 (A/B rejeté : trop soft). Texte : `curePlateDxt` → `solidifyPlateInk` puis lanczos. Chaque couche est redimensionnée une seule fois sur la carte 63×88 (minify via `supersampleResize` 4×), puis écrite dans `art.client.webp`. Le chrome est la première tranche du tableau `Card_Battle_{Couleur}_Frame` dans `card_frame`. Le gemme chiffré vient de `Cost_01` + `CostFrame_{Couleur}` (RGBA32 + SS) et du badge `{Couleur}_01_cost{n}` (BC7). Une art 1:2 (512×1024) devient 512×715 (63×88). Sidecars S3TC/BPTC = phase foil (optionnel), pas requis pour l’étagère. `pnpm exec tsx scripts/extractFusionWorldFaces.ts` — sans `--force`, un aplat pré-split (sans `layer.picture` / `layer.text`, ou sans `layer.costRing` / `layer.badge` quand la carte a un coût) est réécrit (`isClientFaceExtractCurrent`).
 
 ## 7. Shaders — Metal traduit en GLSL ES 3.00
 

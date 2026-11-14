@@ -291,6 +291,143 @@ export function boxFilterRgba(
   return out;
 }
 
+function plateLuma(red: number, green: number, blue: number): number {
+  return Math.max(red, green, blue);
+}
+
+function plateChroma(red: number, green: number, blue: number): number {
+  return plateLuma(red, green, blue) - Math.min(red, green, blue);
+}
+
+/**
+ * DXT5 stores two RGB endpoints per 4×4 block. On silver chrome and white
+ * ink the dark endpoint is near black, so the decoded block is a stair of
+ * black and metal. The client samples the texture with bilinear filtering
+ * (`m_FilterMode = 1`), which hides that stair. A flat decode keeps it.
+ * Inside each block, opaque low-chroma texels on the dark side take the
+ * bright side's average. A flat dark panel has no bright side, so it stays.
+ */
+export function deblockPlateDxt(
+  rgba: Buffer,
+  width: number,
+  height: number,
+): Buffer {
+  const out = Buffer.from(rgba);
+  for (let by = 0; by < height; by += 4) {
+    for (let bx = 0; bx < width; bx += 4) {
+      const dark: number[] = [];
+      let brightRed = 0;
+      let brightGreen = 0;
+      let brightBlue = 0;
+      let brightCount = 0;
+      let brightMin = 255;
+      for (let y = 0; y < 4 && by + y < height; y += 1) {
+        for (let x = 0; x < 4 && bx + x < width; x += 1) {
+          const i = ((by + y) * width + bx + x) * 4;
+          const alpha = out[i + 3] ?? 0;
+          if (alpha < 200) continue;
+          const red = out[i] ?? 0;
+          const green = out[i + 1] ?? 0;
+          const blue = out[i + 2] ?? 0;
+          const luma = plateLuma(red, green, blue);
+          if (plateChroma(red, green, blue) > 28) continue;
+          if (luma < 90) {
+            dark.push(i);
+            continue;
+          }
+          brightRed += red;
+          brightGreen += green;
+          brightBlue += blue;
+          brightCount += 1;
+          if (luma < brightMin) brightMin = luma;
+        }
+      }
+      if (!dark.length || brightCount < 2) continue;
+      // A dark panel that only grazes mid-grey noise keeps its blacks.
+      if (brightMin < 100 && dark.length >= 10) continue;
+      const red = Math.round(brightRed / brightCount);
+      const green = Math.round(brightGreen / brightCount);
+      const blue = Math.round(brightBlue / brightCount);
+      for (const i of dark) {
+        out[i] = red;
+        out[i + 1] = green;
+        out[i + 2] = blue;
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The cost chrome keeps mid-tone DXT steps after the black endpoint is
+ * gone. The client hides them with bilinear filtering. Average each
+ * metal texel with its metal neighbours; white ink and coloured badges
+ * stay sharp.
+ */
+export function softenPlateChrome(
+  rgba: Buffer,
+  width: number,
+  height: number,
+): Buffer {
+  const out = Buffer.from(rgba);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4;
+      const alpha = rgba[i + 3] ?? 0;
+      if (alpha < 200) continue;
+      const red = rgba[i] ?? 0;
+      const green = rgba[i + 1] ?? 0;
+      const blue = rgba[i + 2] ?? 0;
+      const luma = plateLuma(red, green, blue);
+      if (plateChroma(red, green, blue) > 28) continue;
+      if (luma < 60 || luma > 200) continue;
+      let sumRed = 0;
+      let sumGreen = 0;
+      let sumBlue = 0;
+      let count = 0;
+      for (
+        let yy = Math.max(0, y - 1);
+        yy <= Math.min(height - 1, y + 1);
+        yy += 1
+      ) {
+        for (
+          let xx = Math.max(0, x - 1);
+          xx <= Math.min(width - 1, x + 1);
+          xx += 1
+        ) {
+          const j = (yy * width + xx) * 4;
+          const alpha2 = rgba[j + 3] ?? 0;
+          if (alpha2 < 200) continue;
+          const red2 = rgba[j] ?? 0;
+          const green2 = rgba[j + 1] ?? 0;
+          const blue2 = rgba[j + 2] ?? 0;
+          const luma2 = plateLuma(red2, green2, blue2);
+          if (plateChroma(red2, green2, blue2) > 28) continue;
+          if (luma2 < 60 || luma2 > 200) continue;
+          sumRed += red2;
+          sumGreen += green2;
+          sumBlue += blue2;
+          count += 1;
+        }
+      }
+      if (count < 3) continue;
+      out[i] = Math.round(sumRed / count);
+      out[i + 1] = Math.round(sumGreen / count);
+      out[i + 2] = Math.round(sumBlue / count);
+    }
+  }
+  return out;
+}
+
+/** CPU stand-in for Unity bilinear (`m_FilterMode = 1`) on DXT plates. */
+export function curePlateDxt(
+  rgba: Buffer,
+  width: number,
+  height: number,
+): Buffer {
+  return softenPlateChrome(deblockPlateDxt(rgba, width, height), width, height);
+}
+
 /**
  * DXT5 interpolates glyph ink toward the black endpoint of the block, so a
  * letter is a ramp of opaque grays. Downscaling that ramp dissolves the
@@ -299,7 +436,8 @@ export function boxFilterRgba(
  * A near-black texel in the same block is the other DXT endpoint: if it
  * sits on the ink it takes that ink too. A flat dark panel is farther
  * from the letter, and a coloured badge fails the chroma test, so both stay.
- * Chrome tramage is handled by blending Unity's mip1, not by filtering here.
+ * Chrome tramage on picture/frame/text is cured by {@link curePlateDxt}
+ * before this runs — not by Unity mip1 (rejected for catalogue aplats).
  */
 export function solidifyPlateInk(
   rgba: Buffer,

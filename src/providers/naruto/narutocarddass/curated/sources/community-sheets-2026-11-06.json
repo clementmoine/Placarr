@@ -1,0 +1,87 @@
+{
+  "source": "Community Google Sheets / Drive (user paste 2026-11-06)",
+  "observed": "2026-11-06",
+  "line": "en-ccg",
+  "pack": "naruto/carddass",
+  "staging": "staging/community-sheets/",
+  "sheets": [
+    {
+      "id": "1iJymzs61KmfiSKO24KXIe3U8BPCjgMDQnxasVpl70w8",
+      "title": "NARUTO CCG - SELL LIST",
+      "url": "https://docs.google.com/spreadsheets/d/1iJymzs61KmfiSKO24KXIe3U8BPCjgMDQnxasVpl70w8/edit?usp=sharing",
+      "staging": "staging/community-sheets/sell_list.csv",
+      "access": "public-export-csv",
+      "kind": "sell-list",
+      "ingestSheet": false,
+      "note": "Seller ask prices (promo chase etc.) — provenance only, not catalogue document"
+    },
+    {
+      "id": "1dvwy66urXUUFMMht3JyIlUf1AU39xS-pGK3eWQUqx4E",
+      "title": "Naruto Cards, Complete",
+      "url": "https://docs.google.com/spreadsheets/d/1dvwy66urXUUFMMht3JyIlUf1AU39xS-pGK3eWQUqx4E/edit?usp=sharing",
+      "staging": "staging/community-sheets/naruto_cards_complete.csv",
+      "access": "public-export-csv",
+      "kind": "chase-inventory",
+      "alsoSeenIn": "s5-starter-contents-hunt-2026-08-26.json",
+      "ingestSheet": false,
+      "note": "EN CCG chase inventory — not Carddass FR"
+    },
+    {
+      "id": "1J7bs4XCjI3NOYWobsoDzsy7UuPwebwprr1jQrBltYlw",
+      "title": "Naruto CCG Inventory",
+      "url": "https://docs.google.com/spreadsheets/d/1J7bs4XCjI3NOYWobsoDzsy7UuPwebwprr1jQrBltYlw/edit?usp=sharing",
+      "staging": "staging/community-sheets/inventory/",
+      "access": "share-link read via gviz/tq (File→export 401)",
+      "kind": "inventory-sheet",
+      "alsoSeenIn": "reddit-narutoccg.json#1uhfnge",
+      "tabs": 37,
+      "completeInventoryRows": 17920,
+      "ingestSheet": false,
+      "note": "Spend_Far master inventory — all 37 tabs CSV-mirrored; Complete Inventory ≈17.9k rows. Provenance only until EN finish ingest."
+    },
+    {
+      "id": "1TbT6y6U1k4xFub2qvx-3kVhApUlMTx-ZQS5_wjSbpV4",
+      "title": "Personal Naruto Collection Spreadsheet form",
+      "url": "https://docs.google.com/spreadsheets/d/1TbT6y6U1k4xFub2qvx-3kVhApUlMTx-ZQS5_wjSbpV4/edit?usp=sharing",
+      "staging": "staging/community-sheets/personal/",
+      "access": "share-link read via gviz/tq (File→export 401)",
+      "kind": "personal-form",
+      "tabs": 33,
+      "ingestSheet": false,
+      "note": "Personal collection checklist by set — 33 tabs CSV-mirrored. Provenance only."
+    }
+  ],
+  "alreadyCuratedElsewhere": [
+    {
+      "id": "1QpivP4LB4hJiQWC5qSt_HsvrtCpF_qNh",
+      "title": "White Heaven Comprehensive Rulebook PDF",
+      "where": "documents.json + bandai-fr-us-drive-rules-2026-11-06.json"
+    },
+    {
+      "id": "1PqjRkZ79W0vOhRxs8DrrVMcCujy88j04",
+      "title": "White Heaven Comprehensive Rulebook DOCX",
+      "where": "bandai-fr-us-drive-rules-2026-11-06.json (_alts)"
+    },
+    {
+      "id": "1Y8iy5eK4RnnU9xP2pU3MhoAARcr-zvkb",
+      "title": "GUIDE_RARETE_KAYOU_2-8",
+      "where": "narutokayou/curated/documents.json"
+    }
+  ],
+  "notThisPack": [
+    {
+      "id": "1pGSxi6WtQPsEINdLYm916_2-cW1pP4dg",
+      "title": "LORCANA - Rise of the Floodborne - Checklist.pdf",
+      "where": "lorcana/lorcanatcg curated documents"
+    }
+  ],
+  "rulesCommunity": [
+    {
+      "id": "1cfca3XJcFz6i0dHOjuFY4KnUJnstf0ohTrLNuE6LAfE",
+      "title": "OccasionalGamer Comprehensive Rulebook",
+      "url": "https://docs.google.com/document/d/1cfca3XJcFz6i0dHOjuFY4KnUJnstf0ohTrLNuE6LAfE/edit",
+      "staging": "staging/community-rules/occasionalgamer_comprehensive_rulebook.pdf",
+      "note": "Reddit r/Narutoccg pointer — distinct from White Heaven"
+    }
+  ]
+}

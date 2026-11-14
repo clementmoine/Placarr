@@ -5,6 +5,7 @@ import {
   hasCatalogReferenceListingNoise,
   pickBestCatalogDisplayTitle,
 } from "./displayScore";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 export function shouldRefineCatalogDisplayTitle(
   title: string,
@@ -53,8 +54,16 @@ export function refineCatalogDisplayTitle(
         )
       : nonEmpty.filter(
           (candidate) =>
-            isMetadataTitleAligned({ title: candidate }, [trimmed], 0.58) ||
-            isMetadataTitleAligned({ title: trimmed }, [candidate], 0.58),
+            isMetadataTitleAligned(
+              { title: candidate },
+              [trimmed],
+              METADATA_TITLE_ALIGN_FLOOR,
+            ) ||
+            isMetadataTitleAligned(
+              { title: trimmed },
+              [candidate],
+              METADATA_TITLE_ALIGN_FLOOR,
+            ),
         );
 
   return pickBestCatalogDisplayTitle(filtered) ?? trimmed;

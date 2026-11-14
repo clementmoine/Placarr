@@ -1,0 +1,328 @@
+{
+  "observed": "2026-09-20",
+  "count": 25,
+  "items": [
+    {
+      "stem": "extra-booster-pack-4",
+      "jan": "4570118213631",
+      "title": "スーパードラゴンボールヒーローズ エクストラブースターパック4",
+      "url": "https://sec.carddass.com/club/products/detail/4570118213631",
+      "released": "2024-03",
+      "files": [
+        "carddass/extra-booster-pack-4.jpg",
+        "carddass/extra-booster-pack-4-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "binder-13th-anniversary-cell",
+      "jan": "4570118189745",
+      "title": "スーパードラゴンボールヒーローズオフィシャル9ポケットバインダーセット-セル編-",
+      "url": "https://sec.carddass.com/club/products/detail/4570118189745",
+      "released": "2023-12",
+      "files": [
+        "carddass/binder-13th-anniversary-cell.jpg",
+        "carddass/binder-13th-anniversary-cell-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "binder-12th-anniversary-ultra-god",
+      "jan": "4549660860013",
+      "title": "スーパードラゴンボールヒーローズ オフィシャル9ポケットバインダー-ウルトラゴッドミッションセット-",
+      "url": "https://sec.carddass.com/club/products/detail/4549660860013",
+      "released": "2022-12",
+      "files": [
+        "carddass/binder-12th-anniversary-ultra-god.jpg",
+        "carddass/binder-12th-anniversary-ultra-god-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "extra-booster-pack-2",
+      "jan": "4549660860037",
+      "title": "スーパードラゴンボールヒーローズ エクストラブースターパック２",
+      "url": "https://sec.carddass.com/club/products/detail/4549660860037",
+      "released": "2022-08",
+      "files": [
+        "carddass/extra-booster-pack-2.jpg",
+        "carddass/extra-booster-pack-2-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "extra-booster-pack-1",
+      "jan": "4549660823698",
+      "title": "スーパードラゴンボールヒーローズ エクストラブースタ－パック",
+      "url": "https://sec.carddass.com/club/products/detail/4549660823698",
+      "released": "2022-04",
+      "files": [
+        "carddass/extra-booster-pack-1.jpg",
+        "carddass/extra-booster-pack-1-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-12",
+      "jan": "4549660804482",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション12弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660804482",
+      "released": "2022-01",
+      "files": [
+        "carddass/big-bang-mission-12.jpg",
+        "carddass/big-bang-mission-12-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-11",
+      "jan": "4549660749387000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション11弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660749387000",
+      "released": "2021-11",
+      "files": [
+        "carddass/big-bang-mission-11.jpg",
+        "carddass/big-bang-mission-11-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-10",
+      "jan": "4549660725442000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション10弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660725442000",
+      "released": "2021-09",
+      "files": [
+        "carddass/big-bang-mission-10.jpg",
+        "carddass/big-bang-mission-10-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-9",
+      "jan": "4549660667247000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション9弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660667247000",
+      "released": "2021-07",
+      "files": [
+        "carddass/big-bang-mission-9.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-booster-pack-4",
+      "jan": "4549660667216000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンブースターパック4",
+      "url": "https://sec.carddass.com/club/products/detail/4549660667216000",
+      "released": "2021-07",
+      "files": [
+        "carddass/big-bang-booster-pack-4.jpg",
+        "carddass/big-bang-booster-pack-4-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-8",
+      "jan": "4549660666448000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション8弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660666448000",
+      "released": "2021-06",
+      "files": [
+        "carddass/big-bang-mission-8.jpg",
+        "carddass/big-bang-mission-8-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-7",
+      "jan": "4549660640462000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション7弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660640462000",
+      "released": "2021-03",
+      "files": [
+        "carddass/big-bang-mission-7.jpg",
+        "carddass/big-bang-mission-7-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-booster-pack-3",
+      "jan": "4549660637585000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンブースターパック3",
+      "url": "https://sec.carddass.com/club/products/detail/4549660637585000",
+      "released": "2021-03",
+      "files": [
+        "carddass/big-bang-booster-pack-3.jpg",
+        "carddass/big-bang-booster-pack-3-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-6",
+      "jan": "4549660611059000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンミッション６弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660611059000",
+      "released": "2021-01",
+      "files": [
+        "carddass/big-bang-mission-6.jpg",
+        "carddass/big-bang-mission-6-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-5",
+      "jan": "4549660567974000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンミッション5弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660567974000",
+      "released": "2020-11",
+      "files": [
+        "carddass/big-bang-mission-5.jpg",
+        "carddass/big-bang-mission-5-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-4",
+      "jan": "4549660540847000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション4弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660540847000",
+      "released": "2020-10",
+      "files": [
+        "carddass/big-bang-mission-4.jpg",
+        "carddass/big-bang-mission-4-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-booster-pack-2",
+      "jan": "4549660539995000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンブースターパック2",
+      "url": "https://sec.carddass.com/club/products/detail/4549660539995000",
+      "released": "2020-08",
+      "files": [
+        "carddass/big-bang-booster-pack-2.jpg",
+        "carddass/big-bang-booster-pack-2-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-3",
+      "jan": "4549660523574000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション3弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660523574000",
+      "released": "2020-08",
+      "files": [
+        "carddass/big-bang-mission-3.jpg",
+        "carddass/big-bang-mission-3-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-2",
+      "jan": "4549660505914000",
+      "title": "スーパードラゴンボールヒーローズ ビッグバンミッション2弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660505914000",
+      "released": "2020-06",
+      "files": [
+        "carddass/big-bang-mission-2.jpg",
+        "carddass/big-bang-mission-2-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-booster-pack-1",
+      "jan": "4549660490722000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンブースターパック",
+      "url": "https://sec.carddass.com/club/products/detail/4549660490722000",
+      "released": "2020-04",
+      "files": [
+        "carddass/big-bang-booster-pack-1.jpg",
+        "carddass/big-bang-booster-pack-1-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "big-bang-mission-1",
+      "jan": "4549660505679000",
+      "title": "スーパードラゴンボールヒーローズ　ビッグバンミッション1弾",
+      "url": "https://sec.carddass.com/club/products/detail/4549660505679000",
+      "released": "2020-03",
+      "files": [
+        "carddass/big-bang-mission-1.jpg",
+        "carddass/big-bang-mission-1-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "ultimate-booster-bravery",
+      "jan": "4549660401124000",
+      "title": "スーパードラゴンボールヒーローズ　アルティメットブースターパック－激突する武勇－",
+      "url": "https://sec.carddass.com/club/products/detail/4549660401124000",
+      "released": "2019-08",
+      "files": [
+        "carddass/ultimate-booster-bravery.jpg",
+        "carddass/ultimate-booster-bravery-box.jpg"
+      ],
+      "cardsPerPack": 3,
+      "declaredCardCount": 30
+    },
+    {
+      "stem": "ultimate-booster-power-breakthrough",
+      "jan": "4549660364870000",
+      "title": "スーパードラゴンボールヒーローズ アルティメットブースターパック -限界突破の究極戦士-",
+      "url": "https://sec.carddass.com/club/products/detail/4549660364870000",
+      "released": "2019-03",
+      "files": [
+        "carddass/ultimate-booster-power-breakthrough.jpg",
+        "carddass/ultimate-booster-power-breakthrough-box.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "ultimate-booster-super-warrior",
+      "jan": "4549660305644000",
+      "title": "スーパードラゴンボールヒーローズ アルティメットブースターパック -超戦士集結-",
+      "url": "https://sec.carddass.com/club/products/detail/4549660305644000",
+      "released": "2018-07",
+      "files": [
+        "carddass/ultimate-booster-super-warrior.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    },
+    {
+      "stem": "ultimate-booster-new-clash",
+      "jan": "4549660249863000",
+      "title": "スーパードラゴンボールヒーローズ アルティメットブースターパック -新たなる激闘-",
+      "url": "https://sec.carddass.com/club/products/detail/4549660249863000",
+      "released": "2018-03",
+      "files": [
+        "carddass/ultimate-booster-new-clash.jpg"
+      ],
+      "cardsPerPack": null,
+      "declaredCardCount": null
+    }
+  ]
+}

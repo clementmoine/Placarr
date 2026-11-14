@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { AsyncQueue } from "@/lib/async/asyncQueue";
+import { AsyncQueue } from "@/lib/async";
 import { isAbortError } from "@/lib/http/abort";
 import { resolveRequestAbortSignal } from "@/lib/http/jobAbort";
 import { looksLikeImageBuffer } from "@/core/enrich/media/imageBuffer";
@@ -17,13 +17,56 @@ export type FlareSolverrDownloadedImage = {
 };
 
 /**
- * FlareSolverr is typically a single remote browser. Parallel challenges just
- * queue there while each axios wait still occupies the Next event loop for
- * 45–90s — serialize outbound Flare calls so enrich fan-out cannot pile up.
+ * Challenge browser sidecar (Byparr, FlareSolverr-compatible /v1). Parallel
+ * challenges just queue there while each axios wait still occupies the Next
+ * event loop for 45–90s — serialize outbound calls so enrich fan-out cannot
+ * pile up.
  */
 const flareQueue = new AsyncQueue(1);
 
-/** Rolling outcome counters for operator logs (Flare is serial — watch wait pressure). */
+function envMs(name: string, fallback: number): number {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function envMsOptional(name: string): number | null {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/** Per-challenge solve budget handed to the sidecar itself. */
+function flareMaxTimeoutMs(): number {
+  return (
+    envMsOptional("BYPARR_MAX_TIMEOUT_MS") ??
+    envMs("FLARESOLVERR_MAX_TIMEOUT_MS", 30_000)
+  );
+}
+
+/**
+ * How long a caller may sit in the serial queue before giving up. The sidecar
+ * is one browser, so a deep queue used to add its whole depth to an item's
+ * refresh before the solve even started. The solve timeout each caller asks
+ * for is unchanged — this only bounds the waiting.
+ */
+function flareMaxQueueWaitMs(): number {
+  return (
+    envMsOptional("BYPARR_MAX_QUEUE_WAIT_MS") ??
+    envMs("FLARESOLVERR_MAX_QUEUE_WAIT_MS", 45_000)
+  );
+}
+
+let lastQueueWaitLogAt = 0;
+
+function logQueueWaitSkip(waitedMs: number): void {
+  const now = Date.now();
+  if (now - lastQueueWaitLogAt < 60_000) return;
+  lastQueueWaitLogAt = now;
+  console.warn(
+    `[Byparr] Skipped a request after ${Math.round(waitedMs / 1000)}s of queue wait (cap ${Math.round(flareMaxQueueWaitMs() / 1000)}s) — lower WORKER_CONCURRENCY or raise BYPARR_MAX_QUEUE_WAIT_MS`,
+  );
+}
+
+/** Rolling outcome counters for operator logs (serial browser — watch wait pressure). */
 const flareStats = {
   attempts: 0,
   ok: 0,
@@ -41,16 +84,32 @@ function recordFlareOutcome(ok: boolean): void {
   }
   flareStats.lastLogAt = now;
   console.info(
-    `[FlareSolverr] outcomes attempts=${flareStats.attempts} ok=${flareStats.ok} fail=${flareStats.fail} (serial queue depth pressure → lower WORKER_CONCURRENCY if fail climbs)`,
+    `[Byparr] outcomes attempts=${flareStats.attempts} ok=${flareStats.ok} fail=${flareStats.fail} (serial queue depth pressure → lower WORKER_CONCURRENCY if fail climbs)`,
   );
 }
 
 function flareSolverrBaseUrl(): string | null {
-  const flaresolverrUrl = process.env.FLARESOLVERR_URL?.trim();
-  return flaresolverrUrl ? flaresolverrUrl.replace(/\/+$/, "") : null;
+  const url =
+    process.env.BYPARR_URL?.trim() || process.env.FLARESOLVERR_URL?.trim();
+  return url ? url.replace(/\/+$/, "") : null;
 }
 
-function runFlareExclusive<T>(fn: () => Promise<T>): Promise<T> {
+/** True when Byparr / Flare-compatible sidecar URL is configured. */
+export function isChallengeSolverConfigured(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return Boolean(env.BYPARR_URL?.trim() || env.FLARESOLVERR_URL?.trim());
+}
+
+/**
+ * Take the single Flare slot. Callers that waited longer than the queue cap
+ * never reach the browser — `onQueueWaitExceeded` answers for them.
+ */
+function runFlareExclusive<T>(
+  fn: () => Promise<T>,
+  onQueueWaitExceeded: () => T,
+): Promise<T> {
+  const queuedAt = Date.now();
   return flareQueue.run(async () => {
     const signal = resolveRequestAbortSignal();
     if (signal?.aborted) {
@@ -60,57 +119,67 @@ function runFlareExclusive<T>(fn: () => Promise<T>): Promise<T> {
       error.name = "AbortError";
       throw error;
     }
+
+    const waitedMs = Date.now() - queuedAt;
+    if (waitedMs >= flareMaxQueueWaitMs()) {
+      logQueueWaitSkip(waitedMs);
+      recordFlareOutcome(false);
+      return onQueueWaitExceeded();
+    }
     return fn();
   });
 }
 
 export async function flareSolverrCookiesFor(
   referer: string,
-  maxTimeoutMs = 60_000,
+  maxTimeoutMs = flareMaxTimeoutMs(),
   signal?: AbortSignal,
 ): Promise<FlareSolverrCookies | null> {
   const baseUrl = flareSolverrBaseUrl();
   if (!baseUrl) return null;
 
-  return runFlareExclusive(async () => {
-    try {
-      const response = await axios.post(
-        `${baseUrl}/v1`,
-        {
-          cmd: "request.get",
-          url: referer,
-          maxTimeout: maxTimeoutMs,
-        },
-        { timeout: maxTimeoutMs + 10_000, validateStatus: () => true, signal },
-      );
-      if (response.data?.status !== "ok") {
+  return runFlareExclusive(
+    async () => {
+      try {
+        const response = await axios.post(
+          `${baseUrl}/v1`,
+          {
+            cmd: "request.get",
+            url: referer,
+            maxTimeout: maxTimeoutMs,
+          },
+          { timeout: maxTimeoutMs + 5_000, validateStatus: () => true, signal },
+        );
+        if (response.data?.status !== "ok") {
+          recordFlareOutcome(false);
+          return null;
+        }
+        const solution = response.data.solution;
+        const cookie = (solution?.cookies || [])
+          .map(
+            (entry: { name: string; value: string }) =>
+              `${entry.name}=${entry.value}`,
+          )
+          .join("; ");
+        if (!cookie) {
+          recordFlareOutcome(false);
+          return null;
+        }
+        recordFlareOutcome(true);
+        return {
+          cookie,
+          userAgent:
+            solution?.userAgent ||
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        };
+      } catch (error) {
+        if (isAbortError(error)) throw error;
         recordFlareOutcome(false);
         return null;
       }
-      const solution = response.data.solution;
-      const cookie = (solution?.cookies || [])
-        .map(
-          (entry: { name: string; value: string }) =>
-            `${entry.name}=${entry.value}`,
-        )
-        .join("; ");
-      if (!cookie) {
-        recordFlareOutcome(false);
-        return null;
-      }
-      recordFlareOutcome(true);
-      return {
-        cookie,
-        userAgent:
-          solution?.userAgent ||
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      };
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      recordFlareOutcome(false);
-      return null;
-    }
-  });
+    },
+    () => null,
+  );
 }
 
 /**
@@ -120,58 +189,61 @@ export async function flareSolverrCookiesFor(
 export async function flareSolverrDownloadImages(
   referer: string,
   imageUrls: string[],
-  maxTimeoutMs = 60_000,
+  maxTimeoutMs = flareMaxTimeoutMs(),
   signal?: AbortSignal,
 ): Promise<FlareSolverrDownloadedImage[]> {
   const baseUrl = flareSolverrBaseUrl();
   if (!baseUrl || imageUrls.length === 0) return [];
 
-  return runFlareExclusive(async () => {
-    try {
-      const response = await axios.post(
-        `${baseUrl}/v1`,
-        {
-          cmd: "request.get",
-          url: referer,
-          maxTimeout: maxTimeoutMs,
-          download: true,
-          downloadUrls: imageUrls,
-        },
-        { timeout: maxTimeoutMs + 10_000, validateStatus: () => true, signal },
-      );
-      if (response.data?.status !== "ok") {
+  return runFlareExclusive(
+    async () => {
+      try {
+        const response = await axios.post(
+          `${baseUrl}/v1`,
+          {
+            cmd: "request.get",
+            url: referer,
+            maxTimeout: maxTimeoutMs,
+            download: true,
+            downloadUrls: imageUrls,
+          },
+          { timeout: maxTimeoutMs + 5_000, validateStatus: () => true, signal },
+        );
+        if (response.data?.status !== "ok") {
+          recordFlareOutcome(false);
+          return [];
+        }
+
+        const downloads = response.data?.solution?.download;
+        if (!Array.isArray(downloads)) {
+          recordFlareOutcome(false);
+          return [];
+        }
+
+        const results: FlareSolverrDownloadedImage[] = [];
+        for (const entry of downloads) {
+          const entryUrl = typeof entry?.url === "string" ? entry.url : "";
+          const encoded =
+            typeof entry?.encoded_data === "string" ? entry.encoded_data : "";
+          if (!entryUrl || !encoded) continue;
+
+          const buffer = Buffer.from(encoded, "base64");
+          const contentType =
+            typeof entry?.mime_type === "string" ? entry.mime_type : undefined;
+          if (!looksLikeImageBuffer(buffer, contentType)) continue;
+
+          results.push({ url: entryUrl, buffer, contentType });
+        }
+        recordFlareOutcome(results.length > 0);
+        return results;
+      } catch (error) {
+        if (isAbortError(error)) throw error;
         recordFlareOutcome(false);
         return [];
       }
-
-      const downloads = response.data?.solution?.download;
-      if (!Array.isArray(downloads)) {
-        recordFlareOutcome(false);
-        return [];
-      }
-
-      const results: FlareSolverrDownloadedImage[] = [];
-      for (const entry of downloads) {
-        const entryUrl = typeof entry?.url === "string" ? entry.url : "";
-        const encoded =
-          typeof entry?.encoded_data === "string" ? entry.encoded_data : "";
-        if (!entryUrl || !encoded) continue;
-
-        const buffer = Buffer.from(encoded, "base64");
-        const contentType =
-          typeof entry?.mime_type === "string" ? entry.mime_type : undefined;
-        if (!looksLikeImageBuffer(buffer, contentType)) continue;
-
-        results.push({ url: entryUrl, buffer, contentType });
-      }
-      recordFlareOutcome(results.length > 0);
-      return results;
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      recordFlareOutcome(false);
-      return [];
-    }
-  });
+    },
+    () => [],
+  );
 }
 
 export type FlareSolverrRequestGetOptions = {
@@ -188,7 +260,7 @@ export async function flareSolverrRequestGet(
   const baseUrl = flareSolverrBaseUrl();
   if (!baseUrl) return null;
 
-  const maxTimeoutMs = options.maxTimeoutMs ?? 30_000;
+  const maxTimeoutMs = options.maxTimeoutMs ?? flareMaxTimeoutMs();
   const signal = resolveRequestAbortSignal(options.signal);
   if (signal?.aborted) {
     const reason = signal.reason;
@@ -200,32 +272,57 @@ export async function flareSolverrRequestGet(
   const body: Record<string, unknown> = {
     cmd: "request.get",
     url,
-    maxTimeout: maxTimeoutMs,
   };
   if (options.session) body.session = options.session;
   if (options.waitInSeconds) body.waitInSeconds = options.waitInSeconds;
 
-  return runFlareExclusive(async () => {
-    try {
-      const response = await axios.post(`${baseUrl}/v1`, body, {
-        timeout: maxTimeoutMs + 5_000,
-        validateStatus: () => true,
-        signal,
-      });
-      const html = response.data?.solution?.response;
-      const status = Number(response.data?.solution?.status || 0);
-      if (typeof html !== "string" || status >= 400) {
+  return runFlareExclusive(
+    async () => {
+      const postOnce = async (waitInSeconds?: number) => {
+        const payload: Record<string, unknown> = {
+          ...body,
+          maxTimeout: maxTimeoutMs,
+        };
+        if (waitInSeconds) payload.waitInSeconds = waitInSeconds;
+        const response = await axios.post(`${baseUrl}/v1`, payload, {
+          timeout: maxTimeoutMs + 5_000,
+          validateStatus: () => true,
+          signal,
+        });
+        const html = response.data?.solution?.response;
+        const status = Number(response.data?.solution?.status || 0);
+        if (typeof html !== "string" || status >= 400) return null;
+        return html;
+      };
+
+      try {
+        let html = await postOnce(options.waitInSeconds);
+        // Anubis sometimes returns the challenge shell with HTTP 200 and
+        // "Challenge not detected!" — wait and retry once before giving up.
+        if (
+          html &&
+          /making sure you're not a bot|techaro\.lol-anubis/i.test(html) &&
+          !options.waitInSeconds
+        ) {
+          html = await postOnce(5);
+        }
+        if (
+          !html ||
+          /making sure you're not a bot|techaro\.lol-anubis/i.test(html)
+        ) {
+          recordFlareOutcome(false);
+          return null;
+        }
+        recordFlareOutcome(true);
+        return html;
+      } catch (error) {
+        if (isAbortError(error)) throw error;
         recordFlareOutcome(false);
         return null;
       }
-      recordFlareOutcome(true);
-      return html;
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      recordFlareOutcome(false);
-      return null;
-    }
-  });
+    },
+    () => null,
+  );
 }
 
 export async function flareSolverrDestroySession(
@@ -235,7 +332,8 @@ export async function flareSolverrDestroySession(
   const baseUrl = flareSolverrBaseUrl();
   if (!baseUrl || !session) return;
 
-  return runFlareExclusive(async () => {
+  // Session teardown is cleanup — it must run even past the caller's budget.
+  return flareQueue.run(async () => {
     try {
       await axios.post(
         `${baseUrl}/v1`,
@@ -250,7 +348,7 @@ export async function flareSolverrDestroySession(
 
 export async function fetchWithFlareSolverr(
   url: string,
-  maxTimeoutMs = 45_000,
+  maxTimeoutMs = flareMaxTimeoutMs(),
   signal?: AbortSignal,
 ): Promise<string | null> {
   return flareSolverrRequestGet(url, { maxTimeoutMs, signal });

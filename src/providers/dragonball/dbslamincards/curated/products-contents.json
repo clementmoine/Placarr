@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "pack": "dragonball/lamincards",
+  "updatedAt": "2026-09-20",
+  "byKind": {
+    "booster": {
+      "source": "Edibas Lamincards bustina (souvent 3–5 cartes selon série)",
+      "verifiedAt": "2026-09-20",
+      "packsContained": 1,
+      "randomPoolScope": "set",
+      "contentsKnown": false,
+      "notes": "cardsPerPack variable (2008≈3, X-Metal≈5) — pas de byKind inventé."
+    },
+    "display": {
+      "source": "Edibas Lamincards booster box",
+      "verifiedAt": "2026-09-20",
+      "packsContained": null,
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "packsContained box non attesté globalement — SKU par SKU."
+    },
+    "ephemera": {
+      "source": "Album Lamincards Edibas — pas de cartes scellées",
+      "verifiedAt": "2026-09-20",
+      "behavior": "no_cards",
+      "randomPoolScope": "none",
+      "contentsKnown": false,
+      "notes": "Album collector — structure « pas de cartes »."
+    }
+  },
+  "skus": {}
+}

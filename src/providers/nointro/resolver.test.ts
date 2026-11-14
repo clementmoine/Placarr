@@ -1,6 +1,9 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 
-import { __resetNoIntroIndexForTests, __setNoIntroIndexFromXmlForTests } from "./indexStore";
+import {
+  __resetNoIntroIndexForTests,
+  __setNoIntroIndexFromXmlForTests,
+} from "./indexStore";
 import {
   fetchFromNoIntro,
   mapNoIntroGameToMetadata,
@@ -77,9 +80,9 @@ describe("nointro resolver", () => {
 
   it("strip les flags région/rev pour l'alignement", () => {
     expect(stripNoIntroReleaseFlags("Tetris (World) (Rev 1)")).toBe("Tetris");
-    expect(
-      stripNoIntroReleaseFlags("Pokémon Red Version (USA, Europe)"),
-    ).toBe("Pokémon Red Version");
+    expect(stripNoIntroReleaseFlags("Pokémon Red Version (USA, Europe)")).toBe(
+      "Pokémon Red Version",
+    );
   });
 
   it("lit les checksums depuis romChecksums ou externalIds", () => {
@@ -143,7 +146,9 @@ describe("nointro resolver", () => {
       sha1: "9306510639ab3d52b27fc5bc5c0f5c4b4c1d3a4e",
     });
     expect(
-      metadata.facts?.filter((fact) => fact.kind === "identifier").map((f) => f.label),
+      metadata.facts
+        ?.filter((fact) => fact.kind === "identifier")
+        .map((f) => f.label),
     ).toEqual(["CRC", "MD5", "SHA1"]);
   });
 

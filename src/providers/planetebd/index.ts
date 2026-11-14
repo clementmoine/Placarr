@@ -1,4 +1,3 @@
-import { createMetadataHealthCheck, pingUrl } from "@/core/catalog/healthUtils";
 import { bookIdentifierLabel } from "@/core/identify/shelfLabels";
 import {
   METADATA_OBSERVATION_SCHEMA_VERSION,
@@ -7,16 +6,15 @@ import {
 import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { throwIfAborted } from "@/lib/http/abort";
+import { defineProvider } from "@/providers/shared/defineProvider";
+import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 import type {
   MetadataAttachment,
   MetadataFact,
   MetadataResult,
 } from "@/types/metadataProvider";
-import type {
-  MetadataProviderAdapter,
-  ProviderModule,
-} from "@/types/providerModule";
+import type { MetadataProviderAdapter } from "@/types/providerModule";
 
 import {
   collectPlanetebdMappingRawKeys,
@@ -25,7 +23,6 @@ import {
   resolvePlanetebdMetadata,
   type PlanetebdAlbum,
 } from "./fetch";
-import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 
 export {
   fetchPlanetebdAlbum,
@@ -170,6 +167,7 @@ export function mapPlanetebdMetadata(
         ? ["title_match", "barcode_match"]
         : ["title_match"],
       titleRole: "catalog_title",
+      aliasRole: "provider_grouped_alias",
       imageRole: "cover_front",
       factRole: "structured_fact",
       language: "fr",
@@ -178,7 +176,7 @@ export function mapPlanetebdMetadata(
   };
 }
 
-export const planetebdModule: ProviderModule = {
+export const planetebdModule = defineProvider({
   info: {
     id: "planetebd",
     label: "Planète BD",
@@ -193,6 +191,7 @@ export const planetebdModule: ProviderModule = {
       "releaseDate",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     defaultLanguage: "fr",
     isRealBoxCover: true,
@@ -239,7 +238,7 @@ export const planetebdModule: ProviderModule = {
         return mapPlanetebdMetadata(
           await resolvePlanetebdMetadata({
             name: String(ctx.name || "").trim() || undefined,
-            barcode: ctx.barcode,
+            barcode: ctx.barcode ?? undefined,
             lookupQueries: ctx.lookupQueries,
             signal: ctx.signal,
           }),
@@ -249,26 +248,7 @@ export const planetebdModule: ProviderModule = {
   },
   suggestDatabaseTitles: ({ cleanedName }) =>
     getPlanetebdSuggestions(cleanedName),
-  healthCheck: createMetadataHealthCheck(
-    "planetebd",
-    "Planète BD",
-    async () => {
-      const start = Date.now();
-      const isUp = await pingUrl("https://www.planetebd.com/");
-      return {
-        ok: isUp,
-        latency: Date.now() - start,
-        error: isUp ? null : "Host unreachable",
-      };
-    },
-  ),
-  testHandlers: {
-    "planetebd-metadata": {
-      label: "Planète BD - Metadata",
-      kind: "metadata",
-      run: (query) => resolvePlanetebdMetadata({ name: query }),
-    },
-  },
+  metadataSearch: (query) => resolvePlanetebdMetadata({ name: query }),
   mappingProbe: {
     sampleInput: SAMPLE_QUERY,
     context: { name: SAMPLE_QUERY },
@@ -283,4 +263,4 @@ export const planetebdModule: ProviderModule = {
     const ctx = probeContextOrDefault(context, { name: SAMPLE_QUERY });
     return collectPlanetebdMappingRawKeys(ctx.name);
   },
-};
+});

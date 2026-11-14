@@ -1,9 +1,7 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { coverDownloadCandidates } from "@/core/enrich/media/coverDownloadCandidates";
-import {
-  coverUrlExpectsHighResolution,
-} from "@/core/enrich/media/coverResolution";
+import { coverUrlExpectsHighResolution } from "@/core/enrich/media/coverResolution";
 import {
   flareSolverrCookiesFor,
   flareSolverrDownloadImages,
@@ -26,10 +24,10 @@ export type RemoteImageFetchResult = {
 
 export type FetchRemoteImageOptions = {
   /**
- * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
- * Localization keeps this false so /full/ URLs are not persisted as CDN thumbs.
- */
-allowSubThresholdFallback?: boolean;
+   * UI proxy may serve a tiny mod11 fallback when /full/ JPEGs are blocked.
+   * Localization keeps this false so /full/ URLs are not persisted as CDN thumbs.
+   */
+  allowSubThresholdFallback?: boolean;
 };
 
 function sleep(ms: number) {
@@ -40,9 +38,12 @@ async function tryFetchUrl(
   url: string,
   extraHeaders: Record<string, string> = {},
 ): Promise<RemoteImageFetchResult | null> {
-  const response = await axios.get(url, {
+  const response = await httpGet<ArrayBuffer>(url, {
     responseType: "arraybuffer",
     timeout: 15_000,
+    // Cookie / UA variants must not share in-flight slots with bare GETs
+    // (Anubis HTML must not win the race against a Flare-unlocked JPEG).
+    noDedup: true,
     headers: {
       ...remoteImageRequestHeaders(url),
       ...extraHeaders,
@@ -130,6 +131,32 @@ function isAcceptableForRequest(
   return coverUrlExpectsHighResolution(ranked.sourceUrl);
 }
 
+function cookieFetchLooksComplete(
+  cookieFetch: RankedFetch | null,
+  fullCandidates: string[],
+): cookieFetch is RankedFetch {
+  if (!cookieFetch) return false;
+  return (
+    fullCandidates.length === 0 ||
+    coverUrlExpectsHighResolution(cookieFetch.sourceUrl)
+  );
+}
+
+async function fetchCandidatesWithFlareCookies(
+  candidates: string[],
+  unlockUrl: string,
+  timeout: number,
+): Promise<RankedFetch | null> {
+  const flare = await flareSolverrCookiesFor(unlockUrl, timeout);
+  if (!flare) return null;
+  return fetchBestFromCandidates(candidates, (candidate) =>
+    tryFetchUrl(candidate, {
+      Cookie: flare.cookie,
+      "User-Agent": flare.userAgent,
+    }),
+  );
+}
+
 async function fetchWithOptionalFlare(
   url: string,
   candidates: string[],
@@ -140,43 +167,52 @@ async function fetchWithOptionalFlare(
   const fullCandidates = candidates.filter((candidate) =>
     coverUrlExpectsHighResolution(candidate),
   );
-  let cookieFetch: RankedFetch | null = null;
 
-  const flare = await flareSolverrCookiesFor(referer, timeout);
-  if (flare) {
-    cookieFetch = await fetchBestFromCandidates(candidates, (candidate) =>
-      tryFetchUrl(candidate, {
-        Cookie: flare.cookie,
-        "User-Agent": flare.userAgent,
-      }),
+  // Prefer /full/ targets when present. Browser fetch inside Byparr keeps the
+  // challenge TLS fingerprint — required when cf_clearance is IP/JA3-bound
+  // (Booknode CDN). Sidecars without downloadUrls return [].
+  const downloadTargets = (
+    fullCandidates.length > 0 ? fullCandidates : candidates
+  ).slice(0, 4);
+  let best: RankedFetch | null = null;
+  if (downloadTargets.length > 0) {
+    const downloads = await flareSolverrDownloadImages(
+      referer,
+      downloadTargets,
+      timeout,
     );
-    if (
-      cookieFetch &&
-      (!fullCandidates.length ||
-        coverUrlExpectsHighResolution(cookieFetch.sourceUrl))
-    ) {
-      return cookieFetch;
+    for (const download of downloads) {
+      const ranked = await rankFetchedImageAsync({
+        buffer: download.buffer,
+        contentType: download.contentType,
+        sourceUrl: download.url,
+      });
+      best = pickBetterFetch(best, ranked);
+    }
+    if (cookieFetchLooksComplete(best, fullCandidates)) {
+      return best;
     }
   }
 
-  if (fullCandidates.length === 0) {
-    return cookieFetch;
+  // Cookie hand-off fallback — Anubis (LDDb) mints usable auth cookies on the
+  // cover GET; homepage-only cookies often still return challenge HTML.
+  const unlockUrls = Array.from(
+    new Set([candidates[0] || url, referer].filter(Boolean)),
+  );
+  for (const unlockUrl of unlockUrls) {
+    const cookieFetch = await fetchCandidatesWithFlareCookies(
+      candidates,
+      unlockUrl,
+      timeout,
+    );
+    if (cookieFetch) {
+      best = pickBetterFetch(best, cookieFetch);
+    }
+    if (cookieFetchLooksComplete(best, fullCandidates)) {
+      return best;
+    }
   }
 
-  const downloads = await flareSolverrDownloadImages(
-    referer,
-    fullCandidates.slice(0, 4),
-    timeout,
-  );
-  let best: RankedFetch | null = cookieFetch;
-  for (const download of downloads) {
-    const ranked = await rankFetchedImageAsync({
-      buffer: download.buffer,
-      contentType: download.contentType,
-      sourceUrl: download.url,
-    });
-    best = pickBetterFetch(best, ranked);
-  }
   return best;
 }
 

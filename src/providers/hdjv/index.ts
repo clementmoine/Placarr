@@ -3,7 +3,7 @@ import { metadataProbe } from "@/lib/dev/mappingProbe";
 import { collectObjectMappingSignals } from "@/lib/dev/scrapeMappingSignals";
 import { probeContextOrDefault } from "@/lib/dev/mappingRawKeys";
 import { stripLegalMarkSymbols } from "@/core/enrich/search/query";
-import type { ProviderModule } from "@/types/providerModule";
+import { defineProvider } from "@/providers/shared/defineProvider";
 import type { MetadataResult } from "@/types/metadataProvider";
 import {
   normalizeVideoGamePlatformKey,
@@ -66,7 +66,7 @@ function galleryToMetadata(
   );
 }
 
-export const hdjvModule: ProviderModule = {
+export const hdjvModule = defineProvider({
   info: {
     id: "hdjv",
     label: "HDJV",
@@ -80,6 +80,7 @@ export const hdjvModule: ProviderModule = {
       "players",
     ],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: false,
     isSecondary: true,
     requiresTitleAlignment: true,
@@ -145,4 +146,4 @@ export const hdjvModule: ProviderModule = {
       gallery ? galleryToMetadata(gallery) : null,
     );
   },
-};
+});

@@ -1,44 +1,58 @@
 "use client";
 
-import { useState } from "react";
-import type { Prisma } from "@prisma/client";
+import { useCallback, useEffect, useState } from "react";
+import type { Prisma } from "@/generated/prisma/browser";
 import { usePathname, useRouter } from "next/navigation";
 import { Scan, Barcode } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { saveItem } from "@/lib/api/items";
 import { itemPath } from "@/lib/routing/slugs";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { useCameraAvailability } from "@/lib/client/hooks/useCameraAvailability";
-import { BarcodeScanCapture } from "@/components/BarcodeScanCapture";
-import { ItemModal } from "./modals/ItemModal";
-import { QuickScanModal } from "./modals/QuickScanModal";
+import {
+  UnifiedScanCapture,
+  type ScanAddPrefill,
+} from "@/components/UnifiedScanCapture";
+import { warmScanAssetsWhenIdle } from "@/lib/client/scan/scanRuntime";
+import dynamic from "next/dynamic";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { Type } from "@/generated/prisma/browser";
+
+const ItemModal = dynamic(
+  () => import("./modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
+const QuickScanModal = dynamic(
+  () => import("./modals/QuickScanModal").then((m) => m.QuickScanModal),
+  { ssr: false },
+);
+
+type PrefillState = {
+  name: string;
+  imageUrl: string | null;
+  barcode: string;
+  shelfId?: string;
+  printKey?: string | null;
+  skuKey?: string | null;
+  language?: string | null;
+  setCode?: string | null;
+  shelfType?: Type | string | null;
+  shelfSure?: boolean;
+  metadataPreview?: MetadataResult | null;
+};
 
 export function ScanFAB() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scannedBarcode, setScannedBarcode] = useState<string>("");
-  const [quickScanOpen, setQuickScanOpen] = useState<boolean>(false);
-  const [isItemModalOpen, setIsItemModalOpen] = useState<boolean>(false);
+  const [quickScanOpen, setQuickScanOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState("");
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [prefilledItemValues, setPrefilledItemValues] = useState<
-    | {
-        name: string;
-        imageUrl: string | null;
-        barcode: string;
-        shelfId?: string;
-        metadataPreview?: MetadataResult | null;
-      }
-    | undefined
+    PrefillState | undefined
   >(undefined);
 
   const pathname = usePathname() || "";
@@ -47,14 +61,12 @@ export function ScanFAB() {
   const queryClient = useQueryClient();
   const { isCameraUnavailable, isCheckingCamera } = useCameraAvailability();
 
-  const shelfMatch = pathname.match(/^\/shelves\/([^\/]+)/);
-  const shelfId = shelfMatch ? shelfMatch[1] : undefined;
+  useEffect(() => {
+    if (!isCameraUnavailable && !isCheckingCamera) warmScanAssetsWhenIdle();
+  }, [isCameraUnavailable, isCheckingCamera]);
 
-  const openQuickScan = (barcode: string) => {
-    setIsScannerOpen(false);
-    setScannedBarcode(barcode);
-    setQuickScanOpen(true);
-  };
+  const shelfMatch = pathname.match(/^\/shelves\/([^/]+)/);
+  const shelfId = shelfMatch ? shelfMatch[1] : undefined;
 
   const handleScanButtonClick = () => {
     if (isCameraUnavailable || isCheckingCamera) {
@@ -64,6 +76,37 @@ export function ScanFAB() {
     }
     setIsScannerOpen(true);
   };
+
+  const openAddModal = useCallback((prefill: PrefillState) => {
+    setPrefilledItemValues(prefill);
+    setIsItemModalOpen(true);
+  }, []);
+
+  const handleCommitAdd = useCallback(
+    (prefill: ScanAddPrefill) => {
+      openAddModal({
+        name: prefill.name,
+        imageUrl: prefill.imageUrl,
+        barcode: prefill.barcode,
+        shelfId: prefill.shelfId || shelfId,
+        printKey: prefill.printKey,
+        skuKey: prefill.skuKey,
+        language: prefill.language,
+        shelfType: prefill.shelfType,
+        shelfSure: prefill.shelfSure,
+        metadataPreview: prefill.metadataPreview ?? null,
+      });
+    },
+    [openAddModal, shelfId],
+  );
+
+  const handleOpenOwned = useCallback(
+    (path: string) => {
+      setIsScannerOpen(false);
+      router.push(path);
+    },
+    [router],
+  );
 
   const shouldUseManualScan = isCameraUnavailable || isCheckingCamera;
   const scanButtonLabel = shouldUseManualScan
@@ -78,8 +121,7 @@ export function ScanFAB() {
     metadataPreview?: MetadataResult | null;
   }) => {
     setQuickScanOpen(false);
-    setPrefilledItemValues(product);
-    setIsItemModalOpen(true);
+    openAddModal(product);
   };
 
   const handleItemModalSubmit = async (
@@ -96,7 +138,11 @@ export function ScanFAB() {
       });
 
       toast.success(t("common.success"));
-      router.push(itemPath(newItem.shelf || { id: newItem.shelfId }, newItem));
+      if (!isScannerOpen) {
+        router.push(
+          itemPath(newItem.shelf || { id: newItem.shelfId }, newItem),
+        );
+      }
     } catch (error) {
       console.error("Failed to save scanned item:", error);
       toast.error(t("items.saveFailed"));
@@ -127,28 +173,27 @@ export function ScanFAB() {
       </div>
 
       <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-        <DialogContent className="flex flex-col p-0 overflow-hidden bg-background text-foreground gap-0 max-h-[90vh] w-[95vw] sm:max-w-md rounded-2xl border border-border dark:border-zinc-800 shadow-2xl">
-          <DialogHeader className="p-5 border-b shrink-0 flex flex-col gap-1">
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-              <Scan className="size-5 text-primary" />
-              {t("scanner.title") || "Item scan"}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-              {t("scanner.description") ||
-                "Hold the barcode inside the frame to scan the item."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="border-t border-border/60 p-4">
-            <BarcodeScanCapture
+        <DialogContent
+          showClose={false}
+          className="flex flex-col p-0 overflow-hidden gap-0 border-0 bg-black text-white shadow-2xl w-[100vw] max-w-none h-[100dvh] max-h-[100dvh] rounded-none top-0 left-0 translate-x-0 translate-y-0 sm:w-[min(100vw,28rem)] sm:h-[min(96dvh,52rem)] sm:max-h-[96dvh] sm:rounded-2xl sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:border sm:border-zinc-800"
+        >
+          <DialogTitle className="sr-only">
+            {t("scanner.title") || "Item scan"}
+          </DialogTitle>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <UnifiedScanCapture
               active={isScannerOpen}
-              onBarcode={openQuickScan}
-              cameraClassName="aspect-square rounded-xl border-0 max-h-none"
+              preferredShelfId={shelfId}
+              pathname={pathname}
+              onCommitAdd={handleCommitAdd}
+              onOpenOwned={handleOpenOwned}
+              onClose={() => setIsScannerOpen(false)}
             />
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* No-camera fallback only — hunt path no longer stacks QuickScan. */}
       <QuickScanModal
         isOpen={quickScanOpen}
         onClose={() => setQuickScanOpen(false)}
@@ -166,6 +211,9 @@ export function ScanFAB() {
           }}
           onSubmit={handleItemModalSubmit}
           shelfId={prefilledItemValues.shelfId || ""}
+          shelfType={
+            (prefilledItemValues.shelfType as Type | undefined) || undefined
+          }
           prefilledValues={prefilledItemValues}
         />
       )}

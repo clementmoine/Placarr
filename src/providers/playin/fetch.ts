@@ -9,6 +9,13 @@ import {
   promotePlayInSearchEvidence,
   readPlayInSearchEvidence,
 } from "./durableEvidence";
+import {
+  parsePlayInCardHits,
+  parsePlayInCardPageHtml,
+  playInCardSearchUrl,
+  type PlayInCardHit,
+  type PlayInCardPage,
+} from "./tcgCards";
 
 const BASE_URL = "https://www.play-in.com";
 const BOARDGAME_CATALOGUE_PATH = "/fr/gamme/5/jeux-de-societe/catalogue";
@@ -258,6 +265,57 @@ export type PlayInBarcodeHit = {
   productUrl?: string | null;
   priceCents?: number | null;
 };
+
+export async function searchPlayInCardHits(
+  query: string,
+  limit = 8,
+): Promise<PlayInCardHit[]> {
+  const cleanedQuery = query.trim();
+  if (!cleanedQuery) return [];
+
+  const searchUrl = playInCardSearchUrl(cleanedQuery);
+  const fromEvidence = await readPlayInSearchEvidence(searchUrl);
+  if (fromEvidence) {
+    console.info(`[Play-In] Card search evidence hit for ${searchUrl}`);
+    return fromEvidence
+      .map((hit) => {
+        const match = hit.url.match(/\/fr\/carte\/(\d+)\//i);
+        if (!match) return null;
+        return {
+          url: hit.url,
+          productId: match[1],
+        } satisfies PlayInCardHit;
+      })
+      .filter((hit): hit is PlayInCardHit => hit != null)
+      .slice(0, limit);
+  }
+
+  try {
+    const response = await fetchGetWithFlareFallback(searchUrl, {
+      headers: HEADERS,
+      timeout: 15_000,
+    });
+    const hits = parsePlayInCardHits(response.data as string, limit);
+    await promotePlayInSearchEvidence(
+      searchUrl,
+      hits.map((hit) => ({ url: hit.url, productId: hit.productId })),
+    );
+    return hits;
+  } catch (error) {
+    console.error("[Play-In] Card search failed:", error);
+    return [];
+  }
+}
+
+export async function fetchPlayInCardPage(
+  url: string,
+): Promise<PlayInCardPage> {
+  const response = await fetchGetWithFlareFallback(url, {
+    headers: HEADERS,
+    timeout: 15_000,
+  });
+  return parsePlayInCardPageHtml(response.data as string, url);
+}
 
 export async function fetchPlayInBarcodeProduct(
   barcode: string,

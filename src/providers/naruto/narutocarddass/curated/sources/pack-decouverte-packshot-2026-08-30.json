@@ -1,0 +1,19 @@
+{
+  "source": "pack-decouverte-packshot",
+  "observed": "2026-08-30",
+  "ingest": "curated/products/wrappers/pack-decouverte.jpg → face catalogue pack-decouverte (stagingKind wrappers)",
+  "slug": "pack-decouverte",
+  "file": "curated/products/wrappers/pack-decouverte.jpg",
+  "dims": "1190×896 JPEG",
+  "verdict": "Packshot clean fond blanc (Gemini) à partir des photos LBC Série 1 — « Contient 2 Starters & 2 Boosters ». Face catalogue. Photos LBC staging/leboncoin/pack-decouverte-* archival ; verso LBC reste ingest.",
+  "archival": [
+    "staging/leboncoin/pack-decouverte-00.jpg",
+    "staging/leboncoin/pack-decouverte-01.jpg",
+    "staging/leboncoin/pack-decouverte-02.jpg",
+    "staging/leboncoin/pack-decouverte-03.jpg"
+  ],
+  "doNot": [
+    "Remonter une photo LBC watermarkée en face catalogue",
+    "Confondre avec display-s24 (même collage LBC lu à tort une fois)"
+  ]
+}

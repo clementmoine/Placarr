@@ -1,9 +1,7 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 import { prisma } from "@/lib/db/prisma";
-import {
-  ITEM_ENRICH_WINDOW_MS,
-} from "@/core/collect/enrichment";
+import { ITEM_ENRICH_WINDOW_MS } from "@/core/collect/enrichment";
 import {
   cancelAndClearItemMetadataRefresh,
   getInMemoryMetadataRefreshItemIds,
@@ -12,13 +10,35 @@ import {
 import {
   BACKGROUND_WORK_KIND,
   BACKGROUND_WORK_STATUS,
+  cancelBackgroundWorkJobById,
   cancelBackgroundWorkJobsForUser,
+  cancelOpenCatalogueJobsVisibleToUser,
 } from "@/core/collect/jobs/workQueue";
+import { getProviderModule } from "@/core/catalog/catalog";
+import {
+  adminCatalogueHref,
+  adminCatalogueHrefForExtractTarget,
+  cataloguePackForDataPack,
+  cataloguePackInfo,
+  resolveCataloguePackId,
+} from "@/lib/admin/cataloguePacks";
+import {
+  catalogueExtractLabel,
+  normalizeCatalogueExtractTarget,
+  type CatalogueExtractTarget,
+} from "@/lib/admin/catalogueExtractRunner";
+import { itemPath } from "@/lib/routing/slugs";
 
 export type BackgroundJobKind =
   | "metadataRefresh"
   | "metadataEnrich"
-  | "priceRefresh";
+  | "priceRefresh"
+  | "foilExtract"
+  | "apkStoreFetch"
+  | "icollectCatalogSync"
+  | "launchboxIndexSync"
+  | "nointroIndexSync"
+  | "catalogProviderSync";
 
 export type BackgroundJobRow = {
   id: string;
@@ -27,13 +47,65 @@ export type BackgroundJobRow = {
   kind: BackgroundJobKind;
   startedAt: Date;
   cancellable: boolean;
+  /** Foil extract pack target — drives per-pack loading / logs in admin. */
+  foilTarget?: CatalogueExtractTarget | null;
+  /**
+   * Most-scoped place to open this job (item page, or Catalogue pack/corpus).
+   * Null only when there is nowhere useful to land.
+   */
+  href: string | null;
+  /**
+   * After `catalogProviderSync` densifies prints — how many shelf items got a
+   * soft metadata refresh enqueued (`payload.propagatedItemCount`).
+   */
+  propagatedItemCount?: number;
+  /**
+   * Recently finished catalogue Sync kept briefly in the list so admin UI can
+   * show « propagé N » even when the worker completed between polls.
+   */
+  done?: boolean;
   shelf: {
     id: string;
     name: string;
     slug: string | null;
     type: string;
-  };
+  } | null;
 };
+
+/** How long a completed Sync stays visible for the propagate toast / subtitle. */
+const CATALOG_SYNC_DONE_WINDOW_MS = 90_000;
+
+function propagatedItemCountFromPayload(payload: unknown): number | undefined {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return undefined;
+  }
+  const value = (payload as { propagatedItemCount?: unknown }).propagatedItemCount;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+  return Math.floor(value);
+}
+
+function hrefForItemJob(item: {
+  id: string;
+  name: string;
+  slug: string | null;
+  shelf: BackgroundJobRow["shelf"];
+}): string | null {
+  if (!item.shelf) return null;
+  return itemPath(item.shelf, item);
+}
+
+/** Catalogue tab for a `catalogProviderSync` / index corpus provider. */
+function hrefForCatalogProvider(providerId: string): string {
+  const mdl = getProviderModule(providerId);
+  const dataPack = mdl?.catalog?.dataPack?.trim();
+  if (dataPack) {
+    const pack = cataloguePackForDataPack(dataPack);
+    return adminCatalogueHref(pack?.id ?? dataPack);
+  }
+  return adminCatalogueHref(providerId);
+}
 
 const backgroundJobSelect = {
   id: true,
@@ -87,6 +159,7 @@ function toBackgroundJobRow(
     kind: isRefresh ? "metadataRefresh" : "metadataEnrich",
     startedAt,
     cancellable: isRefresh || inMemoryIds.has(item.id),
+    href: hrefForItemJob(item),
     shelf: item.shelf,
   };
 }
@@ -138,10 +211,181 @@ async function listPriceRefreshJobsForUser(
       kind: "priceRefresh",
       startedAt: job.lockedAt ?? job.createdAt,
       cancellable: true,
+      href: hrefForItemJob(item),
       shelf: item.shelf,
     });
   }
   return rows;
+}
+
+/**
+ * Index-sync job kinds encode the provider id as a prefix
+ * (`…CatalogSync` / `…IndexSync`). Avoid quoting provider ids here — the
+ * blindness guard treats those as core→provider wiring.
+ */
+function indexSyncProviderId(kind: string): string | null {
+  if (kind === "catalogProviderSync") return null;
+  if (kind.endsWith("CatalogSync")) {
+    const id = kind.slice(0, -"CatalogSync".length);
+    return id || null;
+  }
+  if (kind.endsWith("IndexSync")) {
+    const id = kind.slice(0, -"IndexSync".length);
+    return id || null;
+  }
+  return null;
+}
+
+async function listCatalogIndexJobsForUser(
+  userId: string,
+): Promise<BackgroundJobRow[]> {
+  const kinds = [
+    BACKGROUND_WORK_KIND.icollectCatalogSync,
+    BACKGROUND_WORK_KIND.launchboxIndexSync,
+    BACKGROUND_WORK_KIND.nointroIndexSync,
+    BACKGROUND_WORK_KIND.catalogProviderSync,
+    BACKGROUND_WORK_KIND.apkStoreFetch,
+  ] as const;
+
+  const doneSince = new Date(Date.now() - CATALOG_SYNC_DONE_WINDOW_MS);
+  const jobs = await prisma.backgroundWorkJob.findMany({
+    where: {
+      OR: [
+        {
+          kind: { in: [...kinds] },
+          status: {
+            in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+          },
+          OR: [{ userId }, { userId: null }],
+        },
+        // Keep Sync results visible long enough for the admin poll + toast.
+        {
+          kind: BACKGROUND_WORK_KIND.catalogProviderSync,
+          status: BACKGROUND_WORK_STATUS.completed,
+          finishedAt: { gte: doneSince },
+          OR: [{ userId }, { userId: null }],
+        },
+      ],
+    },
+    orderBy: [{ createdAt: "asc" }],
+    take: 40,
+    select: {
+      id: true,
+      kind: true,
+      status: true,
+      payload: true,
+      createdAt: true,
+      lockedAt: true,
+    },
+  });
+
+  const labels: Record<
+    Exclude<(typeof kinds)[number], "catalogProviderSync" | "apkStoreFetch">,
+    string
+  > = {
+    [BACKGROUND_WORK_KIND.icollectCatalogSync]: "iCollect catalog",
+    [BACKGROUND_WORK_KIND.launchboxIndexSync]: "LaunchBox index",
+    [BACKGROUND_WORK_KIND.nointroIndexSync]: "No-Intro index",
+  };
+
+  return jobs.map((job) => {
+    if (job.kind === BACKGROUND_WORK_KIND.apkStoreFetch) {
+      const packRaw =
+        typeof (job.payload as { pack?: unknown })?.pack === "string"
+          ? (job.payload as { pack: string }).pack
+          : "apk";
+      const packId = resolveCataloguePackId(packRaw) ?? packRaw;
+      const packInfo = cataloguePackInfo(packId);
+      return {
+        id: job.id,
+        name: packInfo?.labelEn ?? packRaw,
+        slug: null,
+        kind: "apkStoreFetch" as const,
+        startedAt: job.lockedAt ?? job.createdAt,
+        cancellable: true,
+        href: packInfo
+          ? adminCatalogueHref(packInfo.id)
+          : adminCatalogueHref(packRaw),
+        shelf: null,
+      };
+    }
+    if (job.kind === BACKGROUND_WORK_KIND.catalogProviderSync) {
+      const providerId =
+        typeof (job.payload as { providerId?: unknown })?.providerId ===
+        "string"
+          ? (job.payload as { providerId: string }).providerId
+          : "catalogue";
+      const label =
+        getProviderModule(providerId)?.info.label?.trim() || providerId;
+      const propagatedItemCount = propagatedItemCountFromPayload(job.payload);
+      const done = job.status === BACKGROUND_WORK_STATUS.completed;
+      return {
+        id: job.id,
+        name: label,
+        slug: null,
+        kind: "catalogProviderSync" as const,
+        startedAt: job.lockedAt ?? job.createdAt,
+        cancellable: !done,
+        href: hrefForCatalogProvider(providerId),
+        ...(propagatedItemCount !== undefined ? { propagatedItemCount } : {}),
+        ...(done ? { done: true } : {}),
+        shelf: null,
+      };
+    }
+    const indexProviderId = indexSyncProviderId(job.kind);
+    return {
+      id: job.id,
+      name: labels[job.kind as keyof typeof labels] ?? job.kind,
+      slug: null,
+      kind: job.kind as BackgroundJobKind,
+      startedAt: job.lockedAt ?? job.createdAt,
+      cancellable: true,
+      href: indexProviderId ? hrefForCatalogProvider(indexProviderId) : null,
+      shelf: null,
+    };
+  });
+}
+
+async function listCatalogueExtractJobsForUser(
+  userId: string,
+): Promise<BackgroundJobRow[]> {
+  const jobs = await prisma.backgroundWorkJob.findMany({
+    where: {
+      kind: BACKGROUND_WORK_KIND.catalogueExtract,
+      status: {
+        in: [BACKGROUND_WORK_STATUS.pending, BACKGROUND_WORK_STATUS.running],
+      },
+      // Admin-enqueued jobs carry userId; CLI registers with null (system-wide).
+      OR: [{ userId }, { userId: null }],
+    },
+    orderBy: [{ createdAt: "asc" }],
+    take: 10,
+    select: {
+      id: true,
+      payload: true,
+      createdAt: true,
+      lockedAt: true,
+    },
+  });
+
+  return jobs.flatMap((job) => {
+    const payload = job.payload as { target?: unknown };
+    const target = normalizeCatalogueExtractTarget(payload?.target);
+    if (!target) return [];
+    return [
+      {
+        id: job.id,
+        name: catalogueExtractLabel(target),
+        slug: null,
+        kind: "foilExtract" as const,
+        startedAt: job.lockedAt ?? job.createdAt,
+        cancellable: true,
+        foilTarget: target,
+        href: adminCatalogueHrefForExtractTarget(target),
+        shelf: null,
+      },
+    ];
+  });
 }
 
 export async function listBackgroundJobsForUser(
@@ -164,27 +408,40 @@ export async function listBackgroundJobsForUser(
   const priceJobs = (await listPriceRefreshJobsForUser(userId)).filter(
     (job) => !metadataIds.has(job.id),
   );
+  const foilJobs = await listCatalogueExtractJobsForUser(userId);
+  const catalogJobs = await listCatalogIndexJobsForUser(userId);
 
-  return [...metadataJobs, ...priceJobs].slice(0, 50);
+  return [...foilJobs, ...catalogJobs, ...metadataJobs, ...priceJobs].slice(
+    0,
+    50,
+  );
 }
 
 export async function cancelBackgroundJobForUser(
   userId: string,
-  itemId: string,
+  id: string,
 ): Promise<boolean> {
   const item = await prisma.item.findFirst({
-    where: { id: itemId, userId },
+    where: { id, userId },
     select: { id: true },
   });
-  if (!item) return false;
+  if (item) {
+    await cancelAndClearItemMetadataRefresh(item.id);
+    return true;
+  }
 
-  await cancelAndClearItemMetadataRefresh(itemId);
-  return true;
+  if (await cancelBackgroundWorkJobById(id, userId)) return true;
+  // Catalog index syncs are often system-wide (null userId).
+  return cancelBackgroundWorkJobById(id);
 }
 
 export async function cancelAllBackgroundJobsForUser(
   userId: string,
 ): Promise<number> {
+  // Foil / catalogue Sync first — often `userId: null` (auto + admin Sync)
+  // while still listed in the menu.
+  const catalogueCancelled = await cancelOpenCatalogueJobsVisibleToUser(userId);
+  // Remaining work rows stamped with this user (price / metadata queue…).
   const workCancelled = await cancelBackgroundWorkJobsForUser(userId);
 
   const inMemoryIds = getInMemoryMetadataRefreshItemIds();
@@ -207,5 +464,5 @@ export async function cancelAllBackgroundJobsForUser(
     await cancelAndClearItemMetadataRefresh(itemId);
   }
 
-  return workCancelled + itemIds.length;
+  return catalogueCancelled + workCancelled + itemIds.length;
 }

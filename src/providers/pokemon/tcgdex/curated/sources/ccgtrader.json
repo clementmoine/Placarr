@@ -1,0 +1,66 @@
+{
+  "source": "ccgtrader.net/games/pokemon-tcg",
+  "observed": "2026-11-10",
+  "ingest": "none",
+  "status": "harvest",
+  "line": "pokemon",
+  "lang": "en",
+  "urls": {
+    "game": "https://www.ccgtrader.net/games/pokemon-tcg",
+    "apiGame": "https://api.ccgtrader.co.uk/_/items/game?filter[url_title][eq]=pokemon-tcg",
+    "assets": "https://api.ccgtrader.co.uk/_/assets/{id}"
+  },
+  "api": {
+    "gameId": 158,
+    "urlTitle": "pokemon-tcg",
+    "publisher": "The Pokemon Company / Wizards of the Coast / Nintendo",
+    "inPrint": true,
+    "languages": ["en", "zh-TW", "nl", "fr", "de", "it", "jp", "ko", "pl", "pt", "ru", "es"],
+    "seriesCount": 26,
+    "setCount": 193
+  },
+  "note": "Page labelled « Pokémon TCG Database (Automated) ». Series cover Base→SV + POP / McDo / trainer kits. TCGdex + Limitless + official checklists stay primary; CCG Trader is a secondary set index + Directus faces.",
+  "primaryAlready": ["tcgdex.net", "limitlesstcg.com", "pokecardex", "fullset.fr", "coleka"],
+  "value": "EN-centric set tree for cross-checks; possible face gap-fill when TCGdex/CDN miss a print.",
+  "series": [
+    "Scarlet & Violet",
+    "Sword & Shield Series",
+    "Sun & Moon Series",
+    "Sun & Moon Trainer Kits",
+    "Sun & Moon Promo Series",
+    "X-Y Series",
+    "X-Y Trainer Kits",
+    "McDonald's Series",
+    "Other Promo Sets",
+    "Pokemon TCG: X-Y Promo Series",
+    "Black & White Series",
+    "Pokemon TCG: Black & White Trainer Kits",
+    "Black & White Promo Series",
+    "Pokemon TCG: Call of Legends",
+    "HeartGold SoulSilver Series",
+    "Pokemon TCG: HeartGold SoulSilver Trainer Kits",
+    "Platinum Series",
+    "Diamond & Pearl Series",
+    "EX Ruby & Sapphire Series",
+    "E-Card Series",
+    "Legendary Collection Series",
+    "Pokemon TCG: Neo Genesis Series",
+    "Pokemon TCG: Gym Heroes Series",
+    "NP",
+    "Pokemon TCG: Base Set Series",
+    "POP Series"
+  ],
+  "setSlugSample": [
+    "scarlet-violet",
+    "paldea-evolved",
+    "obsidian-flames",
+    "151",
+    "pop-series-9"
+  ],
+  "harvest": {
+    "module": "@/providers/shared/ccgtrader/harvestSets",
+    "ledger": "data/pokemon/sources/ccgtrader-sets.json",
+    "urlTitle": "pokemon-tcg"
+  },
+  "not": ["pokemon-tcg-live", "pocket"]
+}

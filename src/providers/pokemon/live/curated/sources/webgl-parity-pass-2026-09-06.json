@@ -1,0 +1,32 @@
+{
+  "source": "webgl-parity-pass",
+  "observed": "2026-09-06",
+  "kind": "research-dig",
+  "question": "Pokémon WebGL foil parity vs TCG Live (leaf by leaf)",
+  "structural": {
+    "leavesChecked": 26,
+    "issues": 0,
+    "checks": ["frag", "materialSheet", "sharedMotifs", "paperMaterial resolve", "shared textures on disk", "playroomArt"],
+    "aliases": ["FlatSilver_CC", "Rainbow02", "SwSecreT02"]
+  },
+  "playroom": {
+    "url": "/admin?tab=catalogue&pack=pokemon&view=compare",
+    "webglRendersObserved": ["Rainbow", "SvHolo"],
+    "cssVsWebgl": {
+      "Rainbow": "CSS = vertical white/grey bars (broken vs WebGL spectrum) — CSS track, not WebGL"
+    }
+  },
+  "liveSideBySide": {
+    "status": "blocked",
+    "navd": "http://127.0.0.1:8765/health → device not found (warming)",
+    "macAppPresent": "Pokemon TCG Live.app",
+    "note": "OpenInLiveButton = Frida → MuMu; no emulator attached this session"
+  },
+  "unitTests": "materials.test + foilLayerAudit + assets — green",
+  "stillNeeded": [
+    "MuMu / device attached for Live open leaf-by-leaf",
+    "Eye re-check Rainbow text-box mottling (backlog #6)",
+    "Systematic WebGL vs Live for remaining leaves once device up"
+  ],
+  "ingest": "none — dig only"
+}

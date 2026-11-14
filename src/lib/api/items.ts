@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { Prisma, Item, Condition } from "@prisma/client";
+import type { Prisma, Item, Condition } from "@/generated/prisma/browser";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 
@@ -19,6 +19,221 @@ export const getItem = (
   }
 
   return axios.get(url.toString()).then((response) => response.data);
+};
+
+/** Open a sealed product — materialize guaranteed / pile contents (étapes 4–6). */
+export const openSealedItem = (
+  id: Item["id"],
+  options?: {
+    shelfId?: string | null;
+    createShell?: boolean;
+    childBoosterSlug?: string | null;
+    packCount?: number | null;
+    takeSealedCount?: number | null;
+  },
+): Promise<{
+  item: ItemWithMetadata;
+  childIds: string[];
+  shellId: string | null;
+  childCount: number;
+  remainingSealed?: number;
+  groupId: string;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/open`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios
+    .post(url.toString(), {
+      createShell: Boolean(options?.createShell),
+      ...(options?.childBoosterSlug
+        ? { childBoosterSlug: options.childBoosterSlug }
+        : {}),
+      ...(options?.packCount != null ? { packCount: options.packCount } : {}),
+      ...(options?.takeSealedCount != null
+        ? { takeSealedCount: options.takeSealedCount }
+        : {}),
+    })
+    .then((response) => response.data);
+};
+
+/** Presence / sealed audit timeline for an item. */
+export const getItemEvents = (
+  id: Item["id"],
+  options?: { shelfId?: string | null },
+): Promise<{
+  itemId: string;
+  events: Array<{
+    id: string;
+    at: string;
+    fromPresence: string;
+    toPresence: string;
+    reason: string | null;
+    kind: string;
+    snapshot: Record<string, unknown> | null;
+  }>;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/events`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios.get(url.toString()).then((response) => response.data);
+};
+
+/** Current parent + remount candidates (décisions 8–9). */
+export type ItemTradeLinkDto = {
+  id: string;
+  role: "out" | "in";
+  note: string | null;
+  createdAt: string;
+  counterpart: {
+    id: string;
+    name: string;
+    slug?: string | null;
+    shelfId?: string | null;
+  };
+};
+
+export const getItemTrades = (
+  id: Item["id"],
+  shelfId?: string | null,
+): Promise<{ itemId: string; links: ItemTradeLinkDto[] }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/trades`,
+    window.location.origin,
+  );
+  if (shelfId) url.searchParams.set("shelfId", shelfId);
+  return axios.get(url.toString()).then((response) => response.data);
+};
+
+export const linkItemTrade = (
+  id: Item["id"],
+  data: { counterpartItemId: string; note?: string | null },
+  shelfId?: string | null,
+): Promise<{ link: ItemTradeLinkDto | null }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/trades`,
+    window.location.origin,
+  );
+  if (shelfId) url.searchParams.set("shelfId", shelfId);
+  return axios.post(url.toString(), data).then((response) => response.data);
+};
+
+export const unlinkItemTrade = (
+  id: Item["id"],
+  data: { linkId?: string; counterpartItemId?: string },
+  shelfId?: string | null,
+): Promise<{ ok: boolean }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/trades`,
+    window.location.origin,
+  );
+  if (shelfId) url.searchParams.set("shelfId", shelfId);
+  return axios
+    .delete(url.toString(), { data })
+    .then((response) => response.data);
+};
+
+export const getItemContainment = (
+  id: Item["id"],
+  options?: { shelfId?: string | null },
+): Promise<{
+  childId: string;
+  childRef: { kind: "sealed"; slug: string; skuKey: string } | {
+    kind: "card";
+    printKey: string;
+  } | null;
+  currentParent: {
+    id: string;
+    name: string;
+    skuKey: string | null;
+    slug: string;
+    linkId: string;
+  } | null;
+  candidates: Array<{
+    id: string;
+    name: string;
+    skuKey: string;
+    slots: number;
+    attachedMatching: number;
+    remaining: number;
+  }>;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/containment`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios.get(url.toString()).then((response) => response.data);
+};
+
+/** Remettre un item sous un scellé ouvert compatible. */
+export const attachItemContainment = (
+  id: Item["id"],
+  options: { shelfId?: string | null; parentId: string },
+): Promise<{ item: ItemWithMetadata; parentId: string }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/containment`,
+    window.location.origin,
+  );
+  if (options.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios
+    .post(url.toString(), { parentId: options.parentId })
+    .then((response) => response.data);
+};
+
+/** Retirer l'item de son contenant (lien content). */
+export const detachItemContainment = (
+  id: Item["id"],
+  options?: { shelfId?: string | null },
+): Promise<{ item: ItemWithMetadata; detachedFrom: string }> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/containment`,
+    window.location.origin,
+  );
+  if (options?.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios.delete(url.toString()).then((response) => response.data);
+};
+
+/** Declare pulls from a sealed product (grouped / unit rip — étape 6). */
+export const declareSealedPulls = (
+  id: Item["id"],
+  options: {
+    shelfId?: string | null;
+    prints: readonly {
+      printKey: string;
+      name?: string | null;
+      language?: string | null;
+    }[];
+  },
+): Promise<{
+  item: ItemWithMetadata;
+  childIds: string[];
+  childCount: number;
+  groupId: string;
+}> => {
+  const url = new URL(
+    `/api/items/${encodeURIComponent(id)}/declare`,
+    window.location.origin,
+  );
+  if (options.shelfId) {
+    url.searchParams.set("shelfId", options.shelfId);
+  }
+  return axios
+    .post(url.toString(), { prints: options.prints })
+    .then((response) => response.data);
 };
 
 export const saveItem = (
@@ -125,6 +340,38 @@ export const deleteItemsBatch = (
     .then((response) => response.data);
 };
 
+export type UpdateItemsLifecycleBatchInput = {
+  itemIds: string[];
+  sourceShelfId?: string;
+  presence?: string | null;
+  absenceReason?: string | null;
+  absenceSince?: string | null;
+  absenceRecipient?: string | null;
+  absenceSource?: string | null;
+  absenceCarrier?: string | null;
+  absenceTracking?: string | null;
+  absenceOrderRef?: string | null;
+  absenceOrderUrl?: string | null;
+  absenceNote?: string | null;
+  absencePriceCents?: number | null;
+  absenceExpectedAt?: string | null;
+  purchasePriceCents?: number | null;
+  purchasedAt?: string | null;
+};
+
+export type UpdateItemsLifecycleBatchResult = {
+  count: number;
+  sourceShelfIds: string[];
+};
+
+export const updateItemsLifecycleBatch = (
+  data: UpdateItemsLifecycleBatchInput,
+): Promise<UpdateItemsLifecycleBatchResult> => {
+  return axios
+    .patch("/api/items/batch/lifecycle", data)
+    .then((response) => response.data);
+};
+
 export const deleteItem = (id: Item["id"]): Promise<void> => {
   if (id == null) {
     throw new Error("Id was not given to deleteItem");
@@ -167,10 +414,13 @@ export const getItems = (
 
 export interface ItemPrices {
   priceNew: number | null;
+  priceFoil?: number | null;
   priceUsed: number | null;
   priceUsedCIB: number | null;
   /** Point price derived from catalog estimates — display fallback, shown as ~. */
   priceEstimated?: number | null;
+  /** FX ~ for the foil market bucket (TCG finishes). */
+  priceEstimatedFoil?: number | null;
   priceLastUpdated: string | null;
   priceSources?: string[];
   priceSourceDisplayNames?: string[];
@@ -212,6 +462,25 @@ export const getItemPrices = (
   return axios.get(url.toString()).then((res) => res.data);
 };
 
+export type SealedContainmentSourceDto = {
+  slug: string;
+  name: string;
+  kind: string;
+  imageUrl?: string | null;
+  relation: "guaranteed" | "listed_pool" | "set_pool";
+};
+
+export const getItemSealedContainment = (
+  shelfId: string,
+  itemId: string,
+): Promise<{ sources: SealedContainmentSourceDto[] }> => {
+  const url = new URL(
+    `/api/shelves/${encodeURIComponent(shelfId)}/items/${encodeURIComponent(itemId)}/sealed-containment`,
+    window.location.origin,
+  );
+  return axios.get(url.toString()).then((res) => res.data);
+};
+
 export const refreshItemMetadata = (
   itemId: string,
   shelfId?: string | null,
@@ -224,5 +493,29 @@ export const refreshItemMetadata = (
 
   return axios
     .post(url.toString(), lookupQuery ? { lookupQuery } : {})
+    .then((res) => res.data);
+};
+
+export type RemoveItemMediaImageResponse = {
+  removedAttachmentIds: string[];
+  clearedCover: boolean;
+  clearedBackground: boolean;
+  nextImageUrl: string | null;
+  nextBackgroundImageUrl: string | null;
+  item: ItemWithMetadata | null;
+};
+
+/** Drop one gallery image; catalogue sync may recreate provider rows later. */
+export const removeItemMediaImage = (
+  itemId: string,
+  imageUrl: string,
+  shelfId?: string | null,
+): Promise<RemoveItemMediaImageResponse> => {
+  const url = new URL(`/api/items/${itemId}/media`, window.location.origin);
+  if (shelfId) {
+    url.searchParams.set("shelfId", shelfId);
+  }
+  return axios
+    .delete(url.toString(), { data: { url: imageUrl } })
     .then((res) => res.data);
 };

@@ -1,0 +1,81 @@
+[
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_EN_v1.20.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Official Rules Manual v1.20 (EN)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_FR_v1.20.pdf",
+    "lang": "fr",
+    "kind": "rulebook",
+    "title": "Manuel officiel des règles v1.20 (FR)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_JP_v1.20.pdf",
+    "lang": "ja",
+    "kind": "rulebook",
+    "title": "オフィシャルルールマニュアル v1.20 (JA)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_GE_v1.20.pdf",
+    "lang": "de",
+    "kind": "rulebook",
+    "title": "Official Rules Manual v1.20 (DE)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_IT_v1.20.pdf",
+    "lang": "it",
+    "kind": "rulebook",
+    "title": "Official Rules Manual v1.20 (IT)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_PT_v1.20.pdf",
+    "lang": "pt",
+    "kind": "rulebook",
+    "title": "Official Rules Manual v1.20 (PT)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/manual/fw_manual_SP_v1.20.pdf",
+    "lang": "es",
+    "kind": "rulebook",
+    "title": "Official Rules Manual v1.20 (ES)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/fw_rule_comprehensive_en_v1.08.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "General / Comprehensive Rules v1.08 (EN)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/fw_rule_comprehensive_jp_v1.08.pdf",
+    "lang": "ja",
+    "kind": "rulebook",
+    "title": "総合ルール v1.08 (JA)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/fw_rule_tournament_rules_manual_en_v1.00.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "Tournament Rules Manual v1.00 (EN)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/fw_playsheet_en.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Playsheet (EN)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/pdf/rules/fw_playsheet_jp.pdf",
+    "lang": "ja",
+    "kind": "other",
+    "title": "Playsheet (JA)"
+  },
+  {
+    "url": "https://www.dbs-cardgame.com/fw/en/products/01_31.html",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Official Rules hub (EN)"
+  }
+]

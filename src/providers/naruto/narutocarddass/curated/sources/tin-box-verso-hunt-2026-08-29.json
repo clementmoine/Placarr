@@ -1,0 +1,43 @@
+{
+  "source": "tin-box-verso-hunt",
+  "observed": "2026-08-29",
+  "kind": "research-dig",
+  "ingest": "leboncoin.json products → tin-box art/back ; sealed-contents.json tin-box + tin-box-hobby mixed_bundle",
+  "listing": "https://www.leboncoin.fr/ad/jeux_jouets/3258840985",
+  "title": "Coffret carte naruto — 10 € (Sézanne)",
+  "printed": {
+    "ref": "05129",
+    "ean": "3296580051298",
+    "made": "BANDAI 2007 MADE IN BELGIUM",
+    "distributor": "BANDAI S.A. (France) Cergy"
+  },
+  "versoContents": [
+    "1 deck 40 cartes [INVOCATION] série 4",
+    "1 booster 8 cartes série 1",
+    "1 booster 8 cartes série 2",
+    "1 carte promotionnelle holographique exclusive",
+    "1 tapis de jeu",
+    "6 jetons",
+    "1 livret des règles"
+  ],
+  "cardMath": {
+    "declaredCards": 57,
+    "breakdown": "40 + 8 + 8 + 1 promo",
+    "note": "Accessories (tapis/jetons/livret) excluded from declaredCardCount"
+  },
+  "promoNote": "Verso Invocation : 1 exclusive holo (laquelle des PR-11 / PR-16 n'est pas imprimée — ne pas garantir les deux). Tin Box Hobby : les deux (NI-PR16 + NI-PR11) d'après carddass.fr news.htm → SKU tin-box-hobby.",
+  "packshots": {
+    "front": "staging/leboncoin/tin-box-01.jpg",
+    "back": "staging/leboncoin/tin-box-02.jpg",
+    "sitePreferredArt": "staging/carddass-fr/images/packshots/Tin-boxN.jpg"
+  },
+  "sku": "tin-box",
+  "relatedSku": {
+    "slug": "tin-box-hobby",
+    "renamedFrom": "tin-box-obi",
+    "renameNote": "ASR YT « Obi » = étiquette écran « Tin Box Hobby »",
+    "source": "carddass.fr news.htm + contenu-tin-box.jpg",
+    "art": "staging/carddass-fr/images/packshots/Tin-box-hobby.jpg",
+    "claim": "5 boosters S1–S5 + Naruto NI-PR16 + Orochimaru NI-PR11. Distinct de tin-box Invocation (05129)."
+  }
+}

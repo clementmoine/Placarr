@@ -32,6 +32,9 @@ const SEARCH_HTML = `
       Manette DualSense Midnight Black
     </a>
     <img class="product-image-photo" src="https://www.freakxy.fr/media/dualsense.jpg" />
+    <span class="price-wrapper" data-price-amount="69.90" data-price-type="finalPrice">
+      <span class="price">69,90&nbsp;€</span>
+    </span>
   </li>
 </ul>
 `;
@@ -51,11 +54,15 @@ describe("freakxy fetch", () => {
     );
   });
 
-  it("parse Magento product-item hits", () => {
+  it("parse Magento product-item hits with EUR price", () => {
     expect(parseFreakxySearchHits(SEARCH_HTML)).toEqual([
       {
         name: "Manette DualSense Midnight Black",
         coverUrl: "https://www.freakxy.fr/media/dualsense.jpg",
+        priceCents: 6990,
+        priceNew: 6990,
+        sourceUrl: "https://www.freakxy.fr/manette-dualsense.html",
+        productUrl: "https://www.freakxy.fr/manette-dualsense.html",
       },
     ]);
   });
@@ -65,6 +72,8 @@ describe("freakxy fetch", () => {
       {
         name: "Manette DualSense Midnight Black",
         coverUrl: "https://www.freakxy.fr/media/dualsense.jpg",
+        priceCents: 6990,
+        priceNew: 6990,
       },
     ];
     readFreakxySearchEvidence.mockResolvedValueOnce(hits);
@@ -82,12 +91,17 @@ describe("freakxy fetch", () => {
 
     const hits = await fetchFromFreakxy("711719541226");
     expect(hits).toHaveLength(1);
+    expect(hits[0]?.priceCents).toBe(6990);
     expect(promoteFreakxySearchEvidence).toHaveBeenCalledWith(
       "https://www.freakxy.fr/catalogsearch/result/?q=711719541226",
       [
         {
           name: "Manette DualSense Midnight Black",
           coverUrl: "https://www.freakxy.fr/media/dualsense.jpg",
+          priceCents: 6990,
+          priceNew: 6990,
+          sourceUrl: "https://www.freakxy.fr/manette-dualsense.html",
+          productUrl: "https://www.freakxy.fr/manette-dualsense.html",
         },
       ],
     );

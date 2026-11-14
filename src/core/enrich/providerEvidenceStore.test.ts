@@ -35,16 +35,12 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://www.pricecharting.com/search-products?utm_source=x&type=prices&q=Wii+U",
       ),
-    ).toBe(
-      "https://www.pricecharting.com/search-products?q=wii+u&type=prices",
-    );
+    ).toBe("https://www.pricecharting.com/search-products?q=wii+u&type=prices");
     expect(
       normalizeProviderEvidenceUrl(
         "https://www.pricecharting.com/search-products?q=Wii%20U&type=prices",
       ),
-    ).toBe(
-      "https://www.pricecharting.com/search-products?q=wii+u&type=prices",
-    );
+    ).toBe("https://www.pricecharting.com/search-products?q=wii+u&type=prices");
     expect(
       normalizeProviderEvidenceUrl(
         "https://www.pricecharting.com/search-products?q=borderlands&type=prices",
@@ -80,9 +76,7 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://www.philibertnet.com/fr/recherche?search_query=Catan&utm_source=x",
       ),
-    ).toBe(
-      "https://www.philibertnet.com/fr/recherche?search_query=catan",
-    );
+    ).toBe("https://www.philibertnet.com/fr/recherche?search_query=catan");
     expect(
       normalizeProviderEvidenceUrl(
         "https://shop.example/recherche?controller=search&s=Ticket+to+Ride&ajax=1",
@@ -95,16 +89,12 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://www.okkazeo.com/jeux/resultats?ean=3421272109517&titre_jeu=&action=Rechercher",
       ),
-    ).toBe(
-      "https://www.okkazeo.com/jeux/resultats?ean=3421272109517",
-    );
+    ).toBe("https://www.okkazeo.com/jeux/resultats?ean=3421272109517");
     expect(
       normalizeProviderEvidenceUrl(
         "https://www.okkazeo.com/jeux/resultats?ean=&titre_jeu=Mille+Sabords&action=Rechercher",
       ),
-    ).toBe(
-      "https://www.okkazeo.com/jeux/resultats?titre_jeu=mille+sabords",
-    );
+    ).toBe("https://www.okkazeo.com/jeux/resultats?titre_jeu=mille+sabords");
   });
 
   it("keeps HDJV q+support identity (platform collisions)", () => {
@@ -144,9 +134,7 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://www.bdovore.com/getjson?data=Serie&mode=2&term=Alpha",
       ),
-    ).toBe(
-      "https://www.bdovore.com/getjson?term=alpha&data=serie&mode=2",
-    );
+    ).toBe("https://www.bdovore.com/getjson?term=alpha&data=serie&mode=2");
     expect(
       normalizeProviderEvidenceUrl(
         "https://www.bdovore.com/getjson?data=Serie&mode=2&term=Alpha",
@@ -192,9 +180,7 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://www.senscritique.com/search?keywords=Rayman&universe=game",
       ),
-    ).toBe(
-      "https://www.senscritique.com/search?keywords=rayman&universe=game",
-    );
+    ).toBe("https://www.senscritique.com/search?keywords=rayman&universe=game");
     expect(
       normalizeProviderEvidenceUrl(
         "https://www.senscritique.com/search?keywords=Rayman&universe=game",
@@ -211,9 +197,7 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://howlongtobeat.com/search?q=Hades&platform=Nintendo+Switch&utm=1",
       ),
-    ).toBe(
-      "https://howlongtobeat.com/search?q=hades&platform=nintendo+switch",
-    );
+    ).toBe("https://howlongtobeat.com/search?q=hades&platform=nintendo+switch");
     expect(
       normalizeProviderEvidenceUrl(
         "https://howlongtobeat.com/search?q=Hades&platform=Nintendo+Switch",
@@ -244,9 +228,7 @@ describe("normalizeProviderEvidenceUrl", () => {
       normalizeProviderEvidenceUrl(
         "https://api.ebay.com/buy/browse/v1/item_summary/search?epid=555",
       ),
-    ).toBe(
-      "https://api.ebay.com/buy/browse/v1/item_summary/search?epid=555",
-    );
+    ).toBe("https://api.ebay.com/buy/browse/v1/item_summary/search?epid=555");
   });
 
   it("returns null for empty or invalid URLs", () => {
@@ -259,10 +241,16 @@ describe("providerEvidenceIsFresh", () => {
   it("is true before expiresAt and false after", () => {
     const expiresAt = new Date("2026-07-24T12:00:00.000Z");
     expect(
-      providerEvidenceIsFresh(expiresAt, Date.parse("2026-07-24T11:59:00.000Z")),
+      providerEvidenceIsFresh(
+        expiresAt,
+        Date.parse("2026-07-24T11:59:00.000Z"),
+      ),
     ).toBe(true);
     expect(
-      providerEvidenceIsFresh(expiresAt, Date.parse("2026-07-24T12:00:00.000Z")),
+      providerEvidenceIsFresh(
+        expiresAt,
+        Date.parse("2026-07-24T12:00:00.000Z"),
+      ),
     ).toBe(false);
   });
 });

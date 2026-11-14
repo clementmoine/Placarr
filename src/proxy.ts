@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client";
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
@@ -23,27 +22,24 @@ export default withAuth(
     if (imageGuard) return imageGuard;
 
     const token = req.nextauth.token;
-    const isAdmin = token?.role === UserRole.admin;
-    const isGuest = token?.role === UserRole.guest;
+    const isAdmin = token?.role === "admin";
 
-    // Allow guests to access read-only routes
-    if (isGuest) {
-      if (req.method !== "GET") {
-        return NextResponse.redirect(new URL("/auth/login", req.url));
-      }
-    }
-
-    // Protect admin routes
     if (req.nextUrl.pathname.startsWith("/admin") && !isAdmin) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/auth/login", req.url));
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ req, token }) =>
-        req.nextUrl.pathname === "/_next/image" || !!token,
+      authorized: ({ req, token }) => {
+        if (req.nextUrl.pathname === "/_next/image") return true;
+        // Admin UI needs an unlocked owner session; everything else is public.
+        if (req.nextUrl.pathname.startsWith("/admin")) {
+          return token?.role === "admin";
+        }
+        return true;
+      },
     },
   },
 );
@@ -51,21 +47,6 @@ export default withAuth(
 export const config = {
   matcher: [
     "/_next/image",
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - favicon.ico (favicon file)
-     * - manifest.json (manifest file)
-     * - robots.txt (robots file)
-     * - screenshots/wide or screenshots/narrow (screenshots)
-     * - sw.js (service worker file)
-     * - icons (icons)
-     * - public folder and uploaded media
-     * - auth/error (auth error page)
-     * - auth/login (login page)
-     * - auth/register (register page)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|public|uploads|auth/error|auth/login|auth/register|manifest.json|robots.txt|screenshots|sw.js|icons).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|public|uploads|auth/error|auth/login|auth/register|manifest.json|robots.txt|screenshots|icons|assets).*)",
   ],
 };

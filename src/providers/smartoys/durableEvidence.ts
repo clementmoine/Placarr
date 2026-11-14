@@ -49,10 +49,7 @@ export async function readSmartoysSearchEvidence(
     if (!isSmartoysSearchHits(row.yieldJson)) return null;
     return row.yieldJson;
   } catch (error) {
-    console.warn(
-      "[Smartoys] Failed to read durable search evidence:",
-      error,
-    );
+    console.warn("[Smartoys] Failed to read durable search evidence:", error);
     return null;
   }
 }

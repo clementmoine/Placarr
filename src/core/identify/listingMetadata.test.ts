@@ -158,16 +158,16 @@ describe("listing merch taxonomies", () => {
   it("treats amiibo as merch on games but identity on toys", () => {
     const title = "Amiibo Link Tears of the Kingdom";
     expect(listingLooksLikeMerchAccessory(title)).toBe(true);
-    expect(
-      listingLooksLikeMerchAccessory(title, { shelfType: "toys" }),
-    ).toBe(false);
+    expect(listingLooksLikeMerchAccessory(title, { shelfType: "toys" })).toBe(
+      false,
+    );
   });
 
   it("treats TCG boosters as identity on tcg shelves", () => {
     const title = "Pokemon Booster ETB";
     expect(listingLooksLikeNonBookProduct(title)).toBe(true);
-    expect(
-      listingLooksLikeNonBookProduct(title, { shelfType: "tcg" }),
-    ).toBe(false);
+    expect(listingLooksLikeNonBookProduct(title, { shelfType: "tcg" })).toBe(
+      false,
+    );
   });
 });

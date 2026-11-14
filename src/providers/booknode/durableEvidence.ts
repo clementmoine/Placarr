@@ -32,7 +32,10 @@ function isBooknodeSearchHits(value: unknown): value is BooknodeSearchHit[] {
 function isBooknodeSearchUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.pathname.includes("/search") && Boolean(parsed.searchParams.get("q")?.trim());
+    return (
+      parsed.pathname.includes("/search") &&
+      Boolean(parsed.searchParams.get("q")?.trim())
+    );
   } catch {
     return url.includes("/search?") && url.includes("q=");
   }
@@ -49,10 +52,7 @@ export async function readBooknodeSearchEvidence(
     if (!isBooknodeSearchHits(row.yieldJson)) return null;
     return row.yieldJson;
   } catch (error) {
-    console.warn(
-      "[Booknode] Failed to read durable search evidence:",
-      error,
-    );
+    console.warn("[Booknode] Failed to read durable search evidence:", error);
     return null;
   }
 }

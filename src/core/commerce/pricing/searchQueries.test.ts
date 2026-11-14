@@ -53,9 +53,9 @@ describe("buildPriceSearchQueries", () => {
     expect(buildPriceSearchQueries(["Resident Evil 4 (2023)"])).toEqual([
       "Resident Evil 4",
     ]);
-    expect(
-      buildPriceSearchQueries(["Inception (2010)"], "Bluray"),
-    ).toEqual(expect.arrayContaining(["Inception bluray", "Inception"]));
+    expect(buildPriceSearchQueries(["Inception (2010)"], "Bluray")).toEqual(
+      expect.arrayContaining(["Inception bluray", "Inception"]),
+    );
     expect(
       buildPriceSearchQueries(["Inception (2010)"], "Bluray").some((q) =>
         q.includes("2010"),

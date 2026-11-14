@@ -46,9 +46,9 @@ describe("senscritique durableEvidence", () => {
       keywords: "Rayman",
       universe: "game",
     });
-    await expect(
-      readSensCritiqueSearchEvidence(searchUrl),
-    ).resolves.toEqual(hits);
+    await expect(readSensCritiqueSearchEvidence(searchUrl)).resolves.toEqual(
+      hits,
+    );
 
     putProviderEvidence.mockResolvedValueOnce(undefined);
     await promoteSensCritiqueSearchEvidence(searchUrl, hits);

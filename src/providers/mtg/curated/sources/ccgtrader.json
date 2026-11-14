@@ -1,0 +1,33 @@
+{
+  "source": "ccgtrader.net/games/magic-the-gathering-ccg",
+  "observed": "2026-11-10",
+  "ingest": "none",
+  "status": "harvest",
+  "line": "mtg",
+  "lang": "en",
+  "urls": {
+    "game": "https://www.ccgtrader.net/games/magic-the-gathering-ccg",
+    "apiGame": "https://api.ccgtrader.co.uk/_/items/game?filter[url_title][eq]=magic-the-gathering-ccg",
+    "assets": "https://api.ccgtrader.co.uk/_/assets/{id}"
+  },
+  "api": {
+    "gameId": 21,
+    "urlTitle": "magic-the-gathering-ccg",
+    "publisher": "Wizards of the Coast",
+    "inPrint": true,
+    "languages": ["en", "zh-CN", "zh-TW", "fr", "de", "it", "jp", "ko", "pt", "ru", "es"],
+    "seriesCount": 36,
+    "setCount": 1103
+  },
+  "note": "Large living set index (year buckets + Other). Directus faces may help rare shop gaps; Scryfall remains the print + art SSOT. Do not mirror the full face dump blindly.",
+  "primaryAlready": ["scryfall.com", "mtgcards.fr", "fullset.fr"],
+  "value": "Cross-check set inventory / marketplace inventory; secondary art only when Scryfall + mtgcards miss a print.",
+  "seriesSample": ["MTG: 2027", "MTG: 2026", "MTG: 2025", "MTG: 1993", "MTG: Other Sets"],
+  "setSlugSample": ["ecl", "mh3", "lea", "arn", "olgc"],
+  "harvest": {
+    "module": "@/providers/shared/ccgtrader/harvestSets",
+    "ledger": "data/mtg/sources/ccgtrader-sets.json",
+    "urlTitle": "magic-the-gathering-ccg"
+  },
+  "not": ["arena-only-skins-as-prints"]
+}

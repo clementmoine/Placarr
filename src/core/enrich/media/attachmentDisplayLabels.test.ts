@@ -19,6 +19,243 @@ describe("attachmentDisplayLabels", () => {
     });
   });
 
+  it("affiche Face + langue pour les rôles TCG standardisés (pas le seau région)", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "lorcana-face-de-art",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Allemand",
+      detail: "Face · Allemand",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "pokemon-face-en-live",
+        source: "tcgdex",
+        providerLabel: "TCGdex",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Anglais",
+      detail: "Face · Anglais · Live",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "naruto-face-fr-carddass",
+        source: "narutocarddass",
+        providerLabel: "Naruto Carddass",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+      // Dump token `carddass` is the Affiche source chip (not the catalogue line).
+      provider: "Carddass",
+    });
+  });
+
+  it("garde la langue d'un role ISO nu (legacy Lorcana) hors du seau région Europe", () => {
+    // Older Lorcana rows used bare ISO as role (`de` / `en` / `it`). The region
+    // alias map folds `de`→Europe for German *game boxes*; on a card printing
+    // that would hide the actual language.
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "de",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      kind: "Jaquette",
+      region: "Allemand",
+      detail: "Jaquette · Allemand",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "en",
+        source: "lorcanajson",
+        providerLabel: "LorcanaJSON",
+      }),
+    ).toMatchObject({
+      region: "Anglais",
+      detail: "Jaquette · Anglais",
+    });
+  });
+
+  it("garde les rôles région composés (back-eu) hors des labels langue", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "image",
+        role: "back-eu",
+        source: "screenscraper",
+        providerLabel: "ScreenScraper",
+      }),
+    ).toMatchObject({
+      kind: "Dos",
+      region: "Europe",
+      detail: "Dos · Europe",
+    });
+  });
+
+  it("affiche langue + rôle flyer / face TCG (Mythos)", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "mythos-proof-flyer-fr",
+        title: "Annonce promo Mythos (flyer FR)",
+        source: "narutomythos",
+        providerLabel: "Naruto Mythos",
+      }),
+    ).toMatchObject({
+      kind: "Flyer",
+      region: "Français",
+      detail: "Flyer · Français",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "mythos-face-en-promo",
+        source: "narutomythos",
+        providerLabel: "Naruto Mythos",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Anglais",
+      detail: "Face · Anglais · Promo",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        url: "/assets/naruto/mythos/prints/ks1promo-0133-vv2-fr/face",
+        source: "narutomythos",
+        providerLabel: "Naruto Mythos",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+    });
+  });
+
+  it("lit la langue FR depuis les chemins /cards/ Ninja Ranks (set/lang et lang/set)", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        url: "/assets/naruto/ninja-ranks/cards/ff/fr/0006/art.animecollection.jpg",
+        source: "narutoranks",
+        providerLabel: "Naruto Ninja Ranks",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+      provider: "AnimeCollection",
+    });
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        url: "/assets/naruto/ninja-ranks/cards/fr/nr/0001/art.coleka.webp",
+        source: "narutoranks",
+        providerLabel: "Naruto Ninja Ranks",
+      }),
+    ).toMatchObject({
+      kind: "Face",
+      region: "Français",
+      detail: "Face · Français",
+      provider: "Coleka",
+    });
+  });
+
+  it("Affiche source chip is the dump site, not the catalogue line name", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "naruto-face-fr-animecollection",
+        url: "https://localhost:3000/assets/naruto/ninja-ranks/cards/nr/fr/0020/art.animecollection.jpg",
+        source: "narutoranks",
+        providerLabel: "Naruto Ninja Ranks",
+      }),
+    ).toMatchObject({
+      provider: "AnimeCollection",
+      sourceNames: ["AnimeCollection"],
+      detail: "Face · Français",
+    });
+  });
+
+  it("TCG disk faces stay Face even when typed cover (all packs)", () => {
+    const cases: Array<{
+      url: string;
+      role?: string;
+      source?: string;
+      providerLabel?: string;
+      detail: string;
+      provider?: string;
+    }> = [
+      {
+        url: "https://localhost:3000/assets/naruto/ninja-ranks/cards/ff/fr/0006/art.animecollection.jpg",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/pokemon/cards/fr/sv3-5/006/art.webp",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/dragonball/jcc/cards/fr/part1/d0050/art.dbzcollection.jpg",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/lorcana/prints/1-1-fr/face",
+        detail: "Face · Français",
+      },
+      {
+        url: "/assets/naruto/carddass/prints/s5-ni0229-fr/face",
+        role: "naruto-face-fr-carddass",
+        source: "narutocarddass",
+        providerLabel: "Naruto Carddass",
+        detail: "Face · Français",
+        provider: "Carddass",
+      },
+    ];
+    for (const row of cases) {
+      expect(
+        getAttachmentGalleryLabels({
+          type: "cover",
+          title: "Itachi - Sasuke",
+          url: row.url,
+          role: row.role,
+          source: row.source ?? "local",
+          providerLabel: row.providerLabel,
+        }),
+      ).toMatchObject({
+        kind: "Face",
+        detail: row.detail,
+        ...(row.provider ? { provider: row.provider } : {}),
+      });
+    }
+  });
+
+  it("keeps ScreenScraper box titles as Jaquette when URL is not a TCG face", () => {
+    expect(
+      getAttachmentGalleryLabels({
+        type: "cover",
+        role: "eu",
+        title: "Box - Front",
+        url: "https://www.screenscraper.fr/image.php?gameid=1",
+        source: "screenscraper",
+      }),
+    ).toMatchObject({
+      kind: "Jaquette",
+      detail: "Jaquette · Europe",
+    });
+  });
+
   it("affiche la région d'une jaquette ScreenScraper australienne (au → Europe)", () => {
     // Regression: a `box-2D(au)` cover was stored with role "au" and showed
     // "Jaquette" with no region because the resolver only knew the 6 canonical

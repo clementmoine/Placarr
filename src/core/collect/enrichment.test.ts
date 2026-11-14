@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 
 import {
+  BACKGROUND_JOBS_BUSY_POLL_MS,
+  BACKGROUND_JOBS_IDLE_POLL_MS,
+  backgroundJobsRefetchInterval,
   ITEM_ENRICH_WINDOW_MS,
   METADATA_REFRESH_MAX_MS,
   METADATA_REFRESH_STAMP_PRESERVE_MS,
@@ -56,9 +59,9 @@ describe("isItemMetadataRefreshing", () => {
   });
 
   it("returns false when the stamp is cleared", () => {
-    expect(
-      isItemMetadataRefreshing({ metadataRefreshStartedAt: null }),
-    ).toBe(false);
+    expect(isItemMetadataRefreshing({ metadataRefreshStartedAt: null })).toBe(
+      false,
+    );
   });
 });
 
@@ -152,5 +155,19 @@ describe("metadataBusyRefetchInterval", () => {
         },
       ]),
     ).toBe(false);
+  });
+});
+
+describe("backgroundJobsRefetchInterval", () => {
+  it("polls tightly while jobs are queued and sparsely when idle", () => {
+    expect(
+      backgroundJobsRefetchInterval({ state: { data: { count: 3 } } }),
+    ).toBe(BACKGROUND_JOBS_BUSY_POLL_MS);
+    expect(
+      backgroundJobsRefetchInterval({ state: { data: { count: 0 } } }),
+    ).toBe(BACKGROUND_JOBS_IDLE_POLL_MS);
+    expect(backgroundJobsRefetchInterval({ state: { data: undefined } })).toBe(
+      BACKGROUND_JOBS_IDLE_POLL_MS,
+    );
   });
 });

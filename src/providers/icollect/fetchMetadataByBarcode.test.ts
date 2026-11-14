@@ -59,6 +59,7 @@ describe("fetchICollectMetadataByBarcode", () => {
       title: "Mario Kart Wii",
       platform: "Nintendo Wii",
       catalogSource: "page",
+      images: [],
     });
 
     const metadata = await fetchICollectMetadataByBarcode("045496365226");
@@ -111,6 +112,7 @@ describe("fetchICollectMetadataByBarcode", () => {
       platform: "Nintendo Wii",
       estimatedValueCents: 1000,
       catalogSource: "page",
+      images: [],
     });
 
     const staleAt = Date.now() - DEFAULT_PAGE_CATALOG_REFRESH_MS - 60_000;

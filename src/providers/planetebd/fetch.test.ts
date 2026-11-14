@@ -152,9 +152,7 @@ describe("planetebd", () => {
     expect(hits).toHaveLength(1);
     expect(promotePlanetebdSearchEvidence).toHaveBeenCalledWith(
       expect.stringContaining("mot-clef="),
-      expect.arrayContaining([
-        expect.objectContaining({ id: "58791" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: "58791" })]),
     );
   });
 });

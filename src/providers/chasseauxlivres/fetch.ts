@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { decode as decodeHTMLEntities } from "html-entities";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { retailerProductBarcodeConfirmed } from "@/core/commerce/retailer/productUrl";
@@ -195,7 +195,7 @@ async function fetchChassePageHtml(
   }
 
   try {
-    const response = await axios.get(url, {
+    const response = await httpGet(url, {
       headers: CHASSE_AUX_LIVRES_HEADERS,
       timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
       responseType: "text",
@@ -484,8 +484,7 @@ export function parseChasseAuxLivresProductPage(
       (Array.isArray(image) ? image[0] : image)?.split("?")[0],
     ) || galleryImages[0];
   const aggregateRating = productSchema?.aggregateRating as
-    | { ratingValue?: unknown; ratingCount?: unknown }
-    | undefined;
+    { ratingValue?: unknown; ratingCount?: unknown } | undefined;
   const sku =
     firstSchemaValue(productSchema?.sku) ||
     productUrl?.match(/\/prix\/([^/]+)/)?.[1];
@@ -756,7 +755,7 @@ async function fetchChasseSearchResultsPage(
   }
 
   try {
-    const resultsRes = await axios.get(resultsUrl, {
+    const resultsRes = await httpGet(resultsUrl, {
       headers: {
         ...CHASSE_AUX_LIVRES_HEADERS,
         Referer: searchUrl,
@@ -1276,7 +1275,7 @@ async function fetchChasseAuxLivresOffers(
     let redirHtml =
       prefetchedHtml ??
       (
-        await axios.get(redirUrl, {
+        await httpGet<string>(redirUrl, {
           headers: CHASSE_AUX_LIVRES_HEADERS,
           timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
         })
@@ -1307,7 +1306,10 @@ async function fetchChasseAuxLivresOffers(
       );
       const lookupUrl = `https://www.chasse-aux-livres.fr/rest/lookup/results?calls=offers&itemId=${params.asin}&retry=0&duih=${params.duih}&lvs=${params.lvs}&ui=${params.ui}&engines=${engines}&f=${params.fuzz}`;
 
-      const lookupRes = await axios.get(lookupUrl, {
+      const lookupRes = await httpGet<{
+        relook?: boolean;
+        offers?: Record<string, unknown>;
+      }>(lookupUrl, {
         headers: ajaxHeaders,
         timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
       });
@@ -1322,7 +1324,7 @@ async function fetchChasseAuxLivresOffers(
           await new Promise((resolve) => setTimeout(resolve, 2500));
           // Refetch product page to get new session/lvs parameters
           redirHtml = (
-            await axios.get(redirUrl, {
+            await httpGet<string>(redirUrl, {
               headers: CHASSE_AUX_LIVRES_HEADERS,
               timeout: CHASSE_AUX_LIVRES_TIMEOUT_MS,
             })
@@ -1334,7 +1336,7 @@ async function fetchChasseAuxLivresOffers(
           );
         }
       } else {
-        offersData = resData.offers;
+        offersData = resData.offers ?? null;
         break;
       }
     }

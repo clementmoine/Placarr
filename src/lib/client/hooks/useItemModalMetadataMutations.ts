@@ -11,6 +11,7 @@ type PreviewVariables = {
   barcode?: string;
   forceOverwrite?: boolean;
   romChecksums?: RomChecksums;
+  printKey?: string | null;
   requestId: number;
 };
 
@@ -22,6 +23,8 @@ type SuggestionsVariables = {
 type UseItemModalMetadataMutationsOptions = {
   activeShelfType?: string;
   activeShelfName?: string | null;
+  /** When set, preview resolves by print identity — never cross-game name hits. */
+  printKey?: string | null;
   applyMetadataPreviewToForm: (
     metadata: MetadataResult,
     options?: {
@@ -35,6 +38,7 @@ type UseItemModalMetadataMutationsOptions = {
 export function useItemModalMetadataMutations({
   activeShelfType,
   activeShelfName,
+  printKey,
   applyMetadataPreviewToForm,
   onSuggestionsLoaded,
 }: UseItemModalMetadataMutationsOptions) {
@@ -46,6 +50,7 @@ export function useItemModalMetadataMutations({
       name,
       barcode,
       romChecksums,
+      printKey: previewPrintKey,
     }: PreviewVariables): Promise<MetadataResult | null> => {
       if (!name.trim() || !activeShelfType) return null;
       return getMetadataPreview(
@@ -55,6 +60,7 @@ export function useItemModalMetadataMutations({
         null,
         activeShelfName || null,
         romChecksums,
+        previewPrintKey,
       );
     },
     onSuccess: (metadata, variables) => {
@@ -120,10 +126,11 @@ export function useItemModalMetadataMutations({
         barcode,
         forceOverwrite,
         romChecksums,
+        printKey,
         requestId,
       });
     },
-    [activeShelfType, mutatePreview],
+    [activeShelfType, mutatePreview, printKey],
   );
 
   const fetchNameSuggestions = useCallback(

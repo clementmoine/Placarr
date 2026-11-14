@@ -288,14 +288,9 @@ async function fetchPrestashopSearchProducts(
   url.searchParams.set("ajax", "1");
   const searchUrl = url.toString();
 
-  const fromEvidence = await readPrestashopSearchEvidence(
-    config.id,
-    searchUrl,
-  );
+  const fromEvidence = await readPrestashopSearchEvidence(config.id, searchUrl);
   if (fromEvidence) {
-    console.info(
-      `[${config.label}] Search evidence hit for ${searchUrl}`,
-    );
+    console.info(`[${config.label}] Search evidence hit for ${searchUrl}`);
     return fromEvidence;
   }
 

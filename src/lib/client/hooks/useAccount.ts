@@ -1,14 +1,14 @@
 import axios from "axios";
 import { useSession, signOut } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 
-import { type User, UserRole } from "@prisma/client";
+import { type User, UserRole } from "@/generated/prisma/browser";
 
 export function useAccount() {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session, status } = useSession();
   const queryClient = useQueryClient();
-  const router = useRouter();
+
+  const unlocked = status === "authenticated" && !!session?.user?.id;
 
   const { data: user } = useQuery<User>({
     queryKey: ["user"],
@@ -21,62 +21,37 @@ export function useAccount() {
         return response.data;
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
-          // Session is invalid, sign out and redirect to login
+          // Stale unlock cookie — clear it; browsing stays public.
           await signOut({ redirect: false });
-          router.push("/auth/login");
         }
         throw error;
       }
     },
-    enabled: !!session?.user,
+    enabled: unlocked,
   });
 
-  const { mutate: update } = useMutation({
-    mutationFn: async (data: {
-      name?: string;
-      image?: string;
-      password?: string;
-      email?: string;
-    }) => {
+  const { mutateAsync: update } = useMutation({
+    mutationFn: async (data: { password: string }) => {
       const response = await axios.patch("/api/users", data);
       return response.data;
     },
-    onSuccess: async (data) => {
-      // Update session with new data
-      await updateSession({
-        user: {
-          ...session?.user,
-          name: data.name,
-          email: data.email,
-        },
-      });
-      // Invalidate and refetch user data
-      queryClient.invalidateQueries({ queryKey: ["user"] });
-    },
-  });
-
-  const { mutate: deleteAccount } = useMutation({
-    mutationFn: async () => {
-      const response = await axios.delete("/api/users");
-      return response.data;
-    },
     onSuccess: async () => {
-      // Invalidate all user-related queries
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      // Sign out and redirect to login
-      await signOut({ redirect: false });
-      router.push("/auth/login");
     },
   });
 
-  const isAuthenticated = user;
-
-  const isGuest = user?.role === UserRole.guest;
-  const isAdmin = user?.role === UserRole.admin;
-  const userId = user?.id;
+  // Unlocked owner session. Anonymous browsing is intentional — not "logged out".
+  const isGuest =
+    !unlocked ||
+    session?.user?.role === "guest" ||
+    user?.role === UserRole.guest;
+  const isAuthenticated = unlocked && !isGuest;
+  const isAdmin =
+    session?.user?.role === "admin" || user?.role === UserRole.admin;
+  const userId = user?.id ?? session?.user?.id;
 
   const hasPermission = (ownerId?: string | null) => {
+    if (isGuest) return false;
     if (isAdmin) return true;
     if (!userId || !ownerId) return false;
     return userId === ownerId;
@@ -85,7 +60,6 @@ export function useAccount() {
   return {
     user,
     update,
-    deleteAccount,
     isAuthenticated,
     isGuest,
     isAdmin,

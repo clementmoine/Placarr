@@ -1,36 +1,249 @@
 // @ts-check
-import crypto from "node:crypto";
-import withSerwistInit from "@serwist/next";
+import { fileURLToPath } from "node:url";
+
 import { NEXT_IMAGE_CONFIG_REMOTE_PATTERNS } from "./src/core/enrich/media/nextImageRemoteHosts.ts";
 
-const revision = crypto.randomUUID();
+/**
+ * Trees `@vercel/nft` must not walk. The webpack plugin ignores only
+ * `node_modules` by default — `data/` (multi-GB foil dumps) and Python
+ * venvs under provider `unity` folders were on the critical path (~11 min).
+ * `outputFileTracingExcludes` only filters after that walk; these go into
+ * `TraceEntryPointsPlugin.traceIgnores` so NFT never stats them.
+ */
+const NFT_TRACE_IGNORES = [
+  "**/data/**",
+  "**/.venv/**",
+  "**/__pycache__/**",
+  "**/*.pyc",
+  "**/unity/.venv/**",
+  "**/curated/cards/**",
+  "**/scratch/**",
+  "**/.tmp-*/**",
+  "**/coverage/**",
+];
 
-const withSerwist = withSerwistInit({
-  disable: process.env.NODE_ENV !== "production",
-  cacheOnNavigation: true,
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  additionalPrecacheEntries: [{ url: "/", revision }],
-});
+/**
+ * One ONNX Runtime Web module in the browser bundle.
+ *
+ * transformers.js imports `onnxruntime-web/webgpu`; ppu-paddle-ocr and our
+ * DocAligner import `onnxruntime-web`. Those are two different bundles of
+ * the same runtime, each with its own `env` and its own WebAssembly
+ * instance: twice the memory on a phone, and the configuration in
+ * `src/lib/client/scan/ortRuntime.ts` (self-hosted WASM, flavour by
+ * capability) only reached one of them. Both specifiers resolve to the same
+ * file here, browser side only — the server never bundles `onnxruntime-web`.
+ */
+const ORT_WEB_BUNDLE =
+  "./node_modules/onnxruntime-web/dist/ort.webgpu.bundle.min.mjs";
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  // Les données runtime ne font pas partie du build : sans cette exclusion le
-  // tracing standalone recopiait tout public/uploads (plusieurs Go) et .cache
-  // (index SQLite providers) dans .next/standalone à chaque build. Elles sont
-  // écrites/servies au runtime et persistées par des volumes Docker.
+  turbopack: {
+    resolveAlias: {
+      "onnxruntime-web": { browser: ORT_WEB_BUNDLE },
+      "onnxruntime-web/webgpu": { browser: ORT_WEB_BUNDLE },
+    },
+  },
+  // Next 16 writes AGENTS.md / CLAUDE.md on `next dev`. We already have
+  // project rules under `.cursor/`; don't dump extra files into the tree.
+  agentRules: false,
+  /**
+   * Hosts allowed to load dev assets, for testing on a phone over the LAN.
+   *
+   * `next dev` answers 403 to any `/_next/*` request carrying a cross-origin
+   * `Origin` header, which is every request a browser makes to
+   * `http://192.168.x.y:3000`. The page itself still renders, so the failure
+   * looks like anything but what it is: the client bundle never boots, so React
+   * never hydrates — the UI shows raw i18n keys (`auth.loginButton`), and the
+   * login form submits natively and comes back blank instead of signing you in.
+   *
+   * Private ranges only, and `next dev` only, so nothing routable can reach it.
+   * A home network hands out a different address often enough that pinning one
+   * would only break again. `*` matches a single label, so `172.16.*.*` does
+   * not cover the rest of 172.16.0.0/12 — an iPhone hotspot is 172.20.10.0/28.
+   */
+  allowedDevOrigins: [
+    "192.168.*.*",
+    "10.*.*.*",
+    ...Array.from({ length: 16 }, (_, octet) => `172.${16 + octet}.*.*`),
+    "*.local",
+    "*.localhost",
+  ],
   outputFileTracingExcludes: {
-    "*": ["./public/uploads/**", "./.cache/**"],
+    "*": [
+      "./data/**",
+      "./src/providers/**/unity/**",
+      "./src/providers/**/unity/.venv/**",
+      "./src/providers/**/curated/cards/**",
+      "./scripts/**/.venv/**",
+      "./**/.venv/**",
+      "./**/__pycache__/**",
+      "./scratch/**",
+      "./coverage/**",
+    ],
   },
   typescript: {
     ignoreBuildErrors: false,
+  },
+  experimental: {
+    // Large app: lets webpack drop compilation caches between compilers
+    // so the worker stays under the 16 GB heap cap in `package.json`.
+    webpackMemoryOptimizations: true,
   },
   images: {
     // Next.js caps remotePatterns at 50 — runtime host guard in `src/proxy.ts`.
     remotePatterns: NEXT_IMAGE_CONFIG_REMOTE_PATTERNS,
   },
+  /**
+   * Models / WASM threads: CORP on static models; COEP credentialless on the
+   * shelves scan surface so ort-web can use SharedArrayBuffer when available
+   * without breaking cross-origin catalogue faces (credentialless).
+   */
+  /**
+   * `public/models` would otherwise win over an app route and skip our
+   * gzip/br stream. beforeFiles runs ahead of the public filesystem.
+   */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/models/:path*",
+          destination: "/api/models/:path*",
+        },
+      ],
+    };
+  },
+  async headers() {
+    return [
+      {
+        source: "/models/:path*",
+        headers: [
+          {
+            key: "Cross-Origin-Resource-Policy",
+            value: "cross-origin",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/shelves",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          {
+            key: "Cross-Origin-Embedder-Policy",
+            value: "credentialless",
+          },
+        ],
+      },
+    ];
+  },
+  /**
+   * Server packages Next must NOT bundle.
+   *
+   * This used to be `[]`, which reads like "nothing special to declare" but
+   * actually *replaces* Next's own default list — 79 packages, `sharp` and
+   * `pg` among them. Emptying it made the build bundle a native image library
+   * and its platform binaries into the server output: 22-minute builds and a
+   * 3.7 GB `.next`.
+   *
+   * The original intent was narrower — keep **`@prisma/client`** bundled,
+   * because Prisma 7's real client lives in `src/generated` and the npm package
+   * is an empty stub that looks for a missing `.prisma/client`. So the list is
+   * Next's defaults intersected with what this project actually depends on,
+   * minus that one entry.
+   */
+  serverExternalPackages: [
+    "@huggingface/transformers",
+    // unpdf PDF→PNG fallback — native Skia bindings must stay external.
+    "@napi-rs/canvas",
+    "eslint",
+    "onnxruntime-node",
+    "pg",
+    "ppu-paddle-ocr",
+    "ppu-ocv",
+    "prettier",
+    "prisma",
+    "sharp",
+    "typescript",
+    "unpdf",
+  ],
 };
 
-export default withSerwist(nextConfig);
+/**
+ * Watch tuning for the webpack *dev* server only.
+ *
+ * Foil/CDN dumps write heavily under ``data/``. Watching them forces webpack to
+ * recompile on every texture pull (and races JSON parses on concurrent
+ * ``/assets/...`` requests during invalidation).
+ *
+ * Deliberately outside `nextConfig`: since Next 16 the mere presence of a
+ * `webpack` key makes a Turbopack `next build` fail. The key exists only when
+ * `TURBOPACK` is unset (`next dev --webpack` / `pnpm build`).
+ *
+ * @param {{ watchOptions?: Record<string, unknown>, resolve?: { alias?: Record<string, string | false | string[]> }, plugins?: { constructor?: { name?: string }, traceIgnores?: string[] }[] }} config
+ * @param {{ dev?: boolean, isServer?: boolean, nextRuntime?: string }} options
+ */
+const applyWebpack = (config, { dev, isServer, nextRuntime }) => {
+  if (!isServer) {
+    // Same single-runtime rule as `turbopack.resolveAlias` above.
+    const abs = fileURLToPath(new URL(ORT_WEB_BUNDLE, import.meta.url));
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "onnxruntime-web$": abs,
+      "onnxruntime-web/webgpu$": abs,
+    };
+  }
+  if (dev) {
+    const ignored = [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/.next/**",
+      "**/data/**",
+      "**/src/providers/**/unity/.venv/**",
+      "**/src/effects/**/cards.json",
+      "**/src/effects/**/manifest.json",
+    ];
+    config.watchOptions = { ...config.watchOptions, ignored };
+    return config;
+  }
+  if (isServer && nextRuntime === "nodejs") {
+    for (const plugin of config.plugins ?? []) {
+      if (
+        plugin?.constructor?.name === "TraceEntryPointsPlugin" &&
+        Array.isArray(plugin.traceIgnores)
+      ) {
+        plugin.traceIgnores.push(...NFT_TRACE_IGNORES);
+      }
+    }
+  }
+  return config;
+};
+
+function nextConfigForPhase() {
+  /*
+    `PLACARR_DIST_DIR` construit ailleurs que dans `.next` — de quoi vérifier un
+    build sans écraser celui du serveur de dev qui tourne. Vérification
+    seulement : la sortie normale reste `.next`.
+
+    Étalé dans un **nouvel** objet : Next gèle la config qu'il a lue, et y
+    écrire échoue à la validation, avant le moindre message utile — un build
+    muet pendant plusieurs minutes, puis une erreur qui ne dit pas d'où elle
+    vient.
+  */
+  const distDir = process.env.PLACARR_DIST_DIR;
+  const base = distDir ? { ...nextConfig, distDir } : nextConfig;
+  // Turbopack rejects a `webpack` key. `pnpm build` is `--webpack`.
+  if (process.env.TURBOPACK) return base;
+  return {
+    ...base,
+    webpack: (config, options) => applyWebpack(config, options),
+  };
+}
+
+export default nextConfigForPhase;

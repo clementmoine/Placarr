@@ -10,6 +10,13 @@ export function normalizeForTokens(s: string): string {
     .toLowerCase();
 }
 
+/** Substring match ignoring case and accents (« epees » ⊂ « 7 Épées »). */
+export function includesFolded(haystack: string, needle: string): boolean {
+  const n = normalizeForTokens(needle);
+  if (!n) return true;
+  return normalizeForTokens(haystack).includes(n);
+}
+
 /**
  * Some catalogs (notably ScreenScraper FR noms) store subtitle separators as
  * "Main ? Subtitle" because `:` is awkward in filenames. Real interrogative

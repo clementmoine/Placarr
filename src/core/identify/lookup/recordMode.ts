@@ -73,8 +73,7 @@ export function filterBarcodeLookupTasksForRecord(
 
 /** Slim RECORD: skip ScreenScraper media; keep PC name fallback (fast, anchor). */
 export function buildBarcodeRecordEnrichmentDeps():
-  | GameBarcodeEnrichmentDeps
-  | undefined {
+  GameBarcodeEnrichmentDeps | undefined {
   if (!isBarcodeRecordSlimMode()) return undefined;
   return {
     ...createGameBarcodeEnrichmentDeps(),

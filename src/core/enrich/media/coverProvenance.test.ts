@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   COVER_PROVENANCE_ORDER,
   coverProvenanceRank,
+  isListingPhotoCoverProvenance,
   resolveCoverProvenance,
 } from "./coverProvenance";
 
@@ -47,5 +48,11 @@ describe("coverProvenance", () => {
     expect(resolveCoverProvenance({ coverProvenance: "listing_photo" })).toBe(
       "listing_photo",
     );
+  });
+
+  it("détecte listing_photo pour la démotion de pin", () => {
+    expect(isListingPhotoCoverProvenance("listing_photo")).toBe(true);
+    expect(isListingPhotoCoverProvenance("catalog")).toBe(false);
+    expect(isListingPhotoCoverProvenance(null)).toBe(false);
   });
 });

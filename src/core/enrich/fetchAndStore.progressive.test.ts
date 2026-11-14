@@ -6,9 +6,7 @@ const h = vi.hoisted(() => ({
   fetchMetadataByType: vi.fn(),
   getCachedMetadata: vi.fn(),
   storeMetadata: vi.fn(),
-  formatMetadataFromStorage: vi.fn(
-    (value: unknown) => value as MetadataResult,
-  ),
+  formatMetadataFromStorage: vi.fn((value: unknown) => value as MetadataResult),
   assertRefreshCanPersist: vi.fn().mockResolvedValue(true),
   prismaItemFindUnique: vi.fn(),
   prismaFieldEvidenceFindMany: vi.fn().mockResolvedValue([]),
@@ -95,11 +93,13 @@ describe("fetchAndStoreMetadata — progressive API pass", () => {
         options?: {
           onApiPassComplete?: (partial: MetadataResult) => Promise<void>;
           existingScrapeProviderIds?: readonly string[];
+          existingExternalIds?: Record<string, string | null>;
+          existingProviderRecordUrls?: Record<string, string>;
         },
       ) => {
-        expect(options?.existingScrapeProviderIds?.sort()).toEqual(
-          ["bdovore"].sort(),
-        );
+        expect([...(options?.existingScrapeProviderIds ?? [])].sort()).toEqual([
+          "bdovore",
+        ]);
         expect(options?.existingExternalIds).toEqual({ bdovore: "51068" });
         expect(options?.existingProviderRecordUrls).toEqual({
           bdovore: "https://www.bdovore.com/Album?id_tome=51068",

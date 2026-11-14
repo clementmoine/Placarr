@@ -4,19 +4,22 @@ import {
   probeContextOrDefault,
 } from "@/lib/dev/mappingRawKeys";
 import { teardownMetadataWhen } from "@/core/catalog/teardownHelpers";
+import { defineProvider } from "@/providers/shared/defineProvider";
 
-import type { ProviderModule } from "@/types/providerModule";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 import { fetchCoverFromCoverProject, fetchFromCoverProject } from "./resolver";
 
-export const coverprojectModule: ProviderModule = {
+export const coverprojectModule = defineProvider({
   info: {
     id: "coverproject",
     label: "Cover Project",
+    // Static CDN listing pages — two in flight is polite enough.
+    maxConcurrentRequests: 2,
     types: ["games"],
     capabilities: ["cover"],
     auth: { kind: "scrape" },
+    supplyMode: "scrape_cache",
     canonical: true,
     isRealBoxCover: true,
     // Covers are full front+back wraps, so the display scorer penalises them and
@@ -40,6 +43,7 @@ export const coverprojectModule: ProviderModule = {
       )) as MetadataResult | null;
     },
   }),
+  // kind `cover` + label custom — pas le défaut metadata.
   testHandlers: {
     "coverproject-metadata": {
       label: "The Cover Project - Covers",
@@ -98,7 +102,7 @@ export const coverprojectModule: ProviderModule = {
       return url ? { title: ctx.name, imageUrl: url } : null;
     });
   },
-};
+});
 
 export { fetchCoverFromCoverProject, fetchFromCoverProject } from "./resolver";
 export {

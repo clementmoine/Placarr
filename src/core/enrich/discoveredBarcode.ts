@@ -1,7 +1,7 @@
 import {
   detectVideoGamePlatformKey,
   isVideoGamePlatformKey,
-} from "@/core/identify/platforms/platforms";
+} from "@/core/identify/platforms/platformList";
 
 function normalizeMetadataPlatformKey(value?: string | null): string | null {
   if (!value?.trim()) return null;

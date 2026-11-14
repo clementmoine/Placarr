@@ -1,7 +1,10 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { cleanSearchQuery } from "@/core/enrich/search/query";
 import { parseTMDBSeriesIntent } from "./resolver";
+
+type TmdbSuggestionHit = { title?: string; name?: string };
+type TmdbSuggestionResults = { results?: TmdbSuggestionHit[] };
 
 export async function getTMDBSuggestions(name: string): Promise<string[]> {
   try {
@@ -11,9 +14,9 @@ export async function getTMDBSuggestions(name: string): Promise<string[]> {
 
     const [movieRes, tvRes] = await Promise.all([
       seriesIntent.isSeriesLike
-        ? Promise.resolve({ data: { results: [] } })
-        : axios.get(movieSearchUrl),
-      axios.get(tvSearchUrl),
+        ? Promise.resolve({ data: { results: [] as TmdbSuggestionHit[] } })
+        : httpGet<TmdbSuggestionResults>(movieSearchUrl),
+      httpGet<TmdbSuggestionResults>(tvSearchUrl),
     ]);
 
     const movieSuggestions = (movieRes.data?.results || [])

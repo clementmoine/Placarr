@@ -1,0 +1,96 @@
+{
+  "observed": "2026-09-04",
+  "source": "ebay.fr ventes réussies/terminées (logged-in), Monde entier",
+  "note": "NI/TE/TA orphans absent from FR/DE sold history. PR作 sold yielded hits. Skipped PR作-4 Chinese. ebay.com sold needs separate login.",
+  "faces": [
+    {
+      "printedRef": "PR作-11",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-11",
+      "listing": "https://www.ebay.fr/itm/252823015054",
+      "imageId": "sEMAAOSwXYtY0I46",
+      "url": "https://i.ebayimg.com/images/g/sEMAAOSwXYtY0I46/s-l1600.webp",
+      "staging": "staging/ebay/prta0011-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "PR作-1",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-1",
+      "listing": "https://www.ebay.fr/itm/252822999982",
+      "imageId": "NQIAAOSwTM5Y0Iow",
+      "url": "https://i.ebayimg.com/images/g/NQIAAOSwTM5Y0Iow/s-l1600.webp",
+      "staging": "staging/ebay/prta0001-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "PR作-7",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-7",
+      "listing": "https://www.ebay.fr/itm/262903654393",
+      "imageId": "YqsAAOSwCU1Y0I0N",
+      "url": "https://i.ebayimg.com/images/g/YqsAAOSwCU1Y0I0N/s-l1600.webp",
+      "staging": "staging/ebay/prta0007-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "PR作-17",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-17",
+      "listing": "https://www.ebay.fr/itm/262903664591",
+      "imageId": "gsgAAOSwol5Y0JCg",
+      "url": "https://i.ebayimg.com/images/g/gsgAAOSwol5Y0JCg/s-l1600.webp",
+      "staging": "staging/ebay/prta0017-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "PR作-15",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-15",
+      "listing": "https://www.ebay.fr/itm/262903662456",
+      "imageId": "LfwAAOSwdGFY0JAi",
+      "url": "https://i.ebayimg.com/images/g/LfwAAOSwdGFY0JAi/s-l1600.webp",
+      "staging": "staging/ebay/prta0015-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "PR作-10",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-10",
+      "listing": "https://www.ebay.fr/itm/252823014307",
+      "imageId": "olkAAOSw2gxY0I37",
+      "url": "https://i.ebayimg.com/images/g/olkAAOSw2gxY0I37/s-l1600.webp",
+      "staging": "staging/ebay/prta0010-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    },
+    {
+      "printedRef": "PR作-14",
+      "lang": "ja",
+      "title": "Naruto Card Game Promo PR作-14",
+      "listing": "https://www.ebay.fr/itm/252823018849",
+      "imageId": "L1gAAOSw4A5Y0I8H",
+      "url": "https://i.ebayimg.com/images/g/L1gAAOSw4A5Y0I8H/s-l1600.webp",
+      "staging": "staging/ebay/prta0014-ja.webp",
+      "ingest": true,
+      "note": "ebay sold dig JA orphan 2026-09-04"
+    }
+  ],
+  "counts": {
+    "total": 7,
+    "prta": 7
+  },
+  "installed": {
+    "written": 7,
+    "failed": 0
+  },
+  "after": {
+    "missingArtTiles": 572,
+    "trulyFacelessJa": 112
+  }
+}

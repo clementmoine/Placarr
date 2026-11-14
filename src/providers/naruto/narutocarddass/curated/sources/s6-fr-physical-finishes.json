@@ -1,0 +1,8 @@
+{
+  "source": "FR Série 6 chapter (Kana / DVD inserts + MIJ reprints) — no FR foil cardboard",
+  "observed": "2026-10-19",
+  "line": "carddass-fr",
+  "note": "S6 was never a FR booster set. Chapter prints are Normale only (inserts / reprints). Empty holoOnly forces every S6 slot to Normale — never invent dual or foil.",
+  "holoOnly": [],
+  "dualNormalAndHolo": []
+}

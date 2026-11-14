@@ -1,0 +1,190 @@
+/**
+ * Admin Catalogue browse for Magic — sqlite titles + local faces, with
+ * Scryfall CDN soft-fill from `curated/art-urls.json` (same ledger as seed /
+ * decorateCandidate). Local `art.*` always wins.
+ *
+ * Audit filters (« sans image » / incomplete) stay local-only so densify debt
+ * remains honest empty tiles. Default browse soft-fills CDN so the grid is
+ * usable before Sync densifies Scryfall → disk. Overscan + readdir on ~100k
+ * rows hung the admin grid — missingArtOnly is SQL empty `print_assets.art`.
+ */
+import { existsSync, statSync } from "node:fs";
+
+import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
+import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
+import { assetsCardUrl } from "@/lib/packAssetUrls";
+import { packCatalogDb } from "@/lib/packPaths";
+import { catalogUrlMayStayRemote } from "@/providers/shared/catalogDurableCdn";
+import { resolveCatalogueLocalArtUrl } from "@/providers/shared/cardCatalogue/localCatalogueFace";
+import {
+  createLocalPrintsIndex,
+  getLocalPrintsIndex,
+  type LocalPrintSearchRow,
+} from "@/providers/shared/cardCatalogue/localPrintsIndex";
+
+import {
+  artUrlsMtimeMs,
+  clearMtgArtUrlCache,
+  loadMtgArtUrlMap,
+  resolveMtgArtUrl,
+} from "./artUrls";
+import { MTG_PACK_ID } from "./pack";
+
+type Cache = { stamp: string; rows: CatalogueCardRow[] };
+let cache: Cache | null = null;
+
+function sqliteMtimeMs(): number {
+  const file = packCatalogDb(MTG_PACK_ID);
+  try {
+    if (!existsSync(file)) return 0;
+    return statSync(file).mtimeMs;
+  } catch {
+    return 0;
+  }
+}
+
+function cacheStamp(): string {
+  return `${sqliteMtimeMs()}:${artUrlsMtimeMs()}`;
+}
+
+function diskCardOf(row: LocalPrintSearchRow): string {
+  return row.grouping ? `${row.number}-${row.grouping}` : row.number;
+}
+
+function remoteArtUrl(
+  printKey: string,
+  lang: string,
+): { url: string; artLang: string } | null {
+  const hit = resolveMtgArtUrl(loadMtgArtUrlMap(), printKey, lang);
+  if (!hit) return null;
+  if (catalogUrlMayStayRemote(hit.url) || /^https?:\/\//i.test(hit.url)) {
+    return hit;
+  }
+  return null;
+}
+
+function rowToCatalogueCard(
+  row: LocalPrintSearchRow,
+  opts?: { softFillCdn?: boolean },
+): CatalogueCardRow {
+  const set = (row.setCode || row.cardType || "").trim() || "—";
+  const diskCard = diskCardOf(row);
+  const local = resolveCatalogueLocalArtUrl({
+    packId: MTG_PACK_ID,
+    set,
+    lang: row.lang,
+    card: diskCard,
+    sqliteArt: row.art?.trim() || row.thumb?.trim() || "",
+  });
+  const thumbRaw = row.thumb?.trim() || "";
+  const thumbFile =
+    thumbRaw && thumbRaw !== local.artFile && !thumbRaw.includes("/")
+      ? thumbRaw
+      : "";
+  const name = row.fullName?.trim() || undefined;
+  const label = name
+    ? `${set} · ${diskCard} — ${name}`
+    : `${set} · ${diskCard}`;
+
+  let artUrl = local.artUrl;
+  let missingArt = local.missingArt;
+  let artLocaleFrom: string | undefined;
+  if (local.missingArt && opts?.softFillCdn !== false) {
+    const remote = remoteArtUrl(row.printKey, row.lang);
+    if (remote) {
+      artUrl = remote.url;
+      missingArt = false;
+      if (remote.artLang !== row.lang) artLocaleFrom = remote.artLang;
+    }
+  }
+
+  return {
+    printKey: row.printKey,
+    set,
+    card: diskCard,
+    lang: row.lang,
+    artUrl,
+    ...(thumbFile
+      ? {
+          thumbUrl: assetsCardUrl(
+            MTG_PACK_ID,
+            { set, lang: row.lang, card: diskCard },
+            thumbFile,
+          ),
+        }
+      : {}),
+    hasFoil: false,
+    label,
+    ...(name ? { name } : {}),
+    ...(row.rarity?.trim() ? { rarity: row.rarity.trim() } : {}),
+    missingArt,
+    ...(artLocaleFrom ? { artLocaleFrom } : {}),
+    languageSpecific: true,
+    kind: "face",
+  };
+}
+
+/** Full materialize — densify offline audit (local faces only, no CDN). */
+export function buildMtgCatalogueBrowseRows(): CatalogueCardRow[] {
+  const index = createLocalPrintsIndex(MTG_PACK_ID);
+  if (!index.hasIdentityCorpus()) return [];
+
+  const stamp = cacheStamp();
+  if (cache && cache.stamp === stamp) return cache.rows;
+
+  const packInfo = cataloguePackInfo(MTG_PACK_ID);
+  const locales = packInfo?.catalogueLocales ?? (["en", "fr"] as const);
+
+  const byKeyLang = new Map<string, CatalogueCardRow>();
+  for (const lang of locales) {
+    for (const row of index.listRowsForLanguage(lang)) {
+      const card = rowToCatalogueCard(row, { softFillCdn: false });
+      byKeyLang.set(`${card.printKey}\0${card.lang}`, card);
+    }
+  }
+  const rows = [...byKeyLang.values()].sort((a, b) => {
+    const setCmp = a.set.localeCompare(b.set);
+    if (setCmp !== 0) return setCmp;
+    const cardCmp = a.card.localeCompare(b.card, undefined, { numeric: true });
+    if (cardCmp !== 0) return cardCmp;
+    return a.lang.localeCompare(b.lang);
+  });
+  cache = { stamp, rows };
+  return rows;
+}
+
+export function clearMtgCatalogueBrowseCache(): void {
+  cache = null;
+  clearMtgArtUrlCache();
+}
+
+export type MtgCatalogueBrowsePageInput = {
+  langs: readonly string[];
+  q?: string;
+  offset: number;
+  limit: number;
+  missingArtOnly?: boolean;
+  missingNameOnly?: boolean;
+  incompleteOnly?: boolean;
+};
+
+export function listMtgCatalogueBrowsePage(
+  input: MtgCatalogueBrowsePageInput,
+): { rows: CatalogueCardRow[]; total: number } {
+  const index = getLocalPrintsIndex(MTG_PACK_ID);
+  if (!index.hasIdentityCorpus()) return { rows: [], total: 0 };
+  const softFillCdn = !input.missingArtOnly && !input.incompleteOnly;
+  const page = index.listBrowsePage({
+    langs: input.langs,
+    q: input.q,
+    offset: input.offset,
+    limit: input.limit,
+    missingArtOnly: input.missingArtOnly,
+    missingNameOnly: input.missingNameOnly,
+    incompleteOnly: input.incompleteOnly,
+  });
+  return {
+    total: page.total,
+    rows: page.rows.map((row) => rowToCatalogueCard(row, { softFillCdn })),
+  };
+}

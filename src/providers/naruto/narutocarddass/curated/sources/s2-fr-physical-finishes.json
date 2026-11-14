@@ -1,0 +1,31 @@
+{
+  "source": "physical FR Série 2 shelf + dig Collection Naruto (2026-10-19)",
+  "observed": "2026-10-19",
+  "line": "carddass-fr",
+  "note": "carddass.fr liste S2 marks several holos on the wrong collector (off-by-one). Physical: foil-only IDs below; every other S2 slot (paper + reprints) is Normale only. Confirmed site-holo / physical-Normale: ni062, ni065, ni069, ni095, ni103, ta068, ta071, ta074, ta081, te074, te086, te088, te093, te101.",
+  "holoOnly": [
+    "ni061",
+    "ni064",
+    "ni068",
+    "ni082",
+    "ni083",
+    "ni084",
+    "ni094",
+    "ni100",
+    "ni109",
+    "te062",
+    "te073",
+    "te076",
+    "te085",
+    "te087",
+    "te091",
+    "te092",
+    "te100",
+    "ta067",
+    "ta069",
+    "ta070",
+    "ta073",
+    "ta080"
+  ],
+  "dualNormalAndHolo": []
+}

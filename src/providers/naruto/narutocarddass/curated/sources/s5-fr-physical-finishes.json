@@ -1,0 +1,33 @@
+{
+  "source": "physical FR Série 5 shelf + dig (2026-10-19)",
+  "observed": "2026-10-19",
+  "line": "carddass-fr",
+  "note": "carddass.fr liste S5 is often off-by-one on TE/TA holos. Physical: 24 foil-only (incl. NI-223 confirmed). Site-holo / physical-Normale: ni252, ta194, ta205, ta223, ta225, ta230, ta234, te196, te203, te216, te224, te226, te231. Dig « ~35 holos » mixed S5 + S6 DVD inserts — ignore for S5 count.",
+  "holoOnly": [
+    "ni216",
+    "ni217",
+    "ni218",
+    "ni219",
+    "ni220",
+    "ni221",
+    "ni222",
+    "ni223",
+    "ni229",
+    "ni247",
+    "ni250",
+    "ni251",
+    "ni254",
+    "ni313",
+    "te202",
+    "te223",
+    "te225",
+    "te230",
+    "ta193",
+    "ta200",
+    "ta204",
+    "ta222",
+    "ta229",
+    "ta233"
+  ],
+  "dualNormalAndHolo": []
+}

@@ -1,4 +1,4 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 export interface SSMedia {
   type: string;
@@ -68,6 +68,9 @@ export function screenScraperMediaAttachmentSemantics(media: {
   if (mediaType === "box-2D-back" || mediaType === "box-back") {
     return { type: "image", role: region ? `back-${region}` : "back" };
   }
+  if (mediaType === "box-2D-side" || mediaType === "box-side") {
+    return { type: "image", role: region ? `spine-${region}` : "spine" };
+  }
   if (mediaType === "support-2D" || mediaType === "support-texture") {
     return { type: "image", role: region ? `disc-${region}` : "disc" };
   }
@@ -118,8 +121,7 @@ export function parseScreenScraperMediaUrl(url: string): {
 export function screenScraperAttachmentFromMediaUrl(
   url: string,
 ):
-  | (ScreenScraperMediaAttachmentSemantics & { source: "screenscraper" })
-  | null {
+  (ScreenScraperMediaAttachmentSemantics & { source: "screenscraper" }) | null {
   const parsed = parseScreenScraperMediaUrl(url);
   if (!parsed?.mediaType) return null;
 

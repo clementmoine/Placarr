@@ -1,15 +1,18 @@
 import { PROVIDERS } from "@/core/catalog/catalog";
 
-const PROXY_PROVIDERS = PROVIDERS.filter(
-  (provider) => provider.remoteImageReferer && provider.coverUrlHost,
-);
-
+/**
+ * Resolve the registry provider that owns a protected CDN URL.
+ * Looked up live (not module-cached) so HMR / late registry edits pick up
+ * new `remoteImageReferer` hosts without a full server restart.
+ */
 export function remoteImageProxyProviderFor(url: string) {
   if (!url || !/^https?:\/\//i.test(url)) return null;
   return (
-    PROXY_PROVIDERS.find(
+    PROVIDERS.find(
       (provider) =>
-        provider.coverUrlHost && url.includes(provider.coverUrlHost),
+        Boolean(provider.remoteImageReferer) &&
+        Boolean(provider.coverUrlHost) &&
+        url.includes(provider.coverUrlHost as string),
     ) ?? null
   );
 }

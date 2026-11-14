@@ -108,7 +108,9 @@ describe("buildRequestedTitleFallbackVariants", () => {
   });
 
   it("does not invent Legend of X from La Légende du X", () => {
-    const variants = buildRequestedTitleFallbackVariants("La Légende Du Dragon");
+    const variants = buildRequestedTitleFallbackVariants(
+      "La Légende Du Dragon",
+    );
     expect(variants).not.toContain("Dragon");
     expect(variants).not.toContain("Legend of Dragon");
   });
@@ -301,9 +303,7 @@ describe("isMetadataTitleAligned", () => {
   });
 
   it("rejects Boruto catalog titles for a Naruto shelf volume", () => {
-    expect(
-      franchiseLeadTokens("Naruto n°03"),
-    ).toEqual(["naruto"]);
+    expect(franchiseLeadTokens("Naruto n°03")).toEqual(["naruto"]);
     expect(
       franchiseLeadTokens("Boruto no 03/20: Naruto Next Generations"),
     ).toEqual(["boruto"]);
@@ -1135,10 +1135,7 @@ describe("buildGameMetadataSearchQueries year disambiguators", () => {
     expect(queries[0]).toBe("Resident Evil 4");
     expect(queries.some((q) => q.includes("2023"))).toBe(false);
     expect(buildMetadataAlignmentNames("Resident Evil 4 (2023)")).toEqual(
-      expect.arrayContaining([
-        "Resident Evil 4 (2023)",
-        "Resident Evil 4",
-      ]),
+      expect.arrayContaining(["Resident Evil 4 (2023)", "Resident Evil 4"]),
     );
   });
 });
@@ -1151,7 +1148,10 @@ describe("catalogLabelSimilarity", () => {
         "Picsou Magazine (hors-série, les trésors de Picsou)",
       ),
     ).toBeGreaterThan(
-      catalogLabelSimilarity("les tresors de picsou", "Les âges d'or de Picsou"),
+      catalogLabelSimilarity(
+        "les tresors de picsou",
+        "Les âges d'or de Picsou",
+      ),
     );
     expect(
       catalogLabelSimilarity(
@@ -1169,7 +1169,10 @@ describe("catalogLabelSimilarity", () => {
       ),
     ).toBe(1);
     expect(
-      distinctiveTokenCoverage("les tresors de picsou", "Les âges d'or de Picsou"),
+      distinctiveTokenCoverage(
+        "les tresors de picsou",
+        "Les âges d'or de Picsou",
+      ),
     ).toBe(0.5);
   });
 });

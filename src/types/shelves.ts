@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/browser";
 
 /** Cover + background of a shelf's highest-rated item, for the shelf card. */
 export type ShelfBestItem = {

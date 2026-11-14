@@ -1,0 +1,27 @@
+{
+  "source": "poster-s5-reconstructed",
+  "observed": "2026-11-08",
+  "kind": "research-dig",
+  "ingest": "curated/documents/poster_s5_{face,back}.png → documents harvest (checklist)",
+  "proof": "User hand reconstruction (Figma) of the Série 5 FR paper poster",
+  "files": {
+    "face": {
+      "curated": "curated/documents/poster_s5_face.png",
+      "role": "recto — 92 cartes booster S5",
+      "title": "Poster Série 5 — face (boosters, 92 cartes)"
+    },
+    "back": {
+      "curated": "curated/documents/poster_s5_back.png",
+      "role": "verso — 50 exclusives starters (La quête / Un nouveau départ)",
+      "title": "Poster Série 5 — dos (starters, 50 cartes)"
+    }
+  },
+  "related": [
+    "poster-starters-s5-2026-10-01.json (membership exclusives)",
+    "s5-leboncoin-vendeur-photos-2026-10-01.json (photos vendeur 03/05 — source photo, pas la reconstruction)"
+  ],
+  "notes": [
+    "Remplace les JPEG Leboncoin flous comme artefact lisible pour l’admin Documents.",
+    "Membership starters déjà lockée dans products-contents ; ce dig n’ajoute pas de qty."
+  ]
+}

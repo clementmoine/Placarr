@@ -1,0 +1,47 @@
+[
+  {
+    "url": "https://media.wizards.com/2026/downloads/MagicCompRules%2020261106.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Comprehensive Rules (2026-11-06)"
+  },
+  {
+    "url": "https://media.wizards.com/ContentResources/WPN/MTG_MTR_2026_Feb27_EN.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "Magic Tournament Rules (2026-02-27)"
+  },
+  {
+    "url": "https://media.wizards.com/ContentResources/WPN/MTG_IPG_2024Sep23_EN.pdf",
+    "lang": "en",
+    "kind": "penalty",
+    "title": "Infraction Procedure Guide (2024-09-23)"
+  },
+  {
+    "url": "https://media.wizards.com/ContentResources/WPN/MTG_JAR_2024Aug2_EN.pdf",
+    "lang": "en",
+    "kind": "penalty",
+    "title": "Judging at Regular REL (2024-08-02)"
+  },
+  {
+    "url": "https://magic.wizards.com/en/rules",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Official Rules hub (EN)"
+  },
+  {
+    "url": "https://magic.wizards.com/en/banned-restricted-list",
+    "download": false,
+    "lang": "en",
+    "kind": "op",
+    "title": "Banned & Restricted List hub"
+  },
+  {
+    "url": "https://wpn.wizards.com/en/rules-documents",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "WPN Rules Documents hub (checklists + MTR)"
+  }
+]

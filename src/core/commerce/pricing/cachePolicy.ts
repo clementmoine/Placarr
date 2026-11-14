@@ -114,4 +114,3 @@ export function shouldRefreshPriceCache(
 export function finalizeGamePriceProviders(providers: string[]) {
   return providers;
 }
-

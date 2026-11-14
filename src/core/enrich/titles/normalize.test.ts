@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  includesFolded,
   normalizeForTokens,
   repairCatalogColonSubstitute,
 } from "./normalize";
@@ -16,12 +17,18 @@ describe("normalizeForTokens", () => {
   });
 });
 
+describe("includesFolded", () => {
+  it("matches accent-stripped queries against accented titles", () => {
+    expect(includesFolded("7 Épées", "7 epees")).toBe(true);
+    expect(includesFolded("Kidōmaru", "kidomaru")).toBe(true);
+    expect(includesFolded("7 Épées", "7 sabres")).toBe(false);
+  });
+});
+
 describe("repairCatalogColonSubstitute", () => {
   it("rewrites ScreenScraper-style Main ? Subtitle to a colon", () => {
     expect(
-      repairCatalogColonSubstitute(
-        "Lego La Grande Aventure ? Le Jeu Vidéo",
-      ),
+      repairCatalogColonSubstitute("Lego La Grande Aventure ? Le Jeu Vidéo"),
     ).toBe("Lego La Grande Aventure : Le Jeu Vidéo");
   });
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { QueryClient } from "@tanstack/react-query";
-import type { Item, Shelf } from "@prisma/client";
+import type { Item, Shelf } from "@/generated/prisma/browser";
 
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
 import { refetchItemQueries } from "@/core/collect/queryCache";

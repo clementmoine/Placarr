@@ -1,0 +1,35 @@
+{
+  "source": "starter-holo-identity-hunt",
+  "observed": "2026-08-30",
+  "kind": "research-dig",
+  "question": "Which 2 holographiques are in each FR Carddass starter S1–S4?",
+  "verdict": "introuvable — count only (2 per starter). No named printKeys for S1–S4 deck holos in curated, staging, carddass.fr catalogues/listes S1–S4, Bandai H checklist, Manga-News rarity tags, Tric Trac, opened-box accessories dig, Wayback news (S5 still count-only in prose), Coleka, eBay FR/IT singles.",
+  "attestedCountOnly": [
+    "sets.json starterComposition",
+    "carddass.fr news / index / trictrac (11 rares + 2 holos + 27 communes)",
+    "bandai-fr-serie-1-detaillee deckHolos: 2",
+    "poster dig: finish omitted on purpose"
+  ],
+  "rejectedHeuristics": {
+    "mangaNewsHoloIntersectMembership": {
+      "whyNot": "Series Holo tags ∩ poster membership is not cleanly 2 per deck (Hokage 3, Sceller 1, Puissances 3, Esprit 0). Docs already: Manga-News Deck Série = series rarity, not starter slots.",
+      "teasersOnly": {
+        "starter-pays-du-vent": ["naruto:ni-0001", "naruto:ni-0008"],
+        "starter-detruire-konoha": ["naruto:ni-0084", "naruto:te-0076"],
+        "starter-apprentissage": ["naruto:ni-0115", "naruto:ni-0127"],
+        "starter-invocation": ["naruto:ni-0176", "naruto:ni-0204"]
+      }
+    },
+    "bandaiHChecklist": "33 series holos for S1 + « 2 holos par decks » count — does not assign which two printKeys are the deck slots."
+  },
+  "contrastS5": {
+    "liste_cartes_s5": "Official * /** rows can carry Holo rarity (partial). Outside this hunt's S1–S4 ask; still incomplete for full 40.",
+    "news.htm": "S5 starters: « 2 holographiques » without naming them in the news blurb."
+  },
+  "stillNeeded": [
+    "Photo livret / verso boîte naming the 2 holos",
+    "Opened sealed inventory with finish photos tied to starter SKU",
+    "Official catalogue row that marks holo inside the starter card list (not booster-only)"
+  ],
+  "ingest": "none — do not write finish:holo without proof"
+}

@@ -179,4 +179,3 @@ export function metadataTitleSimilarity(a: string, b: string): number {
 
   return Math.max(tokenScore, distanceScore);
 }
-

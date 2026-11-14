@@ -164,7 +164,8 @@ export function booknodePreviewCoverUrl(
         candidate.includes("/mod11/") && /264-432\.webp$/i.test(candidate),
     ) ||
     candidates.find(
-      (candidate) => candidate.includes("/mod11/") && /\.webp$/i.test(candidate),
+      (candidate) =>
+        candidate.includes("/mod11/") && /\.webp$/i.test(candidate),
     ) ||
     candidates.find((candidate) => /\.webp$/i.test(candidate)) ||
     url

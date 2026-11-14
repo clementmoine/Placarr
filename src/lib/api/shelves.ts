@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { Prisma, Shelf } from "@prisma/client";
+import type { Prisma, Shelf } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount, ShelfWithItems } from "@/types/shelves";
 
 export const getShelves = (

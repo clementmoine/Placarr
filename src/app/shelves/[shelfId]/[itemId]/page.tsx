@@ -23,6 +23,12 @@ import {
   Gauge,
   Layers,
   Loader2,
+  Sparkles,
+  HandHelping,
+  Award,
+  Trash2,
+  PackageOpen,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
@@ -33,6 +39,8 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
+  type CSSProperties,
   type SyntheticEvent,
   type TouchEvent,
 } from "react";
@@ -50,39 +58,67 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ItemModal } from "@/components/modals/ItemModal";
+import nextDynamic from "next/dynamic";
 import { ConditionIcon } from "@/components/ConditionIcon";
 import { ItemCard } from "@/components/ItemCard";
+
+const ItemModal = nextDynamic(
+  () =>
+    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  { ssr: false },
+);
+const FoilCardImage = nextDynamic(
+  () =>
+    import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
+  { ssr: false },
+);
+const SealedDeclareModal = nextDynamic(
+  () =>
+    import("@/components/modals/SealedDeclareModal").then(
+      (m) => m.SealedDeclareModal,
+    ),
+  { ssr: false },
+);
 
 import { getShelf } from "@/lib/api/shelves";
 import {
   getItem,
   saveItem,
   refreshItemMetadata,
+  removeItemMediaImage,
+  getItemSealedContainment,
+  getItemContainment,
+  attachItemContainment,
+  detachItemContainment,
+  openSealedItem,
+  getItemTrades,
   type ItemPrices,
+  type SealedContainmentSourceDto,
 } from "@/lib/api/items";
-import { cancelBackgroundJob, upsertBackgroundJobInCache } from "@/lib/api/backgroundJobs";
 import {
-  getHeroImage,
-  getGalleryImages,
-} from "@/core/collect/media";
-import { findAttachmentForUrl } from "@/core/enrich/media/coverUrl";
+  cancelBackgroundJob,
+  upsertBackgroundJobInCache,
+} from "@/lib/api/backgroundJobs";
+import { getHeroImageLight, getGalleryImagesLight } from "@/core/collect/mediaDisplay";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import { AttachmentSourceChip } from "@/components/AttachmentSourceChip";
+import { ItemPresenceTimeline } from "@/components/ItemPresenceTimeline";
+import { ItemTradeLinks } from "@/components/ItemTradeLinks";
+import { formatGradeBadge } from "@/core/collect/itemGrade";
 import {
   hasGameMediaGalleryAttachment,
   hasDetailMetadataAttachments,
   isMissingGameMediaGallery,
   isMissingMusicGallery,
   isMissingBookGallery,
-} from "@/core/enrich/galleries";
+} from "@/core/enrich/media/galleries";
 
 import type { ShelfWithItems } from "@/types/shelves";
 import type { ItemWithMetadata } from "@/types/items";
-import type { Shelf, Prisma, Item } from "@prisma/client";
+import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useDocumentTitle } from "@/lib/client/hooks/useDocumentTitle";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -96,7 +132,59 @@ import {
 import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
-import { getDetailCoverClass, getAspectRatio } from "@/lib/text/cardFormat";
+import { FlippableCard } from "@/components/FlippableCard";
+import { SealedBagOverlay } from "@/components/SealedBagOverlay";
+import { GameBox3D } from "@/components/GameBox3D";
+import {
+  isSealedFinish,
+  sealedBagOuterAspect,
+} from "@/core/render/sealedBag";
+import { Disc3D } from "@/components/Disc3D";
+import {
+  resolveBoxFaces,
+  resolveDiscFace,
+  resolveFlatSleeveFlip,
+} from "@/core/enrich/media/resolveBoxFaces";
+import { remoteImageDisplaySrc } from "@/core/enrich/media/remoteImageDisplay";
+import { resolveOpticalDiscKind, isLooseDiscShelfPresentation } from "@/core/enrich/media/opticalDisc";
+import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
+import { shouldIgnoreItemSiblingNavigation } from "@/lib/client/itemSiblingNavigation";
+import {
+  resolveDefaultCardBack,
+  resolveSharedCardBackSkeleton,
+} from "@/core/render/foil";
+import { useMirroredCropMask } from "@/lib/client/hooks/useMirroredCropMask";
+import {
+  stripEditSuffixFromUrl,
+  urlsReferToSameLocalizedImage,
+} from "@/core/enrich/media/coverUrl";
+import { resolveStoredVariant } from "@/core/enrich/variants";
+import {
+  edgeGradient,
+  useImageEdgeColors,
+} from "@/lib/client/hooks/useImageEdgeColors";
+import {
+  usePrintVariant,
+  variantRendering,
+} from "@/lib/client/hooks/usePrintVariant";
+import {
+  effectsRegistered,
+  ensureEffects,
+  subscribeEffectsReady,
+} from "@/effects/ensureEffects";
+import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
+import {
+  getDetailCoverClass,
+  getAspectRatio,
+  faceDisplayAspect,
+} from "@/lib/text/cardFormat";
+import { AmbientBackdrop } from "@/components/AmbientBackdrop";
+import { CardBackSkeleton } from "@/components/CardBackSkeleton";
+import {
+  cardFaceRadius,
+  OrientedMediaRotator,
+} from "@/components/OrientedMediaFrame";
+import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { prepareDescriptionMarkdown } from "@/lib/text/descriptionMarkdown";
 import {
   itemPath,
@@ -106,6 +194,7 @@ import {
 import { compareTitlesForSort } from "@/core/enrich/titles/sort";
 import { seriesSiblings } from "@/core/enrich/titles/series";
 import { FRANCHISE_FACT_KIND } from "@/core/enrich/facts/franchiseFact";
+import { usesPrintSearch } from "@/lib/printSearchTypes";
 import {
   invalidateItemQueries,
   patchCachedItem,
@@ -113,8 +202,20 @@ import {
   shelfListItemMissingAttachments,
 } from "@/core/collect/queryCache";
 import { useRefetchItemWhenMetadataIdle } from "@/core/collect/useRefetchItemWhenMetadataIdle";
-import { getItemValueEstimate } from "@/core/collect/value";
-import { marketOfferConditionsForItem } from "@/core/collect/condition";
+import {
+  detailPriceChipIsObserved,
+  estimationFactDuplicatesPriceChip,
+  getItemValueEstimate,
+} from "@/core/collect/value";
+import {
+  marketOfferConditionsForItem,
+  shelfShowsItemCondition,
+} from "@/core/collect/condition";
+import {
+  countsAsOwned,
+  formatAbsenceBadge,
+} from "@/core/collect/itemAbsence";
+import { canDeclareSealedPulls } from "@/core/collect/sealedOpen";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
 
@@ -127,9 +228,13 @@ import {
   formatDetailFactSourceToken,
 } from "@/core/enrich/facts/playerFacts";
 import {
+  displayFactCitationUrl,
   extractProviderLinkFacts,
   filterRedundantDisplayFacts,
+  isStoryDisplayFact,
+  splitTagValues,
 } from "@/core/enrich/facts/displayFacts";
+import { StoryBodyWithMentions } from "@/components/storytelling/StoryBodyWithMentions";
 import { ProviderLinksBar } from "@/components/ProviderLinksBar";
 
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
@@ -156,15 +261,6 @@ function formatDurationSeconds(seconds?: number | null) {
   return minutes
     ? `${hours} h ${String(minutes).padStart(2, "0")}`
     : `${hours} h`;
-}
-
-function shouldIgnoreItemNavigation(target: EventTarget | null) {
-  if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest(
-      'a, button, input, textarea, select, [role="button"], [role="textbox"], [contenteditable="true"]',
-    ),
-  );
 }
 
 function normalizeFacts(rawFacts: unknown): DetailFact[] {
@@ -216,8 +312,57 @@ function RelatedItemsRow({
   );
 }
 
+/** Packshots des produits scellés qui contiennent ce tirage. */
+function IncludedInRow({
+  title,
+  sources,
+  checklistHref,
+}: {
+  title: string;
+  sources: SealedContainmentSourceDto[];
+  checklistHref: string;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <div className="mt-8 flex flex-col gap-3">
+      <h3 className="text-foreground dark:text-zinc-200 font-bold text-lg tracking-tight select-none">
+        {title}
+      </h3>
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+        {sources.slice(0, 12).map((source) => (
+          <a
+            key={source.slug}
+            href={`${checklistHref}?product=${encodeURIComponent(source.slug)}`}
+            className="group w-28 sm:w-32 shrink-0 flex flex-col gap-2"
+          >
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-border/70 bg-card/50 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+              {source.imageUrl ? (
+                <RemoteImage
+                  src={source.imageUrl}
+                  alt={source.name}
+                  fill
+                  sizes="128px"
+                  className="object-contain p-1.5"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-medium text-muted-foreground">
+                  {source.kind}
+                </div>
+              )}
+            </div>
+            <span className="line-clamp-2 text-center text-[11px] font-medium leading-snug text-foreground/90 group-hover:text-primary">
+              {source.name}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ItemDiscoverySection({
   isPending,
+  includedIn,
   seriesVolumes,
   franchiseName,
   franchiseItems,
@@ -227,6 +372,7 @@ function ItemDiscoverySection({
   t,
 }: {
   isPending: boolean;
+  includedIn: SealedContainmentSourceDto[];
   seriesVolumes: ItemWithMetadata[];
   franchiseName: string | null;
   franchiseItems: ItemWithMetadata[];
@@ -236,13 +382,23 @@ function ItemDiscoverySection({
   t: (key: string, values?: Record<string, string>) => string;
 }) {
   if (isPending) return null;
+  const hasIncluded = includedIn.length > 0;
   const hasSeries = seriesVolumes.length > 0;
   const hasFranchise = Boolean(franchiseName) && franchiseItems.length > 0;
   const hasOther = otherItems.length > 0;
-  if (!hasSeries && !hasFranchise && !hasOther) return null;
+  if (!hasIncluded && !hasSeries && !hasFranchise && !hasOther) return null;
+
+  const checklistHref = `${shelfPath(shelf || { id: shelfId })}/checklist`;
 
   return (
     <div className="mt-8 flex flex-col gap-1 w-full">
+      {hasIncluded && (
+        <IncludedInRow
+          title={t("items.includedIn")}
+          sources={includedIn}
+          checklistHref={checklistHref}
+        />
+      )}
       {hasSeries && (
         <RelatedItemsRow
           title={t("items.otherVolumes")}
@@ -501,9 +657,14 @@ function priceObservationConditions(
   shelfType?: string | null,
   prices?: {
     priceUsedCIB?: number | null;
+    priceObservations?: Array<{ condition?: string | null }> | null;
   } | null,
+  options?: {
+    variant?: string | null;
+    plainFinishes?: readonly (string | null | undefined)[] | null;
+  },
 ) {
-  return marketOfferConditionsForItem(condition, shelfType, prices);
+  return marketOfferConditionsForItem(condition, shelfType, prices, options);
 }
 
 function isPrimaryInfoFact(fact: DetailFact) {
@@ -547,12 +708,6 @@ function isTagLikeDetailFact(fact: DetailFact) {
   );
 }
 
-function splitTagFactValue(value: string) {
-  return value
-    .split(/\s*•\s*/g)
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
 
 const FACT_DISPLAY_ORDER: Record<string, number> = {
   "estimated-value": 10,
@@ -616,8 +771,10 @@ function isDurationLikeFact(fact: DetailFact) {
 }
 
 function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
+  const citation = displayFactCitationUrl(fact.url);
+
   if (fact.kind === "external-link") {
-    return fact.url ? fact : null;
+    return citation ? { ...fact, url: citation } : null;
   }
 
   if (fact.kind === "time-to-beat") {
@@ -629,7 +786,7 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
         ...fact,
         kind: "completion-time",
         label: "Complétion",
-        url: isHowLongToBeatSource(fact) ? fact.url : undefined,
+        url: isHowLongToBeatSource(fact) ? citation : undefined,
       };
     }
 
@@ -637,16 +794,25 @@ function normalizeDisplayFact(fact: DetailFact): DetailFact | null {
       ...fact,
       kind: "duration",
       label: "Durée",
-      url: isHowLongToBeatSource(fact) ? fact.url : undefined,
+      url: isHowLongToBeatSource(fact) ? citation : undefined,
     };
   }
 
+  // Dig indicative quotes (Naruto YT…) — surface as estimated-value with proof.
+  // Other `price` rows stay hidden via filterRedundantDisplayFacts.
+  if (fact.kind === "price" && citation && /^estimation$/i.test(fact.label)) {
+    return {
+      ...fact,
+      kind: "estimated-value",
+      url: citation,
+    };
+  }
+
+  // Keep stamped dig / offer proofs (Distribution, …).
+  // Homepage stamps are already null after sanitize.
   return {
     ...fact,
-    url:
-      fact.kind === "estimated-value" || isHowLongToBeatSource(fact)
-        ? fact.url
-        : undefined,
+    url: citation,
   };
 }
 
@@ -1101,6 +1267,9 @@ export default function ItemDetailsPage() {
   const itemId = params.itemId as Item["id"];
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [openingSealed, setOpeningSealed] = useState(false);
+  const [declareSealedOpen, setDeclareSealedOpen] = useState(false);
+  const [containmentBusy, setContainmentBusy] = useState(false);
   const [modalActiveTab, setModalActiveTab] = useState<
     "general" | "poster" | "background" | "info"
   >("general");
@@ -1108,6 +1277,7 @@ export default function ItemDetailsPage() {
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
     "contain",
   );
+  const [coverFaceReady, setCoverFaceReady] = useState(false);
   // Garde « une seule tentative » : jamais rendu → ref, pas un state (évite
   // un setState synchrone dans l'effect de refresh).
   const autoMetadataRefreshAttemptedRef = useRef(false);
@@ -1162,11 +1332,35 @@ export default function ItemDetailsPage() {
     // while this item is still being enriched (no metadataId yet) — survives a
     // page refresh since the state is derived from the persisted item.
     refetchInterval: (query) =>
-      metadataBusyRefetchInterval(
-        query.state.data ? [query.state.data] : null,
-      ),
+      metadataBusyRefetchInterval(query.state.data ? [query.state.data] : null),
     refetchIntervalInBackground: true,
   });
+
+  const { data: sealedContainment } = useQuery({
+    queryKey: ["shelf", shelfId, "items", item?.id, "sealed-containment"],
+    queryFn: () => getItemSealedContainment(shelfId, item!.id),
+    enabled: Boolean(item?.id && item.printKey),
+    staleTime: 60_000,
+  });
+  const includedInSources = sealedContainment?.sources ?? [];
+
+  const { data: itemContainment } = useQuery({
+    queryKey: ["shelf", shelfId, "items", item?.id, "containment"],
+    queryFn: () => getItemContainment(item!.id, { shelfId }),
+    enabled: Boolean(
+      item?.id && (item.kind === "sealed" || item.kind === "card" || item.printKey),
+    ),
+    staleTime: 15_000,
+  });
+
+  const { data: itemTrades } = useQuery({
+    queryKey: ["itemTrades", shelfId, item?.id],
+    queryFn: () => getItemTrades(item!.id, shelfId),
+    enabled: Boolean(item?.id),
+    staleTime: 15_000,
+  });
+  const tradeCounterpartName =
+    itemTrades?.links?.[0]?.counterpart.name?.trim() || null;
 
   const isMetadataBusy = isItemMetadataBusy(item);
   const hasNoMetadata =
@@ -1179,6 +1373,14 @@ export default function ItemDetailsPage() {
   const metadataRefreshToastArmedRef = useRef(false);
 
   useRefetchItemWhenMetadataIdle(queryClient, item, shelfId);
+
+  // Collector-code bookmarks (`/tfc-2`) resolve after title adoption — rewrite
+  // the address bar to the canonical catalog slug once the item is known.
+  useEffect(() => {
+    if (!item?.id || !item.slug || !shelf) return;
+    if (itemId === item.id || itemId === item.slug) return;
+    router.replace(itemPath(shelf, item));
+  }, [item, itemId, router, shelf]);
 
   useEffect(() => {
     if (!item?.id) return;
@@ -1262,18 +1464,22 @@ export default function ItemDetailsPage() {
     if (!item?.id) return null;
     if (
       item.priceNew == null &&
+      item.priceFoil == null &&
       item.priceUsed == null &&
       item.priceUsedCIB == null &&
       item.priceEstimated == null &&
+      item.priceEstimatedFoil == null &&
       !item.priceObservations?.length
     ) {
       return null;
     }
     return {
       priceNew: item.priceNew ?? null,
+      priceFoil: item.priceFoil ?? null,
       priceUsed: item.priceUsed ?? null,
       priceUsedCIB: item.priceUsedCIB ?? null,
       priceEstimated: item.priceEstimated ?? null,
+      priceEstimatedFoil: item.priceEstimatedFoil ?? null,
       priceLastUpdated: item.priceLastUpdated ?? null,
       priceSources: item.priceSources,
       priceSourceDisplayNames: item.priceSourceDisplayNames,
@@ -1326,7 +1532,7 @@ export default function ItemDetailsPage() {
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
-        shouldIgnoreItemNavigation(event.target)
+        shouldIgnoreItemSiblingNavigation(event.target)
       ) {
         return;
       }
@@ -1353,7 +1559,7 @@ export default function ItemDetailsPage() {
         !nextItemHref ||
         isDetailOverlayOpen ||
         event.touches.length !== 1 ||
-        shouldIgnoreItemNavigation(event.target)
+        shouldIgnoreItemSiblingNavigation(event.target)
       ) {
         touchStartRef.current = null;
         return;
@@ -1369,7 +1575,13 @@ export default function ItemDetailsPage() {
     (event: TouchEvent<HTMLDivElement>) => {
       const start = touchStartRef.current;
       touchStartRef.current = null;
-      if (!start || isDetailOverlayOpen || !previousItemHref || !nextItemHref) {
+      if (
+        !start ||
+        isDetailOverlayOpen ||
+        !previousItemHref ||
+        !nextItemHref ||
+        shouldIgnoreItemSiblingNavigation(event.target)
+      ) {
         return;
       }
 
@@ -1532,6 +1744,32 @@ export default function ItemDetailsPage() {
     if (!item?.id) return;
     cancelMetadataRefresh();
   }, [cancelMetadataRefresh, item?.id]);
+
+  const {
+    mutate: removeGalleryImage,
+    isPending: isRemovingGalleryImage,
+    variables: removingGalleryImageUrl,
+  } = useMutation({
+    mutationFn: (url: string) =>
+      removeItemMediaImage(item!.id, url, item?.shelfId || shelfId),
+    onSuccess: (response) => {
+      if (response.item) {
+        void syncItemQueries(queryClient, response.item, [
+          shelfId,
+          item?.shelfId,
+        ]);
+      } else {
+        void invalidateItemQueries(queryClient, item!.id, [
+          shelfId,
+          item?.shelfId,
+        ]);
+      }
+      toast.success(t("items.editTabs.removeImageSuccess"));
+    },
+    onError: () => {
+      toast.error(t("items.editTabs.removeImageFailed"));
+    },
+  });
 
   const isMetadataRefreshing =
     isItemMetadataRefreshing(item) || isRefreshingMetadata;
@@ -1711,62 +1949,221 @@ export default function ItemDetailsPage() {
 
   const heroImage = useMemo(() => {
     return (
-      item?.backgroundImageUrl || (item ? getHeroImage(item, locale) : null)
+      item?.backgroundImageUrl || (item ? getHeroImageLight(item) : null)
     );
   }, [item, locale]);
 
   const coverImage = item?.imageUrl ?? null;
 
-  const coverSourceChip = useMemo(() => {
-    if (!item || !coverImage) return null;
-    const displayLocale: AttachmentDisplayLocale =
-      locale === "en" ? "en" : "fr";
-    const match = findAttachmentForUrl(getGalleryImages(item), coverImage);
-    if (!match) return null;
-    const gallery = getAttachmentGalleryLabels(
-      {
-        type: match.type,
-        role: match.role,
-        title: match.title,
-        source: match.source,
-        providerLabel: match.providerLabel,
-        sourceNames: match.sourceNames,
-        gridStyleCoverLabelsSource: match.gridStyleCoverLabelsSource,
-      },
-      displayLocale,
+  /**
+   * A foil copy is drawn with the holographic layers; a plain one is not. The
+   * provider says which finishes carry an effect and supplies the masks.
+   */
+  const printVariant = usePrintVariant(item?.printKey, item?.shelf?.type);
+  /**
+   * Pack backs / resolveCss live on the effect registry. ItemCard warms it for
+   * the grid; the fiche must too — otherwise promo / S1 (no stamped set back)
+   * never get Face·Dos (pack default stays unresolved).
+   */
+  const effectsReady = useSyncExternalStore(
+    subscribeEffectsReady,
+    effectsRegistered,
+    () => false,
+  );
+  useEffect(() => {
+    if (item?.printKey || printVariant?.effectPack || item?.variant) {
+      void ensureEffects();
+    }
+  }, [item?.printKey, printVariant?.effectPack, item?.variant]);
+  const variantView = useMemo(
+    () => variantRendering(item?.variant, printVariant, coverImage),
+    [item?.variant, printVariant, coverImage, effectsReady],
+  );
+
+  /** Loose disc hero — printed support art + synthetic optical underside. */
+  const [disc3dFailed, setDisc3dFailed] = useState(false);
+  const preferredCoverRegion = locale === "en" ? "us" : "fr";
+  const itemPlatformKey = useMemo(
+    () =>
+      item?.metadata?.platformKey ??
+      detectVideoGamePlatformKey(shelf?.name ?? "") ??
+      null,
+    [item?.metadata?.platformKey, shelf?.name],
+  );
+  const discFaceUrl = useMemo(() => {
+    if (!item || variantView.foilMaskUrl || item.condition !== "loose") {
+      return null;
+    }
+    return resolveDiscFace(item.metadata?.attachments ?? [], {
+      preferredRegion: preferredCoverRegion,
+      preferredPlatformKey: itemPlatformKey,
+      preferredUrl: coverImage,
+    });
+  }, [
+    item,
+    coverImage,
+    preferredCoverRegion,
+    itemPlatformKey,
+    variantView.foilMaskUrl,
+  ]);
+  const opticalKind = useMemo(() => {
+    const facts = normalizeFacts(item?.metadata?.facts);
+    const mediaFormat =
+      facts.find((fact) => fact.kind === "media-format")?.value ?? null;
+    return resolveOpticalDiscKind({
+      platformKey: itemPlatformKey,
+      mediaFormatFact: mediaFormat,
+      shelfType: shelf?.type ?? null,
+    });
+  }, [item?.metadata?.facts, itemPlatformKey, shelf?.type]);
+  const showDisc3d =
+    Boolean(discFaceUrl) &&
+    !disc3dFailed &&
+    !variantView.foilMaskUrl &&
+    isLooseDiscShelfPresentation(
+      item?.condition,
+      shelf?.type ?? null,
+      itemPlatformKey,
     );
-    return {
-      sourceNames: gallery.sourceNames,
-      detail: gallery.detail,
-    };
-  }, [item, coverImage, locale]);
+
+  /** Rotatable CSS box when front + back + spine scans exist (games shelves). */
+  const [box3dFailed, setBox3dFailed] = useState(false);
+  const boxFaces = useMemo(() => {
+    if (!item || variantView.foilMaskUrl || showDisc3d) {
+      return { complete: false as const };
+    }
+    return resolveBoxFaces(item.metadata?.attachments ?? [], {
+      fallbackFrontUrl: coverImage,
+      preferredRegion: preferredCoverRegion,
+      preferredPlatformKey: itemPlatformKey,
+    });
+  }, [
+    item,
+    coverImage,
+    preferredCoverRegion,
+    itemPlatformKey,
+    variantView.foilMaskUrl,
+    showDisc3d,
+  ]);
+  const showGameBox =
+    boxFaces.complete &&
+    !box3dFailed &&
+    !variantView.foilMaskUrl &&
+    !showDisc3d;
+
+  /** Vinyl / LaserDisc jackets: front + back, no honest spine to invent. */
+  const flatSleeve = useMemo(
+    () =>
+      showGameBox || showDisc3d
+        ? null
+        : resolveFlatSleeveFlip(boxFaces, {
+            preferredFrontUrl: coverImage,
+          }),
+    [boxFaces, showGameBox, showDisc3d, coverImage],
+  );
+  const showFlatSleeve =
+    Boolean(flatSleeve) && !variantView.foilMaskUrl && !box3dFailed;
+
+  const [prevBoxFaceKey, setPrevBoxFaceKey] = useState<string | null>(null);
+  const boxFaceKey = boxFaces.complete
+    ? `${boxFaces.front}|${boxFaces.back}|${boxFaces.spine}`
+    : flatSleeve
+      ? `${flatSleeve.front}|${flatSleeve.back}`
+      : null;
+  if (prevBoxFaceKey !== boxFaceKey) {
+    setPrevBoxFaceKey(boxFaceKey);
+    if (box3dFailed) setBox3dFailed(false);
+  }
+
+  const [prevDiscFaceUrl, setPrevDiscFaceUrl] = useState<string | null>(null);
+  if (prevDiscFaceUrl !== discFaceUrl) {
+    setPrevDiscFaceUrl(discFaceUrl);
+    if (disc3dFailed) setDisc3dFailed(false);
+  }
+
+  const cardBack = resolveDefaultCardBack({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: item?.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
+  const cardBackUrl = cardBack?.url ?? null;
+  const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
+    printCardBackUrl: printVariant?.cardBackUrl,
+    printKey: item?.printKey,
+    setCode: printVariant?.setCode,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
+  });
+  /**
+   * Masks follow the artwork's own framing. Cropping the card left them cut for
+   * the full print, so `object-contain` letterboxed the two differently and the
+   * shimmer sat off the foil areas.
+   */
+  const heroArtworkUrl = variantView.imageUrl ?? coverImage;
+  const foilMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.foilMaskUrl,
+  );
+  const varnishMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.varnishMaskUrl,
+  );
+  const secondVarnishMaskUrl = useMirroredCropMask(
+    heroArtworkUrl,
+    variantView.secondVarnishMaskUrl,
+  );
+  /**
+   * Shown on the fiche only once the provider still offers it. A variant the
+   * catalogue has dropped is not a fact worth stating.
+   */
+  const resolvedVariant = resolveStoredVariant(
+    item?.variant,
+    printVariant?.finishes,
+  );
+
+  /**
+   * Colours of the two cover edges that border the empty space. A contained
+   * cover leaves bands on one axis; filled with the artwork's own edge colours
+   * they read as the image continuing, rather than as a plate it sits on.
+   */
+  const {
+    colors: coverEdgeColors,
+    measure: measureCoverEdges,
+    reset: resetCoverEdgeColors,
+  } = useImageEdgeColors();
 
   // Réinitialisation quand la cover change — ajustée pendant le render.
   const [prevCoverImage, setPrevCoverImage] = useState(coverImage);
   if (prevCoverImage !== coverImage) {
     setPrevCoverImage(coverImage);
     setCoverImageFit("contain");
+    setCoverFaceReady(false);
+    resetCoverEdgeColors();
   }
 
   const handleCoverImageLoad = useCallback(
-    (_event: SyntheticEvent<HTMLImageElement>) => {
+    (event: SyntheticEvent<HTMLImageElement>) => {
+      setCoverFaceReady(true);
       setCoverImageFit("contain");
+      measureCoverEdges(event.currentTarget);
     },
-    [],
+    [measureCoverEdges],
   );
 
   const galleryImages = useMemo(() => {
     if (!item) return [];
     const displayLocale: AttachmentDisplayLocale =
       locale === "en" ? "en" : "fr";
-    const allImages = getGalleryImages(item);
-    // Exclude the cover, including its uncropped twin: the cover is a "_crop"
-    // derivative of a gallery image, so its source image must not show again.
-    const stripCrop = (url: string) => url.replace(/_crop(\.[^.]+)$/, "$1");
-    const coverKey = coverImage ? stripCrop(coverImage) : null;
+    const allImages = getGalleryImagesLight(item);
+    // Exclude the cover, including its unedited twin: the cover is a derivative
+    // of a gallery image, so its source must not show again. Through the shared
+    // helper — a local copy of the rule went stale the moment the suffix moved.
+    const coverKey = coverImage ? stripEditSuffixFromUrl(coverImage) : null;
     return allImages
       .filter(
-        (img) => img.url !== coverImage && stripCrop(img.url) !== coverKey,
+        (img) =>
+          img.url !== coverImage &&
+          stripEditSuffixFromUrl(img.url) !== coverKey,
       )
       .slice(0, 24)
       .map((img) => {
@@ -1775,10 +2172,12 @@ export default function ItemDetailsPage() {
             type: img.type,
             role: img.role,
             title: img.title,
+            url: img.url,
             source: img.source,
             providerLabel: img.providerLabel,
             sourceNames: img.sourceNames,
-            gridStyleCoverLabelsSource: img.gridStyleCoverLabelsSource,
+            gridStyleCoverLabelsSource:
+              img.gridStyleCoverLabelsSource ?? undefined,
           },
           displayLocale,
         );
@@ -1799,15 +2198,38 @@ export default function ItemDetailsPage() {
   const itemDisplayName = item?.name;
   useDocumentTitle(itemDisplayName);
 
+  /** Série · Extension · n° — picker shows this; keep it next to the title too. */
+  const printReferenceLine = useMemo(() => {
+    if (shelf?.type !== "tcg") return null;
+    const facts = normalizeFacts(item?.metadata?.facts);
+    const byLabel = (label: string) =>
+      facts.find((fact) => fact.label === label)?.value?.trim() || null;
+    const parts = [
+      byLabel("Série"),
+      byLabel("Extension"),
+      byLabel("Numéro"),
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  }, [item?.metadata?.facts, shelf?.type]);
+
   const displayAliases = useMemo(() => {
     return displayAliasesForItem({
       name: itemDisplayName,
       metadataTitle: item?.metadata?.title,
       aliases: item?.metadata?.aliases,
+      attachments: item?.metadata?.attachments,
     });
-  }, [item?.metadata?.aliases, item?.metadata?.title, itemDisplayName]);
+  }, [
+    item?.metadata?.aliases,
+    item?.metadata?.attachments,
+    item?.metadata?.title,
+    itemDisplayName,
+  ]);
 
   const seriesVolumes = useMemo(() => {
+    // Volume consensus is a books concept — collector codes like `TFC#001`
+    // look like "Tome #001" and would invent a phantom series on TCG shelves.
+    if (usesPrintSearch(shelf?.type)) return [];
     if (!shelf?.items || !item || !resolvedItemId) return [];
     const seriesTitle = item.storedName ?? item.name ?? "";
     const entries = (shelf.items as unknown as ItemWithMetadata[]).map(
@@ -1819,7 +2241,8 @@ export default function ItemDetailsPage() {
     return seriesSiblings(seriesTitle, entries).filter(
       (entry) => entry.id !== resolvedItemId,
     );
-  }, [shelf?.items, item, resolvedItemId]);
+    // `shelf` whole: the compiler tracks the object, not the `.items` read.
+  }, [shelf, item, resolvedItemId]);
 
   // Franchise grouping comes only from the provider-sourced franchise fact, never
   // from title heuristics.
@@ -1847,7 +2270,7 @@ export default function ItemDetailsPage() {
         );
       },
     );
-  }, [shelf?.items, franchiseName, seriesVolumes, resolvedItemId]);
+  }, [shelf, franchiseName, seriesVolumes, resolvedItemId]);
 
   // Generic "other items" excludes the more specific groups above, so each sibling
   // shows up once in its most meaningful section.
@@ -1863,9 +2286,60 @@ export default function ItemDetailsPage() {
     );
   }, [shelf, resolvedItemId, seriesVolumes, franchiseItems]);
 
+  const artOrient = useArtFaceOrientation(
+    heroArtworkUrl,
+    printVariant ?? undefined,
+  );
+  const faceQuarterTurns = artOrient.faceQuarterTurns;
+  const landscapeFace = artOrient.landscapeFace;
+  const displayQuarterTurns = landscapeFace ? 0 : faceQuarterTurns;
   const coverAspectRatio = useMemo(() => {
-    return getDetailCoverClass(shelf?.cardFormat, shelf?.type);
-  }, [shelf?.cardFormat, shelf?.type]);
+    const base = getDetailCoverClass(shelf?.cardFormat, shelf?.type);
+    if (!displayQuarterTurns && !landscapeFace) return base;
+    // Aspect comes from inline style when the print sits on its side.
+    return base
+      .replace(/\baspect-\[[^\]]+\]\b/g, "")
+      .replace(/\baspect-square\b/g, "")
+      .replace(/\baspect-video\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }, [shelf?.cardFormat, shelf?.type, displayQuarterTurns, landscapeFace]);
+  const coverOrientedAspect = useMemo(() => {
+    const faceAspect = faceDisplayAspect(
+      getAspectRatio(shelf?.cardFormat, shelf?.type),
+      {
+        faceQuarterTurns,
+        landscapeFace,
+      },
+    );
+    const sealedAspect = sealedBagOuterAspect({
+      finish: variantView.finish,
+      sealedBag: printVariant?.sealedBag,
+      faceAspect,
+    });
+    if (sealedAspect) return sealedAspect;
+    return faceAspect;
+  }, [
+    shelf?.cardFormat,
+    shelf?.type,
+    faceQuarterTurns,
+    landscapeFace,
+    variantView.finish,
+    printVariant?.sealedBag,
+  ]);
+  /**
+   * The backdrop turns with the card only when it *is* the card. A Location has
+   * no background of its own, so the hero falls back to its own face — a
+   * portrait scan whose art is sideways — and the banner lay on its side. A
+   * real landscape background, or any other artwork, must be left alone.
+   */
+  const heroQuarterTurns =
+    heroImage &&
+    heroArtworkUrl &&
+    urlsReferToSameLocalizedImage(heroImage, heroArtworkUrl) &&
+    !landscapeFace
+      ? faceQuarterTurns
+      : 0;
 
   const description = useMemo(() => {
     return item?.description || item?.metadata?.description;
@@ -1876,16 +2350,21 @@ export default function ItemDetailsPage() {
   }, [description]);
 
   const copyValue = useMemo(() => {
-    if (!prices || !item?.condition) return null;
+    if (!prices) return null;
+    if (shelf?.type !== "tcg" && !item?.condition) return null;
     return getItemValueEstimate({
-      condition: item.condition,
+      condition: item?.condition,
       shelfType: shelf?.type,
+      variant: item?.variant,
+      plainFinishes: printVariant?.plainFinishes,
       priceNew: prices.priceNew,
+      priceFoil: prices.priceFoil,
       priceUsed: prices.priceUsed,
       priceUsedCIB: prices.priceUsedCIB,
       priceEstimated: prices.priceEstimated,
+      priceEstimatedFoil: prices.priceEstimatedFoil,
     });
-  }, [prices, item, shelf?.type]);
+  }, [prices, item, shelf?.type, printVariant?.plainFinishes]);
 
   const formattedCopyValue = useMemo(() => {
     if (copyValue === null) return null;
@@ -1901,12 +2380,24 @@ export default function ItemDetailsPage() {
       item?.condition,
       shelf?.type,
       prices,
+      {
+        variant: item?.variant,
+        plainFinishes: printVariant?.plainFinishes,
+      },
     );
     const observations = prices?.priceObservations || [];
-    const relevantObservations = observations.filter(
+    const marketObservations = observations.filter(
       (observation) =>
         observation.condition && conditions.includes(observation.condition),
     );
+    // A cote has no `new`/`foil` row. Attribute the chip to the estimate
+    // observations so it stays one source, not an unlabeled "prix constaté".
+    const relevantObservations =
+      marketObservations.length > 0 || !copyValue?.isEstimate
+        ? marketObservations
+        : observations.filter(
+            (observation) => observation.condition === "estimated",
+          );
     // Only sources that actually feed the grade shown — not every offer on the
     // item (avoids attributing NetGamesRetro retail to a PriceCharting link).
     const sources = Array.from(
@@ -1955,7 +2446,14 @@ export default function ItemDetailsPage() {
         (Boolean(stampedReferenceOnly) ||
           (prices?.isReferencePriceOnly ?? false)),
     };
-  }, [item?.condition, prices, shelf?.type]);
+  }, [
+    copyValue?.isEstimate,
+    item?.condition,
+    item?.variant,
+    prices,
+    shelf?.type,
+    printVariant?.plainFinishes,
+  ]);
 
   const { usefulFacts, providerLinkFacts } = useMemo(() => {
     const facts: DetailFact[] = [];
@@ -2063,12 +2561,17 @@ export default function ItemDetailsPage() {
   const primaryInfoFacts = useMemo(() => {
     const facts: DetailFact[] = [];
     const priceDisplayValue = formattedCopyValue ?? catalogEstimateDisplay;
+    const priceChipIsEstimate =
+      !detailPriceChipIsObserved({
+        hasAmount: Boolean(formattedCopyValue),
+        isEstimate: copyValue?.isEstimate === true,
+        isReferencePriceOnly: priceSourceSummary.isReferencePriceOnly,
+      }) && Boolean(priceDisplayValue);
 
     if (priceDisplayValue) {
-      const priceLabel =
-        formattedCopyValue && !priceSourceSummary.isReferencePriceOnly
-          ? t("items.info.observedPrice")
-          : t("items.info.estimatedValue");
+      const priceLabel = priceChipIsEstimate
+        ? t("items.info.estimatedValue")
+        : t("items.info.observedPrice");
       facts.push({
         kind: "estimated-value",
         label: priceLabel,
@@ -2079,10 +2582,17 @@ export default function ItemDetailsPage() {
         priority: 110,
       });
     }
-    facts.push(...usefulFacts.filter(isPrimaryInfoFact));
+    facts.push(
+      ...usefulFacts.filter(
+        (fact) =>
+          isPrimaryInfoFact(fact) &&
+          !estimationFactDuplicatesPriceChip(fact, priceChipIsEstimate),
+      ),
+    );
     return facts.sort(sortDetailFacts);
   }, [
     catalogEstimateDisplay,
+    copyValue?.isEstimate,
     formattedCopyValue,
     priceSourceSummary.count,
     priceSourceSummary.isReferencePriceOnly,
@@ -2094,6 +2604,11 @@ export default function ItemDetailsPage() {
 
   const detailTableFacts = useMemo(
     () => usefulFacts.filter(isDetailTableFact).sort(sortDetailFacts),
+    [usefulFacts],
+  );
+
+  const storyFacts = useMemo(
+    () => usefulFacts.filter(isStoryDisplayFact).sort(sortDetailFacts),
     [usefulFacts],
   );
 
@@ -2167,9 +2682,9 @@ export default function ItemDetailsPage() {
       {/* Netflix-style Ambient Backdrop */}
       {heroImage && (
         <div className="absolute top-0 left-0 right-0 h-[65vh] md:h-[75vh] pointer-events-none -z-10 overflow-hidden select-none">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-[0.50] transition-all duration-1000 ease-out"
-            style={{ backgroundImage: `url(${heroImage})` }}
+          <AmbientBackdrop
+            imageUrl={heroImage}
+            quarterTurns={heroQuarterTurns}
           />
           {/* Dark overlay to ensure text readability */}
           <div className="absolute inset-0 bg-zinc-950/10 dark:bg-zinc-950/40" />
@@ -2193,6 +2708,27 @@ export default function ItemDetailsPage() {
             onSubmit={handleModalSubmit}
             defaultTab={modalActiveTab}
           />
+          {item?.id && shelf?.type ? (
+            <SealedDeclareModal
+              itemId={item.id}
+              shelfId={shelfId}
+              shelfType={shelf.type}
+              defaultLanguage={item.skuLanguage ?? item.language ?? null}
+              isOpen={declareSealedOpen}
+              onClose={() => setDeclareSealedOpen(false)}
+              onDeclared={({ childCount }) => {
+                toast.success(
+                  t("items.sealedDeclare.success", { count: childCount }),
+                );
+                void queryClient.invalidateQueries({
+                  queryKey: ["shelf", shelfId],
+                });
+                void queryClient.invalidateQueries({
+                  queryKey: ["item-events", item.id],
+                });
+              }}
+            />
+          ) : null}
         </>
       )}
 
@@ -2262,52 +2798,220 @@ export default function ItemDetailsPage() {
           ) : (
             <div className="relative flex flex-col md:flex-row gap-6 md:gap-10 items-start p-6 md:p-8 rounded-3xl border border-border/60 dark:border-zinc-800/80 bg-zinc-50/20 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl overflow-hidden w-full mt-4">
               <div
-                onClick={() => coverImage && setZoomImageUrl(coverImage)}
+                onClick={() =>
+                  heroArtworkUrl &&
+                  !showGameBox &&
+                  !showDisc3d &&
+                  !showFlatSleeve &&
+                  setZoomImageUrl(heroArtworkUrl)
+                }
                 className={cn(
-                  "relative mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/90 border border-border dark:border-zinc-800/80 shrink-0 select-none transition-all duration-300",
-                  coverImage
-                    ? "cursor-pointer group/cover bg-white"
+                  // Clips again now that nothing leans out of it — see the
+                  // `tilt={false}` below. The 3D box / disc must bleed past
+                  // their footprint while turning, so overflow stays visible.
+                  "relative mx-auto md:mx-0 rounded-2xl shrink-0 select-none transition-all duration-300",
+                  showGameBox || showDisc3d || showFlatSleeve
+                    ? "overflow-visible"
+                    : "overflow-hidden",
+                  coverImage || showDisc3d || showFlatSleeve
+                    ? // No plate behind the cover: card art is opaque and edge
+                      // to edge, so a white slab only framed it. Anything else
+                      // gets its own edges bled outwards, see `style` below.
+                      showGameBox || showDisc3d || showFlatSleeve
+                        ? "cursor-grab"
+                        : "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
-                  coverAspectRatio,
+                  showDisc3d
+                    ? "aspect-square w-[240px] md:w-[320px]"
+                    : coverAspectRatio,
                 )}
+                /**
+                 * Bleed the cover's own edges into the letterbox. Skipped for a
+                 * foil card, which fills its frame edge to edge and has the
+                 * holographic layers instead. Also skipped for the CSS 3D box /
+                 * disc, whose aspect comes from the artwork.
+                 */
+                style={{
+                  // Always set aspect-ratio in style: Tailwind classes for
+                  // formats live in `cardFormat.ts` and can miss the CSS scan.
+                  aspectRatio: showDisc3d ? "1 / 1" : coverOrientedAspect,
+                  ...(coverEdgeColors &&
+                  !variantView.foilMaskUrl &&
+                  !showGameBox &&
+                  !showDisc3d &&
+                  !showFlatSleeve
+                    ? { background: edgeGradient(coverEdgeColors) }
+                    : {}),
+                }}
               >
-                {coverImage ? (
-                  <>
-                    <RemoteImage
-                      src={coverImage}
+                {/* Bleeding the cover's own edges wins; the back only fills a
+                    frame that has nothing else behind it. */}
+                {!(coverEdgeColors && !variantView.foilMaskUrl) &&
+                  !showGameBox &&
+                  !showDisc3d &&
+                  !showFlatSleeve && (
+                  <CardBackSkeleton
+                    url={cardBackSkeletonUrl}
+                    faceQuarterTurns={displayQuarterTurns}
+                    orientedAspect={coverOrientedAspect}
+                  />
+                )}
+                {coverImage || discFaceUrl || showFlatSleeve ? (
+                  showDisc3d && discFaceUrl ? (
+                    <Disc3D
+                      frontUrl={discFaceUrl}
+                      kind={opticalKind}
                       alt={itemDisplayName ?? ""}
-                      width={768}
-                      height={1152}
-                      sizes="(max-width: 768px) 240px, 480px"
-                      priority
-                      onLoad={handleCoverImageLoad}
-                      className={cn(
-                        "w-full h-full transition-transform duration-500",
-                        coverImageFit === "contain"
-                          ? "object-contain"
-                          : "object-cover group-hover/cover:scale-105",
-                      )}
+                      flipLabel={t("items.flipCard")}
+                      faceTabLabel={t("items.cardFace")}
+                      backTabLabel={t("items.cardBack")}
+                      onError={() => setDisc3dFailed(true)}
+                      className="w-full"
                     />
-                    {/* Hover Zoom Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+                  ) : showGameBox && boxFaces.complete ? (
+                    <GameBox3D
+                      front={boxFaces.front}
+                      back={boxFaces.back}
+                      spine={boxFaces.spine}
+                      platformKey={itemPlatformKey}
+                      alt={itemDisplayName ?? ""}
+                      onError={() => setBox3dFailed(true)}
+                      className="w-full max-w-[240px] md:max-w-[480px]"
+                    />
+                  ) : showFlatSleeve && flatSleeve ? (
+                    <FlippableCard
+                      backUrl={remoteImageDisplaySrc(flatSleeve.back)}
+                      backAlt={itemDisplayName ?? ""}
+                      flipLabel={t("items.flipCard")}
+                      tiltPromptLabel={t("items.tiltPrompt")}
+                      faceTabLabel={t("items.cardFace")}
+                      backTabLabel={t("items.cardBack")}
+                      orientedAspect={coverOrientedAspect}
+                      className="h-full w-full"
+                    >
+                      <RemoteImage
+                        src={flatSleeve.front}
+                        alt={itemDisplayName ?? ""}
+                        width={768}
+                        height={768}
+                        sizes="(max-width: 768px) 240px, 480px"
+                        loading="eager"
+                        fetchPriority="high"
+                        onLoad={handleCoverImageLoad}
+                        onError={() => setBox3dFailed(true)}
+                        className={cn(
+                          "w-full h-full",
+                          coverImageFit === "contain"
+                            ? "object-contain"
+                            : "object-cover",
+                        )}
+                      />
+                    </FlippableCard>
+                  ) : coverImage ? (
+                  <>
+                    <OrientedMediaRotator
+                      faceQuarterTurns={displayQuarterTurns}
+                      orientedAspect={coverOrientedAspect}
+                    >
+                      {variantView.foilMaskUrl ? (
+                        <FoilCardImage
+                          effectPack={variantView.effectPackId}
+                          printKey={item?.printKey}
+                          title={itemDisplayName}
+                          imageUrl={variantView.imageUrl ?? coverImage}
+                          alt={itemDisplayName ?? ""}
+                          finish={variantView.finish}
+                          sealedBag={printVariant?.sealedBag}
+                          materialName={variantView.materialName}
+                          varnishType={variantView.varnishType}
+                          cssFinishShaderId={variantView.shader?.id ?? null}
+                          cssVarnishShaderId={variantView.varnish?.id ?? null}
+                          lenticularGrid={variantView.lenticularGrid}
+                          lenticularCropProfile={variantView.lenticularCropProfile}
+                          scanCrop={variantView.scanCrop}
+                          maskUrl={foilMaskUrl}
+                          varnishMaskUrl={varnishMaskUrl}
+                          varnishColor={variantView.varnishColor}
+                          secondVarnishMaskUrl={secondVarnishMaskUrl}
+                          secondVarnishColor={variantView.secondVarnishColor}
+                          faceQuarterTurns={displayQuarterTurns}
+                          /**
+                           * Flat here, exactly as in the grid. This cover sits in
+                           * a page of text, and a card that tips whenever the
+                           * cursor passes on its way to the metadata is restless
+                           * rather than alive. The sheen still drifts on its own,
+                           * so the print still reads as foil — and the click
+                           * opens the fullscreen card, which is where the
+                           * perspective, the lean and the turn belong.
+                           */
+                          tilt={false}
+                        />
+                      ) : isSealedFinish(
+                          variantView.finish ?? item?.variant,
+                        ) ? (
+                        <SealedBagOverlay
+                          side="front"
+                        >
+                          <RemoteImage
+                            src={variantView.imageUrl ?? coverImage}
+                            alt={itemDisplayName ?? ""}
+                            width={768}
+                            height={1152}
+                            sizes="(max-width: 768px) 240px, 480px"
+                            loading="eager"
+                            fetchPriority="high"
+                            onLoad={handleCoverImageLoad}
+                            className={cn(
+                              "h-full w-full transition-opacity duration-150 object-cover",
+                              cardBackSkeletonUrl &&
+                                !coverFaceReady &&
+                                "opacity-0",
+                            )}
+                          />
+                        </SealedBagOverlay>
+                      ) : (
+                        <div className="relative h-full w-full">
+                          <RemoteImage
+                            src={variantView.imageUrl ?? coverImage}
+                            alt={itemDisplayName ?? ""}
+                            width={768}
+                            height={1152}
+                            sizes="(max-width: 768px) 240px, 480px"
+                            loading="eager"
+                            fetchPriority="high"
+                            onLoad={handleCoverImageLoad}
+                            className={cn(
+                              "w-full h-full transition-opacity duration-150 transition-transform duration-500",
+                              coverImageFit === "contain"
+                                ? "object-contain"
+                                : "object-cover group-hover/cover:scale-105",
+                              cardBackSkeletonUrl &&
+                                !coverFaceReady &&
+                                "opacity-0",
+                            )}
+                          />
+                        </div>
+                      )}
+                    </OrientedMediaRotator>
+                    {/* Hover Zoom Overlay — decorative, and the click is the
+                        container's, so it must not swallow the pointer: the holo
+                        layers below track pointer position to place their sheen. */}
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20",
+                        // Darkening fights the shimmer it appears with, so a foil
+                        // copy keeps the affordance and loses the scrim.
+                        variantView.foilMaskUrl
+                          ? "bg-transparent"
+                          : "bg-black/40",
+                      )}
+                    >
                       <div className="bg-white/20 hover:bg-white/35 text-white backdrop-blur-md p-2.5 rounded-full border border-white/20 shadow-md active:scale-95 transition-all">
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    {coverSourceChip &&
-                      (coverSourceChip.sourceNames.length > 0 ||
-                        coverSourceChip.detail) && (
-                        <div
-                          className="absolute top-2 right-2 z-30"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <AttachmentSourceChip
-                            sourceNames={coverSourceChip.sourceNames}
-                            detail={coverSourceChip.detail}
-                          />
-                        </div>
-                      )}
                   </>
+                  ) : null
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-950 text-muted-foreground p-6 gap-3 min-h-[300px]">
                     <ShelfTypeIcon
@@ -2324,6 +3028,11 @@ export default function ItemDetailsPage() {
                   <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground dark:text-white leading-none">
                     {itemDisplayName}
                   </h1>
+                  {printReferenceLine && (
+                    <p className="text-sm md:text-base font-semibold text-muted-foreground tracking-tight">
+                      {printReferenceLine}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {isMetadataBusy && (
                       <Badge
@@ -2350,15 +3059,77 @@ export default function ItemDetailsPage() {
                         {year}
                       </Badge>
                     )}
-                    {item?.condition && (
+                    {item?.condition &&
+                      shelfShowsItemCondition(shelf?.type) && (
+                        <Badge
+                          variant="outline"
+                          className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
+                        >
+                          <ConditionIcon condition={item.condition} />
+                          {t(`items.conditions.${item.condition}`)}
+                        </Badge>
+                      )}
+                    {/* Finish is the TCG copy axis (foil vs plain); condition is
+                        hidden for cards — see shelfShowsItemCondition. */}
+                    {resolvedVariant && (
                       <Badge
                         variant="outline"
                         className="border-border dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 font-semibold px-2 py-0.5 flex gap-1 items-center bg-zinc-100/50 dark:bg-zinc-900/30"
                       >
-                        <ConditionIcon condition={item.condition} />
-                        {t(`items.conditions.${item.condition}`)}
+                        <Sparkles className="size-3" />
+                        {localizeFinishLabel(resolvedVariant, t)}
                       </Badge>
                     )}
+                    {(() => {
+                      const absence = formatAbsenceBadge({
+                        ...(item ?? {}),
+                        tradeCounterpartName,
+                      });
+                      if (!absence) return null;
+                      const label = t(`items.absence.badge.${absence.labelKey}`, {
+                        ...(absence.name ? { name: absence.name } : {}),
+                        ...(absence.detail ? { detail: absence.detail } : {}),
+                        ...(absence.price ? { price: absence.price } : {}),
+                        ...(absence.days ? { days: absence.days } : {}),
+                      });
+                      const dated =
+                        absence.labelKey === "loaned_to" &&
+                        item?.absenceSince
+                          ? t("items.loan.badgeWithDate", {
+                              name: absence.name ?? "",
+                              date: new Date(
+                                item.absenceSince,
+                              ).toLocaleDateString(
+                                locale === "en" ? "en-GB" : "fr-FR",
+                              ),
+                            })
+                          : label;
+                      const toneClass =
+                        absence.tone === "away"
+                          ? "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                          : "border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
+                      return (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "font-semibold px-2 py-0.5 flex gap-1 items-center",
+                            toneClass,
+                          )}
+                        >
+                          <HandHelping className="size-3" />
+                          {dated}
+                        </Badge>
+                      );
+                    })()}
+                    {formatGradeBadge(item) ? (
+                      <Badge
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-semibold px-2 py-0.5 flex gap-1 items-center"
+                      >
+                        <Award className="size-3" />
+                        {formatGradeBadge(item)}
+                      </Badge>
+                    ) : null}
                     {shelf?.type && (
                       <Badge className="bg-amber-550/10 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 px-2 py-0.5 text-xs font-semibold">
                         {t(`shelf.type.${shelf.type}`)}
@@ -2389,6 +3160,245 @@ export default function ItemDetailsPage() {
                         <Wrench className="size-4 mr-1.5" />
                         {t("items.editItem")}
                       </Button>
+                      {item?.kind === "sealed" && !item.openedAt ? (
+                        <Button
+                          variant="secondary"
+                          className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                          disabled={openingSealed}
+                          onClick={() => {
+                            void (async () => {
+                              setOpeningSealed(true);
+                              try {
+                                let packCount: number | null = null;
+                                let childBoosterSlug: string | null = null;
+                                let result: Awaited<
+                                  ReturnType<typeof openSealedItem>
+                                > | null = null;
+                                for (let attempt = 0; attempt < 3; attempt += 1) {
+                                  try {
+                                    result = await openSealedItem(item.id, {
+                                      shelfId,
+                                      createShell: true,
+                                      ...(packCount != null
+                                        ? { packCount }
+                                        : {}),
+                                      ...(childBoosterSlug
+                                        ? { childBoosterSlug }
+                                        : {}),
+                                    });
+                                    break;
+                                  } catch (err) {
+                                    const reason =
+                                      err &&
+                                      typeof err === "object" &&
+                                      "response" in err &&
+                                      (
+                                        err as {
+                                          response?: {
+                                            data?: { reason?: string };
+                                          };
+                                        }
+                                      ).response?.data?.reason;
+                                    if (reason === "needs_pack_count") {
+                                      const raw = window.prompt(
+                                        t("items.sealedOpen.askPackCount"),
+                                      );
+                                      if (raw == null) return;
+                                      const parsed = Number.parseInt(
+                                        raw.trim(),
+                                        10,
+                                      );
+                                      if (
+                                        !Number.isFinite(parsed) ||
+                                        parsed <= 0
+                                      ) {
+                                        toast.error(
+                                          t("items.sealedOpen.failed"),
+                                        );
+                                        return;
+                                      }
+                                      packCount = parsed;
+                                      continue;
+                                    }
+                                    if (reason === "needs_child_slug") {
+                                      const raw = window.prompt(
+                                        t("items.sealedOpen.askChildSlug"),
+                                      );
+                                      if (raw == null) return;
+                                      const slug = raw.trim();
+                                      if (!slug) {
+                                        toast.error(
+                                          t("items.sealedOpen.failed"),
+                                        );
+                                        return;
+                                      }
+                                      childBoosterSlug = slug;
+                                      continue;
+                                    }
+                                    throw err;
+                                  }
+                                }
+                                if (!result) {
+                                  toast.error(t("items.sealedOpen.failed"));
+                                  return;
+                                }
+                                toast.success(
+                                  result.childCount > 0
+                                    ? t("items.sealedOpen.success", {
+                                        count: result.childCount,
+                                      })
+                                    : t("items.sealedOpen.successUnit"),
+                                );
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["shelf", shelfId],
+                                });
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["item-events", item.id],
+                                });
+                              } catch {
+                                toast.error(t("items.sealedOpen.failed"));
+                              } finally {
+                                setOpeningSealed(false);
+                              }
+                            })();
+                          }}
+                        >
+                          {openingSealed ? (
+                            <Loader2 className="size-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <PackageOpen className="size-4 mr-1.5" />
+                          )}
+                          {t("items.sealedOpen.action")}
+                        </Button>
+                      ) : null}
+                      {item &&
+                      canDeclareSealedPulls({
+                        kind: item.kind,
+                        skuKey: item.skuKey,
+                        countsAsOwned: countsAsOwned(item),
+                      }) ? (
+                        <Button
+                          variant="secondary"
+                          className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                          onClick={() => setDeclareSealedOpen(true)}
+                        >
+                          <ListChecks className="size-4 mr-1.5" />
+                          {t("items.sealedDeclare.action")}
+                        </Button>
+                      ) : null}
+                      {itemContainment?.currentParent ? (
+                        <Button
+                          variant="secondary"
+                          className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
+                          disabled={containmentBusy}
+                          title={t("items.containment.inside", {
+                            name: itemContainment.currentParent.name,
+                          })}
+                          onClick={() => {
+                            void (async () => {
+                              setContainmentBusy(true);
+                              try {
+                                await detachItemContainment(item!.id, {
+                                  shelfId,
+                                });
+                                toast.success(t("items.containment.detached"));
+                                await queryClient.invalidateQueries({
+                                  queryKey: [
+                                    "shelf",
+                                    shelfId,
+                                    "items",
+                                    item!.id,
+                                    "containment",
+                                  ],
+                                });
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["item-events", item!.id],
+                                });
+                              } catch {
+                                toast.error(
+                                  t("items.containment.detachFailed"),
+                                );
+                              } finally {
+                                setContainmentBusy(false);
+                              }
+                            })();
+                          }}
+                        >
+                          {containmentBusy ? (
+                            <Loader2 className="size-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <PackageOpen className="size-4 mr-1.5" />
+                          )}
+                          {t("items.containment.detach")}
+                        </Button>
+                      ) : null}
+                      {!itemContainment?.currentParent &&
+                      (itemContainment?.candidates?.length ?? 0) > 0 ? (
+                        <label className="inline-flex items-center gap-2 bg-card border border-border dark:border-zinc-800 rounded-xl h-10 px-3 text-sm font-bold shadow-sm">
+                          <span className="text-muted-foreground whitespace-nowrap">
+                            {t("items.containment.reattach")}
+                          </span>
+                          <select
+                            className="bg-transparent border-0 text-foreground text-sm font-bold max-w-[14rem] cursor-pointer disabled:opacity-60"
+                            disabled={containmentBusy}
+                            defaultValue=""
+                            onChange={(event) => {
+                              const parentId = event.target.value;
+                              event.target.value = "";
+                              if (!parentId || !item) return;
+                              const parentName =
+                                itemContainment?.candidates.find(
+                                  (row) => row.id === parentId,
+                                )?.name ?? parentId;
+                              void (async () => {
+                                setContainmentBusy(true);
+                                try {
+                                  await attachItemContainment(item.id, {
+                                    shelfId,
+                                    parentId,
+                                  });
+                                  toast.success(
+                                    t("items.containment.attached", {
+                                      name: parentName,
+                                    }),
+                                  );
+                                  await queryClient.invalidateQueries({
+                                    queryKey: [
+                                      "shelf",
+                                      shelfId,
+                                      "items",
+                                      item.id,
+                                      "containment",
+                                    ],
+                                  });
+                                  await queryClient.invalidateQueries({
+                                    queryKey: ["item-events", item.id],
+                                  });
+                                } catch {
+                                  toast.error(
+                                    t("items.containment.attachFailed"),
+                                  );
+                                } finally {
+                                  setContainmentBusy(false);
+                                }
+                              })();
+                            }}
+                          >
+                            <option value="">
+                              {t("items.containment.reattachPick")}
+                            </option>
+                            {itemContainment!.candidates.map((row) => (
+                              <option key={row.id} value={row.id}>
+                                {row.name} (
+                                {t("items.containment.slotsLeft", {
+                                  remaining: row.remaining,
+                                })}
+                                )
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                       <Button
                         variant="secondary"
                         className="bg-card hover:bg-accent hover:text-accent-foreground text-foreground border border-border dark:border-zinc-800 rounded-xl h-10 px-4 text-sm font-bold shadow-sm cursor-pointer"
@@ -2538,34 +3548,82 @@ export default function ItemDetailsPage() {
                     />
                   )}
 
-                  {detailTableFacts.map((fact) => (
-                    <div
-                      key={`${fact.kind}-${fact.label}-${fact.value}`}
-                      className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0"
-                    >
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
-                        {fact.label}
-                      </span>
-                      {isTagLikeDetailFact(fact) ? (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {splitTagFactValue(fact.value).map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
-                          {fact.value}
-                        </span>
-                      )}
-                      <FactSourceFooter fact={fact} />
+                  {storyFacts.length > 0 && (
+                    <div className="sm:col-span-2 space-y-3 border-y border-border/60 py-3 dark:border-zinc-800/50">
+                      {storyFacts.map((fact) => {
+                        const proofUrl = displayFactCitationUrl(fact.url);
+                        return (
+                          <div
+                            key={`${fact.kind}-${fact.label}-${fact.value}`}
+                            className="space-y-1.5"
+                          >
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                              {t("items.didYouKnow")}
+                            </span>
+                            <StoryBodyWithMentions
+                              body={fact.value}
+                              className="text-foreground dark:text-zinc-200"
+                            />
+                            {proofUrl ? (
+                              <a
+                                href={proofUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-500 underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300"
+                              >
+                                <span>{t("items.didYouKnowSource")}</span>
+                                <Link2 className="size-3 shrink-0" />
+                              </a>
+                            ) : null}
+                            <FactSourceFooter fact={fact} />
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  )}
+
+                  {detailTableFacts.map((fact) => {
+                    const proofUrl = displayFactCitationUrl(fact.url);
+                    const valueNode = isTagLikeDetailFact(fact) && !proofUrl ? (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {splitTagValues(fact.value).map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : proofUrl ? (
+                      <a
+                        href={proofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:text-zinc-200 dark:hover:text-zinc-50"
+                      >
+                        <span>{fact.value}</span>
+                        <Link2 className="size-3 shrink-0 text-zinc-400" />
+                      </a>
+                    ) : (
+                      <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                        {fact.value}
+                      </span>
+                    );
+                    return (
+                      <div
+                        key={`${fact.kind}-${fact.label}-${fact.value}`}
+                        className="flex flex-col gap-0.5 border-b border-border/60 dark:border-zinc-800/40 pb-2 sm:col-span-2 sm:border-b-0 sm:pb-0"
+                      >
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 select-none">
+                          {fact.label}
+                        </span>
+                        {valueNode}
+                        <FactSourceFooter fact={fact} />
+                      </div>
+                    );
+                  })}
 
                   {item?.metadata?.releaseDate &&
                     !isNaN(new Date(item.metadata.releaseDate).getTime()) && (
@@ -2671,7 +3729,7 @@ export default function ItemDetailsPage() {
                   <div
                     key={idx}
                     onClick={() => setZoomImageUrl(img.url)}
-                    className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden border border-border dark:border-zinc-800/80 bg-zinc-100/30 dark:bg-zinc-950/30 hover:border-zinc-350 dark:hover:border-zinc-700/80 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="relative group/gallery shrink-0 w-64 aspect-video rounded-lg overflow-hidden bg-zinc-100/30 dark:bg-zinc-950/30 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
                     <RemoteImage
                       src={img.url}
@@ -2686,7 +3744,30 @@ export default function ItemDetailsPage() {
                         <Maximize2 className="size-5" />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2 z-30" onClick={(event) => event.stopPropagation()}>
+                    <button
+                      type="button"
+                      title={t("items.editTabs.removeImage")}
+                      disabled={
+                        isRemovingGalleryImage &&
+                        removingGalleryImageUrl === img.url
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeGalleryImage(img.url);
+                      }}
+                      className="absolute bottom-2 right-2 z-30 bg-black/60 hover:bg-red-700/90 text-white backdrop-blur-md p-2 rounded-lg border border-white/10 shadow-md opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/gallery:opacity-100 transition-all disabled:opacity-50"
+                    >
+                      {isRemovingGalleryImage &&
+                      removingGalleryImageUrl === img.url ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                    </button>
+                    <div
+                      className="absolute top-2 right-2 z-30"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <AttachmentSourceChip
                         sourceNames={img.gallerySourceNames ?? []}
                         detail={img.galleryDetail}
@@ -2698,8 +3779,26 @@ export default function ItemDetailsPage() {
             </div>
           )}
 
+          {item?.id &&
+          (item.absenceReason === "exchanged" ||
+            item.presence === "past" ||
+            (itemTrades?.links?.length ?? 0) > 0) ? (
+            <ItemTradeLinks
+              itemId={item.id}
+              shelfId={
+                typeof item.shelfId === "string" ? item.shelfId : shelfId
+              }
+              canEdit={Boolean(isAuthenticated && !isGuest && canEdit)}
+            />
+          ) : null}
+
+          {item?.id ? (
+            <ItemPresenceTimeline itemId={item.id} shelfId={shelfId} />
+          ) : null}
+
           <ItemDiscoverySection
             isPending={isPending}
+            includedIn={includedInSources}
             seriesVolumes={seriesVolumes}
             franchiseName={franchiseName}
             franchiseItems={franchiseItems}
@@ -2718,19 +3817,163 @@ export default function ItemDetailsPage() {
           if (!open) setZoomImageUrl(null);
         }}
       >
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none flex flex-col items-center justify-center backdrop-blur-xl">
+        {/* Transparent: the blur alone separates the card from the page, and a
+            black plate fought the holographic sheen it was meant to showcase. */}
+        {/*
+          Full-viewport shell, not a shrink-wrapped box: clicking the dimmed
+          edge must close. Radix's content owns `pointer-events: auto` inline and
+          used to swallow those clicks before they reached the overlay — so the
+          shell itself is the dismiss target, and the card stops propagation.
+        */}
+        <DialogContent
+          showClose={false}
+          onClick={() => setZoomImageUrl(null)}
+          className="fixed inset-0 top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 items-center justify-center rounded-none border-none bg-transparent p-0 shadow-none sm:max-w-none"
+        >
           <DialogTitle className="sr-only">Zoom Image</DialogTitle>
-          <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center p-4">
-            {zoomImageUrl && (
-              <RemoteImage
-                src={zoomImageUrl}
-                alt="Zoom"
-                width={1920}
-                height={1920}
-                className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
-              />
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setZoomImageUrl(null);
+            }}
+            aria-label={t("common.close")}
+            className="absolute top-4 right-4 z-50 rounded-full bg-black/60 p-2 text-white opacity-90 shadow-md backdrop-blur-sm transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/40"
+          >
+            <X className="size-4" />
+          </button>
+          {zoomImageUrl &&
+            /* Fullscreen is where a foil card is worth looking at, so the
+               holographic layers belong here above all — but only for the
+               cover itself: zooming a gallery image shows that image. */
+            /* A card is a physical object whether or not its print is foil, so
+               the whole treatment — the card shape, the perspective, the lean,
+               and the turn when a back is known — hangs on it being a card,
+               not on it shimmering. `printKey` is what makes it one. */
+            (item?.printKey &&
+            urlsReferToSameLocalizedImage(
+              zoomImageUrl,
+              /* Live catalogue face (`/prints/…`) often beats a stale
+                 `item.imageUrl` (`/cards/…/art.*`). Zoom opens on
+                 heroArtworkUrl — compare to that, or Face·Dos never mounts. */
+              heroArtworkUrl ?? coverImage ?? "",
+            ) ? (
+              /**
+               * Sized from its *width*, so the card can never be wider than
+               * the screen.
+               *
+               * Driven from the height (`h-[80vh] aspect-[5/7]`) it was 464px
+               * wide inside a 375px iPhone — 44px off each edge, corners and
+               * card number cut away. Deriving the height from the width
+               * instead keeps the 5:7 exact at every size: the width takes
+               * whichever is smaller, the room on screen or what 80dvh of
+               * height would allow.
+               *
+               * Measured against the **viewport**, not the parent. `min(100%,
+               * …)` looks tidier and is circular: this dialog is shrink-to-fit,
+               * so its width comes from its content while the content's came
+               * from its width — the same card measured 480px wide one moment
+               * and 331px the next.
+               *
+               * `dvh`, not `vh`: on iOS `vh` measures the viewport with the
+               * URL bar hidden, so 80vh is taller than what can actually be
+               * seen and the card slid under the browser chrome. The `2rem`
+               * is padding on both sides.
+               *
+               * The height budget is spent through the *same* oriented ratio
+               * the box is given, so a sideways print (or a shelf format that
+               * is not 5:7 at all) cannot drift from it.
+               */
+              <div
+                className="animate-zoom-in"
+                style={
+                  {
+                    // The card's own corner, quoted against this (oriented)
+                    // box. FlippableCard clips to the same shape; this is what
+                    // its `rounded-[inherit]` chain starts from.
+                    borderRadius: cardFaceRadius(displayQuarterTurns),
+                    aspectRatio: coverOrientedAspect,
+                    width: `min(calc(100vw - 2rem), calc(80dvh * ${coverOrientedAspect}))`,
+                  } as CSSProperties
+                }
+                onClick={(event) => event.stopPropagation()}
+              >
+                <FlippableCard
+                  backUrl={cardBackUrl}
+                  backAlt={`${itemDisplayName ?? ""} — dos`}
+                  sealedBag={
+                    isSealedFinish(variantView.finish ?? item?.variant) ||
+                    Boolean(printVariant?.sealedBag)
+                  }
+                  flipLabel={t("items.flipCard")}
+                  tiltPromptLabel={t("items.tiltPrompt")}
+                  faceQuarterTurns={displayQuarterTurns}
+                  orientedAspect={coverOrientedAspect}
+                  faceTabLabel={t("items.cardFace")}
+                  backTabLabel={t("items.cardBack")}
+                >
+                  <OrientedMediaRotator
+                    faceQuarterTurns={displayQuarterTurns}
+                    orientedAspect={coverOrientedAspect}
+                  >
+                    <FoilCardImage
+                      effectPack={variantView.effectPackId}
+                      printKey={item?.printKey}
+                      title={itemDisplayName}
+                      imageUrl={variantView.imageUrl ?? zoomImageUrl}
+                      alt="Zoom"
+                      finish={variantView.finish}
+                      sealedBag={printVariant?.sealedBag}
+                      materialName={variantView.materialName}
+                      varnishType={variantView.varnishType}
+                      cssFinishShaderId={variantView.shader?.id ?? null}
+                      cssVarnishShaderId={variantView.varnish?.id ?? null}
+                      lenticularGrid={variantView.lenticularGrid}
+                      lenticularCropProfile={variantView.lenticularCropProfile}
+                      scanCrop={variantView.scanCrop}
+                      faceQuarterTurns={displayQuarterTurns}
+                      /* Pointer still tips the wrapper so the back turns with
+                         it. Device tilt does not: the plane stays square and
+                         only the light on this surface follows the phone. */
+                      tilt={false}
+                      trackPointer
+                      disableCompass
+                      /* The mirrored masks were cut for the hero's framing. They
+                       only fit here if this is the same file — zooming the
+                       uncropped original of a cropped cover is not. */
+                      maskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? foilMaskUrl
+                          : variantView.foilMaskUrl
+                      }
+                      varnishMaskUrl={
+                        (variantView.imageUrl ?? zoomImageUrl) ===
+                        heroArtworkUrl
+                          ? varnishMaskUrl
+                          : variantView.varnishMaskUrl
+                      }
+                      varnishColor={variantView.varnishColor}
+                      secondVarnishMaskUrl={secondVarnishMaskUrl}
+                      secondVarnishColor={variantView.secondVarnishColor}
+                    />
+                  </OrientedMediaRotator>
+                </FlippableCard>
+              </div>
+            ) : (
+              <div onClick={(event) => event.stopPropagation()}>
+                <RemoteImage
+                  src={zoomImageUrl}
+                  alt="Zoom"
+                  width={1920}
+                  height={1920}
+                  // `dvh` for the same reason as the card branch above: on iOS
+                  // `vh` measures the viewport with the URL bar hidden, so a
+                  // tall gallery image ran under the browser chrome.
+                  className="max-w-full max-h-[80dvh] w-auto h-auto object-contain rounded-lg shadow-2xl transition-transform duration-300 animate-zoom-in"
+                />
+              </div>
+            ))}
         </DialogContent>
       </Dialog>
     </div>

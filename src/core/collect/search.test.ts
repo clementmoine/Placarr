@@ -47,6 +47,13 @@ describe("buildItemSearchConditions", () => {
     // The marker word itself is never a required token.
     expect(json).not.toContain('"vol"');
   });
+
+  it("cherche aussi printKey et slug (numéro Carddass / TCG)", () => {
+    const json = JSON.stringify(buildItemSearchConditions("250"));
+    expect(json).toContain('"printKey"');
+    expect(json).toContain('"slug"');
+    expect(json).toContain('"250"');
+  });
 });
 
 describe("itemMatchesSearchQuery", () => {
@@ -106,6 +113,32 @@ describe("itemMatchesSearchQuery", () => {
 
     expect(itemMatchesSearchQuery(haystacks, "shingeki")).toBe(true);
     expect(itemMatchesSearchQuery(haystacks, "attack on titan")).toBe(true);
+  });
+
+  it("matche un numéro de carte via printKey même si le titre est un nom", () => {
+    const haystacks = itemSearchHaystacks({
+      name: "Piccolo",
+      printKey: "dbsjcc:part2-d0250a",
+      slug: "part2-d0250a-fr",
+      metadata: { title: "Piccolo" },
+    });
+
+    expect(itemMatchesSearchQuery(haystacks, "250")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "d0250")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "piccolo")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "999")).toBe(false);
+  });
+
+  it("ignore les accents (« 7 epees » ≡ « 7 Épées »)", () => {
+    const haystacks = itemSearchHaystacks({
+      name: "7 Épées",
+      metadata: { title: "7 Épées" },
+    });
+
+    expect(itemMatchesSearchQuery(haystacks, "7 epees")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "epees")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "7 épées")).toBe(true);
+    expect(itemMatchesSearchQuery(haystacks, "7 sabres")).toBe(false);
   });
 });
 

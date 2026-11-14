@@ -1,0 +1,316 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+import { afterEach, describe, expect, it } from "vitest";
+
+import { emptyProductsIndex, type SealedProductEntry } from "./indexFormat";
+import {
+  listProductsCataloguePage,
+  loadProductsIndexFromSqlite,
+  lookupProductKeysByBarcode,
+  lookupSealedProductKeysByBarcode,
+  readPackDocument,
+  writePackDocument,
+  writeProductsIndexToSqlite,
+} from "./productsSqlite";
+
+function minimalEntry(
+  slug: string,
+  overrides: Partial<SealedProductEntry> = {},
+): SealedProductEntry {
+  return {
+    slug,
+    path: `products/${slug}`,
+    kind: "booster",
+    behavior: "random_pack",
+    category: "booster",
+    name: slug,
+    image: null,
+    imageBack: null,
+    setLogo: null,
+    setCode: "s1",
+    lang: "fr",
+    releaseDate: null,
+    priceCents: 100,
+    cardsPerPack: 5,
+    packsContained: 1,
+    guaranteedPrints: [],
+    randomPoolScope: "set",
+    randomPoolPrints: [],
+    declaredCardCount: null,
+    setCardCount: null,
+    contentsKnown: false,
+    containsPrintsIsPreview: false,
+    prints: [],
+    ...overrides,
+  };
+}
+
+describe("productsSqlite", () => {
+  let dir = "";
+
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("round-trips products and content printKeys", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-sqlite-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const index = emptyProductsIndex("demo");
+    const entry: SealedProductEntry = {
+      slug: "booster-s1",
+      path: "products/booster-s1",
+      kind: "booster",
+      behavior: "random_pack",
+      category: "booster",
+      name: "Booster S1",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: "s1",
+      lang: "fr",
+      releaseDate: null,
+      priceCents: 450,
+      cardsPerPack: 5,
+      packsContained: 1,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: true,
+      containsPrintsIsPreview: false,
+      prints: [
+        {
+          name: "Naruto",
+          slug: "ni-0001",
+          ref: "NI-001",
+          printKey: "naruto:ni-0001",
+          qty: 1,
+        },
+      ],
+    };
+    index.products["demo::booster-s1"] = entry;
+
+    const written = writeProductsIndexToSqlite("demo", index, { dbPath });
+    expect(written.products).toBe(1);
+    expect(written.contents).toBe(1);
+
+    const loaded = loadProductsIndexFromSqlite("demo", { dbPath });
+    expect(loaded).not.toBeNull();
+    expect(loaded!.products["demo::booster-s1"]?.prints[0]?.printKey).toBe(
+      "naruto:ni-0001",
+    );
+    expect(loaded!.products["demo::booster-s1"]?.priceCents).toBe(450);
+  });
+
+  it("pages products with stable total (SQL LIMIT/OFFSET)", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-page-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const index = emptyProductsIndex("demo");
+    for (let i = 0; i < 5; i++) {
+      const slug = `booster-s${i}`;
+      index.products[`demo::${slug}`] = {
+        slug,
+        path: `products/${slug}`,
+        kind: "booster",
+        behavior: "random_pack",
+        category: "booster",
+        name: `Booster ${i}`,
+        image: null,
+        imageBack: null,
+        setLogo: null,
+        setCode: `s${i}`,
+        lang: "fr",
+        releaseDate: null,
+        priceCents: i === 0 ? null : 100,
+        cardsPerPack: 5,
+        packsContained: 1,
+        guaranteedPrints: [],
+        randomPoolScope: "set",
+        randomPoolPrints: [],
+        declaredCardCount: null,
+        setCardCount: null,
+        contentsKnown: true,
+        containsPrintsIsPreview: false,
+        prints: [],
+      };
+    }
+    writeProductsIndexToSqlite("demo", index, { dbPath });
+
+    const first = listProductsCataloguePage(
+      "demo",
+      { offset: 0, limit: 2, langs: ["fr", "en"] },
+      dbPath,
+    );
+    expect(first).not.toBeNull();
+    expect(first!.total).toBe(5);
+    expect(first!.entries).toHaveLength(2);
+
+    const missing = listProductsCataloguePage(
+      "demo",
+      { offset: 0, limit: 10, missingPrice: true, langs: ["fr"] },
+      dbPath,
+    );
+    expect(missing!.total).toBe(1);
+    expect(missing!.entries[0]?.productKey).toBe("demo::booster-s0");
+  });
+
+  it("writes pack_documents under busy_timeout / WAL", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-pack-doc-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    writePackDocument(
+      "demo",
+      "appearances",
+      { version: 1, appearances: { ni0001: { fr: "s1" } } },
+      { dbPath },
+    );
+    expect(readPackDocument("demo", "appearances", { dbPath })).toEqual({
+      version: 1,
+      appearances: { ni0001: { fr: "s1" } },
+    });
+  });
+
+  it("returns null on a corrupt catalog instead of throwing", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-corrupt-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    // Valid header prefix then zeros → open may succeed, queries fail corrupt.
+    const header = Buffer.from("SQLite format 3\0");
+    writeFileSync(dbPath, Buffer.concat([header, Buffer.alloc(4096, 0)]));
+    expect(loadProductsIndexFromSqlite("demo", { dbPath })).toBeNull();
+  });
+
+  it("indexes barcodes and returns every SKU sharing a GTIN (Bleach trap)", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-barcode-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    // Shared retail EAN on Bleach S1 booster face + display (press-packshots).
+    const sharedEan = "3296580052110";
+    const index = emptyProductsIndex("bleach/scb");
+    index.products["bleach/scb::booster-s1-shinigami-and-ichigo"] = minimalEntry(
+      "booster-s1-shinigami-and-ichigo",
+      {
+        kind: "booster",
+        category: "booster",
+        barcodes: [sharedEan],
+        barcodeSources: { [sharedEan]: "tempslibre" },
+      },
+    );
+    index.products["bleach/scb::display-s1-shinigami-and-ichigo"] = minimalEntry(
+      "display-s1-shinigami-and-ichigo",
+      {
+        kind: "display",
+        category: "display",
+        behavior: "pack_container",
+        packsContained: 24,
+        barcodes: [sharedEan],
+        barcodeSources: { [sharedEan]: "ultrajeux" },
+      },
+    );
+
+    const written = writeProductsIndexToSqlite("bleach/scb", index, { dbPath });
+    expect(written.barcodes).toBe(2);
+
+    const keys = lookupProductKeysByBarcode("bleach/scb", sharedEan, { dbPath });
+    expect(keys).toEqual([
+      "bleach/scb::booster-s1-shinigami-and-ichigo",
+      "bleach/scb::display-s1-shinigami-and-ichigo",
+    ]);
+
+    // Leading-zero variant still hits the same index key.
+    expect(
+      lookupProductKeysByBarcode("bleach/scb", `0${sharedEan}`, { dbPath }),
+    ).toEqual(keys);
+
+    const multi = lookupSealedProductKeysByBarcode(sharedEan, {
+      packIds: ["bleach/scb"],
+      dbPathForPack: () => dbPath,
+    });
+    expect(multi).toEqual([
+      {
+        packId: "bleach/scb",
+        productKey: "bleach/scb::booster-s1-shinigami-and-ichigo",
+      },
+      {
+        packId: "bleach/scb",
+        productKey: "bleach/scb::display-s1-shinigami-and-ichigo",
+      },
+    ]);
+  });
+
+  it("salvages a corrupt catalog then rewrites products", () => {
+    dir = mkdtempSync(path.join(os.tmpdir(), "placarr-products-salvage-"));
+    const dbPath = path.join(dir, "catalog.sqlite");
+    const seed = new DatabaseSync(dbPath);
+    seed.exec(`
+      CREATE TABLE prints (
+        print_key TEXT PRIMARY KEY,
+        set_code TEXT NOT NULL,
+        number TEXT NOT NULL
+      );
+      CREATE TABLE products (
+        product_key TEXT PRIMARY KEY,
+        slug TEXT NOT NULL,
+        lang TEXT,
+        set_code TEXT,
+        kind TEXT,
+        name TEXT,
+        image TEXT,
+        price_cents INTEGER,
+        entry_json TEXT NOT NULL
+      );
+      CREATE TABLE product_contents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_key TEXT NOT NULL,
+        print_key TEXT,
+        name TEXT,
+        slug TEXT,
+        ref TEXT,
+        qty INTEGER,
+        finish TEXT,
+        image TEXT
+      );
+      INSERT INTO prints VALUES ('demo:s1-001', 's1', '001');
+    `);
+    seed.close();
+
+    // Truncate after a valid header so DELETE/migrate hits SQLITE_CORRUPT.
+    const buf = readFileSync(dbPath);
+    writeFileSync(dbPath, buf.subarray(0, Math.min(buf.length, 1024)));
+
+    const index = emptyProductsIndex("demo");
+    index.products["demo::booster"] = {
+      slug: "booster",
+      path: "products/booster",
+      kind: "booster",
+      behavior: "random_pack",
+      category: "booster",
+      name: "Booster",
+      image: null,
+      imageBack: null,
+      setLogo: null,
+      setCode: "s1",
+      lang: "fr",
+      releaseDate: null,
+      priceCents: 100,
+      cardsPerPack: 5,
+      packsContained: 1,
+      guaranteedPrints: [],
+      randomPoolScope: "set",
+      randomPoolPrints: [],
+      declaredCardCount: null,
+      setCardCount: null,
+      contentsKnown: false,
+      containsPrintsIsPreview: false,
+      prints: [],
+    };
+
+    const written = writeProductsIndexToSqlite("demo", index, { dbPath });
+    expect(written.products).toBe(1);
+    expect(
+      loadProductsIndexFromSqlite("demo", { dbPath })?.products["demo::booster"]
+        ?.name,
+    ).toBe("Booster");
+  });
+});

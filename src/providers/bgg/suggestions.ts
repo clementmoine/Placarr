@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import { convertXML } from "simple-xml-to-json";
 
 import type { BGGChild, BGGResponse } from "./resolver";
@@ -6,7 +6,7 @@ import type { BGGChild, BGGResponse } from "./resolver";
 export async function getBGGSuggestions(name: string): Promise<string[]> {
   try {
     const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(name)}&type=boardgame`;
-    const searchRes = await axios.get(searchUrl, {
+    const searchRes = await httpGet<string>(searchUrl, {
       responseType: "text",
       timeout: 5000,
     });

@@ -1,0 +1,114 @@
+import { describe, expect, it } from "vitest";
+
+import { narutocarddassModule } from "./index";
+
+/**
+ * The provider plays the role Lorcana and Pokémon split across two modules:
+ * catalogue owner *and* card database. These are the hooks the card-database
+ * side is expected to carry (`lorcanajson`, `tcgdex`) — without them the
+ * provider is invisible to the admin test panel and to the mapping audit.
+ */
+describe("narutocarddass provider hooks", () => {
+  it("declares the card-database surface, not just the catalogue", () => {
+    expect(narutocarddassModule.searchPrints).toBeTypeOf("function");
+    expect(narutocarddassModule.lookupPrint).toBeTypeOf("function");
+    expect(narutocarddassModule.suggestDatabaseTitles).toBeTypeOf("function");
+    expect(narutocarddassModule.runMappingProbe).toBeTypeOf("function");
+    expect(narutocarddassModule.collectMappingRawKeys).toBeTypeOf("function");
+    expect(narutocarddassModule.evidence?.label).toBeTruthy();
+    // `nameDatabase` is what makes `suggestDatabaseTitles` reachable.
+    expect(narutocarddassModule.info.nameDatabase).toBe(true);
+  });
+
+  it("exposes a search and a print-key handler to the admin test panel", () => {
+    const handlers = Object.keys(narutocarddassModule.testHandlers ?? {});
+    expect(handlers).toContain("narutocarddass-search");
+    expect(handlers).toContain("narutocarddass-printkey");
+  });
+
+  it("suggests each distinct title once, prints being told apart by the picker", async () => {
+    const titles = await narutocarddassModule.suggestDatabaseTitles!({
+      cleanedName: "Tayuya",
+    } as never);
+    // `ni151` and `ni253` are both "Tayuya": one suggestion, two prints.
+    // EN CCG may also expose distinct "Tayuya (State 1/2)" titles.
+    expect(titles).toContain("Tayuya");
+    expect(titles[0]).toBe("Tayuya");
+  });
+
+  it("probes a sample that is always on disk", async () => {
+    const probe = await narutocarddassModule.runMappingProbe!();
+    expect(probe).not.toBeNull();
+    const keys = await narutocarddassModule.collectMappingRawKeys!(
+      undefined as never,
+    );
+    expect(keys).toContain("field:number");
+  });
+
+  /*
+    TA-074 S2 / S3 are distinct set-scoped keys — Extension follows the key.
+  */
+  it("labels Extension from the set-scoped printKey", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const asS2 = await adapter.resolve({
+      name: "Monnaie d'Echange",
+      printKey: "naruto:s2-ta0074",
+    });
+    const asS3 = await adapter.resolve({
+      name: "Monnaie d'Echange",
+      printKey: "naruto:s3-ta0074",
+    });
+    const extension = (facts: typeof asS2, label: string) =>
+      facts?.facts?.find((f) => f.label === label)?.value;
+    expect(extension(asS2, "Extension")).toMatch(/Série 2/i);
+    expect(extension(asS3, "Extension")).toMatch(/Série 3/i);
+  });
+
+  it("stamps sealed dig Distribution from __skuKey", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Pack Découverte",
+      externalIds: { __skuKey: "naruto/carddass::pack-decouverte" },
+    });
+    expect(hit?.title).toMatch(/Pack Découverte/i);
+    const dist = hit?.facts?.find((f) => f.label === "Distribution");
+    expect(dist?.url).toContain("manga-sanctuary.com/news/7397");
+    const story = hit?.facts?.find((f) => f.kind === "story");
+    expect(story?.label).toMatch(/saviez/i);
+    expect(story?.value).toMatch(/2 starters S1|Pack Découverte/i);
+  });
+
+  it("stamps Kana DVD sealed SKU Distribution from Facebook dig", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Naruto DVD vol. 3",
+      externalIds: { __skuKey: "naruto/carddass::kana-dvd-naruto-vol3" },
+    });
+    expect(hit?.title).toMatch(/DVD/i);
+    const dist = hit?.facts?.find((f) => f.label === "Distribution");
+    expect(dist?.url).toContain("facebook.com");
+  });
+
+  it("stamps UNS3 Xbox sealed Distribution from Facebook dig", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Xbox 360 UNS3",
+      externalIds: { __skuKey: "naruto/carddass::xbox360-uns3" },
+    });
+    expect(hit?.facts?.find((f) => f.label === "Distribution")?.url).toContain(
+      "facebook.com",
+    );
+  });
+
+  it("emits dig storytelling encart for UNS3 PR-093", async () => {
+    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const hit = await adapter.resolve({
+      name: "Double éclair pourfendeur",
+      printKey: "naruto:promo-pr0093",
+    });
+    const story = hit?.facts?.find((f) => f.kind === "story");
+    expect(story?.value).toMatch(/Kana|Japan Expo|PR‑093|PR-093/i);
+    expect(story?.url).toContain("kana.fr");
+  });
+});
+

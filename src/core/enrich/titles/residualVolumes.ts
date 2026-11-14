@@ -7,7 +7,10 @@ import { identityTokens } from "@/core/enrich/titles/identityTokens";
  * Shared issue number: explicit on both sides, or request explicit matched
  * against any number on the candidate ("Dragon Ball 1 . …").
  */
-export function volumesMatched(requestTitle: string, candidateTitle: string): boolean {
+export function volumesMatched(
+  requestTitle: string,
+  candidateTitle: string,
+): boolean {
   const requestVolumes = explicitVolumeNumbers(requestTitle);
   const candidateVolumes = explicitVolumeNumbers(candidateTitle);
   if (
@@ -27,7 +30,10 @@ export function volumesMatched(requestTitle: string, candidateTitle: string): bo
   return false;
 }
 
-export function volumesConflict(requestTitle: string, candidateTitle: string): boolean {
+export function volumesConflict(
+  requestTitle: string,
+  candidateTitle: string,
+): boolean {
   const requestVolumes = explicitVolumeNumbers(requestTitle);
   const candidateVolumes = explicitVolumeNumbers(candidateTitle);
   if (requestVolumes.length === 0 || candidateVolumes.length === 0) {

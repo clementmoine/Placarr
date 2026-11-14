@@ -23,6 +23,10 @@ function refreshCtx(
 ): BarcodePriceRefreshContext {
   return {
     shelfType: "boardgames",
+    barcodes: ["0827912079678"],
+    primaryTitle: "Black Stories",
+    titles: ["Black Stories"],
+    acceptanceTitles: ["Black Stories"],
     cleanedBarcode: "0827912079678",
     primaryName: "Black Stories",
     fallbackNames: [],

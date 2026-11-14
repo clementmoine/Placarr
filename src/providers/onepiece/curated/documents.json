@@ -1,0 +1,133 @@
+[
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_manual.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Official Rule Manual (EN)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_comprehensive.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Comprehensive Rules (EN)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/tournament_rules_manual.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "Tournament Rules Manual (EN)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/qa_rules.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Q&A General Rules (EN)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/playsheet.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Playsheet (EN)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_overview_sheet_en.pdf",
+    "lang": "en",
+    "kind": "other",
+    "title": "Rule Overview Sheet (EN)"
+  },
+  {
+    "url": "https://fr.onepiece-cardgame.com/pdf/rule_manual.pdf",
+    "lang": "fr",
+    "kind": "rulebook",
+    "title": "Manuel officiel des règles (FR)"
+  },
+  {
+    "url": "https://fr.onepiece-cardgame.com/pdf/rule_comprehensive.pdf",
+    "lang": "fr",
+    "kind": "rulebook",
+    "title": "Règles complètes (FR)"
+  },
+  {
+    "url": "https://fr.onepiece-cardgame.com/pdf/tournament_rules_manual.pdf",
+    "lang": "fr",
+    "kind": "op",
+    "title": "Règlement tournoi (FR)"
+  },
+  {
+    "url": "https://fr.onepiece-cardgame.com/pdf/qa_rules.pdf",
+    "lang": "fr",
+    "kind": "other",
+    "title": "Q&R règles générales (FR)"
+  },
+  {
+    "url": "https://fr.onepiece-cardgame.com/pdf/playsheet.pdf",
+    "lang": "fr",
+    "kind": "other",
+    "title": "Playsheet (FR)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_overview_sheet_fr.pdf",
+    "lang": "fr",
+    "kind": "other",
+    "title": "Fiche aperçu des règles (FR)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_overview_sheet_de.pdf",
+    "lang": "de",
+    "kind": "other",
+    "title": "Rule Overview Sheet (DE)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_overview_sheet_it.pdf",
+    "lang": "it",
+    "kind": "other",
+    "title": "Rule Overview Sheet (IT)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_overview_sheet_es.pdf",
+    "lang": "es",
+    "kind": "other",
+    "title": "Rule Overview Sheet (ES)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/pdf/rule_overview_sheet_pt.pdf",
+    "lang": "pt",
+    "kind": "other",
+    "title": "Rule Overview Sheet (PT)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/rules/",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Official Rules hub (EN)"
+  },
+  {
+    "url": "https://www.onepiece-cardgame.com/pdf/don-cardlist.pdf",
+    "localPath": "staging/don-cardlist-jp.pdf",
+    "lang": "ja",
+    "kind": "checklist",
+    "title": "DON!! Cardlist (JP)"
+  },
+  {
+    "url": "https://asia-en.onepiece-cardgame.com/pdf/don-cardlist.pdf",
+    "localPath": "staging/don-cardlist-asia-en.pdf",
+    "lang": "en",
+    "kind": "checklist",
+    "title": "DON!! Cardlist (Asia EN)"
+  },
+  {
+    "url": "https://en.onepiece-cardgame.com/cardlist/?cardtype=3",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Cardlist — DON!! filter (EN)"
+  },
+  {
+    "url": "https://www.onepiece-cardgame.com/cardlist/?cardtype=3",
+    "download": false,
+    "lang": "ja",
+    "kind": "brand",
+    "title": "Cardlist — DON!! filter (JP)"
+  }
+]

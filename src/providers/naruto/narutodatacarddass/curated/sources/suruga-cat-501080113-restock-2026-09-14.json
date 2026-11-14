@@ -1,0 +1,215 @@
+{
+  "source": "suruga-cat-501080113-restock",
+  "observed": "2026-09-14",
+  "url": "https://www.suruga-ya.jp/search?category=501080113&search_word=",
+  "resultsBanner": 565,
+  "beforeTsv": 958,
+  "afterTsv": 958,
+  "totalAdded": 0,
+  "pageStats": [
+    {
+      "page": 1,
+      "added": 0,
+      "after": 958,
+      "products": 23
+    },
+    {
+      "page": 2,
+      "added": 0,
+      "after": 958,
+      "products": 18
+    },
+    {
+      "page": 3,
+      "added": 0,
+      "after": 958,
+      "products": 20
+    },
+    {
+      "page": 4,
+      "added": 0,
+      "after": 958,
+      "products": 18
+    },
+    {
+      "page": 5,
+      "added": 0,
+      "after": 958,
+      "products": 20
+    },
+    {
+      "page": 6,
+      "added": 0,
+      "after": 958,
+      "products": 24
+    },
+    {
+      "page": 7,
+      "added": 0,
+      "after": 958,
+      "products": 26
+    },
+    {
+      "page": 8,
+      "added": 0,
+      "after": 958,
+      "products": 23
+    },
+    {
+      "page": 9,
+      "added": 0,
+      "after": 958,
+      "products": 22
+    },
+    {
+      "page": 10,
+      "added": 0,
+      "after": 958,
+      "products": 26
+    },
+    {
+      "page": 11,
+      "added": 0,
+      "after": 958,
+      "products": 21
+    },
+    {
+      "page": 12,
+      "added": 0,
+      "after": 958,
+      "products": 25
+    },
+    {
+      "page": 13,
+      "added": 0,
+      "after": 958,
+      "products": 24
+    },
+    {
+      "page": 14,
+      "added": 0,
+      "after": 958,
+      "products": 22
+    },
+    {
+      "page": 15,
+      "added": 0,
+      "after": 958,
+      "products": 24
+    },
+    {
+      "page": 16,
+      "added": 0,
+      "after": 958,
+      "products": 21
+    },
+    {
+      "page": 17,
+      "added": 0,
+      "after": 958,
+      "products": 21
+    },
+    {
+      "page": 18,
+      "added": 0,
+      "after": 958,
+      "products": 25
+    },
+    {
+      "page": 19,
+      "added": 0,
+      "after": 958,
+      "products": 19
+    },
+    {
+      "page": 20,
+      "added": 0,
+      "after": 958,
+      "products": 19
+    },
+    {
+      "page": 21,
+      "added": 0,
+      "after": 958,
+      "products": 22
+    },
+    {
+      "page": 22,
+      "added": 0,
+      "after": 958,
+      "products": 20
+    },
+    {
+      "page": 23,
+      "added": 0,
+      "after": 958,
+      "products": 22
+    },
+    {
+      "page": 24,
+      "added": 0,
+      "after": 958,
+      "products": 16
+    },
+    {
+      "page": 25,
+      "added": 0,
+      "after": 958,
+      "products": 0
+    },
+    {
+      "page": 26,
+      "added": 0,
+      "after": 958,
+      "products": 0
+    }
+  ],
+  "install": {
+    "written": 0,
+    "skipped": 891,
+    "failed": 45,
+    "writtenKeys": [],
+    "failedSample": [
+      "dn/ja/136t",
+      "dn/ja/141t",
+      "dn/ja/144t",
+      "dn/ja/164t",
+      "dn/ja/157t",
+      "dn/ja/174t",
+      "dn/ja/195t",
+      "dn/ja/210t",
+      "dn/ja/211t",
+      "dn/ja/239t",
+      "nf/ja/126",
+      "nf/ja/230",
+      "nm/ja/023",
+      "nm/ja/054",
+      "nm/ja/056",
+      "nm/ja/057",
+      "nm/ja/093",
+      "nm/ja/099",
+      "nm/ja/108",
+      "nm/ja/188",
+      "nx/ja/010",
+      "nx/ja/015",
+      "nx/ja/017",
+      "nx/ja/028",
+      "nx/ja/044",
+      "nx/ja/049",
+      "nx/ja/090",
+      "NX-173",
+      "NX-176",
+      "nx/ja/106",
+      "nx/ja/111",
+      "nx/ja/130",
+      "NX-224",
+      "NX-229",
+      "NX-237",
+      "nx/ja/133",
+      "nx/ja/156",
+      "nx/ja/179",
+      "nx/ja/186",
+      "nx/ja/187"
+    ]
+  }
+}

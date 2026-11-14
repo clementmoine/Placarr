@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 import { parse, format } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
@@ -7,6 +7,7 @@ import { normalizeProductBarcode } from "@/core/identify/normalize";
 import { volumeNumberFromTitle } from "@/core/enrich/titles/volumeNumber";
 import { metadataTitleSimilarity } from "@/core/enrich/titleMatching";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 function openLibraryTitleAligned(
   resultTitle: string,
@@ -17,7 +18,10 @@ function openLibraryTitleAligned(
   if (requestedIssue && resultIssue && requestedIssue !== resultIssue) {
     return false;
   }
-  return metadataTitleSimilarity(resultTitle, requestedName) >= 0.58;
+  return (
+    metadataTitleSimilarity(resultTitle, requestedName) >=
+    METADATA_TITLE_ALIGN_FLOOR
+  );
 }
 
 interface OpenLibraryWork {
@@ -151,7 +155,7 @@ export function createOpenLibraryResolver() {
       retryCount = 0,
     ): Promise<T> => {
       try {
-        const response = await axios.get<T>(url, {
+        const response = await httpGet<T>(url, {
           timeout: OPENLIBRARY_TIMEOUT_MS,
         });
         return response.data;

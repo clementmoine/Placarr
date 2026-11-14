@@ -83,10 +83,10 @@ describe("presentItemFromStorage identity gates (golden)", () => {
       },
     } as Parameters<typeof presentItemFromStorage>[0]);
 
-    const linkUrls =
-      presented.metadata?.facts
-        ?.filter((fact) => fact.kind === "external-link")
-        .map((fact) => fact.url) ?? [];
+    const facts = presented.metadata?.facts;
+    const linkUrls = (Array.isArray(facts) ? facts : [])
+      .filter((fact) => fact.kind === "external-link")
+      .map((fact) => fact.url);
     expect(linkUrls.some((url) => url?.includes("playstation-5"))).toBe(true);
     expect(linkUrls.some((url) => url?.includes("playstation-1"))).toBe(false);
 
@@ -94,9 +94,9 @@ describe("presentItemFromStorage identity gates (golden)", () => {
       presented.metadata?.attachments?.map((attachment) => attachment.url) ??
       [];
     expect(coverUrls).toContain(bmGoodCover);
-    expect(
-      coverUrls.some((url) => url.includes("wrong-ps1-cover")),
-    ).toBe(false);
+    expect(coverUrls.some((url) => url.includes("wrong-ps1-cover"))).toBe(
+      false,
+    );
   });
 
   it("keeps write-persisted BM Mega Drive cover without list priceOffers.rawValue", () => {

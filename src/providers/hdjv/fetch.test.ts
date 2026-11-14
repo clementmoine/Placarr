@@ -199,8 +199,6 @@ describe("searchHdjv", () => {
         expect.objectContaining({ gameCode: "12852", support: "Xbox 360" }),
       ]),
     );
-    expect(promoteHdjvSearchEvidence.mock.calls[0]?.[0]).toContain(
-      "support=5",
-    );
+    expect(promoteHdjvSearchEvidence.mock.calls[0]?.[0]).toContain("support=5");
   });
 });

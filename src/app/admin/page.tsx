@@ -3,13 +3,17 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
+import { useOptimisticUrlValue } from "@/lib/client/useOptimisticUrlValue";
 import Header from "@/components/Header";
+import { CorpusPromotePanel } from "@/components/admin/CorpusPromotePanel";
 import { MetadataRefreshPanel } from "@/components/admin/MetadataRefreshPanel";
+import { ProviderAffinitiesPanel } from "@/components/admin/ProviderAffinitiesPanel";
 import {
   Card,
   CardContent,
@@ -38,6 +42,7 @@ import {
   Play,
   Loader2,
   FlaskConical,
+  Sparkles,
   Terminal,
 } from "lucide-react";
 import { useAccount } from "@/lib/client/hooks/useAccount";
@@ -52,6 +57,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RemoteImage } from "@/components/RemoteImage";
+
+/** Catalogue / foil playroom — heavy; only load when that admin tab is open. */
+const TcgEffectsPanel = dynamic(
+  () =>
+    import("@/components/admin/TcgEffectsPanel").then((m) => m.TcgEffectsPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3 p-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
+  },
+);
 
 interface ApiStatus {
   providerId: string;
@@ -285,11 +305,41 @@ function AdminDashboardComponent() {
   const { status, data: session } = useSession();
   useAccount();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, locale } = useLocale();
+
+  const tabFromUrl = searchParams.get("tab");
+  const urlTab =
+    tabFromUrl === "catalogue" ||
+    tabFromUrl === "refresh" ||
+    tabFromUrl === "playground" ||
+    tabFromUrl === "providers"
+      ? tabFromUrl
+      : "providers";
+  const { value: activeTab, setOptimistic: setTabOptimistic } =
+    useOptimisticUrlValue(urlTab);
+
+  const setTab = (value: string) => {
+    const next =
+      value === "catalogue" ||
+      value === "refresh" ||
+      value === "playground" ||
+      value === "providers"
+        ? value
+        : "providers";
+    setTabOptimistic(next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", next);
+    if (next !== "catalogue") params.delete("pack");
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  };
 
   const [expandedErrors, setExpandedErrors] = useState<Record<string, boolean>>(
     {},
   );
+
+  const isAdmin = status === "authenticated" && session?.user?.role === "admin";
+  const providersTabActive = activeTab === "providers";
 
   const {
     data: apis,
@@ -302,7 +352,7 @@ function AdminDashboardComponent() {
       const res = await axios.get("/api/admin/status");
       return res.data;
     },
-    enabled: status === "authenticated" && session?.user?.role === "admin",
+    enabled: isAdmin && providersTabActive,
     refetchOnWindowFocus: false,
   });
 
@@ -317,7 +367,7 @@ function AdminDashboardComponent() {
       const res = await axios.get("/api/admin/providers");
       return res.data;
     },
-    enabled: status === "authenticated" && session?.user?.role === "admin",
+    enabled: isAdmin && providersTabActive,
     refetchOnWindowFocus: false,
   });
 
@@ -696,29 +746,13 @@ function AdminDashboardComponent() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground pb-24 md:pb-12">
-      <Header>
-        <div className="flex gap-2">
-          <Button
-            id="btn-refresh-status"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              refetch();
-              refetchProviders();
-              refetchMappingAudit();
-            }}
-            disabled={isLoading || isFetching}
-            className="flex items-center gap-1.5"
-          >
-            <RefreshCw
-              className={`size-4 ${isFetching ? "animate-spin" : ""}`}
-            />
-            <span>{t("admin.status.refresh")}</span>
-          </Button>
-        </div>
-      </Header>
+      <Header />
 
-      <div className="max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+      <div
+        className={`max-w-7xl w-full mx-auto p-4 md:p-6 ${
+          activeTab === "catalogue" ? "space-y-3" : "space-y-6"
+        }`}
+      >
         {/* Navigation & Header Info */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -732,16 +766,28 @@ function AdminDashboardComponent() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {t("navigation.admin") || "Administration"}
+              {activeTab === "catalogue"
+                ? locale === "fr"
+                  ? "Catalogue"
+                  : "Catalogue"
+                : t("navigation.admin") || "Administration"}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {t("admin.status.description")}
-            </p>
+            {activeTab === "catalogue" ? null : (
+              <p className="text-muted-foreground text-sm mt-1">
+                {t("admin.status.description")}
+              </p>
+            )}
           </div>
         </div>
 
-        <Tabs defaultValue="providers" className="w-full space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-[760px]">
+        <Tabs
+          value={activeTab}
+          onValueChange={setTab}
+          className={`w-full ${
+            activeTab === "catalogue" ? "space-y-3" : "space-y-6"
+          }`}
+        >
+          <TabsList className="grid w-full grid-cols-4 max-w-[900px]">
             <TabsTrigger value="providers" className="flex items-center gap-2">
               <Database className="size-4" />
               {locale === "fr" ? "Providers" : "Providers"}
@@ -754,10 +800,23 @@ function AdminDashboardComponent() {
               <FlaskConical className="size-4" />
               {locale === "fr" ? "Teardown" : "Teardown"}
             </TabsTrigger>
+            <TabsTrigger value="catalogue" className="flex items-center gap-2">
+              <Sparkles className="size-4" />
+              {locale === "fr" ? "Catalogue" : "Catalogue"}
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="catalogue" className="outline-none">
+            {/* Mount only when open — the grid spins WebGL canvases. */}
+            {activeTab === "catalogue" ? (
+              <TcgEffectsPanel locale={locale} />
+            ) : null}
+          </TabsContent>
 
           <TabsContent value="refresh" className="space-y-6 outline-none">
             <MetadataRefreshPanel />
+            <ProviderAffinitiesPanel />
+            <CorpusPromotePanel />
           </TabsContent>
 
           <TabsContent value="playground" className="space-y-6 outline-none">
@@ -1358,6 +1417,7 @@ function AdminDashboardComponent() {
                     </p>
                   </div>
                   <Button
+                    id="btn-refresh-status"
                     variant="outline"
                     size="sm"
                     onClick={() => {
@@ -1365,15 +1425,17 @@ function AdminDashboardComponent() {
                       refetchProviders();
                       refetchMappingAudit();
                     }}
-                    disabled={isFetchingProviders}
+                    disabled={isLoading || isFetching || isFetchingProviders}
                     className="w-full sm:w-auto"
                   >
                     <RefreshCw
-                      className={`size-4 ${isFetchingProviders ? "animate-spin" : ""}`}
+                      className={`size-4 ${isFetching || isFetchingProviders ? "animate-spin" : ""}`}
                     />
                     {t("admin.status.refresh")}
                   </Button>
                 </div>
+
+                {/* Local indexes live under Catalogue (corpus hub). */}
 
                 <div className="rounded-lg border bg-card/40 px-3 py-2">
                   <button

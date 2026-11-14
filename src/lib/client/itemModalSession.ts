@@ -1,4 +1,4 @@
-import type { Condition } from "@prisma/client";
+import type { Condition } from "@/generated/prisma/browser";
 
 import { isBarcodePlaceholderItemName } from "@/core/collect/placeholderName";
 import {
@@ -7,22 +7,62 @@ import {
   isExplicitUserCoverOverride,
 } from "@/core/collect/media";
 import { collectMetadataTitleSuggestions } from "@/core/collect/titleSuggestions";
+import {
+  absenceSinceInputValue,
+  coerceItemPresence,
+  isAbsenceReason,
+  priceCentsInputValue,
+  type ItemPresence,
+} from "@/core/collect/itemAbsence";
+import {
+  isGradeStatus,
+  type GradeStatus,
+} from "@/core/collect/itemGrade";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
+import type { Locale } from "@/types/i18n";
 
 export type ItemModalFormValues = {
   shelfId: string;
   name: string;
   barcode?: string;
   description?: string;
+  /**
+   * Which variant of the object this copy is (a card's finish, say). Free text
+   * because the vocabulary is the provider's; the options come from the
+   * metadata's `variant-option` facts. See `@/core/enrich/variants`.
+   */
+  variant?: string | null;
   condition: Condition;
+  presence: ItemPresence;
+  absenceReason: string;
+  absenceSince: string;
+  absenceRecipient: string;
+  absenceSource: string;
+  absenceCarrier: string;
+  absenceTracking: string;
+  absenceOrderRef: string;
+  absenceOrderUrl: string;
+  absenceNote: string;
+  /** Euros string for the form; converted to cents on submit. */
+  absencePrice: string;
+  absenceExpectedAt: string;
+  purchasePrice: string;
+  purchasedAt: string;
+  gradeStatus: GradeStatus;
+  gradeHouse: string;
+  gradeLabel: string;
+  gradeCertNo: string;
+  gradedAt: string;
   imageUrl: string | File | null;
+  coverMode: "auto" | "pinned" | null;
   backgroundImageUrl: string | File | null;
 };
 
 export type ItemModalShelfMediaContext = {
   type?: string;
   name?: string;
+  cardFormat?: string | null;
 };
 
 export type ItemModalPrefilledValues = {
@@ -30,6 +70,10 @@ export type ItemModalPrefilledValues = {
   barcode?: string;
   imageUrl?: string | null;
   shelfId?: string;
+  /** Scan / PrintPicker — required for local catalogue enrich. */
+  printKey?: string | null;
+  language?: string | null;
+  setCode?: string | null;
   metadataPreview?: MetadataResult | null;
 };
 
@@ -70,7 +114,34 @@ export function itemModalSessionKey({
   }
 
   const prefilledShelfId = prefilledValues?.shelfId ?? shelfId;
-  return `new:${prefilledValues?.barcode ?? ""}|${prefilledValues?.name ?? ""}|${prefilledShelfId}`;
+  return `new:${prefilledValues?.barcode ?? ""}|${prefilledValues?.printKey ?? ""}|${prefilledValues?.name ?? ""}|${prefilledShelfId}`;
+}
+
+function emptyAbsenceFields() {
+  return {
+    presence: "owned" as const,
+    absenceReason: "",
+    absenceSince: "",
+    absenceRecipient: "",
+    absenceSource: "",
+    absenceCarrier: "",
+    absenceTracking: "",
+    absenceOrderRef: "",
+    absenceOrderUrl: "",
+    absenceNote: "",
+    absencePrice: "",
+    absenceExpectedAt: "",
+  };
+}
+
+function emptyGradeFields() {
+  return {
+    gradeStatus: "raw" as const,
+    gradeHouse: "",
+    gradeLabel: "",
+    gradeCertNo: "",
+    gradedAt: "",
+  };
 }
 
 function defaultFormValues(
@@ -81,10 +152,16 @@ function defaultFormValues(
     shelfId: prefilledValues?.shelfId || shelfId || "",
     name: prefilledValues?.name || "",
     imageUrl: prefilledValues?.imageUrl || null,
+    coverMode: null,
     backgroundImageUrl: null,
     description: "",
     barcode: prefilledValues?.barcode || "",
+    variant: null,
     condition: "used",
+    purchasePrice: "",
+    purchasedAt: "",
+    ...emptyAbsenceFields(),
+    ...emptyGradeFields(),
   };
 }
 
@@ -124,39 +201,94 @@ function formValuesFromMetadataPreview(
   return next;
 }
 
+function absenceFieldsFromItem(item: ItemWithMetadata) {
+  const presence = coerceItemPresence(item.presence);
+  if (presence === "owned") return emptyAbsenceFields();
+  return {
+    presence,
+    absenceReason: isAbsenceReason(item.absenceReason)
+      ? item.absenceReason
+      : "",
+    absenceSince: absenceSinceInputValue(item.absenceSince),
+    absenceRecipient: item.absenceRecipient?.trim() || "",
+    absenceSource: item.absenceSource?.trim() || "",
+    absenceCarrier: item.absenceCarrier?.trim() || "",
+    absenceTracking: item.absenceTracking?.trim() || "",
+    absenceOrderRef: item.absenceOrderRef?.trim() || "",
+    absenceOrderUrl: item.absenceOrderUrl?.trim() || "",
+    absenceNote: item.absenceNote?.trim() || "",
+    absencePrice: priceCentsInputValue(item.absencePriceCents),
+    absenceExpectedAt: absenceSinceInputValue(item.absenceExpectedAt),
+  };
+}
+
+function gradeFieldsFromItem(item: ItemWithMetadata) {
+  const status = isGradeStatus(item.gradeStatus) ? item.gradeStatus : "raw";
+  if (status === "raw") return emptyGradeFields();
+  return {
+    gradeStatus: status,
+    gradeHouse: item.gradeHouse?.trim() || "",
+    gradeLabel: item.gradeLabel?.trim() || "",
+    gradeCertNo: item.gradeCertNo?.trim() || "",
+    gradedAt: absenceSinceInputValue(item.gradedAt),
+  };
+}
+
 export function buildItemModalSessionInit(input: {
   item?: ItemWithMetadata | null;
   prefilledValues?: ItemModalPrefilledValues;
   shelfId: string;
   activeShelfForMedia: ItemModalShelfMediaContext;
+  uiLocale?: Locale | null;
 }): ItemModalSessionInit {
-  const { item, prefilledValues, shelfId, activeShelfForMedia } = input;
+  const { item, prefilledValues, shelfId, activeShelfForMedia, uiLocale } =
+    input;
   const defaults = defaultFormValues(shelfId, prefilledValues);
 
   if (item) {
     const storedName = (item.storedName || item.name || defaults.name).trim();
+    const seededCoverMode =
+      item.coverMode === "auto" || item.coverMode === "pinned"
+        ? item.coverMode
+        : null;
     const mediaForCover = {
       imageUrl: item.imageUrl,
+      coverMode: seededCoverMode,
       updatedAt: item.updatedAt,
       condition: item.condition,
       metadata: item.metadata,
-      shelf: item.shelf || activeShelfForMedia,
+      // Prefer the live shelf frame (cardFormat) over a stale nested item.shelf
+      // that may omit it — same options as Affiche gallery ranking.
+      shelf: {
+        type: activeShelfForMedia.type ?? item.shelf?.type,
+        name: activeShelfForMedia.name ?? item.shelf?.name,
+        cardFormat:
+          activeShelfForMedia.cardFormat ?? item.shelf?.cardFormat ?? null,
+      },
     };
     // Without an explicit user gallery pick, seed the form on the dynamic
     // default (same ranking as cards / "Par défaut") — not a stale item.imageUrl.
     const seededCoverUrl = isExplicitUserCoverOverride(mediaForCover)
       ? item.imageUrl || defaults.imageUrl
-      : getCoverImage(mediaForCover) || item.imageUrl || defaults.imageUrl;
+      : getCoverImage(mediaForCover, uiLocale) ||
+        item.imageUrl ||
+        defaults.imageUrl;
     let formValues: ItemModalFormValues = {
       shelfId: item.shelfId || defaults.shelfId,
       name: storedName,
       description:
         item.description || item.metadata?.description || defaults.description,
       condition: item.condition || defaults.condition,
+      variant: item.variant ?? defaults.variant ?? null,
       imageUrl: seededCoverUrl,
+      coverMode: seededCoverMode,
       backgroundImageUrl:
         item.backgroundImageUrl || defaults.backgroundImageUrl,
       barcode: item.barcode || defaults.barcode,
+      purchasePrice: priceCentsInputValue(item.purchasePriceCents),
+      purchasedAt: absenceSinceInputValue(item.purchasedAt),
+      ...absenceFieldsFromItem(item),
+      ...gradeFieldsFromItem(item),
     };
 
     const metadata = filterMetadataForShelfPlatform(
@@ -184,9 +316,16 @@ export function buildItemModalSessionInit(input: {
       nameSuggestion: titleSuggestions[0] ?? null,
       fetchedMetadata: metadata ?? null,
       lastInitializedShelfId: formValues.shelfId,
-      asyncInit:
-        !metadata && item.barcode?.trim()
-          ? { kind: "barcode", barcode: item.barcode.trim() }
+      // Print-bound edits re-resolve by printKey so the Images picker can list
+      // every local_catalog face for that print (not a stale single winner, and
+      // not a cross-game name hit).
+      asyncInit: item.printKey?.trim()
+        ? {
+            kind: "preview" as const,
+            name: formValues.name.trim() || storedName,
+          }
+        : !metadata && item.barcode?.trim()
+          ? { kind: "barcode" as const, barcode: item.barcode.trim() }
           : null,
     };
   }

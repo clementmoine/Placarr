@@ -1,4 +1,4 @@
-import type { AttachmentType } from "@prisma/client";
+import type { AttachmentType } from "@/generated/prisma/browser";
 
 import type { FieldEvidenceInput } from "@/core/enrich/evidence";
 import type { MetadataObservation } from "@/types/metadataObservation";
@@ -34,6 +34,18 @@ export interface MetadataAttachment {
   height?: number;
   meanLuminance?: number;
   darkPixelRatio?: number;
+  /**
+   * Public proof URL for this image (dump page, Wayback, official CDN).
+   * Persisted on `Attachment.sourceUrl` — Affiche chips link here.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Face/cover kind stamped at ingest (`dump` / `corrected` / `reconstructed`…).
+   * Ranking reads this — never re-parses the basename. See `faceArtMeta`.
+   */
+  artKind?: string | null;
+  /** Dig knows this art carries SAMPLE/DEMO/site overlay watermark. */
+  watermarked?: boolean | null;
   /**
    * Provider-derived display fields, computed from `source` server-side so the
    * client-safe scorer/label formatter can read them. Not persisted (recomputed
@@ -95,21 +107,14 @@ export interface MetadataResult {
   attachments?: MetadataAttachment[];
   aliases?: string[];
   regionalTitles?: { region?: string; text: string }[];
+  /**
+   * Record ids keyed by provider id, plus cross-provider namespaces like
+   * `imdb`. Deliberately an index signature: enumerating the providers here
+   * added nothing (the signature already accepted any key) and made core
+   * carry a list to update on every new provider.
+   */
   externalIds?: {
     imdb?: string | null;
-    tmdb?: string | null;
-    launchbox?: string | null;
-    igdb?: string | null;
-    screenscraper?: string | null;
-    steam?: string | null;
-    rawg?: string | null;
-    bgg?: string | null;
-    googlebooks?: string | null;
-    openlibrary?: string | null;
-    musicbrainz?: string | null;
-    discogs?: string | null;
-    wikidata?: string | null;
-    thegamesdb?: string | null;
     [key: string]: string | null | undefined;
   };
   facts?: MetadataFact[];

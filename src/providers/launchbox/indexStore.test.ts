@@ -24,7 +24,8 @@ describe("LaunchBox prebuild / download gate", () => {
 
   afterEach(() => {
     __resetLaunchBoxIndexForTests();
-    if (originalAllow === undefined) delete process.env.LAUNCHBOX_ALLOW_DOWNLOAD;
+    if (originalAllow === undefined)
+      delete process.env.LAUNCHBOX_ALLOW_DOWNLOAD;
     else process.env.LAUNCHBOX_ALLOW_DOWNLOAD = originalAllow;
     if (originalXml === undefined) delete process.env.LAUNCHBOX_METADATA_XML;
     else process.env.LAUNCHBOX_METADATA_XML = originalXml;

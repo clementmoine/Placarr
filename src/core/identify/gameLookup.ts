@@ -29,6 +29,8 @@ export type NamedListing = {
   category?: string | null;
   /** Brand / label ("DISNEY JUNIOR") for shelf estimation. */
   brand?: string | null;
+  /** Listing photo when the source sheet exposes one (Freakxy, …). */
+  coverUrl?: string | null;
 };
 
 export type GameLookupInputs = {

@@ -184,7 +184,7 @@ export function BarcodeScannerView({
         scanDelay={250}
         allowMultiple={false}
         sound={false}
-        components={{ finder: false }}
+        components={{ finder: false, torch: true, zoom: true }}
         styles={{
           container: {
             background: "black",

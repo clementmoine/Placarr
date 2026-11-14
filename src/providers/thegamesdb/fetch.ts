@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "@/lib/http/httpClient";
 
 import { isTheGamesDbQuotaBlocked, markTheGamesDbQuotaHit } from "./quota";
 
@@ -108,7 +108,7 @@ export async function searchTheGamesDbByName(
   if (!apiKey || !name.trim() || isTheGamesDbQuotaBlocked()) return null;
 
   try {
-    const response = await axios.get<TheGamesDbSearchResponse>(
+    const response = await httpGet<TheGamesDbSearchResponse>(
       `${API_BASE}/v1.1/Games/ByGameName`,
       {
         params: { apikey: apiKey, name: name.trim() },
@@ -136,7 +136,7 @@ export async function fetchTheGamesDbById(
   if (!apiKey || isTheGamesDbQuotaBlocked()) return null;
 
   try {
-    const response = await axios.get<TheGamesDbByGameIdResponse>(
+    const response = await httpGet<TheGamesDbByGameIdResponse>(
       `${API_BASE}/v1/Games/ByGameID`,
       {
         params: {
@@ -173,11 +173,14 @@ export async function pingTheGamesDb(): Promise<{
 
   const start = Date.now();
   try {
-    const response = await axios.get(`${API_BASE}/v1/Platforms`, {
-      params: { apikey: apiKey },
-      timeout: 5000,
-      validateStatus: () => true,
-    });
+    const response = await httpGet<{ code?: number }>(
+      `${API_BASE}/v1/Platforms`,
+      {
+        params: { apikey: apiKey },
+        timeout: 5000,
+        validateStatus: () => true,
+      },
+    );
     const latency = Date.now() - start;
     const ok = response.status === 200 && response.data?.code === 200;
     if (response.status === 429 || response.data?.code === 429) {

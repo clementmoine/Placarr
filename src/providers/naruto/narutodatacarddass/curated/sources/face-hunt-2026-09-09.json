@@ -1,0 +1,39 @@
+{
+  "source": "data-carddass-face-hunt-2026-09-09",
+  "observed": "2026-09-09",
+  "kind": "research-dig",
+  "baseline": {
+    "checklist": 1329,
+    "before": { "dirsWithArt": 124, "suruga": 107, "ebay": 19 }
+  },
+  "after": {
+    "dirsWithArt": "~180+",
+    "sources": ["suruga", "ebay", "arcadegamecards", "chitoroshop"]
+  },
+  "yields": [
+    {
+      "host": "arcadegamecards.com",
+      "faces": 14,
+      "note": "WP uploads/2021/03/narutimatedni*.jpg (680×992). Parser fix: DNI→DN-###T + uploads listing. Promos P/CP skipped."
+    },
+    {
+      "host": "chitoroshop.com",
+      "faces": 51,
+      "note": "Shopify og:image ~1590×2250. DN/NM/NF/NX singles. Ledger curated/sources/chitoroshop.json. NX-0271 slug → NX-271."
+    }
+  ],
+  "deadEnds": [
+    "carddass.com mission carddata/*.gif — CDX only 301/404, not archived",
+    "fudanin popup faces — chrome only in CDX, no card JPEGs",
+    "noihjp DataCarddas — checklist text, no images",
+    "nao-yoshi seesaa — one collage JPG only",
+    "Suruga category pages 4–10 — still absent Wayback",
+    "buyee/aucfan live — 403 / empty image CDN in HTML"
+  ],
+  "next": [
+    "Paste more eBay mikanshop page 2+ (hunt journal ~780 listings, 19 ingested)",
+    "More Chito collection pagination / search if stock rotates",
+    "Suruga TSV pages 4–10 if user pastes live HTML",
+    "Yahoo/Mercari paste-only singles (no crawl)"
+  ]
+}

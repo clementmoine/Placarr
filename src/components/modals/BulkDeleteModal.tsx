@@ -7,7 +7,7 @@ import { BaseModal } from "@/components/modals/BaseModal";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { deleteItemsBatch } from "@/lib/api/items";
 
-import type { Shelf } from "@prisma/client";
+import type { Shelf } from "@/generated/prisma/browser";
 
 export function BulkDeleteModal({
   isOpen,

@@ -1,9 +1,10 @@
-import axios from "axios";
+import { httpGet, isAxiosError } from "@/lib/http/httpClient";
 import levenshtein from "fast-levenshtein";
 
 import { isMetadataTitleAligned } from "@/core/enrich/titleMatching";
 import { normalizeProductBarcode } from "@/core/identify/normalize";
 import type { MetadataFact, MetadataResult } from "@/types/metadataProvider";
+import { METADATA_TITLE_ALIGN_FLOOR } from "@/core/enrich/titles/identityThresholds";
 
 const BASE_URL = "https://www.googleapis.com/books/v1/volumes";
 
@@ -58,12 +59,10 @@ async function resolveGoogleBooksCoverUrl(
 ): Promise<string | undefined> {
   if (!imageLinks) return undefined;
 
-  const { fetchRemoteImageBuffer } = await import(
-    "@/core/enrich/media/remoteFetch"
-  );
-  const { isUnavailableCoverPlaceholderBuffer } = await import(
-    "@/core/enrich/media/coverPlaceholder.server"
-  );
+  const { fetchRemoteImageBuffer } =
+    await import("@/core/enrich/media/remoteFetch");
+  const { isUnavailableCoverPlaceholderBuffer } =
+    await import("@/core/enrich/media/coverPlaceholder.server");
 
   const candidates = [
     imageLinks.extraLarge,
@@ -366,7 +365,11 @@ function pickBestVolume(
       if (
         trimmedName &&
         title &&
-        !isMetadataTitleAligned({ title }, [trimmedName], 0.58)
+        !isMetadataTitleAligned(
+          { title },
+          [trimmedName],
+          METADATA_TITLE_ALIGN_FLOOR,
+        )
       ) {
         // ISBN hit for a different franchise than the shelf name — refuse
         // rather than ship a confident wrong cover (Naruto label + Boruto ISBN).
@@ -383,7 +386,11 @@ function pickBestVolume(
   const aligned = volumes.filter((volume) => {
     const title = volumeDisplayTitle(volume);
     if (!title) return false;
-    return isMetadataTitleAligned({ title }, [trimmedName], 0.58);
+    return isMetadataTitleAligned(
+      { title },
+      [trimmedName],
+      METADATA_TITLE_ALIGN_FLOOR,
+    );
   });
   if (aligned.length === 0) return null;
 
@@ -418,7 +425,7 @@ export function createGoogleBooksResolver() {
     if (!query) return null;
 
     try {
-      const response = await axios.get<GoogleBooksResponse>(BASE_URL, {
+      const response = await httpGet<GoogleBooksResponse>(BASE_URL, {
         params: {
           q: query,
           maxResults: 8,
@@ -435,7 +442,7 @@ export function createGoogleBooksResolver() {
 
       return await mapVolumeToMetadata(best, cleanedBarcode);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 429) {
+      if (isAxiosError(error) && error.response?.status === 429) {
         throw new Error(
           apiKey
             ? "Google Books API rate limit exceeded"

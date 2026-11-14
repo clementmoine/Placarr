@@ -1,0 +1,82 @@
+[
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Rulebook+FR.pdf",
+    "lang": "fr",
+    "kind": "rulebook",
+    "title": "Naruto Mythos TCG — Rulebook (FR)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Rulebook+EN.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Naruto Mythos TCG — Rulebook (EN)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Rulebook+V2+ENG+update+13+mar.pdf",
+    "lang": "en",
+    "kind": "rulebook",
+    "title": "Naruto Mythos TCG — Rulebook V2 (EN, Mar update)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Tournament+Rules-4ee6641f.pdf",
+    "lang": "en",
+    "kind": "op",
+    "title": "Naruto Mythos TCG — Tournament Rules"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+Mythos+TCG+Tournament+Infraction+Guidelines-5173c2a1.pdf",
+    "lang": "en",
+    "kind": "penalty",
+    "title": "Naruto Mythos TCG — Tournament Infraction Guidelines"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+TCG+-+Guide+de+collection+FR.pdf",
+    "lang": "fr",
+    "kind": "checklist",
+    "title": "Guide de collection (FR)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto+TCG+Colleciton+Guide+Set+1+2ED+-+FR+v2.pdf",
+    "lang": "fr",
+    "kind": "checklist",
+    "title": "Guide de collection — Set 1 2ED (FR v2)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Collection+Guide+Shinobi+Shiren+FR.pdf",
+    "lang": "fr",
+    "kind": "checklist",
+    "title": "Guide de collection — Shinobi Shiren (FR)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto_TCG_Collection_Guide_EN.pdf",
+    "lang": "en",
+    "kind": "checklist",
+    "title": "Collection Guide (EN)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Naruto_TCG_Collection_guide_EN_v2-a83b0a03.pdf",
+    "lang": "en",
+    "kind": "checklist",
+    "title": "Collection Guide Set 1 2ED (EN v2)"
+  },
+  {
+    "url": "https://irp.cdn-website.com/99e556bf/files/uploaded/Collection+guide+Shinobi+Shiren+EN.pdf",
+    "lang": "en",
+    "kind": "checklist",
+    "title": "Collection Guide — Shinobi Shiren (EN)"
+  },
+  {
+    "url": "https://www.narutotcgmythos.com/fr/guide-de-collection",
+    "download": false,
+    "lang": "fr",
+    "kind": "brand",
+    "title": "Guide de collection hub (FR)"
+  },
+  {
+    "url": "https://www.narutotcgmythos.com/collection-guide",
+    "download": false,
+    "lang": "en",
+    "kind": "brand",
+    "title": "Collection Guide hub (EN)"
+  }
+]

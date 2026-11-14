@@ -16,13 +16,17 @@ import {
   rewriteScreenScraperGameInfoUrl,
   screenScraperLookupHasCanonicalCover,
   pickSSCover,
+  pickScreenScraperRomBytes,
   scoreScreenScraperGameTitleMatch,
   shouldUseCachedScreenScraperSuggestions,
   __screenScraperChromeTokensForTests,
   type SSMedia,
 } from "./resolver";
 import { getScreenScraperEnv } from "./env";
-import { screenScraperAttachmentFromMediaUrl } from "./mediaUrl";
+import {
+  screenScraperAttachmentFromMediaUrl,
+  screenScraperMediaAttachmentSemantics,
+} from "./mediaUrl";
 
 const SCREEN_SCRAPER_ENV_KEYS = [
   "SCREENSCRAPER_DEV_ID",
@@ -138,6 +142,43 @@ describe("isScreenScraperPlaceholderMedia", () => {
   });
 });
 
+describe("screenScraperMediaAttachmentSemantics", () => {
+  it("maps box-2D-side to a spine role for the CSS 3D box", () => {
+    expect(
+      screenScraperMediaAttachmentSemantics({
+        type: "box-2D-side",
+        region: "eu",
+      }),
+    ).toEqual({ type: "image", role: "spine-eu" });
+    expect(
+      screenScraperMediaAttachmentSemantics({ type: "box-2D-side" }),
+    ).toEqual({ type: "image", role: "spine" });
+    expect(
+      screenScraperAttachmentFromMediaUrl(
+        "https://api.screenscraper.fr/api2/mediaJeu.php?systemeid=32&jeuid=16056&media=box-2D-side(fr)",
+      ),
+    ).toEqual({
+      type: "image",
+      role: "spine-fr",
+      source: "screenscraper",
+    });
+  });
+});
+
+describe("pickScreenScraperRomBytes", () => {
+  it("takes the largest clean dump and ignores beta/demo flags", () => {
+    expect(
+      pickScreenScraperRomBytes({
+        roms: [
+          { romsize: "600000000", beta: "1" },
+          { romsize: "4571201536" },
+          { romsize: "700000000", demo: "1" },
+        ],
+      }),
+    ).toBe(4_571_201_536);
+  });
+});
+
 describe("buildScreenScraperFacts", () => {
   it("maps player count and play modes when ScreenScraper exposes them", () => {
     const facts = buildScreenScraperFacts(
@@ -161,6 +202,25 @@ describe("buildScreenScraperFacts", () => {
           kind: "modes",
           label: "Modes de jeu",
           value: "Solo • Coopératif",
+          source: "screenscraper",
+        }),
+      ]),
+    );
+  });
+
+  it("emits media-format DVD-ROM from Ace Combat–sized dumps", () => {
+    const facts = buildScreenScraperFacts(
+      {
+        roms: [{ romsize: "4571201536", romfilename: "Ace Combat.iso" }],
+      },
+      () => null,
+    );
+    expect(facts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "media-format",
+          label: "Support",
+          value: "DVD-ROM",
           source: "screenscraper",
         }),
       ]),
@@ -197,6 +257,12 @@ describe("buildScreenScraperObservations", () => {
             url: "https://media.screenscraper.fr/box-back-fr.jpg",
             source: "screenscraper",
           },
+          {
+            type: "image",
+            role: "spine-fr",
+            url: "https://media.screenscraper.fr/box-side-fr.jpg",
+            source: "screenscraper",
+          },
         ],
         facts: [
           {
@@ -209,8 +275,7 @@ describe("buildScreenScraperObservations", () => {
         externalIds: { screenscraper: "14825" },
       },
       {
-        sourceUrl:
-          "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
+        sourceUrl: "https://www.screenscraper.fr/gameinfos.php?gameid=14825",
         hasBarcodeMatch: true,
         hasPlatformMatch: true,
       },
@@ -246,6 +311,12 @@ describe("buildScreenScraperObservations", () => {
           kind: "image",
           role: "cover_back",
           url: "https://media.screenscraper.fr/box-back-fr.jpg",
+          region: "fr",
+        }),
+        expect.objectContaining({
+          kind: "image",
+          role: "cover_spine",
+          url: "https://media.screenscraper.fr/box-side-fr.jpg",
           region: "fr",
         }),
         expect.objectContaining({
@@ -679,6 +750,16 @@ describe("hydrateScreenScraperLookupFromGameCache", () => {
         },
       ],
     };
+
+    const { getCachedScreenScraperGame } = await import("./cache");
+    const game = await getCachedScreenScraperGame(16056);
+    if (!game) {
+      // Disk cache is optional in CI / fresh checkouts — passthrough only.
+      await expect(
+        hydrateScreenScraperLookupFromGameCache(lookup),
+      ).resolves.toBe(lookup);
+      return;
+    }
 
     const merged = await hydrateScreenScraperLookupFromGameCache(lookup);
 

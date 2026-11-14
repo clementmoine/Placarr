@@ -1,0 +1,90 @@
+{
+  "source": "collector physical copies (chat 2026-08-16 17:46) + UNS3 EU hunt 2026-08-26",
+  "observed": "2026-08-26",
+  "note": "French-text Bandai USA CCG — same game as EN, not Carddass NI/TE/TA. Storm 3 booster line = s28. Quartet promo Storm 3 VF = PR-093 / PR-095 / PR-096 / PR-100 (photo classeur FB fbid 1968916513588340) — Kana JE manga / Day One / duopack / collectors, pas singles booster. 10-char codes are UNS3 video-game passwords. « © 2002 MK – 2007 SP » ≠ print year. Sleeve: curated/cards/back.en.png.",
+  "sameSleeveEnFr": true,
+  "pack": "naruto/carddass",
+  "legalLine": "2002MK - 2007SP",
+  "legalLineIsNotPrintYear": true,
+  "prints": [
+    {
+      "namePrinted": "Double éclair pourfendeur",
+      "ref": "PR-093",
+      "password": "N2FB24M1K5",
+      "lang": "fr",
+      "setCode": "promo",
+      "notBoosterS28": true,
+      "printKeyHint": "naruto:pr-0093",
+      "inCardsIndex": true,
+      "enName": "Lightning Blade : Twin Lightning Shiver",
+      "art": "Kakashi Chidori",
+      "channel": "Kana Japan Expo 2013 — carte offerte à l'achat d'un tome Naruto",
+      "attestedBy": [
+        "kana-je-18-carte-naruto-offerte",
+        "facebook-fbid-1968916513588340",
+        "uns3-vf-promo-quartet-binder"
+      ],
+      "official": "https://www.kana.fr/je-18-carte-naruto-offerte/",
+      "officialPhoto": "https://www.kana.fr/assets/uploads/2013/06/narutocarte.jpg",
+      "faceFr": "art.reconstructed 864×1210 ; source.jpg = FB binder fbid 1968916513588340",
+      "faceEn": "drive + coleka"
+    },
+    {
+      "namePrinted": "Naruto Uzumaki",
+      "ref": "PR-095",
+      "lang": "fr",
+      "setCode": "promo",
+      "notBoosterS28": true,
+      "printKeyHint": "naruto:pr-0095",
+      "inCardsIndex": true,
+      "enEffect": "UNIQUE TRAINING",
+      "frEffect": "ENTRAÎNEMENT UNIQUE",
+      "art": "Goku outfit",
+      "channel": "Day One / EURO Edition",
+      "attestedBy": ["ebay-115771696619", "goat-euro-edition"],
+      "faceFr": "ebay-115771696619 photo 2/7",
+      "faceEn": "drive + goat euro photo"
+    },
+    {
+      "namePrinted": "4E Hokage",
+      "ref": "PR-096",
+      "password": "5CBNQ9W86S",
+      "lang": "fr",
+      "setCode": "promo",
+      "notBoosterS28": true,
+      "printKeyHint": "naruto:pr-0096",
+      "inCardsIndex": true,
+      "effectName": "SAUVEUR DE KONOHA",
+      "characterName": "Minato Namikaze",
+      "channel": "duopack-s28 window",
+      "faceFr": "leboncoin + duopack window",
+      "faceEn": "drive + coleka _r38199"
+    },
+    {
+      "namePrinted": "Naruto Uzumaki",
+      "ref": "PR-100",
+      "lang": "fr",
+      "setCode": "promo",
+      "notBoosterS28": true,
+      "printKeyHint": "naruto:pr-0100",
+      "inCardsIndex": true,
+      "effectName": "ASPIRATIONS",
+      "enEffect": "ASPIRATIONS",
+      "art": "Hokage cloak",
+      "channel": "UNS3 EU promo (Goat French Foil)",
+      "attestedBy": ["goat-french-foil"],
+      "faceFr": "goat french foil CDN",
+      "faceEn": "drive pr100.png"
+    },
+    {
+      "namePrinted": "Kisame Hoshigaki",
+      "ref": "1650",
+      "printedAlso": "52B",
+      "password": "9EHS44A9ST",
+      "lang": "fr",
+      "setCode": "s28",
+      "printKeyHint": "naruto:n-1650",
+      "inCardsIndex": true
+    }
+  ]
+}

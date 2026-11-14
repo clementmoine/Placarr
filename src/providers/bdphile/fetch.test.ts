@@ -78,9 +78,9 @@ describe("bdphile fetch", () => {
       ),
     ).toEqual(["4", "3"]);
 
-    expect(
-      rankBdphileRevues("Super Picsou Géant n°7", REVUES)[0]?.id,
-    ).toBe("3");
+    expect(rankBdphileRevues("Super Picsou Géant n°7", REVUES)[0]?.id).toBe(
+      "3",
+    );
     expect(
       rankBdphileRevues("Super Picsou Géant n°7", REVUES).map((r) => r.id),
     ).not.toContain("4");
@@ -105,8 +105,18 @@ describe("bdphile fetch", () => {
   it("résout le numéro numérique dans une revue suffixée (100bis → Numéro 100)", () => {
     const links = parseBdphileRevueIssueLinks(revueBisListingHtml());
     expect(links).toEqual([
-      { numeroId: "298", path: "https://www.bdphile.fr/revue/numero/298/", issueNumber: "65", horsSerie: false },
-      { numeroId: "308", path: "https://www.bdphile.fr/revue/numero/308/", issueNumber: "100", horsSerie: false },
+      {
+        numeroId: "298",
+        path: "https://www.bdphile.fr/revue/numero/298/",
+        issueNumber: "65",
+        horsSerie: false,
+      },
+      {
+        numeroId: "308",
+        path: "https://www.bdphile.fr/revue/numero/308/",
+        issueNumber: "100",
+        horsSerie: false,
+      },
     ]);
 
     expect(
@@ -134,8 +144,11 @@ describe("bdphile fetch", () => {
     expect(links.map((l) => l.horsSerie)).toEqual([true, false]);
 
     expect(
-      pickBdphileIssueLink(links, "Super Picsou Géant n°5", "Super Picsou Géant")
-        ?.numeroId,
+      pickBdphileIssueLink(
+        links,
+        "Super Picsou Géant n°5",
+        "Super Picsou Géant",
+      )?.numeroId,
     ).toBe("901");
   });
 
@@ -175,9 +188,7 @@ describe("bdphile fetch", () => {
   });
 
   it("replie le suffixe de la revue dans le titre composé", () => {
-    expect(
-      composeBdphileIssueTitle("Super Picsou Géant bis", "100"),
-    ).toEqual({
+    expect(composeBdphileIssueTitle("Super Picsou Géant bis", "100")).toEqual({
       title: "Super Picsou Géant n°100bis",
       issueNumber: "100bis",
     });

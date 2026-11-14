@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpPost } from "@/lib/http/httpClient";
 
 import { fetchGetWithFlareFallback } from "@/lib/http/scrapeFetch";
 
@@ -524,7 +524,7 @@ async function fetchProductDetail(
   productId: number,
 ): Promise<LeDenicheurProductNode | null> {
   try {
-    const response = await axios.post(
+    const response = await httpPost(
       BFF_URL,
       {
         query: PRODUCT_DETAIL_QUERY,
@@ -678,7 +678,7 @@ async function fetchSingleQuery(
     return resolvePricesFromSearchNodes(fromEvidence, query, options);
   }
 
-  const response = await axios.post(
+  const response = await httpPost(
     BFF_URL,
     {
       query: SEARCH_QUERY,

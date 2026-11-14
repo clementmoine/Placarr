@@ -1,0 +1,31 @@
+{
+  "source": "sec.carddass.com club product detail (official)",
+  "observed": "2026-09-20",
+  "notes": "Official catalog thumbs are 560×560 only — keep Amazon SL1500 as primary packshots; mirror Bandai CDN under products/carddass/.",
+  "count": 1,
+  "items": [
+    {
+      "productId": "4549660401124000",
+      "title": "スーパードラゴンボールヒーローズ　アルティメットブースターパック－激突する武勇－",
+      "productUrl": "https://sec.carddass.com/club/products/detail/4549660401124000",
+      "slugs": ["ultimate-booster-bravery", "ultimate-booster-bravery-box"],
+      "attested": {
+        "cardsPerPack": 3,
+        "declaredCardCount": 30,
+        "notes": "1パック3枚入り全30種類すべて新規コード・イラスト / 全てキラ / 1スペシャルキラ保証"
+      },
+      "art": [
+        "products/carddass/ultimate-booster-bravery.jpg",
+        "products/carddass/ultimate-booster-bravery-box.jpg"
+      ],
+      "originImages": [
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137564_1.jpg",
+        "https://bandai-a.akamaihd.net/bc/img/model/b/1000137564_2.jpg"
+      ],
+      "primaryArtKept": [
+        "products/ultimate-booster-bravery.jpg",
+        "products/ultimate-booster-bravery-box.jpg"
+      ]
+    }
+  ]
+}

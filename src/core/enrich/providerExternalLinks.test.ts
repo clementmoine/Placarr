@@ -42,6 +42,15 @@ describe("looksLikeProviderProductPageUrl", () => {
       ),
     ).toBe(false);
   });
+
+  it("rejects site roots (homepage is not a product fiche)", () => {
+    expect(
+      looksLikeProviderProductPageUrl("https://www.netgamesretro.com/"),
+    ).toBe(false);
+    expect(
+      looksLikeProviderProductPageUrl("https://www.netgamesretro.com"),
+    ).toBe(false);
+  });
 });
 
 describe("pickBestProviderDocumentUrl", () => {
@@ -195,6 +204,61 @@ describe("appendMissingProviderExternalLinkFacts", () => {
           fact.url === "https://www.philibertnet.com/fr/black-stories.html",
       ),
     ).toBe(true);
+  });
+
+  it("does not emit external-links for internal merge keys like __cached_fiche__", () => {
+    const merged = appendMissingProviderExternalLinkFacts(
+      [],
+      [
+        {
+          providerId: "__cached_fiche__",
+          metadata: {
+            facts: [
+              {
+                kind: "external-link",
+                label: "PriceCharting",
+                value: "Voir la fiche",
+                url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+                source: "pricecharting",
+              },
+            ],
+          },
+        },
+      ],
+    );
+
+    expect(
+      merged.some(
+        (fact) =>
+          fact.kind === "external-link" && fact.source === "__cached_fiche__",
+      ),
+    ).toBe(false);
+  });
+
+  it("strips already-persisted __cached_fiche__ external-links on dedupe", () => {
+    const merged = dedupeProviderExternalLinkFacts([
+      {
+        kind: "external-link",
+        label: "__cached_fiche__",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+        source: "__cached_fiche__",
+      },
+      {
+        kind: "external-link",
+        label: "PriceCharting",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/wii/white-nintendo-wii-system",
+        source: "pricecharting",
+      },
+    ]);
+
+    expect(merged.filter((fact) => fact.kind === "external-link")).toHaveLength(
+      1,
+    );
+    expect(merged.find((fact) => fact.kind === "external-link")?.source).toBe(
+      "pricecharting",
+    );
   });
 
   it("does not duplicate an existing external-link for the same provider", () => {
@@ -730,10 +794,12 @@ describe("reconcileExternalLinksFromPriceOffers", () => {
     );
 
     expect(
-      reconciled.filter((fact) => fact.kind === "external-link").map((fact) => ({
-        label: fact.label,
-        url: fact.url,
-      })),
+      reconciled
+        .filter((fact) => fact.kind === "external-link")
+        .map((fact) => ({
+          label: fact.label,
+          url: fact.url,
+        })),
     ).toEqual([
       {
         label: "PriceCharting (EUR)",
@@ -784,6 +850,72 @@ describe("reconcileExternalLinksFromPriceOffers", () => {
         .filter((fact) => fact.kind === "external-link")
         .map((fact) => fact.label),
     ).toEqual(["PriceCharting (EUR)", "PriceCharting (US)"]);
+  });
+
+  it("accepts a Back Market listing that only matches a soft alias", () => {
+    const reconciled = reconcileExternalLinksFromPriceOffers(
+      [],
+      [
+        {
+          source: "Back Market",
+          sourceUrl:
+            "https://www.backmarket.fr/fr-fr/p/sony-playstation-3-slim-cech-2004a/abc123",
+          productName: "CECH-2004A",
+        },
+      ],
+      "711719801564",
+      "PlayStation 3 Slim Gris",
+      "hardware",
+      ["PlayStation 3 Slim Gris", "PlayStation 3 Slim Silver", "CECH-2004A"],
+    );
+
+    expect(reconciled.find((fact) => fact.source === "Back Market")?.url).toBe(
+      "https://www.backmarket.fr/fr-fr/p/sony-playstation-3-slim-cech-2004a/abc123",
+    );
+  });
+
+  it("rejects the same listing when the alias bag is omitted", () => {
+    const reconciled = reconcileExternalLinksFromPriceOffers(
+      [],
+      [
+        {
+          source: "Back Market",
+          sourceUrl:
+            "https://www.backmarket.fr/fr-fr/p/sony-playstation-3-slim-cech-2004a/abc123",
+          productName: "CECH-2004A",
+        },
+      ],
+      "711719801564",
+      "PlayStation 3 Slim Gris",
+      "hardware",
+    );
+
+    expect(reconciled.filter((fact) => fact.source === "Back Market")).toEqual(
+      [],
+    );
+  });
+
+  it("keeps PriceCharting Silver URL for a Gris shelf via finish synonyms", () => {
+    const facts: MetadataFact[] = [
+      {
+        kind: "external-link",
+        label: "PriceCharting",
+        value: "Voir la fiche",
+        url: "https://www.pricecharting.com/game/pal-playstation-3/sony-playstation-3-slim-silver-console",
+        source: "pricecharting",
+      },
+    ];
+
+    const kept = purgeContradictedProviderExternalLinks(
+      facts,
+      "711719801564",
+      "PlayStation 3 Slim Gris",
+      "hardware",
+      ["PlayStation 3 Slim Gris", "PlayStation 3 Slim Silver"],
+    );
+
+    expect(kept).toHaveLength(1);
+    expect(kept[0]?.url).toContain("slim-silver");
   });
 });
 
@@ -839,7 +971,7 @@ describe("externalLinkFactsFromFieldEvidence", () => {
 });
 
 describe("buildProfileProviderLinkFacts", () => {
-  it("aggregates contributors from facts, evidence, offers, and catalog link", () => {
+  it("keeps real product URLs and attribution chips for other contributors", () => {
     const links = buildProfileProviderLinkFacts({
       facts: [
         {
@@ -855,6 +987,12 @@ describe("buildProfileProviderLinkFacts", () => {
           value: "1",
           source: "rawg",
         },
+        {
+          kind: "price",
+          label: "Prix NetGamesRetro",
+          value: "20,00 €",
+          source: "netgamesretro",
+        },
       ],
       fieldEvidence: [
         {
@@ -863,8 +1001,18 @@ describe("buildProfileProviderLinkFacts", () => {
           source: "netgamesretro",
           sourceUrl: "https://www.netgamesretro.com/jeu/little-big-planet",
         },
+        {
+          field: "cover",
+          value: "/uploads/ngr.jpg",
+          source: "netgamesretro",
+          sourceUrl: "/uploads/ngr.jpg",
+        },
       ],
-      attachments: [{ source: "steamgriddb" }, { source: "rawg" }],
+      attachments: [
+        { source: "steamgriddb" },
+        { source: "rawg" },
+        { source: "netgamesretro" },
+      ],
       priceOffers: [
         {
           source: "pricecharting",
@@ -887,5 +1035,96 @@ describe("buildProfileProviderLinkFacts", () => {
       "RAWG",
       "SteamGridDB",
     ]);
+    expect(links.find((fact) => fact.source === "netgamesretro")?.url).toBe(
+      "https://www.netgamesretro.com/jeu/little-big-planet",
+    );
+    expect(links.find((fact) => fact.source === "steamgriddb")?.url).toBe(
+      "https://www.steamgriddb.com/",
+    );
+    expect(links.find((fact) => fact.source === "rawg")?.url).toBe(
+      "https://rawg.io/",
+    );
+  });
+
+  it("attributes cover/price-only NetGamesRetro via registry websiteUrl", () => {
+    const links = buildProfileProviderLinkFacts({
+      facts: [
+        {
+          kind: "price",
+          label: "Prix NetGamesRetro",
+          value: "20,00 €",
+          source: "netgamesretro",
+        },
+      ],
+      attachments: [{ source: "netgamesretro" }],
+      fieldEvidence: [
+        {
+          field: "cover",
+          value: "/uploads/ds-gris.jpg",
+          source: "netgamesretro",
+          sourceUrl: "/uploads/ds-gris.jpg",
+        },
+      ],
+      itemTitle: "Nintendo DS Gris",
+      shelfType: "hardware",
+    });
+
+    expect(links.filter((fact) => fact.source === "netgamesretro")).toEqual([
+      expect.objectContaining({
+        kind: "external-link",
+        source: "netgamesretro",
+        url: "https://www.netgamesretro.com",
+      }),
+    ]);
+  });
+
+  it("attributes LorcanaJSON / Lorcast contributors systematically", () => {
+    const links = buildProfileProviderLinkFacts({
+      facts: [
+        {
+          kind: "tag",
+          label: "Rareté",
+          value: "Common",
+          source: "lorcanajson",
+        },
+      ],
+      attachments: [{ source: "lorcanajson" }],
+      priceOffers: [
+        {
+          source: "lorcast",
+          sourceUrl: "https://lorcast.com/cards/tfc/1",
+        },
+      ],
+    });
+
+    expect(links.find((fact) => fact.source === "lorcanajson")?.url).toBe(
+      "https://lorcanajson.org/",
+    );
+    expect(links.find((fact) => fact.source === "lorcast")?.url).toBe(
+      "https://lorcast.com/cards/tfc/1",
+    );
+  });
+
+  it("never invents chips for MergedEngine or internal merge keys", () => {
+    const links = buildProfileProviderLinkFacts({
+      facts: [
+        {
+          kind: "title",
+          label: "Titre",
+          value: "Ariel",
+          source: "MergedEngine",
+        },
+      ],
+      fieldEvidence: [
+        {
+          field: "title",
+          value: "Ariel",
+          source: "__cached_fiche__",
+        },
+      ],
+      attachments: [{ source: "MergedEngine" }],
+    });
+
+    expect(links).toEqual([]);
   });
 });

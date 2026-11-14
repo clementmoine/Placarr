@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/shared/utils";
 import {
-  ITEM_COLLECTION_SORT_OPTIONS,
+  ITEM_COLLECTION_SHELF_VIEWS,
+  itemCollectionSortOptions,
+  type ItemCollectionShelfView,
   type ItemCollectionSort,
 } from "@/core/collect/collectionQuery";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
@@ -19,6 +21,8 @@ type ItemCollectionSortSelectProps = {
   onValueChange: (value: ItemCollectionSort) => void;
   className?: string;
   placeholderKey?: string;
+  /** When set, binder (set → number) sorts appear for print shelves only. */
+  shelfType?: string | null;
 };
 
 export function ItemCollectionSortSelect({
@@ -26,8 +30,10 @@ export function ItemCollectionSortSelect({
   onValueChange,
   className,
   placeholderKey = "sorting.title",
+  shelfType,
 }: ItemCollectionSortSelectProps) {
   const { t } = useLocale();
+  const options = itemCollectionSortOptions(shelfType);
 
   return (
     <Select
@@ -36,16 +42,57 @@ export function ItemCollectionSortSelect({
     >
       <SelectTrigger
         className={cn(
-          "w-full bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 cursor-pointer",
+          "w-full bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 data-[size=default]:h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 cursor-pointer",
           className,
         )}
       >
         <SelectValue placeholder={t(placeholderKey)} />
       </SelectTrigger>
       <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
-        {ITEM_COLLECTION_SORT_OPTIONS.map((option) => (
+        {options.map((option) => (
           <SelectItem key={option} value={option} className="cursor-pointer">
             {t(`sorting.${option}`)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+type ItemCollectionViewFilterProps = {
+  value: ItemCollectionShelfView;
+  onValueChange: (value: ItemCollectionShelfView) => void;
+  className?: string;
+};
+
+/**
+ * Shelf presence / duplicates view (active, away, past, duplicates).
+ * Replaces the old « Doublons seulement » toggle.
+ */
+export function ItemCollectionViewFilter({
+  value,
+  onValueChange,
+  className,
+}: ItemCollectionViewFilterProps) {
+  const { t } = useLocale();
+
+  return (
+    <Select
+      value={value}
+      onValueChange={(next) => onValueChange(next as ItemCollectionShelfView)}
+    >
+      <SelectTrigger
+        className={cn(
+          "w-full sm:w-[220px] bg-zinc-50/5 dark:bg-zinc-950/20 backdrop-blur-md border border-border/80 dark:border-zinc-800/80 rounded-2xl h-11 data-[size=default]:h-11 focus:ring-2 focus:ring-primary/20 transition-all duration-300 cursor-pointer",
+          className,
+        )}
+      >
+        <SelectValue placeholder={t("filters.view")} />
+      </SelectTrigger>
+      <SelectContent className="bg-popover border border-border dark:border-zinc-800 rounded-xl shadow-lg">
+        {ITEM_COLLECTION_SHELF_VIEWS.map((option) => (
+          <SelectItem key={option} value={option} className="cursor-pointer">
+            {t(`filters.view.${option}`)}
           </SelectItem>
         ))}
       </SelectContent>

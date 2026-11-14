@@ -18,3 +18,9 @@ export {
   PROVIDER_MODULES,
   getProviderModule,
 } from "@/core/catalog/catalog";
+export {
+  CONTENT_TYPES,
+  CONTENT_DOMAINS,
+  isContentType,
+  type ContentType,
+} from "@/core/schemas/content-types";

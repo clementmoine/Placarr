@@ -9,19 +9,20 @@ export const DBS_FW_EXTRACT_STEPS = [
   "products",
   "faces",
   "details",
-  /** Mac client dump — shaders / plates / masks / art.client (Lorcana `mobile`). */
+  /** CDN client dump — shaders / plates / masks / art.client (Lorcana `mobile`). */
   "foil",
   "documents",
 ] as const;
 
 export type DbsFwExtractStep = (typeof DBS_FW_EXTRACT_STEPS)[number];
 
-/** Steps that need the network. `foil` is local StandaloneOSX. */
+/** Steps that need the network (foil hits GUS + Xsolla CDN). */
 const ONLINE = new Set<DbsFwExtractStep>([
   "scrape",
   "dbscards",
   "faces",
   "details",
+  "foil",
   "documents",
 ]);
 

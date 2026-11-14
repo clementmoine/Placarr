@@ -32,11 +32,11 @@ describe("selectDbsFwSteps", () => {
     expect(selectDbsFwSteps(["--only", "foil"])).toEqual(["foil"]);
   });
 
-  it("reparses local product HTML when --offline (foil stays — local client)", () => {
-    expect(selectDbsFwSteps(["--offline"])).toEqual(["products", "foil"]);
+  it("drops online steps when --offline (foil needs GUS/CDN)", () => {
+    expect(selectDbsFwSteps(["--offline"])).toEqual(["products"]);
     expect(selectDbsFwSteps(["--only", "products", "--offline"])).toEqual([
       "products",
     ]);
-    expect(selectDbsFwSteps(["--only", "foil", "--offline"])).toEqual(["foil"]);
+    expect(selectDbsFwSteps(["--only", "foil", "--offline"])).toEqual([]);
   });
 });

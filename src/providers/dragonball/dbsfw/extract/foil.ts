@@ -1,7 +1,9 @@
 /**
  * Client foil kit extract — shaders + shared plates + per-card masks/faces.
- * Soft-skips when StandaloneOSX is missing (cloud / Linux Sync), like Lorcana
- * skips Unity without an APK.
+ *
+ * Source of truth: Xsolla CDN via GUS (standalone Sync), staged under
+ * `data/dragonball/fw/staging/xsolla/`. Optional Mac install path is only a
+ * fallback when CDN staging is unavailable.
  */
 import { join } from "node:path";
 
@@ -10,20 +12,26 @@ import {
   fusionWorldClientBundlesPresent,
   fusionWorldStandaloneOsxBundlesDir,
 } from "@/providers/dragonball/dbsfw/clientPaths";
+import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
 import { DBS_FW_PACK_ID } from "@/providers/dragonball/dbsfw/indexStore";
 
 export type RunDbsFwFoilExtractOpts = {
   force?: boolean;
   limit?: number;
   match?: string;
+  /** Override Addressables root (tests). */
   bundlesDir?: string;
-  /** Repo root for generated S3TC sidecar module. */
+  /** Prefer Mac install over CDN (legacy). Default: CDN first. */
+  preferMacInstall?: boolean;
+  /** Skip CDN download (Mac-only / offline fixtures). */
+  skipCdn?: boolean;
   repo?: string;
 };
 
 export type RunDbsFwFoilExtractResult = {
   skipped: boolean;
   reason?: string;
+  source?: "cdn" | "mac" | "override";
   shaders?: { written: string[]; frostVariants: number; uiHologram: boolean };
   textures?: {
     webpWritten: number;
@@ -35,21 +43,58 @@ export type RunDbsFwFoilExtractResult = {
   faces?: { written: number; skipped: number; failed: number };
 };
 
+async function resolveBundlesDir(
+  opts: RunDbsFwFoilExtractOpts,
+): Promise<{ dir: string; source: "cdn" | "mac" | "override" } | null> {
+  if (opts.bundlesDir) {
+    return fusionWorldClientBundlesPresent(opts.bundlesDir)
+      ? { dir: opts.bundlesDir, source: "override" }
+      : null;
+  }
+
+  const macDir = fusionWorldStandaloneOsxBundlesDir();
+  if (opts.preferMacInstall && fusionWorldClientBundlesPresent(macDir)) {
+    return { dir: macDir, source: "mac" };
+  }
+
+  if (!opts.skipCdn) {
+    try {
+      const staged = await ensureFusionWorldClientFromCdn({
+        force: opts.force,
+        repo: opts.repo,
+      });
+      return { dir: staged.bundlesDir, source: "cdn" };
+    } catch (err) {
+      console.warn(
+        `── fw foil : CDN staging failed (${err instanceof Error ? err.message : err})`,
+      );
+    }
+  }
+
+  if (fusionWorldClientBundlesPresent(macDir)) {
+    console.log("── fw foil : fallback to local Mac StandaloneOSX");
+    return { dir: macDir, source: "mac" };
+  }
+  return null;
+}
+
 /**
- * Dump the Mac client foil kit into `data/dragonball/fw/foil/` (+ card layers).
+ * Dump the Fusion World foil kit into `data/dragonball/fw/foil/` (+ card layers).
  */
 export async function runDbsFwFoilExtract(
   opts: RunDbsFwFoilExtractOpts = {},
 ): Promise<RunDbsFwFoilExtractResult> {
-  const bundlesDir = opts.bundlesDir ?? fusionWorldStandaloneOsxBundlesDir();
-  if (!fusionWorldClientBundlesPresent(bundlesDir)) {
+  const resolved = await resolveBundlesDir(opts);
+  if (!resolved) {
     console.log(
-      "skip foil: no StandaloneOSX under DBSCGFW.app (install the Mac client, or run Sync on that machine)",
+      "skip foil: no CDN staging and no StandaloneOSX (check GUS/Xsolla or install 7-Zip)",
     );
-    return { skipped: true, reason: "no-standalone-osx" };
+    return { skipped: true, reason: "no-client-bundles" };
   }
 
-  // Lazy — unityfs-js decoder is Mac/Node extract only; keep Sync import light.
+  const { dir: bundlesDir, source } = resolved;
+  console.log(`── fw foil : bundles ← ${source} (${bundlesDir})`);
+
   const [
     { extractFusionWorldShaders },
     { extractFusionWorldFoilTextures },
@@ -130,5 +175,5 @@ export async function runDbsFwFoilExtract(
     `   faces : written=${faces.written} skipped=${faces.skipped} failed=${faces.failed}`,
   );
 
-  return { skipped: false, shaders, textures, masks, faces };
+  return { skipped: false, source, shaders, textures, masks, faces };
 }

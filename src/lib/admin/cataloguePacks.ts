@@ -882,10 +882,11 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       prelude: [
         "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dragonball/fw",
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
-        "foil client Mac (StandaloneOSX) : shaders Frost COUNT + plaques + masks + art.client — absent = skip",
+        "foil CDN : GUS Xsolla → staging/xsolla → shaders Frost COUNT + plaques + masks + art.client (Mac = fallback)",
       ],
-      timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
-      // `foil` mirrors Lorcana `mobile` / Pokémon `extract` (Unity dump).
+      // CDN full_game multi-volume (~4,5 Gio) + extract — same order as Pokémon catalogue.
+      timeoutMs: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
+      // `foil` mirrors Lorcana `mobile` / Pokémon `extract` (Unity dump via CDN).
       pipelineSteps: [
         "scrape",
         "dbscards",

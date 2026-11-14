@@ -245,8 +245,15 @@ que la variante holo (`FrostCard.frag`) — les feuilles `effects-uv-shine`,
 rééchantillonnaient pas `_EffectsLayersTex`.
 
 Extract multi-variantes : inclus dans le **Sync catalogue Fusion World**
-(étape `foil`, comme Lorcana `mobile` / Pokémon `extract`). Soft-skip si
-`StandaloneOSX` est absent. Manuel :
+(étape `foil`, comme Lorcana `mobile` / Pokémon `extract`).
+
+Source **standalone** : GUS (`project_id=254594`) → CDN Xsolla
+(`gamebuild.launcher.xsolla.com`) → volumes `full_game_*.7z.*` → extract
+sous `data/dragonball/fw/staging/xsolla/` → dump foil. Pas besoin du Mac
+installé ; l’arbre `~/Library/…/StandaloneOSX` n’est qu’un fallback.
+
+Soft-skip si GUS/CDN/7-Zip échouent **et** qu’aucun fallback local n’existe.
+Manuel shaders seuls :
 
 `pnpm exec tsx scripts/extractFusionWorldShaders.ts [--force]`
 

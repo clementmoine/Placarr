@@ -1,5 +1,6 @@
 /**
- * Mac StandaloneOSX Addressables root for the installed Fusion World client.
+ * Optional local Mac install path for Fusion World Addressables.
+ * Sync prefers CDN staging (`cdn/ensureClient`) — this is a fallback only.
  */
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";

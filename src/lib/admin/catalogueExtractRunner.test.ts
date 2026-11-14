@@ -88,7 +88,7 @@ describe("catalogueExtractRunner targets", () => {
     const fw = await resolveCatalogueExtractPlan("dbs-fw");
     expect(fw.target).toBe("dbs-fw");
     expect(fw.prelude.some((line) => /produit/i.test(line))).toBe(true);
-    expect(fw.prelude.some((line) => /foil client Mac/i.test(line))).toBe(true);
+    expect(fw.prelude.some((line) => /foil CDN/i.test(line))).toBe(true);
     expect(
       (
         await import("@/lib/admin/cataloguePacks")
@@ -166,12 +166,12 @@ describe("catalogueExtractRunner targets", () => {
     );
   });
 
-  it("gives Masters a longer timeout for the Arena clone + faces", () => {
+  it("gives Masters faces timeout and Fusion World CDN full timeout", () => {
     expect(catalogueExtractTimeoutMs("dbs-cg", "catalogue")).toBe(
       CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
     );
-    expect(catalogueExtractTimeoutMs("dbs-fw", "catalogue")).toBeLessThan(
-      CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
+    expect(catalogueExtractTimeoutMs("dbs-fw", "catalogue")).toBe(
+      CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
     );
   });
 

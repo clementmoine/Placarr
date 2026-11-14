@@ -12,8 +12,14 @@ import { DBS_FW_S3TC_BY_WEBP } from "./s3tcSidecars.generated";
 describe("dbsFwEffectPack playroom arts", () => {
   const materials = dbsFwEffectPack.listMaterials?.() ?? [];
 
-  it("lists every client render (shader + plate inventory)", () => {
-    expect(materials).toEqual(DBS_FW_CLIENT_RENDERS.map((row) => row.id));
+  it("lists Frost/Card leaves only (no raw plate inventory tiles)", () => {
+    const branched = DBS_FW_CLIENT_RENDERS.filter((row) => row.shader).map(
+      (row) => row.id,
+    );
+    expect(materials).toEqual(branched);
+    expect(materials).not.toContain("holo-map");
+    expect(materials).not.toContain("ui-hologram");
+    expect(materials).not.toContain("ef-mask-01");
   });
 
   it.each(
@@ -37,15 +43,6 @@ describe("dbsFwEffectPack playroom arts", () => {
     for (const row of branched) {
       expect(row.playroomFace?.path, row.id).toBeTruthy();
     }
-  });
-
-  it.each(
-    DBS_FW_CLIENT_RENDERS.filter((row) => !row.shader).map((row) => row.id),
-  )("%s is plate-only inventory (inutilisé, no shader material)", (id) => {
-    const art = dbsFwEffectPack.playroomArtForMaterial?.(id);
-    expect(art?.imageUrl).toMatch(/\/textures\//);
-    expect(art?.label).toMatch(/inutilisé/);
-    expect(dbsFwEffectPack.material?.(id)).toBeNull();
   });
 
   it("binds Mac DXT/S3TC sidecars on Frost plate files (Lorcana ASTC twin)", () => {
@@ -140,11 +137,9 @@ describe("dbsFwEffectPack playroom arts", () => {
     expect(champ?.floats._ChampionshipHologram).toBe(1);
     expect(champ?.textures._HoloMap?.file).toBe("client-cardhologram.webp");
 
-    // UIHologram.frag is a UI badge shader — inventory plate only in playroom.
+    // Shared plates are not playroom materials (bound into Frost leaves).
     expect(dbsFwEffectPack.material?.("ui-hologram")).toBeNull();
-    const uiArt = dbsFwEffectPack.playroomArtForMaterial?.("ui-hologram");
-    expect(uiArt?.imageUrl).toMatch(/client-tabac-holo\.webp/);
-    expect(uiArt?.label).toMatch(/inutilisé/);
+    expect(dbsFwEffectPack.playroomArtForMaterial?.("holo-map")).toBeNull();
   });
 
   it.each(

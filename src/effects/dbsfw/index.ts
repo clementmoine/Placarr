@@ -85,18 +85,7 @@ function artsFor(name: string): PlayroomArt[] {
   const row = rendersById.get(name.trim().toLowerCase());
   if (!row) return [];
 
-  // Plate-only inventory rows: show the client texture, no Frost/Card shader.
-  if (!row.shader) {
-    const plate = row.files[0];
-    if (!plate) return [];
-    return [
-      {
-        imageUrl: dbsFwClientRenderUrl(plate),
-        label: `${row.label} · inutilisé`,
-        liveOwned: false,
-      },
-    ];
-  }
+  if (!row.shader) return [];
 
   const face = row.playroomFace;
   if (!face) return [];
@@ -107,7 +96,6 @@ function artsFor(name: string): PlayroomArt[] {
       imageUrl,
       label: face.label,
       ...(maskUrl ? { maskUrl } : {}),
-      // Sort branched shader leaves ahead of plate-only rows in the grid.
       liveOwned: true,
     },
   ];
@@ -347,16 +335,9 @@ export const dbsFwEffectPack = defineCatalogueOnlyPack({
 
 dbsFwEffectPack.isCssOnlyFoilMask = isDbsFwCssOnlyFoilMask;
 
-/** Shader leaves first (branched), then plate-only inventory (inutilisé). */
-dbsFwEffectPack.listMaterials = () => {
-  const branched = DBS_FW_CLIENT_RENDERS.filter((row) => row.shader).map(
-    (row) => row.id,
-  );
-  const plates = DBS_FW_CLIENT_RENDERS.filter((row) => !row.shader).map(
-    (row) => row.id,
-  );
-  return [...branched, ...plates];
-};
+/** Frost/Card leaves only — shared plates bind into these, not as tiles. */
+dbsFwEffectPack.listMaterials = () =>
+  DBS_FW_CLIENT_RENDERS.filter((row) => row.shader).map((row) => row.id);
 dbsFwEffectPack.playroomArtsForMaterial = artsFor;
 dbsFwEffectPack.material = (name) => {
   const row = rendersById.get(name.trim().toLowerCase());

@@ -233,23 +233,8 @@ export const DBS_FW_CLIENT_RENDERS: readonly DbsFwClientRender[] = [
     cardMask: "mask-foil.webp",
     files: ["client-pakipakifoil.webp"],
   },
-  // UIHologram.frag is a UI badge shader (mask α × _Color shimmer) — not
-  // Frost/Card. Tabac plate is fully opaque α, so binding it as a "card"
-  // finish painted a solid gold rectangle. Keep as plate inventory.
-  { id: "ui-hologram", label: "UIHologram", files: ["client-tabac-holo.webp"] },
-  { id: "frame-mask", label: "CardFrameMask", files: ["client-cardframemask.webp"] },
-  { id: "holo-map", label: "HoloMap", files: ["client-holomap.webp"] },
-  { id: "holo-map-para", label: "HoloMap PARA", files: ["client-holomap-para.webp"] },
-  { id: "holo-rainbow", label: "HoloRainbow", files: ["client-holorainbow.webp"] },
-  { id: "holo-map-main", label: "HoloMap main", files: ["client-holomap-main.webp"] },
-  { id: "holo-map-main-2", label: "HoloMap main 2", files: ["client-holomap-main2.webp"] },
-  { id: "holo-map-main-3", label: "HoloMap main 3", files: ["client-holomap-main3.webp"] },
-  { id: "ef-mask-00", label: "ef_mask00", files: ["client-ef-mask00.webp"] },
-  { id: "ef-mask-01", label: "ef_mask01", files: ["client-ef-mask01.webp"] },
-  { id: "ef-mask-02", label: "ef_mask02", files: ["client-ef-mask02.webp"] },
-  { id: "ef-mask-03", label: "ef_mask03", files: ["client-ef-mask03.webp"] },
-  { id: "ef-mask-02-cf", label: "ef_mask02_CF", files: ["client-ef-mask02-cf.webp"] },
-  { id: "ef-mask-03-cf", label: "ef_mask03_CF", files: ["client-ef-mask03-cf.webp"] },
+  // Shared plates (HoloMap, HoloRainbow, ef_mask*, CardFrameMask, …) stay on
+  // disk and bind into the Frost leaves above — no separate playroom tiles.
 ];
 
 export function dbsFwClientRenderUrl(file: string): string {

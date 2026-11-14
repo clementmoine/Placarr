@@ -55,7 +55,7 @@ describe("searchDbsFwPrints", () => {
     expect(print?.effectPack).toBe(DBS_FW_EFFECT_PACK_ID);
     expect(print?.finishes).toEqual(["normal", ...DBS_FW_FINISHES]);
     expect(dbsFwEffectPack.listMaterials()).toEqual(
-      DBS_FW_CLIENT_RENDERS.map((row) => row.id),
+      DBS_FW_CLIENT_RENDERS.filter((row) => row.shader).map((row) => row.id),
     );
     const face = dbsFwEffectPack.playroomArtForMaterial?.("foil-holo");
     expect(face?.imageUrl).toContain("/cards/");
@@ -70,8 +70,12 @@ describe("searchDbsFwPrints", () => {
     expect(holo?.floats._HoloFoilEnabled).toBe(1);
     expect(holo?.floats._UseFrame2).toBe(0);
     expect(holo?.textures._FoilMask).toEqual({ role: "foilMask" });
-    expect(holo?.textures._HoloMask?.file).toBe("client-st01-004-para-holo.webp");
-    expect(holo?.textures._MasksTex?.file).toBe("client-st01-004-para-holo.webp");
+    expect(holo?.textures._HoloMask?.file).toBe(
+      "client-st01-004-para-holo.webp",
+    );
+    expect(holo?.textures._MasksTex?.file).toBe(
+      "client-st01-004-para-holo.webp",
+    );
     expect(holo?.textures._MainTex).toEqual({ role: "art" });
     expect(holo?.textures._FrontTex).toEqual({ role: "front" });
     expect(holo?.textures._FrameTex).toEqual({ role: "frame" });
@@ -91,7 +95,9 @@ describe("searchDbsFwPrints", () => {
     const energy = dbsFwEffectPack.material("energy-holo");
     expect(energy?.floats._FoilType).toBe(0);
     expect(energy?.textures._FoilMask).toBeUndefined();
-    expect(energy?.textures._HoloMask?.file).toBe("client-energy-holo-map.webp");
+    expect(energy?.textures._HoloMask?.file).toBe(
+      "client-energy-holo-map.webp",
+    );
     expect(energy?.textures._HoloMap?.file).toBe("client-energy-holo-map.webp");
     expect(energy?.textures._MainTex).toEqual({ role: "art" });
     expect(print?.reference).toBe("ST01-001");

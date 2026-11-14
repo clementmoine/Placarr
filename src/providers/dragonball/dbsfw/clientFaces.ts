@@ -103,11 +103,7 @@ export function clientPlateMipBlend(
 }
 
 /** Mix two same-size RGBA buffers. `t = 1` keeps only `mip1`. */
-export function blendPlateMips(
-  mip0: Buffer,
-  mip1: Buffer,
-  t: number,
-): Buffer {
+export function blendPlateMips(mip0: Buffer, mip1: Buffer, t: number): Buffer {
   if (t <= 0) return mip0;
   if (t >= 1) return mip1;
   const out = Buffer.allocUnsafe(mip0.length);
@@ -198,10 +194,7 @@ export function scaleRgbaNearest(
       Math.floor((y * srcHeight) / destHeight),
     );
     for (let x = 0; x < destWidth; x += 1) {
-      const sx = Math.min(
-        srcWidth - 1,
-        Math.floor((x * srcWidth) / destWidth),
-      );
+      const sx = Math.min(srcWidth - 1, Math.floor((x * srcWidth) / destWidth));
       const si = (sy * srcWidth + sx) * 4;
       const di = (y * destWidth + x) * 4;
       out[di] = src[si] ?? 0;
@@ -500,8 +493,16 @@ export function solidifyPlateInk(
         if (!darkHole || bestLuma < 70 || bestLuma > 190 || lift < 48) continue;
         let metal = 0;
         let clear = 0;
-        for (let yy = Math.max(0, y - 1); yy <= Math.min(height - 1, y + 1); yy += 1) {
-          for (let xx = Math.max(0, x - 1); xx <= Math.min(width - 1, x + 1); xx += 1) {
+        for (
+          let yy = Math.max(0, y - 1);
+          yy <= Math.min(height - 1, y + 1);
+          yy += 1
+        ) {
+          for (
+            let xx = Math.max(0, x - 1);
+            xx <= Math.min(width - 1, x + 1);
+            xx += 1
+          ) {
             if (xx === x && yy === y) continue;
             const j = (yy * width + xx) * 4;
             const alpha2 = rgba[j + 3] ?? 0;
@@ -514,7 +515,11 @@ export function solidifyPlateInk(
             const green2 = rgba[j + 1] ?? 0;
             const blue2 = rgba[j + 2] ?? 0;
             const luma2 = Math.max(red2, green2, blue2);
-            if (luma2 >= 70 && luma2 <= 190 && luma2 - Math.min(red2, green2, blue2) <= 24) {
+            if (
+              luma2 >= 70 &&
+              luma2 <= 190 &&
+              luma2 - Math.min(red2, green2, blue2) <= 24
+            ) {
               metal += 1;
             }
           }
@@ -666,17 +671,18 @@ export function compositeCostFill(
       const outAlpha = alpha + Math.round((destAlpha * inv) / 255);
       if (outAlpha === 0) continue;
       out[dest] = Math.round(
-        ((fill[source] ?? 0) * alpha + (out[dest] ?? 0) * destAlpha * inv / 255) /
+        ((fill[source] ?? 0) * alpha +
+          ((out[dest] ?? 0) * destAlpha * inv) / 255) /
           outAlpha,
       );
       out[dest + 1] = Math.round(
         ((fill[source + 1] ?? 0) * alpha +
-          (out[dest + 1] ?? 0) * destAlpha * inv / 255) /
+          ((out[dest + 1] ?? 0) * destAlpha * inv) / 255) /
           outAlpha,
       );
       out[dest + 2] = Math.round(
         ((fill[source + 2] ?? 0) * alpha +
-          (out[dest + 2] ?? 0) * destAlpha * inv / 255) /
+          ((out[dest + 2] ?? 0) * destAlpha * inv) / 255) /
           outAlpha,
       );
       out[dest + 3] = outAlpha;
@@ -789,7 +795,11 @@ export function clientFrameArrayCandidates(card: FwFrameCard): string[] {
   if (!color) return [];
   if (type === "LEADER") {
     const face = card.side === "back" ? "LeaderB" : "LeaderF";
-    add(starter ? `Card_ST_${face}_${color}_Frame` : `Card_${face}_${color}_Frame`);
+    add(
+      starter
+        ? `Card_ST_${face}_${color}_Frame`
+        : `Card_${face}_${color}_Frame`,
+    );
     return names;
   }
   if (type === "EXTRA") {

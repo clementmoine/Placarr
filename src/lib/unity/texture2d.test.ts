@@ -10,11 +10,22 @@ import {
   canDecodeTextureFormat,
   decodeTextureFormat,
   decodeTextureTree,
+  dxtMipByteSize,
+  rawS3tcMip0FromTree,
   TextureFormat,
   textureFormatId,
 } from "@/lib/unity/texture2d";
-import { iterClassTrees, loadUnityFs } from "@/lib/unity/loadUnityFs";
+import {
+  iterClassTrees,
+  loadUnityFs,
+  type LoadedUnityFs,
+} from "@/lib/unity/loadUnityFs";
 import { repoRoot } from "@/providers/shared/foilPaths";
+
+/** Minimal LoadedUnityFs — inline `image data` never touches resource blobs. */
+const EMPTY_LOADED = {
+  resourceBlobs: new Map(),
+} as unknown as LoadedUnityFs;
 
 describe("texture2d compressed formats", () => {
   it("recognises ETC1 and DXT1 alongside ASTC", () => {
@@ -61,6 +72,36 @@ describe("texture2d compressed formats", () => {
     expect(rgba.length).toBe(4 * 4 * 4);
     expect(rgba[0]).toBeGreaterThan(240);
     expect(rgba[3]).toBeGreaterThan(240);
+  });
+
+  it("rawS3tcMip0FromTree returns DXT5 mip0 bytes for catalogue Front sidecars", () => {
+    const mip0 = dxtMipByteSize(4, 4, TextureFormat.DXT5);
+    const block = new Uint8Array(mip0);
+    block[0] = 255;
+    block[8] = 0xff;
+    const tree = {
+      m_Name: "ST01-004_front",
+      m_Width: 4,
+      m_Height: 4,
+      m_TextureFormat: TextureFormat.DXT5,
+      m_ColorSpace: 0,
+      "image data": block,
+    };
+    const raw = rawS3tcMip0FromTree(tree, EMPTY_LOADED);
+    expect(raw).toMatchObject({
+      width: 4,
+      height: 4,
+      format: TextureFormat.DXT5,
+      srgb: false,
+      glFormat: "COMPRESSED_RGBA_S3TC_DXT5_EXT",
+    });
+    expect(raw!.data.byteLength).toBe(mip0);
+    expect(
+      rawS3tcMip0FromTree(
+        { ...tree, m_TextureFormat: TextureFormat.RGBA32 },
+        EMPTY_LOADED,
+      ),
+    ).toBeNull();
   });
 
   it("BGRA→RGBA on DXT5: Cost_Blue centre is blue without a game-side swap", () => {

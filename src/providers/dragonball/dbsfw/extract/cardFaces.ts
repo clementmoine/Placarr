@@ -60,10 +60,7 @@ import {
 import { bakeCostRingFill } from "../costRingBake";
 import { dbsFwFactsFor } from "../harvest/factsStore";
 import { DBS_FW_PACK_ID } from "../indexStore";
-import {
-  fusionWorldCardBundle,
-  fusionWorldMaterialsParaPrint,
-} from "../masks";
+import { fusionWorldCardBundle, fusionWorldMaterialsParaPrint } from "../masks";
 
 export type FwFaceExtractStats = {
   bundles: number;
@@ -122,7 +119,11 @@ function dxt5LevelBytes(width: number, height: number): number {
   return Math.ceil(width / 4) * Math.ceil(height / 4) * 16;
 }
 
-function dxt5MipChainBytes(width: number, height: number, mips: number): number {
+function dxt5MipChainBytes(
+  width: number,
+  height: number,
+  mips: number,
+): number {
   let total = 0;
   let w = width;
   let h = height;
@@ -161,13 +162,21 @@ function decodeFrameArray(tree: UnityTypeTree): {
   const depth = Number(tree.m_Depth ?? 0);
   const mips = Number(tree.m_MipCount ?? 1);
   const data = tree["image data"];
-  if (!(data instanceof Uint8Array) || width <= 0 || height <= 0 || depth <= 0) {
+  if (
+    !(data instanceof Uint8Array) ||
+    width <= 0 ||
+    height <= 0 ||
+    depth <= 0
+  ) {
     return null;
   }
   // Layout is [slice0 mips…][slice1 mips…]… — only slice 0 is the border.
   const chain = dxt5MipChainBytes(width, height, Math.max(1, mips));
   const mip0 = dxt5LevelBytes(width, height);
-  if (data.byteLength < mip0 || (chain > 0 && data.byteLength < chain && data.byteLength < mip0 * depth)) {
+  if (
+    data.byteLength < mip0 ||
+    (chain > 0 && data.byteLength < chain && data.byteLength < mip0 * depth)
+  ) {
     return null;
   }
   const srgb = format === 100; // BC3_SRGB GraphicsFormat
@@ -281,7 +290,9 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
           // Bake at PASTE_SPRITE_SUPERSAMPLE×; fillSize stays Frost slot 32
           // (not CostFrame atlas 226). Mass-centre on the inner rim.
           const ring = ringTree ? decodeTextureTree(ringTree, loaded) : null;
-          const fillMip0 = fillTree ? decodeTextureTree(fillTree, loaded) : null;
+          const fillMip0 = fillTree
+            ? decodeTextureTree(fillTree, loaded)
+            : null;
           if (!ring || !fillMip0) return null;
           ringGeom = deriveCostRingGeometry(
             ring.rgba,
@@ -401,11 +412,18 @@ async function pasteSprite(
   const cropped = await sharp(source.rgba, {
     raw: { width: source.width, height: source.height, channels: 4 },
   })
-    .extract({ left: srcLeft, top: srcTop, width: cropWidth, height: cropHeight })
+    .extract({
+      left: srcLeft,
+      top: srcTop,
+      width: cropWidth,
+      height: cropHeight,
+    })
     .png()
     .toBuffer();
   return sharp(base, { raw: { width, height, channels: 4 } })
-    .composite([{ input: cropped, left: destLeft, top: destTop, blend: "over" }])
+    .composite([
+      { input: cropped, left: destLeft, top: destTop, blend: "over" },
+    ])
     .ensureAlpha()
     .raw()
     .toBuffer();
@@ -561,9 +579,7 @@ async function writeCardFaceSides(
         const onDisk = existsSync(cardDir)
           ? new Set(readdirSync(cardDir))
           : new Set<string>();
-        if (
-          isClientFaceExtractCurrent(onDisk, side, badgeName != null)
-        ) {
+        if (isClientFaceExtractCurrent(onDisk, side, badgeName != null)) {
           stats.skipped += 1;
           continue;
         }
@@ -639,9 +655,7 @@ async function writeCardFaceSides(
             format: chromeS3tc.format,
           };
         }
-        const ring = badgeName
-          ? await frames.ring(facts?.color ?? "")
-          : null;
+        const ring = badgeName ? await frames.ring(facts?.color ?? "") : null;
         const ringAt = ring
           ? clientCostRingOffset(
               sized.width,
@@ -700,11 +714,7 @@ async function writeCardFaceSides(
         // Glyph repair at native, then one lanczos (sRGB) minify to the
         // catalogue face. A prior half-box mip crushed FB01-044's collector
         // number in the BR corner; keep coverage for that stroke.
-        const solidified = solidifyPlateInk(
-          text.rgba,
-          text.width,
-          text.height,
-        );
+        const solidified = solidifyPlateInk(text.rgba, text.width, text.height);
         const textPremul = await resizeRgba(
           { rgba: solidified, width: text.width, height: text.height },
           sized.width,
@@ -783,7 +793,9 @@ async function extractMaterialsParaFaces(
   const seriesPara = new Set(
     bundleNames(bundlesDir)
       .map((name) => fusionWorldCardBundle(name))
-      .filter((c): c is NonNullable<typeof c> => Boolean(c?.folder.endsWith("-p1")))
+      .filter((c): c is NonNullable<typeof c> =>
+        Boolean(c?.folder.endsWith("-p1")),
+      )
       .map((c) => `${c.set}/${c.folder}`),
   );
   let loaded;
@@ -804,7 +816,10 @@ async function extractMaterialsParaFaces(
     const name = String(tree.m_Name ?? tree.name ?? "");
     const print = fusionWorldMaterialsParaPrint(name);
     if (!print) continue;
-    if (match && !`${print.set}-${print.number}`.includes(match.toLowerCase())) {
+    if (
+      match &&
+      !`${print.set}-${print.number}`.includes(match.toLowerCase())
+    ) {
       continue;
     }
     const key = `${print.set}/${print.folder}`;
@@ -907,7 +922,9 @@ export async function extractFusionWorldCardFaces(opts: {
   return stats;
 }
 
-const CLIENT_FACE_NAMES = new Set<string>(Object.values(DBS_FW_CLIENT_FACE_FILES));
+const CLIENT_FACE_NAMES = new Set<string>(
+  Object.values(DBS_FW_CLIENT_FACE_FILES),
+);
 
 function clientFaceFiles(cardsDir: string): string[] {
   const files: string[] = [];

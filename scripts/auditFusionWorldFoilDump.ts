@@ -1,14 +1,13 @@
 /**
- * Prove shared + per-card foil plates from the installed client are on disk.
+ * Prove shared + per-card foil plates from CDN staging are on disk.
  * Usage: tsx scripts/auditFusionWorldFoilDump.ts
- * Does not modify the game.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
 
 import { packCardDir } from "@/lib/packPaths";
 import { resolveAssetManager } from "@/lib/unity/loadUnityFs";
+import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
 import {
   clientFoilWebpName,
   DBS_FW_FOIL_TEXTURE_TARGETS,
@@ -24,10 +23,7 @@ import {
 } from "@/providers/dragonball/dbsfw/masks";
 
 async function main(): Promise<void> {
-  const bundlesDir = join(
-    homedir(),
-    "Library/Application Support/DBSCG FW/Games/DRAGON BALL SUPER CARD GAME FUSION WORLD/default/game/DBSCGFW.app/Contents/Resources/Data/StreamingAssets/aa/StandaloneOSX",
-  );
+  const { bundlesDir } = await ensureFusionWorldClientFromCdn();
   const texDir = join(process.cwd(), "data/dragonball/fw/foil/textures");
   const onDiskShared = new Set(readdirSync(texDir));
 

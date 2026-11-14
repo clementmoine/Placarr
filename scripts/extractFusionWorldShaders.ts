@@ -1,18 +1,16 @@
 /**
- * Extract Frost/Card keyword variants + UIHologram from the Mac client.
+ * Extract Frost/Card keyword variants + UIHologram via CDN staging.
  * Usage: tsx scripts/extractFusionWorldShaders.ts [--force]
  *
- * Prefer Catalogue Sync (Fusion World → étape `foil`) which also dumps
- * textures, masks and art.client. This script is shaders-only.
- *
- * Writes `data/dragonball/fw/foil/shaders/FrostCard.frag` and
- * `FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_{ONE,TWO,FIVE,…}.frag`.
+ * Prefer Catalogue Sync (Fusion World → étape `foil`) for the full kit.
  */
+import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
 import { extractFusionWorldShaders } from "@/providers/dragonball/dbsfw/extract/shaders";
 
 async function main(): Promise<void> {
   const force = process.argv.includes("--force");
-  const result = await extractFusionWorldShaders({ force });
+  const { bundlesDir } = await ensureFusionWorldClientFromCdn({ force });
+  const result = await extractFusionWorldShaders({ force, bundlesDir });
   console.log(
     `── fw shaders : ${result.written.length} written, ` +
       `${result.frostVariants} Frost variants` +

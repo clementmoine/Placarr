@@ -1,6 +1,6 @@
 /**
- * Extract Frost/Card + UIHologram fragments from the Mac StandaloneOSX
- * `packdata_assets_shader.bundle`. Frost emits one `.frag` per
+ * Extract Frost/Card + UIHologram fragments from `packdata_assets_shader.bundle`
+ * (CDN staging Addressables). Frost emits one `.frag` per
  * `EFFECTS_LAYER_COUNT_*` so effects-uv-shine / rainbow / superpara sample
  * `_EffectsLayersTex` instead of the holo-only ZERO leaf.
  */
@@ -24,16 +24,13 @@ import {
   type ShaderTypeTree,
 } from "@/lib/unity/shader";
 import { adaptClientFragment } from "@/lib/unity/webglAdapt";
-import { fusionWorldStandaloneOsxBundlesDir } from "@/providers/dragonball/dbsfw/clientPaths";
-
-export { fusionWorldStandaloneOsxBundlesDir };
 
 export const DBS_FW_SHADER_BUNDLE = "packdata_assets_shader.bundle";
 
 export type ExtractDbsFwShadersOpts = {
   dataDir?: string;
   shadersDir?: string;
-  /** Override StandaloneOSX root (tests / Sync on a custom install). */
+  /** Addressables root from CDN staging (required unless `bundleBytes`). */
   bundlesDir?: string;
   bundleBytes?: Buffer;
   force?: boolean;
@@ -87,7 +84,7 @@ function uiHologramFrag(bundle: Uint8Array): string | null {
 
 /**
  * Write FrostCard (+ COUNT variants) and UIHologram under `foil/shaders/`.
- * Requires the Mac game bundle (or `bundleBytes`).
+ * Pass `bundlesDir` from CDN staging or raw `bundleBytes`.
  */
 export async function extractFusionWorldShaders(
   opts: ExtractDbsFwShadersOpts = {},
@@ -99,12 +96,14 @@ export async function extractFusionWorldShaders(
   const bundle =
     opts.bundleBytes ??
     (() => {
-      const root = opts.bundlesDir ?? fusionWorldStandaloneOsxBundlesDir();
-      const path = join(root, DBS_FW_SHADER_BUNDLE);
-      if (!existsSync(path)) {
+      if (!opts.bundlesDir) {
         throw new Error(
-          `Missing ${DBS_FW_SHADER_BUNDLE} under StandaloneOSX — run on the Mac with the installed client.`,
+          `Missing bundlesDir for ${DBS_FW_SHADER_BUNDLE} — run Sync foil (CDN) first`,
         );
+      }
+      const path = join(opts.bundlesDir, DBS_FW_SHADER_BUNDLE);
+      if (!existsSync(path)) {
+        throw new Error(`Missing ${DBS_FW_SHADER_BUNDLE} under ${opts.bundlesDir}`);
       }
       return readFileSync(path);
     })();
@@ -144,14 +143,12 @@ export async function extractFusionWorldShaders(
     uiHologram = true;
   }
 
-  // Drop orphan FrostCard__* left by older keyword sets (keep UIHologram).
   try {
     for (const name of readdirSync(shadersDir)) {
       if (!name.endsWith(".frag")) continue;
       if (keep.has(name)) continue;
       if (name === "UIHologram.frag") continue;
       if (!name.startsWith("FrostCard")) continue;
-      // Soft: only remove keyed variants we no longer emit.
       if (name.startsWith("FrostCard__")) {
         const { unlinkSync } = await import("node:fs");
         unlinkSync(join(shadersDir, name));

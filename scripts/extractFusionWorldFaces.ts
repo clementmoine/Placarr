@@ -1,13 +1,10 @@
 /**
- * Decode Fusion World card faces from the installed client.
+ * Decode Fusion World card faces from CDN staging.
  * Usage: tsx scripts/extractFusionWorldFaces.ts [--limit N] [--force] [--match sb02-024]
- * Does not modify the game. Writes art.client.webp / back.client.webp
- * beside the prints already on disk.
+ * Writes art.client.webp / back.client.webp beside catalogue prints.
  */
-import { homedir } from "node:os";
-import { join } from "node:path";
-
 import { packCardsDir } from "@/lib/packPaths";
+import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
 import { DBS_FW_PACK_ID } from "@/providers/dragonball/dbsfw/indexStore";
 import {
   extractFusionWorldCardFaces,
@@ -34,10 +31,7 @@ async function main(): Promise<void> {
     console.log(JSON.stringify(stats));
     return;
   }
-  const bundlesDir = join(
-    homedir(),
-    "Library/Application Support/DBSCG FW/Games/DRAGON BALL SUPER CARD GAME FUSION WORLD/default/game/DBSCGFW.app/Contents/Resources/Data/StreamingAssets/aa/StandaloneOSX",
-  );
+  const { bundlesDir } = await ensureFusionWorldClientFromCdn({ force });
   const stats = await extractFusionWorldCardFaces({
     bundlesDir,
     force,

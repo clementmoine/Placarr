@@ -1,29 +1,23 @@
 /**
  * Client foil kit extract — shaders + shared plates + per-card masks/faces.
  *
- * Source of truth: Xsolla CDN via GUS (standalone Sync), staged under
- * `data/dragonball/fw/staging/xsolla/`. Optional Mac install path is only a
- * fallback when CDN staging is unavailable.
+ * Source of truth: Xsolla CDN via GUS → `data/dragonball/fw/staging/xsolla/`.
+ * No Mac install path.
  */
 import { join } from "node:path";
 
 import { foilPackDir } from "@/lib/packPaths";
-import {
-  fusionWorldClientBundlesPresent,
-  fusionWorldStandaloneOsxBundlesDir,
-} from "@/providers/dragonball/dbsfw/clientPaths";
 import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
 import { DBS_FW_PACK_ID } from "@/providers/dragonball/dbsfw/indexStore";
+import { existsSync } from "node:fs";
 
 export type RunDbsFwFoilExtractOpts = {
   force?: boolean;
   limit?: number;
   match?: string;
-  /** Override Addressables root (tests). */
+  /** Override Addressables root (tests / already-staged tree). */
   bundlesDir?: string;
-  /** Prefer Mac install over CDN (legacy). Default: CDN first. */
-  preferMacInstall?: boolean;
-  /** Skip CDN download (Mac-only / offline fixtures). */
+  /** Skip CDN (tests with fixtures only). */
   skipCdn?: boolean;
   repo?: string;
 };
@@ -31,7 +25,7 @@ export type RunDbsFwFoilExtractOpts = {
 export type RunDbsFwFoilExtractResult = {
   skipped: boolean;
   reason?: string;
-  source?: "cdn" | "mac" | "override";
+  source?: "cdn" | "override";
   shaders?: { written: string[]; frostVariants: number; uiHologram: boolean };
   textures?: {
     webpWritten: number;
@@ -45,37 +39,26 @@ export type RunDbsFwFoilExtractResult = {
 
 async function resolveBundlesDir(
   opts: RunDbsFwFoilExtractOpts,
-): Promise<{ dir: string; source: "cdn" | "mac" | "override" } | null> {
+): Promise<{ dir: string; source: "cdn" | "override" } | null> {
   if (opts.bundlesDir) {
-    return fusionWorldClientBundlesPresent(opts.bundlesDir)
+    return existsSync(opts.bundlesDir)
       ? { dir: opts.bundlesDir, source: "override" }
       : null;
   }
+  if (opts.skipCdn) return null;
 
-  const macDir = fusionWorldStandaloneOsxBundlesDir();
-  if (opts.preferMacInstall && fusionWorldClientBundlesPresent(macDir)) {
-    return { dir: macDir, source: "mac" };
+  try {
+    const staged = await ensureFusionWorldClientFromCdn({
+      force: opts.force,
+      repo: opts.repo,
+    });
+    return { dir: staged.bundlesDir, source: "cdn" };
+  } catch (err) {
+    console.warn(
+      `── fw foil : CDN staging failed (${err instanceof Error ? err.message : err})`,
+    );
+    return null;
   }
-
-  if (!opts.skipCdn) {
-    try {
-      const staged = await ensureFusionWorldClientFromCdn({
-        force: opts.force,
-        repo: opts.repo,
-      });
-      return { dir: staged.bundlesDir, source: "cdn" };
-    } catch (err) {
-      console.warn(
-        `── fw foil : CDN staging failed (${err instanceof Error ? err.message : err})`,
-      );
-    }
-  }
-
-  if (fusionWorldClientBundlesPresent(macDir)) {
-    console.log("── fw foil : fallback to local Mac StandaloneOSX");
-    return { dir: macDir, source: "mac" };
-  }
-  return null;
 }
 
 /**
@@ -87,9 +70,9 @@ export async function runDbsFwFoilExtract(
   const resolved = await resolveBundlesDir(opts);
   if (!resolved) {
     console.log(
-      "skip foil: no CDN staging and no StandaloneOSX (check GUS/Xsolla or install 7-Zip)",
+      "skip foil: CDN staging unavailable (check GUS/Xsolla or 7-Zip)",
     );
-    return { skipped: true, reason: "no-client-bundles" };
+    return { skipped: true, reason: "no-cdn-client" };
   }
 
   const { dir: bundlesDir, source } = resolved;

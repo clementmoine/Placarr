@@ -1,11 +1,8 @@
 /**
- * Decode every Fusion World card mask from the installed client.
+ * Decode Fusion World card masks from CDN staging.
  * Usage: tsx scripts/extractFusionWorldMasks.ts [--limit N] [--force]
- * Does not modify the game.
  */
-import { homedir } from "node:os";
-import { join } from "node:path";
-
+import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
 import { extractFusionWorldCardMasks } from "@/providers/dragonball/dbsfw/extract/cardMasks";
 
 const args = process.argv.slice(2);
@@ -15,10 +12,7 @@ const limit = args.includes("--limit")
 const force = args.includes("--force");
 
 async function main(): Promise<void> {
-  const bundlesDir = join(
-    homedir(),
-    "Library/Application Support/DBSCG FW/Games/DRAGON BALL SUPER CARD GAME FUSION WORLD/default/game/DBSCGFW.app/Contents/Resources/Data/StreamingAssets/aa/StandaloneOSX",
-  );
+  const { bundlesDir } = await ensureFusionWorldClientFromCdn({ force });
   const stats = await extractFusionWorldCardMasks({
     bundlesDir,
     force,

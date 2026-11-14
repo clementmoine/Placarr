@@ -249,10 +249,10 @@ Extract multi-variantes : inclus dans le **Sync catalogue Fusion World**
 
 Source **standalone** : GUS (`project_id=254594`) → CDN Xsolla
 (`gamebuild.launcher.xsolla.com`) → volumes `full_game_*.7z.*` → extract
-sous `data/dragonball/fw/staging/xsolla/` → dump foil. Pas besoin du Mac
-installé ; l’arbre `~/Library/…/StandaloneOSX` n’est qu’un fallback.
+sous `data/dragonball/fw/staging/xsolla/` → dump foil. Aucun chemin
+`~/Library/…` : le Sync ne lit pas une install Mac.
 
-Soft-skip si GUS/CDN/7-Zip échouent **et** qu’aucun fallback local n’existe.
+Soft-skip si GUS/CDN/7-Zip échouent.
 Manuel shaders seuls :
 
 `pnpm exec tsx scripts/extractFusionWorldShaders.ts [--force]`

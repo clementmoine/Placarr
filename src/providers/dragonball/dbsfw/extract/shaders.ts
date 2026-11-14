@@ -11,7 +11,6 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 
 import { toWebgl2Fragment } from "@/core/render/unity/webglFragment";
@@ -25,19 +24,17 @@ import {
   type ShaderTypeTree,
 } from "@/lib/unity/shader";
 import { adaptClientFragment } from "@/lib/unity/webglAdapt";
+import { fusionWorldStandaloneOsxBundlesDir } from "@/providers/dragonball/dbsfw/clientPaths";
+
+export { fusionWorldStandaloneOsxBundlesDir };
 
 export const DBS_FW_SHADER_BUNDLE = "packdata_assets_shader.bundle";
-
-export function fusionWorldStandaloneOsxBundlesDir(): string {
-  return join(
-    homedir(),
-    "Library/Application Support/DBSCG FW/Games/DRAGON BALL SUPER CARD GAME FUSION WORLD/default/game/DBSCGFW.app/Contents/Resources/Data/StreamingAssets/aa/StandaloneOSX",
-  );
-}
 
 export type ExtractDbsFwShadersOpts = {
   dataDir?: string;
   shadersDir?: string;
+  /** Override StandaloneOSX root (tests / Sync on a custom install). */
+  bundlesDir?: string;
   bundleBytes?: Buffer;
   force?: boolean;
 };
@@ -102,10 +99,8 @@ export async function extractFusionWorldShaders(
   const bundle =
     opts.bundleBytes ??
     (() => {
-      const path = join(
-        fusionWorldStandaloneOsxBundlesDir(),
-        DBS_FW_SHADER_BUNDLE,
-      );
+      const root = opts.bundlesDir ?? fusionWorldStandaloneOsxBundlesDir();
+      const path = join(root, DBS_FW_SHADER_BUNDLE);
       if (!existsSync(path)) {
         throw new Error(
           `Missing ${DBS_FW_SHADER_BUNDLE} under StandaloneOSX — run on the Mac with the installed client.`,

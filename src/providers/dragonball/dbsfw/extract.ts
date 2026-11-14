@@ -8,7 +8,6 @@ import { logCatalogueCheckpoint } from "@/lib/admin/catalogueExtractCheckpoint";
 import {
   catalogueArgList,
   catalogueArgValue,
-  selectCatalogueSteps,
 } from "@/providers/shared/cardCatalogue/catalogueSteps";
 
 import { DBS_FW_FACE_LANGS, fetchDbsFwFaces } from "./disk/fetchFaces";
@@ -17,28 +16,9 @@ import { DBS_FW_PACK_ID } from "./indexStore";
 import { ensureDbsFwCuratedAssets } from "./install/curated";
 import { scrapeDbsFwCardDetails } from "./scrape/cardDetails";
 import { scrapeDbsFwCardlist } from "./scrape/cardlist";
+import { selectDbsFwSteps } from "./extractSteps";
 
-const STEPS = [
-  "scrape",
-  "dbscards",
-  "products",
-  "faces",
-  "details",
-  "documents",
-] as const;
-type Step = (typeof STEPS)[number];
-/** Everything but a local re-range needs the network. */
-const ONLINE = new Set<Step>([
-  "scrape",
-  "dbscards",
-  "faces",
-  "details",
-  "documents",
-]);
-
-export function selectDbsFwSteps(argv: readonly string[]): Step[] {
-  return selectCatalogueSteps(argv, STEPS, { online: ONLINE });
-}
+export { selectDbsFwSteps } from "./extractSteps";
 
 export async function runDbsFwPackPipeline(
   argv: readonly string[] = [],
@@ -60,12 +40,10 @@ export async function runDbsFwPackPipeline(
   for (const step of steps) {
     if (step === "documents") {
       try {
-        const { loadDbsFwCuratedDocuments } = await import(
-          "@/providers/dragonball/dbsfw/curated/documents"
-        );
-        const { harvestPackDocuments } = await import(
-          "@/providers/shared/documents/harvestPackDocuments"
-        );
+        const { loadDbsFwCuratedDocuments } =
+          await import("@/providers/dragonball/dbsfw/curated/documents");
+        const { harvestPackDocuments } =
+          await import("@/providers/shared/documents/harvestPackDocuments");
         const docs = await harvestPackDocuments({
           packId: DBS_FW_PACK_ID,
           curated: loadDbsFwCuratedDocuments(),
@@ -174,7 +152,23 @@ export async function runDbsFwPackPipeline(
           : undefined,
       });
     }
+    if (step === "foil") {
+      const { runDbsFwFoilExtract } =
+        await import("@/providers/dragonball/dbsfw/extract/foil");
+      const match = catalogueArgValue(argv, "--match");
+      const result = await runDbsFwFoilExtract({
+        force,
+        limit: catalogueArgValue(argv, "--limit")
+          ? Number(catalogueArgValue(argv, "--limit"))
+          : undefined,
+        ...(match ? { match } : {}),
+      });
+      if (result.skipped) {
+        console.log(`── foil : skipped (${result.reason})`);
+      } else {
+        console.log("── foil : ok");
+      }
+    }
     logCatalogueCheckpoint(step);
   }
 }
-

@@ -2,6 +2,9 @@
  * Extract Frost/Card keyword variants + UIHologram from the Mac client.
  * Usage: tsx scripts/extractFusionWorldShaders.ts [--force]
  *
+ * Prefer Catalogue Sync (Fusion World → étape `foil`) which also dumps
+ * textures, masks and art.client. This script is shaders-only.
+ *
  * Writes `data/dragonball/fw/foil/shaders/FrostCard.frag` and
  * `FrostCard__ARTWORK_ON__EFFECTS_LAYER_COUNT_{ONE,TWO,FIVE,…}.frag`.
  */

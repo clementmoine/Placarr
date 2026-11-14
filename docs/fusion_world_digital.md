@@ -244,7 +244,9 @@ que la variante holo (`FrostCard.frag`) — les feuilles `effects-uv-shine`,
 `effects-ef-flash`, `effects-uv-rainbow`, `tabac`, `superpara` ne
 rééchantillonnaient pas `_EffectsLayersTex`.
 
-Extract multi-variantes (Mac + bundle) :
+Extract multi-variantes : inclus dans le **Sync catalogue Fusion World**
+(étape `foil`, comme Lorcana `mobile` / Pokémon `extract`). Soft-skip si
+`StandaloneOSX` est absent. Manuel :
 
 `pnpm exec tsx scripts/extractFusionWorldShaders.ts [--force]`
 

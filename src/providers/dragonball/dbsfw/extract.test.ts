@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { selectDbsFwSteps } from "./extract";
+import { selectDbsFwSteps } from "./extractSteps";
 
 describe("selectDbsFwSteps", () => {
-  it("includes the product graph on a manual Sync", () => {
+  it("includes the product graph + client foil kit on a manual Sync", () => {
     expect(selectDbsFwSteps([])).toEqual([
       "scrape",
       "dbscards",
       "products",
       "faces",
       "details",
+      "foil",
       "documents",
     ]);
   });
@@ -22,14 +23,20 @@ describe("selectDbsFwSteps", () => {
       // `details` reste du tour horaire : la récolte est incrémentale, elle ne
       // relit que les numéros que `facts.json` n'a pas encore.
       "details",
+      "foil",
       "documents",
     ]);
   });
 
-  it("reparses local product HTML when --offline", () => {
-    expect(selectDbsFwSteps(["--offline"])).toEqual(["products"]);
+  it("runs foil alone via --only (Mac client dump)", () => {
+    expect(selectDbsFwSteps(["--only", "foil"])).toEqual(["foil"]);
+  });
+
+  it("reparses local product HTML when --offline (foil stays — local client)", () => {
+    expect(selectDbsFwSteps(["--offline"])).toEqual(["products", "foil"]);
     expect(selectDbsFwSteps(["--only", "products", "--offline"])).toEqual([
       "products",
     ]);
+    expect(selectDbsFwSteps(["--only", "foil", "--offline"])).toEqual(["foil"]);
   });
 });

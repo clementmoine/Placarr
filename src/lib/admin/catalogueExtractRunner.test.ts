@@ -88,6 +88,12 @@ describe("catalogueExtractRunner targets", () => {
     const fw = await resolveCatalogueExtractPlan("dbs-fw");
     expect(fw.target).toBe("dbs-fw");
     expect(fw.prelude.some((line) => /produit/i.test(line))).toBe(true);
+    expect(fw.prelude.some((line) => /foil client Mac/i.test(line))).toBe(true);
+    expect(
+      (
+        await import("@/lib/admin/cataloguePacks")
+      ).cataloguePackInfo("dragonball/fw")?.extract.pipelineSteps,
+    ).toContain("foil");
   });
 
   it("resumes stepped packs with --skip from completedSteps", async () => {

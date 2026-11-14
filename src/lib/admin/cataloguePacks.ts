@@ -62,11 +62,7 @@ export type CataloguePackId =
   | "leclerc/disney26";
 
 export type CatalogueBrowseScope =
-  | "foils"
-  | "all"
-  | "sealed"
-  | "documents"
-  | "stories";
+  "foils" | "all" | "sealed" | "documents" | "stories";
 
 /** Naruto disk / verso line — same game, different back and sealed SKUs. */
 export type CatalogueCardLine = NarutoCardLine;
@@ -415,13 +411,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       timeoutMsByScope: { catalogue: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS },
       postExtract: "invalidatePokemonFoilNamesCache",
       // Mirrors selectPokemonSteps defaults — SKUs/scellés/packshots included.
-      pipelineSteps: [
-        "malie",
-        "scrape",
-        "extract",
-        "paper-faces",
-        "products",
-      ],
+      pipelineSteps: ["malie", "scrape", "extract", "paper-faces", "products"],
     },
   },
   {
@@ -535,11 +525,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     browseLocales: CARDDASS_BROWSE_LOCALES,
     extractTarget: "naruto",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -591,11 +577,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "naruto-shippuden",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -631,11 +613,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     localeArt: { bestFaceAcrossLocales: true },
     extractTarget: "naruto-ranks",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -668,11 +646,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueLocales: ["fr"],
     extractTarget: "naruto-ultra",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -706,11 +680,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     defaultScope: "all",
     extractTarget: "naruto-mythos",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -752,9 +722,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractMarkers: ["catalog.sqlite", "cards"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
-      prelude: [
-        "Naruto Card Game (Bandai) : JA+EN+FR → data/naruto/cardgame",
-      ],
+      prelude: ["Naruto Card Game (Bandai) : JA+EN+FR → data/naruto/cardgame"],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
     },
     blurbFr:
@@ -783,11 +751,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueLocales: ["en"],
     extractTarget: "naruto-kayou",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -822,10 +786,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueLocales: ["ja"],
     extractTarget: "naruto-data-carddass",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -865,11 +826,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     },
     extractTarget: "dbs-cg",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -917,15 +874,26 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       "catalog.sqlite",
       "cards",
       "cards/back.webp",
+      "foil/shaders",
+      "foil/textures",
     ],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
         "Dragon Ball Fusion World: Bandai fw/en cardlist → data/dragonball/fw",
         "graphe produit→cartes (decks / coffrets) — HTML déjà là = reprise",
+        "foil client Mac (StandaloneOSX) : shaders Frost COUNT + plaques + masks + art.client — absent = skip",
       ],
       timeoutMs: CATALOGUE_EXTRACT_TIMEOUT_MS,
-      pipelineSteps: ["scrape", "dbscards", "products", "faces", "details"],
+      // `foil` mirrors Lorcana `mobile` / Pokémon `extract` (Unity dump).
+      pipelineSteps: [
+        "scrape",
+        "dbscards",
+        "products",
+        "faces",
+        "details",
+        "foil",
+      ],
     },
     blurbFr:
       "Catalogue Bandai Fusion World. Rendu : types du client (holo, tabac, parallèle, super parallèle) et masques.",
@@ -952,11 +920,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueLocales: ["it", "fr"],
     extractTarget: "dbs-lamincards",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -991,11 +955,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueOnly: true,
     expandLocales: true,
     catalogueLocales: ["ja", "fr", "en"],
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -1029,11 +989,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     extractTarget: "dbs-heroes",
     catalogueOnly: true,
     catalogueLocales: ["ja"],
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -1070,11 +1026,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     // JA (nikita) + FR (carddass.fr). Pas d'EN officiel SCB — le Bleach TCG
     // Score US est un autre jeu (hors pack).
     catalogueLocales: ["ja", "fr"],
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -1109,11 +1061,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     expandLocales: true,
     catalogueLocales: ["ja", "fr", "en"],
     localeArt: { bestFaceAcrossLocales: true },
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -1156,11 +1104,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       catalogueLocales: ["fr"] as const,
       extractTarget: op.extractTarget as CatalogueExtractTarget,
       catalogueOnly: true,
-      extractMarkers: [
-        "catalog.sqlite",
-        "cards",
-        "cards/back.webp",
-      ],
+      extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
       emptyUnless: ["catalog.sqlite"],
       extract: {
         prelude: [
@@ -1193,11 +1137,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
      * Do **not** borrow EN rectos onto FR tiles — missing FR art stays empty.
      * Opt-in `bestFaceAcrossLocales` is for exceptional packs (OPTCG, Mythos…).
      */
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -1227,11 +1167,7 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
     catalogueLocales: ["en", "fr"],
     extractTarget: "mtg",
     catalogueOnly: true,
-    extractMarkers: [
-      "catalog.sqlite",
-      "cards",
-      "cards/back.webp",
-    ],
+    extractMarkers: ["catalog.sqlite", "cards", "cards/back.webp"],
     emptyUnless: ["catalog.sqlite"],
     extract: {
       prelude: [
@@ -1256,9 +1192,8 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
 ];
 
 /** Derived from {@link CATALOGUE_PACKS} — single source of hub pack ids. */
-export const CATALOGUE_PACK_IDS: readonly CataloguePackId[] = CATALOGUE_PACKS.map(
-  (pack) => pack.id,
-);
+export const CATALOGUE_PACK_IDS: readonly CataloguePackId[] =
+  CATALOGUE_PACKS.map((pack) => pack.id);
 
 export function isCataloguePackId(value: unknown): value is CataloguePackId {
   return (

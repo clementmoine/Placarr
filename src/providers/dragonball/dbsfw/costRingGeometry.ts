@@ -78,6 +78,112 @@ function innerRimCenter(
 }
 
 /**
+ * Largest circle that fits in the dark well around `seed` before hitting
+ * bright chrome. Y-band means alone drift toward the Cost_02/03 waist;
+ * `innerRimCenter` is wrong here (figure-8 chrome skews the rim mean).
+ */
+function refineHoleCenter(
+  rgba: Buffer,
+  width: number,
+  height: number,
+  seed: { x: number; y: number },
+  search = 5,
+): { x: number; y: number } {
+  let best = seed;
+  let bestR = -1;
+  for (let dy = -search; dy <= search; dy += 0.25) {
+    for (let dx = -search; dx <= search; dx += 0.25) {
+      const cx = seed.x + dx;
+      const cy = seed.y + dy;
+      let minR = 40;
+      for (let deg = 0; deg < 360; deg += 5) {
+        const rad = (deg * Math.PI) / 180;
+        for (let r = 1; r < 40; r += 0.5) {
+          const x = Math.round(cx + r * Math.cos(rad));
+          const y = Math.round(cy + r * Math.sin(rad));
+          if (x < 0 || y < 0 || x >= width || y >= height) {
+            minR = Math.min(minR, r);
+            break;
+          }
+          const i = (y * width + x) * 4;
+          const a = rgba[i + 3] ?? 0;
+          const L =
+            ((rgba[i] ?? 0) + (rgba[i + 1] ?? 0) + (rgba[i + 2] ?? 0)) / 3;
+          if (a > 80 && L >= 70) {
+            minR = Math.min(minR, r);
+            break;
+          }
+        }
+      }
+      if (minR > bestR) {
+        bestR = minR;
+        best = { x: cx, y: cy };
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Dark-well centres for `Cost_0N` (N holes stacked in the atlas cell).
+ * Splits opaque dark pixels into `holeCount` Y-bands, then refines each
+ * seed onto the well’s inner rim (Cost_02 waist otherwise pulls the mean).
+ */
+export function deriveCostRingHoleCenters(
+  rgba: Buffer,
+  width: number,
+  height: number,
+  holeCount: number,
+  alphaThreshold = 60,
+  lumaThreshold = 80,
+): { x: number; y: number }[] {
+  const n = Math.max(1, Math.min(3, Math.round(holeCount)));
+  const points: { x: number; y: number }[] = [];
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4;
+      const a = rgba[i + 3] ?? 0;
+      if (a < alphaThreshold) continue;
+      const L =
+        ((rgba[i] ?? 0) + (rgba[i + 1] ?? 0) + (rgba[i + 2] ?? 0)) / 3;
+      if (L >= lumaThreshold) continue;
+      points.push({ x, y });
+    }
+  }
+  if (points.length === 0) return [];
+  const seeds: { x: number; y: number }[] = [];
+  if (n === 1) {
+    let sx = 0;
+    let sy = 0;
+    for (const p of points) {
+      sx += p.x;
+      sy += p.y;
+    }
+    seeds.push({ x: sx / points.length, y: sy / points.length });
+  } else {
+    const ys = points.map((p) => p.y).sort((a, b) => a - b);
+    for (let band = 0; band < n; band += 1) {
+      const lo = ys[Math.floor((band * ys.length) / n)]!;
+      const hi = ys[
+        Math.min(ys.length - 1, Math.floor(((band + 1) * ys.length) / n) - 1)
+      ]!;
+      let sx = 0;
+      let sy = 0;
+      let count = 0;
+      for (const p of points) {
+        if (p.y < lo || p.y > hi) continue;
+        sx += p.x;
+        sy += p.y;
+        count += 1;
+      }
+      if (count === 0) continue;
+      seeds.push({ x: sx / count, y: sy / count });
+    }
+  }
+  return seeds.map((seed) => refineHoleCenter(rgba, width, height, seed));
+}
+
+/**
  * Opaque bbox → outerDiam + outerCentre; fill centre from inner chrome rim
  * (falls back to outer centre when the rim cannot be sampled).
  */

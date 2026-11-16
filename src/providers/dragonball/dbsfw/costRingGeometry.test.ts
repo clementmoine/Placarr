@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_COST_RING_GEOMETRY,
   deriveCostRingGeometry,
+  deriveCostRingHoleCenters,
 } from "./costRingGeometry";
 import {
   FROST_COST_DISC_1,
@@ -90,6 +91,77 @@ describe("costRingGeometry", () => {
       fillSize: 32,
     });
   });
+
+  it("splits Cost_02-style dark wells into two Y-banded centres", () => {
+    const w = 40;
+    const h = 80;
+    const rgba = Buffer.alloc(w * h * 4, 0);
+    const paint = (cx: number, cy: number, r: number) => {
+      for (let y = cy - r; y <= cy + r; y += 1) {
+        for (let x = cx - r; x <= cx + r; x += 1) {
+          if (x < 0 || y < 0 || x >= w || y >= h) continue;
+          if ((x - cx) ** 2 + (y - cy) ** 2 > r * r) continue;
+          const i = (y * w + x) * 4;
+          rgba[i] = 25;
+          rgba[i + 1] = 25;
+          rgba[i + 2] = 25;
+          rgba[i + 3] = 255;
+        }
+      }
+    };
+    paint(20, 20, 8);
+    paint(20, 55, 8);
+    const holes = deriveCostRingHoleCenters(rgba, w, h, 2);
+    expect(holes).toHaveLength(2);
+    expect(holes[0]!.y).toBeLessThan(holes[1]!.y);
+    expect(Math.abs(holes[0]!.x - 20)).toBeLessThan(2);
+    expect(Math.abs(holes[1]!.x - 20)).toBeLessThan(2);
+  });
+
+  it("refines Cost_02 centres off the waist so fills sit in each well", () => {
+    const w = 64;
+    const h = 96;
+    const rgba = Buffer.alloc(w * h * 4, 0);
+    const paintRing = (cx: number, cy: number, inner: number, outer: number) => {
+      for (let y = 0; y < h; y += 1) {
+        for (let x = 0; x < w; x += 1) {
+          const d = Math.hypot(x - cx, y - cy);
+          const i = (y * w + x) * 4;
+          if (d <= inner) {
+            rgba[i] = 20;
+            rgba[i + 1] = 20;
+            rgba[i + 2] = 20;
+            rgba[i + 3] = 255;
+          } else if (d <= outer) {
+            rgba[i] = 180;
+            rgba[i + 1] = 180;
+            rgba[i + 2] = 180;
+            rgba[i + 3] = 255;
+          }
+        }
+      }
+    };
+    const top = { x: 28, y: 28 };
+    const bot = { x: 36, y: 68 };
+    paintRing(top.x, top.y, 10, 14);
+    paintRing(bot.x, bot.y, 10, 14);
+    // Dark waist between wells — pulls a raw Y-band mean toward the junction.
+    for (let y = 38; y <= 58; y += 1) {
+      for (let x = 30; x <= 34; x += 1) {
+        const i = (y * w + x) * 4;
+        rgba[i] = 25;
+        rgba[i + 1] = 25;
+        rgba[i + 2] = 25;
+        rgba[i + 3] = 255;
+      }
+    }
+    const holes = deriveCostRingHoleCenters(rgba, w, h, 2);
+    expect(holes).toHaveLength(2);
+    expect(Math.abs(holes[0]!.x - top.x)).toBeLessThan(1.5);
+    expect(Math.abs(holes[0]!.y - top.y)).toBeLessThan(1.5);
+    expect(Math.abs(holes[1]!.x - bot.x)).toBeLessThan(1.5);
+    expect(Math.abs(holes[1]!.y - bot.y)).toBeLessThan(1.5);
+  });
 });
 
 describe("frostCostDisc", () => {
@@ -113,7 +185,7 @@ describe("frostCostDisc", () => {
 
 describe("clientFacePolicy", () => {
   it("keeps Placarr decisions explicit", () => {
-    expect(COST_FILL_DRAW_SIZE).toBe(20);
+    expect(COST_FILL_DRAW_SIZE).toBe(24);
     expect(FW_PRINT_ASPECT).toBeCloseTo(63 / 88, 10);
   });
 });

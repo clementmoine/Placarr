@@ -645,6 +645,8 @@ export function FoilCardImage({
             frontUrl: layers?.frontUrl ?? null,
             frameUrl: layers?.frameUrl ?? null,
             inkUrl: layers?.inkUrl ?? null,
+            middleUrl: layers?.middleUrl ?? null,
+            frameTopUrl: layers?.frameTopUrl ?? null,
             costRingUrl: layers?.costRingUrl ?? null,
             badgeUrl: layers?.badgeUrl ?? null,
             holoMaskUrl: layers?.holoMaskUrl ?? null,

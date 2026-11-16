@@ -127,13 +127,20 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
   frameUrl: string;
   inkUrl: string;
   /**
-   * Cost disc (`Cost_01` + fill) — composited onto Frame at WebGL load
-   * (Unity draws it between Frame and Chara; not a Frost sampler).
+   * Frost `_MiddleTex` when `_ShowMiddleTex` (character / FX over frame).
+   * Absent → transparent; shader gate stays off.
+   */
+  middleUrl: string | null;
+  /** FrameTex array z=2 (footer chrome over Middle). */
+  frameTopUrl: string | null;
+  /**
+   * Cost disc (`Cost_0N` + fill, N = specified-cost pips) — composited onto
+   * ink at WebGL load (above Middle; not a Frost sampler).
    */
   costRingUrl: string | null;
   /**
-   * CostNumber gem (`{Color}_01_cost{n}`) — composited onto Chara/ink
-   * (Frost `_CostNumberTex` after Chara).
+   * CostNumber gem (`{Color}_0N_cost{n}`) — composited onto Chara/ink
+   * (Frost `_CostNumberTex` after Chara / Middle).
    */
   badgeUrl: string | null;
   /** Denser plate for Frost `_HoloMask` when `_FoilMask` is a sparse stamp. */
@@ -141,7 +148,9 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
 } | null {
   const back = /\/back\.[^/]+$/i.test(faceUrl);
   const picture = back ? "layer.back-picture.webp" : "layer.picture.webp";
+  const middle = back ? "layer.back-middle.webp" : "layer.middle.webp";
   const frame = back ? "layer.back-frame.webp" : "layer.frame.webp";
+  const frameTop = back ? "layer.back-frameTop.webp" : "layer.frameTop.webp";
   const ink = back ? "layer.back-text.webp" : "layer.text.webp";
   const costRing = back ? "layer.back-costRing.webp" : "layer.costRing.webp";
   const badge = back ? "layer.back-badge.webp" : "layer.badge.webp";
@@ -155,6 +164,9 @@ export function dbsFwLayerSurfaces(faceUrl: string): {
     frontUrl,
     frameUrl,
     inkUrl,
+    middleUrl: dbsFwCatalogueMaskUrl(faceUrl, middle),
+    /** FrameTex z=2 — composited onto ink (above Middle) until WebGL arrays. */
+    frameTopUrl: dbsFwCatalogueMaskUrl(faceUrl, frameTop),
     costRingUrl: dbsFwCatalogueMaskUrl(faceUrl, costRing),
     badgeUrl: dbsFwCatalogueMaskUrl(faceUrl, badge),
     holoMaskUrl,

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   clientBattleFrameName,
+  clientCostNumberSpriteName,
   clientCostFillName,
   clientCostRingAnchor,
+  clientCostRingName,
   clientCostRingOffset,
+  specifiedCostPipCount,
   clientFacePixels,
   blendPlateMips,
   boxFilterRgba,
@@ -14,6 +17,8 @@ import {
   resolvePlateWithMip1,
   scaleRgbaNearest,
   resolvePlateChromeMips,
+  bilinearResizeRgba,
+  softenPlateBilinear,
   softenPlateChrome,
   compositeCostFill,
   COST_FILL_DRAW_SIZE,
@@ -27,8 +32,8 @@ import {
 } from "./clientFaces";
 
 describe("clientFacePixels", () => {
-  it("shrinks the 1:2 client texture onto a 63×88 card without enlarging", () => {
-    expect(clientFacePixels(512, 1024)).toEqual({ width: 512, height: 715 });
+  it("widens the 1:2 client texture onto a 63×88 card (733×1024)", () => {
+    expect(clientFacePixels(512, 1024)).toEqual({ width: 733, height: 1024 });
     expect(clientFacePixels(733, 1024)).toEqual({ width: 733, height: 1024 });
     expect(clientFacePixels(800, 1024)).toEqual({ width: 800, height: 1024 });
   });
@@ -48,6 +53,7 @@ describe("isClientFaceExtractCurrent", () => {
       "layer.text.webp",
       "layer.picture.dxt5",
       "layers.s3tc.json",
+      "layers.compose.json",
     ]);
     expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(false);
@@ -57,7 +63,36 @@ describe("isClientFaceExtractCurrent", () => {
     expect(isClientFaceExtractCurrent(base, "front", true)).toBe(true);
   });
 
-  it("requires picture DXT + layers.s3tc.json for front WebGL sidecars", () => {
+  it("requires layer.middle when Material Card shows MiddleTex", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+      "layer.picture.dxt5",
+      "layers.s3tc.json",
+      "layers.compose.json",
+    ]);
+    expect(isClientFaceExtractCurrent(base, "front", false, true)).toBe(false);
+    base.add("layer.middle.webp");
+    expect(isClientFaceExtractCurrent(base, "front", false, true)).toBe(true);
+  });
+
+  it("requires frameTop.dxt5 when frameTop.webp is present", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+      "layer.picture.dxt5",
+      "layers.s3tc.json",
+      "layers.compose.json",
+      "layer.frameTop.webp",
+    ]);
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(false);
+    base.add("layer.frameTop.dxt5");
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
+  });
+
+  it("requires picture DXT + layers.s3tc.json + layers.compose.json for front", () => {
     const base = new Set([
       "art.client.webp",
       "layer.picture.webp",
@@ -67,7 +102,109 @@ describe("isClientFaceExtractCurrent", () => {
     base.add("layer.picture.dxt5");
     expect(isClientFaceExtractCurrent(base, "front", false)).toBe(false);
     base.add("layers.s3tc.json");
+    expect(isClientFaceExtractCurrent(base, "front", false)).toBe(false);
+    base.add("layers.compose.json");
     expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
+  });
+
+  it("rejects CPU aplat when bake mode is checked (extract path)", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+      "layer.picture.dxt5",
+      "layers.s3tc.json",
+      "layers.compose.json",
+    ]);
+    expect(
+      isClientFaceExtractCurrent(base, "front", false, false, undefined, null),
+    ).toBe(false);
+    expect(
+      isClientFaceExtractCurrent(base, "front", false, false, undefined, "cpu"),
+    ).toBe(false);
+    expect(
+      isClientFaceExtractCurrent(base, "front", false, false, undefined, "gpu"),
+    ).toBe(true);
+  });
+
+  it("rejects pre-widen layout (512×715 shrink)", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+      "layer.picture.dxt5",
+      "layers.s3tc.json",
+      "layers.compose.json",
+    ]);
+    expect(
+      isClientFaceExtractCurrent(
+        base,
+        "front",
+        false,
+        false,
+        undefined,
+        "gpu",
+        "print-shrink",
+      ),
+    ).toBe(false);
+    expect(
+      isClientFaceExtractCurrent(
+        base,
+        "front",
+        false,
+        false,
+        undefined,
+        "gpu",
+        "print-widen",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects pre-display-bytes tone (mixed DXT sRGB + raw RGBA)", () => {
+    const base = new Set([
+      "art.client.webp",
+      "layer.picture.webp",
+      "layer.text.webp",
+      "layer.picture.dxt5",
+      "layers.s3tc.json",
+      "layers.compose.json",
+    ]);
+    expect(
+      isClientFaceExtractCurrent(
+        base,
+        "front",
+        false,
+        false,
+        undefined,
+        "gpu",
+        "print-widen",
+        null,
+      ),
+    ).toBe(false);
+    expect(
+      isClientFaceExtractCurrent(
+        base,
+        "front",
+        false,
+        false,
+        undefined,
+        "gpu",
+        "print-widen",
+        "display-bytes",
+      ),
+    ).toBe(false);
+    expect(
+      isClientFaceExtractCurrent(
+        base,
+        "front",
+        false,
+        false,
+        undefined,
+        "gpu",
+        "print-widen",
+        "display-bytes-v2",
+      ),
+    ).toBe(true);
   });
 });
 
@@ -201,8 +338,33 @@ describe("fusionWorldFaceLayer", () => {
     const soft = softenPlateChrome(rgba, 3, 3);
     expect([...soft.subarray(0, 4)]).toEqual([120, 118, 122, 255]);
     expect([...soft.subarray(4 * 4, 5 * 4)]).toEqual([255, 255, 255, 255]);
+  });
+
+  it("bilinear resize matches WebGL LINEAR sample at texel centers", () => {
+    const src = Buffer.alloc(2 * 2 * 4);
+    src.set([0, 0, 0, 255], 0);
+    src.set([255, 0, 0, 255], 4);
+    src.set([0, 255, 0, 255], 8);
+    src.set([0, 0, 255, 255], 12);
+    const out = bilinearResizeRgba(src, 2, 2, 1, 1);
+    // Centre of 2×2 → average of all four
+    expect(out[0]!).toBe(64);
+    expect(out[1]!).toBe(64);
+    expect(out[2]!).toBe(64);
+    expect(out[3]!).toBe(255);
+  });
+
+  it("LINEAR stand-in blends a texel with its opaque neighbours", () => {
+    const rgba = Buffer.alloc(3 * 3 * 4);
+    for (let i = 0; i < 9; i += 1) rgba.set([0, 0, 0, 255], i * 4);
+    rgba.set([255, 255, 255, 255], 4 * 4);
+    const soft = softenPlateBilinear(rgba, 3, 3);
+    // Centre white averaged with 8 black neighbours → ~28
+    expect(soft[4 * 4]!).toBeGreaterThan(20);
+    expect(soft[4 * 4]!).toBeLessThan(40);
     const cured = curePlateDxt(rgba, 3, 3);
-    expect([...cured.subarray(4 * 4, 5 * 4)]).toEqual([255, 255, 255, 255]);
+    expect(cured[4 * 4]!).toBeGreaterThan(20);
+    expect(cured[4 * 4]!).toBeLessThan(40);
   });
 
   it("blends Unity mip levels for the catalogue plate width", () => {
@@ -390,14 +552,39 @@ describe("fusionWorldFaceLayer", () => {
     expect(a).toBeLessThan(255);
   });
 
-  it("names the printed header from the card colour and cost", () => {
+  it("names the BC7 layout atlas from colour, cost and specified-cost pips", () => {
     expect(clientBattleFrameName("BATTLE", "Blue", "1")).toBe("Blue_01_cost1");
     expect(clientBattleFrameName("EXTRA", "Yellow", "2")).toBe(
       "Yellow_01_cost2",
     );
+    expect(clientBattleFrameName("BATTLE", "Yellow", "5", "YY")).toBe(
+      "Yellow_02_cost5",
+    );
+    expect(clientBattleFrameName("BATTLE", "Red", "3", "RRR")).toBe(
+      "Red_03_cost3",
+    );
     expect(clientBattleFrameName("LEADER", "Red", null)).toBeNull();
     expect(clientBattleFrameName("BATTLE", "ALL", "1")).toBeNull();
     expect(clientBattleFrameName("ENERGY MARKER", null, null)).toBeNull();
+  });
+
+  it("names the Bandai-flat BattleCard CostNumber sprite (not BC7 bevel atlas)", () => {
+    expect(clientCostNumberSpriteName("BATTLE", "Yellow", "5")).toBe(
+      "BattleCard_Yellow_01_cost5",
+    );
+    expect(clientCostNumberSpriteName("EXTRA", "Blue", "2")).toBe(
+      "BattleCard_Blue_01_cost2",
+    );
+    expect(clientCostNumberSpriteName("LEADER", "Red", "1")).toBeNull();
+  });
+
+  it("maps specified-cost length to Cost_0N chrome", () => {
+    expect(specifiedCostPipCount("Y")).toBe(1);
+    expect(specifiedCostPipCount("YY")).toBe(2);
+    expect(specifiedCostPipCount("RRR")).toBe(3);
+    expect(specifiedCostPipCount(null)).toBe(1);
+    expect(clientCostRingName("YY")).toBe("Cost_02");
+    expect(clientCostRingName("Y")).toBe("Cost_01");
   });
 
   it("drops holo washes, masks and thumbnails", () => {

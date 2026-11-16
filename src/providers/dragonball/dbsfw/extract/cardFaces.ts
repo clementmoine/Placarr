@@ -29,35 +29,54 @@ import {
 } from "@/lib/unity/loadUnityFs";
 
 import {
+  bilinearResizeRgba,
+  boxFilterRgba,
+  CLIENT_FACE_LAYOUT_ID,
+  CLIENT_FACE_TONE_ID,
   clientBattleFrameName,
   clientCostFillName,
+  clientCostNumberSpriteName,
+  clientCostRingName,
   clientCostRingOffset,
+  specifiedCostPipCount,
   clientFacePixels,
   clientFrameArrayCandidates,
-  curePlateDxt,
   DBS_FW_CLIENT_FACE_FILES,
   DBS_FW_CLIENT_LAYER_FILES,
-  DBS_FW_COST_RING,
+  DBS_FW_LAYERS_COMPOSE_META,
   DBS_FW_LAYERS_S3TC_META,
   deriveCostRingGeometry,
+  deriveCostRingHoleCenters,
   fusionWorldFaceLayer,
   isolateCostRingDisc,
   isClientFaceExtractCurrent,
   premultiplyStraight,
-  solidifyPlateInk,
-  unpremultiplyStraight,
   type CostRingGeometry,
   type FwFaceSide,
 } from "../clientFaces";
 import {
   FRAME_ARRAY_DXT5_GRAPHICS,
+  FRAME_ARRAY_SLICE_OVER,
+  FRAME_ARRAY_SLICE_UNDER,
   FRAME_BUNDLE_NAME,
+  CLIENT_FACE_UNDERLAY_RGBA,
   FROST_COST_FILL_SLOT,
   PASTE_SPRITE_SUPERSAMPLE,
   UNITY_TEXTURE2D_ARRAY_CLASS,
   UNITY_TEXTURE2D_CLASS,
 } from "../clientFacePolicy";
-import { bakeCostRingFill } from "../costRingBake";
+import { bakeCostNumberBadge, bakeCostRingFill } from "../costRingBake";
+import {
+  openClientFaceGpuBaker,
+  type ClientFaceGpuBaker,
+} from "./bakeClientFaceS3tc";
+import {
+  frostCardMaterialFallback,
+  frostCatalogueComposeOrder,
+  parseFrostCardMaterial,
+  type FrostCardMaterial,
+  type FrostCatalogueLayer,
+} from "../frostCardMaterial";
 import { dbsFwFactsFor } from "../harvest/factsStore";
 import { DBS_FW_PACK_ID } from "../indexStore";
 import { fusionWorldCardBundle, fusionWorldMaterialsParaPrint } from "../masks";
@@ -83,22 +102,116 @@ type S3tcPlate = {
   format: string;
 };
 
+type NamedPlate = {
+  name: string;
+  pixels: DecodedLayer;
+  s3tc: S3tcPlate | null;
+};
+
 type SideLayers = {
+  /** All face-relevant Texture2D plates keyed by Unity name. */
+  plates: Map<string, NamedPlate>;
   picture: DecodedLayer | null;
   pictureName: string;
   pictureS3tc: S3tcPlate | null;
+  middle: DecodedLayer | null;
+  middleName: string;
+  middleS3tc: S3tcPlate | null;
   text: Partial<Record<"en" | "ja", DecodedLayer>>;
   textS3tc: Partial<Record<"en" | "ja", S3tcPlate>>;
+  material: FrostCardMaterial | null;
 };
+
+function emptySide(): SideLayers {
+  return {
+    plates: new Map(),
+    picture: null,
+    pictureName: "",
+    pictureS3tc: null,
+    middle: null,
+    middleName: "",
+    middleS3tc: null,
+    text: {},
+    textS3tc: {},
+    material: null,
+  };
+}
+
+function plateFromTree(
+  name: string,
+  tree: Parameters<typeof decodeTextureTree>[0],
+  loaded: Parameters<typeof decodeTextureTree>[1],
+): NamedPlate | null {
+  const decoded = decodeTextureTree(tree, loaded);
+  if (!decoded) return null;
+  const rawS3tc = rawS3tcMip0FromTree(tree, loaded);
+  return {
+    name,
+    pixels: {
+      rgba: decoded.rgba,
+      width: decoded.width,
+      height: decoded.height,
+    },
+    s3tc: rawS3tc ? s3tcPlateFromRaw(rawS3tc) : null,
+  };
+}
+
+/** Resolve Front / Middle plates from Material Card (or name heuristic). */
+function bindMaterialPlates(side: SideLayers): void {
+  const mat =
+    side.material ??
+    frostCardMaterialFallback(
+      [...side.plates.values()].find((p) => {
+        const layer = fusionWorldFaceLayer(p.name);
+        return layer?.kind === "picture" && layer.side === "front";
+      })?.name ??
+        "",
+    );
+  side.material = mat;
+
+  const frontName = mat.useFront ? mat.frontTex : null;
+  if (frontName) {
+    const plate = side.plates.get(frontName);
+    if (plate) {
+      side.picture = plate.pixels;
+      side.pictureName = plate.name;
+      side.pictureS3tc = plate.s3tc;
+    }
+  }
+  if (!side.picture) {
+    // Heuristic: first picture-kind plate for this side.
+    for (const plate of side.plates.values()) {
+      const layer = fusionWorldFaceLayer(plate.name);
+      if (layer?.kind === "picture") {
+        side.picture = plate.pixels;
+        side.pictureName = plate.name;
+        side.pictureS3tc = plate.s3tc;
+        break;
+      }
+    }
+  }
+
+  if (mat.showMiddle && mat.middleTex) {
+    const plate = side.plates.get(mat.middleTex);
+    if (plate) {
+      side.middle = plate.pixels;
+      side.middleName = plate.name;
+      side.middleS3tc = plate.s3tc;
+    }
+  }
+}
 
 const FRAME_BUNDLE = FRAME_BUNDLE_NAME;
 
 type FrameLibrary = {
   badge: (name: string) => DecodedLayer | null;
   frame: (name: string) => DecodedLayer[] | null;
-  /** Raw slice-0 DXT for the named frame array (archive / future WebGL). */
-  frameS3tc: (name: string) => S3tcPlate | null;
-  ring: (color: string) => Promise<DecodedLayer | null>;
+  /** Raw FrameTex mip0 DXT — slice 0 (under) / slice 2 (over / frameTop). */
+  frameS3tc: (name: string, slice?: number) => S3tcPlate | null;
+  ring: (
+    color: string,
+    specifiedCost?: string | null,
+  ) => Promise<DecodedLayer | null>;
   ringGeometry: () => CostRingGeometry | null;
 };
 
@@ -135,24 +248,16 @@ function dxt5MipChainBytes(
   return total;
 }
 
-/** Mip0 decode + CPU bilinear stand-in for DXT chrome/ink stairs. */
-function cureDecodedLayer(layer: DecodedLayer): DecodedLayer {
-  return {
-    rgba: curePlateDxt(layer.rgba, layer.width, layer.height),
-    width: layer.width,
-    height: layer.height,
-  };
-}
-
 /**
- * Slice 0 of a frame Texture2DArray. Catalogue faces keep the 512-wide
- * mip0 (height shrinks to 63×88); Unity bilinear-filters the Y minify —
- * {@link curePlateDxt} stands in for that filter on CPU.
- * Mip data after slice 0 is ignored — stacking other slices cuts text.
+ * Frame Texture2DArray slices. Frost samples z=0 under Middle and z=2 over
+ * (footer chrome). Layout: [slice0 mips…][slice1 mips…]… Catalogue keeps
+ * 512-wide mip0; RGBA layer sidecars use CPU bilinear. Product `art.client`
+ * is GPU S3TC+LINEAR via bakeClientFaceS3tc (not this decode).
  */
 function decodeFrameArray(tree: UnityTypeTree): {
   slices: DecodedLayer[];
-  s3tc: S3tcPlate | null;
+  /** mip0 DXT per array slice (z=0 under, z=2 frameTop). */
+  s3tcBySlice: Map<number, S3tcPlate>;
 } | null {
   // m_Format is Unity GraphicsFormat (e.g. 100 = BC3_SRGB), not TextureFormat.
   const format = Number(tree.m_Format ?? 0);
@@ -170,39 +275,35 @@ function decodeFrameArray(tree: UnityTypeTree): {
   ) {
     return null;
   }
-  // Layout is [slice0 mips…][slice1 mips…]… — only slice 0 is the border.
   const chain = dxt5MipChainBytes(width, height, Math.max(1, mips));
   const mip0 = dxt5LevelBytes(width, height);
-  if (
-    data.byteLength < mip0 ||
-    (chain > 0 && data.byteLength < chain && data.byteLength < mip0 * depth)
-  ) {
-    return null;
-  }
+  if (data.byteLength < mip0) return null;
   const srgb = format === 100; // BC3_SRGB GraphicsFormat
   const glFormat = webglS3tcFormat(TextureFormat.DXT5, srgb);
-  const s3tc: S3tcPlate | null = glFormat
-    ? {
-        data: Buffer.from(data.subarray(0, mip0)),
+  const s3tcBySlice = new Map<number, S3tcPlate>();
+  const slices: DecodedLayer[] = [];
+  for (let s = 0; s < depth; s += 1) {
+    const off = s * chain;
+    if (data.byteLength < off + mip0) break;
+    if (glFormat) {
+      s3tcBySlice.set(s, {
+        data: Buffer.from(data.subarray(off, off + mip0)),
         width,
         height,
         format: glFormat,
-      }
-    : null;
-  const raw = bgraToRgba(
-    Buffer.from(decodeBc3(data.subarray(0, mip0), width, height)),
-  );
-  const flipped = flipRgbaVertical(raw, width, height);
-  return {
-    slices: [
-      cureDecodedLayer({
-        rgba: flipped,
-        width,
-        height,
-      }),
-    ],
-    s3tc,
-  };
+      });
+    }
+    const raw = bgraToRgba(
+      Buffer.from(decodeBc3(data.subarray(off, off + mip0), width, height)),
+    );
+    slices.push({
+      rgba: flipRgbaVertical(raw, width, height),
+      width,
+      height,
+    });
+  }
+  if (slices.length === 0) return null;
+  return { slices, s3tcBySlice };
 }
 
 const emptyLibrary: FrameLibrary = {
@@ -235,7 +336,7 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
   }
   const badges = new Map<string, DecodedLayer | null>();
   const frames = new Map<string, DecodedLayer[] | null>();
-  const frameS3tcs = new Map<string, S3tcPlate | null>();
+  const frameS3tcs = new Map<string, Map<number, S3tcPlate>>();
   const rings = new Map<string, Promise<DecodedLayer | null>>();
   let ringGeom: CostRingGeometry | null = null;
   return {
@@ -267,39 +368,51 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
       const tree = arrays.get(name);
       const decoded = tree ? decodeFrameArray(tree) : null;
       frames.set(name, decoded?.slices ?? null);
-      frameS3tcs.set(name, decoded?.s3tc ?? null);
+      frameS3tcs.set(name, decoded?.s3tcBySlice ?? new Map());
       return decoded?.slices ?? null;
     },
-    frameS3tc(name) {
+    frameS3tc(name, slice = FRAME_ARRAY_SLICE_UNDER) {
       if (!frameS3tcs.has(name)) {
         // Populate via frame() so cured + raw stay in sync.
         this.frame(name);
       }
-      return frameS3tcs.get(name) ?? null;
+      return frameS3tcs.get(name)?.get(slice) ?? null;
     },
-    ring(color) {
+    ring(color, specifiedCost = null) {
       const fillName = clientCostFillName(color);
       if (!fillName) return Promise.resolve(null);
-      const hit = rings.get(fillName);
+      const ringName = clientCostRingName(specifiedCost);
+      const pipCount = specifiedCostPipCount(specifiedCost);
+      const cacheKey = `${ringName}:${fillName}`;
+      const hit = rings.get(cacheKey);
       if (hit) return hit;
       const pending = (async (): Promise<DecodedLayer | null> => {
-        const ringTree = textures.get(DBS_FW_COST_RING);
+        const ringTree = textures.get(ringName);
         const fillTree = textures.get(fillName);
         try {
-          // Cost_01 (RGBA32 chrome) + CostFrame_{Color} (RGBA32 disc).
+          // Cost_0N (RGBA32 chrome, N specified-cost holes) + CostFrame_{Color}.
           // Bake at PASTE_SPRITE_SUPERSAMPLE×; fillSize stays Frost slot 32
-          // (not CostFrame atlas 226). Mass-centre on the inner rim.
+          // (not CostFrame atlas 226). Fill every hole; anchor on the first.
           const ring = ringTree ? decodeTextureTree(ringTree, loaded) : null;
           const fillMip0 = fillTree
             ? decodeTextureTree(fillTree, loaded)
             : null;
           if (!ring || !fillMip0) return null;
+          const holes = deriveCostRingHoleCenters(
+            ring.rgba,
+            ring.width,
+            ring.height,
+            pipCount,
+          );
           ringGeom = deriveCostRingGeometry(
             ring.rgba,
             ring.width,
             ring.height,
             FROST_COST_FILL_SLOT,
           );
+          if (holes[0]) {
+            ringGeom = { ...ringGeom, center: holes[0] };
+          }
           const filled = await bakeCostRingFill(
             ring.rgba,
             ring.width,
@@ -308,6 +421,9 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
             fillMip0.width,
             fillMip0.height,
             ringGeom,
+            undefined,
+            undefined,
+            holes.length > 0 ? holes : undefined,
           );
           return {
             rgba: isolateCostRingDisc(
@@ -325,19 +441,18 @@ function openFrameLibrary(bundlesDir: string): FrameLibrary {
           return null;
         }
       })();
-      rings.set(fillName, pending);
+      rings.set(cacheKey, pending);
       return pending;
     },
     ringGeometry: () => ringGeom,
   };
 }
 
-type ResizeKernel = "lanczos3" | "mitchell" | "cubic";
+type ResizeKernel = "lanczos3" | "mitchell" | "cubic" | "box" | "bilinear";
 
 /**
- * Shared minify path for costRing blit, badge, picture, frame, text.
- * Same recipe as {@link bakeCostRingFill}: up to SS× target, then lanczos down.
- * Upscales stay single-pass.
+ * Shared minify path for costRing blit (RGBA32 SS).
+ * Layer WebPs use {@link bilinearResizeRgba}. Product aplat = GPU bake.
  */
 async function supersampleResize(
   rgba: Buffer,
@@ -436,8 +551,9 @@ function bundleNames(dir: string): string[] {
 }
 
 /**
- * One resample onto the printed card. Minifies use the same SS path as
- * costRing ({@link supersampleResize}); upscales stay single-pass.
+ * One resample onto the printed card.
+ * `bilinear` = card-renders.html `TEXTURE_*_FILTER = LINEAR` on mip0.
+ * CostRing blit keeps {@link supersampleResize}.
  */
 async function resizeRgba(
   layer: DecodedLayer,
@@ -450,13 +566,36 @@ async function resizeRgba(
     return covered ? premultiplyStraight(layer.rgba) : layer.rgba;
   }
   const source = covered ? premultiplyStraight(layer.rgba) : layer.rgba;
+  if (kernel === "bilinear") {
+    const resized = bilinearResizeRgba(
+      source,
+      layer.width,
+      layer.height,
+      width,
+      height,
+    );
+    return resized;
+  }
+  if (
+    kernel === "box" &&
+    width <= layer.width &&
+    height <= layer.height
+  ) {
+    return boxFilterRgba(
+      source,
+      layer.width,
+      layer.height,
+      width,
+      height,
+    );
+  }
   return supersampleResize(
     source,
     layer.width,
     layer.height,
     width,
     height,
-    kernel,
+    kernel === "box" ? "lanczos3" : kernel,
   );
 }
 
@@ -482,12 +621,34 @@ async function compositeOver(
     .toBuffer();
 }
 
+/** Opaque plate under the flatten — shelf cannot keep Front alpha holes. */
+function opaqueUnderlay(width: number, height: number): Buffer {
+  const [r, g, b, a] = CLIENT_FACE_UNDERLAY_RGBA;
+  const out = Buffer.alloc(width * height * 4);
+  for (let i = 0; i < out.length; i += 4) {
+    out[i] = r;
+    out[i + 1] = g;
+    out[i + 2] = b;
+    out[i + 3] = a;
+  }
+  return out;
+}
+
+/** Texture names the Material Card may bind as Front/Middle (incl. bare Back). */
+function isMaterialPlateName(name: string): boolean {
+  if (fusionWorldFaceLayer(name)) return true;
+  const n = name.trim().toLowerCase();
+  if (!n || /holo|foil|ef_mask|thumb|alp/.test(n)) return false;
+  return /_(back|front)$/.test(n);
+}
+
 async function extractBundle(
   bundlesDir: string,
   fileName: string,
   force: boolean,
   stats: FwFaceExtractStats,
   frames: FrameLibrary,
+  baker: ClientFaceGpuBaker | null,
 ): Promise<void> {
   const card = fusionWorldCardBundle(fileName);
   if (!card) return;
@@ -499,50 +660,41 @@ async function extractBundle(
     return;
   }
 
+  const material = parseFrostCardMaterial(loaded);
   const sides: Record<FwFaceSide, SideLayers> = {
-    front: {
-      picture: null,
-      pictureName: "",
-      pictureS3tc: null,
-      text: {},
-      textS3tc: {},
-    },
-    back: {
-      picture: null,
-      pictureName: "",
-      pictureS3tc: null,
-      text: {},
-      textS3tc: {},
-    },
+    front: emptySide(),
+    back: emptySide(),
   };
+  sides.front.material = material;
+  // Double-faced prints live in separate `_front` / `_back` bundles; each
+  // bundle's Card material describes that face.
+
   for (const tree of iterClassTrees(loaded, 28)) {
     const name = String(tree.m_Name ?? tree.name ?? "");
     const layer = fusionWorldFaceLayer(name);
-    if (!layer) continue;
-    const decoded = decodeTextureTree(tree, loaded);
-    if (!decoded) {
+    const wanted =
+      Boolean(layer) ||
+      (material?.frontTex === name || material?.middleTex === name) ||
+      isMaterialPlateName(name);
+    if (!wanted) continue;
+    const plate = plateFromTree(name, tree, loaded);
+    if (!plate) {
       stats.failed += 1;
       continue;
     }
-    const slot = sides[layer.side];
-    const rawS3tc = rawS3tcMip0FromTree(tree, loaded);
-    // Picture / text are DXT5 — cure tramage before resize (not mip1).
-    const pixels = cureDecodedLayer({
-      rgba: decoded.rgba,
-      width: decoded.width,
-      height: decoded.height,
-    });
-    if (layer.kind === "picture") {
-      slot.picture = pixels;
-      slot.pictureName = name;
-      slot.pictureS3tc = rawS3tc ? s3tcPlateFromRaw(rawS3tc) : null;
-    } else {
-      slot.text[layer.lang] = pixels;
-      if (rawS3tc) slot.textS3tc[layer.lang] = s3tcPlateFromRaw(rawS3tc);
+    const faceSide: FwFaceSide =
+      layer?.side === "back" ? "back" : "front";
+    const slot = sides[faceSide];
+    slot.plates.set(name, plate);
+    if (layer?.kind === "text") {
+      slot.text[layer.lang] = plate.pixels;
+      if (plate.s3tc) slot.textS3tc[layer.lang] = plate.s3tc;
     }
   }
 
-  await writeCardFaceSides(card, sides, force, stats, frames);
+  bindMaterialPlates(sides.front);
+  bindMaterialPlates(sides.back);
+  await writeCardFaceSides(card, sides, force, stats, frames, baker);
 }
 
 async function writeCardFaceSides(
@@ -555,6 +707,7 @@ async function writeCardFaceSides(
   force: boolean,
   stats: FwFaceExtractStats,
   frames: FrameLibrary,
+  baker: ClientFaceGpuBaker | null,
 ): Promise<void> {
   for (const side of ["front", "back"] as const) {
     const slot = sides[side];
@@ -562,6 +715,7 @@ async function writeCardFaceSides(
     const langs = (["en", "ja"] as const).filter((lang) => slot.text[lang]);
     if (langs.length === 0) continue;
     stats.faces += langs.length;
+    const expectsMiddle = Boolean(slot.middle);
     for (const lang of langs) {
       const cardDir = packCardDir(DBS_FW_PACK_ID, {
         set: card.set,
@@ -570,16 +724,77 @@ async function writeCardFaceSides(
       });
       const dest = path.join(cardDir, DBS_FW_CLIENT_FACE_FILES[side]);
       const facts = dbsFwFactsFor(card.set, card.number);
-      const badgeName = clientBattleFrameName(
+      const badgeLayoutName = clientBattleFrameName(
+        facts?.cardType ?? null,
+        facts?.color ?? null,
+        facts?.cost ?? null,
+        facts?.specifiedCost ?? null,
+      );
+      const badgeSpriteName = clientCostNumberSpriteName(
         facts?.cardType ?? null,
         facts?.color ?? null,
         facts?.cost ?? null,
       );
+      const badgeName = badgeSpriteName ?? badgeLayoutName;
       if (!force) {
         const onDisk = existsSync(cardDir)
           ? new Set(readdirSync(cardDir))
           : new Set<string>();
-        if (isClientFaceExtractCurrent(onDisk, side, badgeName != null)) {
+        let composeOrder: string[] | null = null;
+        let bakeMode: string | null = null;
+        let layoutId: string | null = null;
+        let toneId: string | null = null;
+        const composePath = path.join(cardDir, DBS_FW_LAYERS_COMPOSE_META);
+        if (existsSync(composePath)) {
+          try {
+            const raw = JSON.parse(readFileSync(composePath, "utf8")) as {
+              order?: string[];
+              bake?: string;
+              layout?: string;
+              tone?: string;
+            };
+            composeOrder = Array.isArray(raw.order) ? raw.order : null;
+            bakeMode = typeof raw.bake === "string" ? raw.bake : null;
+            layoutId = typeof raw.layout === "string" ? raw.layout : null;
+            toneId = typeof raw.tone === "string" ? raw.tone : null;
+          } catch {
+            composeOrder = null;
+            bakeMode = null;
+            layoutId = null;
+            toneId = null;
+          }
+        }
+        if (
+          isClientFaceExtractCurrent(
+            onDisk,
+            side,
+            badgeName != null,
+            expectsMiddle,
+            composeOrder,
+            // Front product face must be GPU-baked; omit check for back.
+            side === "front" ? bakeMode : undefined,
+            side === "front" ? layoutId : undefined,
+            side === "front" ? toneId : undefined,
+          )
+        ) {
+          stats.skipped += 1;
+          continue;
+        }
+        // No Chrome → keep a prior CPU aplat rather than rewrite forever.
+        if (
+          side === "front" &&
+          !baker &&
+          bakeMode === "cpu" &&
+          layoutId === CLIENT_FACE_LAYOUT_ID &&
+          toneId === CLIENT_FACE_TONE_ID &&
+          isClientFaceExtractCurrent(
+            onDisk,
+            side,
+            badgeName != null,
+            expectsMiddle,
+            composeOrder,
+          )
+        ) {
           stats.skipped += 1;
           continue;
         }
@@ -595,15 +810,13 @@ async function writeCardFaceSides(
           string,
           { file: string; width: number; height: number; format: string }
         > = {};
-        // Lanczos in sRGB byte space (Unity FilterMode.Bilinear ≈ cubic was
-        // softer on glyphs; linear filtering cut gem edge energy ~40%).
+
         const pictureSized = await resizeRgba(
           picture,
           sized.width,
           sized.height,
-          "lanczos3",
+          "bilinear",
         );
-        let composed = pictureSized;
         await writeLosslessRgbaWebp(
           pictureSized,
           sized.width,
@@ -619,6 +832,32 @@ async function writeCardFaceSides(
             format: slot.pictureS3tc.format,
           };
         }
+
+        let middleSized: Buffer | null = null;
+        if (slot.middle) {
+          middleSized = await resizeRgba(
+            slot.middle,
+            sized.width,
+            sized.height,
+            "bilinear",
+          );
+          await writeLosslessRgbaWebp(
+            middleSized,
+            sized.width,
+            sized.height,
+            path.join(cardDirName, layers.middle),
+          );
+          if (slot.middleS3tc) {
+            writeS3tcPlate(cardDirName, layers.middleS3tc, slot.middleS3tc);
+            s3tcMeta.middle = {
+              file: layers.middleS3tc,
+              width: slot.middleS3tc.width,
+              height: slot.middleS3tc.height,
+              format: slot.middleS3tc.format,
+            };
+          }
+        }
+
         const textS3tc = slot.textS3tc[lang];
         if (textS3tc) {
           writeS3tcPlate(cardDirName, layers.textS3tc, textS3tc);
@@ -629,6 +868,8 @@ async function writeCardFaceSides(
             format: textS3tc.format,
           };
         }
+
+        const useFrame = slot.material?.useFrame ?? true;
         const frameCard = {
           cardType: facts?.cardType ?? null,
           color: facts?.color ?? null,
@@ -639,39 +880,43 @@ async function writeCardFaceSides(
         };
         let chrome: DecodedLayer[] | null = null;
         let chromeS3tc: S3tcPlate | null = null;
-        for (const name of clientFrameArrayCandidates(frameCard)) {
-          chrome = frames.frame(name);
-          if (chrome) {
-            chromeS3tc = frames.frameS3tc(name);
-            break;
+        let chromeTopS3tc: S3tcPlate | null = null;
+        let frameSized: Buffer | null = null;
+        let frameTopSized: Buffer | null = null;
+        if (useFrame) {
+          for (const name of clientFrameArrayCandidates(frameCard)) {
+            chrome = frames.frame(name);
+            if (chrome) {
+              chromeS3tc = frames.frameS3tc(name, FRAME_ARRAY_SLICE_UNDER);
+              chromeTopS3tc = frames.frameS3tc(name, FRAME_ARRAY_SLICE_OVER);
+              break;
+            }
           }
-        }
-        if (chromeS3tc) {
-          writeS3tcPlate(cardDirName, layers.frameS3tc, chromeS3tc);
-          s3tcMeta.frame = {
-            file: layers.frameS3tc,
-            width: chromeS3tc.width,
-            height: chromeS3tc.height,
-            format: chromeS3tc.format,
-          };
-        }
-        const ring = badgeName ? await frames.ring(facts?.color ?? "") : null;
-        const ringAt = ring
-          ? clientCostRingOffset(
+          if (chromeS3tc) {
+            writeS3tcPlate(cardDirName, layers.frameS3tc, chromeS3tc);
+            s3tcMeta.frame = {
+              file: layers.frameS3tc,
+              width: chromeS3tc.width,
+              height: chromeS3tc.height,
+              format: chromeS3tc.format,
+            };
+          }
+          if (chromeTopS3tc) {
+            writeS3tcPlate(cardDirName, layers.frameTopS3tc, chromeTopS3tc);
+            s3tcMeta.frameTop = {
+              file: layers.frameTopS3tc,
+              width: chromeTopS3tc.width,
+              height: chromeTopS3tc.height,
+              format: chromeTopS3tc.format,
+            };
+          }
+          const under = chrome?.[FRAME_ARRAY_SLICE_UNDER];
+          if (under) {
+            frameSized = await resizeRgba(
+              under,
               sized.width,
               sized.height,
-              frames.ringGeometry() ?? undefined,
-            )
-          : null;
-        // Frame chrome only — costRing is a separate layer (not baked into
-        // `_FrameTex`), Frost-like: Front→Frame→disc→Chara→CostNumber.
-        if (chrome) {
-          for (const slice of chrome) {
-            const frameSized = await resizeRgba(
-              slice,
-              sized.width,
-              sized.height,
-              "lanczos3",
+              "bilinear",
             );
             await writeLosslessRgbaWebp(
               frameSized,
@@ -679,17 +924,43 @@ async function writeCardFaceSides(
               sized.height,
               path.join(cardDirName, layers.frame),
             );
-            composed = await compositeOver(
-              composed,
+          }
+          // Frost samples FrameTex z=2 after Middle (footer over character).
+          // RGBA WebP = foil/debug sidecar; product bake uses frameTop.dxt5.
+          const over = chrome?.[FRAME_ARRAY_SLICE_OVER];
+          if (over) {
+            frameTopSized = await resizeRgba(
+              over,
               sized.width,
               sized.height,
-              frameSized,
+              "bilinear",
+            );
+            await writeLosslessRgbaWebp(
+              frameTopSized,
+              sized.width,
+              sized.height,
+              path.join(cardDirName, layers.frameTop),
             );
           }
         }
+
+        const ring = badgeName
+          ? await frames.ring(
+              facts?.color ?? "",
+              facts?.specifiedCost ?? null,
+            )
+          : null;
+        const ringAt = ring
+          ? clientCostRingOffset(
+              sized.width,
+              sized.height,
+              frames.ringGeometry() ?? undefined,
+            )
+          : null;
+        let ringLayer: Buffer | null = null;
         if (ring && ringAt) {
           const blank = Buffer.alloc(sized.width * sized.height * 4, 0);
-          const ringLayer = await pasteSprite(
+          ringLayer = await pasteSprite(
             blank,
             sized.width,
             sized.height,
@@ -704,68 +975,192 @@ async function writeCardFaceSides(
             sized.height,
             path.join(cardDirName, layers.costRing),
           );
-          composed = await compositeOver(
-            composed,
-            sized.width,
-            sized.height,
-            ringLayer,
-          );
         }
-        // Glyph repair at native, then one lanczos (sRGB) minify to the
-        // catalogue face. A prior half-box mip crushed FB01-044's collector
-        // number in the BR corner; keep coverage for that stroke.
-        const solidified = solidifyPlateInk(text.rgba, text.width, text.height);
-        const textPremul = await resizeRgba(
-          { rgba: solidified, width: text.width, height: text.height },
+
+        const textSized = await resizeRgba(
+          text,
           sized.width,
           sized.height,
-          "lanczos3",
-          true,
+          "bilinear",
         );
         await writeLosslessRgbaWebp(
-          unpremultiplyStraight(textPremul),
+          textSized,
           sized.width,
           sized.height,
           path.join(cardDirName, layers.text),
         );
-        composed = await compositeOver(
-          composed,
-          sized.width,
-          sized.height,
-          textPremul,
-          true,
-        );
-        // CostNumber plate — own layer for Frost restack (Frame→disc→Chara→badge).
-        const badge = badgeName ? frames.badge(badgeName) : null;
-        if (badge) {
-          const badgePremul = await resizeRgba(
-            badge,
+
+        const badgeSprite = badgeSpriteName
+          ? frames.badge(badgeSpriteName)
+          : null;
+        const badgeLayout = badgeLayoutName
+          ? frames.badge(badgeLayoutName)
+          : null;
+        let badgeSized: Buffer | null = null;
+        if (badgeSprite && badgeLayout) {
+          badgeSized = await bakeCostNumberBadge(
+            badgeSprite.rgba,
+            badgeSprite.width,
+            badgeSprite.height,
+            badgeLayout.rgba,
+            badgeLayout.width,
+            badgeLayout.height,
             sized.width,
             sized.height,
-            "lanczos3",
-            true,
           );
           await writeLosslessRgbaWebp(
-            unpremultiplyStraight(badgePremul),
+            badgeSized,
             sized.width,
             sized.height,
             path.join(cardDirName, layers.badge),
           );
-          composed = await compositeOver(
-            composed,
+        } else if (badgeSprite) {
+          // No BC7 layout atlas — stretch sprite (legacy fallback).
+          badgeSized = await resizeRgba(
+            badgeSprite,
             sized.width,
             sized.height,
-            badgePremul,
-            true,
+            "bilinear",
+          );
+          await writeLosslessRgbaWebp(
+            badgeSized,
+            sized.width,
+            sized.height,
+            path.join(cardDirName, layers.badge),
+          );
+        } else if (badgeLayout) {
+          badgeSized = await resizeRgba(
+            badgeLayout,
+            sized.width,
+            sized.height,
+            "bilinear",
+          );
+          await writeLosslessRgbaWebp(
+            badgeSized,
+            sized.width,
+            sized.height,
+            path.join(cardDirName, layers.badge),
           );
         }
-        await writeLosslessRgbaWebp(composed, sized.width, sized.height, dest);
-        if (side === "front" && s3tcMeta.picture) {
+
+        const order = frostCatalogueComposeOrder({
+          material: slot.material,
+          hasText: true,
+          hasCostRing: ringLayer != null,
+          hasBadge: badgeSized != null,
+          hasFrameTop: frameTopSized != null,
+        });
+        const layerBuf: Partial<Record<FrostCatalogueLayer, Buffer>> = {
+          picture: pictureSized,
+          frame: frameSized ?? undefined,
+          middle: middleSized ?? undefined,
+          frameTop: frameTopSized ?? undefined,
+          text: textSized,
+          costRing: ringLayer ?? undefined,
+          badge: badgeSized ?? undefined,
+        };
+
+        let bake: "gpu" | "cpu" = "cpu";
+        if (baker && s3tcMeta.picture) {
+          const abs = (file: string) => path.join(cardDirName, file);
+          const gpu = await baker.bake({
+            destWebp: dest,
+            width: sized.width,
+            height: sized.height,
+            layers: {
+              picture: s3tcMeta.picture
+                ? { ...s3tcMeta.picture, file: abs(s3tcMeta.picture.file) }
+                : null,
+              frame: s3tcMeta.frame
+                ? { ...s3tcMeta.frame, file: abs(s3tcMeta.frame.file) }
+                : null,
+              middle: s3tcMeta.middle
+                ? { ...s3tcMeta.middle, file: abs(s3tcMeta.middle.file) }
+                : null,
+              text: s3tcMeta.text
+                ? { ...s3tcMeta.text, file: abs(s3tcMeta.text.file) }
+                : null,
+              frameTop: s3tcMeta.frameTop
+                ? { ...s3tcMeta.frameTop, file: abs(s3tcMeta.frameTop.file) }
+                : frameTopSized
+                  ? { file: abs(layers.frameTop) }
+                  : null,
+              costRing: ringLayer ? { file: abs(layers.costRing) } : null,
+              badge: badgeSized ? { file: abs(layers.badge) } : null,
+            },
+          });
+          if (gpu.ok) {
+            bake = "gpu";
+          } else {
+            console.warn(
+              `── fw faces : GPU bake failed (${card.set}-${card.folder}/${lang}): ${gpu.reason}`,
+            );
+          }
+        } else if (s3tcMeta.picture) {
+          console.warn(
+            `── fw faces : GPU bake unavailable (${card.set}-${card.folder}/${lang}) — Chrome/S3TC; writing CPU aplat`,
+          );
+        }
+        if (bake !== "gpu") {
+          // Last-resort CPU composite — tramage; marked bake:cpu so a later
+          // extract with Chrome replaces it.
+          let composed: Buffer | null = null;
+          for (const kind of order) {
+            const buf = layerBuf[kind];
+            if (!buf) continue;
+            if (!composed) {
+              composed = buf;
+              continue;
+            }
+            composed = await compositeOver(
+              composed,
+              sized.width,
+              sized.height,
+              buf,
+            );
+          }
+          if (!composed) continue;
+
+          const flat = await compositeOver(
+            opaqueUnderlay(sized.width, sized.height),
+            sized.width,
+            sized.height,
+            composed,
+          );
+          await writeLosslessRgbaWebp(flat, sized.width, sized.height, dest);
+        }
+        if (side === "front") {
           writeFileSync(
-            path.join(cardDirName, DBS_FW_LAYERS_S3TC_META),
-            `${JSON.stringify(s3tcMeta, null, 2)}\n`,
+            path.join(cardDirName, DBS_FW_LAYERS_COMPOSE_META),
+            `${JSON.stringify(
+              {
+                order,
+                bake,
+                layout: CLIENT_FACE_LAYOUT_ID,
+                tone: CLIENT_FACE_TONE_ID,
+                pixels: { width: sized.width, height: sized.height },
+                material: slot.material
+                  ? {
+                      frontTex: slot.material.frontTex,
+                      middleTex: slot.material.middleTex,
+                      useFront: slot.material.useFront,
+                      useFrame: slot.material.useFrame,
+                      showMiddle: slot.material.showMiddle,
+                    }
+                  : null,
+              },
+              null,
+              2,
+            )}\n`,
             "utf8",
           );
+          if (s3tcMeta.picture) {
+            writeFileSync(
+              path.join(cardDirName, DBS_FW_LAYERS_S3TC_META),
+              `${JSON.stringify(s3tcMeta, null, 2)}\n`,
+              "utf8",
+            );
+          }
         }
         stats.written += 1;
       } catch {
@@ -784,6 +1179,7 @@ async function extractMaterialsParaFaces(
   force: boolean,
   stats: FwFaceExtractStats,
   frames: FrameLibrary,
+  baker: ClientFaceGpuBaker | null,
   match?: string,
 ): Promise<void> {
   const materials = "packdata_assets_card_materials.bundle";
@@ -825,9 +1221,9 @@ async function extractMaterialsParaFaces(
     const key = `${print.set}/${print.folder}`;
     if (seriesPara.has(key)) continue;
     const layer = fusionWorldFaceLayer(name);
-    if (!layer) continue;
-    const decoded = decodeTextureTree(tree, loaded);
-    if (!decoded) {
+    if (!layer && !isMaterialPlateName(name)) continue;
+    const plate = plateFromTree(name, tree, loaded);
+    if (!plate) {
       stats.failed += 1;
       continue;
     }
@@ -835,44 +1231,35 @@ async function extractMaterialsParaFaces(
     if (!entry) {
       entry = {
         card: print,
-        sides: {
-          front: {
-            picture: null,
-            pictureName: "",
-            pictureS3tc: null,
-            text: {},
-            textS3tc: {},
-          },
-          back: {
-            picture: null,
-            pictureName: "",
-            pictureS3tc: null,
-            text: {},
-            textS3tc: {},
-          },
-        },
+        sides: { front: emptySide(), back: emptySide() },
       };
       byKey.set(key, entry);
     }
-    const pixels = cureDecodedLayer({
-      rgba: decoded.rgba,
-      width: decoded.width,
-      height: decoded.height,
-    });
-    const rawS3tc = rawS3tcMip0FromTree(tree, loaded);
-    const slot = entry.sides[layer.side];
-    if (layer.kind === "picture") {
-      slot.picture = pixels;
-      slot.pictureName = name;
-      slot.pictureS3tc = rawS3tc ? s3tcPlateFromRaw(rawS3tc) : null;
-    } else {
-      slot.text[layer.lang] = pixels;
-      if (rawS3tc) slot.textS3tc[layer.lang] = s3tcPlateFromRaw(rawS3tc);
+    const faceSide: FwFaceSide =
+      layer?.side === "back" ? "back" : "front";
+    const slot = entry.sides[faceSide];
+    slot.plates.set(name, plate);
+    if (layer?.kind === "text") {
+      slot.text[layer.lang] = plate.pixels;
+      if (plate.s3tc) slot.textS3tc[layer.lang] = plate.s3tc;
+    } else if (layer?.kind === "picture") {
+      slot.picture = plate.pixels;
+      slot.pictureName = plate.name;
+      slot.pictureS3tc = plate.s3tc;
     }
   }
   stats.bundles += byKey.size > 0 ? 1 : 0;
   for (const entry of byKey.values()) {
-    await writeCardFaceSides(entry.card, entry.sides, force, stats, frames);
+    bindMaterialPlates(entry.sides.front);
+    bindMaterialPlates(entry.sides.back);
+    await writeCardFaceSides(
+      entry.card,
+      entry.sides,
+      force,
+      stats,
+      frames,
+      baker,
+    );
   }
 }
 
@@ -897,28 +1284,35 @@ export async function extractFusionWorldCardFaces(opts: {
     skipped: 0,
     failed: 0,
   };
-  let done = 0;
-  for (const fileName of selected) {
-    await extractBundle(
+  const baker = await openClientFaceGpuBaker();
+  try {
+    let done = 0;
+    for (const fileName of selected) {
+      await extractBundle(
+        opts.bundlesDir,
+        fileName,
+        opts.force === true,
+        stats,
+        frames,
+        baker,
+      );
+      done += 1;
+      if (done % 50 === 0 || done === selected.length) {
+        opts.onProgress?.(done, selected.length, stats);
+      }
+    }
+    // Materials-only PARA (e.g. E-106) — not matched by card_series bundle names.
+    await extractMaterialsParaFaces(
       opts.bundlesDir,
-      fileName,
       opts.force === true,
       stats,
       frames,
+      baker,
+      opts.match,
     );
-    done += 1;
-    if (done % 50 === 0 || done === selected.length) {
-      opts.onProgress?.(done, selected.length, stats);
-    }
+  } finally {
+    baker?.close();
   }
-  // Materials-only PARA (e.g. E-106) — not matched by card_series bundle names.
-  await extractMaterialsParaFaces(
-    opts.bundlesDir,
-    opts.force === true,
-    stats,
-    frames,
-    opts.match,
-  );
   return stats;
 }
 

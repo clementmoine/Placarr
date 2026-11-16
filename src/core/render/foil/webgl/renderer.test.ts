@@ -46,6 +46,7 @@ describe("ROLE_TEXTURE_FALLBACK", () => {
 
   it("illustration, frame and text stay transparent when the file is missing", () => {
     expect(ROLE_TEXTURE_FALLBACK.front).toEqual([0, 0, 0, 0]);
+    expect(ROLE_TEXTURE_FALLBACK.middle).toEqual([0, 0, 0, 0]);
     expect(ROLE_TEXTURE_FALLBACK.frame).toEqual([0, 0, 0, 0]);
     expect(ROLE_TEXTURE_FALLBACK.ink).toEqual([0, 0, 0, 0]);
   });

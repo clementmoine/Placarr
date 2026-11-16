@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { bakeCostRingFill, trimOpaqueRgba } from "./costRingBake";
+import {
+  bakeCostNumberBadge,
+  bakeCostRingFill,
+  opaqueDiscLayout,
+  trimOpaqueRgba,
+} from "./costRingBake";
 import { DEFAULT_COST_RING_GEOMETRY } from "./costRingGeometry";
 
 describe("trimOpaqueRgba", () => {
@@ -16,6 +21,139 @@ describe("trimOpaqueRgba", () => {
     const trimmed = trimOpaqueRgba(rgba, w, h)!;
     expect(trimmed.width).toBe(7);
     expect(trimmed.height).toBe(7);
+  });
+});
+
+describe("opaqueDiscLayout", () => {
+  it("uses the shorter opaque edge so soft fluff does not inflate diam", () => {
+    const w = 32;
+    const h = 32;
+    const rgba = Buffer.alloc(w * h * 4, 0);
+    // 10×10 hard disc + 6 px soft fluff only on +X.
+    for (let y = 10; y < 20; y += 1) {
+      for (let x = 10; x < 20; x += 1) {
+        rgba[(y * w + x) * 4 + 3] = 255;
+      }
+    }
+    for (let y = 12; y < 18; y += 1) {
+      for (let x = 20; x < 26; x += 1) {
+        rgba[(y * w + x) * 4 + 3] = 50;
+      }
+    }
+    const layout = opaqueDiscLayout(rgba, w, h)!;
+    expect(layout.diam).toBe(10);
+    expect(layout.cx).toBeGreaterThan(14);
+    expect(layout.cx).toBeLessThan(18);
+  });
+});
+
+describe("bakeCostNumberBadge", () => {
+  function makeDiscLayout(
+    layoutW: number,
+    layoutH: number,
+    x0: number,
+    y0: number,
+    size: number,
+  ): Buffer {
+    const layout = Buffer.alloc(layoutW * layoutH * 4, 0);
+    for (let y = y0; y < y0 + size; y += 1) {
+      for (let x = x0; x < x0 + size; x += 1) {
+        const i = (y * layoutW + x) * 4;
+        layout[i] = 200;
+        layout[i + 1] = 100;
+        layout[i + 2] = 0;
+        layout[i + 3] = 255;
+      }
+    }
+    return layout;
+  }
+
+  function makeSprite(size: number): Buffer {
+    const sprite = Buffer.alloc(size * size * 4, 0);
+    for (let y = 2; y < size - 2; y += 1) {
+      for (let x = 2; x < size - 2; x += 1) {
+        const i = (y * size + x) * 4;
+        sprite[i] = 255;
+        sprite[i + 1] = 255;
+        sprite[i + 2] = 255;
+        sprite[i + 3] = 255;
+      }
+    }
+    return sprite;
+  }
+
+  it("places the BattleCard sprite on a transparent card using layout centre", async () => {
+    const layoutW = 64;
+    const layoutH = 64;
+    const layout = makeDiscLayout(layoutW, layoutH, 8, 8, 16);
+    const sprite = makeSprite(16);
+    const cardW = 128;
+    const cardH = 128;
+    const baked = await bakeCostNumberBadge(
+      sprite,
+      16,
+      16,
+      layout,
+      layoutW,
+      layoutH,
+      cardW,
+      cardH,
+      2,
+    );
+    let opaque = 0;
+    let sx = 0;
+    let sy = 0;
+    for (let y = 0; y < cardH; y += 1) {
+      for (let x = 0; x < cardW; x += 1) {
+        const a = baked[(y * cardW + x) * 4 + 3] ?? 0;
+        if (a < 40) continue;
+        opaque += 1;
+        sx += x;
+        sy += y;
+      }
+    }
+    expect(opaque).toBeGreaterThan(50);
+    expect(Math.abs(sx / opaque - 32)).toBeLessThan(2);
+    expect(Math.abs(sy / opaque - 32)).toBeLessThan(2);
+  });
+
+  it("sizes the badge by layout height scale (print-widen must not shrink)", async () => {
+    // 16² gem in 64² atlas → diam 16. Print-widen 48×64 (¾ width) must keep
+    // diam = 16 * (64/64) = 16, not min(scale)*16 = 12.
+    const layoutW = 64;
+    const layoutH = 64;
+    const layout = makeDiscLayout(layoutW, layoutH, 8, 8, 16);
+    const sprite = makeSprite(16);
+    const cardW = 48;
+    const cardH = 64;
+    const baked = await bakeCostNumberBadge(
+      sprite,
+      16,
+      16,
+      layout,
+      layoutW,
+      layoutH,
+      cardW,
+      cardH,
+      1,
+    );
+    let minX = cardW;
+    let maxX = 0;
+    let minY = cardH;
+    let maxY = 0;
+    for (let y = 0; y < cardH; y += 1) {
+      for (let x = 0; x < cardW; x += 1) {
+        const a = baked[(y * cardW + x) * 4 + 3] ?? 0;
+        if (a < 40) continue;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+    const diam = Math.min(maxX - minX + 1, maxY - minY + 1);
+    expect(diam).toBeGreaterThanOrEqual(14);
+    expect(diam).toBeLessThanOrEqual(18);
   });
 });
 

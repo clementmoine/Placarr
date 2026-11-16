@@ -12,12 +12,15 @@
 
 import {
   COST_RING_DISC_FEATHER as POLICY_FEATHER,
+  CLIENT_FACE_LAYOUT_ID,
+  CLIENT_FACE_TONE_ID,
   FW_PRINT_ASPECT as POLICY_ASPECT,
 } from "./clientFacePolicy";
 import {
   DEFAULT_COST_RING_GEOMETRY,
   type CostRingGeometry,
 } from "./costRingGeometry";
+import { isFrostComposeOrderCurrent } from "./frostCardMaterial";
 import {
   FROST_COST_DISC_1,
   frostCostDiscDiameter as frostDiscDiam,
@@ -25,6 +28,8 @@ import {
 } from "./frostCostDisc";
 
 export {
+  CLIENT_FACE_LAYOUT_ID,
+  CLIENT_FACE_TONE_ID,
   COST_FILL_DRAW_SIZE,
   COST_RING_DISC_FEATHER,
   FROST_COST_FILL_SLOT,
@@ -33,6 +38,7 @@ export {
 export {
   DEFAULT_COST_RING_GEOMETRY,
   deriveCostRingGeometry,
+  deriveCostRingHoleCenters,
   type CostRingGeometry,
 } from "./costRingGeometry";
 export {
@@ -76,8 +82,8 @@ export function fusionWorldFaceLayer(name: string): FwFaceLayer | null {
 }
 
 /**
- * Fractional LOD of a plate drawn at `destWidth`. Catalogue 1024→512 is
- * a full mip step; the old 1024→733 widen was only ~0.48.
+ * Fractional LOD of a plate drawn at `destWidth`. Catalogue text 1024→733
+ * is ~0.48 mip; picture 512→733 enlarges (LOD 0).
  */
 export function clientPlateMipLod(
   sourceWidth: number,
@@ -227,6 +233,50 @@ export function resolvePlateWithMip1(
 }
 
 /**
+ * WebGL `TEXTURE_*_FILTER = LINEAR` sample into a new size (card-renders.html).
+ * Clamp-to-edge, no mips — same as uploading mip0 DXT/RGBA and drawing a
+ * fullscreen quad onto the 63×88 framebuffer.
+ */
+export function bilinearResizeRgba(
+  src: Buffer,
+  srcWidth: number,
+  srcHeight: number,
+  destWidth: number,
+  destHeight: number,
+): Buffer {
+  if (srcWidth === destWidth && srcHeight === destHeight) return src;
+  const out = Buffer.alloc(destWidth * destHeight * 4);
+  const sample = (sx: number, sy: number, channel: number): number => {
+    const x = Math.min(srcWidth - 1, Math.max(0, sx));
+    const y = Math.min(srcHeight - 1, Math.max(0, sy));
+    return src[(y * srcWidth + x) * 4 + channel] ?? 0;
+  };
+  for (let y = 0; y < destHeight; y += 1) {
+    const v = ((y + 0.5) / destHeight) * srcHeight - 0.5;
+    const y0 = Math.floor(v);
+    const y1 = y0 + 1;
+    const fy = v - y0;
+    for (let x = 0; x < destWidth; x += 1) {
+      const u = ((x + 0.5) / destWidth) * srcWidth - 0.5;
+      const x0 = Math.floor(u);
+      const x1 = x0 + 1;
+      const fx = u - x0;
+      const o = (y * destWidth + x) * 4;
+      for (let c = 0; c < 4; c += 1) {
+        const s00 = sample(x0, y0, c);
+        const s10 = sample(x1, y0, c);
+        const s01 = sample(x0, y1, c);
+        const s11 = sample(x1, y1, c);
+        const s0 = s00 * (1 - fx) + s10 * fx;
+        const s1 = s01 * (1 - fx) + s11 * fx;
+        out[o + c] = Math.round(s0 * (1 - fy) + s1 * fy);
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * Area-average resize (Unity's continuous box mip at an arbitrary size).
  * Premultiplied so chrome alpha edges anti-alias instead of stair.
  */
@@ -352,10 +402,8 @@ export function deblockPlateDxt(
 }
 
 /**
- * The cost chrome keeps mid-tone DXT steps after the black endpoint is
- * gone. The client hides them with bilinear filtering. Average each
- * metal texel with its metal neighbours; white ink and coloured badges
- * stay sharp.
+ * Mid-tone chrome stairs after deblock — narrow pass before the full-plate
+ * LINEAR stand-in. White ink and coloured badges stay sharp here.
  */
 export function softenPlateChrome(
   rgba: Buffer,
@@ -412,13 +460,73 @@ export function softenPlateChrome(
   return out;
 }
 
-/** CPU stand-in for Unity bilinear (`m_FilterMode = 1`) on DXT plates. */
+/**
+ * CPU stand-in for Unity `m_FilterMode = 1` / WebGL `LINEAR` on S3TC
+ * (card-renders.html: TEXTURE_MAG/MIN_FILTER = LINEAR).
+ * Premultiplied 3×3 box over every opaque texel — same neighborhood the GPU
+ * blends when sampling between texel centers.
+ */
+export function softenPlateBilinear(
+  rgba: Buffer,
+  width: number,
+  height: number,
+): Buffer {
+  const out = Buffer.from(rgba);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4;
+      const alpha = rgba[i + 3] ?? 0;
+      if (alpha < 8) continue;
+      let wSum = 0;
+      let sumRed = 0;
+      let sumGreen = 0;
+      let sumBlue = 0;
+      let aAcc = 0;
+      let aCount = 0;
+      for (
+        let yy = Math.max(0, y - 1);
+        yy <= Math.min(height - 1, y + 1);
+        yy += 1
+      ) {
+        for (
+          let xx = Math.max(0, x - 1);
+          xx <= Math.min(width - 1, x + 1);
+          xx += 1
+        ) {
+          const j = (yy * width + xx) * 4;
+          const alpha2 = rgba[j + 3] ?? 0;
+          if (alpha2 < 8) continue;
+          const w = alpha2 / 255;
+          wSum += w;
+          sumRed += (rgba[j] ?? 0) * w;
+          sumGreen += (rgba[j + 1] ?? 0) * w;
+          sumBlue += (rgba[j + 2] ?? 0) * w;
+          aAcc += alpha2;
+          aCount += 1;
+        }
+      }
+      if (wSum <= 0) continue;
+      out[i] = Math.round(sumRed / wSum);
+      out[i + 1] = Math.round(sumGreen / wSum);
+      out[i + 2] = Math.round(sumBlue / wSum);
+      if (aCount > 0) out[i + 3] = Math.round(aAcc / aCount);
+    }
+  }
+  return out;
+}
+
+/**
+ * Deblock DXT stairs → mid-chrome soften → full-plate LINEAR stand-in
+ * (matches card-renders.html S3TC + FilterMode.1).
+ */
 export function curePlateDxt(
   rgba: Buffer,
   width: number,
   height: number,
 ): Buffer {
-  return softenPlateChrome(deblockPlateDxt(rgba, width, height), width, height);
+  const deblocked = deblockPlateDxt(rgba, width, height);
+  const chrome = softenPlateChrome(deblocked, width, height);
+  return softenPlateBilinear(chrome, width, height);
 }
 
 /**
@@ -575,12 +683,6 @@ export function unpremultiplyStraight(rgba: Buffer): Buffer {
 const FRAME_COLORS = new Set(["blue", "red", "green", "yellow", "black"]);
 
 /**
- * Header and cost numeral for a battle or extra card.
- * `Blue_01_cost1` is the printed header (white numeral). Leaders and
- * energy markers have no cost, so they keep the plate they already carry.
- */
-
-/**
  * Coloured disc that fills `Cost_01`.
  * Prefer `CostFrame_{Color}` (RGBA32, ~89 px) over `Cost_{Color}` (DXT5 32²)
  * — the DXT pip stair-steps even after supersample.
@@ -590,6 +692,38 @@ export function clientCostFillName(color: string | null): string | null {
   if (!FRAME_COLORS.has(normalized)) return null;
   const Color = `${normalized[0]!.toUpperCase()}${normalized.slice(1)}`;
   return `CostFrame_${Color}`;
+}
+
+function battleExtraCostDigit(
+  cardType: string | null,
+  color: string | null,
+  cost: string | null,
+): { Color: string; digit: string } | null {
+  const type = cardType?.trim().toUpperCase();
+  if (type !== "BATTLE" && type !== "EXTRA") return null;
+  const normalized = color?.trim().toLowerCase() ?? "";
+  if (!FRAME_COLORS.has(normalized)) return null;
+  const digit = cost?.trim() ?? "";
+  if (!/^\d$/.test(digit)) return null;
+  return {
+    Color: `${normalized[0]!.toUpperCase()}${normalized.slice(1)}`,
+    digit,
+  };
+}
+
+/**
+ * CostNumber **pixels** for catalogue / Bandai match: `BattleCard_{Color}_01_cost{n}`
+ * (RGBA32, flat white digit + soft shadow). The BC7 `{Color}_0N_cost{n}` atlas
+ * carries a gold bevel that print does not use.
+ */
+export function clientCostNumberSpriteName(
+  cardType: string | null,
+  color: string | null,
+  cost: string | null,
+): string | null {
+  const parts = battleExtraCostDigit(cardType, color, cost);
+  if (!parts) return null;
+  return `BattleCard_${parts.Color}_01_cost${parts.digit}`;
 }
 
 /** @deprecated Prefer geometry.outerDiam from {@link deriveCostRingGeometry}. */
@@ -742,18 +876,39 @@ export function isolateCostRingDisc(
 
 export const DBS_FW_COST_RING = "Cost_01";
 
+/**
+ * Specified-cost pip count → `Cost_0N` / `{Color}_0N_cost*` slot (1–3).
+ * Empty specified cost still uses the cost-1 chrome when a numeral is shown.
+ */
+export function specifiedCostPipCount(
+  specifiedCost: string | null | undefined,
+): number {
+  const letters = (specifiedCost ?? "").replace(/[^A-Za-z]/g, "");
+  if (letters.length <= 0) return 1;
+  return Math.min(3, letters.length);
+}
+
+export function clientCostRingName(
+  specifiedCost: string | null | undefined,
+): string {
+  const n = specifiedCostPipCount(specifiedCost);
+  return `Cost_0${n}`;
+}
+
+/**
+ * Full-card BC7 CostNumber **layout** atlas (`Yellow_02_cost5`). Used only for
+ * on-card anchor / size — pixels come from {@link clientCostNumberSpriteName}.
+ */
 export function clientBattleFrameName(
   cardType: string | null,
   color: string | null,
   cost: string | null,
+  specifiedCost: string | null = null,
 ): string | null {
-  const type = cardType?.trim().toUpperCase();
-  if (type !== "BATTLE" && type !== "EXTRA") return null;
-  const normalized = color?.trim().toLowerCase() ?? "";
-  if (!FRAME_COLORS.has(normalized)) return null;
-  const digit = cost?.trim() ?? "";
-  if (!/^\d$/.test(digit)) return null;
-  return `${normalized[0]!.toUpperCase()}${normalized.slice(1)}_01_cost${digit}`;
+  const parts = battleExtraCostDigit(cardType, color, cost);
+  if (!parts) return null;
+  const slot = String(specifiedCostPipCount(specifiedCost)).padStart(2, "0");
+  return `${parts.Color}_${slot}_cost${parts.digit}`;
 }
 
 export type FwFrameCard = {
@@ -833,40 +988,57 @@ export const DBS_FW_CLIENT_FACE_FILES = {
 /**
  * Foil / flatten layers beside the face. Names stay off `art.*` / `back.*`
  * so the catalogue does not rank them as a second face.
- * Order: picture → frame chrome → costRing → text → badge (Frost-like).
+ * Per-card order: Material Card gates via `frostCatalogueComposeOrder`
+ * (Front→Frame→Middle→text→costRing→badge).
  */
 export const DBS_FW_CLIENT_LAYER_FILES: Record<
   FwFaceSide,
   {
     picture: string;
+    /** Frost `_MiddleTex` when `_ShowMiddleTex` (character over frame). */
+    middle: string;
     text: string;
+    /** FrameTex array z=0 (under Middle). */
     frame: string;
+    /** FrameTex array z=2 (footer chrome over Middle). */
+    frameTop: string;
     costRing: string;
     badge: string;
     /** Raw Unity DXT5 mip0 — WebGL Front prefers this over the cured WebP. */
     pictureS3tc: string;
+    middleS3tc: string;
     frameS3tc: string;
+    /** FrameTex array z=2 mip0 — same S3TC+LINEAR path as frame/middle. */
+    frameTopS3tc: string;
     textS3tc: string;
   }
 > = {
   front: {
     picture: "layer.picture.webp",
+    middle: "layer.middle.webp",
     text: "layer.text.webp",
     frame: "layer.frame.webp",
+    frameTop: "layer.frameTop.webp",
     costRing: "layer.costRing.webp",
     badge: "layer.badge.webp",
     pictureS3tc: "layer.picture.dxt5",
+    middleS3tc: "layer.middle.dxt5",
     frameS3tc: "layer.frame.dxt5",
+    frameTopS3tc: "layer.frameTop.dxt5",
     textS3tc: "layer.text.dxt5",
   },
   back: {
     picture: "layer.back-picture.webp",
+    middle: "layer.back-middle.webp",
     text: "layer.back-text.webp",
     frame: "layer.back-frame.webp",
+    frameTop: "layer.back-frameTop.webp",
     costRing: "layer.back-costRing.webp",
     badge: "layer.back-badge.webp",
     pictureS3tc: "layer.back-picture.dxt5",
+    middleS3tc: "layer.back-middle.dxt5",
     frameS3tc: "layer.back-frame.dxt5",
+    frameTopS3tc: "layer.back-frameTop.dxt5",
     textS3tc: "layer.back-text.dxt5",
   },
 };
@@ -875,15 +1047,31 @@ export const DBS_FW_CLIENT_LAYER_FILES: Record<
 export const DBS_FW_LAYERS_S3TC_META = "layers.s3tc.json";
 
 /**
+ * Material-driven flatten recipe written beside the face. Presence marks the
+ * post–Card-material extract; missing → re-run without `--force`.
+ */
+export const DBS_FW_LAYERS_COMPOSE_META = "layers.compose.json";
+
+/**
  * True when on-disk basenames already match the Frost-like extract layout.
- * Stale `art.client.webp` alone (pre–costRing / badge split) is not current —
- * re-run extract without `--force`. Costless faces never write `costRing` /
- * `badge`. Picture DXT + `layers.s3tc.json` required for WebGL Front S3TC.
+ * Stale `art.client.webp` alone (pre–costRing / badge / middle split) is not
+ * current — re-run extract without `--force`. Costless faces never write
+ * `costRing` / `badge`. Split Back+Front cards require `middle`. Picture DXT
+ * + `layers.s3tc.json` required for WebGL Front S3TC. Extract also requires
+ * `layers.compose.json` `bake: "gpu"` (S3TC+LINEAR) — CPU aplats are stale.
  */
 export function isClientFaceExtractCurrent(
   basenames: ReadonlySet<string>,
   side: FwFaceSide,
   expectsCostRing: boolean,
+  expectsMiddle = false,
+  composeOrder?: readonly string[] | null,
+  /** When provided (extract path), front faces must be GPU S3TC+LINEAR baked. */
+  bake?: string | null,
+  /** When provided, must match {@link CLIENT_FACE_LAYOUT_ID} (print-widen). */
+  layout?: string | null,
+  /** When provided, must match {@link CLIENT_FACE_TONE_ID} (srgb-linear). */
+  tone?: string | null,
 ): boolean {
   const face = DBS_FW_CLIENT_FACE_FILES[side];
   const layers = DBS_FW_CLIENT_LAYER_FILES[side];
@@ -891,20 +1079,41 @@ export function isClientFaceExtractCurrent(
   if (!basenames.has(layers.picture) || !basenames.has(layers.text)) {
     return false;
   }
+  if (expectsMiddle && !basenames.has(layers.middle)) return false;
   if (expectsCostRing && !basenames.has(layers.costRing)) return false;
   if (expectsCostRing && !basenames.has(layers.badge)) return false;
+  // Footer chrome must be raw S3TC too — CPU WebP frameTop = tramage seam.
+  if (
+    basenames.has(layers.frameTop) &&
+    !basenames.has(layers.frameTopS3tc)
+  ) {
+    return false;
+  }
   if (side === "front") {
     if (!basenames.has(layers.pictureS3tc)) return false;
     if (!basenames.has(DBS_FW_LAYERS_S3TC_META)) return false;
+    if (!basenames.has(DBS_FW_LAYERS_COMPOSE_META)) return false;
+    // Reject pre–UI-on-top stacks (costRing under Middle / text).
+    if (
+      composeOrder !== undefined &&
+      !isFrostComposeOrderCurrent(composeOrder)
+    ) {
+      return false;
+    }
+    // CPU aplat tramage — not product. Extract passes bake from compose meta.
+    if (bake !== undefined && bake !== "gpu") return false;
+    // Reject pre–widen shrink layout (512×715).
+    if (layout !== undefined && layout !== CLIENT_FACE_LAYOUT_ID) return false;
+    // Reject pre–display-bytes bake (DXT sRGB + raw RGBA costRing/badge mix).
+    if (tone !== undefined && tone !== CLIENT_FACE_TONE_ID) return false;
   }
   return true;
 }
 
 /**
- * Fit a client texture onto the printed 63×88 card without enlarging.
- * A 1:2 art (512×1024) keeps its width and shrinks height → 512×715.
- * Widening to 733×1024 magnified DXT; minifying the tall axis hides it.
- * Already wide enough faces stay put.
+ * Fit a client texture onto the printed 63×88 card.
+ * A 1:2 art (512×1024) widens → 733×1024. Already wide enough faces stay put.
+ * GPU S3TC+LINEAR bake samples native mip0 onto this size.
  */
 export function clientFacePixels(
   width: number,
@@ -914,5 +1123,5 @@ export function clientFacePixels(
   const aspect = POLICY_ASPECT;
   const wideEnough = Math.round(height * aspect);
   if (width >= wideEnough) return { width, height };
-  return { width, height: Math.round(width / aspect) };
+  return { width: wideEnough, height };
 }

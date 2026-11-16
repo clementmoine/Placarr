@@ -8,10 +8,28 @@
 export const FW_PRINT_ASPECT = 63 / 88;
 
 /**
- * DECISION: pastille draw size inside Cost_01 (~24 px hole). Source is
- * `CostFrame_*` (~89 px opaque); blitting native overfills.
+ * DECISION: fit Unity 1:2 plates onto 63×88 by **widening** (512×1024 →
+ * 733×1024). Shrink-height (512×715) was an anti-tramage workaround; GPU
+ * S3TC+LINEAR bake makes widen safe again.
  */
-export const COST_FILL_DRAW_SIZE = 20;
+export const CLIENT_FACE_LAYOUT_ID = "print-widen";
+
+/**
+ * DECISION: catalogue GPU bake tone — all layers in display-byte space
+ * (non-sRGB DXT + RGBA Image, `colorSpaceConversion: none`). Matches the
+ * validated lab; avoids mixing sRGB-sampled DXT with raw RGBA costRing/badge.
+ * (Unity `m_ColorSpace=1` bytes are stored as-is, not linearized mid-bake.)
+ * `v2`: canvas Y-flip for RGBA (ImageBitmap ignores UNPACK_FLIP_Y).
+ */
+export const CLIENT_FACE_TONE_ID = "display-bytes-v2";
+
+/**
+ * DECISION: pastille draw size inside Cost_0N holes (~36 px diam on atlas).
+ * Source is `CostFrame_*` (~89 px opaque); native blit overfills. 20 was
+ * undersized vs Bandai aplat (~fillR 8 vs 9 @ 733); 24 ≈ ⅔ hole, matches
+ * Bandai without swallowing the chrome lip (30 overshot).
+ */
+export const COST_FILL_DRAW_SIZE = 24;
 
 /**
  * DECISION: Frost cost-disc slot edge used for on-card scale
@@ -24,24 +42,38 @@ export const COST_RING_DISC_FEATHER = 1.25;
 
 /**
  * DECISION: 4× supersample + lanczos minify for pasteSprite *and* for
- * baking the cost fill into Cost_01 (avoids locking stair-steps at 20²).
+ * baking the cost fill into Cost_0N (avoids locking stair-steps at drawSize²).
  */
 export const PASTE_SPRITE_SUPERSAMPLE = 4;
 
 /**
- * DECISION: catalogue flatten stack (aplat WebP). Mirrors Frost sample
- * order loosely (Front→Frame→cost disc→Chara→CostNumber) without baking
- * the disc into `_FrameTex`.
+ * DECISION: opaque underlay for `art.client.webp` (shelf/grid). The live
+ * app leaves Front holes see-through to the 3D scene (`_UseMainTex: 0`);
+ * catalogue cannot. White matches print/energy plates better than black.
+ */
+export const CLIENT_FACE_UNDERLAY_RGBA = [255, 255, 255, 255] as const;
+
+/**
+ * DECISION: catalogue product inserts around the Frost material stack.
+ * Actual per-card order comes from `frostCatalogueComposeOrder` (Material
+ * Card gates). Fallback when no Card material: art then UI on top
+ * (Front→Frame→text→costRing→badge). Never costRing under Middle.
  */
 export const CLIENT_FACE_COMPOSE_ORDER = [
   "picture",
   "frame",
-  "costRing",
   "text",
+  "costRing",
   "badge",
 ] as const;
 
-/** DECISION: frame Texture2DArray — slice 0 mip0 only (other slices cut text). */
+/**
+ * DECISION: Frost samples FrameTex at z=0 (under Middle) and z=2 (footer /
+ * chrome over Middle). Slice 1 is empty in dumps. Catalogue keeps both.
+ */
+export const FRAME_ARRAY_SLICE_UNDER = 0;
+export const FRAME_ARRAY_SLICE_OVER = 2;
+/** @deprecated use FRAME_ARRAY_SLICE_UNDER */
 export const FRAME_ARRAY_SLICE = 0;
 export const FRAME_ARRAY_MIP = 0;
 

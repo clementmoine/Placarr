@@ -1,7 +1,11 @@
 /**
  * Decode Fusion World card faces from CDN staging.
- * Usage: tsx scripts/extractFusionWorldFaces.ts [--limit N] [--force] [--match sb02-024]
- * Writes art.client.webp / back.client.webp beside catalogue prints.
+ * Usage:
+ *   tsx scripts/extractFusionWorldFaces.ts [--limit N] [--force] [--match sb02-024]
+ *   [--force-cdn]
+ *
+ * `--force` rewrites art.client / layers. `--force-cdn` re-downloads the
+ * Xsolla 7z (rare) — do not pass it for a normal face rebuild.
  */
 import { packCardsDir } from "@/lib/packPaths";
 import { ensureFusionWorldClientFromCdn } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
@@ -19,6 +23,7 @@ const match = args.includes("--match")
   ? args[args.indexOf("--match") + 1]
   : undefined;
 const force = args.includes("--force");
+const forceCdn = args.includes("--force-cdn");
 
 async function main(): Promise<void> {
   if (args.includes("--reflow")) {
@@ -31,7 +36,9 @@ async function main(): Promise<void> {
     console.log(JSON.stringify(stats));
     return;
   }
-  const { bundlesDir } = await ensureFusionWorldClientFromCdn({ force });
+  const { bundlesDir } = await ensureFusionWorldClientFromCdn({
+    force: forceCdn,
+  });
   const stats = await extractFusionWorldCardFaces({
     bundlesDir,
     force,

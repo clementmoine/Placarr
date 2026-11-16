@@ -288,6 +288,10 @@ function clientMaterial(
     textures: {
       _MainTex: { role: "art" },
       _FrontTex: { role: "front" },
+      // Catalogue: per-print `layer.middle.webp` via role. Playroom leaves that
+      // reuse Middle for foil plates (pakipaki / championship) keep recipe binds
+      // from holoTextures / effects — those spread after and win when set.
+      ...(catalogue ? { _MiddleTex: { role: "middle" as const } } : {}),
       _FrameTex: { role: "frame" },
       _CharaTex: { role: "ink" },
       ...holoTextures,
@@ -306,7 +310,11 @@ function clientMaterial(
       _UseFrame2: 0,
       _UseChara: 1,
       _AlphaToMaskAvailable: 0,
-      _ShowMiddleTex: recipe?.floats._ShowMiddleTex ?? 0,
+      // Catalogue: Middle plate is per-print (`layer.middle.webp`); missing →
+      // transparent. Playroom keeps the Unity template gate.
+      _ShowMiddleTex: catalogue
+        ? 1
+        : (recipe?.floats._ShowMiddleTex ?? 0),
     },
     colors: {
       ...DBS_FW_CARD_COLORS,

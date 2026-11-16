@@ -9,9 +9,13 @@ export type WebglFoilSurfaces = {
   frontUrl?: string | null;
   frameUrl?: string | null;
   inkUrl?: string | null;
-  /** Cost disc — composited onto frame at load (Frost order). */
+  /** Frost `_MiddleTex` when the print uses `_ShowMiddleTex`. */
+  middleUrl?: string | null;
+  /** FrameTex z=2 footer — composited onto ink (above Middle). */
+  frameTopUrl?: string | null;
+  /** Cost disc — composited onto ink at load (above Middle). */
   costRingUrl?: string | null;
-  /** CostNumber gem — composited onto ink at load (Frost order). */
+  /** CostNumber gem — composited onto ink at load (above Middle). */
   badgeUrl?: string | null;
   holoMaskUrl?: string | null;
   /**

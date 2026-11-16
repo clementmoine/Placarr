@@ -449,6 +449,7 @@ export const ROLE_TEXTURE_FALLBACK: Record<
   normals: [128, 128, 255, 255],
   // Optional card layers. Transparent so a missing file leaves the face.
   front: [0, 0, 0, 0],
+  middle: [0, 0, 0, 0],
   frame: [0, 0, 0, 0],
   ink: [0, 0, 0, 0],
 };
@@ -864,6 +865,8 @@ export function createWebglFoilRenderer(
         return surfaces.secondVarnishMaskUrl ?? null;
       case "front":
         return surfaces.frontUrl ?? null;
+      case "middle":
+        return surfaces.middleUrl ?? null;
       case "frame":
         return surfaces.frameUrl ?? null;
       case "ink":
@@ -1000,15 +1003,18 @@ export function createWebglFoilRenderer(
 
     let image = await fetchImageBitmap(url);
     if (destroyed) return;
-    // Frost restack: cost disc between Frame and Chara; CostNumber after Chara.
-    // Catalogue keeps those as sibling files — fold them into frame / ink here.
-    if (role === "frame") {
+    // Frame z=2 + cost disc + CostNumber sit above Middle (with ink/text).
+    if (role === "ink") {
+      image = await compositeOptionalOverlay(
+        image,
+        surfaces.frameTopUrl,
+        fetchImageBitmap,
+      );
       image = await compositeOptionalOverlay(
         image,
         surfaces.costRingUrl,
         fetchImageBitmap,
       );
-    } else if (role === "ink") {
       image = await compositeOptionalOverlay(
         image,
         surfaces.badgeUrl,

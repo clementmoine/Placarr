@@ -49,10 +49,14 @@ export type ScrapeDbsFwDetailsOptions = {
   root?: string;
   locale?: string;
   delayMs?: number;
+  /** Parallel detail GETs (default 1). Keep modest vs Bandai. */
+  concurrency?: number;
   /** Stop after this many cards — for a first proving pass. */
   limit?: number;
   /** Re-fetch numbers already in the facts file. */
   force?: boolean;
+  /** Persist facts.json every N successful fetches (0 = only at end). */
+  checkpointEvery?: number;
 };
 
 const sleep = (ms: number) =>
@@ -119,12 +123,32 @@ async function fetchDetail(
   return null;
 }
 
+function writeFactsFile(
+  dest: string,
+  locale: string,
+  cards: Record<string, DbsFwCardDetail>,
+): DbsFwFactsFile {
+  const file: DbsFwFactsFile = {
+    version: 1,
+    source: "https://www.dbs-cardgame.com/fw/<locale>/cardlist/detail.php",
+    locale,
+    capturedAt: new Date().toISOString(),
+    count: Object.keys(cards).length,
+    cards,
+  };
+  mkdirSync(path.dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify(file, null, 2)}\n`, "utf8");
+  return file;
+}
+
 export async function scrapeDbsFwCardDetails(
   opts: ScrapeDbsFwDetailsOptions = {},
 ): Promise<{ listed: number; fetched: number; failed: number; file: string }> {
   const root = packRoot(opts.root);
   const locale = opts.locale ?? "en";
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
+  const concurrency = Math.max(1, Math.min(8, opts.concurrency ?? 1));
+  const checkpointEvery = opts.checkpointEvery ?? 50;
   const loaded = loadDbsFwIndex();
   if (!loaded?.prints.length) {
     throw new Error(`catalog.sqlite absent ou vide: ${root}`);
@@ -144,36 +168,47 @@ export async function scrapeDbsFwCardDetails(
   if (held) numbers = numbers.filter((n) => !cards[n]);
   if (opts.limit && opts.limit > 0) numbers = numbers.slice(0, opts.limit);
 
+  const dest = dbsFwFactsPath(opts.root);
   console.log(
-    `── FW détails → ${DBS_FW_FACTS_FILE} (${numbers.length} fiches à lire, ${Object.keys(cards).length} déjà tenues)`,
+    `── FW détails → ${DBS_FW_FACTS_FILE} (${numbers.length} fiches à lire, ${Object.keys(cards).length} déjà tenues, ×${concurrency})`,
   );
 
   let fetched = 0;
   let failed = 0;
-  for (const number of numbers) {
-    if (delayMs > 0) await sleep(delayMs);
-    const html = await fetchDetail(dbsFwCardDetailUrl(number, locale), delayMs);
-    const card = html ? parseDbsFwCardDetail(html) : null;
-    if (!card) {
-      failed += 1;
-      continue;
-    }
-    cards[number] = card;
-    fetched += 1;
-    if (fetched % 100 === 0) console.log(`   FW ${fetched} fiches…`);
-  }
+  let cursor = 0;
 
-  const file: DbsFwFactsFile = {
-    version: 1,
-    source: "https://www.dbs-cardgame.com/fw/<locale>/cardlist/detail.php",
-    locale,
-    capturedAt: new Date().toISOString(),
-    count: Object.keys(cards).length,
-    cards,
-  };
-  mkdirSync(root, { recursive: true });
-  const dest = dbsFwFactsPath(opts.root);
-  writeFileSync(dest, `${JSON.stringify(file, null, 2)}\n`, "utf8");
+  const workers = Array.from({ length: concurrency }, async (_, worker) => {
+    if (delayMs > 0 && worker > 0) {
+      await sleep((delayMs / concurrency) * worker);
+    }
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= numbers.length) return;
+      const number = numbers[index]!;
+      if (delayMs > 0) await sleep(delayMs);
+      const html = await fetchDetail(
+        dbsFwCardDetailUrl(number, locale),
+        delayMs,
+      );
+      const card = html ? parseDbsFwCardDetail(html) : null;
+      if (!card) {
+        failed += 1;
+        continue;
+      }
+      cards[number] = card;
+      fetched += 1;
+      if (fetched % 50 === 0) {
+        console.log(`   FW ${fetched}/${numbers.length} fiches…`);
+      }
+      if (checkpointEvery > 0 && fetched % checkpointEvery === 0) {
+        writeFactsFile(dest, locale, cards);
+      }
+    }
+  });
+  await Promise.all(workers);
+
+  const file = writeFactsFile(dest, locale, cards);
   console.log(
     JSON.stringify({
       dbsFwDetails: true,

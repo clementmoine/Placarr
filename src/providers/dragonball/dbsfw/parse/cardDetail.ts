@@ -92,6 +92,23 @@ function first(values: readonly string[]): string | null {
   return value && value !== "-" ? value : null;
 }
 
+/**
+ * Specified cost is one letter per energy (Bandai prints `Y Y` as two nodes,
+ * or occasionally `YY` as one). Join letters; `-` / empty → null.
+ */
+export function joinSpecifiedCost(values: readonly string[]): string | null {
+  const letters: string[] = [];
+  for (const raw of values) {
+    for (const token of raw.trim().split(/\s+/)) {
+      if (!token || token === "-") continue;
+      if (/^[A-Za-z]+$/.test(token)) {
+        letters.push(...token.toUpperCase().split(""));
+      }
+    }
+  }
+  return letters.length > 0 ? letters.join("") : null;
+}
+
 export function parseDbsFwCardDetail(html: string): DbsFwCardDetail | null {
   const nodes = textNodes(html);
   // The <title> starts with the number too — anchor on the node that *is* it.
@@ -116,7 +133,7 @@ export function parseDbsFwCardDetail(html: string): DbsFwCardDetail | null {
     cardType: first(valuesAfter(nodes, "Card type")),
     color: first(valuesAfter(nodes, "Color")),
     cost: first(valuesAfter(nodes, "Cost")),
-    specifiedCost: first(valuesAfter(nodes, "Specified cost")),
+    specifiedCost: joinSpecifiedCost(valuesAfter(nodes, "Specified cost")),
     power: valuesAfter(nodes, "Power").filter((v) => v !== "-"),
     comboPower: first(valuesAfter(nodes, "Combo power")),
     // The page repeats the trait line once per face — keep it once, and a

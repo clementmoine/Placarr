@@ -11,6 +11,8 @@ export type FoilTextureRole =
   | "normals"
   /** Illustration under the shine. Missing → transparent, the face shows through. */
   | "front"
+  /** Frost `_MiddleTex` (character / FX over frame). Missing → transparent. */
+  | "middle"
   /** Chrome around the illustration. Missing → transparent. */
   | "frame"
   /** Text and UI painted above the shine. Missing → transparent. */
@@ -158,13 +160,16 @@ export type EffectPackModule = {
     frontUrl?: string | null;
     frameUrl?: string | null;
     inkUrl?: string | null;
+    /** Frost `_MiddleTex` plate when the print uses `_ShowMiddleTex`. */
+    middleUrl?: string | null;
+    /** FrameTex array z=2 (footer over Middle) — folded into ink for WebGL. */
+    frameTopUrl?: string | null;
     /**
-     * Cost disc plate — WebGL composites onto `frameUrl` (Unity: between
-     * Frame and Chara).
+     * Cost disc plate — WebGL composites onto `inkUrl` (above Middle).
      */
     costRingUrl?: string | null;
     /**
-     * CostNumber gem — WebGL composites onto `inkUrl` (Unity: after Chara).
+     * CostNumber gem — WebGL composites onto `inkUrl` (after Chara / Middle).
      */
     badgeUrl?: string | null;
     /** Optional denser plate for Frost `_HoloMask` when foil stamp is sparse. */

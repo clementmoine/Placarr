@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { dbsFwCardDetailUrl, parseDbsFwCardDetail } from "./cardDetail";
+import {
+  dbsFwCardDetailUrl,
+  joinSpecifiedCost,
+  parseDbsFwCardDetail,
+} from "./cardDetail";
 
 /* Trimmed from the live pages of 2026-08-19 — the two card shapes. */
 const LEADER = `
@@ -63,6 +67,22 @@ describe("parseDbsFwCardDetail", () => {
       comboPower: "10000",
     });
     expect(card?.power).toEqual(["5000"]);
+  });
+
+  it("joins multi-letter specified cost (Bandai prints Y Y as two nodes)", () => {
+    const html = BATTLE.replace(
+      "<dt>Specified cost</dt><dd>R</dd>",
+      "<dt>Specified cost</dt><dd>Y</dd><dd>Y</dd>",
+    ).replace("ST01-002", "FB11-088");
+    expect(parseDbsFwCardDetail(html)?.specifiedCost).toBe("YY");
+  });
+
+  it("joinSpecifiedCost concatenates letter tokens", () => {
+    expect(joinSpecifiedCost(["Y", "Y"])).toBe("YY");
+    expect(joinSpecifiedCost(["YY"])).toBe("YY");
+    expect(joinSpecifiedCost(["R"])).toBe("R");
+    expect(joinSpecifiedCost(["-"])).toBeNull();
+    expect(joinSpecifiedCost([])).toBeNull();
   });
 
   it("anchors on the number itself, not on the <title> that starts with it", () => {

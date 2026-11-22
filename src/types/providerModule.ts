@@ -296,7 +296,12 @@ export type PrintCandidate = {
   /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
   lenticularCropProfile?: string | null;
   /** Kayou portrait scan gutter trim — single-face HR/MR/BP strips. */
-  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
+  scanCrop?: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } | null;
   /**
    * Card family as the catalogue spells it (`Pokémon`, `Dresseur`, `Énergie`).
    * A look is chosen per family as much as per rarity — a Dresseur wearing a
@@ -667,12 +672,32 @@ export type CorpusPromoteApplyInput = {
 };
 
 export type CorpusPromoteApplyResult =
-  | { written: true; printKey: string }
-  | { written: false; reason: string };
+  { written: true; printKey: string } | { written: false; reason: string };
+
+/** Résultat de {@link ProviderCatalogHooks.ensureClient} (ADR-026). */
+export type ProviderClientOutcome =
+  | { status: "skipped" }
+  | { status: "up-to-date"; version: string }
+  | { status: "updated"; version: string }
+  | { status: "unavailable"; reason: string };
+
+export type ProviderClientOpts = {
+  /** Retélécharger même si la version n'a pas bougé. */
+  force?: boolean;
+  signal?: AbortSignal;
+  onLog?: (line: string) => void;
+};
 
 export interface ProviderCatalogHooks {
   /** Pack slug under `data/<pack>/` (may differ from provider id). */
   dataPack: string;
+  /**
+   * Client de jeu téléchargé dont l'extract tire les rendus (APK du store,
+   * client CDN…). Appelé par une seule étape commune avant Sync et Extract
+   * (`ensurePackClient`, ADR-026) — les pipelines ne le téléchargent pas
+   * eux-mêmes.
+   */
+  ensureClient?: (opts?: ProviderClientOpts) => Promise<ProviderClientOutcome>;
   /**
    * Effect-pack id stamped on `PrintCandidate.effectPack` for this corpus.
    * Must be registered (`@/effects`) whenever the module serves TCG prints —
@@ -794,9 +819,7 @@ export interface ProviderModule {
    * (`listing_photo` vs `catalog`). Provider-side only — core ranks tiers,
    * never source names. Absent = leave `coverProvenance` unset.
    */
-  coverProvenanceForArtFile?: (
-    artFile: string,
-  ) => string | null | undefined;
+  coverProvenanceForArtFile?: (artFile: string) => string | null | undefined;
   /**
    * Les langues dans lesquelles ce catalogue a été imprimé.
    *

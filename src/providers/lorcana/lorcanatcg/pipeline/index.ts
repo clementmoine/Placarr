@@ -9,6 +9,7 @@ import { LORCANA_EFFECT_PACK_ID } from "@/effects/lorcana";
 import type { ProviderCatalogHooks } from "@/types/providerModule";
 import { withCardnexusPackFacesStep } from "@/providers/commerce/cardnexus/fillPackFaces";
 import { cardCatalogueHooks } from "@/providers/shared/cardCatalogue/pipeline";
+import { apkStoreClient } from "@/providers/shared/apkStoreClient";
 
 import { lorcanaTcgDbPath } from "../indexStore";
 import { scrapeLorcardsProducts } from "../sources/lorcards";
@@ -52,4 +53,7 @@ const hooks = cardCatalogueHooks({
 
 export const refreshLorcanaTcgCatalog = hooks.refresh;
 export const lorcanaTcgCatalogStatus = hooks.status;
-export const lorcanatcgCatalog: ProviderCatalogHooks = hooks;
+export const lorcanatcgCatalog: ProviderCatalogHooks = {
+  ...hooks,
+  ensureClient: apkStoreClient(LORCANA_PACK_ID),
+};

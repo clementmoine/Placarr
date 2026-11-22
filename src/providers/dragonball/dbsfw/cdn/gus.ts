@@ -2,6 +2,7 @@
  * Xsolla GUS update manifest for Fusion World Digital (project 254594).
  * @see docs/fusion_world_digital.md
  */
+import { httpGet } from "@/lib/http/httpClient";
 
 export const DBS_FW_GUS_PROJECT_ID = "254594";
 export const DBS_FW_GUS_URL =
@@ -101,14 +102,14 @@ export function parseGusManifestXml(
 }
 
 export async function fetchGusManifest(
-  opts: { url?: string; cdnOrigin?: string; fetchImpl?: typeof fetch } = {},
+  opts: { url?: string; cdnOrigin?: string } = {},
 ): Promise<GusManifest> {
-  const fetchImpl = opts.fetchImpl ?? fetch;
-  const res = await fetchImpl(opts.url ?? DBS_FW_GUS_URL, {
+  const url = opts.url ?? DBS_FW_GUS_URL;
+  // lib/http : rejeu des erreurs transitoires + circuit par host (ADR-008/024).
+  const res = await httpGet<string>(url, {
+    responseType: "text",
     headers: { accept: "application/xml,text/xml,*/*" },
+    noDedup: true,
   });
-  if (!res.ok) {
-    throw new Error(`GUS fetch ${res.status}: ${opts.url ?? DBS_FW_GUS_URL}`);
-  }
-  return parseGusManifestXml(await res.text(), opts.cdnOrigin);
+  return parseGusManifestXml(String(res.data), opts.cdnOrigin);
 }

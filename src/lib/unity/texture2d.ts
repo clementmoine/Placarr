@@ -9,11 +9,14 @@
 
 import {
   decodeAstc,
-  decodeBc1,
-  decodeBc3,
   decodeBc7,
   decodeEtc1,
+  decodeEtc2Rgb,
+  decodeEtc2Rgba1,
+  decodeEtc2Rgba8,
 } from "@arkntools/unity-js-tools";
+
+import { decodeBc1Rgba, decodeBc3Rgba } from "@/lib/unity/bcn";
 
 import {
   iterClassTrees,
@@ -26,6 +29,13 @@ import {
 
 /** Unity ``TextureFormat`` values we decode. */
 export const TextureFormat = {
+  /** Alpha seul (atlas SDF TextMeshPro) — RGB blanc. */
+  Alpha8: 1,
+  /** 4 × float16 (textures de données des shaders). */
+  RGBAHalf: 17,
+  ETC2_RGB: 45,
+  ETC2_RGBA1: 46,
+  ETC2_RGBA8: 47,
   /** BC1 / S3TC — Mac Live shadersbundle. */
   DXT1: 10,
   /** BC3 / DXT5 — desktop masks and most card faces. */
@@ -81,6 +91,11 @@ export function canDecodeTextureFormat(format: number): boolean {
     format === TextureFormat.RGBA32 ||
     format === TextureFormat.BC7 ||
     format === TextureFormat.ETC_RGB4 ||
+    format === TextureFormat.Alpha8 ||
+    format === TextureFormat.RGBAHalf ||
+    format === TextureFormat.ETC2_RGB ||
+    format === TextureFormat.ETC2_RGBA1 ||
+    format === TextureFormat.ETC2_RGBA8 ||
     ASTC_BLOCK[format] != null
   );
 }
@@ -168,6 +183,16 @@ export function flipRgbaVertical(rgba: Buffer, width: number, height: number): B
   return out;
 }
 
+/** IEEE 754 binary16 → nombre. */
+function halfToFloat(h: number): number {
+  const sign = h & 0x8000 ? -1 : 1;
+  const exp = (h >> 10) & 0x1f;
+  const frac = h & 0x3ff;
+  if (exp === 0) return sign * frac * 2 ** -24;
+  if (exp === 31) return frac ? Number.NaN : sign * Infinity;
+  return sign * (1 + frac / 1024) * 2 ** (exp - 15);
+}
+
 export function decodeTextureFormat(
   data: Uint8Array,
   width: number,
@@ -175,29 +200,60 @@ export function decodeTextureFormat(
   format: number,
   name = "",
 ): Buffer {
-  // ETC1: arkntools returns RGBA8 — flip only.
+  // ETC1 : arkntools rend du BGRA8 comme BC7 / ASTC (vérifié bit à bit contre
+  // le décodeur GPU Metal, 2026-11-22) — sans la permutation R et B s'inversent.
   if (format === TextureFormat.ETC_RGB4) {
     return flipRgbaVertical(
-      Buffer.from(decodeEtc1(data, width, height)),
+      bgraToRgba(Buffer.from(decodeEtc1(data, width, height))),
       width,
       height,
     );
   }
-  // BCn (DXT1/5, BC7): arkntools / texture2ddecoder expand to BGRA8.
+  // ETC2 : arkntools (BGRA8), vérifié contre le GPU Metal sur blocs aléatoires.
+  const etc2 =
+    format === TextureFormat.ETC2_RGB
+      ? decodeEtc2Rgb
+      : format === TextureFormat.ETC2_RGBA1
+        ? decodeEtc2Rgba1
+        : format === TextureFormat.ETC2_RGBA8
+          ? decodeEtc2Rgba8
+          : null;
+  if (etc2) {
+    const rgba = bgraToRgba(Buffer.from(etc2(data, width, height)));
+    // Spec ETC2 punch-through : un texel transparent vaut (0, 0, 0, 0).
+    if (format === TextureFormat.ETC2_RGBA1) {
+      for (let i = 0; i < rgba.length; i += 4) {
+        if (rgba[i + 3] === 0) rgba[i] = rgba[i + 1] = rgba[i + 2] = 0;
+      }
+    }
+    return flipRgbaVertical(rgba, width, height);
+  }
+  if (format === TextureFormat.Alpha8) {
+    const pixels = width * height;
+    const rgba = Buffer.alloc(pixels * 4, 255);
+    for (let i = 0; i < pixels; i++) rgba[i * 4 + 3] = data[i] ?? 0;
+    return flipRgbaVertical(rgba, width, height);
+  }
+  if (format === TextureFormat.RGBAHalf) {
+    const pixels = width * height;
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    const rgba = Buffer.alloc(pixels * 4);
+    for (let i = 0; i < pixels * 4 && i * 2 + 1 < data.byteLength; i++) {
+      const v = halfToFloat(view.getUint16(i * 2, true));
+      rgba[i] = Math.round(Math.min(1, Math.max(0, v)) * 255);
+    }
+    return flipRgbaVertical(rgba, width, height);
+  }
+  // DXT1 / DXT5 : décodeur maison conforme (l'alpha BC3 d'arkntools est faux
+  // aux pixels 10–15 de chaque bloc — tramage 4×4). Sortie RGBA directe.
   if (format === TextureFormat.DXT1) {
-    return flipRgbaVertical(
-      bgraToRgba(Buffer.from(decodeBc1(data, width, height))),
-      width,
-      height,
-    );
+    return flipRgbaVertical(decodeBc1Rgba(data, width, height), width, height);
   }
   if (format === TextureFormat.DXT5) {
-    return flipRgbaVertical(
-      bgraToRgba(Buffer.from(decodeBc3(data, width, height))),
-      width,
-      height,
-    );
+    return flipRgbaVertical(decodeBc3Rgba(data, width, height), width, height);
   }
+  // BC7 : arkntools (BGRA8) — identique bit à bit au GPU Metal sur les 157
+  // badges Fusion World (2026-11-22).
   if (format === TextureFormat.BC7) {
     return flipRgbaVertical(
       bgraToRgba(Buffer.from(decodeBc7(data, width, height))),
@@ -225,7 +281,7 @@ export function decodeTextureFormat(
   if (block == null) {
     throw new Error(`Texture2D format ${format} not implemented (${name})`);
   }
-  // ASTC: same BGRA8 convention as BCn.
+  // ASTC : arkntools (BGRA8) — ±1 du GPU Metal sur 4×4…8×8 réels (2026-11-22).
   const decoded = Buffer.from(decodeAstc(data, width, height, block, block));
   return flipRgbaVertical(bgraToRgba(decoded), width, height);
 }
@@ -436,10 +492,14 @@ type UnityTextureObject = {
   data?: Uint8Array | null;
   _streamData?: StreamDataRef;
   streamData?: StreamDataRef;
-  decodeRgba?: (worker?: boolean) => Promise<Uint8Array | null>;
 };
 
 const FORMAT_BY_NAME: Record<string, number> = {
+  Alpha8: TextureFormat.Alpha8,
+  RGBAHalf: TextureFormat.RGBAHalf,
+  ETC2_RGB: TextureFormat.ETC2_RGB,
+  ETC2_RGBA1: TextureFormat.ETC2_RGBA1,
+  ETC2_RGBA8: TextureFormat.ETC2_RGBA8,
   RGB24: TextureFormat.RGB24,
   RGBA32: TextureFormat.RGBA32,
   DXT1: TextureFormat.DXT1,
@@ -488,9 +548,10 @@ export function pixelsFromTextureObject(
 }
 
 /**
- * Compressed formats via typetree + ``@arkntools/unity-js-tools``; other
- * formats fall back to unityfs-js ``decodeRgba``. Never call ``decodeRgba``
- * for formats we expand ourselves (TextureDecoderPool is stubbed → spam).
+ * Décodage d'un Texture2D unityfs-js par l'entrée commune
+ * {@link decodeTextureFormat} — une seule chaîne pour toute l'app, croisée
+ * avec le décodeur GPU Metal (2026-11-22). Un format non couvert rend `null`
+ * (résultat honnête) plutôt qu'un second décodeur caché.
  */
 export async function rgbaFromTexture2DObject(
   tex: UnityTextureObject,
@@ -500,33 +561,18 @@ export async function rgbaFromTexture2DObject(
   const width = Number(tex.width ?? tex._width ?? 0);
   const height = Number(tex.height ?? tex._height ?? 0);
   const format = textureFormatId(tex);
+  if (format == null || !canDecodeTextureFormat(format)) return null;
   const payload = pixelsFromTextureObject(tex, opts?.resourceBlobs);
-
-  if (
-    payload?.byteLength &&
-    width > 0 &&
-    height > 0 &&
-    format != null &&
-    canDecodeTextureFormat(format)
-  ) {
-    try {
-      return {
-        rgba: decodeTextureFormat(payload, width, height, format, name),
-        width,
-        height,
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  if (format != null && canDecodeTextureFormat(format)) {
+  if (!payload?.byteLength || width <= 0 || height <= 0) return null;
+  try {
+    return {
+      rgba: decodeTextureFormat(payload, width, height, format, name),
+      width,
+      height,
+    };
+  } catch {
     return null;
   }
-
-  const rgba = await tex.decodeRgba?.(false);
-  if (!rgba?.length || !width || !height) return null;
-  return { rgba: Buffer.from(rgba), width, height };
 }
 
 export function listTexture2D(loaded: LoadedUnityFs): DecodedTexture2D[] {

@@ -239,7 +239,7 @@ export async function bakeCostRingFill(
   }
   const centers =
     holeCenters && holeCenters.length > 0 ? holeCenters : [geom.center];
-  let filledBig = ringBig;
+  let filledBig: Buffer = ringBig;
   for (const hole of centers) {
     const centerX = hole.x * ss - massX + (fillDraw - 1) / 2;
     const centerY = hole.y * ss - massY + (fillDraw - 1) / 2;

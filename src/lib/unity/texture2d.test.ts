@@ -12,6 +12,7 @@ import {
   decodeTextureTree,
   dxtMipByteSize,
   rawS3tcMip0FromTree,
+  rgbaFromTexture2DObject,
   TextureFormat,
   textureFormatId,
 } from "@/lib/unity/texture2d";
@@ -124,6 +125,50 @@ describe("texture2d compressed formats", () => {
     const { rgba, width, height } = decoded!;
     const i = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4;
     expect([rgba[i], rgba[i + 1], rgba[i + 2]]).toEqual([66, 119, 183]);
+  });
+
+  it("Alpha8 : RGB blanc, alpha lu tel quel", () => {
+    const rgba = decodeTextureFormat(
+      Uint8Array.from([0, 64, 128, 255]),
+      2,
+      2,
+      TextureFormat.Alpha8,
+    );
+    // Retournement vertical : la 2e ligne Unity passe en haut.
+    expect([...rgba]).toEqual([
+      255, 255, 255, 128, 255, 255, 255, 255, 255, 255, 255, 0, 255, 255, 255, 64,
+    ]);
+  });
+
+  it("RGBAHalf : float16 bornés à 0–1 puis en octets", () => {
+    // 1.0, 0.5, 0.0, 2.0 (borné à 1).
+    const halves = Uint16Array.from([0x3c00, 0x3800, 0x0000, 0x4000]);
+    const rgba = decodeTextureFormat(
+      new Uint8Array(halves.buffer),
+      1,
+      1,
+      TextureFormat.RGBAHalf,
+    );
+    expect([...rgba]).toEqual([255, 128, 0, 255]);
+  });
+
+  it("un format non couvert rend null, sans second décodeur caché", async () => {
+    const decoded = await rgbaFromTexture2DObject({
+      width: 4,
+      height: 4,
+      textureFormat: 28, // DXT1Crunched
+      data: new Uint8Array(64),
+    });
+    expect(decoded).toBeNull();
+  });
+
+  it("ETC1 sort en RGBA : un bloc rouge pur reste rouge (arkntools rend du BGRA)", () => {
+    // Mode individuel, R1=R2=0xF, G=B=0, tables 0, indices 0 → modificateur +2.
+    const block = Uint8Array.from([0xff, 0x00, 0x00, 0x00, 0, 0, 0, 0]);
+    const rgba = decodeTextureFormat(block, 4, 4, TextureFormat.ETC_RGB4);
+    for (let p = 0; p < 16; p++) {
+      expect([...rgba.subarray(p * 4, p * 4 + 4)]).toEqual([255, 2, 2, 255]);
+    }
   });
 
   it("decodes TEX_StitchedRings from CDN shadersbundle (ETC_RGB4)", () => {

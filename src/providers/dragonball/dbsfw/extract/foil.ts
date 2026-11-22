@@ -1,8 +1,9 @@
 /**
  * Client foil kit extract — shaders + shared plates + per-card masks/faces.
  *
- * Source of truth: Xsolla CDN via GUS → `data/dragonball/fw/staging/xsolla/`.
- * No Mac install path.
+ * Source of truth: Xsolla CDN via GUS → `data/dragonball/fw/staging/xsolla/`,
+ * posé par l'étape commune `ensurePackClient` avant la Sync / l'Extract
+ * (ADR-026) — cette étape ne télécharge rien, elle lit le client posé.
  *
  * Freshness:
  * - CDN volumes: reuse when `version.json` matches GUS version/build (no redownload).
@@ -14,12 +15,12 @@ import { join } from "node:path";
 
 import { foilPackDir } from "@/lib/packPaths";
 import {
-  ensureFusionWorldClientFromCdn,
   foilKitStepFresh,
+  readStagedFusionWorldClient,
   updateFwClientKit,
-  type EnsureFwClientResult,
   type FwClientStamp,
 } from "@/providers/dragonball/dbsfw/cdn/ensureClient";
+import { CLIENT_FACE_BAKE_ID } from "@/providers/dragonball/dbsfw/clientFacePolicy";
 import { DBS_FW_PACK_ID } from "@/providers/dragonball/dbsfw/indexStore";
 import { existsSync } from "node:fs";
 
@@ -29,13 +30,8 @@ export type RunDbsFwFoilExtractOpts = {
   match?: string;
   /** Override Addressables root (tests / already-staged tree). */
   bundlesDir?: string;
-  /** Skip CDN (tests with fixtures only). */
-  skipCdn?: boolean;
-  /**
-   * Force CDN redownload/extract even when version matches.
-   * Default false — Sync never redownloads an unchanged GUS version.
-   */
-  forceCdn?: boolean;
+  /** Racine staging Xsolla (tests). */
+  stagingRoot?: string;
   repo?: string;
 };
 
@@ -62,33 +58,20 @@ export type RunDbsFwFoilExtractResult = {
   };
 };
 
-async function resolveBundlesDir(
-  opts: RunDbsFwFoilExtractOpts,
-): Promise<{
+function resolveBundlesDir(opts: RunDbsFwFoilExtractOpts): {
   dir: string;
   source: "cdn" | "override";
-  cdn?: EnsureFwClientResult;
-} | null> {
+  stamp?: FwClientStamp;
+} | null {
   if (opts.bundlesDir) {
     return existsSync(opts.bundlesDir)
       ? { dir: opts.bundlesDir, source: "override" }
       : null;
   }
-  if (opts.skipCdn) return null;
-
-  try {
-    // Never tie kit `--force` to CDN: unchanged GUS version → no redownload.
-    const staged = await ensureFusionWorldClientFromCdn({
-      force: opts.forceCdn === true,
-      repo: opts.repo,
-    });
-    return { dir: staged.bundlesDir, source: "cdn", cdn: staged };
-  } catch (err) {
-    console.warn(
-      `── fw foil : CDN staging failed (${err instanceof Error ? err.message : err})`,
-    );
-    return null;
-  }
+  const staged = readStagedFusionWorldClient(opts.stagingRoot);
+  return staged
+    ? { dir: staged.bundlesDir, source: "cdn", stamp: staged.stamp }
+    : null;
 }
 
 function markKit(
@@ -98,6 +81,7 @@ function markKit(
     texturesOk?: boolean;
     masksOk?: boolean;
     facesOk?: boolean;
+    facesRecipe?: string;
   },
   source: "cdn" | "override",
 ): void {
@@ -111,26 +95,25 @@ function markKit(
 export async function runDbsFwFoilExtract(
   opts: RunDbsFwFoilExtractOpts = {},
 ): Promise<RunDbsFwFoilExtractResult> {
-  const resolved = await resolveBundlesDir(opts);
+  const resolved = resolveBundlesDir(opts);
   if (!resolved) {
     console.log(
-      "skip foil: CDN staging unavailable (check GUS/Xsolla or 7-Zip)",
+      "skip foil: pas de client posé (l'étape client de la Sync le télécharge — GUS/Xsolla, 7-Zip)",
     );
     return { skipped: true, reason: "no-cdn-client" };
   }
 
-  const { dir: bundlesDir, source, cdn } = resolved;
-  const stamp = cdn?.stamp;
-  const cdnReused = cdn?.skipped === true;
-  // Fresh CDN extract (version bump / first install) → rebuild kit even if
-  // on-disk faces still look "current" from the previous client build.
+  const { dir: bundlesDir, source, stamp } = resolved;
+  // Le tampon d'une nouvelle version n'a pas encore de `kit` : rien n'a été
+  // extrait de ce client → tout refaire, même des faces qui semblent à jour.
+  const cdnReused = Boolean(stamp?.kit);
   const force =
     opts.force === true || (source === "cdn" && cdnReused === false);
   const partial = opts.limit != null || Boolean(opts.match);
 
   console.log(
     `── fw foil : bundles ← ${source} (${bundlesDir})` +
-      (cdn
+      (stamp
         ? cdnReused
           ? ` [cdn reuse v${stamp?.version}]`
           : ` [cdn fresh v${stamp?.version}]`
@@ -233,7 +216,12 @@ export async function runDbsFwFoilExtract(
   }
 
   let faces: RunDbsFwFoilExtractResult["faces"];
-  if (foilKitStepFresh(stamp, "facesOk", kitOpts)) {
+  if (
+    foilKitStepFresh(stamp, "facesOk", {
+      ...kitOpts,
+      facesRecipe: CLIENT_FACE_BAKE_ID,
+    })
+  ) {
     kitSkipped.faces = true;
     console.log(
       "── fw foil : client faces — skip (already generated for this version)",
@@ -257,7 +245,11 @@ export async function runDbsFwFoilExtract(
       `   faces : written=${faces.written} skipped=${faces.skipped} failed=${faces.failed}`,
     );
     if (!partial && faces.failed === 0 && faces.written + faces.skipped > 0) {
-      markKit(stamp, { facesOk: true }, source);
+      markKit(
+        stamp,
+        { facesOk: true, facesRecipe: CLIENT_FACE_BAKE_ID },
+        source,
+      );
     }
   }
 

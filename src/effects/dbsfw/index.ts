@@ -96,7 +96,6 @@ function artsFor(name: string): PlayroomArt[] {
       imageUrl,
       label: face.label,
       ...(maskUrl ? { maskUrl } : {}),
-      liveOwned: true,
     },
   ];
 }

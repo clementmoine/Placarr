@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { CLIENT_FACE_BAKE_ID } from "./clientFacePolicy";
+
 import {
   clientBattleFrameName,
   clientCostNumberSpriteName,
@@ -9,26 +11,12 @@ import {
   clientCostRingOffset,
   specifiedCostPipCount,
   clientFacePixels,
-  blendPlateMips,
-  boxFilterRgba,
-  clientPlateMipBlend,
-  curePlateDxt,
-  deblockPlateDxt,
-  resolvePlateWithMip1,
-  scaleRgbaNearest,
-  resolvePlateChromeMips,
-  bilinearResizeRgba,
-  softenPlateBilinear,
-  softenPlateChrome,
   compositeCostFill,
   COST_FILL_DRAW_SIZE,
   isolateCostRingDisc,
   isClientFaceExtractCurrent,
   clientFrameArrayCandidates,
   fusionWorldFaceLayer,
-  premultiplyStraight,
-  solidifyPlateInk,
-  unpremultiplyStraight,
 } from "./clientFaces";
 
 describe("clientFacePixels", () => {
@@ -107,7 +95,7 @@ describe("isClientFaceExtractCurrent", () => {
     expect(isClientFaceExtractCurrent(base, "front", false)).toBe(true);
   });
 
-  it("rejects CPU aplat when bake mode is checked (extract path)", () => {
+  it("n'accepte que le bake CPU conforme (décodeur bcn + Lanczos) sur le chemin extract", () => {
     const base = new Set([
       "art.client.webp",
       "layer.picture.webp",
@@ -122,8 +110,19 @@ describe("isClientFaceExtractCurrent", () => {
     expect(
       isClientFaceExtractCurrent(base, "front", false, false, undefined, "cpu"),
     ).toBe(false);
+    // Anciens bakes : WebGL (Chrome) et CPU au décodeur unity-js-tools (tramé).
     expect(
       isClientFaceExtractCurrent(base, "front", false, false, undefined, "gpu"),
+    ).toBe(false);
+    expect(
+      isClientFaceExtractCurrent(
+        base,
+        "front",
+        false,
+        false,
+        undefined,
+        CLIENT_FACE_BAKE_ID,
+      ),
     ).toBe(true);
   });
 
@@ -143,7 +142,7 @@ describe("isClientFaceExtractCurrent", () => {
         false,
         false,
         undefined,
-        "gpu",
+        CLIENT_FACE_BAKE_ID,
         "print-shrink",
       ),
     ).toBe(false);
@@ -154,7 +153,7 @@ describe("isClientFaceExtractCurrent", () => {
         false,
         false,
         undefined,
-        "gpu",
+        CLIENT_FACE_BAKE_ID,
         "print-widen",
       ),
     ).toBe(true);
@@ -176,7 +175,7 @@ describe("isClientFaceExtractCurrent", () => {
         false,
         false,
         undefined,
-        "gpu",
+        CLIENT_FACE_BAKE_ID,
         "print-widen",
         null,
       ),
@@ -188,7 +187,7 @@ describe("isClientFaceExtractCurrent", () => {
         false,
         false,
         undefined,
-        "gpu",
+        CLIENT_FACE_BAKE_ID,
         "print-widen",
         "display-bytes",
       ),
@@ -200,7 +199,7 @@ describe("isClientFaceExtractCurrent", () => {
         false,
         false,
         undefined,
-        "gpu",
+        CLIENT_FACE_BAKE_ID,
         "print-widen",
         "display-bytes-v2",
       ),
@@ -219,7 +218,9 @@ describe("fusionWorldFaceLayer", () => {
       side: "front",
       lang: "en",
     });
-    expect(fusionWorldFaceLayer("SB02-024_Text_Ja")?.lang).toBe("ja");
+    expect(fusionWorldFaceLayer("SB02-024_Text_Ja")).toMatchObject({
+      lang: "ja",
+    });
     expect(fusionWorldFaceLayer("ST01-004_front")).toEqual({
       kind: "picture",
       side: "front",
@@ -280,214 +281,6 @@ describe("fusionWorldFaceLayer", () => {
     ).toEqual(["Card_LeaderB_Red_Frame"]);
   });
 
-  it("fills a gray DXT hole in white text and leaves the dark panel and a coloured badge", () => {
-    const rgba = Buffer.alloc(8 * 4);
-    // gray hole, then white ink, then a gap, then a dark panel and a blue badge
-    rgba.set([140, 140, 140, 250, 255, 255, 255, 255], 0);
-    rgba.set([16, 12, 8, 200], 4 * 4);
-    rgba.set([40, 90, 210, 255], 5 * 4);
-    const solid = solidifyPlateInk(rgba, 8, 1);
-    expect([...solid.subarray(0, 4)]).toEqual([255, 255, 255, 250]);
-    expect([...solid.subarray(4 * 4, 5 * 4)]).toEqual([16, 12, 8, 200]);
-    expect([...solid.subarray(5 * 4, 6 * 4)]).toEqual([40, 90, 210, 255]);
-  });
-
-  it("fills a black nick in a silver rim and leaves a lone dark pixel", () => {
-    const rgba = Buffer.alloc(3 * 3 * 4);
-    const metal = [120, 118, 122, 255];
-    rgba.set(metal, 0);
-    rgba.set(metal, 4);
-    rgba.set([8, 8, 8, 250], 8);
-    rgba.set(metal, 12);
-    const solid = solidifyPlateInk(rgba, 3, 3);
-    expect([...solid.subarray(8, 12)]).toEqual([120, 118, 122, 250]);
-    const alone = Buffer.alloc(3 * 4);
-    alone.set([8, 8, 8, 250, 120, 118, 122, 255], 0);
-    const kept = solidifyPlateInk(alone, 3, 1);
-    expect([...kept.subarray(0, 4)]).toEqual([8, 8, 8, 250]);
-  });
-
-  it("fills a black DXT endpoint on the stroke and leaves the dark panel", () => {
-    const rgba = Buffer.alloc(6 * 4);
-    rgba.set([0, 0, 0, 250, 255, 255, 255, 255], 0);
-    rgba.set([16, 12, 8, 240], 5 * 4);
-    const solid = solidifyPlateInk(rgba, 6, 1);
-    expect([...solid.subarray(0, 4)]).toEqual([255, 255, 255, 250]);
-    expect([...solid.subarray(5 * 4, 6 * 4)]).toEqual([16, 12, 8, 240]);
-  });
-
-  it("clears the black/metal stair inside a DXT block and leaves a dark panel block", () => {
-    const block = Buffer.alloc(4 * 4 * 4);
-    for (let i = 0; i < 8; i += 1) block.set([10, 8, 8, 255], i * 4);
-    for (let i = 8; i < 16; i += 1) block.set([160, 158, 162, 255], i * 4);
-    const fixed = deblockPlateDxt(block, 4, 4);
-    expect([...fixed.subarray(0, 4)]).toEqual([160, 158, 162, 255]);
-    expect([...fixed.subarray(8 * 4, 9 * 4)]).toEqual([160, 158, 162, 255]);
-
-    const panel = Buffer.alloc(4 * 4 * 4);
-    for (let i = 0; i < 16; i += 1) panel.set([16, 12, 10, 255], i * 4);
-    expect([...deblockPlateDxt(panel, 4, 4).subarray(0, 4)]).toEqual([
-      16, 12, 10, 255,
-    ]);
-  });
-
-  it("softens mid-tone chrome without blurring white ink", () => {
-    const rgba = Buffer.alloc(3 * 3 * 4);
-    for (let i = 0; i < 9; i += 1) rgba.set([120, 118, 122, 255], i * 4);
-    rgba.set([255, 255, 255, 255], 4 * 4);
-    const soft = softenPlateChrome(rgba, 3, 3);
-    expect([...soft.subarray(0, 4)]).toEqual([120, 118, 122, 255]);
-    expect([...soft.subarray(4 * 4, 5 * 4)]).toEqual([255, 255, 255, 255]);
-  });
-
-  it("bilinear resize matches WebGL LINEAR sample at texel centers", () => {
-    const src = Buffer.alloc(2 * 2 * 4);
-    src.set([0, 0, 0, 255], 0);
-    src.set([255, 0, 0, 255], 4);
-    src.set([0, 255, 0, 255], 8);
-    src.set([0, 0, 255, 255], 12);
-    const out = bilinearResizeRgba(src, 2, 2, 1, 1);
-    // Centre of 2×2 → average of all four
-    expect(out[0]!).toBe(64);
-    expect(out[1]!).toBe(64);
-    expect(out[2]!).toBe(64);
-    expect(out[3]!).toBe(255);
-  });
-
-  it("LINEAR stand-in blends a texel with its opaque neighbours", () => {
-    const rgba = Buffer.alloc(3 * 3 * 4);
-    for (let i = 0; i < 9; i += 1) rgba.set([0, 0, 0, 255], i * 4);
-    rgba.set([255, 255, 255, 255], 4 * 4);
-    const soft = softenPlateBilinear(rgba, 3, 3);
-    // Centre white averaged with 8 black neighbours → ~28
-    expect(soft[4 * 4]!).toBeGreaterThan(20);
-    expect(soft[4 * 4]!).toBeLessThan(40);
-    const cured = curePlateDxt(rgba, 3, 3);
-    expect(cured[4 * 4]!).toBeGreaterThan(20);
-    expect(cured[4 * 4]!).toBeLessThan(40);
-  });
-
-  it("blends Unity mip levels for the catalogue plate width", () => {
-    expect(clientPlateMipBlend(1024, 1024)).toBe(0);
-    expect(clientPlateMipBlend(1024, 512)).toBe(1);
-    expect(clientPlateMipBlend(1024, 733)).toBe(1);
-    const mixed = blendPlateMips(
-      Buffer.from([0, 0, 0, 255]),
-      Buffer.from([100, 100, 100, 255]),
-      0.5,
-    );
-    expect([...mixed]).toEqual([50, 50, 50, 255]);
-  });
-
-  it("box-filters opaque texels to the catalogue size", () => {
-    const src = Buffer.alloc(4 * 4 * 4, 0);
-    for (let i = 0; i < 16; i += 1) {
-      src[i * 4] = 255;
-      src[i * 4 + 3] = 255;
-    }
-    const out = boxFilterRgba(src, 4, 4, 2, 2);
-    expect(out.length).toBe(2 * 2 * 4);
-    expect([...out.subarray(0, 4)]).toEqual([255, 0, 0, 255]);
-  });
-
-  it("nearest-upsamples mip1 then resolves chrome stairs", () => {
-    const mip0 = Buffer.alloc(4 * 4 * 4, 0);
-    const mip1 = Buffer.alloc(2 * 2 * 4, 0);
-    // Checkerboard low-chroma stairs on mip0.
-    for (let y = 0; y < 4; y += 1) {
-      for (let x = 0; x < 4; x += 1) {
-        const i = (y * 4 + x) * 4;
-        const v = (x + y) % 2 === 0 ? 40 : 200;
-        mip0[i] = v;
-        mip0[i + 1] = v;
-        mip0[i + 2] = v;
-        mip0[i + 3] = 255;
-      }
-    }
-    for (let i = 0; i < mip1.length; i += 4) {
-      mip1[i] = 120;
-      mip1[i + 1] = 120;
-      mip1[i + 2] = 120;
-      mip1[i + 3] = 255;
-    }
-    const up = scaleRgbaNearest(mip1, 2, 2, 4, 4);
-    expect(up.length).toBe(4 * 4 * 4);
-    expect([...up.subarray(0, 4)]).toEqual([120, 120, 120, 255]);
-    const resolved = resolvePlateWithMip1(mip0, 4, 4, mip1, 2, 2);
-    expect([...resolved.subarray(0, 4)]).toEqual([120, 120, 120, 255]);
-  });
-
-  it("resolves DXT chrome / alpha stairs toward mip1, keeps flat gem fill", () => {
-    const w = 3;
-    const h = 3;
-    const mip0 = Buffer.alloc(w * h * 4, 0);
-    const mip1 = Buffer.alloc(w * h * 4, 0);
-    for (let y = 0; y < h; y += 1) {
-      for (let x = 0; x < w; x += 1) {
-        const i = (y * w + x) * 4;
-        const v = (x + y) % 2 === 0 ? 40 : 200;
-        mip0[i] = v;
-        mip0[i + 1] = v;
-        mip0[i + 2] = v;
-        mip0[i + 3] = 255;
-        mip1[i] = 120;
-        mip1[i + 1] = 120;
-        mip1[i + 2] = 120;
-        mip1[i + 3] = 255;
-      }
-    }
-    // Flat saturated blue fill — must stay on mip0.
-    const c = (1 * w + 1) * 4;
-    mip0[c] = 30;
-    mip0[c + 1] = 80;
-    mip0[c + 2] = 200;
-    mip0[c + 3] = 255;
-    mip1[c] = 0;
-    mip1[c + 1] = 0;
-    mip1[c + 2] = 0;
-    mip1[c + 3] = 255;
-    // Neighbours of centre also solid blue so alpha/luma variance is low.
-    for (const [x, y] of [
-      [0, 1],
-      [2, 1],
-      [1, 0],
-      [1, 2],
-      [0, 0],
-      [2, 0],
-      [0, 2],
-      [2, 2],
-    ] as const) {
-      const i = (y * w + x) * 4;
-      mip0[i] = 30;
-      mip0[i + 1] = 80;
-      mip0[i + 2] = 200;
-      mip0[i + 3] = 255;
-    }
-    const flat = resolvePlateChromeMips(mip0, mip1, w, h);
-    expect([...flat.subarray(c, c + 4)]).toEqual([30, 80, 200, 255]);
-
-    // Silhouette: opaque blue next to clear — alpha variance pulls mip1.
-    const edge = Buffer.from(mip0);
-    const clear = (0 * w + 0) * 4;
-    edge[clear + 3] = 0;
-    const soft = Buffer.alloc(w * h * 4, 0);
-    for (let i = 0; i < soft.length; i += 4) {
-      soft[i] = 40;
-      soft[i + 1] = 90;
-      soft[i + 2] = 180;
-      soft[i + 3] = 128;
-    }
-    const resolved = resolvePlateChromeMips(edge, soft, w, h);
-    const neighbour = (0 * w + 1) * 4;
-    expect(resolved[neighbour + 3]).toBe(128);
-  });
-
-  it("weights colour by coverage and restores it", () => {
-    const covered = premultiplyStraight(Buffer.from([255, 255, 255, 128]));
-    expect([...covered]).toEqual([128, 128, 128, 128]);
-    expect([...unpremultiplyStraight(covered)]).toEqual([255, 255, 255, 128]);
-  });
-
   it("places the cost ring on the printed card", () => {
     const placed = clientCostRingOffset(733, 1024);
     const anchor = clientCostRingAnchor();
@@ -527,12 +320,12 @@ describe("fusionWorldFaceLayer", () => {
     // Atlas junk far from centre.
     rgba.set([80, 80, 80, 200], (0 * w + 7) * 4);
     const cleared = isolateCostRingDisc(rgba, w, h, 3.5, 3.5, 2, 0.5);
-    expect([...cleared.subarray((3 * w + 3) * 4, (3 * w + 3) * 4 + 4)]).toEqual([
-      20, 20, 20, 255,
-    ]);
-    expect([...cleared.subarray((0 * w + 7) * 4, (0 * w + 7) * 4 + 4)]).toEqual([
-      0, 0, 0, 0,
-    ]);
+    expect([...cleared.subarray((3 * w + 3) * 4, (3 * w + 3) * 4 + 4)]).toEqual(
+      [20, 20, 20, 255],
+    );
+    expect([...cleared.subarray((0 * w + 7) * 4, (0 * w + 7) * 4 + 4)]).toEqual(
+      [0, 0, 0, 0],
+    );
   });
 
   it("keeps cost fill draw size below the Frost slot and CostFrame disc", () => {

@@ -16,6 +16,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { spawn } from "node:child_process";
 
+import { httpGet } from "@/lib/http/httpClient";
 import { packStagingDir } from "@/lib/packPaths";
 import { DBS_FW_PACK_ID } from "@/providers/dragonball/dbsfw/indexStore";
 import {
@@ -32,6 +33,12 @@ export type FwFoilKitStamp = {
   texturesOk?: boolean;
   masksOk?: boolean;
   facesOk?: boolean;
+  /**
+   * Recette de rendu des faces (`CLIENT_FACE_BAKE_ID`) au moment où
+   * `facesOk` a été posé : une nouvelle recette refait les faces même sans
+   * changement de version du client.
+   */
+  facesRecipe?: string;
   updatedAt?: string;
 };
 
@@ -49,7 +56,6 @@ export type EnsureFwClientOpts = {
   force?: boolean;
   repo?: string;
   stagingRoot?: string;
-  fetchImpl?: typeof fetch;
   /** Skip download when stamp matches (default true). */
   reuse?: boolean;
 };
@@ -87,9 +93,7 @@ function writeStamp(root: string, stamp: FwClientStamp): void {
   writeFileSync(stampPath(root), `${JSON.stringify(stamp, null, 2)}\n`, "utf8");
 }
 
-export function readFwClientStamp(
-  stagingRoot?: string,
-): FwClientStamp | null {
+export function readFwClientStamp(stagingRoot?: string): FwClientStamp | null {
   return readStamp(stagingRoot ?? fwXsollaStagingRoot());
 }
 
@@ -124,35 +128,47 @@ export type FwFoilKitStep = "shadersOk" | "texturesOk" | "masksOk" | "facesOk";
 export function foilKitStepFresh(
   stamp: FwClientStamp | null | undefined,
   step: FwFoilKitStep,
-  opts: { force?: boolean; limit?: number; match?: string } = {},
+  opts: {
+    force?: boolean;
+    limit?: number;
+    match?: string;
+    /** Recette courante des faces ; différente du tampon ⇒ étape à refaire. */
+    facesRecipe?: string;
+  } = {},
 ): boolean {
   if (opts.force) return false;
   if (opts.limit != null || (opts.match != null && opts.match !== "")) {
     return false;
   }
+  if (
+    step === "facesOk" &&
+    opts.facesRecipe !== undefined &&
+    stamp?.kit?.facesRecipe !== opts.facesRecipe
+  ) {
+    return false;
+  }
   return stamp?.kit?.[step] === true;
 }
 
+/** Volume CDN par flux vers `.partial` — lib/http (rejeu, circuit par host). */
 async function downloadToFile(
   url: string,
   dest: string,
   expectedBytes: number,
-  fetchImpl: typeof fetch,
 ): Promise<void> {
   if (existsSync(dest) && expectedBytes > 0) {
     const size = statSync(dest).size;
     if (size === expectedBytes) return;
   }
   const partial = `${dest}.partial`;
-  const res = await fetchImpl(url);
-  if (!res.ok || !res.body) {
-    throw new Error(`CDN download ${res.status}: ${url}`);
-  }
+  const res = await httpGet<Readable>(url, {
+    responseType: "stream",
+    // Délai jusqu'aux en-têtes : un volume de plusieurs centaines de Mo
+    // s'écoule ensuite à son rythme.
+    timeout: 120_000,
+  });
   mkdirSync(join(dest, ".."), { recursive: true });
-  await pipeline(
-    Readable.fromWeb(res.body as import("node:stream/web").ReadableStream),
-    createWriteStream(partial),
-  );
+  await pipeline(res.data, createWriteStream(partial));
   renameSync(partial, dest);
   if (expectedBytes > 0) {
     const size = statSync(dest).size;
@@ -204,6 +220,19 @@ function findStandaloneOsx(gameRoot: string): string | null {
 }
 
 /**
+ * Client déjà posé par l'étape commune `ensurePackClient` (ADR-026) : tampon
+ * de version + racine Addressables, lus sur disque sans réseau. `null` tant
+ * qu'aucune Sync n'a téléchargé le client.
+ */
+export function readStagedFusionWorldClient(
+  stagingRoot: string = fwXsollaStagingRoot(),
+): { bundlesDir: string; stamp: FwClientStamp } | null {
+  const stamp = readFwClientStamp(stagingRoot);
+  const bundlesDir = findStandaloneOsx(join(stagingRoot, "game"));
+  return stamp && bundlesDir ? { bundlesDir, stamp } : null;
+}
+
+/**
  * Ensure StandaloneOSX Addressables exist under pack staging (CDN download).
  */
 export async function ensureFusionWorldClientFromCdn(
@@ -213,7 +242,6 @@ export async function ensureFusionWorldClientFromCdn(
   const volumesDir = join(root, "volumes");
   const gameRoot = join(root, "game");
   const repo = opts.repo ?? process.cwd();
-  const fetchImpl = opts.fetchImpl ?? fetch;
   const reuse = opts.reuse !== false;
 
   mkdirSync(volumesDir, { recursive: true });
@@ -222,7 +250,6 @@ export async function ensureFusionWorldClientFromCdn(
   let manifest: GusManifest;
   try {
     manifest = await fetchGusManifest({
-      fetchImpl,
       cdnOrigin: DBS_FW_CDN_ORIGIN,
     });
   } catch (err) {
@@ -230,7 +257,6 @@ export async function ensureFusionWorldClientFromCdn(
       `── fw cdn : primary GUS/CDN failed (${err instanceof Error ? err.message : err}) — retry fallback origin`,
     );
     manifest = await fetchGusManifest({
-      fetchImpl,
       cdnOrigin: DBS_FW_CDN_ORIGIN_FALLBACK,
     });
   }
@@ -272,7 +298,7 @@ export async function ensureFusionWorldClientFromCdn(
   for (const vol of manifest.volumes) {
     const dest = join(volumesDir, vol.fileName);
     const had = existsSync(dest) && statSync(dest).size === vol.bytes;
-    await downloadToFile(vol.url, dest, vol.bytes, fetchImpl);
+    await downloadToFile(vol.url, dest, vol.bytes);
     if (!had) downloaded = true;
     console.log(`   volume ${vol.fileName} (${vol.bytes} B)`);
   }

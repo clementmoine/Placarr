@@ -41,11 +41,32 @@ describe("foilKitStepFresh", () => {
     expect(foilKitStepFresh(stamp, "facesOk", { match: "ST01" })).toBe(false);
   });
 
+  it("refait les faces quand la recette de rendu a changé pour la même version du client", () => {
+    const withRecipe = {
+      ...stamp,
+      kit: { ...stamp.kit, facesRecipe: "cpu-lanczos-v1" },
+    };
+    expect(
+      foilKitStepFresh(withRecipe, "facesOk", {
+        facesRecipe: "cpu-lanczos-v1",
+      }),
+    ).toBe(true);
+    expect(
+      foilKitStepFresh(withRecipe, "facesOk", {
+        facesRecipe: "cpu-lanczos-v2",
+      }),
+    ).toBe(false);
+    // Tampon d'avant la recette (bake WebGL) : à refaire.
+    expect(
+      foilKitStepFresh(stamp, "facesOk", { facesRecipe: "cpu-lanczos-v1" }),
+    ).toBe(false);
+  });
+
   it("does not skip without stamp/kit", () => {
     expect(foilKitStepFresh(null, "facesOk")).toBe(false);
-    expect(
-      foilKitStepFresh({ ...stamp, kit: undefined }, "facesOk"),
-    ).toBe(false);
+    expect(foilKitStepFresh({ ...stamp, kit: undefined }, "facesOk")).toBe(
+      false,
+    );
   });
 });
 

@@ -30,7 +30,6 @@ describe("dbsFwEffectPack playroom arts", () => {
     expect(art?.imageUrl).toMatch(/\/cards\/en\//);
     expect(art?.imageUrl).not.toMatch(/sb02\/024/);
     expect(art?.label).toMatch(/branché/);
-    expect(art?.liveOwned).toBe(true);
   });
 
   it("gives every branched leaf its own catalogue print (no ST01 seed reuse)", () => {

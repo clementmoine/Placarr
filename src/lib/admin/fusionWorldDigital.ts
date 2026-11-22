@@ -70,7 +70,7 @@ function readVersion(root: string): string | null {
   if (!existsSync(file)) return null;
   const text = readFileSync(file, "utf8");
   const match = /game=(\d+)/.exec(text);
-  return match?.[1] ?? text.trim() || null;
+  return (match?.[1] ?? text.trim()) || null;
 }
 
 /** Inventory of one client root. Missing directories yield `installed: false`. */

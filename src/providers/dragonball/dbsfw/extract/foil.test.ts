@@ -5,10 +5,9 @@ import { foilKitStepFresh } from "@/providers/dragonball/dbsfw/cdn/ensureClient"
 import { runDbsFwFoilExtract } from "./foil";
 
 describe("runDbsFwFoilExtract", () => {
-  it("soft-skips when CDN staging is unavailable", async () => {
+  it("soft-skips when no client is staged (never downloads itself)", async () => {
     const result = await runDbsFwFoilExtract({
-      bundlesDir: "/tmp/placarr-no-fw-client-bundles",
-      skipCdn: true,
+      stagingRoot: "/tmp/placarr-no-fw-client-staging",
     });
     expect(result.skipped).toBe(true);
     expect(result.reason).toBe("no-cdn-client");

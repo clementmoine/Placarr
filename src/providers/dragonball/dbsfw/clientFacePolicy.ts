@@ -24,6 +24,17 @@ export const CLIENT_FACE_LAYOUT_ID = "print-widen";
 export const CLIENT_FACE_TONE_ID = "display-bytes-v2";
 
 /**
+ * DECISION (2026-11-21): la face catalogue est composée sur CPU
+ * (`extract/composeClientFace.ts`) — décodeur BC1/BC3 conforme
+ * (`src/lib/unity/bcn.ts`), réduction Lanczos3, fusion `over` du shader
+ * d'origine. Remplace le bake WebGL/Chrome (`"gpu"`) et l'aplat CPU au
+ * décodeur unity-js-tools (`"cpu"`, tramé) : tout autre identifiant est
+ * périmé et rebaké. v2 (2026-11-22) : calques `layer.*.webp` réduits par le
+ * même Lanczos3 que la face. Voir docs/backlog/2026-11-21-fw-faces-sans-gpu.md.
+ */
+export const CLIENT_FACE_BAKE_ID = "cpu-lanczos-v2";
+
+/**
  * DECISION: pastille draw size inside Cost_0N holes (~36 px diam on atlas).
  * Source is `CostFrame_*` (~89 px opaque); native blit overfills. 20 was
  * undersized vs Bandai aplat (~fillR 8 vs 9 @ 733); 24 ≈ ⅔ hole, matches

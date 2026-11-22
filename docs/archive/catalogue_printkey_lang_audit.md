@@ -1,6 +1,8 @@
 # Catalogue TCG — printKey × langue
 
-> Audit empirique **2026-09-21** sur corpus local. Alimente le contrat [catalogue_contract.md](catalogue_contract.md).
+> **Archivé le 2026-11-19** — audit daté ; la règle retenue vit dans `../catalogue_contract.md` § Identité et langue.
+
+> Audit empirique **2026-09-21** sur corpus local. Alimente le contrat [catalogue_contract.md](../catalogue_contract.md).
 
 ## Question
 

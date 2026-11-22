@@ -1,5 +1,7 @@
 # Placarr vs tako-firehouse — analyse d'architecture
 
+> **Archivé le 2026-11-19** — analyse close ; ses conclusions vivent dans `ARCHITECTURE.md` et ADR-009/016/020.
+
 Analyse menée le **2026-08-15** sur [Nimai26/tako-firehouse](https://github.com/Nimai26/tako-firehouse),
 un projet de périmètre voisin : agrégation multi-domaines de métadonnées de
 collection. Objectif déclaré : **pouvoir reprendre Placarr à la main, sans IA,

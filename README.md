@@ -50,7 +50,7 @@ What you may actually want to change:
 | `PRISMA_PG_POOL_MAX`                | `10`                       | Connections per process. Keep (processes × pool) under Postgres `max_connections`.                                                      |
 | `PRISMA_PG_CONNECT_TIMEOUT_MS`      | `15000`                    | Wait for a free pool client (enrich fans out many durable-evidence reads).                                                              |
 | `DATABASE_URL` host                 | `127.0.0.1`                | Prefer over `localhost` — compose binds IPv4 loopback only.                                                                             |
-| Provider API keys                   | unset                      | Each missing key simply disables that provider — `pnpm providers:health` lists them.                                                    |
+| Provider API keys                   | unset                      | Each missing key simply disables that provider (shown as `blocked` in the admin). Sign-up URL next to each key in `.env.example`.                                                    |
 
 Provider credentials are all optional and all free tiers. A provider without its
 key reports as `blocked` and is skipped at runtime rather than failing a scan.

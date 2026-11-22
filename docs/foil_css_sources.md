@@ -2,7 +2,7 @@
 
 Contrat commun CSS+WebGL : [foil_effects.md](foil_effects.md).
 
-Dernière passe 2026-09-06 — staging simey via `syncSimeyCss.ts`.
+Dernière passe 2026-09-06. Depuis le 2026-11-22 : étape Sync Pokémon `simey` (`live/foil/simeyWeb.ts`, kit partagé `shared/webFoilKit` comme le visualiseur Lorcana) — HTTP au commit amont figé, provenance `logs/simey-source.json` (licence amont : GPL-3.0).
 
 **Règle licence.** Placarr = GPL-3.0-or-later. Arbres simey =
 `data/pokemon/foil/simey/{poke-holo,poke-151}/` pour **lire** recettes —
@@ -24,7 +24,7 @@ réinvente pas. Différence critique — **Simey est EN** ; Placarr est
 | **FX partagés** (spectrum, noise) | `data/pokemon/foil/textures` (extract Live) | CDN Simey pour art locale |
 | **Glitter / grain partagés** | vendored `simey_glitter`, `simey_grain` | inventer / dimmer Live noise |
 | **Cosmos stack** | vendored `simey_cosmos-{bottom,middle-trans,top-trans}` | scans foil EN par carte |
-| **Motifs finish** (illusion, pokeball, iri, …) | vendored `simey_*` (syncSimeyCss) | CDN Simey en runtime |
+| **Motifs finish** (illusion, pokeball, iri, …) | vendored `simey_*` (étape Sync `simey`) | CDN Simey en runtime |
 | **Pas d’amont Simey** | house **`flare`** | « CSS Live-fidèle » inventé |
 
 **Intégration = matériaux d’abord.** Les recettes staging restent la cible.
@@ -159,7 +159,7 @@ faces locales** du même leaf.
 
 - [ ] Face FR **et** autre locale si dump existe.
 - [ ] `cssGuard` vert.
-- [ ] Staging simey à HEAD (`syncSimeyCss --check`).
+- [x] Staging simey à HEAD — automatique à chaque Sync (étape `simey`).
 
 ---
 
@@ -188,7 +188,7 @@ Voir `LIVE_FINISH_CSS` + `holoShadersSimey.ts` / ports Radiant & co dans
 | [pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css) | `…/simey/poke-holo/` | `UPSTREAM_COMMIT` |
 | [pokemon-cards-151](https://github.com/simeydotme/pokemon-cards-151) | `…/simey/poke-151/` | `UPSTREAM_COMMIT` |
 
-Refresh : `tsx src/providers/pokemon/live/foil/syncSimeyCss.ts`.
+Refresh : Sync catalogue Pokémon (étape `simey`) ; CLI de dev `tsx src/providers/pokemon/live/foil/syncSimeyCss.ts -- --force`.
 
 ---
 

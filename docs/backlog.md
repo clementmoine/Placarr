@@ -1,5 +1,21 @@
 # Backlog
 
+## P0 — Reconstruction des étagères : ajout sans friction + catalogues (2026-11-21)
+
+**Juste après la remise en route** de l'environnement et des données. Les étagères utilisateur ont été perdues avec la base (recréée vide le 2026-11-18) ; tout est à ressaisir. Détail : **[backlog/2026-11-21-reconstruction-etageres.md](backlog/2026-11-21-reconstruction-etageres.md)**.
+
+| Ordre | Item | Résumé |
+| ----- | ---- | ------ |
+| 1 | **Chemin « pas au catalogue »** | Ajout par recherche web / providers ou saisie libre, sans attendre le catalogue ; origine de l'item visible (catalogue vs manuel). |
+| 2 | **Liaison automatique a posteriori** | Après chaque Sync, relier les items manuels au catalogue par identifiant fort (barcode, `printKey`, id externe) puis rafraîchir en préservant les champs utilisateur ; titre seul → proposition à confirmer. Étend `enqueuePrintCatalogPropagate`. |
+| 3 | **Ajout en série + récap commun** | Enchaîner les ajouts sans fermer la modale, défauts mémorisés, page récap accepter / corriger / rejeter, validation groupée. |
+| 4 | **Scan d'une page de classeur** | Caméra sur une page 9 / 16 / 18 cases → toutes les cartes détectées et identifiées → récap → ajout en masse. Rend prioritaire « Identify batch parallèle » (P4). |
+| 5 | **Catalogues jeux vidéo** | Promouvoir LaunchBox / iCollect / No-Intro / Full Set en corpus d'identité par plateforme (checklist, Sync `living`) ; identité VG à définir par ADR. Puis les autres domaines. |
+
+**Faces Fusion World sans GPU** ([backlog/2026-11-21-fw-faces-sans-gpu.md](backlog/2026-11-21-fw-faces-sans-gpu.md)) : le « tramage 4×4 » des rendus CPU venait d'un bug du décodeur `@arkntools/unity-js-tools` (alpha BC3 faux aux pixels 10–15 de chaque bloc) ; avec un décodeur conforme, le CPU égale le GPU (59,8 dB sur 60 cartes). Recommandation : décodeur maison + compositeur Node, plus de Chrome. Le même décodeur sert Lorcana et Pokémon (masques foil) — à vérifier.
+
+**Prérequis — audit du 2026-11-21** ([backlog/2026-11-21-audit-catalogues-reseau-data.md](backlog/2026-11-21-audit-catalogues-reseau-data.md)) : ledgers Carddass / Shippuden non rejouables — **corrigé** (revenus dans `curated/sources/`, ADR-006 précisé) ; `httpGet` sans retry ni circuit breaker par défaut ; deux `fetch()` nus (lint rouge).
+
 > Dernière vérification : **2026-11-08** (absence : badges + filtre vue + bulk edit livrés ; reste → [backlog/2026-11-08-absence-reste-plan.md](backlog/2026-11-08-absence-reste-plan.md)).
 > Index docs : [README.md](README.md). Vision : [ARCHITECTURE.md](../ARCHITECTURE.md) § Vision.
 
@@ -672,10 +688,7 @@ Deux concepts **distincts**, sourcés différemment :
 
 ---
 
-Règles persistantes dans `.cursor/rules/` :
-
-- `placarr-principles.mdc` — providers plug-and-play, **aucun hardcode**, data-first, KISS
-- `placarr-testing.mdc` — **TDD / zéro régression**, guards, quand lancer `pnpm test`
+Règles persistantes (ex-`.cursor/rules/placarr-principles.mdc` + `placarr-testing.mdc`, perdues car non synchronisées) : reprises dans [`CLAUDE.md`](../CLAUDE.md) § Working rules — providers plug-and-play, **aucun hardcode**, data-first, KISS ; **TDD / zéro régression**, guards, `pnpm test`.
 
 ---
 
@@ -744,7 +757,7 @@ détails**, avec tout ce que chaque source donne. Trois packs repassés.
 Les faits sont affichés : `dbsFwPrintFacts` et `dbsCgPrintFacts` portent
 maintenant rareté, type, couleur, coûts, puissance, traits, texte, verso,
 bannissement et errata. Détail des mesures, des pièges et des champs écartés
-dans `card_pack_contract.md`.
+dans `archive/card_pack_contract.md`.
 
 **Scellé japonais — fait le 2026-08-19.** Les trente sorties de
 `cardcheckbox-jp.json` sont au catalogue : **41 → 70 SKU**, JA **2 → 31**. Le
@@ -1054,8 +1067,8 @@ Option ultérieure (hors spike) : module `pkmmarket` depuis le dump liste
 - [provider_agnostic_architecture.md](archive/provider_agnostic_architecture.md)
 - [barcode_consensus_refactor.md](archive/barcode_consensus_refactor.md)
 - [archive/hardcoding_audit.md](archive/hardcoding_audit.md)
-- [card_pack_contract.md](card_pack_contract.md)
-- [structure_vs_tako.md](structure_vs_tako.md)
+- [card_pack_contract.md](archive/card_pack_contract.md)
+- [structure_vs_tako.md](archive/structure_vs_tako.md)
 - [autonomy_audit.md](archive/autonomy_audit.md)
 - [collection_checklist.md](collection_checklist.md)
 - [sealed_product_contents.md](sealed_product_contents.md)

@@ -58,13 +58,7 @@ Validé jeux :
 
 1. **Ne pas** lancer Frida sur Live : anti-tamper (`/proc/self/maps`) → launch timeout.
 2. `./scripts/pokemon_sniff.sh` (coupe Frida, lance l’app).
-3. Tokens → `flows/tokens.json` ; sync Mac :
-
-```bash
-mkdir -p .tmp-foil-audit/live-unity/mitm
-cp ~/.cache/placarr-device-mitm/flows/tokens.json .tmp-foil-audit/live-unity/mitm/tokens.json
-pnpm exec tsx src/providers/pokemon/live/pipeline/syncLiveOwned.ts
-```
+3. Tokens → `flows/tokens.json` (QA / découverte uniquement — la synchro de la collection « owned » et le bouton Live du playroom ont été retirés le 2026-11-22).
 
 ---
 
@@ -130,16 +124,8 @@ Env : `PLACARR_MITM_MODE=all|games`, `PLACARR_MITM_DUMP_BODIES=0|1`,
 | `docs/pokemon_live_rainier.md` | Auth / commerce Rainier |
 | `docs/archive/handoff-live-owned-craft.md` | Owned + craft (archivé) |
 | `docs/archive/handoff-live-frida-nav.md` | Nav uGUI Card-Dex (autre sujet) |
-| `src/providers/pokemon/live/pipeline/syncLiveOwned.ts` | Attend tokens sous `.tmp-foil-audit/…/tokens.json` |
-| Foil playroom Live button | Nav Frida (`~/.cache/placarr-frida-ugui`) — **couper mitm proxy** pendant la nav UI |
 
-Pour sync owned après sniff OAuth (**pas** de script `pnpm foil:pokemon:*` — retiré) :
-
-```bash
-mkdir -p .tmp-foil-audit/live-unity/mitm
-cp ~/.cache/placarr-device-mitm/flows/tokens.json .tmp-foil-audit/live-unity/mitm/tokens.json
-pnpm exec tsx src/providers/pokemon/live/pipeline/syncLiveOwned.ts
-```
+Synchro « owned » (`syncLiveOwned.ts`) et bouton Live du playroom (nav Frida) : **retirés 2026-11-22** — ils servaient à comparer 1:1 les foils pendant la première implémentation.
 
 ---
 

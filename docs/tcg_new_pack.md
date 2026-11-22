@@ -4,7 +4,7 @@ Contrat vivant — ce qu’il faut déclarer pour qu’un nouveau jeu ouvre un
 onglet catalogue, une recherche, une ownership / checklist et un sync admin
 **sans** inventer de chemins core.
 
-Companion : [card_pack_contract.md](card_pack_contract.md) (audit historique),
+Companion : [card_pack_contract.md](archive/card_pack_contract.md) (audit historique),
 [catalogue_contract.md](catalogue_contract.md), [curated_data.md](curated_data.md),
 [sealed_product_contents.md](sealed_product_contents.md).
 

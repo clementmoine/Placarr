@@ -212,7 +212,7 @@ Ordre produit = **Material `Card`** du bundle (`frostCatalogueComposeOrder`) —
 
 Constantes produit isolées : `clientFacePolicy.ts`. Bake fill : `costRingBake.ts`. Fallback Frost/géométrie : `frostCostDisc.ts`, `costRingGeometry.ts`. Foil (modèle Lorcana) : grille/étagère = `art.client.webp` + CSS `flare` (`ItemCard` `backend="css"`) ; détail/playroom = WebGL Frost via `layerSurfaces` (`costRingUrl` / `badgeUrl` composés sur `frame` / `ink`). `full_foil_mask.webp` = CSS-only (`isDbsFwCssOnlyFoilMask`) — pas de Frost sur plaque blanche. WebGL Front préfère `layer.picture.dxt5` + `layers.s3tc.json` (mip0 Unity brut) quand le GPU expose S3TC ; frame/ink restent RGBA WebP + overlays. Leaf Frost produit : `dbsFwFrostLeafForPrint(printKey)` (seeds playroom → `superpara` / tabac / pakipaki → parallels `para` FoilType 0 → sinon `foil-holo`). Catalogue WebGL : FoilMask/HoloMask en **roles** (mask-foil + mask.webp par print), `_UseMainTex: 0` comme le dump Unity.
 
-On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). **Aplat produit** : bake GPU WebGL (`bakeClientFaceS3tc`) — mip0 S3TC + `LINEAR` (picture / frame / middle / frameTop / text) + costRing (RGBA32) + badge (BC7→RGBA) → sous-couche blanche → `art.client.webp`. Sidecars S3TC = mip0 Unity pour le détail WebGL. Le chrome FrameTex est z=0 (`layer.frame`) + z=2 (`layer.frameTop.dxt5`). CostRing : `Cost_0N`+`CostFrame_*` (RGBA32 + SS) ; badge `{Couleur}_0N_cost{n}` (BC7). Une art 1:2 (512×1024) **widen** → 733×1024 (63×88, `CLIENT_FACE_LAYOUT_ID=print-widen`). Tone bake `display-bytes` : DXT non-sRGB + costRing/badge RGBA sans CMS navigateur (pas de mix sRGB-sampled DXT / RGBA brut). Sidecars : `layer.picture.dxt5` (+ frame / frameTop / middle / text) et `layers.s3tc.json` + `layers.compose.json` (`bake:"gpu"`, `layout:"print-widen"`, `tone:"display-bytes"`) — requis par `isClientFaceExtractCurrent`. `pnpm exec tsx scripts/extractFusionWorldFaces.ts` — sans `--force`, un aplat stale (pré-split, CPU, ou layout shrink 512×715) est réécrit. `--reflow` ne retouche que les WebP client : après sidecars S3TC, relancer l’extract complet (pas reflow seul).
+On compose l’illustration (`*_Card`, `*_Front`, `*_Front_Card`) et la plaque de langue (`*_Text_En`, `*_Text_Ja`). **Aplat produit (depuis le 2026-11-21)** : composition **CPU** (`extract/composeClientFace.ts`) — calques mip0 décodés par `src/lib/unity/bcn.ts` (BC1/BC3 conforme D3D10), chaque calque réduit en **Lanczos3** à la taille carte (733×1024, `print-widen`), fusion `over` du shader Frost sur fond blanc, ordre `frostCatalogueComposeOrder` ; `layers.compose.json` `bake: "cpu-lanczos-v1"` (`CLIENT_FACE_BAKE_ID`). Plus de Chrome / WebGL. Le « tramage 4×4 » d’avant venait du décodeur `@arkntools/unity-js-tools` (alpha BC3 faux aux pixels 10–15 de chaque bloc), pas de la compression DXT : les filtres `curePlateDxt` / `deblockPlateDxt` / `softenPlateChrome` / `solidifyPlateInk` sont inutiles. Mesures et sources : [backlog/2026-11-21-fw-faces-sans-gpu.md](backlog/2026-11-21-fw-faces-sans-gpu.md).
 
 ## 7. Shaders — Metal traduit en GLSL ES 3.00
 
@@ -252,7 +252,9 @@ Extract multi-variantes : inclus dans le **Sync catalogue Fusion World**
 Source **standalone** : GUS (`project_id=254594`) → CDN Xsolla
 (`gamebuild.launcher.xsolla.com`) → volumes `full_game_*.7z.*` → extract
 sous `data/dragonball/fw/staging/xsolla/` → dump foil. Aucun chemin
-`~/Library/…` : le Sync ne lit pas une install Mac.
+`~/Library/…` : le Sync ne lit pas une install Mac. Le téléchargement est l'étape
+commune « client du jeu » (`catalog.ensureClient`, ADR-026) qui précède
+chaque Sync et Extract ; l'étape `foil` lit seulement le client posé.
 
 Fraîcheur Sync (`version.json` sous `staging/xsolla/`) :
 

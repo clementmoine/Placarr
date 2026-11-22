@@ -56,8 +56,7 @@ ptcgl.dev / DESIGN + sniffs MuMu.
 | **Disque app**      | Pas d’inventaire joueur dans les fichiers MuMu (prefs / UnityCache seulement)       |
 | **Miroirs publics** | ptcgl.dev / Omukade = catalogue ; **pas** les routes commerce owned                 |
 
-Pour l’owned playroom : sync owned (local tool / admin) →
-`data/pokemon/liveOwned.json` + `inventoryFoilFaces.ts`.
+Owned playroom (`liveOwned.json`, `syncLiveOwned.ts`) : **retiré 2026-11-22** — le playroom montre la face seed puis le dump.
 
 ---
 
@@ -174,8 +173,8 @@ contre `{apiEndpoint}` (ex. `https://api.us-east-1.studio-prod.pokemon.com`) :
 Chemins tirés de `global-metadata.dat` (`/commerce/v1/external/…`). Les guesses
 `/account/v1/external/inventory/get` → **403** (route gate, pas la bonne famille).
 
-**Owned playroom** : joindre `cardId` → `live-cards.sqlite.card_id` →
-`foil_effect` + stem normalisé `_fr_` → `data/pokemon/liveOwned.json`.
+**Owned playroom** (historique, retiré 2026-11-22) : joindre `cardId` → `live-cards.sqlite.card_id` →
+`foil_effect` + stem normalisé `_fr_`.
 Snapshot compte (ex.) : 412 carddex / 1269 inventory items / foil leaves
 AceFoil, FlatSilver, Rainbow, SunPillar, SvHolo, SvUltra (+ Thatch manuel).
 
@@ -226,15 +225,14 @@ Exemple live : craft `bw6-5_2` (Dratini / Tinsel, Common, 40) → wallet
 **Téléphone réel (2026-09)** — Magisk CA + proxy : Unity libcurl en clair
 (CDN, OAuth, `api.*.studio-prod`) **sans Frida**. Frida anti-tamper sur Live —
 ne pas l’armer pour le sniff. Handoff :
-`docs/handoff-device-mitm-frida.md` + `~/.cache/placarr-device-mitm/scripts/pokemon_sniff.sh`.
+`docs/device_mitm_frida.md` + `~/.cache/placarr-device-mitm/scripts/pokemon_sniff.sh`.
 
-Inutile de vider les caches app pour l’owned si on a un refresh PTCS valide :
-appeler carddex/inventory directement (`syncLiveOwned.ts`).
+(La synchro carddex/inventory `syncLiveOwned.ts` a été retirée le 2026-11-22.)
 
 ---
 
 ## 9. Conséquences Placarr
 
 1. **Catalogue / foil** — CDN + config-cache (+ getMultiple auth-driven optionnel).
-2. **Owned** — sync carddex → `liveOwned.json` (plus de saisie manuelle set-par-set).
+2. **Owned** — abandonné (2026-11-22) : plus de collection Live dans Placarr.
 3. **Ne pas** confondre miroir catalogue, inventory GUID brut, et carddex `cardId`.

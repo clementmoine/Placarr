@@ -9,7 +9,7 @@ pnpm test:coverage  # couverture
 ```
 
 Règle d’or produit : **barcode → item** — vide honnête OK, **faux positif confiant interdit**.
-Voir aussi `.cursor/rules/placarr-testing.mdc`.
+Règles de travail (TDD, zéro régression, guards) : [`CLAUDE.md`](CLAUDE.md) § Working rules ; procédure pas à pas : skill `.claude/skills/barcode-regression/`.
 
 ## 3 couches
 

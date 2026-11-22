@@ -1,7 +1,7 @@
 # Contrat catalogue — une base, zéro désync
 
-> Vivant. Companion : [provider_supply_modes.md](provider_supply_modes.md), [data-layout.md](data-layout.md), [card_pack_contract.md](card_pack_contract.md).
-> Audits : [catalogue_sources_underexploited.md](catalogue_sources_underexploited.md), [catalogue_printkey_lang_audit.md](catalogue_printkey_lang_audit.md), [catalogue_non_tcg_provider_audit.md](catalogue_non_tcg_provider_audit.md).
+> Vivant. Companion : [provider_supply_modes.md](provider_supply_modes.md), [data-layout.md](data-layout.md), [card_pack_contract.md](archive/card_pack_contract.md).
+> Audits : [catalogue_sources_underexploited.md](catalogue_sources_underexploited.md), [catalogue_printkey_lang_audit.md](archive/catalogue_printkey_lang_audit.md), [catalogue_non_tcg_provider_audit.md](archive/catalogue_non_tcg_provider_audit.md).
 
 ## Règle d’or
 
@@ -121,7 +121,13 @@ Catalogue Sync reconstruit le corpus **sans** snapshot local, moyennant délai r
 
 - Scrapes / API / CDN / Malie / store APK / logos TCGdex → staging → promote → ledger → purge.
 - Pokémon Live CDN : **Malie** (inventaire + `live.sqlite`) + **epoch probe** (buckets datés) — plus de dig `config-cache` ; meta store sous `logs/apk-store-meta.json`.
-- Hors Sync : `uploads/`, `liveOwned.json` (PTCS), pipelines non-catalogue (icollect / LaunchBox…).
+- Client du jeu (ADR-026) : avant toute Sync catalogue et toute Extract,
+  l'étape commune `ensurePackClient` appelle `catalog.ensureClient` du pack —
+  APK du store pour Lorcana / Pokémon Live (`apkStoreClient`), client
+  GUS/Xsolla pour Fusion World. Téléchargement seulement si la version
+  change ; les pipelines lisent le client posé, ils ne le téléchargent pas.
+- Hors Sync : `uploads/`, le DAT No-Intro
+  (`NOINTRO_DAT_PATH`), pipelines non-catalogue (icollect / LaunchBox…).
 
 ## Autonomie — critère de fin
 

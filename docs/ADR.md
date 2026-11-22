@@ -4,7 +4,7 @@ Format : **Date / Statut / Contexte / Décision / Conséquences / Alternatives
 écartées**. On consigne la décision et pourquoi, pas le résultat. Un ADR n'est
 jamais réécrit ; s'il est renversé, on ajoute un nouvel ADR qui le supplante.
 
-Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
+Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `archive/structure_vs_tako.md`).
 
 ---
 
@@ -96,6 +96,21 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   pas de M sous `curated/sources` pour les ledgers migrés.
 - **Alternatives écartées** : archive contributive en base (tako) — inutile
   en mono-instance ; le local curé couvre le même besoin.
+- **Précision 2026-11-21** : « syncable » veut dire **qu'un code de la Sync
+  écrit le fichier**. Le commit `ab86fb92` avait sorti de git 227 ledgers
+  dont ceux de Naruto Carddass (123) et Shippuden (15), qu'aucun code
+  n'écrit : après la perte Synology, ils n'existaient plus que sur le NAS, et
+  leur lecture au chargement des modules faisait planter Next et les workers.
+  Ils sont revenus dans `curated/sources/` ; les lecteurs prennent la copie
+  `data/` si une Sync en a écrit une, sinon la copie versionnée. Garde-fou :
+  `src/providers/naruto/syncedLedgersVersioned.test.ts` (tout ledger lu au
+  démarrage existe dans `curated/sources/`). **Transitoire** : ce sont des
+  données publiques ; cible = graine d'URL versionnée + scraper qui les
+  reconstruit dans `data/` avec une URL par entrée, puis retrait de
+  `curated/` (qui ne garde que le non récupérable publiquement :
+  constructions manuelles, scans maison). Premier lot fait : checklists
+  officielles EN / JP (graine `official-checklists-seed.json`, étape Sync
+  `checklists`).
 
 ## ADR-007 : Contrat provider déclaratif typé + hooks (capabilities)
 
@@ -124,7 +139,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   (`data/http/circuits/` via `circuitPersistence`, hydraté au restart),
   FlareSolverr derrière une interface `ChallengeSolver` ; règle ESLint
   interdisant `fetch`/`axios` directs dans `src/providers/` (allowlist
-  documentée : `pokemontcglive/cdn.ts` uniquement).
+  documentée : `pokemon/live/cdn/index.ts` uniquement).
 - **Conséquences** : contourner la plomberie devient du travail supplémentaire
   au lieu d'un raccourci. Les ledgers softban **par pack**
   (`providers/shared/softban`) restent pour les CLI CDN (Pokémon / DBS faces).
@@ -361,7 +376,7 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   (`pokemontcglive/unity`, `lorcanatcg/unity`). Les libs npm UnityFS n’étaient
   pas drop-in sous Node ; un spike + patches `unityfs-js` (codecs JS, SerializedPass
   Unity 6000) ont permis la parité golden. Détail :
-  [unity_without_python.md](unity_without_python.md).
+  [unity_without_python.md](archive/unity_without_python.md).
 - **Décision** :
   1. **Une toolchain Node** pour l’extract Unity produit ; Frida QA peut rester
      Python.
@@ -410,7 +425,134 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `structure_vs_tako.md`).
   Priorité ops = fraîcheur embeddings multi-pack ; pas de pipeline auto-FT
   dans Sync.
 
+## ADR-024 — Résilience par défaut des GET d'API (rejeu + circuit par host)
+
+- **Date** : 2026-11-21
+- **Statut** : Accepté, en place (non commité au 2026-11-22)
+- **Contexte** : l'audit du 2026-11-21
+  ([backlog/2026-11-21-audit-catalogues-reseau-data.md](backlog/2026-11-21-audit-catalogues-reseau-data.md))
+  a montré que l'ADR-008 n'était tenu que sur le chemin scrape :
+  `httpGet` / `httpHead` (toutes les API : TMDB, IGDB, Discogs…) n'avaient ni
+  rejeu ni circuit breaker ; `retry()` était opt-in dans 9 fichiers ; la doc
+  de `providerHttp` affirmait le contraire.
+- **Décision** :
+  1. `httpGet` / `httpHead` rejouent **une fois** (`retries`, défaut 2 essais)
+     sur erreur transitoire — réseau, délai, 5xx — avec backoff à jitter
+     complet ; jamais sur 4xx ni 429 (signal de quota). Le rejeu vit dans la
+     promesse partagée : les appels joints ne le multiplient pas. `httpPost`
+     n'est jamais rejoué.
+  2. Circuit breaker par host d'API (clé `api:<host>`, module
+     `circuitBreaker` existant) : ouvert après **5 échecs transitoires
+     consécutifs**, puis reset exponentiel 2 → 5 → 15 → 60 min avec sonde
+     half-open. Toute réponse (même 404) prouve que le host vit et remet le
+     compteur à zéro. Pas d'I/O tant que le host répond : le disque n'est
+     touché qu'à l'ouverture / fermeture. Circuit ouvert → erreur immédiate
+     `ECIRCUITOPEN`, non rejouée.
+  3. Le profil `scrape` garde son propre circuit soft-ban (`scrapeFetch`,
+     qui appelle `httpGet` avec `validateStatus: () => true`).
+- **Conséquences** : un hoquet réseau ne fait plus échouer un enrichissement ;
+  une API en panne cesse d'être martelée item après item. Coût : un GET en
+  échec transitoire prend jusqu'à un délai + un backoff de plus ; les
+  appelants qui ont déjà leur propre `retry()` peuvent passer `retries: 1`.
+- **Hors périmètre** : le `fetch()` du script navigateur de
+  `dbsfw/extract/bakeClientFaceS3tc.ts` — résolu par ADR-025 (module
+  supprimé, `sharedClientGuard` au vert).
+
+- **Complément 2026-11-22** : `PLACARR_HTTP_RESILIENCE=off` coupe rejeu et
+  circuit d'API — **uniquement** pour le rejeu déterministe des fixtures
+  code-barres (`tests/helpers/httpReplay`, qui le pose) : enregistrées sans ces
+  mécanismes, une requête non couverte y rend un 504 qu'un rejeu ou un circuit
+  ouvert transformaient en chemin différent. Le harnais distingue aussi les
+  POST par leur corps (Byparr) et ne tronque plus un corps JSON.
+
+## ADR-025 — Décodage BCn maison et faces Fusion World composées sur CPU
+
+- **Date** : 2026-11-21
+- **Statut** : Accepté, en place (non commité au 2026-11-22)
+- **Contexte** : les faces Fusion World passaient par un bake WebGL dans
+  Chrome headless (`bakeClientFaceS3tc.ts`) parce que le chemin CPU
+  « tramait ». Mesure : le tramage venait de `@arkntools/unity-js-tools`,
+  dont l'alpha BC3 est faux aux pixels 10 à 15 de chaque bloc 4×4 (indices
+  au-delà du 32e bit, défaut wasm-bindgen signalé par le paquet). Le même
+  décodeur sert `src/lib/unity/texture2d.ts` (Lorcana, Pokémon Live, masques
+  foil). Un GPU n'est pas une référence stable (interpolation BC1 propre à
+  chaque fabricant) et WebGL en conteneur sans GPU exige SwiftShader +
+  `--enable-unsafe-swiftshader`.
+- **Décision** :
+  1. `src/lib/unity/bcn.ts` : décodeur BC1 / BC3 TypeScript conforme D3D10
+     (BC3 toujours en 4 couleurs ; DXT1 Unity = RGB, index 3 noir opaque ;
+     alpha 48 bits lu sans décalage > 32 bits). Branché dans
+     `texture2d.ts` (DXT1 / DXT5) et le décodage des cadres FW.
+  2. `dbsfw/extract/composeClientFace.ts` : face produit composée sur CPU —
+     calques mip0 pleine résolution, réduction **Lanczos3** (sharp, alpha
+     prémultiplié), fusion `over` du shader Frost sur fond blanc. Choix du
+     propriétaire : « corrigé + Lanczos » plutôt que l'identique bilinéaire.
+  3. `bake: "cpu-lanczos-v1"` (`CLIENT_FACE_BAKE_ID`) dans
+     `layers.compose.json` et `facesRecipe` dans le tampon CDN : tout autre
+     bake est périmé et rebaké, même sans nouvelle version du client.
+  4. Suppression de `bakeClientFaceS3tc.ts` (Chrome, DevTools, serveur
+     HTTP temporaire).
+- **Conséquences** : décodeur validé à 59,8 dB moyen (min 57,7, écart max
+  3/255) contre 60 vrais bakes GPU ; ~50 ms de composition par face ;
+  sortie identique sur toute machine ; plus de Chrome dans l'image.
+- **Complément 2026-11-22 — une seule chaîne de décodage** :
+  - Référence indépendante : le décodeur matériel du GPU (Metal, Apple M1),
+    sur textures réelles et sur blocs aléatoires (outil de dev dans
+    `scratch/metaldec`, non versionné). BC7 : identique bit à bit (157
+    badges FW) ; ASTC 4×4…8×8 : ±1 (Pokémon Live) ; BC1 / BC3 maison : ±2
+    (arrondi d'interpolation propre à chaque GPU) ; ETC2 : identique.
+  - **ETC1 corrigé** : le paquet rend du BGRA, lu comme du RGBA — les
+    plaques foil Pokémon Live en ETC1 (`TEX_CompositeMask`,
+    `TEX_StitchedRings`, `FX_T_BlueHighlight`, `T_Stamped_HighlightPan`)
+    avaient R et B inversés. Régénérées.
+  - `decodeTextureFormat` couvre aussi Alpha8, RGBAHalf et ETC2 (RGB,
+    RGBA1 avec texel transparent = 0, RGBA8) ; le second décodeur caché
+    (`decodeRgba` d'unityfs-js) est supprimé : un format non couvert rend
+    `null`. Les cadres FW passent par la même entrée.
+  - Les calques `layer.*.webp` du foil FW sont réduits par le même Lanczos3
+    que la face (`resizeClientFaceLayer`) → `cpu-lanczos-v2`. Les filtres
+    de « soin » et les rééchantillonneurs bilinéaire / boîte de
+    `clientFaces.ts` sont retirés.
+  - Les plaques `.dxt5` restent : le rendu foil WebGL du navigateur les
+    lit compressées, ce n'est pas un second décodeur.
+- **Références** : [backlog/2026-11-21-fw-faces-sans-gpu.md](backlog/2026-11-21-fw-faces-sans-gpu.md).
+
 ---
 
 _Les ADR suivants documentent les décisions au fil de l'exécution (réorga
 2026-08, sortie UnityPy, …)._
+
+## ADR-026 — Source du client du jeu : un crochet déclaratif, une seule étape
+
+- **Date** : 2026-11-22
+- **Statut** : Accepté
+- **Contexte** : trois packs extraient leurs rendus d'un client de jeu
+  téléchargé — Lorcana et Pokémon Live depuis un APK du store
+  (`androidPackageId`, `apkStoreFetch`), Fusion World depuis le CDN GUS/Xsolla
+  (`ensureFusionWorldClientFromCdn`). Deux chemins faisaient la même chose :
+  la sonde store vivait dans le runner d'Extract (et, depuis le matin, devant
+  la Sync), la sonde CDN dans l'étape `foil` du pipeline FW. Conséquence
+  mesurée le 2026-11-22 : une Sync manuelle Lorcana relançait l'extract sans
+  APK (« skip Unity ») et perdait les rendus.
+- **Décision** :
+  1. `ProviderCatalogHooks.ensureClient?` : le provider déclare comment
+     obtenir son client ; il rend `ProviderClientOutcome`
+     (`skipped` / `up-to-date` / `updated` / `unavailable`, version en
+     chaîne). Fabrique partagée `apkStoreClient(packId)` pour les APK ;
+     Fusion World branche sa sonde GUS.
+  2. Une seule étape commune `ensurePackClient(dataPack)`
+     (`src/lib/admin/catalogueClient.ts`) appelle le crochet du module ;
+     la Sync catalogue (`catalogProviderSync`) et l'Extract
+     (`runCatalogueExtractCommand`) passent par elle, avant tout le reste.
+  3. Les pipelines ne téléchargent plus leur client eux-mêmes : l'étape
+     `foil` FW lit le client déjà posé (`version.json` + bundles) ; un client
+     absent = étape sautée avec sa raison, jamais une seconde sonde.
+- **Conséquences** : ajouter un jeu à client téléchargé = déclarer
+  `ensureClient`, rien dans le core. Une Sync manuelle ou auto fournit
+  toujours le binaire à l'extract. Garde : `catalogueClient.test.ts`
+  (tout pack `androidPackageId` déclare `ensureClient` ; Fusion World aussi ;
+  les autres packs ne sondent rien).
+- **Alternatives écartées** : une liste `clientSource` dans
+  `cataloguePacks` interprétée par le core (le core nommerait GUS/Xsolla —
+  contraire à la cécité providers) ; garder la sonde FW dans `foil` (deux
+  façons de faire la même chose).

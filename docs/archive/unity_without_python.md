@@ -1,5 +1,7 @@
 # Unity sans Python — livré (ADR-021)
 
+> **Archivé le 2026-11-19** — livré (ADR-021) ; le contrat vivant est dans `data-layout.md`.
+
 Objectif atteint : **UnityPy hors du chemin produit** (`pokemontcglive` /
 `lorcanatcg`). Extract = Node (`@/lib/unity` + `unityfs-js` patché), déclenché
 par **Catalogue Sync / worker in-process** (pas de CLI foil dans Docker).
@@ -28,5 +30,5 @@ SerializedPass Unity 6000 — header editor-data retiré, cf. AssetStudio 3dkkb)
 ## Liens
 
 - ADR-021
-- [data-layout.md](data-layout.md)
+- [data-layout.md](../data-layout.md)
 - Backlog P2 « Sortie UnityPy » (fermé)

@@ -1,6 +1,8 @@
 # Contrat des packs cartes — audit et harmonisation
 
-> **Contrat vivant** → [tcg_new_pack.md](tcg_new_pack.md)
+> **Archivé le 2026-11-19** — audit historique ; le contrat vivant est `../tcg_new_pack.md`.
+
+> **Contrat vivant** → [tcg_new_pack.md](../tcg_new_pack.md)
 > (`LocalTcgLineSpec` + factories). ADR-004 : pas de mega-`CardPack`.
 > Packs hérités (Carddass, Lorcana, Pokémon Live, DBS CG/FW) : **même surface
 > app** (garde `legacyTcgContract.test.ts`) ; schemas SQLite / foil restent

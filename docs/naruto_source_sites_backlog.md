@@ -1602,3 +1602,22 @@ hits 0). Ultrajeux S1–S4 + spc2 staging déjà installés — pas de delta
 `titleWithoutImage`. Outil volume garé pour un futur CDX ; suite faces =
 marché / paste.
 
+
+## Session 2026-11-22 — naruto-card.jp : conditions et robots
+
+- Images servies **uniquement** par le site (`/media/cards/…`, Next.js),
+  derrière le contrôle anti-robot Vercel (429 + `x-vercel-mitigated:
+  challenge`, y compris la page d'accueil en direct). Pas de stockage public
+  à côté, aucune capture Wayback des médias. Byparr lit les pages HTML,
+  pas les images (téléchargement vide).
+- [Conditions](https://naruto-card.jp/terms) art. 3 : interdit sans permission
+  de l'opérateur la récupération massive par crawling / scraping et
+  l'intégration dans une autre base (hors citation / usage privé). Art. 5 :
+  droits sur textes et images à l'opérateur / ayants droit.
+- `robots.txt` : `Disallow: /media/cards/` pour Google-Extended, site entier
+  fermé aux robots IA (ClaudeBot, GPTBot, CCBot…), `/api/` fermé à tous.
+- **Décision du propriétaire (2026-11-22)** — usage privé (app personnelle, couvert par l'exception de l'art. 3 pour la reprise ; la clause « récupération massive » n'a pas cette exception) : garder l'étape actuelle
+  (prefetch Chrome `scripts/narutocardjpBrowserFetch.py`) et les ~817 faces.
+  Voie propre si l'on veut l'officialiser : demander l'autorisation (ou un
+  export) à l'opérateur — page [à propos](https://naruto-card.jp/about).
+  **watch** — ne pas construire d'autre contournement.

@@ -77,7 +77,7 @@ data/
   launchbox|icollect/
   # nointro/ prévu — provider + index SQLite existent, rien de synchronisé sur disque
   indexes/title-idf/               # vide tant que le rebuild title-IDF n'a pas tourné (scripts/buildTitleIdfIndex.ts — pas d'alias npm)
-  logs/                            # artefacts d'audit foil (writer : src/providers/pokemon/live/liveCard.ts)
+  logs/                            # artefacts d'audit foil, reprintMeta / simey-source
 ```
 
 `naruto` = franchise ; **`naruto/carddass`** = Carddass + CCG (plus d’onglet Bandai CCG). **`naruto/shippuden`**, **`naruto/ninja-ranks`**, **`naruto/ultra-challenge`** = autres jeux, autres packs.
@@ -183,7 +183,7 @@ Voir [provider_supply_modes.md](provider_supply_modes.md) :
 | `data/pokemon/cards-index.json`       | Rebuild via `rebuildPokemonCardsIndex` — `catalog.refresh` + Catalogue Sync Pokémon                                                                                    |
 | `data/<pack>/products-index.json`     | **Appendix legacy** — tables `products` / `product_contents` dans `catalog.sqlite` = SSOT. Écriture projection encore via `persistSealedProductsIndex` (merge curated) tant que l’admin lit le JSON ; cible = sqlite-only. |
 | `data/<pack>/curated/products-contents.json` | Overlay runtime (graine git ± rebuild Sync). Sync ne réécrit pas `providers/.../curated/products-contents.json`. |
-| `liveOwned.json` / `reprintMeta.json` | Régénérables (Rainier / TCGdex audit) ; besoin tokens + `ROOT` repo (fixés)                                                                                           |
+| `reprintMeta.json` | Régénéré à chaque Sync Pokémon (TCGdex + dump Live) — `liveOwned.json` retiré 2026-11-22                                                                                           |
 | `catalog.refresh` Pokémon/Lorcana     | Identités/scrape + faces index ; foil Unity = Catalogue Extract (admin / worker)                                                                                      |
 | Naruto `curated/sources/*.json`       | Digs / maps d’ids / Wayback durable. **Pas** ledgers crawlés ni cotes. **`apache-index`** → `data/naruto/carddass/logs/` |
 | `data/<pack>/sources/*.json`          | Ledgers syncés (checklists, `observed`, harvests). |
@@ -236,6 +236,6 @@ Pack extracts: in-process via `catalogueExtractRunner` (admin Catalogue Sync /
 worker). Audits locaux optionnels : `tsx src/providers/pokemon/live/audit*.ts` (**dev**).
 Foil gaps: admin `/api/admin/foil-status` → `computeFoilGaps()` (`src/lib/admin/foilGaps.ts`).
 Unity extract: Node in-process via Catalogue Sync / worker (ADR-021 A–E). Voir
-[unity_without_python.md](unity_without_python.md).
+[unity_without_python.md](archive/unity_without_python.md).
 
 Historical Live handoff notes: [archive/tcglive_effects.md](archive/tcglive_effects.md).

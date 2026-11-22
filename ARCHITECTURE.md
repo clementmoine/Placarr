@@ -96,6 +96,6 @@ Ensuite seulement : `src/core/enrich/index.ts` (consensus, covers) et
 - [`docs/ADR.md`](docs/ADR.md) — décisions datées
 - [`docs/provider_integration_checklist.md`](docs/provider_integration_checklist.md)
   — ajouter un provider
-- [`docs/structure_vs_tako.md`](docs/structure_vs_tako.md) — pourquoi ce chemin
+- [`docs/archive/structure_vs_tako.md`](docs/archive/structure_vs_tako.md) — pourquoi ce chemin
   de lecture (analyse tako-firehouse)
 - [`docs/admin_surface.md`](docs/admin_surface.md) — admin web vs CLI dev-only

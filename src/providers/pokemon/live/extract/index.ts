@@ -20,6 +20,7 @@ export const POKEMON_STEPS = [
   "paper-faces",
   "products",
   "documents",
+  "simey",
 ] as const;
 export type PokemonStep = (typeof POKEMON_STEPS)[number];
 
@@ -31,6 +32,7 @@ const POKEMON_DEFAULT_STEPS: PokemonStep[] = [
   "paper-faces",
   "products",
   "documents",
+  "simey",
 ];
 
 const POKEMON_ONLINE = new Set<PokemonStep>([
@@ -39,6 +41,7 @@ const POKEMON_ONLINE = new Set<PokemonStep>([
   "paper-faces",
   "products",
   "documents",
+  "simey",
 ]);
 
 /** Resolve which Pokémon extract passes to run (full Sync surface by default). */
@@ -130,12 +133,10 @@ async function runManifestDump(
     shouldResumeCdnManifestDump,
     writeCdnManifestTargetMeta,
   } = await import("@/providers/pokemon/live/cdn/cdnManifestTarget");
-  const { directoriesFromDirsManifest } = await import(
-    "@/providers/pokemon/live/cdn/dumpCdnManifest"
-  );
-  const { probeLiveContentDirs } = await import(
-    "@/providers/pokemon/live/cdn/cdnEpochProbe"
-  );
+  const { directoriesFromDirsManifest } =
+    await import("@/providers/pokemon/live/cdn/dumpCdnManifest");
+  const { probeLiveContentDirs } =
+    await import("@/providers/pokemon/live/cdn/cdnEpochProbe");
   const knownDirs = hasDirsManifest
     ? directoriesFromDirsManifest(dirsManifest)
     : [];
@@ -164,15 +165,12 @@ async function runManifestDump(
     );
     return 0;
   }
-  const { pokemonCdnManifestsLedgerFresh } = await import(
-    "@/providers/pokemon/live/extract/liveStagingPurge"
-  );
-  const { cdnManifestTargetFingerprint } = await import(
-    "@/providers/pokemon/live/cdn/cdnManifestTarget"
-  );
-  const { loadDurableCdnCatalogue } = await import(
-    "@/providers/pokemon/live/cdn/durableCdnCatalogue"
-  );
+  const { pokemonCdnManifestsLedgerFresh } =
+    await import("@/providers/pokemon/live/extract/liveStagingPurge");
+  const { cdnManifestTargetFingerprint } =
+    await import("@/providers/pokemon/live/cdn/cdnManifestTarget");
+  const { loadDurableCdnCatalogue } =
+    await import("@/providers/pokemon/live/cdn/durableCdnCatalogue");
   const fingerprint = cdnManifestTargetFingerprint(targetOpts);
   if (
     !opts.force &&
@@ -184,8 +182,7 @@ async function runManifestDump(
     );
     return 0;
   }
-  const resume =
-    !opts.force && shouldResumeCdnManifestDump(targetOpts);
+  const resume = !opts.force && shouldResumeCdnManifestDump(targetOpts);
   if (resume) {
     console.log(
       `  AssetManifests resume (skip existing; ver=${opts.version} dir=${opts.contentDir})`,
@@ -199,9 +196,8 @@ async function runManifestDump(
     buckets,
     complete: false,
   });
-  const { dumpCdnManifests } = await import(
-    "@/providers/pokemon/live/cdn/dumpCdnManifest"
-  );
+  const { dumpCdnManifests } =
+    await import("@/providers/pokemon/live/cdn/dumpCdnManifest");
   const result = await dumpCdnManifests({
     contentBase: opts.contentBase,
     buckets: "all",
@@ -246,9 +242,8 @@ async function runExtract(
   runOpts?: { signal?: AbortSignal },
 ): Promise<Record<string, unknown>> {
   if (runOpts?.signal?.aborted) throw new Error("foil extract cancelled");
-  const { extractAllNode } = await import(
-    "@/providers/pokemon/live/extract/extractAllNode"
-  );
+  const { extractAllNode } =
+    await import("@/providers/pokemon/live/extract/extractAllNode");
   return extractAllNode({
     repo,
     bundlesDir: opts.bundlesDir,
@@ -292,6 +287,8 @@ export type UpdateOpts = {
   skipPaperFaces?: boolean;
   /** Official PDFs / rulebooks → `data/pokemon/documents/`. */
   skipDocuments?: boolean;
+  /** Kit foil web simeydotme (CSS + textures simey_*) — `foil/simey`, `foil/textures`. */
+  skipSimey?: boolean;
   /** AbortSignal from CLI background-job cancel. */
   signal?: AbortSignal;
 };
@@ -309,6 +306,7 @@ function applyPokemonSteps(
     skipPaperFaces: !set.has("paper-faces") || Boolean(opts.skipPaperFaces),
     skipProducts: !set.has("products"),
     skipDocuments: !set.has("documents"),
+    skipSimey: !set.has("simey"),
   };
 }
 
@@ -337,12 +335,10 @@ export async function runUpdate(
   let documentsReport: Record<string, unknown> | null = null;
   if (!opts.skipDocuments) {
     console.log("── documents (rulebooks / OP PDFs → data/pokemon/documents)");
-    const { loadPokemonCuratedDocuments } = await import(
-      "@/providers/pokemon/live/curated/documents"
-    );
-    const { harvestPackDocuments } = await import(
-      "@/providers/shared/documents/harvestPackDocuments"
-    );
+    const { loadPokemonCuratedDocuments } =
+      await import("@/providers/pokemon/live/curated/documents");
+    const { harvestPackDocuments } =
+      await import("@/providers/shared/documents/harvestPackDocuments");
     const docs = await harvestPackDocuments({
       packId: "pokemon",
       curated: loadPokemonCuratedDocuments(),
@@ -352,6 +348,18 @@ export async function runUpdate(
     console.log(
       `── documents : ${docs.fetched} fetched, ${docs.skipped} skipped, ` +
         `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
+    );
+  }
+
+  if (!opts.skipSimey) {
+    console.log(
+      "── simey (CSS + textures foil web → foil/simey, foil/textures)",
+    );
+    const { syncSimeyWebAssets } =
+      await import("@/providers/pokemon/live/foil/simeyWeb");
+    const simey = await syncSimeyWebAssets();
+    console.log(
+      `── simey : ${simey.refreshed.length} rafraîchi(s), ${simey.upToDate.length} à jour, ${simey.failed.length} échec(s)`,
     );
   }
 
@@ -406,9 +414,8 @@ export async function runUpdate(
         ` identities=${boot.report.identities}` +
         ` stems=${boot.report.bundleStems}`,
     );
-    const { yieldMalieEventLoop } = await import(
-      "@/providers/pokemon/live/cdn/malie"
-    );
+    const { yieldMalieEventLoop } =
+      await import("@/providers/pokemon/live/cdn/malie");
     await yieldMalieEventLoop();
   }
 
@@ -523,10 +530,8 @@ export async function runUpdate(
     }
     // Manifest dumps + dirs live under staging/ (post data-layout migrate).
     console.log("── load CDN catalogue from AssetManifest dumps");
-    const {
-      cdnManifestTargetFingerprint: fpOf,
-      readCdnManifestTargetMeta,
-    } = await import("@/providers/pokemon/live/cdn/cdnManifestTarget");
+    const { cdnManifestTargetFingerprint: fpOf, readCdnManifestTargetMeta } =
+      await import("@/providers/pokemon/live/cdn/cdnManifestTarget");
     const manifestMeta = readCdnManifestTargetMeta(
       path.join(staging, "cdn-manifests"),
     );
@@ -684,7 +689,7 @@ export async function runUpdate(
   const summary: Record<string, unknown> = {
     ok:
       extractErrors === 0 &&
-      (extractReport?.cardBackOk !== false) &&
+      extractReport?.cardBackOk !== false &&
       (apkAuditRc == null || apkAuditRc === 0) &&
       (storeAuditRc == null || storeAuditRc === 0),
     cdn: (sources as { cdn?: unknown }).cdn,
@@ -759,7 +764,9 @@ export async function runUpdate(
           (purged.orphans ? ` (+${purged.orphans} orphans)` : ""),
       );
       if (purged.durableCatalogue) {
-        console.log("── cdn-manifests → logs durable catalogue + staging purge");
+        console.log(
+          "── cdn-manifests → logs durable catalogue + staging purge",
+        );
       }
       if (purged.malieDatabases) {
         console.log("── malie-databases purge (inventory durable under logs/)");
@@ -801,9 +808,8 @@ export async function runUpdate(
     console.log("── paper faces skipped");
   } else {
     try {
-      const { runPokemonPaperFacesHarvest } = await import(
-        "@/providers/pokemon/tcgdex/scrape/paperFacesHarvest"
-      );
+      const { runPokemonPaperFacesHarvest } =
+        await import("@/providers/pokemon/tcgdex/scrape/paperFacesHarvest");
       const paper = await runPokemonPaperFacesHarvest({
         force: Boolean((opts as { forcePaperFaces?: boolean }).forcePaperFaces),
         rebuildIndex: false,
@@ -845,9 +851,8 @@ export async function runUpdate(
   }
 
   try {
-    const { rebuildPokemonCardsIndex } = await import(
-      "../pipeline/rebuildCardsIndex"
-    );
+    const { rebuildPokemonCardsIndex } =
+      await import("../pipeline/rebuildCardsIndex");
     const faces = rebuildPokemonCardsIndex({ root: repo });
     if (faces.skipped) {
       console.warn("cards-index: skipped — no data/pokemon/cards yet");
@@ -874,9 +879,7 @@ export async function runPokemonFoilExtract(
   const repo = path.resolve(opts.repo || args.repo || repoRoot());
   const { repo: _repo, ...updateOpts } = args;
   const steps = selectPokemonSteps(argv);
-  console.log(
-    `── Pokémon — étapes : ${steps.join(" → ") || "(rien)"}`,
-  );
+  console.log(`── Pokémon — étapes : ${steps.join(" → ") || "(rien)"}`);
   return runUpdate(repo, {
     ...applyPokemonSteps(steps, updateOpts),
     signal: opts.signal,

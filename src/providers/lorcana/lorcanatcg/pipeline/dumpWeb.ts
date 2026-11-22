@@ -15,8 +15,11 @@ import path from "node:path";
 
 import { packLogsDir } from "@/lib/packPaths";
 import { dataRoot, foilPackDir } from "@/lib/runtimeData";
-import { httpGet } from "@/lib/http/httpClient";
-import { retry } from "@/lib/http/retry";
+import {
+  downloadWebFoilAssets,
+  fetchWebAssetBytes,
+  writeWebFoilSourceLedger,
+} from "@/providers/shared/webFoilKit";
 import { lorcanaWebRecipeTextureStems } from "@/effects/lorcana/cssRecipes";
 import { ensureLorcanaSetLogoIndex } from "@/providers/lorcana/lorcanatcg/sources/setLogos";
 import {
@@ -46,31 +49,13 @@ export type DumpLorcanaWebOptions = {
   root?: string;
 };
 
-/**
- * GET bytes with transient-network retries. `noDedup` so a failed attempt
- * cannot poison the shared in-flight map for the next try.
- */
+/** GET d'un asset du visualiseur — kit web partagé (rejeu, sans dédup). */
 export async function fetchViewerBytes(url: string): Promise<Buffer> {
-  return retry(
-    async () => {
-      const res = await httpGet<ArrayBuffer>(url, {
-        headers: {
-          "User-Agent": UA,
-          // Prefer a fresh connection — Disney CDN sometimes RSTs keep-alive.
-          Connection: "close",
-        },
-        timeout: 45_000,
-        responseType: "arraybuffer",
-        noDedup: true,
-      });
-      if (!res.data || (res.data as ArrayBuffer).byteLength < 16) {
-        throw new Error(`empty response from ${url}`);
-      }
-      return Buffer.from(res.data);
-    },
-    FETCH_ATTEMPTS,
-    FETCH_BACKOFF_MS,
-  );
+  return fetchWebAssetBytes(url, {
+    userAgent: UA,
+    attempts: FETCH_ATTEMPTS,
+    backoffMs: FETCH_BACKOFF_MS,
+  });
 }
 
 export function discoverCssPaths(html: string): string[] {
@@ -137,25 +122,17 @@ async function downloadAssets(
   refs: Record<string, string>,
   dest: string,
 ): Promise<{ written: string[]; sources: Record<string, string> }> {
-  fs.mkdirSync(dest, { recursive: true });
-  const written: string[] = [];
-  const sources: Record<string, string> = {};
-  for (const stem of Object.keys(refs).sort()) {
-    const assetPath = refs[stem]!;
-    const ext = path.extname(assetPath).replace(/^\./, "");
-    const name = stableName(stem, ext);
-    const target = path.join(dest, name);
-    const url = `${VIEWER_BASE.replace(/\/$/, "")}${assetPath}`;
-    try {
-      const data = await fetchViewerBytes(url);
-      fs.writeFileSync(target, data);
-      written.push(name);
-      sources[name] = url;
-      console.log(`  ${name} ← ${assetPath}`);
-    } catch (err) {
-      console.log(`  ATTENTION fetch ${url}: ${err}`);
-    }
-  }
+  const base = VIEWER_BASE.replace(/\/$/, "");
+  const entries = Object.keys(refs)
+    .sort()
+    .map((stem) => {
+      const assetPath = refs[stem]!;
+      const ext = path.extname(assetPath).replace(/^\./, "");
+      return { name: stableName(stem, ext), url: `${base}${assetPath}` };
+    });
+  const { written, sources } = await downloadWebFoilAssets(entries, dest, {
+    fetchBytes: fetchViewerBytes,
+  });
   return { written, sources };
 }
 
@@ -224,9 +201,7 @@ function writeRecipesJson(dest: string, recipes: LorcanaWebRecipesFile): void {
       Object.entries(recipes.finishMap).sort(([a], [b]) => a.localeCompare(b)),
     ),
     varnishMap: Object.fromEntries(
-      Object.entries(recipes.varnishMap).sort(([a], [b]) =>
-        a.localeCompare(b),
-      ),
+      Object.entries(recipes.varnishMap).sort(([a], [b]) => a.localeCompare(b)),
     ),
   };
   fs.writeFileSync(
@@ -242,21 +217,12 @@ function writeSourceJson(
   refs: Record<string, string>,
   unlistedStems: string[],
 ): void {
-  const payload = {
+  writeWebFoilSourceLedger(logsDir, "web-source.json", {
     viewer: `${VIEWER_BASE}/${VIEWER_LOCALE}`,
     stems: refs,
     unlistedStems,
     files: sources,
-  };
-  const ordered = Object.fromEntries(
-    Object.entries(payload).sort(([a], [b]) => a.localeCompare(b)),
-  );
-  fs.mkdirSync(logsDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(logsDir, "web-source.json"),
-    `${JSON.stringify(ordered, null, 2)}\n`,
-    "utf8",
-  );
+  });
 }
 
 function resolveWebDest(root?: string): {

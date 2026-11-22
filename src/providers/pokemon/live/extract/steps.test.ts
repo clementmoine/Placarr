@@ -11,6 +11,7 @@ describe("selectPokemonSteps", () => {
       "paper-faces",
       "products",
       "documents",
+      "simey",
     ]);
   });
 
@@ -26,6 +27,7 @@ describe("selectPokemonSteps", () => {
       "extract",
       "products",
       "documents",
+      "simey",
     ]);
   });
 

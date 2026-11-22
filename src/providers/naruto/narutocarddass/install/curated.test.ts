@@ -989,7 +989,8 @@ const surugaDataCarddass = readNarutoCarddassSyncedSource("suruga-ya-data-cardda
       expect(carddasCom.officialSite.ingestFaces).toBe("none");
       expect(carddasCom.officialSite.promoteStagingHoles).toBe(true);
       expect(carddasJpCardlist.ingest).toBe("titles");
-      expect(carddasJpCardlist.counts.cards).toBe(1010);
+      // 17 volumes + decks de démarrage (st_5th…st_16th) + 5 spéciales.
+      expect(carddasJpCardlist.counts.cards).toBe(1070);
       expect(carddasJpCardlist.not).toContain("data-carddass");
       expect(carddasJpPromo.ingest).toBe("titles");
       expect(carddasJpPromo.counts.cards).toBe(61);

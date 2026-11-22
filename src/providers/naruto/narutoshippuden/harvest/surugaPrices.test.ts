@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { priceProbeContext } from "@/providers/shared/createPrintKeyPriceModule";
+
 import { writeSurugaPriceLedger } from "@/providers/naruto/shared/surugaYenPrices";
 
 import {
@@ -84,16 +86,11 @@ describe("refreshSurugaShippudenYenPriceOffers", () => {
 
     const offers = await refreshSurugaShippudenYenPriceOffers(
       {
-        shelfType: "tcg",
-        cleanedBarcode: "",
+        ...priceProbeContext({
+          printKey: "naruto:shi-0001",
+          name: "うずまきナルト",
+        }),
         primaryName: "Naruto",
-        primaryTitle: "うずまきナルト",
-        fallbackNames: [],
-        titles: [],
-        leDenicheurQueries: [],
-        isPal: false,
-        isClassics: false,
-        printKey: "naruto:shi-0001",
       },
       { ledgerPath },
     );

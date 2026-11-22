@@ -7,6 +7,7 @@
  * axis, audit filters) — never mint ghost `/cards/…` URLs from sqlite alone.
  */
 import { existsSync, statSync } from "node:fs";
+import type { SQLInputValue } from "node:sqlite";
 
 import {
   buildCatalogueCardRows,
@@ -14,7 +15,6 @@ import {
   matchesCataloguePreferredLang,
   type CatalogueCardRow,
 } from "@/lib/admin/catalogueCards";
-import { cataloguePackInfo } from "@/lib/admin/cataloguePacks";
 import { overscanFilterPage } from "@/lib/admin/catalogueOverscan";
 import { assetsPrintFaceUrl } from "@/lib/packAssetUrls";
 import { foldedLikePattern } from "@/providers/shared/sqliteFold";
@@ -179,17 +179,13 @@ export function buildCarddassCatalogueBrowseRows(
       : cache.rows;
   }
 
-  const packInfo = cataloguePackInfo(NARUTO_PACK_ID);
   const index = loadNarutoCardsIndexFromSqlite();
-  const rows = buildCatalogueCardRows(
-    NARUTO_PACK_ID,
-    index,
-    preferLang ?? null,
-    {
-      expandLocales: true,
-      catalogueLocales: packInfo?.catalogueLocales,
-    },
-  );
+  // Locales (expand / catalogueLocales) : lues par buildCatalogueCardRows
+  // depuis cataloguePackInfo — rien à repasser ici.
+  // Pas de sqlite (clone frais, Sync pas encore passée) : catalogue vide.
+  const rows = index
+    ? buildCatalogueCardRows(NARUTO_PACK_ID, index, preferLang ?? undefined)
+    : [];
   cache = { stamp, rows };
   return preferLang
     ? rows.filter((row) =>
@@ -371,7 +367,7 @@ function listCarddassCatalogueBrowsePageSql(
   if (!langs.length) return { rows: [], total: 0 };
   const offset = Math.max(0, Math.floor(input.offset));
   const limit = Math.max(1, Math.min(1000, Math.floor(input.limit)));
-  const params: unknown[] = [];
+  const params: SQLInputValue[] = [];
   const where: string[] = [
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];

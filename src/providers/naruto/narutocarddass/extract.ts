@@ -105,6 +105,9 @@ const driveLedger = readNarutoCarddassSyncedSource("naruto-ccg-drive.json");
 const STEPS = [
   "scrape",
   "reconstruct",
+  // Checklists officielles EN / JP depuis la Wayback (cache staging, donc
+  // aussi en --offline) — avant `index`, qui en fusionne les titres.
+  "checklists",
   "index",
   "products",
   "thumbs",
@@ -576,6 +579,14 @@ export async function runNarutoPackPipeline(
       case "thumbs":
         await runNarutoFixThumbs({ dryRun });
         break;
+      case "checklists": {
+        if (dryRun) break;
+        const { syncOfficialChecklists } = await import(
+          "./sources/officialChecklists"
+        );
+        await syncOfficialChecklists({ offline: argv.includes("--offline") });
+        break;
+      }
       case "index": {
         await scrapeNarutoCards({ indexOnly: true });
         const { runDataPackCardIdentifyIndexes } = await import(

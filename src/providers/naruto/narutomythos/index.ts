@@ -4,6 +4,7 @@
  * Autre jeu que le Carddass / Ninja Ranks / Ultra Challenge / Kayou.
  */
 import { createEmptyLocalTcgProvider } from "@/providers/shared/cardCatalogue/createEmptyLocalTcgProvider";
+import type { ProviderModule } from "@/types/providerModule";
 
 import {
   NARUTO_MYTHOS_EFFECT_PACK_ID,
@@ -80,7 +81,7 @@ export const narutoMythosCatalog = built.catalog;
 
 const baseMetadataAdapter = built.module.createMetadataAdapter?.();
 
-export const narutomythosModule = {
+export const narutomythosModule: ProviderModule = {
   ...built.module,
   info: {
     ...built.module.info,

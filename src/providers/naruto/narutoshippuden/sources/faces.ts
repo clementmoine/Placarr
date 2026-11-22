@@ -5,17 +5,17 @@
  */
 import { readNarutoShippudenSyncedSource } from "../assets";
 
+/** Chaque ligne cite le numéro imprimé relevé et l'annonce qui le montre. */
 type FaceRow = {
   ingest?: boolean;
   url?: string;
   curated?: string;
-  printedRef?: string;
+  printedRef: string;
   diskId?: string;
-  listingUrl?: string;
+  listingUrl: string;
   title?: string;
   note?: string;
   imageId?: string;
-  [key: string]: unknown;
 };
 
 type FacesLedger = { faces: FaceRow[] };
@@ -34,6 +34,7 @@ export type ShippudenMercariFace = FaceRow & {
 };
 
 export type ShippudenFrilFace = FaceRow & {
+  url: string;
   ingest: true;
 };
 

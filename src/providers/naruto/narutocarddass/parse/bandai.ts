@@ -7,7 +7,6 @@ import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { buildPrintKey } from "@/core/identify/printKey";
 import {
   canonicalizeNarutoPrintKey,
-  mintNarutoPrintKey,
   narutoDiskCardId,
   parseNarutoCollector,
   resolveNarutoLedgerPrintTarget,
@@ -19,14 +18,29 @@ import {
   narutoFaceCoverProvenance,
   narutoFaceSourceOf,
 } from "../disk";
-import { readNarutoCarddassSyncedSource } from "../syncedSources";
+import {
+  readNarutoCarddassSyncedSource,
+  readNarutoCarddassSyncedSourceIfPresent,
+} from "../syncedSources";
+import type {
+  BandaicgEnCardlistCard,
+  CarddasJpCardlistCard,
+  ChecklistLedger,
+} from "../sources/officialChecklists";
 
 const carddas20ProLedger = readNarutoCarddassSyncedSource("carddas20-pro.json");
 const noihjpCarddassLedger = readNarutoCarddassSyncedSource("noihjp-carddass.json");
 const bggEnCcgS1 = readNarutoCarddassSyncedSource("bgg-en-ccg-s1.json");
-const ledger = readNarutoCarddassSyncedSource("bandaicg-en-cardlist.json");
-const carddasJpCardlist = readNarutoCarddassSyncedSource("carddas-jp-cardlist.json");
 const promoLedger = readNarutoCarddassSyncedSource("carddas-jp-promo.json");
+
+/*
+ * Checklists officielles EN / JP : écrites par l'étape Sync `checklists`
+ * (`sources/officialChecklists.ts`) dans data/ — lues à la demande, vides tant
+ * que la Sync n'a pas tourné (un clone frais démarre sans elles).
+ */
+function generatedChecklist<Card>(fileName: string): ChecklistLedger<Card> | null {
+  return readNarutoCarddassSyncedSourceIfPresent<ChecklistLedger<Card>>(fileName);
+}
 
 // ─── parseBandaicgAsset ──────────────────────────────────────────────────────────
 
@@ -132,21 +146,21 @@ export function cardTypeFromCollectorNumber(number: string): string {
 // ─── parseBandaicgCardlist ──────────────────────────────────────────────────────────
 
 /**
- * Official Bandai USA CCG cardlists (bandaicg.com Wayback).
- * Source of truth: `curated/sources/bandaicg-en-cardlist.json`.
+ * Official Bandai USA CCG cardlists (bandaicg.com Wayback), rebuilt by the
+ * `checklists` Sync step into `data/…/sources/bandaicg-en-cardlist.json`.
  * Titles only — no faces. N/J/M/C, never NI. Skip N-US tin exclusives.
  */
-export type BandaicgEnCardlistRow = (typeof ledger.cards)[number];
+export type BandaicgEnCardlistRow = BandaicgEnCardlistCard;
 
 const bandaicgCardlist_ROW_RE =
   /card_col1"[^>]*>\s*([A-Z]{1,3}-?(?:US-?)?\d+)\s*<\/div>\s*<div class="card_link">(?:<a\b[^>]*>)?([^<]+)/gi;
 
-export function bandaicgEnCardlistLedger() {
-  return ledger;
+export function bandaicgEnCardlistLedger(): ChecklistLedger<BandaicgEnCardlistRow> | null {
+  return generatedChecklist<BandaicgEnCardlistRow>("bandaicg-en-cardlist.json");
 }
 
 export function bandaicgEnCardlistCards(): BandaicgEnCardlistRow[] {
-  return ledger.cards;
+  return bandaicgEnCardlistLedger()?.cards ?? [];
 }
 
 export function parseBandaicgCardlistHtml(
@@ -176,8 +190,13 @@ export function parseBandaicgCardlistHtml(
     if (seen.has(parsed.number)) continue;
     const name = match[2]!.replace(/\s+/g, " ").trim();
     if (!name) continue;
+    // La rareté est dans la même ligne (`card_row`) ; certaines pages (s12)
+    // y glissent un long `onmouseover`, d'où une fenêtre bornée par la ligne
+    // suivante plutôt qu'un nombre fixe de caractères.
+    const rowStart = match.index ?? 0;
+    const nextRow = html.indexOf('class="card_row"', rowStart + match[0].length);
     const rarityMatch = html
-      .slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 180)
+      .slice(rowStart, nextRow === -1 ? undefined : nextRow)
       .match(/card_col3"[^>]*>\s*([^<]+)\s*</i);
     seen.add(parsed.number);
     out.push({
@@ -348,7 +367,6 @@ const BARE_FACE_RE = /^(shinobi|jutsu|saku|irai)-(\d+)$/i;
 /** `shinobi_372_16` (underscore dump). */
 const UNDERSCORE_VOLUME_FACE_RE =
   /^(shinobi|jutsu|saku|irai)_(\d+)_(\d{1,2})$/i;
-const MAKU_JU_FACE_RE = /^ju-(\d+)_d\d$/i;
 
 const SPC2_PREFIX: Record<string, string> = {
   shinobi: "ni",
@@ -370,7 +388,8 @@ function diskIdFromKindNumber(
  * Sparse official GIFs → disk id for hole-fill (`shinobi-393_spc2` → `ni0393`).
  * Volume dumps use `shinobi-146_7` / `jutsu-348_17` (巻ノ number, not a
  * second collector id). Numbered `001.gif` chrome and event JPEGs stay
- * unmapped — faces on this host are GIFs.
+ * unmapped — faces on this host are GIFs. 幕 `ju-062_d3.gif` = 疾風伝 (JU-…) :
+ * le pack Shippuden les installe depuis sa graine Wayback, jamais ici.
  */
 export function carddasJpStagingFaceToDiskId(filename: string): string | null {
   const base = filename.split("/").pop() ?? "";
@@ -385,13 +404,11 @@ export function carddasJpStagingFaceToDiskId(filename: string): string | null {
   if (underscore) return diskIdFromKindNumber(underscore[1], underscore[2]);
   const bare = BARE_FACE_RE.exec(stem);
   if (bare) return diskIdFromKindNumber(bare[1], bare[2]);
-  const maku = MAKU_JU_FACE_RE.exec(stem);
-  if (maku) return narutoDiskCardId(`mju${maku[1]}`);
   return null;
 }
 
 function carddasJpStagingFaceIsSpecial(stem: string): boolean {
-  return SPC2_FACE_RE.test(stem) || MAKU_JU_FACE_RE.test(stem);
+  return SPC2_FACE_RE.test(stem);
 }
 
 let cardlistDiskIds: Set<string> | null = null;
@@ -407,7 +424,7 @@ function carddasJpCardlistDiskIds(): Set<string> {
 
 /**
  * Install only when the filename maps onto an official 巻ノ… id, or a
- * known special (`_spc2`, Maku `ju-N_dN`). Bare `/card/saku-214.gif`
+ * known special (`_spc2`). Bare `/card/saku-214.gif`
  * dumps are sequential site ids — not 作-214.
  */
 export function carddasJpStagingFaceInstallTarget(
@@ -427,10 +444,12 @@ export function carddasJpStagingFaceInstallTarget(
 
 /**
  * Official JP Carddass CG checklists — `cardlist/1st.shtml`…`17th.shtml`.
- * Source of truth: `curated/sources/carddas-jp-cardlist.json` (parsed from
- * the Wayback mirror). 忍/術/作/依 = NI/TE/TA/CL. Not Data Carddass.
+ * Rebuilt by the `checklists` Sync step into
+ * `data/…/sources/carddas-jp-cardlist.json` (Wayback snapshots listed in
+ * `curated/sources/official-checklists-seed.json`). 忍/術/作/依 =
+ * NI/TE/TA/CL. Not Data Carddass.
  */
-export type CarddasJpCardlistRow = (typeof carddasJpCardlist.cards)[number];
+export type CarddasJpCardlistRow = CarddasJpCardlistCard;
 
 const PREFIX: Record<string, string> = {
   忍: "ni",
@@ -465,12 +484,12 @@ const VOLUME_SET: Record<string, string> = {
 const carddasJpCardlist_ROW_RE =
   />(忍|術|作|依)[-−]?(\d+)<\/td>\s*<td[^>]*>[\s\S]*?<font color="[^"]+">([^<]+)<\/font>[\s\S]*?<\/td>\s*<td[^>]*>([^<]+)<\/td>/g;
 
-export function carddasJpCardlistLedger() {
-  return carddasJpCardlist;
+export function carddasJpCardlistLedger(): ChecklistLedger<CarddasJpCardlistRow> | null {
+  return generatedChecklist<CarddasJpCardlistRow>("carddas-jp-cardlist.json");
 }
 
 export function carddasJpCardlistCards(): CarddasJpCardlistRow[] {
-  return carddasJpCardlist.cards;
+  return carddasJpCardlistLedger()?.cards ?? [];
 }
 
 export function carddasJpVolumeSetCode(volume: string): string | null {

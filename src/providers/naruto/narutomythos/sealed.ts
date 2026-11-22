@@ -7,7 +7,10 @@ import path from "node:path";
 import { packSealedProductsDir } from "@/lib/packPaths";
 import { downloadCardFaceBytes } from "@/providers/shared/cardCatalogue/faceInstall";
 import { installProviderProductsContents } from "@/providers/shared/sealedProducts/curatedContents";
-import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
+import {
+  writeLocalSealedProducts,
+  type LocalSealedWrite,
+} from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
 import { buildMythosKanaBorutoTbv6SealedWrite } from "./kanaMangaSealed";
@@ -116,7 +119,7 @@ export async function ingestMythosSealedProducts(opts: {
   const ledger = opts.ledger ?? readLorenzoneProductsLedger();
   await harvestLorenzoneProductImages({ force: opts.force, ledger });
 
-  const products = ledger.products.flatMap((row) => {
+  const products: LocalSealedWrite[] = ledger.products.flatMap((row) => {
     const dest = artPath(row.slug, row.lang);
     if (!existsSync(dest)) return [];
     const catalogueSetId = row.catalogueSetId?.trim().toLowerCase() || null;

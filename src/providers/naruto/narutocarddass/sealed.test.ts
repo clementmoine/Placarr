@@ -107,7 +107,12 @@ const MEASURABLE_IMAGE = Buffer.from([
    * index (FR starters / tin-box when the tmp pack has no packshot).
    */
   const CURATED_INVENTORY_STUB_SLUGS = new Set(
-    Object.entries(productsContentsLedger.skus)
+    Object.entries<{
+      [field: string]: unknown;
+      guaranteedPrintKeys?: readonly unknown[];
+      guaranteedPrints?: readonly unknown[];
+      guaranteedProducts?: readonly unknown[];
+    }>(productsContentsLedger.skus)
       .filter(([slug, patch]) => {
         const hasInventory = Boolean(
           (patch.guaranteedPrintKeys &&

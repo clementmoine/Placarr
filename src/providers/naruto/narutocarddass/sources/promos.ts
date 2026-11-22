@@ -496,7 +496,7 @@ export function mergeS1FrPrerelease(input: {
     const grouping =
       parseNarutoCollector(number)?.grouping?.toLowerCase() ?? GROUPING;
 
-    let existingPrint =
+    let existingPrint: NarutoPrintRow | null | undefined =
       printByKey.get(printKey) ?? printByCanonical.get(printKey);
     if (!existingPrint) {
       for (const legacy of legacyS1FrPrereleasePrintKeys(bare)) {

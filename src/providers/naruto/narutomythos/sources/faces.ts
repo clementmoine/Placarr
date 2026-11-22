@@ -14,7 +14,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import sharp from "sharp";
+import sharp, { type OutputInfo } from "sharp";
 
 import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { parsePrintKey } from "@/core/identify/printKey";
@@ -1077,7 +1077,7 @@ export async function installOfficialMythosFaces(
     printKey: string;
     lang: string;
     art: string;
-    sourceUrl: string;
+    sourceUrl: string | null;
   }[] = [];
 
   if (!existsSync(staging)) {
@@ -1695,7 +1695,7 @@ export async function reencodeMythosDiskFaces(opts: {
         continue;
       }
       const before = await sharp(raw).metadata();
-      let trimmed: { data: Buffer; info: sharp.OutputInfo };
+      let trimmed: { data: Buffer; info: OutputInfo };
       try {
         trimmed = await sharp(raw)
           .rotate()

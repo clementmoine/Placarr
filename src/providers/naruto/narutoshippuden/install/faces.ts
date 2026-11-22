@@ -83,7 +83,7 @@ function writeHostArt(cardDir: string, host: string, buf: Buffer): string {
 }
 
 /** Upsert `print_assets.art` with Suruga shop scans preferred over listing photos. */
-function upsertShippudenFaceArt(
+export function upsertShippudenFaceArt(
   printKey: string,
   destName: string,
   sourceUrl: string | null,

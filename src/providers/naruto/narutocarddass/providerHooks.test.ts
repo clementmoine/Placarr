@@ -49,7 +49,7 @@ describe("narutocarddass provider hooks", () => {
     TA-074 S2 / S3 are distinct set-scoped keys — Extension follows the key.
   */
   it("labels Extension from the set-scoped printKey", async () => {
-    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const adapter = narutocarddassModule.createMetadataAdapter!()!;
     const asS2 = await adapter.resolve({
       name: "Monnaie d'Echange",
       printKey: "naruto:s2-ta0074",
@@ -65,7 +65,7 @@ describe("narutocarddass provider hooks", () => {
   });
 
   it("stamps sealed dig Distribution from __skuKey", async () => {
-    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const adapter = narutocarddassModule.createMetadataAdapter!()!;
     const hit = await adapter.resolve({
       name: "Pack Découverte",
       externalIds: { __skuKey: "naruto/carddass::pack-decouverte" },
@@ -79,7 +79,7 @@ describe("narutocarddass provider hooks", () => {
   });
 
   it("stamps Kana DVD sealed SKU Distribution from Facebook dig", async () => {
-    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const adapter = narutocarddassModule.createMetadataAdapter!()!;
     const hit = await adapter.resolve({
       name: "Naruto DVD vol. 3",
       externalIds: { __skuKey: "naruto/carddass::kana-dvd-naruto-vol3" },
@@ -90,7 +90,7 @@ describe("narutocarddass provider hooks", () => {
   });
 
   it("stamps UNS3 Xbox sealed Distribution from Facebook dig", async () => {
-    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const adapter = narutocarddassModule.createMetadataAdapter!()!;
     const hit = await adapter.resolve({
       name: "Xbox 360 UNS3",
       externalIds: { __skuKey: "naruto/carddass::xbox360-uns3" },
@@ -101,7 +101,7 @@ describe("narutocarddass provider hooks", () => {
   });
 
   it("emits dig storytelling encart for UNS3 PR-093", async () => {
-    const adapter = narutocarddassModule.createMetadataAdapter!();
+    const adapter = narutocarddassModule.createMetadataAdapter!()!;
     const hit = await adapter.resolve({
       name: "Double éclair pourfendeur",
       printKey: "naruto:promo-pr0093",

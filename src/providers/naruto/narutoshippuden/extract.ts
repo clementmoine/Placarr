@@ -41,12 +41,10 @@ export async function runNarutoShippudenPackPipeline(
   }
   if (!argv.includes("--skip-documents")) {
     try {
-      const { loadShippudenCuratedDocuments } = await import(
-        "@/providers/naruto/narutoshippuden/curated/documents"
-      );
-      const { harvestPackDocuments } = await import(
-        "@/providers/shared/documents/harvestPackDocuments"
-      );
+      const { loadShippudenCuratedDocuments } =
+        await import("@/providers/naruto/narutoshippuden/curated/documents");
+      const { harvestPackDocuments } =
+        await import("@/providers/shared/documents/harvestPackDocuments");
       const docs = await harvestPackDocuments({
         packId: "naruto/shippuden",
         curated: loadShippudenCuratedDocuments(),
@@ -63,12 +61,29 @@ export async function runNarutoShippudenPackPipeline(
     }
   }
 
+  try {
+    const { installCarddasJpMakuFaces } =
+      await import("./install/carddasJpFaces");
+    const { upsertShippudenFaceArt } = await import("./install/faces");
+    const maku = await installCarddasJpMakuFaces({
+      offline: argv.includes("--offline"),
+      force: argv.includes("--force"),
+      writeAsset: (row) =>
+        upsertShippudenFaceArt(row.printKey, row.art, row.sourceUrl),
+    });
+    console.log(
+      `── carddass.com 幕 (Wayback) — ${maku.written.length} écrites, ${maku.skipped.length} skip, ${maku.failed.length} fail`,
+    );
+  } catch (err) {
+    console.warn(
+      `── carddass.com 幕 — ${err instanceof Error ? err.message : err}`,
+    );
+  }
+
   if (!argv.includes("--offline") && !argv.includes("--skip-narutocardjp")) {
     try {
-      const {
-        harvestNarutocardjpFaces,
-        installNarutocardjpFaces,
-      } = await import("@/providers/naruto/shared/narutocardjp/harvest");
+      const { harvestNarutocardjpFaces, installNarutocardjpFaces } =
+        await import("@/providers/naruto/shared/narutocardjp/harvest");
       const { diskIdFromPrintedReference } = await import("./search");
       const { shippudenPrintKey } = await import("./pipeline/ledgers");
       const { openNarutoShippudenDbForWrite } = await import("./indexStore");
@@ -137,4 +152,3 @@ if (isDirectCli) {
     process.exit(1);
   });
 }
-

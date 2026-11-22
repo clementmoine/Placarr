@@ -58,7 +58,7 @@ export type HarvestSurugaDataCarddassPricesOpts = {
 export async function harvestSurugaDataCarddassPrices(
   opts: HarvestSurugaDataCarddassPricesOpts = {},
 ): Promise<{ ledger: SurugaPriceLedger; outPath: string; fetched: number }> {
-  const listings: SurugaYenListing[] =
+  const listings: readonly SurugaYenListing[] =
     opts.listings ?? loadSurugaDataCarddassCuratedListings();
   return harvestSurugaYenPrices({
     packId: NARUTO_DATA_CARDDASS_PACK_ID,

@@ -51,7 +51,7 @@ export type HarvestSurugaShippudenPricesOpts = {
 export async function harvestSurugaShippudenPrices(
   opts: HarvestSurugaShippudenPricesOpts = {},
 ): Promise<{ ledger: SurugaPriceLedger; outPath: string; fetched: number }> {
-  const listings: SurugaYenListing[] =
+  const listings: readonly SurugaYenListing[] =
     opts.listings ?? loadSurugaShippudenCuratedListings();
   return harvestSurugaYenPrices({
     packId: NARUTO_SHIPPUDEN_PACK_ID,

@@ -11,12 +11,14 @@ describe("mirrorNarutoAssetsAcrossCollectorNumbers", () => {
           setCode: "maki1",
           number: "ni0017",
           family: "ninja",
+          cardType: "ni",
         },
         {
           printKey: "naruto:s1-ni0017",
           setCode: "s1",
           number: "ni0017",
           family: "ninja",
+          cardType: "ni",
         },
       ],
       titles: [
@@ -45,6 +47,7 @@ describe("mirrorNarutoAssetsAcrossCollectorNumbers", () => {
           setCode: "maki12",
           number: "ni0255",
           family: "ninja",
+          cardType: "ni",
         },
       ],
       titles: [{ printKey: "naruto:maki12-ni0255", lang: "ja" }],

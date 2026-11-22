@@ -55,7 +55,7 @@ export type StagingPackshotRow = {
   slug?: string;
   staging: string;
   url: string;
-  page?: string;
+  page?: string | null;
   listing?: string | null;
 };
 

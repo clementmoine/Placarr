@@ -354,7 +354,8 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
       expect(carddasJpStagingFaceToDiskId("jutsu-027_spc2.gif")).toBe("te0027");
       expect(carddasJpStagingFaceToDiskId("saku-010_spc2.gif")).toBe("ta0010");
       expect(carddasJpStagingFaceToDiskId("irai-043_spc2.gif")).toBe("cl0043");
-      expect(carddasJpStagingFaceToDiskId("ju-062_d3.gif")).toBe("mju0062");
+      // 幕 JU-… = 疾風伝 : installé par le pack Shippuden, jamais ici.
+      expect(carddasJpStagingFaceToDiskId("ju-062_d3.gif")).toBeNull();
       expect(carddasJpStagingFaceToDiskId("head.gif")).toBeNull();
       expect(carddasJpStagingFaceToDiskId("001.gif")).toBeNull();
       expect(carddasJpStagingFaceToDiskId("shinobi-203.jpg")).toBeNull();
@@ -371,6 +372,7 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
       );
       expect(carddasJpStagingFaceInstallTarget("saku-214.gif")).toBeNull();
       expect(carddasJpStagingFaceInstallTarget("shinobi-314.gif")).toBeNull();
+      expect(carddasJpStagingFaceInstallTarget("ju-085_d4.gif")).toBeNull();
     });
   });
 }
@@ -422,7 +424,12 @@ import { cardTypeFromCollectorNumber, enSetCode, parseBandaicgAssetPath, bandaic
   describe("carddasJpCardlistCards", () => {
     it("ships the official 巻ノ壱…十七 titles, not Data Carddass", () => {
       const cards = carddasJpCardlistCards();
-      expect(cards.length).toBe(1010);
+      expect(cards.length).toBe(1070);
+      expect(cards.find((row) => row.number === "ni0112")).toMatchObject({
+        name: "砂瀑の我愛羅",
+        setCode: "maki5",
+        page: "cardlist/st_5th.shtml",
+      });
       expect(cards.find((row) => row.number === "ni0390")?.name).toBe(
         "マイト・ガイ",
       );

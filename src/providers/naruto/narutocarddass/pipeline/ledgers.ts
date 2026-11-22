@@ -195,7 +195,7 @@ export function colekaFrNamedCards(): Array<{
   number: string;
   name: string;
 }> {
-  const fromJson = Object.entries(coleka.cards)
+  const fromJson = Object.entries<{ name?: string }>(coleka.cards)
     .map(([number, row]) => ({
       number,
       name: typeof row?.name === "string" ? row.name.trim() : "",
@@ -818,5 +818,6 @@ export function mergeFoundCatalogueLedgers(input: {
     narutocardsNetTitled: narutocardsNet.titled,
     collectorsCometTitled: collectorsComet.titled,
     fansetEnTitled: fansetEn.titled,
+    fansetEnMinted: fansetEn.minted,
   };
 }

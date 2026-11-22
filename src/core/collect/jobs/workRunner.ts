@@ -19,7 +19,12 @@ import {
   type MetadataRefreshJobPayload,
   type PriceRefreshJobPayload,
 } from "@/core/collect/jobs/workQueue";
-import { BackgroundWorkAbandonedError } from "@/core/collect/jobs/workJobOutcome";
+import { runCancellableJob } from "@/core/collect/jobs/jobCancellation";
+import {
+  BackgroundWorkAbandonedError,
+  BackgroundWorkInterruptedError,
+  isBackgroundWorkInterruptedError,
+} from "@/core/collect/jobs/workJobOutcome";
 import {
   isCoverResolutionAcceptable,
   readFileImageMetrics,
@@ -37,7 +42,7 @@ import {
 import { repairProviderExternalLinksForItem } from "@/core/enrich/persistProviderExternalLinks";
 import { attachSeriesSiblingBarcodesFromProviders } from "@/core/collect/seriesSiblingBarcodes";
 import { prisma } from "@/lib/db/prisma";
-import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
+import { runWithJobAbortSignal, throwIfJobAborted } from "@/lib/http/jobAbort";
 import { parseCatalogueCheckpointStep } from "@/lib/admin/catalogueExtractCheckpoint";
 import {
   catalogueExtractTimeoutMs,
@@ -374,8 +379,36 @@ export async function executePriceRefreshJob(
   }
 }
 
+export type ExecuteBackgroundWorkOptions = {
+  /** Interruption venue du worker (échéance du drain de rechargement). */
+  signal?: AbortSignal;
+};
+
+/**
+ * Lance `work` sous annulation coopérative (sonde de la ligne + ALS HTTP) :
+ * annulé → retour silencieux (le worker voit la ligne `cancelled`) ;
+ * interrompu par le worker → `BackgroundWorkInterruptedError`.
+ */
+async function runJobCancellable(
+  job: BackgroundWorkJobRow,
+  options: ExecuteBackgroundWorkOptions | undefined,
+  work: (signal: AbortSignal) => Promise<void>,
+): Promise<void> {
+  const outcome = await runCancellableJob(job.id, work, {
+    isCancelled: isBackgroundWorkJobCancelled,
+    pollMs: CANCEL_POLL_MS,
+    signal: options?.signal,
+  });
+  if (outcome.status === "aborted") {
+    throw new BackgroundWorkInterruptedError(
+      `job ${job.id} interrupted by the worker`,
+    );
+  }
+}
+
 export async function executeBackgroundWorkJob(
   job: BackgroundWorkJobRow,
+  options?: ExecuteBackgroundWorkOptions,
 ): Promise<void> {
   const payload = job.payload as unknown;
 
@@ -459,14 +492,21 @@ export async function executeBackgroundWorkJob(
     const { withConsoleTee } =
       await import("@/lib/admin/catalogueExtractRunner");
 
-    const runRefresh = async () => {
+    const runRefresh = async (signal: AbortSignal) => {
       // Client du jeu d'abord (APK du store, client CDN… — ADR-026) :
       // l'extract qui suit a son binaire.
       const { ensurePackClient } = await import("@/lib/admin/catalogueClient");
       await ensurePackClient(mdl.catalog!.dataPack, {
         onLog: (line) => console.log(line),
+        signal,
       });
-      await mdl.catalog!.refresh(catalogRefreshOptsFromPayload(catalogPayload));
+      throwIfJobAborted(signal);
+      await mdl.catalog!.refresh({
+        ...catalogRefreshOptsFromPayload(catalogPayload),
+        signal,
+      });
+      // Annulé pendant la dernière étape : pas de propagation d'une Sync à moitié.
+      throwIfJobAborted(signal);
       // Corpus densified → soft-refresh shelf items sharing those printKeys.
       const { enqueuePrintCatalogPropagate } =
         await import("@/core/collect/jobs/printCatalogPropagate");
@@ -488,12 +528,31 @@ export async function executeBackgroundWorkJob(
           `status=running jobId=${job.id} provider=${providerId}`,
         );
         try {
-          await withConsoleTee(
-            (line) => appendCatalogueExtractLogSync(extractTarget, line),
-            runRefresh,
-          );
-          await appendCatalogueExtractLog(extractTarget, "status=done");
+          let cancelled = false;
+          await runJobCancellable(job, options, async (signal) => {
+            try {
+              await withConsoleTee(
+                (line) => appendCatalogueExtractLogSync(extractTarget, line),
+                () => runRefresh(signal),
+              );
+            } catch (err) {
+              if (signal.aborted) cancelled = true;
+              throw err;
+            }
+          });
+          if (cancelled || (await isBackgroundWorkJobCancelled(job.id))) {
+            await appendCatalogueExtractLog(extractTarget, "status=cancelled");
+          } else {
+            await appendCatalogueExtractLog(extractTarget, "status=done");
+          }
         } catch (err) {
+          if (isBackgroundWorkInterruptedError(err)) {
+            await appendCatalogueExtractLog(
+              extractTarget,
+              "status=interrupted (rechargement du worker — reprise en attente)",
+            );
+            throw err;
+          }
           await appendCatalogueExtractLog(extractTarget, "status=failed");
           await appendCatalogueExtractLog(
             extractTarget,
@@ -502,7 +561,7 @@ export async function executeBackgroundWorkJob(
           throw err;
         }
       } else {
-        await runRefresh();
+        await runJobCancellable(job, options, runRefresh);
       }
     } finally {
       clearInterval(heartbeat);
@@ -511,12 +570,20 @@ export async function executeBackgroundWorkJob(
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.catalogueExtract) {
-    await executeFoilExtractJob(job, payload as CatalogueExtractJobPayload);
+    await executeFoilExtractJob(
+      job,
+      payload as CatalogueExtractJobPayload,
+      options,
+    );
     return;
   }
 
   if (job.kind === BACKGROUND_WORK_KIND.apkStoreFetch) {
-    await executeApkStoreFetchJob(job, payload as ApkStoreFetchJobPayload);
+    await executeApkStoreFetchJob(
+      job,
+      payload as ApkStoreFetchJobPayload,
+      options,
+    );
     return;
   }
 
@@ -531,6 +598,7 @@ export async function executeBackgroundWorkJob(
 async function executeApkStoreFetchJob(
   job: BackgroundWorkJobRow,
   payload: ApkStoreFetchJobPayload,
+  options?: ExecuteBackgroundWorkOptions,
 ): Promise<void> {
   const pack = String(payload?.pack ?? "").trim();
   const { cataloguePackInfo } = await import("@/lib/admin/cataloguePacks");
@@ -539,53 +607,40 @@ async function executeApkStoreFetchJob(
     throw new Error(`apkStoreFetch: no androidPackageId for pack ${pack}`);
   }
 
-  const controller = new AbortController();
-  const cancelPoll = setInterval(() => {
-    void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
-      if (cancelled) controller.abort();
-    });
-  }, CANCEL_POLL_MS);
-  if (typeof cancelPoll.unref === "function") cancelPoll.unref();
   const heartbeat = setInterval(() => {
     void touchBackgroundWorkJobLock(job.id);
   }, FOIL_LOCK_HEARTBEAT_MS);
   if (typeof heartbeat.unref === "function") heartbeat.unref();
 
   try {
-    const { fetchStoreApksForPack } = await import("@/lib/admin/apkStoreFetch");
-    const result = await fetchStoreApksForPack(pack, {
-      force: payload?.force,
-      signal: controller.signal,
-      onLog: (line) => process.stdout.write(`[ApkStore ${pack}] ${line}\n`),
-    });
-    if (result.status === "unavailable") {
-      throw new Error(`apkStoreFetch ${pack}: ${result.reason}`);
-    }
-    if (result.status === "updated") {
-      await enqueueBackgroundWorkJob({
-        kind: BACKGROUND_WORK_KIND.catalogueExtract,
-        userId: job.userId,
-        payload: { target: info.extractTarget },
-        replaceOpenForKind: true,
-        replaceOpenPayloadMatch: {
-          path: ["target"],
-          equals: info.extractTarget,
-        },
+    await runJobCancellable(job, options, async (signal) => {
+      const { fetchStoreApksForPack } =
+        await import("@/lib/admin/apkStoreFetch");
+      const result = await fetchStoreApksForPack(pack, {
+        force: payload?.force,
+        signal,
+        onLog: (line) => process.stdout.write(`[ApkStore ${pack}] ${line}\n`),
       });
-      process.stdout.write(
-        `[ApkStore ${pack}] versionCode=${result.versionCode} → foil extract enqueued\n`,
-      );
-    }
-  } catch (error) {
-    if (
-      controller.signal.aborted ||
-      (await isBackgroundWorkJobCancelled(job.id))
-    ) {
-      return;
-    }
-    throw error;
+      if (result.status === "unavailable") {
+        throw new Error(`apkStoreFetch ${pack}: ${result.reason}`);
+      }
+      if (result.status === "updated") {
+        await enqueueBackgroundWorkJob({
+          kind: BACKGROUND_WORK_KIND.catalogueExtract,
+          userId: job.userId,
+          payload: { target: info.extractTarget },
+          replaceOpenForKind: true,
+          replaceOpenPayloadMatch: {
+            path: ["target"],
+            equals: info.extractTarget,
+          },
+        });
+        process.stdout.write(
+          `[ApkStore ${pack}] versionCode=${result.versionCode} → foil extract enqueued\n`,
+        );
+      }
+    });
   } finally {
-    clearInterval(cancelPoll);
     clearInterval(heartbeat);
   }
 }
@@ -622,6 +677,7 @@ async function stampFoilExtractFailure(
 async function executeFoilExtractJob(
   job: BackgroundWorkJobRow,
   payload: CatalogueExtractJobPayload,
+  options?: ExecuteBackgroundWorkOptions,
 ): Promise<void> {
   const rawTarget = String(payload?.target ?? "").trim();
   const target = normalizeCatalogueExtractTarget(rawTarget);
@@ -630,14 +686,6 @@ async function executeFoilExtractJob(
     if (rawTarget) await stampFoilExtractFailure(rawTarget, job.id, message);
     throw new Error(message);
   }
-
-  const controller = new AbortController();
-  const cancelPoll = setInterval(() => {
-    void isBackgroundWorkJobCancelled(job.id).then((cancelled) => {
-      if (cancelled) controller.abort();
-    });
-  }, CANCEL_POLL_MS);
-  if (typeof cancelPoll.unref === "function") cancelPoll.unref();
 
   const heartbeat = setInterval(() => {
     void touchBackgroundWorkJobLock(job.id);
@@ -676,13 +724,13 @@ async function executeFoilExtractJob(
     }
   };
 
-  try {
-    const explicitScope =
-      payload?.scope != null && String(payload.scope).trim() !== ""
-        ? normalizeCatalogueExtractScope(payload.scope)
-        : undefined;
-    await runCatalogueExtractCommand(target, {
-      signal: controller.signal,
+  const explicitScope =
+    payload?.scope != null && String(payload.scope).trim() !== ""
+      ? normalizeCatalogueExtractScope(payload.scope)
+      : undefined;
+  const runExtract = (signal: AbortSignal) =>
+    runCatalogueExtractCommand(target, {
+      signal,
       timeoutMs: explicitScope
         ? catalogueExtractTimeoutMs(target, explicitScope)
         : undefined,
@@ -697,13 +745,11 @@ async function executeFoilExtractJob(
       auto: payload?.auto === true,
       forceApk: payload?.forceApk === true,
     });
+
+  try {
+    await runJobCancellable(job, options, runExtract);
   } catch (error) {
-    if (
-      controller.signal.aborted ||
-      (await isBackgroundWorkJobCancelled(job.id))
-    ) {
-      return;
-    }
+    if (isBackgroundWorkInterruptedError(error)) throw error;
     const tail = logTail.slice(-8).join("\n");
     const message = error instanceof Error ? error.message : String(error);
     await stampFoilExtractFailure(
@@ -713,7 +759,6 @@ async function executeFoilExtractJob(
     );
     throw new Error(tail ? `${message}\n---\n${tail}` : message);
   } finally {
-    clearInterval(cancelPoll);
     clearInterval(heartbeat);
   }
 }

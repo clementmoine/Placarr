@@ -14,6 +14,7 @@ import type { ProviderClientOutcome } from "@/types/providerModule";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_CATALOGUE_LANGS_CSV } from "@/providers/pokemon/live/cdn/languages";
 import { catalogueExtractSkipArgs } from "@/lib/admin/catalogueExtractCheckpoint";
+import { runWithJobAbortSignal } from "@/lib/http/jobAbort";
 import {
   CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
   CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
@@ -549,8 +550,15 @@ export async function runCatalogueExtractCommand(
       };
       options.signal?.addEventListener("abort", abortReject, { once: true });
 
+      // Le signal du job passe aussi dans l'ALS HTTP : un pipeline qui ne lit
+      // pas `signal` voit quand même ses requêtes échouer à l'annulation, au
+      // lieu de continuer en arrière-plan après le rejet de la course.
       void withConsoleTee(onLog, () =>
-        invokePackPipeline(target, argv, options.signal),
+        options.signal
+          ? runWithJobAbortSignal(options.signal, () =>
+              invokePackPipeline(target, argv, options.signal),
+            )
+          : invokePackPipeline(target, argv, options.signal),
       )
         .then(() => {
           clearTimeout(timer);
@@ -564,6 +572,7 @@ export async function runCatalogueExtractCommand(
         });
     });
 
+    if (options.signal?.aborted) throw abortError;
     const pack = cataloguePackForExtractTarget(target);
     const postExtract = pack?.extract.postExtract;
     if (postExtract === "invalidatePokemonFoilNamesCache") {

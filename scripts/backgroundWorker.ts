@@ -35,9 +35,15 @@ import {
 import {
   abandonBackgroundWorkJob,
   isBackgroundWorkAbandonedError,
+  isBackgroundWorkInterruptedError,
 } from "../src/core/collect/jobs/workJobOutcome";
 import { executeBackgroundWorkJob } from "../src/core/collect/jobs/workRunner";
 import { resolveInteractiveWorkerConcurrency } from "../src/core/collect/jobs/workerConcurrency";
+import {
+  resolveWorkerDrainTimeoutMs,
+  startWorkerDrain,
+  type WorkerDrain,
+} from "./workerDrain";
 
 const WORKER_ID = process.env.WORKER_ID || `worker-${randomUUID().slice(0, 8)}`;
 const POLL_IDLE_MS = Number.parseInt(process.env.WORKER_POLL_MS || "1000", 10);
@@ -88,6 +94,14 @@ let stopping = false;
  * jobs, claim nothing new, then exit — never release a running Sync.
  */
 let draining = false;
+let drain: WorkerDrain | null = null;
+/**
+ * Handed to every job: aborts at the drain deadline so a long Sync stops at
+ * its next HTTP call / step boundary instead of holding the reload forever.
+ */
+const workerInterrupt = new AbortController();
+/** After the deadline, jobs deaf to the signal get this long before a hard exit. */
+const DRAIN_HARD_EXIT_GRACE_MS = 30_000;
 const claimKinds = resolveClaimKinds();
 
 async function processOneJob(): Promise<boolean> {
@@ -106,8 +120,9 @@ async function processOneJob(): Promise<boolean> {
       console.info(`[Worker ${WORKER_ID}] skipped cancelled job ${job.id}`);
       return true;
     }
-    await executeBackgroundWorkJob(job);
+    await executeBackgroundWorkJob(job, { signal: workerInterrupt.signal });
     if (await isBackgroundWorkJobCancelled(job.id)) {
+      console.info(`[Worker ${WORKER_ID}] stopped cancelled job ${job.id}`);
       return true;
     }
     await completeBackgroundWorkJob(job.id);
@@ -115,6 +130,13 @@ async function processOneJob(): Promise<boolean> {
       console.info(`[Worker ${WORKER_ID}] completed ${job.id}`);
     }
   } catch (error) {
+    if (isBackgroundWorkInterruptedError(error)) {
+      // Neither done nor failed: released to pending when the worker exits.
+      console.info(
+        `[Worker ${WORKER_ID}] interrupted ${job.kind} ${job.id} for reload — back to pending on exit`,
+      );
+      return true;
+    }
     if (isBackgroundWorkAbandonedError(error)) {
       await abandonBackgroundWorkJob(job.id, error.message);
       console.info(
@@ -145,12 +167,12 @@ async function runSlot(slot: number): Promise<void> {
 
 function isDbUnavailableError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const code = "code" in error ? String((error as { code?: unknown }).code) : "";
+  const code =
+    "code" in error ? String((error as { code?: unknown }).code) : "";
   if (code === "ECONNREFUSED" || code === "P1001" || code === "P1017") {
     return true;
   }
-  const message =
-    error instanceof Error ? error.message : String(error ?? "");
+  const message = error instanceof Error ? error.message : String(error ?? "");
   return /ECONNREFUSED|Can't reach database|Connection refused/i.test(message);
 }
 
@@ -216,8 +238,24 @@ async function main(): Promise<void> {
   process.on("SIGUSR2", () => {
     if (draining || stopping) return;
     draining = true;
+    const timeoutMs = resolveWorkerDrainTimeoutMs(process.env);
     console.info(
-      `[Worker ${WORKER_ID}] draining for reload — finishing in-flight jobs, claiming nothing new`,
+      `[Worker ${WORKER_ID}] draining for reload — finishing in-flight jobs (≤ ${Math.round(timeoutMs / 1000)}s), claiming nothing new`,
+    );
+    drain = startWorkerDrain({
+      timeoutMs,
+      log: (line) => console.warn(`[Worker ${WORKER_ID}] ${line}`),
+    });
+    drain.signal.addEventListener(
+      "abort",
+      () => {
+        workerInterrupt.abort(drain?.signal.reason);
+        const hardExit = setTimeout(() => {
+          void exitAfterDrain("hard exit — a job ignored the interruption");
+        }, DRAIN_HARD_EXIT_GRACE_MS);
+        if (typeof hardExit.unref === "function") hardExit.unref();
+      },
+      { once: true },
     );
   });
 
@@ -278,10 +316,26 @@ async function main(): Promise<void> {
     Array.from({ length: concurrency }, (_, slot) => runSlot(slot)),
   );
   if (draining && !stopping) {
-    console.info(`[Worker ${WORKER_ID}] drained — exiting for reload`);
     clearInterval(recoverTimer);
-    process.exit(0);
+    await exitAfterDrain("drained");
   }
+}
+
+let exiting = false;
+/** Release what is still ours (interrupted jobs) to pending, then exit for reload. */
+async function exitAfterDrain(reason: string): Promise<void> {
+  if (exiting) return;
+  exiting = true;
+  drain?.settle();
+  try {
+    const count = await releaseRunningJobsForWorker(WORKER_ID);
+    console.info(
+      `[Worker ${WORKER_ID}] ${reason} — exiting for reload${count > 0 ? ` (released ${count} job(s) to pending)` : ""}`,
+    );
+  } catch (error) {
+    console.error(`[Worker ${WORKER_ID}] release before reload failed:`, error);
+  }
+  process.exit(0);
 }
 
 main().catch((error) => {

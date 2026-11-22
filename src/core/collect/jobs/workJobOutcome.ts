@@ -18,6 +18,23 @@ export function isBackgroundWorkAbandonedError(
   return error instanceof BackgroundWorkAbandonedError;
 }
 
+/**
+ * Le worker a interrompu le job lui-même (échéance du drain de rechargement) :
+ * ni réussi ni échoué — la ligne repart en `pending` quand le worker sort.
+ */
+export class BackgroundWorkInterruptedError extends Error {
+  constructor(message = "Background work interrupted by the worker") {
+    super(message);
+    this.name = "BackgroundWorkInterruptedError";
+  }
+}
+
+export function isBackgroundWorkInterruptedError(
+  error: unknown,
+): error is BackgroundWorkInterruptedError {
+  return error instanceof BackgroundWorkInterruptedError;
+}
+
 /** Mark a claimed job as cancelled without retry (superseded / already cancelled). */
 export async function abandonBackgroundWorkJob(
   jobId: string,

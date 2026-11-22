@@ -47,6 +47,25 @@ Inspiré de `docs/ADR.md` de tako-firehouse (analyse : `archive/structure_vs_tak
   job+données ; débit très suffisant. Pratique reconnue (Prisma, pg-boss).
 - **Alternatives écartées** : BullMQ (exige Redis) ; pg-boss — réévalué
   seulement si cron/priorités/dead-letter viennent à manquer.
+- **Addendum 2026-11-23 — annulation en cours de job, drain borné** :
+  - Constat (2026-11-22) : « Annuler » une Sync catalogue la laissait finir
+    (seul l'extract sondait la ligne, et son pipeline continuait en
+    arrière-plan après le rejet), et le drain de rechargement dev (SIGUSR2)
+    attendait sans limite la fin d'une Sync de plusieurs heures.
+  - Contrat : tout job long tourne sous `runCancellableJob`
+    (`core/collect/jobs/jobCancellation.ts`). La ligne `cancelled` est sondée,
+    un `AbortController` est interrompu, et son signal est à la fois passé au
+    travail (`ProviderCatalogRefreshOpts.signal`, `ensurePackClient`,
+    `runCatalogueExtractCommand`) et posé dans l'ALS HTTP
+    (`@/lib/http/jobAbort`) : la requête suivante du job échoue. Les étapes
+    CPU appellent `throwIfJobAborted()` à leurs frontières (pipeline des
+    lignes locales). Un job annulé n'est ni terminé ni propagé aux étagères.
+  - Drain : SIGUSR2 → plus de nouveau job ; passé `WORKER_DRAIN_TIMEOUT_MS`
+    (10 min par défaut, `scripts/workerDrain.ts`), le worker interrompt les
+    jobs en vol (`BackgroundWorkInterruptedError` : ni réussi ni échoué), les
+    rend à `pending` et sort. Un job sourd au signal a 30 s de grâce avant la
+    sortie forcée. Une Sync interrompue reprend via `completedSteps`
+    (ADR-017) ou depuis le début.
 
 ## ADR-004 : Extraction par comportement, pas de méga-fabrique `createCardPack`
 

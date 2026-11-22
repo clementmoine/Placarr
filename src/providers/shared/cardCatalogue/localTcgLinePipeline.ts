@@ -6,6 +6,7 @@
  * inventées). `seedProducts` pose le scellé à part : un wrapper n'est pas une
  * carte.
  */
+import { throwIfJobAborted } from "@/lib/http/jobAbort";
 import { enrichCardsIndexArtDimensions } from "./enrichCardsIndexArtDimensions";
 import {
   createLocalPrintsIndex,
@@ -42,6 +43,8 @@ export async function runLocalTcgPipeline(input: {
       `── ${input.label} — ${seeded.prints} tirage${seeded.prints === 1 ? "" : "s"}, ${seeded.titles} titre${seeded.titles === 1 ? "" : "s"}`,
     );
   }
+  // Frontières d'étape : une Sync annulée s'arrête ici (ADR-003, 2026-11-23).
+  throwIfJobAborted();
   const written = input.seed
     ? (index.exportIndex() ?? index.bootstrapEmpty())
     : index.bootstrapEmpty();
@@ -50,10 +53,8 @@ export async function runLocalTcgPipeline(input: {
   );
 
   if (input.writeLocaleSpecificFacesFromIndex) {
-    const {
-      buildLocaleSpecificFacesFromIndex,
-      writeLocaleSpecificFaces,
-    } = await import("@/lib/admin/localeSpecificFaces");
+    const { buildLocaleSpecificFacesFromIndex, writeLocaleSpecificFaces } =
+      await import("@/lib/admin/localeSpecificFaces");
     try {
       const doc = buildLocaleSpecificFacesFromIndex(
         written.index,
@@ -71,6 +72,7 @@ export async function runLocalTcgPipeline(input: {
     }
   }
 
+  throwIfJobAborted();
   const dims = await enrichCardsIndexArtDimensions(input.packId);
   if (dims.probed) {
     console.log(
@@ -78,6 +80,7 @@ export async function runLocalTcgPipeline(input: {
     );
   }
 
+  throwIfJobAborted();
   const { ensureCuratedPackAssets } = await import(
     /* webpackIgnore: true */
     "@/providers/shared/cardCatalogue/curatedAssets"
@@ -91,6 +94,7 @@ export async function runLocalTcgPipeline(input: {
   });
 
   let products = 0;
+  throwIfJobAborted();
   if (input.seedProducts) {
     const sealed = await input.seedProducts();
     products = sealed.written;

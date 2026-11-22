@@ -3,6 +3,8 @@
  * Harvest & install live in sources/faces.ts.
  */
 
+import { colekaListingItems } from "@/providers/shared/coleka/listingItems";
+
 // ─── Coleka Ninja Ranks ──────────────────────────────────────────────────
 
 /**
@@ -64,9 +66,6 @@ export type ColekaNinjaRanksParse = {
   cards: ColekaNinjaRanksCard[];
   rejected: { ref: string; name: string; reason: string }[];
 };
-
-const ITEM_RE =
-  /<a\s([^>]*class="[^"]*lib_has_2_lines[^"]*"[^>]*)>([\s\S]*?)<\/a>/gi;
 
 function decodeColekaEntities(raw: string): string {
   return raw
@@ -195,19 +194,17 @@ export function parseColekaNinjaRanksListing(
   const byKey = new Map<string, ColekaNinjaRanksCard>();
   const rejected: ColekaNinjaRanksParse["rejected"] = [];
 
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const refMatch = inner.match(
-      /<span class="ref">\s*Ref\.\s*([A-Za-z0-9]{1,4})\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const refMatch = item.ref?.match(/^([A-Za-z0-9]{1,4})$/i);
     if (!refMatch) continue;
     const printedRaw = refMatch[1]!.trim();
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
-    if (!title || !img || !attrs.includes("href=")) continue;
+    const title = item.title ? [item.title, item.title] : null;
+    const img = item.thumbUrl?.startsWith(
+      "https://thumbs.coleka.com/media/item/",
+    )
+      ? [item.thumbUrl, item.thumbUrl]
+      : null;
+    if (!title || !img || !item.href) continue;
     const name = decodeColekaEntities(title[1]!);
     const thumbUrl = img[1]!;
     const parsed = parseColekaPrintedRef(printedRaw);

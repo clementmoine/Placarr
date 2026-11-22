@@ -2,6 +2,8 @@
  * Naruto Carddass coleka parsers.
  */
 
+import { colekaListingItems } from "@/providers/shared/coleka/listingItems";
+
 import { STORM3_SET } from "./marketplace";
 import { narutoDiskCardId } from "../identity";
 import { readNarutoCarddassSyncedSource } from "../syncedSources";
@@ -13,9 +15,6 @@ const coleka = readNarutoCarddassSyncedSource("coleka.json");
 // ─── shared helpers ─────────────────────────────────────────────────────
 
 const NO_IMAGE_RE = /\/css\/assets\/default\/no-image/i;
-
-const ITEM_RE =
-  /<a\s([^>]*class="[^"]*lib_has_2_lines[^"]*"[^>]*)>([\s\S]*?)<\/a>/gi;
 
 function decodeEntities(raw: string): string {
   return raw
@@ -114,26 +113,20 @@ export function parseColekaCarddassFrListing(
   set: ColekaCarddassFrSeriesCode,
 ): ColekaCarddassFrCard[] {
   const byNumber = new Map<string, ColekaCarddassFrCard>();
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const ref = inner.match(
-      /<span class="ref">\s*Ref\.\s*(NI|TE|TA|CL)-(\d{1,3})\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const ref = item.ref?.match(/^(NI|TE|TA|CL)-(\d{1,3})$/i);
     if (!ref) continue;
     const colekaRef = `${ref[1]!.toUpperCase()}-${ref[2]}`;
     const number = colekaCarddassPrefixToCollector(colekaRef);
     if (!number || byNumber.has(number)) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
+    const title = item.title ? [item.title, item.title] : null;
     const rawName = title ? decodeEntities(title[1]!) : "";
     const name =
       rawName && !colekaS6ItNameIsPlaceholder(rawName) ? rawName : null;
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/[^"]+)"/i,
-    );
-    const href = attrs.match(/\bhref="([^"]+)"/i)?.[1];
+    const img = item.thumbUrl ? [item.thumbUrl, item.thumbUrl] : null;
+    const href = item.href;
     if (!href) continue;
-    const colekaId = attrs.match(/\bdata-id="(\d+)"/i)?.[1] ?? "";
+    const colekaId = item.id;
     const pagePath = href.startsWith("http") ? new URL(href).pathname : href;
     const thumbUrl = img?.[1] ?? null;
     const hasFace = Boolean(thumbUrl) && !NO_IMAGE_RE.test(thumbUrl!);
@@ -221,26 +214,20 @@ export function colekaS6ItListingPageUrls(): string[] {
 
 export function parseColekaS6ItListing(html: string): ColekaS6ItCard[] {
   const byNumber = new Map<string, ColekaS6ItCard>();
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const ref = inner.match(
-      /<span class="ref">\s*Ref\.\s*(NI|TE|TA|ST|CL)-(\d{1,3})\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const ref = item.ref?.match(/^(NI|TE|TA|ST|CL)-(\d{1,3})$/i);
     if (!ref) continue;
     const colekaRef = `${ref[1]!.toUpperCase()}-${ref[2]}`;
     const number = colekaCarddassPrefixToCollector(colekaRef);
     if (!number || byNumber.has(number)) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
+    const title = item.title ? [item.title, item.title] : null;
     const rawName = title ? decodeEntities(title[1]!) : "";
     const name =
       rawName && !colekaS6ItNameIsPlaceholder(rawName) ? rawName : null;
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/[^"]+)"/i,
-    );
-    const href = attrs.match(/\bhref="([^"]+)"/i)?.[1];
+    const img = item.thumbUrl ? [item.thumbUrl, item.thumbUrl] : null;
+    const href = item.href;
     if (!href) continue;
-    const colekaId = attrs.match(/\bdata-id="(\d+)"/i)?.[1] ?? "";
+    const colekaId = item.id;
     const pagePath = href.startsWith("http") ? new URL(href).pathname : href;
     const thumbUrl = img?.[1] ?? null;
     const hasFace = Boolean(thumbUrl) && !NO_IMAGE_RE.test(thumbUrl!);
@@ -410,23 +397,21 @@ export function colekaRampageTornadoListingPageUrls(): string[] {
 
 export function parseColekaStorm3Listing(html: string): ColekaStorm3Card[] {
   const byNumber = new Map<string, ColekaStorm3Card>();
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const ref = inner.match(
-      /<span class="ref">\s*Ref\.\s*(NI|JU|MI)-(\d{3,4})\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const ref = item.ref?.match(/^(NI|JU|MI)-(\d{3,4})$/i);
     if (!ref) continue;
     const colekaRef = `${ref[1]!.toUpperCase()}-${ref[2]}`;
     const number = colekaEuPrefixToCollector(colekaRef);
     if (!number || byNumber.has(number)) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
-    const href = attrs.match(/\bhref="([^"]+)"/i)?.[1];
+    const title = item.title ? [item.title, item.title] : null;
+    const img = item.thumbUrl?.startsWith(
+      "https://thumbs.coleka.com/media/item/",
+    )
+      ? [item.thumbUrl, item.thumbUrl]
+      : null;
+    const href = item.href;
     if (!title || !img || !href) continue;
-    const colekaId = attrs.match(/\bdata-id="(\d+)"/i)?.[1] ?? "";
+    const colekaId = item.id;
     const pagePath = href.startsWith("http") ? new URL(href).pathname : href;
     const thumbUrl = img[1]!;
     byNumber.set(number, {
@@ -450,11 +435,9 @@ export function parseColekaRampageTornadoListing(
   html: string,
 ): ColekaStorm3Card[] {
   const byNumber = new Map<string, ColekaStorm3Card>();
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const ref = inner.match(
-      /<span class="ref">\s*Ref\.\s*((?:NI|JU|MI)-US\d{2,4}|(?:NI|JU|MI)-\d{2,4}|CL-\d{2,4})\s*<\/span>/i,
+  for (const item of colekaListingItems(html)) {
+    const ref = item.ref?.match(
+      /^((?:NI|JU|MI)-US\d{2,4}|(?:NI|JU|MI)-\d{2,4}|CL-\d{2,4})$/i,
     );
     if (!ref) continue;
     const colekaRef = ref[1]!.toUpperCase();
@@ -462,13 +445,15 @@ export function parseColekaRampageTornadoListing(
     if (!number || byNumber.has(number)) continue;
     const cardType = cardTypeOfNumber(number);
     if (!cardType) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
-    const href = attrs.match(/\bhref="([^"]+)"/i)?.[1];
+    const title = item.title ? [item.title, item.title] : null;
+    const img = item.thumbUrl?.startsWith(
+      "https://thumbs.coleka.com/media/item/",
+    )
+      ? [item.thumbUrl, item.thumbUrl]
+      : null;
+    const href = item.href;
     if (!title || !img || !href) continue;
-    const colekaId = attrs.match(/\bdata-id="(\d+)"/i)?.[1] ?? "";
+    const colekaId = item.id;
     const pagePath = href.startsWith("http") ? new URL(href).pathname : href;
     const thumbUrl = img[1]!;
     byNumber.set(number, {
@@ -540,23 +525,21 @@ export function colekaUsPromoListingPageUrls(): string[] {
 
 export function parseColekaUsPromoListing(html: string): ColekaUsPromoCard[] {
   const byNumber = new Map<string, ColekaUsPromoCard>();
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const ref = inner.match(
-      /<span class="ref">\s*Ref\.\s*(Pr[\s-]*\d{1,4}R?)\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const ref = item.ref?.match(/^(Pr[\s-]*\d{1,4}R?)$/i);
     if (!ref) continue;
     const number = colekaUsPromoRefToCollector(ref[1]!);
     const colekaRef = colekaUsPromoCanonicalRef(ref[1]!);
     if (!number || !colekaRef || byNumber.has(number)) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
-    const href = attrs.match(/\bhref="([^"]+)"/i)?.[1];
+    const title = item.title ? [item.title, item.title] : null;
+    const img = item.thumbUrl?.startsWith(
+      "https://thumbs.coleka.com/media/item/",
+    )
+      ? [item.thumbUrl, item.thumbUrl]
+      : null;
+    const href = item.href;
     if (!title || !img || !href) continue;
-    const colekaId = attrs.match(/\bdata-id="(\d+)"/i)?.[1] ?? "";
+    const colekaId = item.id;
     const pagePath = href.startsWith("http") ? new URL(href).pathname : href;
     const thumbUrl = img[1]!;
     byNumber.set(number, {

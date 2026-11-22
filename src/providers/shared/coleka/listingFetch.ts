@@ -49,3 +49,31 @@ export async function fetchColekaListingHtml(
   writeFileSync(dest, html, "utf8");
   return html;
 }
+
+/**
+ * Quand une page de listing manque (mur Coleka, page absente), garde les
+ * cartes déjà relevées dans `cards.json` du staging : une lecture partielle
+ * ne doit pas faire disparaître de l'index des cartes attestées (Sage's
+ * Legacy FR, 2026-11-22 : 72 singles sur 120, 48 titres FR perdus). Une
+ * lecture complète fait foi.
+ */
+export function keepStagedListingCards<T extends { number: string }>(
+  byNumber: Map<string, T>,
+  stagedCardsJson: string,
+  pagesMissing: number,
+): void {
+  if (pagesMissing <= 0 || !existsSync(stagedCardsJson)) return;
+  let staged: { cards?: T[] };
+  try {
+    staged = JSON.parse(readFileSync(stagedCardsJson, "utf8")) as {
+      cards?: T[];
+    };
+  } catch {
+    return;
+  }
+  for (const card of staged.cards ?? []) {
+    if (card?.number && !byNumber.has(card.number)) {
+      byNumber.set(card.number, card);
+    }
+  }
+}

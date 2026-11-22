@@ -4,6 +4,8 @@
  * Branche EN (comme Ninja Ranks) : FR/IT tombent plus vite sur le mur.
  * Deux signaux : `Ref. NNN` + numéro dans le nom de fichier de la vignette.
  */
+
+import { colekaListingItems } from "@/providers/shared/coleka/listingItems";
 export const COLEKA_ULTRA_ORIGIN = "https://www.coleka.com";
 export const COLEKA_ULTRA_LISTING_PATH =
   "/en/trading-cards/panini-cards/naruto-ultra-challenge_r18770";
@@ -26,9 +28,6 @@ export type ColekaUltraParse = {
   cards: ColekaUltraCard[];
   rejected: { ref: string; name: string; reason: string }[];
 };
-
-const ITEM_RE =
-  /<a\s([^>]*class="[^"]*lib_has_2_lines[^"]*"[^>]*)>([\s\S]*?)<\/a>/gi;
 
 function decodeEntities(raw: string): string {
   return raw
@@ -119,18 +118,16 @@ export function parseColekaUltraListing(html: string): ColekaUltraParse {
   const byNumber = new Map<string, ColekaUltraCard>();
   const rejected: ColekaUltraParse["rejected"] = [];
 
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const href = attrs.match(/href="([^"]+)"/i)?.[1];
-    const refMatch = inner.match(
-      /<span class="ref">\s*Ref\.\s*([A-Za-z0-9]{1,4})\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const href = item.href;
+    const refMatch = item.ref?.match(/^([A-Za-z0-9]{1,4})$/i);
     if (!refMatch || !href) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
+    const title = item.title ? [item.title, item.title] : null;
+    const img = item.thumbUrl?.startsWith(
+      "https://thumbs.coleka.com/media/item/",
+    )
+      ? [item.thumbUrl, item.thumbUrl]
+      : null;
     if (!title || !img) continue;
     const name = decodeEntities(title[1]!);
     if (/album/i.test(name)) {

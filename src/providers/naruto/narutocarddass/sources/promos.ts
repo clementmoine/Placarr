@@ -45,7 +45,10 @@ import {
   parseColekaUsPromoListing,
 } from "../parse/coleka";
 import type { ColekaUsPromoCard } from "../parse/coleka";
-import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
+import {
+  fetchColekaListingHtml,
+  keepStagedListingCards,
+} from "@/providers/shared/coleka/listingFetch";
 
 const ledger = readNarutoCarddassSyncedSource("coleka-us-promos.json");
 
@@ -839,6 +842,7 @@ export async function scrapeNarutoColekaUsPromoCards(
   console.log("── Coleka US promos → cards/promo/pr0nnn/en/");
   const byNumber = new Map<string, ColekaUsPromoCard>();
   let pageIdx = 0;
+  let pagesMissing = 0;
   let waited = false;
   for (const url of colekaUsPromoListingPageUrls()) {
     if (delayMs > 0) {
@@ -852,13 +856,22 @@ export async function scrapeNarutoColekaUsPromoCards(
     );
     pageIdx += 1;
     if (!html) {
+      pagesMissing += 1;
       console.warn(
         `── Coleka US promos : listing page ${pageIdx} absente ou mur Coleka, on continue`,
       );
       continue;
     }
-    mergeByNumber(byNumber, parseColekaUsPromoListing(html));
+    const parsed = parseColekaUsPromoListing(html);
+    // A page without a single tile (homepage, new template) is not a read.
+    if (parsed.length === 0) pagesMissing += 1;
+    mergeByNumber(byNumber, parsed);
   }
+  keepStagedListingCards(
+    byNumber,
+    path.join(staging, "cards.json"),
+    pagesMissing,
+  );
 
   let cards = [...byNumber.values()].sort((a, b) =>
     a.number.localeCompare(b.number, "en"),

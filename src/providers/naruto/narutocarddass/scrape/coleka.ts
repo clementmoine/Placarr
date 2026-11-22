@@ -11,7 +11,10 @@ import {
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
-import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
+import {
+  fetchColekaListingHtml,
+  keepStagedListingCards,
+} from "@/providers/shared/coleka/listingFetch";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { narutoCardAbsDir } from "../disk";
 import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
@@ -171,9 +174,11 @@ export async function scrapeNarutoColekaCarddassFrCards(
   console.log("── Coleka FR Carddass S1–S5 → art.coleka");
   const byNumber = new Map<string, ColekaCarddassFrCard>();
   let waited = false;
+  let pagesMissing = 0;
 
   for (const series of COLEKA_CARDDASS_FR_SERIES) {
     let pageIdx = 0;
+    let seriesCards = 0;
     for (const url of colekaCarddassFrListingPageUrls(
       series.path,
       series.listedCount,
@@ -189,16 +194,28 @@ export async function scrapeNarutoColekaCarddassFrCards(
       );
       pageIdx += 1;
       if (!html) {
+        pagesMissing += 1;
         console.warn(
           `── Coleka FR ${series.set} : page ${pageIdx} absente ou mur, on continue`,
         );
         continue;
       }
       const parsed = parseColekaCarddassFrListing(html, series.set);
-      if (parsed.length === 0) break;
+      if (parsed.length === 0) {
+        // Past the last page once the series has tiles; before that, the page
+        // was unreadable (homepage, new template) — not « no cards ».
+        if (seriesCards === 0) pagesMissing += 1;
+        break;
+      }
+      seriesCards += parsed.length;
       colekaCarddassFr_mergeByNumber(byNumber, parsed);
     }
   }
+  keepStagedListingCards(
+    byNumber,
+    path.join(staging, "cards.json"),
+    pagesMissing,
+  );
 
   let cards = [...byNumber.values()].sort((a, b) =>
     a.number.localeCompare(b.number, "en"),
@@ -447,6 +464,7 @@ export async function scrapeNarutoColekaS6ItCards(
   console.log("── S6 IT (Coleka Rivalità Eterna) → cards/s6/it/");
   const byNumber = new Map<string, ColekaS6ItCard>();
   let pageIdx = 0;
+  let pagesMissing = 0;
   let waited = false;
   for (const url of colekaS6ItListingPageUrls()) {
     if (delayMs > 0) {
@@ -460,13 +478,22 @@ export async function scrapeNarutoColekaS6ItCards(
     );
     pageIdx += 1;
     if (!html) {
+      pagesMissing += 1;
       console.warn(
         `── S6 IT : listing page ${pageIdx} absente ou mur Coleka, on continue`,
       );
       continue;
     }
-    s6It_mergeByNumber(byNumber, parseColekaS6ItListing(html));
+    const parsed = parseColekaS6ItListing(html);
+    // A page without a single tile (homepage, new template) is not a read.
+    if (parsed.length === 0) pagesMissing += 1;
+    s6It_mergeByNumber(byNumber, parsed);
   }
+  keepStagedListingCards(
+    byNumber,
+    path.join(staging, "cards.json"),
+    pagesMissing,
+  );
 
   let cards = [...byNumber.values()].sort((a, b) =>
     a.number.localeCompare(b.number, "en"),
@@ -747,6 +774,7 @@ async function scrapeColekaCcgFrSet(
   console.log(`── ${spec.label} → cards/{family}/{n|j|m}####/fr/`);
   const byNumber = new Map<string, ColekaStorm3Card>();
   let pageIdx = 0;
+  let pagesMissing = 0;
   let waited = false;
   for (const url of spec.listingPageUrls()) {
     if (delayMs > 0) {
@@ -760,14 +788,23 @@ async function scrapeColekaCcgFrSet(
     );
     pageIdx += 1;
     if (!html) {
+      pagesMissing += 1;
       console.warn(
         `── ${spec.label} : listing page ${pageIdx} absente ou mur Coleka, on continue`,
       );
       continue;
     }
     const parse = spec.parseListing ?? parseColekaStorm3Listing;
-    colekaStorm3_mergeByNumber(byNumber, parse(html));
+    const parsed = parse(html);
+    // A page without a single tile (homepage, new template) is not a read.
+    if (parsed.length === 0) pagesMissing += 1;
+    colekaStorm3_mergeByNumber(byNumber, parsed);
   }
+  keepStagedListingCards(
+    byNumber,
+    path.join(staging, "cards.json"),
+    pagesMissing,
+  );
 
   let cards = [...byNumber.values()].sort((a, b) =>
     a.number.localeCompare(b.number, "en"),

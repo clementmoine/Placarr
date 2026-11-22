@@ -5,6 +5,7 @@ import {
   COLEKA_ORIGIN,
   colekaFullFaceUrl,
 } from "@/providers/naruto/narutocarddass/parse/coleka";
+import { colekaListingItems } from "@/providers/shared/coleka/listingItems";
 
 export { COLEKA_ORIGIN, colekaFullFaceUrl };
 
@@ -17,9 +18,6 @@ export type ColekaPokemonMcdoCard = {
   thumbUrl: string;
   faceUrl: string;
 };
-
-const ITEM_RE =
-  /<a\s([^>]*class="[^"]*lib_has_2_lines[^"]*"[^>]*)>([\s\S]*?)<\/a>/gi;
 
 function decodeEntities(value: string): string {
   return value
@@ -42,23 +40,21 @@ export function parseColekaPokemonMcdoListing(
   html: string,
 ): ColekaPokemonMcdoCard[] {
   const byId = new Map<string, ColekaPokemonMcdoCard>();
-  for (const match of html.matchAll(ITEM_RE)) {
-    const attrs = match[1]!;
-    const inner = match[2]!;
-    const ref = inner.match(
-      /<span class="ref">\s*Ref\.\s*(\d+)\s*\/\s*(\d+)\s*<\/span>/i,
-    );
+  for (const item of colekaListingItems(html)) {
+    const ref = item.ref?.match(/^(\d+)\s*\/\s*(\d+)$/i);
     if (!ref) continue;
     const printed = `${ref[1]}/${ref[2]}`;
     const localId = colekaMcdoLocalId(printed);
     if (!localId || byId.has(localId)) continue;
-    const title = inner.match(/<h3 class="product-title">([^<]+)<\/h3>/i);
-    const img = inner.match(
-      /<img[^>]+src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
-    const href = attrs.match(/\bhref="([^"]+)"/i)?.[1];
+    const title = item.title ? [item.title, item.title] : null;
+    const img = item.thumbUrl?.startsWith(
+      "https://thumbs.coleka.com/media/item/",
+    )
+      ? [item.thumbUrl, item.thumbUrl]
+      : null;
+    const href = item.href;
     if (!title || !img || !href) continue;
-    const colekaId = attrs.match(/\bdata-id="(\d+)"/i)?.[1] ?? "";
+    const colekaId = item.id;
     const pagePath = href.startsWith("http") ? new URL(href).pathname : href;
     const thumbUrl = img[1]!;
     byId.set(localId, {

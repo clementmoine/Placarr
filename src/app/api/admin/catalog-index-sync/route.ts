@@ -101,7 +101,9 @@ export async function POST(req: NextRequest) {
         allowDownload: true,
         source: "admin",
       },
+      // Une Sync par catalogue : ne pas annuler celles des autres providers.
       replaceOpenForKind: true,
+      replaceOpenPayloadMatch: { path: ["providerId"], equals: providerId },
     });
     return NextResponse.json({
       ok: true,
@@ -124,6 +126,10 @@ export async function POST(req: NextRequest) {
         source: "admin",
       },
       replaceOpenForKind: true,
+      replaceOpenPayloadMatch: {
+        path: ["providerId"],
+        equals: legacy.providerId,
+      },
     });
     return NextResponse.json({
       ok: true,

@@ -4,11 +4,13 @@
  * In-process Node only — no `tsx` / CLI spawn. Docker prod never needs a CLI
  * entrypoint; Catalogue Sync / Extract is the product path.
  */
+import { AsyncLocalStorage } from "node:async_hooks";
 import { access } from "node:fs/promises";
 import { inspect } from "node:util";
 import path from "node:path";
 
 import { dataRoot } from "@/lib/runtimeData";
+import type { ProviderClientOutcome } from "@/types/providerModule";
 import { packApksDir } from "@/lib/packPaths";
 import { POKEMON_CATALOGUE_LANGS_CSV } from "@/providers/pokemon/live/cdn/languages";
 import { catalogueExtractSkipArgs } from "@/lib/admin/catalogueExtractCheckpoint";
@@ -161,9 +163,7 @@ export async function resolveCatalogueExtractPlan(
     pack.extract.pipelineSteps,
   );
   const resumePrelude =
-    skipArgs.length > 0
-      ? [`reprise: ${skipArgs[0]} ${skipArgs[1]}`]
-      : [];
+    skipArgs.length > 0 ? [`reprise: ${skipArgs[0]} ${skipArgs[1]}`] : [];
 
   if (target === "lorcana") {
     const apk = await preferredLorcanaApk();
@@ -229,52 +229,50 @@ function formatLogArgs(args: unknown[]): string {
     .join(" ");
 }
 
+type TeeSink = { onLog: (line: string) => void; inside: boolean };
+
+/** Puits de log du job courant, porté par le contexte async (pas global). */
+const teeContext = new AsyncLocalStorage<TeeSink>();
+let consolePatched = false;
+
 /**
- * Tee console → admin extract log while keeping stdout for the worker.
- *
- * Re-entrant: if ``onLog`` itself calls ``console.*`` (worker heartbeat),
- * we forward to the originals only — otherwise the tee stacks prefixes until
- * ``Maximum call stack size exceeded``.
+ * Patch unique de la console : chaque ligne part vers le puits du contexte
+ * async qui l'émet. Deux Sync simultanées n'écrivent plus l'une dans le log
+ * de l'autre (l'ancien patch global capturait tout le process).
+ */
+function ensureConsoleRouted(): void {
+  if (consolePatched) return;
+  consolePatched = true;
+  for (const level of ["log", "info", "warn", "error"] as const) {
+    const orig = console[level].bind(console);
+    console[level] = (...args: unknown[]) => {
+      const sink = teeContext.getStore();
+      if (sink && !sink.inside) {
+        sink.inside = true;
+        try {
+          for (const line of formatLogArgs(args).split("\n")) {
+            if (line.length > 0) sink.onLog(line);
+          }
+        } finally {
+          sink.inside = false;
+        }
+      }
+      orig(...args);
+    };
+  }
+}
+
+/**
+ * Tee console → log d'extract du job, stdout conservé pour le worker.
+ * Le log suit le contexte async (Sync simultanées séparées). Réentrant : si
+ * ``onLog`` appelle ``console.*``, la ligne ne repart pas dans le puits.
  */
 export async function withConsoleTee<T>(
   onLog: (line: string) => void,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const orig = {
-    log: console.log,
-    info: console.info,
-    warn: console.warn,
-    error: console.error,
-  };
-  let insideTee = false;
-  const tee =
-    (level: keyof typeof orig) =>
-    (...args: unknown[]) => {
-      if (!insideTee) {
-        insideTee = true;
-        try {
-          const text = formatLogArgs(args);
-          for (const line of text.split("\n")) {
-            if (line.length > 0) onLog(line);
-          }
-        } finally {
-          insideTee = false;
-        }
-      }
-      orig[level](...args);
-    };
-  console.log = tee("log");
-  console.info = tee("info");
-  console.warn = tee("warn");
-  console.error = tee("error");
-  try {
-    return await fn();
-  } finally {
-    console.log = orig.log;
-    console.info = orig.info;
-    console.warn = orig.warn;
-    console.error = orig.error;
-  }
+  ensureConsoleRouted();
+  return teeContext.run({ onLog, inside: false }, fn);
 }
 
 async function invokePackPipeline(
@@ -287,120 +285,110 @@ async function invokePackPipeline(
 
   switch (target) {
     case "pokemon": {
-      const { runPokemonFoilExtract } = await import(
-        "@/providers/pokemon/live/extract"
-      );
+      const { runPokemonFoilExtract } =
+        await import("@/providers/pokemon/live/extract");
       await runPokemonFoilExtract(argv, { repo: root, signal });
       return;
     }
     case "lorcana": {
-      const { runLorcanaFoilExtract } = await import(
-        "@/providers/lorcana/lorcanatcg/extract"
-      );
+      const { runLorcanaFoilExtract } =
+        await import("@/providers/lorcana/lorcanatcg/extract");
       await runLorcanaFoilExtract(argv, { repo: root, signal });
       return;
     }
     case "naruto": {
-      const { runNarutoPackPipeline } = await import(
-        "@/providers/naruto/narutocarddass/extract"
-      );
+      const { runNarutoPackPipeline } =
+        await import("@/providers/naruto/narutocarddass/extract");
       await runNarutoPackPipeline(argv);
       return;
     }
     case "naruto-shippuden": {
-      const { runNarutoShippudenPackPipeline } = await import(
-        "@/providers/naruto/narutoshippuden/extract"
-      );
+      const { runNarutoShippudenPackPipeline } =
+        await import("@/providers/naruto/narutoshippuden/extract");
       await runNarutoShippudenPackPipeline();
       return;
     }
     case "naruto-ranks": {
-      const { runNarutoRanksPackPipeline } = await import(
-        "@/providers/naruto/narutoranks/extract"
-      );
+      const { runNarutoRanksPackPipeline } =
+        await import("@/providers/naruto/narutoranks/extract");
       await runNarutoRanksPackPipeline(argv);
       return;
     }
     case "naruto-ultra": {
-      const { runNarutoUltraPackPipeline } = await import(
-        "@/providers/naruto/narutoultra/extract"
-      );
+      const { runNarutoUltraPackPipeline } =
+        await import("@/providers/naruto/narutoultra/extract");
       await runNarutoUltraPackPipeline(argv);
       return;
     }
     case "naruto-mythos": {
-      const { runNarutoMythosPackPipeline } = await import(
-        "@/providers/naruto/narutomythos/extract"
-      );
+      const { runNarutoMythosPackPipeline } =
+        await import("@/providers/naruto/narutomythos/extract");
       await runNarutoMythosPackPipeline(argv);
       return;
     }
     case "naruto-cardgame": {
-      const { runNarutoCardgamePackPipeline } = await import(
-        "@/providers/naruto/narutocardgame/extract"
-      );
+      const { runNarutoCardgamePackPipeline } =
+        await import("@/providers/naruto/narutocardgame/extract");
       await runNarutoCardgamePackPipeline(argv);
       return;
     }
     case "naruto-kayou": {
-      const { runNarutoKayouPackPipeline } = await import(
-        "@/providers/naruto/narutokayou/extract"
-      );
+      const { runNarutoKayouPackPipeline } =
+        await import("@/providers/naruto/narutokayou/extract");
       await runNarutoKayouPackPipeline(argv);
       return;
     }
     case "naruto-data-carddass": {
-      const { runNarutoDataCarddassPackPipeline } = await import(
-        "@/providers/naruto/narutodatacarddass/extract"
-      );
+      const { runNarutoDataCarddassPackPipeline } =
+        await import("@/providers/naruto/narutodatacarddass/extract");
       await runNarutoDataCarddassPackPipeline(argv);
       return;
     }
     case "dbs-cg": {
-      const { runDbsCgPackPipeline } = await import("@/providers/dragonball/dbscg/extract");
+      const { runDbsCgPackPipeline } =
+        await import("@/providers/dragonball/dbscg/extract");
       await runDbsCgPackPipeline(argv);
       return;
     }
     case "dbs-fw": {
-      const { runDbsFwPackPipeline } = await import("@/providers/dragonball/dbsfw/extract");
+      const { runDbsFwPackPipeline } =
+        await import("@/providers/dragonball/dbsfw/extract");
       await runDbsFwPackPipeline(argv);
       return;
     }
     case "dbs-lamincards": {
-      const { runDbsLamincardsPackPipeline } = await import(
-        "@/providers/dragonball/dbslamincards/extract"
-      );
+      const { runDbsLamincardsPackPipeline } =
+        await import("@/providers/dragonball/dbslamincards/extract");
       await runDbsLamincardsPackPipeline(argv);
       return;
     }
     case "dbs-jcc": {
-      const { runDbsJccPackPipeline } = await import(
-        "@/providers/dragonball/dbsjcc/extract"
-      );
+      const { runDbsJccPackPipeline } =
+        await import("@/providers/dragonball/dbsjcc/extract");
       await runDbsJccPackPipeline(argv);
       return;
     }
     case "dbs-heroes": {
-      const { runDbhPackPipeline } = await import("@/providers/dragonball/dbh/extract");
+      const { runDbhPackPipeline } =
+        await import("@/providers/dragonball/dbh/extract");
       await runDbhPackPipeline(argv);
       return;
     }
     case "bleach-scb": {
-      const { runBleachScbPackPipeline } = await import(
-        "@/providers/bleach/bleachscb/extract"
-      );
+      const { runBleachScbPackPipeline } =
+        await import("@/providers/bleach/bleachscb/extract");
       await runBleachScbPackPipeline(argv);
       return;
     }
     case "onepiece": {
-      const { runOnepiecePackPipeline } = await import(
-        "@/providers/onepiece/extract"
-      );
+      const { runOnepiecePackPipeline } =
+        await import("@/providers/onepiece/extract");
       await runOnepiecePackPipeline(argv);
       return;
     }
     case "leclerc-sw15":
     case "leclerc-sw16":
+    case "leclerc-sw17":
     case "leclerc-sw18":
     case "leclerc-sw19":
     case "leclerc-marvel20":
@@ -410,14 +398,14 @@ async function invokePackPipeline(
     case "leclerc-marvel24":
     case "leclerc-disney25":
     case "leclerc-disney26": {
-      const { runLeclercExtractTargetPipeline } = await import(
-        "@/providers/leclerc/extract"
-      );
+      const { runLeclercExtractTargetPipeline } =
+        await import("@/providers/leclerc/extract");
       await runLeclercExtractTargetPipeline(target, argv);
       return;
     }
     case "yugioh": {
-      const { runYugiohPackPipeline } = await import("@/providers/yugioh/extract");
+      const { runYugiohPackPipeline } =
+        await import("@/providers/yugioh/extract");
       await runYugiohPackPipeline(argv);
       return;
     }
@@ -439,13 +427,13 @@ async function invokePackPipeline(
  *
  * Always tees stdout-style logs to ``data/<pack>/logs/foil-extract.log``.
  */
-export type ExtractApkFetchOutcome =
-  | { status: "skipped" }
-  | { status: "up-to-date"; versionCode: number }
-  | { status: "updated"; versionCode: number }
-  | { status: "unavailable"; reason: string };
+/** Issue de l'étape client du jeu (ADR-026). */
+export type ExtractApkFetchOutcome = ProviderClientOutcome;
 
-/** Probe/download the store APK when the pack has an `androidPackageId`. */
+/**
+ * Client du jeu du pack avant l'extract — même étape que la Sync
+ * (`ensurePackClient`, ADR-026).
+ */
 export async function maybeFetchStoreApkForExtract(
   target: CatalogueExtractTarget,
   options: {
@@ -455,30 +443,8 @@ export async function maybeFetchStoreApkForExtract(
   } = {},
 ): Promise<ExtractApkFetchOutcome> {
   const pack = cataloguePackForExtractTarget(target);
-  if (!pack?.androidPackageId) return { status: "skipped" };
-  options.onLog?.(
-    `── store APK ${pack.id} (${pack.androidPackageId})`,
-  );
-  const { fetchStoreApksForPack } = await import("@/lib/admin/apkStoreFetch");
-  const result = await fetchStoreApksForPack(pack.id, {
-    force: options.force,
-    signal: options.signal,
-    onLog: options.onLog,
-  });
-  if (result.status === "unavailable") {
-    options.onLog?.(`store APK unavailable: ${result.reason}`);
-    return result;
-  }
-  if (result.status === "up-to-date") {
-    options.onLog?.(
-      `store APK up-to-date (versionCode=${result.versionCode})`,
-    );
-    return result;
-  }
-  options.onLog?.(
-    `store APK updated (versionCode=${result.versionCode})`,
-  );
-  return result;
+  const { ensurePackClient } = await import("@/lib/admin/catalogueClient");
+  return ensurePackClient(pack?.id, options);
 }
 
 /**
@@ -543,8 +509,7 @@ export async function runCatalogueExtractCommand(
   }
 
   const scope =
-    options.scope ??
-    (policy.preferCatalogueScope ? "catalogue" : "inventory");
+    options.scope ?? (policy.preferCatalogueScope ? "catalogue" : "inventory");
   const timeoutMs =
     options.timeoutMs ?? catalogueExtractTimeoutMs(target, scope);
 
@@ -609,9 +574,8 @@ export async function runCatalogueExtractCommand(
     // Every TCG extract refreshes camera identify indexes (dHash + CLIP).
     // Soft-fail so extract success is preserved if embeddings can't load.
     if (pack?.id) {
-      const { runDataPackCardIdentifyIndexes } = await import(
-        "@/providers/shared/cardCatalogue/identifyIndexesStep"
-      );
+      const { runDataPackCardIdentifyIndexes } =
+        await import("@/providers/shared/cardCatalogue/identifyIndexesStep");
       await runDataPackCardIdentifyIndexes(pack.id, { onLog });
       // Admin Sync is foilExtract — without this stamp, auto-sync keeps the
       // pack stale for 2 days and re-enqueues catalogProviderSync forever.
@@ -637,7 +601,9 @@ export async function runCatalogueExtractCommand(
       } catch (stampError) {
         onLog(
           `── last-run stamp skipped: ${
-            stampError instanceof Error ? stampError.message : String(stampError)
+            stampError instanceof Error
+              ? stampError.message
+              : String(stampError)
           }`,
         );
       }

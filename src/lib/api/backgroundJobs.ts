@@ -83,3 +83,15 @@ export function upsertBackgroundJobInCache(
     },
   );
 }
+
+/**
+ * Lignes du menu « Activité en arrière-plan » : tout ce qui tourne, plus les
+ * Sync catalogue terminées **seulement** si elles ont mis à jour des objets
+ * de l'étagère (leurs rafraîchissements suivent ensuite, ligne par objet).
+ * Une Sync terminée à 0 objet n'est pas une activité à signaler.
+ */
+export function backgroundJobsForMenu(
+  jobs: readonly BackgroundJob[],
+): BackgroundJob[] {
+  return jobs.filter((job) => !job.done || (job.propagatedItemCount ?? 0) > 0);
+}

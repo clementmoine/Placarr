@@ -4,6 +4,11 @@ vi.mock("@/lib/runtimeData", () => ({
   dataRoot: () => "/tmp/placarr-data",
 }));
 
+const ensurePackClient = vi.hoisted(() =>
+  vi.fn(async () => ({ status: "skipped" as const })),
+);
+vi.mock("@/lib/admin/catalogueClient", () => ({ ensurePackClient }));
+
 import {
   CATALOGUE_EXTRACT_FULL_TIMEOUT_MS,
   CATALOGUE_EXTRACT_DBS_FACES_TIMEOUT_MS,
@@ -90,9 +95,9 @@ describe("catalogueExtractRunner targets", () => {
     expect(fw.prelude.some((line) => /produit/i.test(line))).toBe(true);
     expect(fw.prelude.some((line) => /foil CDN/i.test(line))).toBe(true);
     expect(
-      (
-        await import("@/lib/admin/cataloguePacks")
-      ).cataloguePackInfo("dragonball/fw")?.extract.pipelineSteps,
+      (await import("@/lib/admin/cataloguePacks")).cataloguePackInfo(
+        "dragonball/fw",
+      )?.extract.pipelineSteps,
     ).toContain("foil");
   });
 
@@ -178,9 +183,7 @@ describe("catalogueExtractRunner targets", () => {
   it("pokemon inventory scrape unions APK/Malie then CDN (catalogue langs)", async () => {
     const cmd = await resolveCatalogueExtractPlan("pokemon");
     expect(cmd.target).toBe("pokemon");
-    expect(cmd.argv).toEqual(
-      expect.arrayContaining(["--langs", "en,fr"]),
-    );
+    expect(cmd.argv).toEqual(expect.arrayContaining(["--langs", "en,fr"]));
     expect(cmd.argv).not.toContain("--skip-products");
     expect(cmd.argv).not.toContain("--no-job");
     expect(cmd.prelude.some((l) => /inventory/i.test(l))).toBe(true);
@@ -198,14 +201,17 @@ describe("catalogueExtractRunner targets", () => {
 });
 
 describe("store APK prefix on extract", () => {
-  it("skips packs without androidPackageId", async () => {
-    await expect(maybeFetchStoreApkForExtract("naruto")).resolves.toEqual({
+  it("passe par l'étape client commune avec le pack de la cible (ADR-026)", async () => {
+    await expect(maybeFetchStoreApkForExtract("lorcana")).resolves.toEqual({
       status: "skipped",
     });
+    expect(ensurePackClient).toHaveBeenCalledWith("lorcana", {});
   });
 
   it("auto-sync without a new APK still runs catalogue (Unity only skipped)", () => {
-    expect(autoExtractPolicy(true, { status: "up-to-date", versionCode: 1 })).toEqual({
+    expect(
+      autoExtractPolicy(true, { status: "up-to-date", version: "1" }),
+    ).toEqual({
       skipUnity: true,
       preferCatalogueScope: true,
     });
@@ -215,12 +221,14 @@ describe("store APK prefix on extract", () => {
       skipUnity: true,
       preferCatalogueScope: true,
     });
-    expect(autoExtractPolicy(true, { status: "updated", versionCode: 2 })).toEqual({
+    expect(
+      autoExtractPolicy(true, { status: "updated", version: "2" }),
+    ).toEqual({
       skipUnity: false,
       preferCatalogueScope: false,
     });
     expect(
-      autoExtractPolicy(false, { status: "up-to-date", versionCode: 1 }),
+      autoExtractPolicy(false, { status: "up-to-date", version: "1" }),
     ).toEqual({
       skipUnity: false,
       preferCatalogueScope: false,

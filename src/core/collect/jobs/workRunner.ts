@@ -431,9 +431,8 @@ export async function executeBackgroundWorkJob(
         : "";
     if (!providerId) throw new Error("catalogProviderSync requires providerId");
     const { getCatalogProviderModule } = await import("@/core/catalog/catalog");
-    const { catalogRefreshOptsFromPayload } = await import(
-      "@/lib/admin/catalogRefreshOpts"
-    );
+    const { catalogRefreshOptsFromPayload } =
+      await import("@/lib/admin/catalogRefreshOpts");
     const mdl = getCatalogProviderModule(providerId);
     if (!mdl?.catalog) {
       throw new Error(`No catalog hooks for provider ${providerId}`);
@@ -452,17 +451,25 @@ export async function executeBackgroundWorkJob(
       progress (scryfall-faces, seed, …) is visible like legacy foilExtract.
     */
     const { cataloguePackInfo } = await import("@/lib/admin/cataloguePacks");
-    const extractTarget = cataloguePackInfo(mdl.catalog.dataPack)?.extractTarget;
+    const extractTarget = cataloguePackInfo(
+      mdl.catalog.dataPack,
+    )?.extractTarget;
     const { appendCatalogueExtractLog, appendCatalogueExtractLogSync } =
       await import("@/lib/admin/catalogueExtractLog");
-    const { withConsoleTee } = await import("@/lib/admin/catalogueExtractRunner");
+    const { withConsoleTee } =
+      await import("@/lib/admin/catalogueExtractRunner");
 
     const runRefresh = async () => {
+      // Client du jeu d'abord (APK du store, client CDN… — ADR-026) :
+      // l'extract qui suit a son binaire.
+      const { ensurePackClient } = await import("@/lib/admin/catalogueClient");
+      await ensurePackClient(mdl.catalog!.dataPack, {
+        onLog: (line) => console.log(line),
+      });
       await mdl.catalog!.refresh(catalogRefreshOptsFromPayload(catalogPayload));
       // Corpus densified → soft-refresh shelf items sharing those printKeys.
-      const { enqueuePrintCatalogPropagate } = await import(
-        "@/core/collect/jobs/printCatalogPropagate"
-      );
+      const { enqueuePrintCatalogPropagate } =
+        await import("@/core/collect/jobs/printCatalogPropagate");
       const n = await enqueuePrintCatalogPropagate({ providerId });
       await mergeBackgroundWorkJobPayload(job.id, {
         propagatedItemCount: n,
@@ -545,9 +552,7 @@ async function executeApkStoreFetchJob(
   if (typeof heartbeat.unref === "function") heartbeat.unref();
 
   try {
-    const { fetchStoreApksForPack } = await import(
-      "@/lib/admin/apkStoreFetch"
-    );
+    const { fetchStoreApksForPack } = await import("@/lib/admin/apkStoreFetch");
     const result = await fetchStoreApksForPack(pack, {
       force: payload?.force,
       signal: controller.signal,

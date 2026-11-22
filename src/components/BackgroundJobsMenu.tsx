@@ -17,6 +17,7 @@ import {
 import { ShelfTypeIcon } from "@/components/ShelfTypeIcon";
 import {
   cancelAllBackgroundJobs,
+  backgroundJobsForMenu,
   cancelBackgroundJob,
   getBackgroundJobs,
   type BackgroundJob,
@@ -116,11 +117,10 @@ export function BackgroundJobsMenu() {
 
   if (isGuest) return null;
 
-  const jobs = data?.jobs ?? [];
+  const jobs = backgroundJobsForMenu(data?.jobs ?? []);
   const activeCount = jobs.filter((job) => !job.done).length;
   const hasDoneOnly = activeCount === 0 && jobs.some((job) => job.done);
-  const isBusy =
-    activeCount > 0 || cancelAll.isPending || cancelOne.isPending;
+  const isBusy = activeCount > 0 || cancelAll.isPending || cancelOne.isPending;
   const visible = isBusy || hasDoneOnly;
 
   if (!visible) return null;

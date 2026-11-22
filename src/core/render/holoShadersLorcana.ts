@@ -4,10 +4,11 @@
 
 import { loadLorcanaWebRecipes } from "@/lib/foilMetaLoad";
 
+import { isHoloShaderId, type HoloShaderId } from "./holoShaderIds";
 import type { HoloShader } from "./holoShaders";
 
 /** Second coats that sit above a finish (not expressed as one upstream rule). */
-const OVERLAY_BY_FINISH: Readonly<Record<string, string>> = {
+const OVERLAY_BY_FINISH: Readonly<Record<string, HoloShaderId>> = {
   lore: "loreShine",
   satin: "satinShine",
 };
@@ -36,21 +37,22 @@ function spacedCssFilter(filter: string): string {
  */
 export function lorcanaWebHoloShader(id: string): HoloShader | null {
   const decl = loadLorcanaWebRecipes().looks?.[id];
-  if (!decl?.backgroundImage) return null;
+  // A look present in recipes.json is a HoloShaderId (`isHoloShaderId`).
+  if (!decl?.backgroundImage || !isHoloShaderId(id)) return null;
   return {
     id,
     backgroundImage: decl.backgroundImage,
-    ...(decl.backgroundRepeat
-      ? { backgroundRepeat: decl.backgroundRepeat }
-      : {}),
-    ...(decl.backgroundSize ? { backgroundSize: decl.backgroundSize } : {}),
-    ...(decl.backgroundPosition
-      ? { backgroundPosition: decl.backgroundPosition }
-      : {}),
+    // A rule the publisher leaves unset falls back to the CSS initial value —
+    // what the browser draws when the inline style omits it (no stylesheet
+    // sets these on the foil layer). `satin` / `chromeRainbowHotFoil` ship no
+    // background-repeat.
+    backgroundRepeat: decl.backgroundRepeat || "repeat",
+    backgroundSize: decl.backgroundSize || "auto",
+    backgroundPosition: decl.backgroundPosition || "0% 0%",
     ...(decl.backgroundBlendMode
       ? { backgroundBlendMode: decl.backgroundBlendMode }
       : {}),
-    ...(decl.mixBlendMode ? { mixBlendMode: decl.mixBlendMode } : {}),
+    mixBlendMode: decl.mixBlendMode || "normal",
     ...(decl.opacity != null ? { opacity: decl.opacity } : {}),
     ...(decl.filter ? { filter: spacedCssFilter(decl.filter) } : {}),
     ...(OVERLAY_BY_FINISH[id]

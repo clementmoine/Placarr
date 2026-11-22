@@ -51,6 +51,7 @@ export type CataloguePackId =
   | "mtg"
   | "leclerc/sw15"
   | "leclerc/sw16"
+  | "leclerc/sw17"
   | "leclerc/sw18"
   | "leclerc/sw19"
   | "leclerc/marvel20"
@@ -94,6 +95,7 @@ export type CatalogueExtractTarget =
   | "mtg"
   | "leclerc-sw15"
   | "leclerc-sw16"
+  | "leclerc-sw17"
   | "leclerc-sw18"
   | "leclerc-sw19"
   | "leclerc-marvel20"
@@ -411,7 +413,14 @@ export const CATALOGUE_PACKS: readonly CataloguePackInfo[] = [
       timeoutMsByScope: { catalogue: CATALOGUE_EXTRACT_FULL_TIMEOUT_MS },
       postExtract: "invalidatePokemonFoilNamesCache",
       // Mirrors selectPokemonSteps defaults — SKUs/scellés/packshots included.
-      pipelineSteps: ["malie", "scrape", "extract", "paper-faces", "products"],
+      pipelineSteps: [
+        "malie",
+        "scrape",
+        "extract",
+        "paper-faces",
+        "products",
+        "simey",
+      ],
     },
   },
   {

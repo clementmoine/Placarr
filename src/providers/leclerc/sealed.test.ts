@@ -40,6 +40,8 @@ describe("leclerc disney25 sealed products", () => {
         ),
       ),
     ).toBe(true);
+    // Toutes les faces candidates restent en curated (scan maison à côté de
+    // Paninimania) : le choix de la face affichée relève du moteur de score.
     expect(
       existsSync(
         path.join(
@@ -49,7 +51,7 @@ describe("leclerc disney25 sealed products", () => {
           "art.scan.png",
         ),
       ),
-    ).toBe(false);
+    ).toBe(true);
     const pochette = ledger?.products.find((p) => p.slug === "pochette");
     expect(pochette).toMatchObject({
       kind: "booster",
@@ -174,12 +176,12 @@ describe.each([
       const out = ingestLeclercSealedProducts(setCode);
       expect(out.written).toBe(3);
       const index = loadSealedProductsIndex(`leclerc/${setCode}`);
-      expect(index.products[`leclerc/${setCode}::collector-album`]).toMatchObject(
-        {
-          name: albumName,
-          priceCents: 199,
-        },
-      );
+      expect(
+        index.products[`leclerc/${setCode}::collector-album`],
+      ).toMatchObject({
+        name: albumName,
+        priceCents: 199,
+      });
       const pochette = index.products[`leclerc/${setCode}::pochette`];
       expect(pochette).toMatchObject({
         name: pochetteName,
@@ -296,7 +298,9 @@ describe("leclerc sealed seed stubs", () => {
       expect(out.written).toBeGreaterThanOrEqual(3);
       expect(out.file).toBeTruthy();
       const index = loadSealedProductsIndex(`leclerc/${setCode}`);
-      expect(index.products[`leclerc/${setCode}::collector-album`]).toMatchObject({
+      expect(
+        index.products[`leclerc/${setCode}::collector-album`],
+      ).toMatchObject({
         slug: "collector-album",
         kind: "coffret",
         category: "albums",
@@ -304,7 +308,9 @@ describe("leclerc sealed seed stubs", () => {
       const cardsPerPack =
         setCode === "sw15" || setCode === "sw16"
           ? 2
-          : setCode === "marvel20"
+          : setCode === "sw17"
+            ? 1
+            : setCode === "marvel20"
             ? 6
             : 4;
       expect(index.products[`leclerc/${setCode}::pochette`]).toMatchObject({
@@ -467,9 +473,10 @@ describe("leclerc disney26 collector-album (Vinted packshot)", () => {
   it("writes collector-album into products-index with /face and /back", () => {
     const out = ingestLeclercSealedProducts("disney26");
     expect(out.written).toBeGreaterThanOrEqual(4);
-    const album = loadSealedProductsIndex("leclerc/disney26").products[
-      "leclerc/disney26::collector-album"
-    ];
+    const album =
+      loadSealedProductsIndex("leclerc/disney26").products[
+        "leclerc/disney26::collector-album"
+      ];
     expect(album).toMatchObject({
       slug: "collector-album",
       name: "Album — En route pour l'aventure !",
@@ -492,7 +499,9 @@ describe("leclerc disney26 fixeez-integrale (Vinted packshot)", () => {
     expect(ledger?.products.find((p) => p.slug === "pochette")).toMatchObject({
       packComposition: { possibleChase: ["Fixeez"] },
     });
-    const integrale = ledger?.products.find((p) => p.slug === "fixeez-integrale");
+    const integrale = ledger?.products.find(
+      (p) => p.slug === "fixeez-integrale",
+    );
     expect(integrale).toMatchObject({
       kind: "collector_box",
       source: "vinted",
@@ -543,27 +552,46 @@ describe("leclerc display packshots (studio)", () => {
     ["marvel24", "Display — Explore L'Univers Marvel avec Groot"],
     ["sw18", "Display — Star Wars"],
     ["sw19", "Display — Maîtriser la Force"],
-  ] as const)("%s display resolves /face from art.packshot.png", (setCode, name) => {
-    expect(
-      existsSync(
-        path.join(
-          leclercCuratedProductsDir(setCode),
-          "display",
-          "fr",
-          "art.packshot.png",
+  ] as const)(
+    "%s display resolves /face from art.packshot.png",
+    (setCode, name) => {
+      expect(
+        existsSync(
+          path.join(
+            leclercCuratedProductsDir(setCode),
+            "display",
+            "fr",
+            "art.packshot.png",
+          ),
         ),
-      ),
-    ).toBe(true);
-    const out = ingestLeclercSealedProducts(setCode);
-    expect(out.written).toBeGreaterThanOrEqual(1);
-    const display = loadSealedProductsIndex(`leclerc/${setCode}`).products[
-      `leclerc/${setCode}::display`
-    ];
-    expect(display).toMatchObject({
-      name,
-      image: `/assets/leclerc/${setCode}/products/display/fr/face`,
-      packsContained:
-        setCode === "sw19" ? 244 : setCode === "marvel23" ? 420 : null,
+      ).toBe(true);
+      const out = ingestLeclercSealedProducts(setCode);
+      expect(out.written).toBeGreaterThanOrEqual(1);
+      const display = loadSealedProductsIndex(`leclerc/${setCode}`).products[
+        `leclerc/${setCode}::display`
+      ];
+      expect(display).toMatchObject({
+        name,
+        image: `/assets/leclerc/${setCode}/products/display/fr/face`,
+        packsContained:
+          setCode === "sw19" ? 244 : setCode === "marvel23" ? 420 : null,
+      });
+    },
+  );
+});
+
+describe("leclerc sw17 MicroPopz (visuel modalités officiel)", () => {
+  it("coffret collector 1,99 € + pochette d'1 MicroPopz", () => {
+    ingestLeclercSealedProducts("sw17");
+    const index = loadSealedProductsIndex("leclerc/sw17");
+    expect(index.products["leclerc/sw17::collector-album"]).toMatchObject({
+      name: "Coffret Collector Faucon Millenium — Star Wars MicroPopz",
+      priceCents: 199,
     });
+    expect(index.products["leclerc/sw17::pochette"]).toMatchObject({
+      cardsPerPack: 1,
+      packComposition: { cardsPerPack: 1 },
+    });
+    expect(index.products["leclerc/sw17::display"]?.packsContained).toBeNull();
   });
 });

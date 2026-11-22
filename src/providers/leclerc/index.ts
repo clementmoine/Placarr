@@ -75,6 +75,7 @@ export const leclercModules: ProviderModule[] = LECLERC_ACTIVE_OPS.map(
 
 export const leclercSw15Module = builtBySet.sw15!.module;
 export const leclercSw16Module = builtBySet.sw16!.module;
+export const leclercSw17Module = builtBySet.sw17!.module;
 export const leclercSw18Module = builtBySet.sw18!.module;
 export const leclercSw19Module = builtBySet.sw19!.module;
 export const leclercMarvel20Module = builtBySet.marvel20!.module;

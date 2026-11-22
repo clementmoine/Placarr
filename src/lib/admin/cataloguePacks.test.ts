@@ -149,6 +149,7 @@ describe("cataloguePacks", () => {
     expect(leclerc?.lines.map((line) => line.id)).toEqual([
       "leclerc/sw15",
       "leclerc/sw16",
+      "leclerc/sw17",
       "leclerc/sw18",
       "leclerc/sw19",
       "leclerc/marvel20",
@@ -170,6 +171,7 @@ describe("cataloguePacks", () => {
         lines: [
           "leclerc/sw15",
           "leclerc/sw16",
+          "leclerc/sw17",
           "leclerc/sw18",
           "leclerc/sw19",
         ],
@@ -819,6 +821,7 @@ describe("Naruto catalogue lines", () => {
       label: "S10 · N-361",
       languageSpecific: false,
       appearanceSets: ["s10"],
+      hasFoil: false,
     };
     expect(
       matchesCataloguePreferredLang(row, "fr", {
@@ -848,6 +851,7 @@ describe("Naruto catalogue lines", () => {
           label: "S1 · NI-013 — Hokage le 3e",
           languageSpecific: true,
           appearanceSets: ["s1"],
+          hasFoil: false,
         },
         "fr",
         opts,
@@ -864,6 +868,7 @@ describe("Naruto catalogue lines", () => {
           label: "S1 · N-013 — 3e Hokage",
           languageSpecific: true,
           appearanceSets: ["s1"],
+          hasFoil: false,
         },
         "fr",
         opts,
@@ -881,6 +886,7 @@ describe("Naruto catalogue lines", () => {
           label: "S11 · N-013 — 3e Hokage",
           languageSpecific: true,
           appearanceSets: ["s11"],
+          hasFoil: false,
         },
         "fr",
         opts,

@@ -59,6 +59,8 @@ function op(
 export const LECLERC_OPS: readonly LeclercOpSpec[] = [
   op("sw15", "starwars", true),
   op("sw16", "starwars", true),
+  /** MicroPopz : 25 figurines (pas de cartes) — 1 figurine / pochette. */
+  op("sw17", "starwars", true),
   op("sw18", "starwars", true),
   /** Stickers + dos jeu J1–J18 = une campagne (pas de ligne « Sticker Backs »). */
   op("sw19", "starwars", true),

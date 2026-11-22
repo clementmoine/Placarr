@@ -32,6 +32,12 @@ export const COLEKA_LECLERC_LISTINGS: readonly ColekaLeclercListing[] = [
       "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/cosmic-shells-star-wars-leclerc/leclerc-cosmic-shell-2016-rogue-one_r343",
   },
   {
+    /** Figurines sans « Ref. » : faces via `coleka-cdn-faces.json` (n° explicites). */
+    setCode: "sw17",
+    listingPath:
+      "/fr/figurines-de-collection/petites-figurines/stikeez-popz/micropopz-star-wars-leclerc_r2836",
+  },
+  {
     setCode: "sw18",
     listingPath:
       "/fr/cartes-de-collection/cartes-star-wars/autres-cartes-star-wars/leclerc-star-wars-solo_r4483",

@@ -82,8 +82,10 @@ export function isCompletePdfBytes(bytes: Buffer): boolean {
 }
 
 function shouldDownload(entry: CuratedPackDocument): boolean {
-  // Explicit opt-out wins over waybackUrl / localPath.
+  // Explicit opt-out wins over waybackUrl / localPath ; opt-in explicite :
+  // URL sans extension (CDN `/media/<hash>`, proxy) déclarée téléchargeable.
   if (entry.download === false) return false;
+  if (entry.download === true) return true;
   if (entry.localPath?.trim()) return true;
   if (entry.waybackUrl?.trim()) return true;
   try {
@@ -97,13 +99,29 @@ function shouldDownload(entry: CuratedPackDocument): boolean {
   }
 }
 
+/** Extension d'après les octets (l'URL peut n'en porter aucune, ou mentir). */
+function sniffDocumentExt(bytes: Buffer): string | null {
+  if (bytes.subarray(0, 4).toString("latin1") === "%PDF") return "pdf";
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpg";
+  if (bytes.subarray(1, 4).toString("latin1") === "PNG") return "png";
+  if (
+    bytes.subarray(0, 4).toString("latin1") === "RIFF" &&
+    bytes.subarray(8, 12).toString("latin1") === "WEBP"
+  ) {
+    return "webp";
+  }
+  if (bytes.subarray(0, 3).toString("latin1") === "GIF") return "gif";
+  return null;
+}
+
 /** Resolve curated localPath under the pack (or `..` within dataRoot). */
 export function resolveCuratedLocalPath(
   packId: string,
   localPath: string,
 ): string | null {
   const cleaned = localPath.replace(/\\/g, "/").trim();
-  if (!cleaned || cleaned.startsWith("/") || cleaned.includes("\0")) return null;
+  if (!cleaned || cleaned.startsWith("/") || cleaned.includes("\0"))
+    return null;
   const abs = path.resolve(packDataDir(packId), cleaned);
   const root = path.resolve(dataRoot()) + path.sep;
   if (!abs.startsWith(root) && abs !== path.resolve(dataRoot())) return null;
@@ -113,7 +131,10 @@ export function resolveCuratedLocalPath(
 
 function classifySourceUrl(entry: CuratedPackDocument): string {
   const url = entry.url.trim();
-  if (/^https?:\/\//i.test(url) && /\.(pdf|png|jpe?g|webp)([?#]|$)/i.test(url)) {
+  if (
+    /^https?:\/\//i.test(url) &&
+    /\.(pdf|png|jpe?g|webp)([?#]|$)/i.test(url)
+  ) {
     return url;
   }
   const base = path.basename(entry.localPath || url);
@@ -166,25 +187,30 @@ export async function harvestPackDocuments(
       continue;
     }
 
-    const relativePath = documentRelativePath(
+    let relativePath = documentRelativePath(
       classified.lang,
       classified.kind,
       classified.filename,
     );
-    const abs = path.join(packDocumentsDir(packId), relativePath);
+    let abs = path.join(packDocumentsDir(packId), relativePath);
     const existing = index.documents.find((d) => d.id === classified.id);
 
     const expectPdf =
       looksLikePdfPath(classified.filename) || looksLikePdfPath(url);
 
+    const existingAbs0 = existing?.relativePath
+      ? path.join(packDocumentsDir(packId), existing.relativePath)
+      : null;
     if (
       !force &&
-      existing?.relativePath === relativePath &&
+      existing?.relativePath &&
       existing.sha256 &&
-      existsSync(abs)
+      existingAbs0 &&
+      existsSync(existingAbs0)
     ) {
-      const onDisk = readFileSync(abs);
-      if (!expectPdf || isCompletePdfBytes(onDisk)) {
+      const onDisk = readFileSync(existingAbs0);
+      const storedIsPdf = looksLikePdfPath(existing.relativePath);
+      if (!storedIsPdf || isCompletePdfBytes(onDisk)) {
         result.skipped += 1;
         continue;
       }
@@ -214,7 +240,11 @@ export async function harvestPackDocuments(
         const fetchUrl = wayback || url;
         bytes = await fetchBytes(fetchUrl, signal);
       }
-      if (expectPdf && !isCompletePdfBytes(bytes)) {
+      const sniffedKind = sniffDocumentExt(bytes);
+      if (
+        (sniffedKind ? sniffedKind === "pdf" : expectPdf) &&
+        !isCompletePdfBytes(bytes)
+      ) {
         // Keep bytes for « Ouvrir » — thumbs may still recover via embeds.
         console.warn(
           `[documents] truncated PDF kept (${bytes.byteLength} bytes, no trailing %%EOF): ${relativePath}`,
@@ -236,13 +266,21 @@ export async function harvestPackDocuments(
           continue;
         }
       }
+      const sniffed = sniffedKind;
+      if (sniffed && !relativePath.toLowerCase().endsWith(`.${sniffed}`)) {
+        relativePath = documentRelativePath(
+          classified.lang,
+          classified.kind,
+          classified.filename.replace(/\.[a-z0-9]+$/i, "") + `.${sniffed}`,
+        );
+        abs = path.join(packDocumentsDir(packId), relativePath);
+      }
       mkdirSync(path.dirname(abs), { recursive: true });
       writeFileSync(abs, bytes);
       let thumbRelativePath: string | null = null;
       try {
-        const { ensurePackDocumentThumb } = await import(
-          "@/lib/admin/packDocumentThumbs"
-        );
+        const { ensurePackDocumentThumb } =
+          await import("@/lib/admin/packDocumentThumbs");
         thumbRelativePath = await ensurePackDocumentThumb({
           packId,
           relativePath,

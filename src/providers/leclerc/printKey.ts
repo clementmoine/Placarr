@@ -7,6 +7,9 @@ export const LECLERC_SW15_SET = "sw15";
 /** Star Wars Cosmic Shells II — Leclerc 2016. */
 export const LECLERC_SW16_SET = "sw16";
 /** Star Wars — Leclerc 2018. */
+/** MicroPopz 2017 — figurines ; n° = ordre de la planche officielle (rien d'imprimé). */
+export const LECLERC_SW17_SET = "sw17";
+
 export const LECLERC_SW18_SET = "sw18";
 /** Star Wars « Maîtriser la Force » — Leclerc 2019. */
 export const LECLERC_SW19_SET = "sw19";
@@ -52,6 +55,7 @@ export function canonicalLeclercSetCode(setCode: string): string {
 const SET_LABELS_FR: Readonly<Record<string, string>> = {
   [LECLERC_SW15_SET]: "2015 Star Wars Cosmic Shells",
   [LECLERC_SW16_SET]: "2016 Star Wars Cosmic Shells II",
+  [LECLERC_SW17_SET]: "2017 Star Wars: MicroPopz",
   [LECLERC_SW18_SET]: "2018 Star Wars",
   [LECLERC_SW19_SET]: "2019 Star Wars: Maîtriser la Force",
   [LECLERC_MARVEL20_SET]: "2020 Marvel: Deviens un Héros",

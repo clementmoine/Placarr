@@ -28,14 +28,26 @@ import {
   leclercOpForSetCode,
   type LeclercOpSpec,
 } from "./pack";
+import {
+  harvestCollexLeclercFaces,
+  installCollexLeclercFaces,
+} from "./collexFaces";
 import { colekaLeclercListingForSet } from "./parseColekaLeclerc";
 import { leclercSetLabel } from "./printKey";
 import { ingestLeclercSealedProducts } from "./sealed";
 
-/** Ledger seed (offline) + Coleka/eBay faces (online) + sealed album (offline). */
-export const LECLERC_STEPS = ["seed", "faces", "products"] as const;
+/**
+ * Ledger seed (offline) + faces Coleka/eBay/ColleX (online) + scellés
+ * (offline) + documents de l'opération (online).
+ */
+export const LECLERC_STEPS = [
+  "seed",
+  "faces",
+  "products",
+  "documents",
+] as const;
 export type LeclercStep = (typeof LECLERC_STEPS)[number];
-const LECLERC_ONLINE = new Set<LeclercStep>(["faces"]);
+const LECLERC_ONLINE = new Set<LeclercStep>(["faces", "documents"]);
 
 export function selectLeclercSteps(argv: readonly string[]): LeclercStep[] {
   return selectCatalogueSteps(argv, LECLERC_STEPS, { online: LECLERC_ONLINE });
@@ -50,7 +62,7 @@ export async function runLeclercOpPipeline(
   console.log(
     `── ${label} — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
-  return runLocalTcgPipeline({
+  const result = await runLocalTcgPipeline({
     packId: op.packId,
     curatedDir: leclercCuratedDir(),
     label,
@@ -102,7 +114,9 @@ export async function runLeclercOpPipeline(
               : ` — densify noms bloqué (${gate.reasons.join("; ")})`),
         );
       } else if (!harvest?.cards) {
-        console.log(`── ${label} — Coleka listing murée / vide (dump ?nbpp=240 puis Sync)`);
+        console.log(
+          `── ${label} — Coleka listing murée / vide (dump ?nbpp=240 puis Sync)`,
+        );
       }
 
       if (op.setCode === "disney25") {
@@ -152,6 +166,19 @@ export async function runLeclercOpPipeline(
         }
       }
 
+      // En dernier : le moteur compare ColleX à toutes les faces déjà posées
+      // (Coleka, eBay…) et l'index pointe sur la gagnante.
+      const collexHarvest = await harvestCollexLeclercFaces(op.setCode);
+      if (collexHarvest) {
+        const collexInstalled = await installCollexLeclercFaces(
+          index,
+          op.setCode,
+        );
+        console.log(
+          `── ${label} — ColleX faces ${collexHarvest.items} objet(s) (dl ${collexHarvest.downloaded}, skip ${collexHarvest.skipped}, fail ${collexHarvest.failed}) → affichées ${collexInstalled.faces}, candidates gardées ${collexInstalled.kept}, sans correspondance ${collexInstalled.unmatched.length}`,
+        );
+      }
+
       return { prints, titles };
     },
     seedProducts: () => {
@@ -166,6 +193,20 @@ export async function runLeclercOpPipeline(
       return { written: sealed.written, skipped: sealed.skipped };
     },
   });
+
+  if (steps.includes("documents")) {
+    const { loadLeclercCuratedDocuments } = await import("./curated/documents");
+    const curated = loadLeclercCuratedDocuments(op.setCode);
+    if (curated.length) {
+      const { harvestPackDocuments } =
+        await import("@/providers/shared/documents/harvestPackDocuments");
+      const docs = await harvestPackDocuments({ packId: op.packId, curated });
+      console.log(
+        `── ${label} — documents : ${docs.fetched} téléchargé(s), ${docs.skipped} déjà là, ${docs.urlOnly} lien(s) seul(s), ${docs.failed} échec(s) / ${docs.total}`,
+      );
+    }
+  }
+  return result;
 }
 
 export async function runLeclercSetPipeline(

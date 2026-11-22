@@ -127,6 +127,7 @@ describe("leclerc printKey / ledgers", () => {
   it.each([
     ["sw15", 54, "001", "Leia Organa"],
     ["sw16", 54, "001", "Poe Dameron"],
+    ["sw17", 25, "001", "Snowtrooper"],
     ["sw18", 90, "001", "Leia Organa"],
     ["sw19", 114, "089", "L'empereur Palpatine"],
     ["marvel20", 184, "c01", "HULK"],

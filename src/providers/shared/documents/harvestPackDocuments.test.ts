@@ -23,7 +23,9 @@ describe("harvestPackDocuments", () => {
 
   it("downloads public PDFs under documents/{lang}/{kind}/ and keeps URL-only stubs", async () => {
     const { harvestPackDocuments } = await import("./harvestPackDocuments");
-    const bytes = Buffer.from("%PDF-1.4\n%\n1 0 obj<<>>endobj\ntrailer<<>>\nstartxref\n0\n%%EOF\n");
+    const bytes = Buffer.from(
+      "%PDF-1.4\n%\n1 0 obj<<>>endobj\ntrailer<<>>\nstartxref\n0\n%%EOF\n",
+    );
 
     const result = await harvestPackDocuments({
       packId: "pokemon",
@@ -49,9 +51,7 @@ describe("harvestPackDocuments", () => {
     expect(index.documents).toHaveLength(2);
 
     const rulebook = index.documents.find((d) => d.kind === "rulebook");
-    expect(rulebook?.relativePath).toBe(
-      "en/rulebook/swsh10_rulebook_en.pdf",
-    );
+    expect(rulebook?.relativePath).toBe("en/rulebook/swsh10_rulebook_en.pdf");
     expect(rulebook?.sha256).toBeTruthy();
     expect(rulebook?.bytes).toBe(bytes.byteLength);
 
@@ -65,6 +65,66 @@ describe("harvestPackDocuments", () => {
     const brand = index.documents.find((d) => d.kind === "brand");
     expect(brand?.relativePath).toBeNull();
     expect(brand?.fetchedAt).toBeNull();
+  });
+
+  it("download:true télécharge une URL sans extension, nommée d'après les octets", async () => {
+    const { harvestPackDocuments } = await import("./harvestPackDocuments");
+    const jpeg = Buffer.from([
+      0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46,
+    ]);
+    const pdf = Buffer.from(
+      "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\nstartxref\n0\n%%EOF\n",
+    );
+    const bytesFor: Record<string, Buffer> = {
+      "https://nos-catalogues-promos-v2.e.leclerc/media/7bf5d612": jpeg,
+      "https://media.e.leclerc/LEN/document/Reglement_MARVEL.docx?func=proxy":
+        pdf,
+    };
+    const result = await harvestPackDocuments({
+      packId: "leclerc/disney26",
+      curated: [
+        {
+          url: "https://nos-catalogues-promos-v2.e.leclerc/media/7bf5d612",
+          download: true,
+          kind: "brand",
+          lang: "fr",
+          title: "Catalogue",
+        },
+        {
+          url: "https://media.e.leclerc/LEN/document/Reglement_MARVEL.docx?func=proxy",
+          download: true,
+          kind: "other",
+          lang: "fr",
+        },
+      ],
+      fetchBytes: async (url) => bytesFor[url]!,
+    });
+    expect(result).toMatchObject({ fetched: 2, urlOnly: 0, failed: 0 });
+    const paths = readPackDocumentsIndex("leclerc/disney26")
+      .documents.map((d) => d.relativePath)
+      .sort();
+    expect(paths).toEqual([
+      "fr/brand/7bf5d612.jpg",
+      "fr/other/reglement_marvel.pdf",
+    ]);
+
+    // Relance : rien à retélécharger.
+    const again = await harvestPackDocuments({
+      packId: "leclerc/disney26",
+      curated: [
+        {
+          url: "https://nos-catalogues-promos-v2.e.leclerc/media/7bf5d612",
+          download: true,
+          kind: "brand",
+          lang: "fr",
+          title: "Catalogue",
+        },
+      ],
+      fetchBytes: async () => {
+        throw new Error("réseau interdit");
+      },
+    });
+    expect(again).toMatchObject({ skipped: 1, failed: 0 });
   });
 
   it("promotes localPath bytes without network", async () => {
@@ -107,7 +167,8 @@ describe("harvestPackDocuments", () => {
       curated: [
         {
           url: "http://example.test/truncated.pdf",
-          waybackUrl: "https://web.archive.org/web/1id_/http://example.test/truncated.pdf",
+          waybackUrl:
+            "https://web.archive.org/web/1id_/http://example.test/truncated.pdf",
           download: false,
           lang: "en",
           kind: "other",
@@ -142,7 +203,8 @@ describe("harvestPackDocuments", () => {
         {
           url: "https://example.test/truncated.pdf",
           localPath: "staging/docs/truncated.pdf",
-          waybackUrl: "https://web.archive.org/web/1id_/https://example.test/truncated.pdf",
+          waybackUrl:
+            "https://web.archive.org/web/1id_/https://example.test/truncated.pdf",
           lang: "en",
           kind: "other",
         },
@@ -156,15 +218,15 @@ describe("harvestPackDocuments", () => {
     const row = index.documents.find((d) => d.id.includes("truncated"));
     expect(row?.bytes).toBe(complete.byteLength);
     expect(
-      readFileSync(
-        path.join(dataDir, "pokemon/documents", row!.relativePath!),
-      ),
+      readFileSync(path.join(dataDir, "pokemon/documents", row!.relativePath!)),
     ).toEqual(complete);
   });
 
   it("skips re-download when sha256 matches (idempotent)", async () => {
     const { harvestPackDocuments } = await import("./harvestPackDocuments");
-    const bytes = Buffer.from("%PDF-1.4\nagain\ntrailer<<>>\nstartxref\n0\n%%EOF\n");
+    const bytes = Buffer.from(
+      "%PDF-1.4\nagain\ntrailer<<>>\nstartxref\n0\n%%EOF\n",
+    );
     let fetches = 0;
     const fetchBytes = async () => {
       fetches += 1;

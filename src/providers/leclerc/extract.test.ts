@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { selectLeclercSteps } from "./extract";
 
 describe("selectLeclercSteps", () => {
-  it("defaults to seed + faces + products", () => {
-    expect(selectLeclercSteps([])).toEqual(["seed", "faces", "products"]);
+  it("defaults to seed + faces + products + documents", () => {
+    expect(selectLeclercSteps([])).toEqual([
+      "seed",
+      "faces",
+      "products",
+      "documents",
+    ]);
   });
 
   it("honours --only and --skip", () => {
@@ -12,10 +17,11 @@ describe("selectLeclercSteps", () => {
     expect(selectLeclercSteps(["--skip", "faces"])).toEqual([
       "seed",
       "products",
+      "documents",
     ]);
   });
 
-  it("drops online faces under --offline", () => {
+  it("drops online faces + documents under --offline", () => {
     expect(selectLeclercSteps(["--offline"])).toEqual(["seed", "products"]);
   });
 });

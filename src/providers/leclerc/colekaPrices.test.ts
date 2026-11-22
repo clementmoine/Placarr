@@ -21,6 +21,7 @@ describe("colekaLeclercDealsTargets", () => {
     expect(targets.map((t) => t.rubriqueId)).toEqual([
       "35",
       "343",
+      "2836",
       "4483",
       "11922",
       "15811",
@@ -33,7 +34,7 @@ describe("colekaLeclercDealsTargets", () => {
     expect(targets[0]!.resolvePrintKey({ refItem: "009" } as never)).toBe(
       "leclerc:sw15-009",
     );
-    expect(targets[5]!.resolvePrintKey({ refItem: "009" } as never)).toBe(
+    expect(targets[6]!.resolvePrintKey({ refItem: "009" } as never)).toBe(
       "leclerc:marvel21-009",
     );
   });

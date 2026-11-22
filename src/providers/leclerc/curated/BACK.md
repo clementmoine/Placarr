@@ -151,3 +151,146 @@ TCDB Images / laststicker / Wayback : toujours pas de harvest faces bulk fiable 
 
 **Astuce** : Turnstile → ouvrir `?nbpp=240` → sauver `div.schema` →
 `data/leclerc/<set>/staging/coleka-faces/listing-0.html`.
+
+## Session 2026-11-22 — faces manquantes `sw15/display`, `sw16/display`, `disney26/pochette`
+
+Constat : ces trois produits n'ont **jamais** eu d'image (ni git, ni NAS, ni
+`curated/` ; ce n'est pas un défaut d'import — les 9 displays curés servent
+bien `/face`). Les displays sw15/sw16 sont des stubs `sealedSeed.ts` (pas de
+`leclerc-sw15|16-sealed.json`).
+
+| Source | Résultat | Statut |
+|--------|----------|--------|
+| Bibelotmania [idm=6150](https://www.bibelotmania.com/visite.php?pag=cid508_alb&idf=3&idm=6150) / [idm=7174](https://www.bibelotmania.com/?pag=cid508_alb&idf=3&idm=7174) | 16 / 13 visuels (offre, album, plateau, pochette, Cosmic Box, jetons) — **aucun présentoir**. Copies brutes : `data/leclerc/staging/bibelotmania/` | done |
+| Web (FR, collectionneurs, Coleka) | aucun présentoir Cosmic Shells 2015/2016 attesté ; seule pièce carton = « Cosmic Box » 2016 (à monter, offerte avec l'album — pas un display) | skip |
+| [ColleX actu 2026](https://www.collexstash.com/fr/news/cartes-disney-leclerc-2026) | visuel offre (album, cartes, Fixeez) — **pas de pochette** | done |
+| eBay [880017384331](https://www.ebay.fr/itm/880017384331) / [880018725722](https://www.ebay.fr/itm/880018725722) (lots de pochettes 2026 neuves) | pochettes photographiées, mais page anti-robot (403 / challenge) : récupération **manuelle** par le propriétaire uniquement | watch |
+
+Reste ouvert : packshot pochette disney26 (eBay / Leboncoin / Vinted, à poser
+à la main en `products/disney26/pochette/fr/art.<source>.*` avec l'URL de
+l'annonce) ; displays sw15/sw16 sans source connue — ne pas réouvrir sans
+nouvelle piste (photo magasin, forum Bibelotmania).
+
+Piste écartée (2026-11-22) : [swnz CosmicShells08.jpg](https://swnz.co.nz/wp-content/uploads/2016/08/CosmicShells08.jpg)
+(article : [SWNZ — « Closer look: Cosmic Shells », 2016-08-04](https://swnz.co.nz/2016/08/04/closer-look-cosmic-shells/))
+= dos de pochette **Countdown NZ** (anglais, « Made for: Progressive Enterprises
+Limited, Mangere », sans EAN) — même campagne BrandLoyalty mais autre marché ;
+ne pas l'utiliser comme dos `fr` sw15/sw16 (le dos FR sw15 porte EAN
+8718973007422 et mentions françaises). Copie brute :
+`data/leclerc/staging/swnz/`. **skip**. Dos FR pochette sw16 toujours manquant.
+
+## Session 2026-11-22 — ColleX (collexstash.com) : faces candidates
+
+Source branchée : `collexFaces.ts` (+ parseur partagé
+`providers/shared/collexstash/parseCollection.ts`). Pages déclarées dans
+`COLLEX_LECLERC_COLLECTIONS` ; la Sync relit le flux RSC (toute la
+collection, pas seulement les vignettes rendues), écrit
+`data/leclerc/sources/collex-<set>-faces.json` puis pose `art.collex.webp`.
+Citation = la page collection (une image nue n'est pas une citation ouvrable).
+
+| Set | Page | Visuels au 2026-11-22 |
+|-----|------|----------------------|
+| `disney26` | [cartes](https://www.collexstash.com/fr/collections/cards/cartes-disney-leclerc-2026) + [Fixeez](https://www.collexstash.com/fr/collections/figures/fixeez-disney-leclerc-2026) | 108 + 24 — tous appariés |
+| `disney25` | [cartes](https://www.collexstash.com/fr/collections/cards/cartes-disney-leclerc-2025) + [Fixeez](https://www.collexstash.com/fr/collections/figures/fixeez-disney-leclerc-2025) | 7 + 8 |
+| `marvel21` | [cartes](https://www.collexstash.com/fr/collections/cards/cartes-marvel-leclerc-2021) | 108 |
+| `marvel22`–`24` | pages cartes (+ Fixeez 23/24) | 0 — **watch** (repris à chaque Sync) |
+
+- Cartes appariées par numéro imprimé ; Fixeez (sans numéro ColleX) par nom,
+  seulement si un seul `fNN` du catalogue porte ce nom.
+- Les visuels ColleX sont des **photos de collectionneurs** (~400 px, parfois
+  sur une table) → provenance `listing_photo`, comme eBay. Le moteur
+  (`pickBestCatalogueFace`) garde l'affichage eBay (Disney, ~1050 px) et
+  Coleka (Marvel 21) ; ColleX reste candidate sur disque (étagère,
+  reconnaissance d'image). L'étape ColleX tourne en dernier dans `faces`
+  pour comparer à toutes les faces déjà posées.
+- `writeAssets` : la `source_url` suit désormais la face (changer d'`art` ne
+  garde plus l'URL d'une autre source).
+
+## Session 2026-11-22 — documents d'opération
+
+Étape Sync `documents` (réseau) : `curated/documents/<set>.json` →
+`data/leclerc/<set>/documents/{lang}/{kind}/` (index + vignettes,
+`harvestPackDocuments`). Classement vérifié sur le contenu (dates lues sur les
+visuels / PDF) :
+
+| Set | Documents |
+|-----|-----------|
+| `disney26` | règlement « Disney 2026 » (27/10–13/12/2026), liste des magasins participants, 6 pages / bandeaux catalogue `nos-catalogues-promos-v2`, page promocataloguesfr (10/11/2026), visuel 123catalogue, 3 bannières `media.e.leclerc` ; page [Jeu Disney](https://www.e.leclerc/e/jeu-disney) en lien seul |
+| `disney25` | 4 pages catalogue « La magie de Disney » (28/10–13/12/2025), bannière solidwind ; feuilletage du catalogue 28/10–08/11/2025 en lien seul |
+| `marvel24` | modalités « Marvel 2024 » (29/10–15/12/2024 — l'URL dit `.docx`, le fichier est un PDF) + liste des magasins |
+
+`download: true` est requis pour les URL sans extension (CDN `/media/<hash>`,
+proxy `func=proxy`) ; l'extension du fichier vient de ses octets.
+
+## Session 2026-11-22 — passe sources externes (liste ChatGPT, revérifiée)
+
+Point de départ : liste de ~100 URL produite par ChatGPT. **Aucune valeur
+reprise telle quelle** : chaque URL a été ouverte (statut HTTP + type), les PDF
+lus (texte ou rendu de page), les images regardées, les finitions relues sur
+la fiche Paninimania.
+
+**Finitions** (ledgers `data/leclerc/sources/leclerc-<set>-checklist.json`,
+champ `rarity` + `raritySource`) :
+
+| Set | Finitions | Source |
+|-----|-----------|--------|
+| `marvel20` | brillante 017, 030, 050, 092 ; pailletee 021, 048, 060, 108, 110, 124, 125, 134 | [Paninimania idm=7013](https://www.paninimania.com/?pag=cid508_alb&idf=15&idm=7013) |
+| `sw19` | brillante 011, 022, 031, 046 ; argentee 005, 016, 067, 080 | [Paninimania idm=6809](https://www.paninimania.com/?pag=cid508_alb&idf=15&idm=6809) |
+
+`marvel21`–`23` : les numéros proposés étaient déjà ceux du ledger (TCDB).
+
+**Documents** : `curated/documents/<set>.json` complétés pour toutes les ops
+(catalogues E.Leclerc copiés par A3 Distrib / InPromo / Pont-l'Abbé, visuels
+publicitaires, articles, photos de collectionneurs, vidéos, opérations
+connexes préfixées « Opération connexe — »). Catalogues lus :
+
+| PDF | Période (couverture) | Page op |
+|-----|----------------------|---------|
+| A3 1005889 | 29/10–09/11/2024 | Marvel p.1 + p.3 |
+| A3 1006246 | 22/10–02/11/2024 | Marvel p.3 |
+| InPromo high-tech-1 (LU) | oct. 2024 (texte : op 29/10–15/12/2024) | Marvel p.2 |
+| Pont-l'Abbé 21G311G | 09–20/11/2021 | Marvel p.1–2 (pochette par 30 € ou 2 produits partenaires) |
+| A3 1028645 | 21–30/11/2025 (Black Friday) | Disney p.2 |
+| A3 1030078 | 09–21/12/2025 | Disney/Stitch p.2 |
+
+**Mesures de collectionneur** (Fanzine Omega, non fabricant — pas écrites dans
+les ledgers scellés, faute de champ) : marvel20 album 22,4 × 29 cm, pochette
+6,9 × 6,8 cm, sticker 4,4 × 6,1 cm, 52 p. couverture comprise (Paninimania
+dit 50 p.) ; marvel21 album 22,5 × 29 cm, 32 p., pochette 12 × 8,8 cm, carte
+5,1 × 7,7 cm. La photo Fanzine Omega de la boîte « Deviens un héros »
+(« Collectionne les 144 autocollants ») est le carton présentoir marvel20 —
+candidate face `display` ; aucun nombre de pochettes.
+
+**`sw17` — MicroPopz 2017** : op ajoutée le 2026-11-22 (voir section suivante).
+Documents dans `curated/documents/sw17.json`.
+
+**Écarté** : Ouest-France « cartes Disney de retour » (renvoie à l'accueil),
+YouTube `gvjS8SbiasQ` (introuvable), image LeBonCoin X-Wing (400) et
+catégorie LBC (403), dialog.cm Courtheoux / cfid.fr / lesaloon1970-80
+(injoignables), pages d'index Toutgagner `?page=8` (contenu glissant),
+fiches eBay 266509011836 / 6087691161 (403 ; les images CDN sont gardées),
+Vimeo 238365479… (404/403), profils LinkedIn individuels (pistes, pas
+documents), portfolio Dal Bello et offre d'emploi L-founders (contexte
+métier, pas l'op). GeekParadize MicroPopz (anti-robot) non vérifié.
+
+## Session 2026-11-22 — op `sw17` Star Wars MicroPopz
+
+Figurines (bustes à ventouse), pas des cartes — même pipeline de ligne
+(`printKey` `leclerc:sw17-NNN`, catégorie `card`).
+
+| Fait | Valeur | Source |
+|------|--------|--------|
+| Période | 24/10–09/12/2017 | [visuel modalités officiel](https://www.mintinbox.net/wp-content/uploads/2017/10/portail-s42-star-wars-1222x1203-modalites-v3.jpg) |
+| Pochette | **1 MicroPopz** par tranche de 30 € ou produit partenaire | idem |
+| Coffret Collector (Faucon Millenium) | **1,99 €** | idem |
+| Lunettes VR (cardbox) | **2,99 €** | [scan catalogue Mintinbox](https://www.mintinbox.net/wp-content/uploads/2017/10/leclerc_micropoz-e1508152266737.jpg) |
+| Noms des 25 | Coleka | [rubrique `_r2836`](https://www.coleka.com/fr/figurines-de-collection/petites-figurines/stikeez-popz/micropopz-star-wars-leclerc_r2836) (28 objets = 25 + coffret + cardbox + pochette) |
+| Numérotation | **aucun n° imprimé** → 001–025 = ordre de la [planche officielle](https://www.mintinbox.net/wp-content/uploads/2017/10/portail-s42-star-wars-1222x1727-pres-micropopz-v5.jpg), rangées gauche→droite ; identique à l'ordre des fiches Coleka i153671→i153695 | contrôle visuel |
+
+Ledgers : `data/leclerc/sources/leclerc-sw17-checklist.json` (noms + lien de
+chaque fiche Coleka), `leclerc-sw17-sealed.json` (coffret, pochette 1,
+`lunettes-vr` en `ephemera`), faces dans `coleka-cdn-faces.json` → `sets.sw17`
+(n° explicites, car les fiches n'ont pas de « Ref. » et le listing ne
+peut pas les apparier). Packshots scellés : URLs Coleka citées dans le ledger,
+**pas copiés** en `curated/` (publics). Display : stub, `packsContained` null.
+Pas de dos commun.

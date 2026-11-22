@@ -214,6 +214,45 @@ describe("createLocalPrintsIndex", () => {
     );
   });
 
+  it("la provenance suit la face : changer d'art ne garde pas l'URL d'une autre source", () => {
+    tmpDataRoot();
+    const index = createLocalPrintsIndex("naruto/ninja-ranks");
+    index.writePrints([
+      {
+        printKey: "naruto:sd-0200",
+        setCode: "sd",
+        number: "0200",
+        cardType: "sd",
+        titles: [{ lang: "en", fullName: "Prov" }],
+      },
+    ]);
+    index.writeAssets([
+      {
+        printKey: "naruto:sd-0200",
+        lang: "en",
+        art: "art.ebay.jpg",
+        sourceUrl: "https://www.ebay.fr/itm/237160946134?var=1",
+      },
+    ]);
+    // Même face réécrite sans URL : on garde la citation existante.
+    index.writeAssets([{ printKey: "naruto:sd-0200", lang: "en", art: "art.ebay.jpg" }]);
+    expect(index.lookupRow("naruto:sd-0200", { language: "en" })?.sourceUrl).toBe(
+      "https://www.ebay.fr/itm/237160946134?var=1",
+    );
+    // Autre face dont l'URL est refusée (image nue) : pas d'URL plutôt qu'eBay.
+    index.writeAssets([
+      {
+        printKey: "naruto:sd-0200",
+        lang: "en",
+        art: "art.collex.webp",
+        sourceUrl: "https://img.collexstash.com/u/items/x-001.webp",
+      },
+    ]);
+    const row = index.lookupRow("naruto:sd-0200", { language: "en" });
+    expect(row?.art).toBe("art.collex.webp");
+    expect(row?.sourceUrl).toBeNull();
+  });
+
   it("stamps art_kind / watermarked at write (basename fill + dig override)", () => {
     tmpDataRoot();
     const index = createLocalPrintsIndex("naruto/ninja-ranks");

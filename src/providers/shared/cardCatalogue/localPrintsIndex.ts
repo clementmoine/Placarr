@@ -9,7 +9,7 @@
  */
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { sanitizePublicCitationUrl } from "@/core/enrich/citations/publicCitationUrl";
 import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
@@ -676,7 +676,7 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
     if (!langs.length) return { rows: [], total: 0 };
     const offset = Math.max(0, Math.floor(opts.offset));
     const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
-    const params: unknown[] = [];
+    const params: SQLInputValue[] = [];
     const where: string[] = [
       `t.lang IN (${langs.map(() => "?").join(",")})`,
     ];
@@ -922,7 +922,13 @@ export function createLocalPrintsIndex(packId: string): LocalPrintsIndex {
          ON CONFLICT(print_key, lang) DO UPDATE SET
            art = COALESCE(excluded.art, print_assets.art),
            back = COALESCE(excluded.back, print_assets.back),
-           source_url = COALESCE(excluded.source_url, print_assets.source_url),
+           -- La provenance suit la face : une autre face n'hérite jamais de
+           -- l'URL de la précédente (mieux vaut null qu'une fausse source).
+           source_url = CASE
+             WHEN excluded.art IS NOT NULL AND excluded.art IS NOT print_assets.art
+               THEN excluded.source_url
+             ELSE COALESCE(excluded.source_url, print_assets.source_url)
+           END,
            art_kind = COALESCE(excluded.art_kind, print_assets.art_kind),
            watermarked = COALESCE(excluded.watermarked, print_assets.watermarked)`,
       );

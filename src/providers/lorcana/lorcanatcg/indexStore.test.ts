@@ -1,5 +1,6 @@
 import { describe, expect, it, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import os from "node:os";
 import path from "node:path";
 
@@ -130,6 +131,18 @@ describe("lorcanatcg indexStore", () => {
         en: { art: "art.jpg", name: "Ariel - On Human Legs" },
       },
     });
+  });
+
+  it("renvoie null quand catalog.sqlite n'a pas encore les tables cartes (Sync depuis zéro)", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "lorcanatcg-"));
+    dirs.push(dir);
+    const dbPath = path.join(dir, "catalog.sqlite");
+    // Une étape scellé / documents a créé la base avant le scrape des cartes.
+    const db = new DatabaseSync(dbPath);
+    db.exec("CREATE TABLE products (id TEXT PRIMARY KEY)");
+    db.close();
+
+    expect(exportLorcanaCardsIndexJson(dbPath)).toBeNull();
   });
 
   it("attaches sibling titles with nameSource when a lang has art but no title", () => {

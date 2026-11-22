@@ -14,7 +14,7 @@ import {
   unlinkSync,
 } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import {
   finalizeSetOptions,
@@ -520,6 +520,14 @@ export function exportLorcanaCardsIndexJson(
   if (!existsSync(dbPath)) return null;
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {
+    // Base créée par une étape scellé / documents avant le premier scrape des
+    // cartes : pas encore de catalogue cartes à reprendre.
+    const hasCardTables = db
+      .prepare(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'print_assets'",
+      )
+      .get();
+    if (!hasCardTables) return null;
     const generatedAt =
       (
         db
@@ -1013,7 +1021,7 @@ export function listLorcanaCatalogueBrowsePage(
   if (!langs.length) return { rows: [], total: 0 };
   const offset = Math.max(0, Math.floor(opts.offset));
   const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
-  const params: unknown[] = [];
+  const params: SQLInputValue[] = [];
   const where: string[] = [
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];

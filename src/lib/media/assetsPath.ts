@@ -13,6 +13,10 @@ import {
   resolveAssetsDiskRoot,
   splitAssetsPackPath,
 } from "@/lib/packPaths";
+import {
+  legacyLangFirstCardsRest,
+  legacySetFirstCardsRest,
+} from "@/lib/media/legacySetFirstCardsRest";
 import { resolveUnderRoot } from "@/lib/media/streamDataFile";
 import { UPLOADS_PREFIX } from "@/lib/media/uploadsPath";
 import { uploadsDir } from "@/lib/runtimeData";
@@ -43,9 +47,23 @@ export function assetsFilePath(url: string): string | null {
     });
   const split = splitAssetsPackPath(segments);
   if (!split || split.rest.length === 0) return null;
-  const mapped = resolveAssetsDiskRoot(split.pack, split.rest);
-  if (!mapped) return null;
-  return resolveUnderRoot(mapped.root, mapped.relative);
+  const resolve = (rest: string[]): string | null => {
+    const mapped = resolveAssetsDiskRoot(split.pack, rest);
+    if (!mapped) return null;
+    return resolveUnderRoot(mapped.root, mapped.relative);
+  };
+  // Same layout remaps as the `/assets` route: a face still set-first on disk
+  // (or a stale set-first URL) resolves like it does when served.
+  for (const rest of [
+    split.rest,
+    legacySetFirstCardsRest(split.rest),
+    legacyLangFirstCardsRest(split.rest),
+  ]) {
+    if (!rest) continue;
+    const hit = resolve(rest);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 /**

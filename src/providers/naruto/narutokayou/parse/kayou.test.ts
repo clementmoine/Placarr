@@ -1,3 +1,7 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
 import { afterEach, describe, expect, it } from "vitest";
 import { kayouFinishesForRarity, kayouShinyFinish } from "../finishes";
 import {
@@ -28,6 +32,8 @@ import {
   kayouCardBackUrlForOfficialReference,
   kayouCardBackUrlForRarity,
   listKayouPerCardBackRows,
+  resetKayouBackAliasCache,
+  mostSharedKayouBack,
   pickKayouTierBacks,
   resetKayouOfficialCardBackManifestCache,
   type KayouOfficialCardBack,
@@ -360,22 +366,45 @@ import { hashKayouOfficialCatalog } from "../sources/crawl";
       );
     });
 
-    it("maps SSR onto the shared PTR sleeve via aliases", () => {
-      // Sync hash-collapse (`kayou-back-aliases.json`): SSR bytes ≡ PTR sleeve.
-      expect(kayouBackTierSlug("SSR")).toBe("ssr");
-      expect(kayouCardBackUrlForRarity("naruto/kayou", "SSR")).toBe(
-        "/assets/naruto/kayou/backs/en/tiers/ptr",
-      );
-      expect(kayouCardBackUrlForRarity("naruto/kayou", "PTR")).toBe(
-        "/assets/naruto/kayou/backs/en/tiers/ptr",
-      );
-    });
+    describe("with a Sync alias ledger", () => {
+      // `kayou-back-aliases.json` is what `dedupeKayouCuratedTierBacks`
+      // writes after the hash collapse: the stamp only reads it.
+      let prevDataDir: string | undefined;
+      afterEach(() => {
+        if (prevDataDir === undefined) delete process.env.PLACARR_DATA_DIR;
+        else process.env.PLACARR_DATA_DIR = prevDataDir;
+        resetKayouBackAliasCache();
+      });
+      function withAliasLedger(ledger: object): void {
+        prevDataDir = process.env.PLACARR_DATA_DIR;
+        const root = mkdtempSync(path.join(tmpdir(), "kayou-aliases-"));
+        const sources = path.join(root, "naruto", "kayou", "sources");
+        mkdirSync(sources, { recursive: true });
+        writeFileSync(
+          path.join(sources, "kayou-back-aliases.json"),
+          JSON.stringify(ledger),
+        );
+        process.env.PLACARR_DATA_DIR = root;
+        resetKayouBackAliasCache();
+      }
 
-    it("stamps R when it is not in skippedDefault", () => {
-      // Alias ledger no longer lists `r` in skippedDefault after Sync densify.
-      expect(kayouCardBackUrlForRarity("naruto/kayou", "R")).toBe(
-        "/assets/naruto/kayou/backs/en/tiers/r",
-      );
+      it("maps a tier onto the sleeve it collapsed into", () => {
+        withAliasLedger({ aliases: { bp: "ar", ar: "ar" }, skippedDefault: [] });
+        expect(kayouBackTierSlug("BP")).toBe("bp");
+        expect(kayouCardBackUrlForRarity("naruto/kayou", "BP")).toBe(
+          "/assets/naruto/kayou/backs/en/tiers/ar",
+        );
+      });
+
+      it("leaves a tier identical to the pack default back unstamped", () => {
+        // Décision 2026-11-22 : le dos par défaut est le plus répandu (R) ;
+        // un tier aux mêmes octets n'a pas d'URL propre.
+        withAliasLedger({ aliases: { ur: "ur" }, skippedDefault: ["r"] });
+        expect(kayouCardBackUrlForRarity("naruto/kayou", "R")).toBeNull();
+        expect(kayouCardBackUrlForRarity("naruto/kayou", "UR")).toBe(
+          "/assets/naruto/kayou/backs/en/tiers/ur",
+        );
+      });
     });
 
     it("returns null when rarity is empty", () => {
@@ -388,6 +417,38 @@ import { hashKayouOfficialCatalog } from "../sources/crawl";
 {
   afterEach(() => {
     resetKayouOfficialCardBackManifestCache();
+  });
+
+  describe("pickKayouTierBacks — by content", () => {
+    // kayouofficial publishes the same R sleeve under one URL per series:
+    // counted per URL, 4×50 identical cards lost to a 70-card variant.
+    const rows: KayouOfficialCardBack[] = [
+      ...["a", "b"].map((id) => ({
+        idCode: id,
+        rarity: "R",
+        backImage: "https://cdn/hokage-shippuden.png",
+        seriesId: "series-1",
+      })),
+      { idCode: "c", rarity: "R", backImage: "https://cdn/hokage-s2.png", seriesId: "series-2" },
+      { idCode: "d", rarity: "R", backImage: "https://cdn/hokage-s3.png", seriesId: "series-3" },
+      { idCode: "e", rarity: "R", backImage: "https://cdn/hokage-s4.png", seriesId: "series-4" },
+      { idCode: "f", rarity: "UR", backImage: "https://cdn/ur.png", seriesId: "series-1" },
+    ];
+    const contentKeyOf = (url: string) =>
+      /hokage-s\d\.png$/.test(url) ? "sha-hokage" : `sha-${url}`;
+
+    it("votes on image bytes, not URLs", () => {
+      const r = pickKayouTierBacks(rows, contentKeyOf).find((p) => p.tier === "r");
+      expect(r).toMatchObject({ votes: 3, conflict: true });
+      expect(r?.url).toMatch(/hokage-s\d\.png$/);
+      expect(r?.seriesIds).toEqual(["series-2", "series-3", "series-4"]);
+    });
+
+    it("finds the back shared by the most cards across tiers", () => {
+      expect(mostSharedKayouBack(rows, contentKeyOf)).toMatchObject({ votes: 3 });
+      expect(mostSharedKayouBack(rows, contentKeyOf)?.url).toMatch(/hokage-s\d/);
+      expect(mostSharedKayouBack([], contentKeyOf)).toBeNull();
+    });
   });
 
   describe("pickKayouTierBacks", () => {

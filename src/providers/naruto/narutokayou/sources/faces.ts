@@ -11,7 +11,7 @@ import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
 import { writeLosslessWebpFile } from "@/lib/media/losslessWebp";
-import { packCardsDir, packStagingDir } from "@/lib/packPaths";
+import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import {
   hashNarutoCuratedJson,
@@ -101,9 +101,17 @@ const KAYOU_FACES_ARTEFACT = "kayou:kayou-faces";
 const DEFAULT_SOURCE_ID = "narutocards";
 
 /** Stable SSOT hash — checklist card ids + face URLs (force = re-harvest). */
+/**
+ * Disposition installée — part de l'empreinte : changer l'arborescence
+ * (2026-11-22 : `set/lang` → `lang/set` de `packCardDir`) réinstalle les faces
+ * à la Sync suivante au lieu de garder l'artefact « frais ».
+ */
+const KAYOU_FACES_INSTALL_LAYOUT = "lang-first";
+
 export function kayouFacesContentHash(checklist: KayouChecklist): string {
-  return hashNarutoCuratedJson(
-    checklist.sets.map((s) => ({
+  return hashNarutoCuratedJson({
+    layout: KAYOU_FACES_INSTALL_LAYOUT,
+    sets: checklist.sets.map((s) => ({
       code: s.code,
       cards: s.cards.map((c) => ({
         number: c.number,
@@ -111,7 +119,7 @@ export function kayouFacesContentHash(checklist: KayouChecklist): string {
         alts: c.faceUrlAlternates ?? [],
       })),
     })),
-  );
+  });
 }
 
 export function kayouFacesStagingDir(): string {
@@ -337,12 +345,11 @@ export function installKayouFaces(
         missing.push(`${set.slug}:${card.printed}`);
         continue;
       }
-      const destDir = path.join(
-        packCardsDir(NARUTO_KAYOU_PACK_ID),
-        setCode,
+      const destDir = packCardDir(NARUTO_KAYOU_PACK_ID, {
+        set: setCode,
         lang,
-        number,
-      );
+        card: number,
+      });
       mkdirSync(destDir, { recursive: true });
       const candidates = kayouFaceUrlCandidates(card);
       const sourceUrl = candidates[0] ?? set.url;

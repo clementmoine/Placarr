@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { enrichChecklistWithOfficialFaces, harvestKayouFaces, kayouFacesContentHash, uprightKayouHorizontalScan } from "./faces";
+import { enrichChecklistWithOfficialFaces, harvestKayouFaces, installKayouFaces, kayouFacesContentHash, uprightKayouHorizontalScan } from "./faces";
+import { packCardDir } from "@/lib/packPaths";
 import type { KayouChecklist } from "../identity";
 import { listKayouLenticularPlayroomSamples } from "../playroomSamples";
 import type { KayouOfficialCatalog } from "./crawl";
@@ -181,6 +182,74 @@ import { NARUTO_KAYOU_PACK_ID } from "../pack";
       );
       expect(byVariant["hr-3x1"]?.name).toBe("Ichiraku Ramen");
       expect(byVariant["hr-2x1"]?.name).toBe("Boruto Uzumaki");
+    });
+  });
+}
+
+// —— installKayouFaces ——
+{
+  describe("installKayouFaces", () => {
+    let prevDataDir: string | undefined;
+    afterEach(() => {
+      if (prevDataDir === undefined) delete process.env.PLACARR_DATA_DIR;
+      else process.env.PLACARR_DATA_DIR = prevDataDir;
+    });
+
+    it("installs faces in the lang-first card dir the app and probes read", () => {
+      // 2026-11-22 : les faces partaient dans `cards/<set>/<lang>/` (ordre
+      // d'avant b50d4220) ; le marquage lenticulaire et l'app lisent
+      // `cards/<lang>/<set>/` (`packCardDir`) — t4w3 HR 084 perdait sa grille.
+      prevDataDir = process.env.PLACARR_DATA_DIR;
+      const root = mkdtempSync(path.join(os.tmpdir(), "kayou-faces-install-"));
+      process.env.PLACARR_DATA_DIR = path.join(root, "data");
+      const staging = path.join(root, "staging");
+      mkdirSync(staging, { recursive: true });
+      writeFileSync(path.join(staging, "t4w3-nr.hr.084.webp"), "webp");
+      const written: { printKey: string; art: string }[] = [];
+      const index = {
+        writeAssets: (rows: { printKey: string; art: string }[]) =>
+          written.push(...rows),
+      } as unknown as Parameters<typeof installKayouFaces>[0];
+
+      const out = installKayouFaces(index, {
+        stagingDir: staging,
+        lang: "en",
+        force: true,
+        checklist: {
+          source: "test",
+          url: "https://example/",
+          sets: [
+            {
+              slug: "t4w3",
+              code: "t4w3",
+              label: "T4W3",
+              url: "https://example/",
+              cards: [
+                {
+                  printed: "NR-HR-084",
+                  number: "nr.hr.084",
+                  name: "Hinata & Naruto",
+                  rarity: "HR",
+                  faceUrl: "https://narutopia.fr/wp-content/uploads/2023/08/HR-84.webp",
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(out.faces).toBe(1);
+      const art = written[0]!.art;
+      expect(
+        existsSync(
+          packCardDir(NARUTO_KAYOU_PACK_ID, {
+            set: "t4w3",
+            lang: "en",
+            card: "nr.hr.084",
+          }) + `/${art}`,
+        ),
+      ).toBe(true);
+      rmSync(root, { recursive: true, force: true });
     });
   });
 }

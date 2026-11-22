@@ -8,6 +8,7 @@ import {
   readFileSync,
   readdirSync,
   statSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -16,7 +17,9 @@ import {
   assetsCardUrl,
   assetsPackTierBackRoleUrl,
 } from "@/lib/packAssetUrls";
-import { packCardsDir } from "@/lib/packPaths";
+import { createHash } from "node:crypto";
+
+import { packCardsDir, packStagingDir } from "@/lib/packPaths";
 import { httpGet } from "@/lib/http/httpClient";
 import {
   installDistinctBacks,
@@ -310,43 +313,86 @@ export function catalogToKayouOfficialCardBacks(
   );
 }
 
+type BackVoteGroup = {
+  votes: number;
+  seriesIds: Set<string>;
+  /** URL → cards using it (the group's most-used URL represents it). */
+  urls: Map<string, number>;
+};
+
+function voteBackGroups(
+  rows: readonly KayouOfficialCardBack[],
+  contentKeyOf: (url: string) => string | null,
+): Map<string, BackVoteGroup> {
+  const groups = new Map<string, BackVoteGroup>();
+  for (const row of rows) {
+    const key = contentKeyOf(row.backImage) ?? row.backImage;
+    let group = groups.get(key);
+    if (!group) {
+      group = { votes: 0, seriesIds: new Set(), urls: new Map() };
+      groups.set(key, group);
+    }
+    group.votes += 1;
+    group.seriesIds.add(row.seriesId);
+    group.urls.set(row.backImage, (group.urls.get(row.backImage) ?? 0) + 1);
+  }
+  return groups;
+}
+
+function representativeUrl(group: BackVoteGroup): string {
+  return [...group.urls.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  )[0]![0];
+}
+
+/**
+ * Tier sleeve = the back image most cards of that rarity carry.
+ *
+ * Votes go to image **content** (`contentKeyOf` → byte hash): kayouofficial
+ * publishes the same sleeve under one URL per series, so per-URL votes let a
+ * 70-card variant beat 200 identical cards. Without a key, the URL is used.
+ */
 export function pickKayouTierBacks(
   rows: readonly KayouOfficialCardBack[],
+  contentKeyOf: (url: string) => string | null = () => null,
 ): KayouTierBackPick[] {
-  const byTier = new Map<
-    string,
-    Map<string, { votes: number; seriesIds: Set<string> }>
-  >();
+  const byTier = new Map<string, KayouOfficialCardBack[]>();
   for (const row of rows) {
     const tier = kayouBackTierSlug(row.rarity);
     if (!tier) continue;
-    let urlMap = byTier.get(tier);
-    if (!urlMap) {
-      urlMap = new Map();
-      byTier.set(tier, urlMap);
-    }
-    let bucket = urlMap.get(row.backImage);
-    if (!bucket) {
-      bucket = { votes: 0, seriesIds: new Set() };
-      urlMap.set(row.backImage, bucket);
-    }
-    bucket.votes += 1;
-    bucket.seriesIds.add(row.seriesId);
+    byTier.set(tier, [...(byTier.get(tier) ?? []), row]);
   }
 
   const picks: KayouTierBackPick[] = [];
-  for (const [tier, urlMap] of byTier) {
-    const ranked = [...urlMap.entries()].sort((a, b) => b[1].votes - a[1].votes);
-    const [url, meta] = ranked[0]!;
+  for (const [tier, tierRows] of byTier) {
+    const ranked = [...voteBackGroups(tierRows, contentKeyOf).values()].sort(
+      (a, b) => b.votes - a.votes,
+    );
+    const top = ranked[0]!;
     picks.push({
       tier,
-      url,
-      votes: meta.votes,
-      seriesIds: [...meta.seriesIds].sort(),
+      url: representativeUrl(top),
+      votes: top.votes,
+      seriesIds: [...top.seriesIds].sort(),
       conflict: ranked.length > 1,
     });
   }
   return picks.sort((a, b) => a.tier.localeCompare(b.tier));
+}
+
+/**
+ * Pack default back = the image shared by the most cards, all rarities
+ * together (product decision 2026-11-22) — the likeliest back of a card
+ * whose rarity is unknown.
+ */
+export function mostSharedKayouBack(
+  rows: readonly KayouOfficialCardBack[],
+  contentKeyOf: (url: string) => string | null = () => null,
+): { url: string; votes: number } | null {
+  const top = [...voteBackGroups(rows, contentKeyOf).values()].sort(
+    (a, b) => b.votes - a.votes,
+  )[0];
+  return top ? { url: representativeUrl(top), votes: top.votes } : null;
 }
 
 /**
@@ -380,6 +426,35 @@ async function fetchText(url: string): Promise<string> {
     validateStatus: (status) => status === 200,
   });
   return res.data;
+}
+
+/** Distinct sleeve URLs → bytes, cached on disk per URL under staging. */
+async function downloadKayouBackUrls(
+  urls: readonly string[],
+  opts: { force?: boolean; report: (message: string) => void },
+): Promise<Map<string, Buffer>> {
+  const cacheDir = path.join(packStagingDir(NARUTO_KAYOU_PACK_ID), "back-urls");
+  mkdirSync(cacheDir, { recursive: true });
+  const out = new Map<string, Buffer>();
+  let fetched = 0;
+  for (const url of urls) {
+    if (!url) continue;
+    const file = path.join(
+      cacheDir,
+      `${createHash("sha1").update(url).digest("hex")}.png`,
+    );
+    if (!opts.force && existsSync(file)) {
+      out.set(url, readFileSync(file));
+      continue;
+    }
+    const buf = await downloadPng(url);
+    if (!buf) continue;
+    writeFileSync(file, buf);
+    out.set(url, buf);
+    fetched += 1;
+  }
+  opts.report(`${out.size}/${urls.length} verso(s) distincts lus (${fetched} téléchargé(s))`);
+  return out;
 }
 
 async function downloadPng(url: string): Promise<Buffer | null> {
@@ -455,7 +530,17 @@ export async function harvestKayouOfficialTierBacks(opts: {
     }
   }
 
-  const picks = pickKayouTierBacks(allRows);
+  // Every distinct sleeve URL once (disk cache per URL): votes go to image
+  // bytes, not URLs — the same sleeve ships under one URL per series.
+  const urlBytes = await downloadKayouBackUrls(
+    [...new Set(allRows.map((row) => row.backImage))],
+    { force: opts.force, report },
+  );
+  const contentKeyOf = (url: string): string | null => {
+    const bytes = urlBytes.get(url);
+    return bytes ? createHash("sha256").update(bytes).digest("hex") : null;
+  };
+  const picks = pickKayouTierBacks(allRows, contentKeyOf);
   const manifest = {
     source: "kayouofficial.com — Naruto IP tier backs",
     observed: new Date().toISOString().slice(0, 10),
@@ -478,7 +563,7 @@ export async function harvestKayouOfficialTierBacks(opts: {
   const tierCandidates: DistinctBackCandidate[] = [];
 
   for (const pick of picks) {
-    const buf = await downloadPng(pick.url);
+    const buf = urlBytes.get(pick.url) ?? null;
     if (!buf) {
       fail += 1;
       report(`manqué CDN tier ${pick.tier}`);
@@ -487,16 +572,21 @@ export async function harvestKayouOfficialTierBacks(opts: {
     tierCandidates.push({ slug: pick.tier, bytes: buf });
   }
 
-  // Pack default must exist before collapse (curated back.png / back.webp).
-  const defaultPath = ["back.png", "back.webp"]
-    .map((n) => path.join(cardsDir, n))
-    .find((p) => existsSync(p));
-  if (!defaultPath && tierCandidates.length > 0) {
-    // Bootstrap: use majority R if present, else first tier.
-    const r = tierCandidates.find((c) => c.slug === "r");
-    const seed = r ?? tierCandidates[0]!;
-    writeFileSync(path.join(cardsDir, "back.png"), seed.bytes);
-    report(`bootstrap pack back.png depuis tier ${seed.slug}`);
+  // Pack default = the sleeve shared by the most cards, all rarities
+  // together (product decision 2026-11-22), rewritten when it moves.
+  const shared = mostSharedKayouBack(allRows, contentKeyOf);
+  const sharedBytes = shared ? urlBytes.get(shared.url) : undefined;
+  if (shared && sharedBytes) {
+    const packBack = path.join(cardsDir, "back.png");
+    const current = existsSync(packBack) ? readFileSync(packBack) : null;
+    if (!current || !current.equals(sharedBytes)) {
+      writeFileSync(packBack, sharedBytes);
+      for (const stale of ["back.webp"]) {
+        const p = path.join(cardsDir, stale);
+        if (existsSync(p)) unlinkSync(p);
+      }
+      report(`dos pack = le plus partagé (${shared.votes} cartes) ← ${shared.url}`);
+    }
   }
 
   const dedupedEarly = dedupeKayouCuratedTierBacks(cardsDir, tierCandidates);

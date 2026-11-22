@@ -1,8 +1,11 @@
 /**
- * Drop Live/paper card trees for locales outside the wanted set.
+ * Drop Live card trees for locales outside the wanted set.
  *
- * Layout: `data/pokemon/cards/{set}/{lang}/{num}/…`. A full six-locale dump
- * is tens of GB; catalogue ingest only needs the languages we actually serve.
+ * Only the Live dump layout `data/pokemon/cards/{set}/{lang}/{num}/…` is
+ * pruned: a full six-locale dump is tens of GB. Paper harvests sit lang-first
+ * (`cards/{lang}/{set}/…`) in the same folder and are never touched — read
+ * as set-first, `fr/2012bw` looked like set `fr` + locale `2012bw`, and the
+ * whole paper corpus was deleted at the end of a Live Sync.
  */
 import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
@@ -44,6 +47,24 @@ function dirBytes(root: string): number {
   return total;
 }
 
+function looksLikeLang(name: string): boolean {
+  return /^(?:[a-z]{2}(?:-[a-z]{2})?|ptbr)$/i.test(name.trim());
+}
+
+/**
+ * Top-level `cards/` entry that is a language (lang-first paper tree), not a
+ * set: locale-shaped name whose children are sets, not locales (`ec/fr/…`
+ * is the e-Card set, `fr/2012bw/…` is the French paper tree).
+ */
+function isLangFirstRoot(dir: string, name: string): boolean {
+  if (!looksLikeLang(name)) return false;
+  try {
+    return !readdirSync(dir).some((child) => looksLikeLang(child));
+  } catch {
+    return true;
+  }
+}
+
 export function pokemonCardsRoot(repoRoot = dataRoot()): string {
   return path.join(repoRoot, "pokemon", "cards");
 }
@@ -79,6 +100,7 @@ export function prunePokemonCardLangs(input: {
 
   for (const setName of readdirSync(root)) {
     const setDir = path.join(root, setName);
+    if (isLangFirstRoot(setDir, setName)) continue;
     let setStat;
     try {
       setStat = statSync(setDir);

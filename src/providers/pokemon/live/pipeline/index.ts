@@ -21,6 +21,7 @@ import {
   POKEMON_PACK_ID,
 } from "@/providers/pokemon/paths";
 
+import { pokemonDesktopClient } from "../cdn/desktopClient";
 import { indexLiveCards } from "./indexCards";
 import { rebuildPokemonCardsIndex } from "./rebuildCardsIndex";
 
@@ -53,6 +54,17 @@ const hooks = cardCatalogueHooks({
         `[pokemon catalog] live index skipped: ${err instanceof Error ? err.message : err}`,
       );
     }
+    // Offsets Shiny Vault (*sv) — dérivés du dump + TCGdex, jamais à la main.
+    try {
+      const { refreshPokemonReprintMeta } =
+        await import("@/providers/pokemon/live/extract/reprintMeta");
+      const n = await refreshPokemonReprintMeta();
+      if (n != null) console.log(`── reprintMeta : ${n} split(s) *sv`);
+    } catch (err) {
+      console.warn(
+        `[pokemon catalog] reprintMeta skipped: ${err instanceof Error ? err.message : err}`,
+      );
+    }
     const faces = rebuildPokemonCardsIndex();
     if (faces.skipped) {
       console.warn("[pokemon catalog] cards-index skipped — no cards/ yet");
@@ -61,14 +73,16 @@ const hooks = cardCatalogueHooks({
         `[pokemon catalog] cards-index ${faces.cards} stems (${faces.named} nommées) → ${faces.path}`,
       );
     }
-    installProviderProductsContents(
-      POKEMON_PACK_ID,
-      POKEMON_PRODUCTS_CONTENTS,
-    );
+    installProviderProductsContents(POKEMON_PACK_ID, POKEMON_PRODUCTS_CONTENTS);
     await scrapeTcgCardsProducts("pkmcards", {});
   },
 });
 
 export const refreshPokemonLiveCatalog = hooks.refresh;
 export const pokemonLiveCatalogStatus = hooks.status;
-export const pokemontcgliveCatalog: ProviderCatalogHooks = hooks;
+export const pokemontcgliveCatalog: ProviderCatalogHooks = {
+  ...hooks,
+  // Build desktop officiel (updater de l'éditeur) : les miroirs d'APK ne
+  // portent plus TCG Live. Même Data/ Unity → maillage Card + dos de carte.
+  ensureClient: pokemonDesktopClient(POKEMON_PACK_ID),
+};

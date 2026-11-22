@@ -1,9 +1,9 @@
-import { mkdtempSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { pokemonApkDumpFresh } from "./dumpCardApk";
+import { pokemonApkDumpFresh, resolvePokemonClientSource } from "./dumpCardApk";
 
 describe("pokemonApkDumpFresh", () => {
   it("is true only when UV + back are not older than the APK", () => {
@@ -46,5 +46,28 @@ describe("pokemonApkDumpFresh", () => {
         cardBackPath: path.join(root, "missing.webp"),
       }),
     ).toBe(false);
+  });
+});
+
+describe("resolvePokemonClientSource", () => {
+  it("prefers base.apk, else the official desktop client Data dir", () => {
+    const staging = mkdtempSync(path.join(tmpdir(), "poke-src-"));
+    const apk = path.join(staging, "apks", "base.apk");
+    expect(
+      resolvePokemonClientSource({ apkPath: apk, stagingDir: staging }),
+    ).toBeNull();
+
+    const data = path.join(staging, "desktop-client", "Data");
+    mkdirSync(data, { recursive: true });
+    writeFileSync(path.join(data, "sharedassets1.assets"), "x");
+    expect(
+      resolvePokemonClientSource({ apkPath: apk, stagingDir: staging }),
+    ).toMatchObject({ kind: "desktop", dataDir: data });
+
+    mkdirSync(path.dirname(apk), { recursive: true });
+    writeFileSync(apk, "apk");
+    expect(
+      resolvePokemonClientSource({ apkPath: apk, stagingDir: staging }),
+    ).toMatchObject({ kind: "apk", apkPath: apk });
   });
 });

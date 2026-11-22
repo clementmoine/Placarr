@@ -5,13 +5,14 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { dumpCardBackFromDataDir, dumpCardBackWebp } from "@/lib/unity/cardBack";
+import { dumpCardBackFromDataDir } from "@/lib/unity/cardBack";
 import { loadUvRectFromJson } from "@/core/render/unity/cardCrop";
 import {
   cardQuadFromExtractedData,
   type CardQuadPayload,
 } from "@/lib/unity/cardQuad";
-import { openApkUnityData } from "@/lib/unity/apkAssets";
+import { openApkUnityData, type ExtractedApkData } from "@/lib/unity/apkAssets";
+import { pokemonClientDataDir } from "@/providers/pokemon/live/cdn/desktopClient";
 import {
   foilPackDir,
   packCardsDir,
@@ -53,6 +54,33 @@ export function pokemonApkDumpFresh(opts: {
   );
 }
 
+export type PokemonClientSource =
+  | { kind: "apk"; apkPath: string; mtimeMs: number }
+  | { kind: "desktop"; dataDir: string; mtimeMs: number };
+
+/**
+ * Unity data to read the Card mesh + card back from: a pulled / store
+ * `base.apk`, else the official desktop client the Sync unpacks
+ * (`desktopClient.ts`). Same `Data/` content either way.
+ */
+export function resolvePokemonClientSource(input: {
+  apkPath: string;
+  stagingDir: string;
+}): PokemonClientSource | null {
+  if (existsSync(input.apkPath)) {
+    return {
+      kind: "apk",
+      apkPath: input.apkPath,
+      mtimeMs: statSync(input.apkPath).mtimeMs,
+    };
+  }
+  const dataDir = pokemonClientDataDir(input.stagingDir);
+  if (dataDir) {
+    return { kind: "desktop", dataDir, mtimeMs: statSync(dataDir).mtimeMs };
+  }
+  return null;
+}
+
 function loadExistingQuad(uvRectPath: string): CardQuadPayload | null {
   try {
     const parsed = JSON.parse(readFileSync(uvRectPath, "utf8")) as CardQuadPayload;
@@ -61,6 +89,21 @@ function loadExistingQuad(uvRectPath: string): CardQuadPayload | null {
   } catch {
     return null;
   }
+}
+
+/** Unity `Data/` of the game client: unzipped APK, or the desktop dir as-is. */
+function openClientData(source: PokemonClientSource): ExtractedApkData {
+  if (source.kind === "desktop") {
+    console.log(`  Unity Data ← client desktop ${source.dataDir}`);
+    return { tmpDir: "", dataDir: source.dataDir, cleanup: () => {} };
+  }
+  console.log(`  unzip APK Unity Data ← ${path.basename(source.apkPath)}…`);
+  const unzipStarted = Date.now();
+  const extracted = openApkUnityData(source.apkPath);
+  console.log(
+    `  unzip done (${Math.round((Date.now() - unzipStarted) / 1000)}s)`,
+  );
+  return extracted;
 }
 
 export async function dumpPokemonCardApk(
@@ -75,21 +118,27 @@ export async function dumpPokemonCardApk(
 
   const uvRectPath = path.join(foilDir, "card-uv-rect.json");
   const cardBackPath = path.join(cardsDir, "back.webp");
-  const apkMtime = existsSync(apk) ? statSync(apk).mtimeMs : null;
+  const source = resolvePokemonClientSource({
+    apkPath: apk,
+    stagingDir: packStagingDir(opts.repo, pack),
+  });
+  const clientMtime = source?.mtimeMs ?? null;
   const uvFresh =
     !opts.force &&
-    apkMtime != null &&
+    clientMtime != null &&
     existsSync(uvRectPath) &&
-    statSync(uvRectPath).mtimeMs >= apkMtime;
+    statSync(uvRectPath).mtimeMs >= clientMtime;
   const backFresh =
     !opts.force &&
-    apkMtime != null &&
+    clientMtime != null &&
     existsSync(cardBackPath) &&
-    statSync(cardBackPath).mtimeMs >= apkMtime;
+    statSync(cardBackPath).mtimeMs >= clientMtime;
 
   if (uvFresh && backFresh) {
     const quad = loadExistingQuad(uvRectPath);
-    console.log("  card quad + back already newer than base.apk — skip APK scan");
+    console.log(
+      "  card quad + back already newer than the game client — skip scan",
+    );
     return {
       ok: quad != null,
       cardQuad: quad,
@@ -100,9 +149,11 @@ export async function dumpPokemonCardApk(
     };
   }
 
-  if (!existsSync(apk)) {
+  if (!source) {
     const quad = loadExistingQuad(uvRectPath);
-    console.log("  card quad ← no base.apk — reuse disk artifacts if present");
+    console.log(
+      "  card quad ← no game client (APK / desktop) — reuse disk artifacts if present",
+    );
     return {
       ok: quad != null,
       cardQuad: quad,
@@ -113,18 +164,15 @@ export async function dumpPokemonCardApk(
     };
   }
 
-  let extracted: ReturnType<typeof openApkUnityData> | null = null;
+  let extracted: ExtractedApkData | null = null;
   try {
     let quad: CardQuadPayload | null = loadExistingQuad(uvRectPath);
     if (uvFresh && quad) {
-      console.log("  card quad already newer than base.apk — skip mesh scan");
-    } else {
-      console.log(`  unzip APK Unity Data ← ${path.basename(apk)}…`);
-      const unzipStarted = Date.now();
-      extracted = openApkUnityData(apk);
       console.log(
-        `  unzip done (${Math.round((Date.now() - unzipStarted) / 1000)}s)`,
+        "  card quad already newer than the game client — skip mesh scan",
       );
+    } else {
+      extracted = openClientData(source);
       console.log("  card quad ← scan serialized heads…");
       const quadStarted = Date.now();
       quad = await cardQuadFromExtractedData(extracted);
@@ -139,7 +187,7 @@ export async function dumpPokemonCardApk(
     const cropRect = quad ? loadUvRectFromJson(quad) : null;
     let cardBackOk = existsSync(cardBackPath);
     if (backFresh) {
-      console.log("  card back already newer than base.apk — skip dump");
+      console.log("  card back already newer than the game client — skip dump");
       cardBackOk = existsSync(cardBackPath);
     } else if (cropRect == null) {
       // Refuse to write a non-cropped (uncropped atlas) card back: without a
@@ -149,9 +197,12 @@ export async function dumpPokemonCardApk(
     } else {
       console.log("  card back ← dump…");
       const backStarted = Date.now();
-      cardBackOk = extracted
-        ? await dumpCardBackFromDataDir(extracted.dataDir, cardBackPath, cropRect)
-        : await dumpCardBackWebp(apk, cardBackPath, cropRect);
+      extracted ??= openClientData(source);
+      cardBackOk = await dumpCardBackFromDataDir(
+        extracted.dataDir,
+        cardBackPath,
+        cropRect,
+      );
       console.log(
         `  card back ${cardBackOk ? "ok" : "MISS"} (${Math.round((Date.now() - backStarted) / 1000)}s)`,
       );

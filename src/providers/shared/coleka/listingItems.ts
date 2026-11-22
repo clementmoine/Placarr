@@ -51,7 +51,9 @@ function thumbOf(inner: string): string | null {
 
 function refOf(text: string | undefined): string | null {
   const ref = text?.match(/Ref\.\s*([^<]+?)\s*$/i)?.[1];
-  return ref ? decodeBasicEntities(ref) : null;
+  if (!ref) return null;
+  // k5 ajoute parfois l'année de sortie : `Ref. NI-01 · 2002`.
+  return decodeBasicEntities(ref).replace(/\s*·\s*\d{4}$/, "") || null;
 }
 
 type Hit = { index: number; item: ColekaListingItem };
@@ -94,4 +96,31 @@ export function colekaListingItems(html: string): ColekaListingItem[] {
     });
   }
   return hits.sort((a, b) => a.index - b.index).map((hit) => hit.item);
+}
+
+export type ColekaListingTemplate = "legacy" | "k5";
+
+/** Gabarit d'une page de liste, `null` sans tuile (mur, page vide, inconnu). */
+export function colekaListingTemplate(
+  html: string,
+): ColekaListingTemplate | null {
+  if (new RegExp(K5_RE.source, "i").test(html)) return "k5";
+  if (new RegExp(LEGACY_RE.source, "i").test(html)) return "legacy";
+  return null;
+}
+
+/**
+ * Une lecture de liste n'est complète que si toutes ses pages viennent du
+ * même gabarit : les deux n'ont ni la même taille de page (48 / 60) ni le même
+ * tri, et le cache CDN de Coleka sert parfois l'ancien pour une page. Mélangées,
+ * des cartes ne tombent sur aucune page. Les pages sans tuile (fin de liste)
+ * ne comptent pas.
+ */
+export function colekaListingPagesCoherent(pages: readonly string[]): boolean {
+  const templates = new Set(
+    pages
+      .map((html) => colekaListingTemplate(html))
+      .filter((t): t is ColekaListingTemplate => t != null),
+  );
+  return templates.size <= 1;
 }

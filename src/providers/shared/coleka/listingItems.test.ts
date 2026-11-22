@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { colekaListingItems } from "./listingItems";
+import {
+  colekaListingItems,
+  colekaListingPagesCoherent,
+  colekaListingTemplate,
+} from "./listingItems";
 
 /** Gabarit historique (`lib_has_2_lines`), page 1 S24 en cache 2026-10-18. */
 const LEGACY = `
@@ -61,5 +65,37 @@ describe("colekaListingItems", () => {
       "JU-895",
       "NI-1363",
     ]);
+  });
+});
+
+describe("colekaListingTemplate / colekaListingPagesCoherent", () => {
+  const legacy = `<a class="lib_has_2_lines" data-id="1" href="/fr/x_i1"><h3 class="product-title">A</h3><span class="ref">Ref. NI-1</span></a>`;
+  const k5 = `<article class="k5" data-id="2"><a class="k5-lien" href="/fr/y_i2"><h3>B</h3><p>Ref. NI-2</p></a></article>`;
+
+  it("names the template a page was served with", () => {
+    expect(colekaListingTemplate(legacy)).toBe("legacy");
+    expect(colekaListingTemplate(k5)).toBe("k5");
+    expect(colekaListingTemplate("<html>verify</html>")).toBeNull();
+  });
+
+  it("refuses a listing read whose pages mix templates", () => {
+    // 2026-11-22 : Sage's Legacy FR lu avec p0 historique (48/page, tri A),
+    // p1 k5 (60/page, tri B), p2 historique en cache → 12 cartes sur aucune
+    // page, `cards.json` réécrit à 108 au lieu de 120.
+    expect(colekaListingPagesCoherent([k5, k5, ""])).toBe(true);
+    expect(colekaListingPagesCoherent([legacy, legacy])).toBe(true);
+    expect(colekaListingPagesCoherent([legacy, k5, legacy])).toBe(false);
+  });
+});
+
+describe("colekaListingItems — k5 ref with year", () => {
+  it("keeps the reference, not the release year appended to it", () => {
+    // k5 prints `Ref. NI-01 · 2002` on some tiles: S1 Naruto Uzumaki lost
+    // its FR title (2026-11-22).
+    const html = `<article class="k5" data-id="202417"><a class="k5-lien" href="/fr/naruto-uzumaki_i202417"><div class="k5-img"><img src="https://thumbs.coleka.com/media/item/201808/27/ni-01_250x250.webp" alt="Naruto Uzumaki"></div><div class="k5-corps"><h3>Naruto Uzumaki</h3><p>Ref. NI-01 · 2002</p></div></a></article>`;
+    expect(colekaListingItems(html)[0]).toMatchObject({
+      title: "Naruto Uzumaki",
+      ref: "NI-01",
+    });
   });
 });

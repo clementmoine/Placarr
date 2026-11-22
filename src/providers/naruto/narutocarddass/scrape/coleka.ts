@@ -15,6 +15,7 @@ import {
   fetchColekaListingHtml,
   keepStagedListingCards,
 } from "@/providers/shared/coleka/listingFetch";
+import { colekaListingPagesCoherent } from "@/providers/shared/coleka/listingItems";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { narutoCardAbsDir } from "../disk";
 import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
@@ -179,6 +180,7 @@ export async function scrapeNarutoColekaCarddassFrCards(
   for (const series of COLEKA_CARDDASS_FR_SERIES) {
     let pageIdx = 0;
     let seriesCards = 0;
+    const seriesPages: string[] = [];
     for (const url of colekaCarddassFrListingPageUrls(
       series.path,
       series.listedCount,
@@ -207,8 +209,16 @@ export async function scrapeNarutoColekaCarddassFrCards(
         if (seriesCards === 0) pagesMissing += 1;
         break;
       }
+      seriesPages.push(html);
       seriesCards += parsed.length;
       colekaCarddassFr_mergeByNumber(byNumber, parsed);
+    }
+    if (!colekaListingPagesCoherent(seriesPages)) {
+      // Lecture partielle : les cartes déjà relevées restent (keepStaged).
+      pagesMissing += 1;
+      console.warn(
+        `── Coleka FR ${series.set} : pages de gabarits mélangés (cache Coleka) — lecture partielle`,
+      );
     }
   }
   keepStagedListingCards(
@@ -776,6 +786,7 @@ async function scrapeColekaCcgFrSet(
   let pageIdx = 0;
   let pagesMissing = 0;
   let waited = false;
+  const pages: string[] = [];
   for (const url of spec.listingPageUrls()) {
     if (delayMs > 0) {
       if (waited) await sleep(delayMs);
@@ -796,9 +807,20 @@ async function scrapeColekaCcgFrSet(
     }
     const parse = spec.parseListing ?? parseColekaStorm3Listing;
     const parsed = parse(html);
-    // A page without a single tile (homepage, new template) is not a read.
-    if (parsed.length === 0) pagesMissing += 1;
+    // A page without a single tile is not a read — unless the listing already
+    // ended (k5 serves 60 per page: the last 48-per-page URL is past the end).
+    if (parsed.length === 0) {
+      if (byNumber.size === 0) pagesMissing += 1;
+      continue;
+    }
+    pages.push(html);
     colekaStorm3_mergeByNumber(byNumber, parsed);
+  }
+  if (!colekaListingPagesCoherent(pages)) {
+    pagesMissing += 1;
+    console.warn(
+      `── ${spec.label} : pages de gabarits mélangés (cache Coleka) — lecture partielle`,
+    );
   }
   keepStagedListingCards(
     byNumber,

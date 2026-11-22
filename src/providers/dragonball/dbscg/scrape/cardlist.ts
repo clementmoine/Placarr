@@ -224,7 +224,12 @@ export function keepFailedLocaleRows(
 async function scrapeLocale(
   locale: DbsCardlistLocaleId,
   opts: ScrapeDbsCgOptions,
-): Promise<{ cards: DbsParsedCard[]; seriesCount: number }> {
+): Promise<{
+  cards: DbsParsedCard[];
+  seriesCount: number;
+  /** Series still failing after retries — the locale is only partly read. */
+  failedSeries: string[];
+}> {
   const indexHtml = await fetchIndexHtml(locale);
   let series = parseDbsSeriesOptions(indexHtml);
   if (opts.limit && opts.limit > 0) {
@@ -237,9 +242,21 @@ async function scrapeLocale(
 
   const byKey = new Map<string, DbsParsedCard>();
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
+  const failedSeries: string[] = [];
 
   for (const [index, option] of series.entries()) {
-    const html = await fetchSeriesHtml(locale, option.categoryId);
+    let html: string;
+    try {
+      html = await fetchSeriesHtml(locale, option.categoryId);
+    } catch (error) {
+      // One series down must not throw away the series already read.
+      failedSeries.push(option.label);
+      console.warn(
+        `   ${locale} ${index + 1}/${series.length} ${option.label} : échec — série sautée`,
+        error instanceof Error ? error.message : error,
+      );
+      continue;
+    }
     const parsed = parseDbsCardlistHtml(html, locale);
     for (const card of parsed) {
       byKey.set(card.printKey, card);
@@ -250,7 +267,11 @@ async function scrapeLocale(
     if (index < series.length - 1 && delayMs > 0) await sleep(delayMs);
   }
 
-  return { cards: [...byKey.values()], seriesCount: series.length };
+  return {
+    cards: [...byKey.values()],
+    seriesCount: series.length,
+    failedSeries,
+  };
 }
 
 export async function scrapeDbsCgCardlist(
@@ -268,9 +289,14 @@ export async function scrapeDbsCgCardlist(
 
   for (const locale of langs) {
     try {
-      const { cards, seriesCount } = await scrapeLocale(locale, opts);
+      const { cards, seriesCount, failedSeries } = await scrapeLocale(
+        locale,
+        opts,
+      );
       allCards.push(...cards);
       seriesByLang[locale] = seriesCount;
+      // Partly read: keep this locale's indexed rows for what was not reread.
+      if (failedSeries.length > 0) failedLangs.push(locale);
     } catch (error) {
       lastError = error;
       failedLangs.push(locale);

@@ -13,6 +13,7 @@ import {
   rowsFromCards,
   scrapeDbsCgCardlist,
 } from "./cardlist";
+import { writeDbsCgIndex } from "../indexStore";
 
 vi.mock("@/lib/http/httpClient", () => ({
   httpGet: vi.fn(),
@@ -149,6 +150,42 @@ describe("scrapeDbsCgCardlist retries", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("keeps the series already read when one series keeps failing", async () => {
+    // FR 2026-11-22: series 40/77 failed after its retries and the 39 series
+    // already read (5 965 cards) were thrown away with the whole locale.
+    const twoSeries = indexHtml.replace(
+      "</select>",
+      '<option value="461002">BT2 Booster -UNION FORCE-</option></select>',
+    );
+    vi.mocked(httpGet).mockResolvedValue({ data: twoSeries } as never);
+    const gone = new axios.AxiosError(
+      "gone",
+      "ERR_BAD_REQUEST",
+      undefined,
+      undefined,
+      {
+        status: 404,
+        statusText: "Not Found",
+        headers: {},
+        config: {} as never,
+        data: "",
+      },
+    );
+    vi.mocked(httpPost).mockImplementation(async (_url, body) =>
+      String(body).includes("461002")
+        ? Promise.reject(gone)
+        : ({ data: frFixture } as never),
+    );
+
+    const result = await scrapeDbsCgCardlist({ langs: ["fr"], delayMs: 0 });
+
+    expect(result.printCount).toBeGreaterThan(0);
+    const written = vi.mocked(writeDbsCgIndex).mock.calls.at(-1)?.[0];
+    expect(written?.prints.map((row) => row.printKey)).toContain(
+      "dbscg:bt1-001",
+    );
   });
 
   it("retries series POST after ECONNRESET instead of aborting the locale", async () => {

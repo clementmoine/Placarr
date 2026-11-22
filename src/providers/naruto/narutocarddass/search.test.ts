@@ -651,8 +651,17 @@ import { japaneseVolumeForNumber } from "./sources/sealed";
       const s3en = listNarutoSetPrints({ setId: "s3", language: "en" });
       expect(s3en.map((row) => row.printKey)).toContain("naruto:s3-m0092");
       const tp4 = listNarutoSetPrints({ setId: "tp4", language: "en" });
-      // CCG M-092 is keyed `s3-m0092` (EN) — no `tp4-` twin.
-      expect(tp4.map((row) => row.printKey)).not.toContain("naruto:tp4-m0092");
+      /*
+        Tournament Pack 4 réimprime M-092 (comme M-080) : clé de membre
+        `tp4-m0092`, distincte de `s3-m0092`. Attesté par la feuille
+        communautaire « Tournament Pack 4 » (Tide of the Deadly Combat, M-092,
+        Rare, 1st, regular + foil —
+        https://docs.google.com/spreadsheets/d/1dvwy66urXUUFMMht3JyIlUf1AU39xS-pGK3eWQUqx4E/htmlview)
+        et par le dossier « Set 23.5 - Tournament Pack 4 » du Drive CCG.
+        L'ancienne attente (« pas de jumeau tp4 ») datait d'avant ces sources.
+      */
+      expect(tp4.map((row) => row.printKey)).toContain("naruto:tp4-m0092");
+      expect(tp4.map((row) => row.printKey)).toContain("naruto:tp4-m0080");
     });
 
     it("lists Tempête approche reprints as s11 FR, not s24/s28", () => {

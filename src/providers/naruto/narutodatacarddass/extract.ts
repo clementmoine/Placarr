@@ -60,6 +60,14 @@ export function selectNarutoDataCarddassSteps(
   });
 }
 
+/*
+ * Hors du pipeline : la fonction est assez longue pour que tsc abandonne le
+ * narrowing (`instanceof`) dans ses derniers blocs.
+ */
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function runNarutoDataCarddassPackPipeline(
   argv: readonly string[] = [],
 ): Promise<{ cards: number; products: number }> {
@@ -145,6 +153,23 @@ export async function runNarutoDataCarddassPackPipeline(
     }
   }
   if (steps.includes("seed")) {
+    // Checklists officielles d'époque (carddass.com / fudanin) depuis la
+    // Wayback : la checklist se reconstruit à la source, pas d'un miroir manuel.
+    try {
+      const { harvestDataCarddassOfficialMirror } =
+        await import("./harvest/officialMirror");
+      const mirror = await harvestDataCarddassOfficialMirror({
+        force,
+        log: (line) => console.log(line),
+      });
+      console.log(
+        `── checklists officielles (Wayback) : ${mirror.fetched} récupérée(s), ${mirror.kept} déjà là, ${mirror.missing.length} jamais archivée(s)`,
+      );
+    } catch (err) {
+      console.warn(
+        `── checklists officielles (Wayback) — échec : ${errorMessage(err)}`,
+      );
+    }
     try {
       const assembled = writeOfficialDataCarddassChecklist();
       console.log(
@@ -365,9 +390,7 @@ export async function runNarutoDataCarddassPackPipeline(
           `${docs.urlOnly} url-only, ${docs.failed} failed / ${docs.total}`,
       );
     } catch (err) {
-      console.warn(
-        `── documents — ${err instanceof Error ? err.message : err}`,
-      );
+      console.warn(`── documents — ${errorMessage(err)}`);
     }
   }
 }

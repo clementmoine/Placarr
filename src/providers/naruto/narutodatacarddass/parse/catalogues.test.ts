@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseBattleCardHtml,
   foldSurugaDataCarddassListings,
   loadSurugaDataCarddassCuratedListings,
   looksLikeMojibakeJa,
@@ -408,3 +409,26 @@ import {
     });
   });
 }
+
+describe("parseBattleCardHtml", () => {
+  // carddass.com/naruto/mission/cardlist/battle_card.shtml (Wayback 2016) :
+  // le tableau DN est dans la page ; le CSV qu'elle propose n'est pas archivé.
+  const html = `
+    <tr>
+      <td align="center" nowrap="nowrap" bgcolor="#EEFFFF">DN-001T</td>
+
+      <td align="left" nowrap="nowrap" bgcolor="#EEFFFF">うずまきナルト</td>
+      <td align="left" bgcolor="#FFFFFF">忍術 影分身の術</td>
+    </tr>
+    <tr>
+      <td align="center" nowrap="nowrap" bgcolor="#EEFFFF">DNP-003</td>
+      <td align="left" nowrap="nowrap" bgcolor="#EEFFFF">うちはサスケ&amp;イタチ</td>
+    </tr>`;
+
+  it("reads printed numbers and names from the DN table", () => {
+    expect(parseBattleCardHtml(html)).toEqual([
+      { printed: "DN-001T", nameJa: "うずまきナルト" },
+      { printed: "DNP-003", nameJa: "うちはサスケ&イタチ" },
+    ]);
+  });
+});

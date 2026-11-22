@@ -19,6 +19,10 @@ import { fileURLToPath } from "node:url";
 import { httpGet } from "@/lib/http/httpClient";
 import { fetchTextWithFlareFallback } from "@/lib/http/scrapeFetch";
 import { packStagingDir } from "@/lib/packPaths";
+import {
+  loadHinokunianFacts,
+  type HinokunianFactsFile,
+} from "@/providers/naruto/narutocarddass/scrape/catalogues";
 
 import {
   dataCarddassChecklistPath,
@@ -34,6 +38,7 @@ import {
   NAO_YOSHI_SEESAA_ORIGIN,
   normalizeOfficialPrinted,
   parseBattleCardCsv,
+  parseBattleCardHtml,
   parseCrossCardlistHtml,
   parseFormationCardlistHtml,
   parseMissionCardlistHtml,
@@ -45,7 +50,7 @@ import {
 import { mergeSurugaHtmlIntoListingsTsv } from "./pipeline/surugaPaste";
 import {
   NARUTO_DATA_CARDDASS_PACK_ID,
-  narutoDataCarddassCuratedDir,
+  narutoDataCarddassSourcePath,
   narutoDataCarddassSyncedSourcePath,
 } from "./pack";
 import {
@@ -553,6 +558,8 @@ function mergeCard(
 
 export function assembleOfficialDataCarddassChecklist(opts?: {
   stagingRoot?: string;
+  /** Live hinokunian harvest (Carddass pack); default: its facts file. */
+  hinokunianFacts?: HinokunianFactsFile | null;
   ebaySeed?: ReadonlyArray<{
     printed: string;
     name?: string;
@@ -569,6 +576,16 @@ export function assembleOfficialDataCarddassChecklist(opts?: {
     sources.push("dn/battle_card.csv");
     for (const row of parseBattleCardCsv(readOfficialText(dnCsv))) {
       const card = toChecklistCard(row, "carddass.com battle_card.csv");
+      if (card) mergeCard(byPrinted, card);
+    }
+  }
+  // Same DN table, from the page the Sync re-fetches on the Wayback (the CSV
+  // it links to was never archived).
+  const dnPage = path.join(root, "dn", "battle_card.shtml");
+  if (existsSync(dnPage)) {
+    sources.push("dn/battle_card.shtml");
+    for (const row of parseBattleCardHtml(readOfficialText(dnPage))) {
+      const card = toChecklistCard(row, "carddass.com battle_card.shtml");
       if (card) mergeCard(byPrinted, card);
     }
   }
@@ -612,20 +629,28 @@ export function assembleOfficialDataCarddassChecklist(opts?: {
     }
   }
 
-  const hinokunianPath = path.join(root, "hinokunian", "dn-dt.json");
-  if (existsSync(hinokunianPath)) {
-    sources.push("hinokunian/dn-dt.json");
-    const payload = JSON.parse(readFileSync(hinokunianPath, "utf8")) as {
-      cards?: Array<{ printed: string; nameJa: string }>;
-    };
-    for (const row of payload.cards ?? []) {
-      const printed = normalizeOfficialPrinted(row.printed);
-      if (!printed) continue;
-      const card = toChecklistCard(
-        { printed, nameJa: row.nameJa },
-        "hinokunian cardbattle",
-      );
-      if (card) mergeCard(byPrinted, card);
+  // DN / DT : pages « cardbattle » du relevé hinokunian que la Sync Carddass
+  // moissonne en direct (le site couvre les deux lignes).
+  const hinokunian =
+    opts?.hinokunianFacts !== undefined
+      ? opts.hinokunianFacts
+      : loadHinokunianFacts();
+  const cardbattle = (hinokunian?.releases ?? []).filter((release) =>
+    /^cardbattle\d*\.html$/i.test(release.path),
+  );
+  if (cardbattle.length > 0) {
+    sources.push("hinokunian cardbattle");
+    for (const release of cardbattle) {
+      for (const row of release.cards) {
+        const printed = normalizeOfficialPrinted(row.printed);
+        const nameJa = row.name?.trim();
+        if (!printed || !nameJa) continue;
+        const card = toChecklistCard(
+          { printed, nameJa },
+          "hinokunian cardbattle",
+        );
+        if (card) mergeCard(byPrinted, card);
+      }
     }
   }
 
@@ -687,9 +712,10 @@ export function assembleOfficialDataCarddassChecklist(opts?: {
 
 /**
  * Fusionne l'assemblage du jour avec la checklist déjà tenue : une fiche
- * relue gagne, une fiche dont la source n'a pas été relue reste. Les relevés
- * officiels (`staging/official`, miroir fait à la main) ne sont pas
- * rejouables — sans eux, la Sync du 2026-11-22 a réécrit 1 482 fiches en 125.
+ * relue gagne, une fiche dont la source n'a pas été relue reste. Le miroir
+ * officiel vient de la Wayback (`harvest/officialMirror`), souvent
+ * indisponible : sans cette fusion, la Sync du 2026-11-22 a réécrit 1 482
+ * fiches en 125.
  */
 export function mergeChecklistWithPrevious(
   assembled: OfficialChecklistAssembly,
@@ -720,27 +746,17 @@ function readPreviousChecklist(outPath: string): {
   cards?: DataCarddassChecklistCard[];
   sources?: string[];
 } | null {
-  // Copie tenue (data/), sinon la copie versionnée (curated/, ADR-006).
-  const candidates = [
-    outPath,
-    path.join(
-      narutoDataCarddassCuratedDir(),
-      "sources",
-      "data-carddass-checklist.json",
-    ),
-  ];
-  for (const file of candidates) {
-    if (!existsSync(file)) continue;
-    try {
-      return JSON.parse(readFileSync(file, "utf8")) as {
-        cards?: DataCarddassChecklistCard[];
-        sources?: string[];
-      };
-    } catch {
-      continue;
-    }
+  // Checklist tenue par la Sync précédente (data/) : une source muette
+  // (Wayback indisponible) ne retire pas ses fiches.
+  if (!existsSync(outPath)) return null;
+  try {
+    return JSON.parse(readFileSync(outPath, "utf8")) as {
+      cards?: DataCarddassChecklistCard[];
+      sources?: string[];
+    };
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export function writeOfficialDataCarddassChecklist(opts?: {
@@ -749,13 +765,9 @@ export function writeOfficialDataCarddassChecklist(opts?: {
   ebaySeedPath?: string;
 }): OfficialChecklistAssembly & { outPath: string } {
   let ebaySeed: OfficialChecklistAssembly["cards"] = [];
+  // Synced eBay faces ledger (data/…/sources/, ab86fb92 — no longer curated).
   const ebayPath =
-    opts?.ebaySeedPath ??
-    path.join(
-      narutoDataCarddassCuratedDir(),
-      "sources",
-      "ebay.json",
-    );
+    opts?.ebaySeedPath ?? narutoDataCarddassSourcePath("ebay.json");
   if (existsSync(ebayPath)) {
     const ebay = JSON.parse(readFileSync(ebayPath, "utf8")) as {
       faces?: Array<{ printedRef: string; title?: string }>;

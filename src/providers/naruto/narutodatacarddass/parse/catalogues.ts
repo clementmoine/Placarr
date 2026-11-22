@@ -80,6 +80,24 @@ export function parseBattleCardCsv(csvText: string): OfficialDcdCard[] {
   return dedupe(cards);
 }
 
+/**
+ * Page officielle `battle_card.shtml` (DN / DNP) : le même tableau que le
+ * CSV qu'elle propose, mais archivé par la Wayback (le CSV, lui, ne l'est
+ * pas). Ligne : `<td>DN-001T</td><td>うずまきナルト</td>…`.
+ */
+export function parseBattleCardHtml(html: string): OfficialDcdCard[] {
+  const cards: OfficialDcdCard[] = [];
+  const re =
+    /<td[^>]*>\s*((?:DN|DNP)-\d+[A-Za-z]?)\s*<\/td>\s*<td[^>]*>\s*([^<]+?)\s*<\/td>/gi;
+  for (const match of html.matchAll(re)) {
+    const printed = normalizeOfficialPrinted(match[1]!);
+    const nameJa = unescapeHtml(match[2]!);
+    if (!printed || !nameJa) continue;
+    cards.push({ printed, nameJa });
+  }
+  return dedupe(cards);
+}
+
 function splitCsvLine(line: string): string[] {
   const out: string[] = [];
   let cur = "";

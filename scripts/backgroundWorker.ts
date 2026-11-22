@@ -83,6 +83,11 @@ function sleep(ms: number): Promise<void> {
 }
 
 let stopping = false;
+/**
+ * Dev reload (`WORKER_DRAIN_SIGNAL` from superviseDevWorker): finish in-flight
+ * jobs, claim nothing new, then exit — never release a running Sync.
+ */
+let draining = false;
 const claimKinds = resolveClaimKinds();
 
 async function processOneJob(): Promise<boolean> {
@@ -127,7 +132,7 @@ async function processOneJob(): Promise<boolean> {
 }
 
 async function runSlot(slot: number): Promise<void> {
-  while (!stopping) {
+  while (!stopping && !draining) {
     try {
       const worked = await processOneJob();
       if (!worked) await sleep(POLL_IDLE_MS);
@@ -207,6 +212,15 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Registered first: SIGUSR2's default action would kill the process.
+  process.on("SIGUSR2", () => {
+    if (draining || stopping) return;
+    draining = true;
+    console.info(
+      `[Worker ${WORKER_ID}] draining for reload — finishing in-flight jobs, claiming nothing new`,
+    );
+  });
+
   const { concurrency, cappedForFlare } = resolveInteractiveWorkerConcurrency();
   const kindsLabel = claimKinds?.join(",") ?? "all";
   console.info(
@@ -263,6 +277,11 @@ async function main(): Promise<void> {
   await Promise.all(
     Array.from({ length: concurrency }, (_, slot) => runSlot(slot)),
   );
+  if (draining && !stopping) {
+    console.info(`[Worker ${WORKER_ID}] drained — exiting for reload`);
+    clearInterval(recoverTimer);
+    process.exit(0);
+  }
 }
 
 main().catch((error) => {

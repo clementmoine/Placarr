@@ -4,6 +4,8 @@ import {
   nextBackoffMs,
   shouldIgnoreWatchPath,
   shouldResetFailureStreak,
+  WORKER_DRAIN_SIGNAL,
+  workerSpawnCommand,
 } from "./superviseDevWorkerLogic";
 
 describe("superviseDevWorkerLogic", () => {
@@ -31,5 +33,27 @@ describe("superviseDevWorkerLogic", () => {
     expect(
       shouldIgnoreWatchPath("src\\providers\\foo\\data\\cache.ts"),
     ).toBe(true);
+  });
+
+  it("ignores tests and fixtures the worker never imports", () => {
+    // Another session editing tests must not restart a multi-hour Sync.
+    expect(shouldIgnoreWatchPath("src/providers/leclerc/index.test.ts")).toBe(
+      true,
+    );
+    expect(shouldIgnoreWatchPath("src/components/Foo.test.tsx")).toBe(true);
+    expect(shouldIgnoreWatchPath("scripts/superviseDevWorker.test.ts")).toBe(
+      true,
+    );
+    expect(shouldIgnoreWatchPath("tests/helpers/setup.ts")).toBe(true);
+    expect(shouldIgnoreWatchPath("src/providers/leclerc/index.ts")).toBe(false);
+  });
+
+  it("spawns the worker under node --import tsx so signals reach it", () => {
+    // The tsx CLI relays only SIGINT/SIGTERM; the drain signal must arrive.
+    expect(workerSpawnCommand("/usr/bin/node", "/repo/scripts/w.ts")).toEqual({
+      command: "/usr/bin/node",
+      args: ["--import", "tsx", "/repo/scripts/w.ts"],
+    });
+    expect(WORKER_DRAIN_SIGNAL).toBe("SIGUSR2");
   });
 });

@@ -10,8 +10,12 @@
  *
  * - Spawn `tsx scripts/backgroundWorker.ts` with inherited stdio / env.
  * - Restart on unexpected exit (backoff, reset after a healthy run).
- * - On source changes under `scripts/` + `src/`, SIGTERM the child (so it
- *   releases locks) then respawn — same exclude set as the old `tsx watch`.
+ * - On source changes under `scripts/` + `src/` (tests excluded), ask the
+ *   child to drain ({@link WORKER_DRAIN_SIGNAL}): it finishes its in-flight
+ *   jobs, claims nothing new, exits, and is respawned on fresh code. A
+ *   SIGTERM here used to release a multi-hour Sync back to pending — every
+ *   save in another session restarted it from zero.
+ * - Supervisor shutdown (Ctrl-C) still sends SIGTERM: hard stop.
  *
  * Usage (via package.json):
  *   pnpm worker:dev
@@ -27,11 +31,13 @@ import {
   nextBackoffMs,
   shouldIgnoreWatchPath,
   shouldResetFailureStreak,
+  WORKER_DRAIN_SIGNAL,
+  workerSpawnCommand,
 } from "./superviseDevWorkerLogic";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const WORKER_ENTRY = path.join(ROOT, "scripts", "backgroundWorker.ts");
-const TSX_BIN = path.join(ROOT, "node_modules", ".bin", "tsx");
+const TSX_LOADER = path.join(ROOT, "node_modules", "tsx");
 
 const RELOAD_DEBOUNCE_MS = 400;
 const WATCH_ROOTS = ["scripts", "src"] as const;
@@ -79,7 +85,8 @@ function spawnWorker(): void {
 
   log(`spawn ${path.relative(ROOT, WORKER_ENTRY)}`);
   childStartedAt = Date.now();
-  const proc = spawn(TSX_BIN, [WORKER_ENTRY], {
+  const { command, args } = workerSpawnCommand(process.execPath, WORKER_ENTRY);
+  const proc = spawn(command, args, {
     cwd: ROOT,
     env: process.env,
     stdio: "inherit",
@@ -132,14 +139,17 @@ function requestReload(reason: string): void {
   if (reloadTimer) clearTimeout(reloadTimer);
   reloadTimer = setTimeout(() => {
     reloadTimer = null;
-    log(`reload (${reason})`);
     failureStreak = 0;
     clearRestartTimer();
     if (child) {
+      // Already draining: the respawn will pick up this change too.
+      if (reloadPending) return;
+      log(`reload (${reason}) — worker drains its in-flight jobs first`);
       reloadPending = true;
-      killChild("SIGTERM");
+      killChild(WORKER_DRAIN_SIGNAL);
       return;
     }
+    log(`reload (${reason})`);
     spawnWorker();
   }, RELOAD_DEBOUNCE_MS);
 }
@@ -188,8 +198,8 @@ async function shutdown(signal: string): Promise<void> {
 }
 
 function main(): void {
-  if (!fs.existsSync(TSX_BIN)) {
-    console.error(`[supervise-worker] missing tsx binary at ${TSX_BIN}`);
+  if (!fs.existsSync(TSX_LOADER)) {
+    console.error(`[supervise-worker] missing tsx loader at ${TSX_LOADER}`);
     process.exit(1);
   }
   if (!fs.existsSync(WORKER_ENTRY)) {

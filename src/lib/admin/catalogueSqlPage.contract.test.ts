@@ -11,6 +11,7 @@ import { NARUTO_PACK_ID } from "@/providers/naruto/narutocarddass/identity";
 import { dbsCgDbPath } from "@/providers/dragonball/dbscg/indexStore";
 import { tcgdexDbPath } from "@/providers/pokemon/tcgdex/indexStore";
 import { clearLocalPrintsIndexSingletons } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import { countCatalogMissingArt } from "../../../tests/helpers/catalogMissingArt";
 
 vi.mock("@/lib/admin/catalogueCardPrices", () => ({
   catalogueCardPriceQuoteByPrintKey: async () => new Map(),
@@ -238,7 +239,8 @@ describe.skipIf(!existsSync("data/mtg/catalog.sqlite"))(
         missingArtOnly: true,
         limit: 24,
       });
-      expect(page.total).toBeGreaterThan(1_000);
+      // EN titles without a disk face, counted in the DB (0 when complete).
+      expect(page.total).toBe(countCatalogMissingArt("mtg", "en"));
       expect(
         page.cards
           .filter((row) => row.kind === "face")

@@ -7,6 +7,10 @@ import {
 } from "@/lib/admin/catalogueIdentityBrowse";
 import { listCatalogueCards, resetCatalogueCardsCache } from "@/lib/admin/catalogueCards";
 import { clearLocalPrintsIndexSingletons } from "@/providers/shared/cardCatalogue/localPrintsIndex";
+import {
+  catalogPrintKeysWithArt,
+  countCatalogMissingArt,
+} from "../../../tests/helpers/catalogMissingArt";
 
 import {
   clearMtgCatalogueBrowseCache,
@@ -47,12 +51,15 @@ describe.skipIf(!hasMtg)("MTG catalogue browse (local + Scryfall soft-fill)", ()
         (r) => !/errors\.scryfall\.com|\/soon\.jpe?g/i.test(r.artUrl),
       ),
     ).toBe(true);
-    if (hasArtUrls) {
-      expect(
-        withFace.some((r) =>
-          r.artUrl.startsWith("https://cards.scryfall.io/"),
-        ),
-      ).toBe(true);
+    // A disk face wins; only a print without one is soft-filled from the CDN
+    // (the corpus may well be complete — then every tile is local).
+    const onDisk = catalogPrintKeysWithArt("mtg", "en");
+    for (const row of withFace) {
+      if (onDisk.has(row.printKey)) {
+        expect(row.artUrl.startsWith("/assets/mtg/")).toBe(true);
+      } else if (hasArtUrls) {
+        expect(row.artUrl.startsWith("https://cards.scryfall.io/")).toBe(true);
+      }
     }
   });
 
@@ -63,8 +70,9 @@ describe.skipIf(!hasMtg)("MTG catalogue browse (local + Scryfall soft-fill)", ()
       limit: 24,
       missingArtOnly: true,
     });
-    expect(page.total).toBeGreaterThan(1_000);
-    expect(page.rows.length).toBeGreaterThan(0);
+    // Exactly the EN titles without a disk face — zero once the corpus is whole.
+    expect(page.total).toBe(countCatalogMissingArt("mtg", "en"));
+    expect(page.rows.length).toBe(Math.min(24, page.total));
     expect(page.rows.every((r) => r.missingArt && r.artUrl === "")).toBe(true);
   });
 
@@ -88,7 +96,8 @@ describe.skipIf(!hasMtg)("MTG catalogue browse (local + Scryfall soft-fill)", ()
     expect(
       rows!.filter((r) => r.artUrl.startsWith("https://cards.scryfall.io/")),
     ).toEqual([]);
+    // Missing faces stay missing (no CDN), and only those.
     const missing = rows!.filter((r) => r.missingArt);
-    expect(missing.length).toBeGreaterThan(1_000);
+    expect(missing.every((r) => r.artUrl === "")).toBe(true);
   }, 120_000);
 });

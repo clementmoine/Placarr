@@ -178,6 +178,49 @@ async function fetchSeriesHtml(
   );
 }
 
+type DbsIndexRows = {
+  prints: DbsPrintRow[];
+  titles: DbsTitleRow[];
+  assets: DbsAssetRow[];
+};
+
+/**
+ * Une locale en échec (cardlist coupée en route) garde ses lignes de l'index
+ * déjà sur disque : sans ça, l'index réécrit perdait les tirages que seule
+ * cette locale nomme (Sync du 2026-11-22 : FR `stream has been aborted`,
+ * −13 tirages). Une source absente n'efface pas, elle laisse en l'état.
+ */
+export function keepFailedLocaleRows(
+  next: DbsIndexRows,
+  existing: DbsIndexRows | null,
+  failedLangs: readonly string[],
+): DbsIndexRows {
+  if (!existing || failedLangs.length === 0) return next;
+  const failed = new Set(failedLangs);
+  const rowKey = (row: { printKey: string; lang: string }) =>
+    `${row.printKey}:${row.lang}`;
+  const nextTitles = new Set(next.titles.map(rowKey));
+  const nextAssets = new Set(next.assets.map(rowKey));
+  const keptTitles = existing.titles.filter(
+    (row) => failed.has(row.lang) && !nextTitles.has(rowKey(row)),
+  );
+  const keptAssets = existing.assets.filter(
+    (row) => failed.has(row.lang) && !nextAssets.has(rowKey(row)),
+  );
+  const nextPrints = new Set(next.prints.map((row) => row.printKey));
+  const keptKeys = new Set(
+    [...keptTitles, ...keptAssets].map((row) => row.printKey),
+  );
+  const keptPrints = existing.prints.filter(
+    (row) => keptKeys.has(row.printKey) && !nextPrints.has(row.printKey),
+  );
+  return {
+    prints: [...next.prints, ...keptPrints],
+    titles: [...next.titles, ...keptTitles],
+    assets: [...next.assets, ...keptAssets],
+  };
+}
+
 async function scrapeLocale(
   locale: DbsCardlistLocaleId,
   opts: ScrapeDbsCgOptions,
@@ -220,6 +263,7 @@ export async function scrapeDbsCgCardlist(
   const langs = opts.langs?.length ? opts.langs : DEFAULT_LANGS;
   const allCards: DbsParsedCard[] = [];
   const seriesByLang: Record<string, number> = {};
+  const failedLangs: string[] = [];
   let lastError: unknown;
 
   for (const locale of langs) {
@@ -229,8 +273,9 @@ export async function scrapeDbsCgCardlist(
       seriesByLang[locale] = seriesCount;
     } catch (error) {
       lastError = error;
+      failedLangs.push(locale);
       console.warn(
-        `── cardlist ${locale} : échec — on continue avec les locales déjà lues`,
+        `── cardlist ${locale} : échec — ses lignes déjà indexées sont gardées`,
         error,
       );
     }
@@ -251,12 +296,16 @@ export async function scrapeDbsCgCardlist(
     );
   }
 
-  const { prints, titles, assets } = rowsFromCards(allCards);
+  const existing = loadDbsCgIndex();
+  const { prints, titles, assets } = keepFailedLocaleRows(
+    rowsFromCards(allCards),
+    existing,
+    failedLangs,
+  );
   const seriesCount = Object.values(seriesByLang).reduce((a, b) => a + b, 0);
 
   // Same printKey set as on disk → leave catalog.sqlite mtime alone so the
   // identify visual-index fast-path still holds on an immediate re-Sync.
-  const existing = loadDbsCgIndex();
   if (existing && !opts.force) {
     const nextKeys = prints.map((row) => row.printKey).sort();
     const prevKeys = existing.prints.map((row) => row.printKey).sort();

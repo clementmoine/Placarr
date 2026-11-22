@@ -685,6 +685,64 @@ export function assembleOfficialDataCarddassChecklist(opts?: {
   return { cards, byPrefix, sources };
 }
 
+/**
+ * Fusionne l'assemblage du jour avec la checklist déjà tenue : une fiche
+ * relue gagne, une fiche dont la source n'a pas été relue reste. Les relevés
+ * officiels (`staging/official`, miroir fait à la main) ne sont pas
+ * rejouables — sans eux, la Sync du 2026-11-22 a réécrit 1 482 fiches en 125.
+ */
+export function mergeChecklistWithPrevious(
+  assembled: OfficialChecklistAssembly,
+  previous: {
+    cards?: readonly DataCarddassChecklistCard[];
+    sources?: readonly string[];
+  } | null,
+): OfficialChecklistAssembly {
+  if (!previous?.cards?.length) return assembled;
+  const byPrinted = new Map<string, DataCarddassChecklistCard>();
+  for (const card of previous.cards) byPrinted.set(card.printed, card);
+  for (const card of assembled.cards) byPrinted.set(card.printed, card);
+  const cards = [...byPrinted.values()].sort((a, b) =>
+    a.printed.localeCompare(b.printed, "en"),
+  );
+  const byPrefix: Record<string, number> = {};
+  for (const card of cards) {
+    const pref = card.printed.split("-")[0] ?? "?";
+    byPrefix[pref] = (byPrefix[pref] ?? 0) + 1;
+  }
+  const sources = [
+    ...new Set([...(previous.sources ?? []), ...assembled.sources]),
+  ];
+  return { cards, byPrefix, sources };
+}
+
+function readPreviousChecklist(outPath: string): {
+  cards?: DataCarddassChecklistCard[];
+  sources?: string[];
+} | null {
+  // Copie tenue (data/), sinon la copie versionnée (curated/, ADR-006).
+  const candidates = [
+    outPath,
+    path.join(
+      narutoDataCarddassCuratedDir(),
+      "sources",
+      "data-carddass-checklist.json",
+    ),
+  ];
+  for (const file of candidates) {
+    if (!existsSync(file)) continue;
+    try {
+      return JSON.parse(readFileSync(file, "utf8")) as {
+        cards?: DataCarddassChecklistCard[];
+        sources?: string[];
+      };
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export function writeOfficialDataCarddassChecklist(opts?: {
   stagingRoot?: string;
   outPath?: string;
@@ -720,13 +778,16 @@ export function writeOfficialDataCarddassChecklist(opts?: {
       .filter((row): row is DataCarddassChecklistCard => row != null);
   }
 
-  const assembled = assembleOfficialDataCarddassChecklist({
-    stagingRoot: opts?.stagingRoot,
-    ebaySeed,
-  });
   const outPath =
     opts?.outPath ??
     narutoDataCarddassSyncedSourcePath("data-carddass-checklist.json");
+  const assembled = mergeChecklistWithPrevious(
+    assembleOfficialDataCarddassChecklist({
+      stagingRoot: opts?.stagingRoot,
+      ebaySeed,
+    }),
+    readPreviousChecklist(outPath),
+  );
   const payload = {
     source:
       "carddass.com mission (miroir) + fudanin formation/cross (Wayback) + hinokunian DN/DT + ebay seed",

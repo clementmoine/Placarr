@@ -7,6 +7,11 @@
  * {@link hydrateFoilMetaFromAssets}.
  */
 
+/**
+ * Returns the parsed file, or `fallback` itself (same reference) when the file
+ * is absent or unreadable. That fallback is never cached: a Sync rewriting the
+ * file mid-read must not leave an empty value stuck until restart.
+ */
 export type FoilMetaFileReader = <T>(
   relativeUnderData: string,
   fallback: T,
@@ -74,7 +79,7 @@ export function readDataJsonSync<T>(relativeUnderData: string, fallback: T): T {
   const reader = g.__PLACARR_FOIL_META_READER__;
   if (reader) {
     const parsed = reader(relativeUnderData, fallback);
-    cache()[relativeUnderData] = parsed as unknown;
+    if (parsed !== fallback) cache()[relativeUnderData] = parsed as unknown;
     return parsed;
   }
   return fallback;

@@ -3,10 +3,12 @@
  * ``mobile.py`` / ``dump_unity.py``.
  */
 
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 
 import type { AssetManager } from "unityfs-js";
+
+import { writeFileAtomic } from "@/lib/fs/writeFileAtomic";
 
 import {
   extractLorcanaShaders,
@@ -155,7 +157,7 @@ export async function extractUnityNode(
     maps,
     shadersDir,
   );
-  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  writeFileAtomic(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
   console.log("Phase 3 — textures");
   clearStaleTextures(texturesDir);
@@ -166,7 +168,7 @@ export async function extractUnityNode(
   );
   const patched = applyAstcToManifest(manifest, astcByName);
   if (patched > 0) {
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+    writeFileAtomic(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   }
 
   console.log("Phase 4 — card back");

@@ -18,6 +18,7 @@ import {
   installFoilMetaFileWriter,
   resetFoilMetaCache,
 } from "@/lib/foilMetaLoad";
+import { writeFileAtomic } from "@/lib/fs/writeFileAtomic";
 import { packShadersDir } from "@/lib/packPaths";
 import { dataRoot } from "@/lib/runtimeData";
 import { exportLorcanaCardsIndexJson } from "@/providers/lorcana/lorcanatcg/indexStore";
@@ -43,7 +44,8 @@ installFoilMetaFileReader((relativeUnderData, fallback) => {
 installFoilMetaFileWriter((relativeUnderData, value) => {
   const filePath = absPath(relativeUnderData);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  // Atomic: a concurrent reader never sees a half-written JSON.
+  writeFileAtomic(filePath, `${JSON.stringify(value, null, 2)}\n`);
 });
 
 installPokemonShaderStemScanner(() => {

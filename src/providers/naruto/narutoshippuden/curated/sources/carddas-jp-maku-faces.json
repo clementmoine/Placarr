@@ -1,0 +1,10 @@
+{
+  "source": "www.carddass.com/naruto/cardgame/product/card_img/ (Wayback, CDX statuscode 200)",
+  "observed": "2026-11-22",
+  "note": "Visuels officiels 疾風伝 幕 (JU-…) archivés sur carddass.com. Graine des instantanés Wayback : la Sync télécharge chaque image (id_) et cite l'instantané. Les autres visuels card_img du site appartiennent au pack Carddass.",
+  "faces": [
+    { "number": "mju0062", "timestamp": "20160111072646", "url": "http://www.carddass.com/naruto/cardgame/product/card_img/ju-062_d3.gif" },
+    { "number": "mju0079", "timestamp": "20160111072650", "url": "http://www.carddass.com/naruto/cardgame/product/card_img/ju-079_d4.gif" },
+    { "number": "mju0085", "timestamp": "20160111072655", "url": "http://www.carddass.com/naruto/cardgame/product/card_img/ju-085_d4.gif" }
+  ]
+}

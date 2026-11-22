@@ -1,0 +1,318 @@
+{
+  "source": "Annonce officielle Kana mangakana.com avr. 2008 (Wayback) + forum t1192/t1185 + Victor FB/YT DVD + Ultrajeux S5 holes + lecture imprint utilisateur + reconstructions MIJ 2026-10-18",
+  "note": "Le retail S6 FR (starters Le Duel / Quartet, boosters) n'est jamais sorti. Check-list FR `s6` = les **6** inédites Kana / DVD (`cards`) + reprints MIJ attestés par reconstruction footer Made in Japan 2026-10-18 (`mijReprints`, 22 faces). Canal manga / DVD MIJ 2008, jumeau MIB/S5. Digs : `vinted-lujee1234-serie5-mij-2018.json`, `vinted-lsdestroyed21-te205-mij-2026.json`. Catalogue `s6` IT / EN / préprod inchangé. Ne pas y verser la branche Coleka serie-06 entière (noms IT, Rivalità Eterna).",
+  "retailFr": false,
+  "officialKana": {
+    "announced": "2008-04-25",
+    "claim": "15 premiers tomes Naruto — 1 carte Bandai / tome dont 7 inédites",
+    "wayback": "https://web.archive.org/web/20080507045935/http://www.mangakana.com:80/r-3_2490-actualite-naruto-.html",
+    "dig": "kana-manga-blister-2008.json"
+  },
+  "cards": [
+    {
+      "number": "ta221",
+      "name": "Devenir Chef",
+      "channel": "kana-manga-blister",
+      "tome": 1,
+      "confidence": "kana-official + forum-t1192",
+      "imprint": "BANDAI 2008 MADE IN JAPAN"
+    },
+    {
+      "number": "ni236",
+      "name": "Sasuke",
+      "channel": "kana-manga-blister + kana-dvd-naruto-vol15",
+      "tome": 2,
+      "confidence": "kana-official + forum-t1192 + victor-dvd-vol15",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Deux canaux attestés : blister tome 2 (liste Kana/forum) et coffret DVD vol. 15 (Victor). Pas exclusif DVD."
+    },
+    {
+      "number": "ni253",
+      "name": "Tayuya",
+      "channel": "kana-manga-blister",
+      "tome": 6,
+      "confidence": "kana-official + forum-t1192",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Erratum papier 3/1 + 1/3 au lieu de 3/3 (t1185)."
+    },
+    {
+      "number": "ni252",
+      "name": "Sakon",
+      "channel": "kana-manga-blister",
+      "tome": 7,
+      "confidence": "kana-official + forum-t1192 + vinted-photo-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Photo Vinted 2026-10-17 confirme imprint MIJ (déjà inédite checklist).",
+      "evidence": "vinted-lujee1234-serie5-mij-2018.json"
+    },
+    {
+      "number": "ni232",
+      "name": "Shikamaru",
+      "channel": "kana-manga-blister + packshot-dvd-vol15",
+      "tome": 10,
+      "confidence": "kana-official + forum-t1192 + packshot-vol15",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Packshot vol. 15 empilé : visible, insert ouvert non confirmé."
+    },
+    {
+      "number": "ta226",
+      "name": "Pouvoir de la marque maléfique",
+      "channel": "kana-manga-blister",
+      "tome": 14,
+      "confidence": "kana-official + forum-t1192",
+      "imprint": "BANDAI 2008 MADE IN JAPAN"
+    }
+  ],
+  "mijReprints": [
+    {
+      "tome": 3,
+      "number": "ni206",
+      "name": "Sakura Haruno et Ino",
+      "channel": "kana-manga-blister",
+      "confidence": "user-imprint-mij + user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-17 lecture MIJ ; 2026-10-18 reconstruction footer MIJ → curated `ninja/ni0206/fr`.",
+      "face": "curated/cards/fr/s6/ni0206/art.reconstructed.png"
+    },
+    {
+      "tome": 4,
+      "number": "te192",
+      "name": "Pichenette",
+      "channel": "kana-manga-blister",
+      "confidence": "vinted-photo-mij + user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Photos Vinted + reconstruction MIJ 2026-10-18 → curated `jutsu/te0192/fr`.",
+      "evidence": [
+        "vinted-lujee1234-serie5-mij-2018.json",
+        "vinted-lsdestroyed21-te205-mij-2026.json"
+      ],
+      "face": "curated/cards/fr/s6/te0192/art.reconstructed.png"
+    },
+    {
+      "tome": 5,
+      "number": "ta214",
+      "name": "Promesse éternelle",
+      "channel": "kana-manga-blister",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ (remplace consensus canal sans photo).",
+      "face": "curated/cards/fr/s6/ta0214/art.reconstructed.png"
+    },
+    {
+      "tome": 8,
+      "number": "te205",
+      "name": "Dédoublement",
+      "channel": "kana-manga-blister",
+      "confidence": "vinted-photo-mij + user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Photo Vinted + reconstruction MIJ 2026-10-18 → curated `jutsu/te0205/fr`.",
+      "evidence": "vinted-lsdestroyed21-te205-mij-2026.json",
+      "face": "curated/cards/fr/s6/te0205/art.reconstructed.png"
+    },
+    {
+      "tome": 9,
+      "number": "ta219",
+      "name": "Tentative désespérée",
+      "channel": "kana-manga-blister",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ.",
+      "face": "curated/cards/fr/s6/ta0219/art.reconstructed.png"
+    },
+    {
+      "tome": 11,
+      "number": "ni239",
+      "name": "Chôji Akimichi",
+      "channel": "kana-manga-blister",
+      "confidence": "user-imprint-mij + vinted-photo-mij + user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Lecture/photo + reconstruction MIJ 2026-10-18 → curated `ninja/ni0239/fr`.",
+      "evidence": "vinted-lujee1234-serie5-mij-2018.json",
+      "face": "curated/cards/fr/s6/ni0239/art.reconstructed.png"
+    },
+    {
+      "tome": 12,
+      "number": "ni240",
+      "name": "Neji Hyûga",
+      "channel": "kana-manga-blister",
+      "confidence": "user-imprint-mij+mib + vinted-photo-mij + user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "also": "BANDAI MADE IN BELGIUM (S5 retail)",
+      "note": "Dual tirage MIJ + MIB/S5 ; reconstruction MIJ 2026-10-18 → curated `ninja/ni0240/fr`.",
+      "evidence": "vinted-lujee1234-serie5-mij-2018.json",
+      "face": "curated/cards/fr/s6/ni0240/art.reconstructed.png"
+    },
+    {
+      "tome": 13,
+      "number": "ta227",
+      "name": "Jeu de hasard",
+      "channel": "kana-manga-blister",
+      "confidence": "user-imprint-mij + user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "Exemplaire MIJ ≠ retail S5 Belgique ; reconstruction 2026-10-18 → curated `mission/ta0227/fr`.",
+      "face": "curated/cards/fr/s6/ta0227/art.reconstructed.png"
+    },
+    {
+      "tome": 15,
+      "number": "te207",
+      "name": "Soin typique",
+      "channel": "kana-manga-blister",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ.",
+      "face": "curated/cards/fr/s6/te0207/art.reconstructed.png"
+    },
+    {
+      "number": "ni242",
+      "name": "Akamaru",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ (hors 9 blister tomes 3–15) → curated `ninja/ni0242/fr`.",
+      "face": "curated/cards/fr/s6/ni0242/art.reconstructed.png"
+    },
+    {
+      "number": "ni243",
+      "name": "Genma Shiranui",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0243/fr`.",
+      "face": "curated/cards/fr/s6/ni0243/art.reconstructed.png"
+    },
+    {
+      "number": "ni244",
+      "name": "Raidô Namiashi",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0244/fr`.",
+      "face": "curated/cards/fr/s6/ni0244/art.reconstructed.png"
+    },
+    {
+      "number": "ni245",
+      "name": "Iwashi Tatami",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0245/fr`.",
+      "face": "curated/cards/fr/s6/ni0245/art.reconstructed.png"
+    },
+    {
+      "number": "ni246",
+      "name": "Shizune",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0246/fr`.",
+      "face": "curated/cards/fr/s6/ni0246/art.reconstructed.png"
+    },
+    {
+      "number": "ni250",
+      "name": "Kidomaru",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0250/fr`.",
+      "face": "curated/cards/fr/s6/ni0250/art.reconstructed.png"
+    },
+    {
+      "number": "ni251",
+      "name": "Jirôbô",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0251/fr`.",
+      "face": "curated/cards/fr/s6/ni0251/art.reconstructed.png"
+    },
+    {
+      "number": "ta232",
+      "name": "Analyse de Shikamaru",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `mission/ta0232/fr`.",
+      "face": "curated/cards/fr/s6/ta0232/art.reconstructed.png"
+    },
+    {
+      "number": "ta234",
+      "name": "Equipe de sauvetage de",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2008 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `mission/ta0234/fr`.",
+      "face": "curated/cards/fr/s6/ta0234/art.reconstructed.png"
+    },
+    {
+      "number": "ni103",
+      "name": "Dosu Kinuta",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2007 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `fr/s6/ni0103/`.",
+      "face": "curated/cards/fr/s6/ni0103/art.reconstructed.png"
+    },
+    {
+      "number": "ni104",
+      "name": "Zaku Abumi",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2007 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0104/fr`.",
+      "face": "curated/cards/fr/s6/ni0104/art.reconstructed.png"
+    },
+    {
+      "number": "ni105",
+      "name": "Kin Tsuchi",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2007 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0105/fr`.",
+      "face": "curated/cards/fr/s6/ni0105/art.reconstructed.png"
+    },
+    {
+      "number": "ni114",
+      "name": "Temari",
+      "channel": "user-reconstruction-mij",
+      "confidence": "user-reconstruction-mij",
+      "imprint": "BANDAI 2007 MADE IN JAPAN",
+      "note": "2026-10-18 — reconstruction footer MIJ → curated `ninja/ni0114/fr`.",
+      "face": "curated/cards/fr/s6/ni0114/art.reconstructed.png"
+    }
+  ],
+  "kanaBlisterS5Reprints": [],
+  "notS6": [
+    {
+      "number": "te191",
+      "name": "Les lames de chakra",
+      "reason": "IT cardgameclub = S4 TE-191 « Tirapugni a lama ». Trou PDF checklist FR S4 (après TE-189), pas t1185. Absent Ultrajeux serie_5. Ne pas ranger en S6 FR sans lecture d'imprint 2008 sur carton."
+    }
+  ],
+  "open": [
+    {
+      "id": "blister-mij-reconstructions-2026-10-18",
+      "note": "22 reconstructions FR footer MIJ ingérées en curated (blister + hors liste + NI-103/104/105/114). Faces → `fr/s6/` via reconstruct Sync."
+    },
+    {
+      "id": "ni234-not-from-vinted",
+      "note": "Lecture NI-234 sur photo Vinted Choji rejetée : listing = NI-239, art solo Chôji = NI-239, checklist NI-234 = duo Shikamaru+Chôji. Pas de mint s6-ni0234 sans photo nette du numéro."
+    },
+    {
+      "id": "7th-inedite",
+      "status": "likely-marketing-mismatch",
+      "note": "2026-10-17 dig web : pas de 7ᵉ numéro à minter. Kana (Wayback) + Katagena intro = « 7 inédites » ; les labels t1192 n'en marquent que **6** (tomes 1,2,6,7,10,14). Ultrajeux S5 holes = exactement ces 6 (ni232/ni236/ni252/ni253/ta221/ta226)."
+    },
+    {
+      "id": "shippuden-dvd-commons",
+      "note": "Victor FB : communes S6 MIJ dos bleu via coffret Shippuden. Partiellement couvert par les 9 reconstructions hors blister 2026-10-18 — canal exact (DVD vs blister) encore ouvert."
+    },
+    {
+      "id": "coffret-tsunade-mij",
+      "note": "Victor réception : coffret Tsunade MIJ S6 distinct du vol. 15 — EAN + table cartes TBD."
+    },
+    {
+      "id": "blister-packshot-physical",
+      "note": "Annonce Kana confirmée ; photo blister manga scellé + insert encore absente 2026-09."
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+{
+  "note": "Graine des checklists officielles Naruto (Bandai USA bandaicg.com, Bandai JP carddas.com) : où regarder dans la Wayback Machine. Le contenu est reconstruit par l'étape Sync `checklists` dans data/naruto/carddass/sources/ (une URL Wayback par carte). Horodatages EN = ceux du miroir d'origine (staging/bandaicg-en/cdx.json, vérifiés octet par octet) ; JP = dernière capture 200 (identique au miroir aux fins de ligne près).",
+  "verifiedAt": "2026-11-21",
+  "bandaicgEn": {
+    "ledger": "bandaicg-en-cardlist.json",
+    "meta": {
+      "observed": "2026-08-17",
+      "ingest": "titles",
+      "line": "en-ccg",
+      "note": "Official Bandai USA CCG checklists. Same game as Goat shop titles, not Carddass NI/TE. Titles only — no faces. N-US tin exclusives skipped. s14.php is a Nice Try placeholder in the archive; s16–s27 were never published on the site. Goat fills those gaps.",
+      "not": ["carddass", "n-us", "s28"]
+    },
+    "pages": [
+      {
+        "page": "cardlists_s1.html",
+        "setCode": "s1",
+        "timestamp": "20070410010153",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s1.html"
+      },
+      {
+        "page": "cardlists_s2.html",
+        "setCode": "s2",
+        "timestamp": "20070410010015",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s2.html"
+      },
+      {
+        "page": "cardlists_s3.html",
+        "setCode": "s3",
+        "timestamp": "20070409182224",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s3.html"
+      },
+      {
+        "page": "cardlists_s4.html",
+        "setCode": "s4",
+        "timestamp": "20070410010304",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s4.html"
+      },
+      {
+        "page": "cardlists_s5.html",
+        "setCode": "s5",
+        "timestamp": "20070430044157",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s5.html"
+      },
+      {
+        "page": "cardlists_s6.html",
+        "setCode": "s6",
+        "timestamp": "20070707082043",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s6.html"
+      },
+      {
+        "page": "cardlists_s7.html",
+        "setCode": "s7",
+        "timestamp": "20071027034714",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s7.html"
+      },
+      {
+        "page": "cardlists_s8.html",
+        "setCode": "s8",
+        "timestamp": "20080128211101",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s8.html"
+      },
+      {
+        "page": "cardlists_s9.html",
+        "setCode": "s9",
+        "timestamp": "20080523230041",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s9.html"
+      },
+      {
+        "page": "cardlists_s10.html",
+        "setCode": "s10",
+        "timestamp": "20080901224503",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s10.html"
+      },
+      {
+        "page": "cardlists_s11.html",
+        "setCode": "s11",
+        "timestamp": "20081212104143",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s11.html"
+      },
+      {
+        "page": "cardlists_s12.php",
+        "setCode": "s12",
+        "timestamp": "20090306115640",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s12.php"
+      },
+      {
+        "page": "cardlists_s13.php",
+        "setCode": "s13",
+        "timestamp": "20090619052342",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s13.php"
+      },
+      {
+        "page": "cardlists_s15.php",
+        "setCode": "s15",
+        "timestamp": "20091207151210",
+        "original": "http://www.bandaicg.com:80/naruto/cardlists_s15.php"
+      }
+    ]
+  },
+  "carddasJp": {
+    "ledger": "carddas-jp-cardlist.json",
+    "meta": {
+      "observed": "2026-09-13",
+      "ingest": "titles",
+      "line": "carddass-jp",
+      "note": "Official JP Carddass CG 巻ノ壱…十七. Same game as FR/IT (忍=NI). Titles only — no faces. Skip d_cardlist (Data Carddass) and cardgame/product/5th.shtml (第五幕 ≠ 巻ノ五). 巻の四 spelling is the page's. Supplément 2026-09-01 : 忍-393…396 + 依-43 (スペシャルコンボシート2) via `cardlist/card_img/*_spc2.gif` ; 作-322, 忍-390…392 (巻ノ十六) absents du miroir Wayback — noms Suruga GL685032…GL685035 ; 術-342/343 + 忍-389 (noms Suruga GL685036/037/031, 2026-09-13). Decks de démarrage (st_5th…st_16th) inclus le 2026-11-21 : cartes exclusives aux starters, numérotées dans la série principale.",
+      "not": ["data-carddass", "en-ccg", "maku5"]
+    },
+    "pages": [
+      {
+        "page": "cardlist/1st.shtml",
+        "fallbackSet": "maki1",
+        "timestamp": "20121001174940",
+        "original": "http://www.carddas.com/naruto/cardlist/1st.shtml"
+      },
+      {
+        "page": "cardlist/2nd.shtml",
+        "fallbackSet": "maki2",
+        "timestamp": "20121001173555",
+        "original": "http://www.carddas.com/naruto/cardlist/2nd.shtml"
+      },
+      {
+        "page": "cardlist/3rd.shtml",
+        "fallbackSet": "maki3",
+        "timestamp": "20121001175057",
+        "original": "http://www.carddas.com/naruto/cardlist/3rd.shtml"
+      },
+      {
+        "page": "cardlist/4th.shtml",
+        "fallbackSet": "maki4",
+        "timestamp": "20121002144253",
+        "original": "http://www.carddas.com/naruto/cardlist/4th.shtml"
+      },
+      {
+        "page": "cardlist/5th.shtml",
+        "fallbackSet": "maki5",
+        "timestamp": "20121002052916",
+        "original": "http://www.carddas.com/naruto/cardlist/5th.shtml"
+      },
+      {
+        "page": "cardlist/st_5th.shtml",
+        "fallbackSet": "maki5",
+        "timestamp": "20121002054241",
+        "original": "http://www.carddas.com/naruto/cardlist/st_5th.shtml"
+      },
+      {
+        "page": "cardlist/6th.shtml",
+        "fallbackSet": "maki6",
+        "timestamp": "20121001174950",
+        "original": "http://www.carddas.com/naruto/cardlist/6th.shtml"
+      },
+      {
+        "page": "cardlist/7th.shtml",
+        "fallbackSet": "maki7",
+        "timestamp": "20121001071637",
+        "original": "http://www.carddas.com/naruto/cardlist/7th.shtml"
+      },
+      {
+        "page": "cardlist/8th.shtml",
+        "fallbackSet": "maki8",
+        "timestamp": "20121002052946",
+        "original": "http://www.carddas.com/naruto/cardlist/8th.shtml"
+      },
+      {
+        "page": "cardlist/st_8th.shtml",
+        "fallbackSet": "maki8",
+        "timestamp": "20121001175003",
+        "original": "http://www.carddas.com/naruto/cardlist/st_8th.shtml"
+      },
+      {
+        "page": "cardlist/9th.shtml",
+        "fallbackSet": "maki9",
+        "timestamp": "20121002054125",
+        "original": "http://www.carddas.com/naruto/cardlist/9th.shtml"
+      },
+      {
+        "page": "cardlist/10th.shtml",
+        "fallbackSet": "maki10",
+        "timestamp": "20121002052826",
+        "original": "http://www.carddas.com/naruto/cardlist/10th.shtml"
+      },
+      {
+        "page": "cardlist/st_10th.shtml",
+        "fallbackSet": "maki10",
+        "timestamp": "20121002052857",
+        "original": "http://www.carddas.com/naruto/cardlist/st_10th.shtml"
+      },
+      {
+        "page": "cardlist/11th.shtml",
+        "fallbackSet": "maki11",
+        "timestamp": "20121002052908",
+        "original": "http://www.carddas.com/naruto/cardlist/11th.shtml"
+      },
+      {
+        "page": "cardlist/12th.shtml",
+        "fallbackSet": "maki12",
+        "timestamp": "20121002053828",
+        "original": "http://www.carddas.com/naruto/cardlist/12th.shtml"
+      },
+      {
+        "page": "cardlist/st_12th.shtml",
+        "fallbackSet": "maki12",
+        "timestamp": "20121001072044",
+        "original": "http://www.carddas.com/naruto/cardlist/st_12th.shtml"
+      },
+      {
+        "page": "cardlist/13th.shtml",
+        "fallbackSet": "maki13",
+        "timestamp": "20121002053758",
+        "original": "http://www.carddas.com/naruto/cardlist/13th.shtml"
+      },
+      {
+        "page": "cardlist/14th.shtml",
+        "fallbackSet": "maki14",
+        "timestamp": "20121002144400",
+        "original": "http://www.carddas.com/naruto/cardlist/14th.shtml"
+      },
+      {
+        "page": "cardlist/15th.shtml",
+        "fallbackSet": "maki15",
+        "timestamp": "20121001072024",
+        "original": "http://www.carddas.com/naruto/cardlist/15th.shtml"
+      },
+      {
+        "page": "cardlist/st_15th.shtml",
+        "fallbackSet": "maki15",
+        "timestamp": "20121002144350",
+        "original": "http://www.carddas.com/naruto/cardlist/st_15th.shtml"
+      },
+      {
+        "page": "cardlist/16th.shtml",
+        "fallbackSet": "maki16",
+        "timestamp": "20121002054134",
+        "original": "http://www.carddas.com/naruto/cardlist/16th.shtml"
+      },
+      {
+        "page": "cardlist/st_16th.shtml",
+        "fallbackSet": "maki16",
+        "timestamp": "20121002054151",
+        "original": "http://www.carddas.com/naruto/cardlist/st_16th.shtml"
+      },
+      {
+        "page": "cardlist/17th.shtml",
+        "fallbackSet": "maki17",
+        "timestamp": "20130107004538",
+        "original": "http://www.carddas.com:80/naruto/cardlist/17th.shtml"
+      }
+    ],
+    "specials": [
+      {
+        "printed": "忍-393",
+        "number": "ni0393",
+        "name": "うずまきナルト",
+        "setCode": "spc2",
+        "volume": "スペシャルコンボシート2",
+        "page": "cardlist/card_img/shinobi-393_spc2.gif",
+        "timestamp": "20071216190435",
+        "original": "http://www.carddas.com/naruto/cardlist/card_img/shinobi-393_spc2.gif",
+        "attestation": "nom lu sur l'image de la carte (スペシャルコンボシート2) ; ex_spc2.shtml liste 忍-394/396 dans l'autre ordre"
+      },
+      {
+        "printed": "忍-394",
+        "number": "ni0394",
+        "name": "はたけカカシ",
+        "setCode": "spc2",
+        "volume": "スペシャルコンボシート2",
+        "page": "cardlist/card_img/shinobi-394_spc2.gif",
+        "timestamp": "20071216190137",
+        "original": "http://www.carddas.com/naruto/cardlist/card_img/shinobi-394_spc2.gif",
+        "attestation": "nom lu sur l'image de la carte (スペシャルコンボシート2) ; ex_spc2.shtml liste 忍-394/396 dans l'autre ordre"
+      },
+      {
+        "printed": "忍-395",
+        "number": "ni0395",
+        "name": "ロック・リー",
+        "setCode": "spc2",
+        "volume": "スペシャルコンボシート2",
+        "page": "cardlist/card_img/shinobi-395_spc2.gif",
+        "timestamp": "20071216190626",
+        "original": "http://www.carddas.com/naruto/cardlist/card_img/shinobi-395_spc2.gif",
+        "attestation": "nom lu sur l'image de la carte (スペシャルコンボシート2) ; ex_spc2.shtml liste 忍-394/396 dans l'autre ordre"
+      },
+      {
+        "printed": "忍-396",
+        "number": "ni0396",
+        "name": "春野サクラ",
+        "setCode": "spc2",
+        "volume": "スペシャルコンボシート2",
+        "page": "cardlist/card_img/shinobi-396_spc2.gif",
+        "timestamp": "20071216190724",
+        "original": "http://www.carddas.com/naruto/cardlist/card_img/shinobi-396_spc2.gif",
+        "attestation": "nom lu sur l'image de la carte (スペシャルコンボシート2) ; ex_spc2.shtml liste 忍-394/396 dans l'autre ordre"
+      },
+      {
+        "printed": "依-43",
+        "number": "cl0043",
+        "name": "ツキ・ヒカル",
+        "setCode": "spc2",
+        "volume": "スペシャルコンボシート2",
+        "page": "cardlist/card_img/irai-043_spc2.gif",
+        "timestamp": "20071216190353",
+        "original": "http://www.carddas.com/naruto/cardlist/card_img/irai-043_spc2.gif",
+        "attestation": "nom lu sur l'image de la carte (スペシャルコンボシート2) ; ex_spc2.shtml liste 忍-394/396 dans l'autre ordre"
+      }
+    ]
+  }
+}

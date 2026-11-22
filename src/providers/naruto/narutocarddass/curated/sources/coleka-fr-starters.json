@@ -1,0 +1,32 @@
+{
+  "source": "thumbs.coleka.com rubrique Carddass FR (2018-02-21)",
+  "observed": "2026-10-15",
+  "note": "Rubrique packshots for Série 1 Pays du Vent + Série 2 Détruire Konoha. Catalogue renders — not card listing photos.",
+  "ingestCollection": false,
+  "products": [
+    {
+      "slug": "starter-pays-du-vent",
+      "setCode": "s1",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Naruto Série 1 — Le pays du vent",
+      "printedRef": "05110",
+      "url": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-01.webp",
+      "staging": "staging/coleka-fr-starters/starter-pays-du-vent.webp",
+      "ingest": true,
+      "pixels": { "width": 403, "height": 500 }
+    },
+    {
+      "slug": "starter-detruire-konoha",
+      "setCode": "s2",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Naruto Série 2 — Détruire Konoha !",
+      "printedRef": "05113",
+      "url": "https://thumbs.coleka.com/media/rubrique/201802/21/cartes-de-collection-naruto-cartes-a-jouer-et-a-collectionner-cartes-naruto-serie-02.webp",
+      "staging": "staging/coleka-fr-starters/starter-detruire-konoha.webp",
+      "ingest": true,
+      "pixels": { "width": 458, "height": 458 }
+    }
+  ]
+}

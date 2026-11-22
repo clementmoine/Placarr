@@ -1,0 +1,23 @@
+{
+  "source": "ultrajeux.com Wayback — images/naruto/scan/normal/vf/serie_5/",
+  "observed": "2026-08-17",
+  "note": "Shop copied carddass.fr. The 6 S5 faces missing from the official CDX are on this tree. Ingest those holes as art.ultrajeux, not the rest of serie_5 (already on disk as art.carddass). Product pages carte-naruto-9-<n>-<slug>.html are not an independent checklist. VF shop tree naruto-cartes-edition-vf-<n>-serie-<n>.html = 151 fiches S5 (Wayback 20071118) — checklist ⊆ carddass, pas contenu starter.",
+  "vfShopPages": {
+    "s5": {
+      "wayback": "https://web.archive.org/web/20071118065006/http://www.ultrajeux.com/naruto-cartes-edition-vf-5-serie-5.html",
+      "staging": "staging/ultrajeux/pages/naruto-cartes-edition-vf-5-serie-5-20071118.html",
+      "cardCodes": 151
+    }
+  },
+  "ingest": "s5-holes",
+  "lang": "fr",
+  "waybackHost": "http://www.ultrajeux.com/images/naruto/scan/normal/vf/serie_5/",
+  "holes": [
+    { "number": "ni232", "file": "ni-232.jpg", "timestamp": "20190228112943" },
+    { "number": "ni236", "file": "ni-236.jpg", "timestamp": "20190228113100" },
+    { "number": "ni252", "file": "ni-252.jpg", "timestamp": "20190228113408" },
+    { "number": "ni253", "file": "ni-253.jpg", "timestamp": "20190228113413" },
+    { "number": "ta221", "file": "ta-221.jpg", "timestamp": "20190228114039" },
+    { "number": "ta226", "file": "ta-226.jpg", "timestamp": "20190228114049" }
+  ]
+}

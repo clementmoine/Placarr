@@ -1,0 +1,458 @@
+{
+  "source": "www.carddas.com/naruto/cardlist/promo.shtml (Wayback staging, cp932)",
+  "observed": "2026-08-17",
+  "ingest": "titles",
+  "line": "carddass-jp",
+  "note": "Official JP Carddass CG promos. PR忍/PR術/PR作/PR依/OP忍/PR騎. 忍-n（PS） n'est PAS une réimpression malgré le numéro partagé (grouping ps) — Bandai annonce 書き下ろしイラスト, une illustration inédite, sur une maquette rouge propre au set : la page officielle les donne comme 予約特典 du jeu PS「NARUTO -ナルト- 忍の里の陣取り合戦」(Bandai, 2003-06-26) — 4 cartes seulement, 忍-1/2/3/11. Set officiel :「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）, une スペシャルカードダス en quantité limitée. Aucun *scan* trouvé au 2026-08-19, mais deux visuels officiels composites oui — voir `ps-yoyaku-tokuten.json`, d'où les quatre `thumb.jpg` : la page officielle n'illustre pas les promos, Fril ne rend que le jeu, et Yahoo Auctions répond 403 EEA depuis ce conteneur. Not Data Carddass. Titles only.",
+  "not": ["data-carddass", "en-ccg", "ni001"],
+  "counts": {
+    "cards": 61
+  },
+  "cards": [
+    {
+      "printed": "PR-忍-1",
+      "number": "prni0001",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-忍-2",
+      "number": "prni0002",
+      "name": "うちはサスケ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-忍-3",
+      "number": "prni0003",
+      "name": "春野サクラ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-忍-4",
+      "number": "prni0004",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-忍-5",
+      "number": "prni0005",
+      "name": "初代火影",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-忍-6",
+      "number": "prni0006",
+      "name": "二代目火影",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-忍-7",
+      "number": "prni0007",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-8",
+      "number": "prni0008",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-9",
+      "number": "prni0009",
+      "name": "うちはサスケ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-10",
+      "number": "prni0010",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-11",
+      "number": "prni0011",
+      "name": "大蛇丸",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-12",
+      "number": "prni0012",
+      "name": "うずまきナルト＆うちはサスケ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-13",
+      "number": "prni0013",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-14",
+      "number": "prni0014",
+      "name": "君麻呂",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-15",
+      "number": "prni0015",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-16",
+      "number": "prni0016",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-17",
+      "number": "prni0017",
+      "name": "うずまきナルト＆うちはサスケ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-18",
+      "number": "prni0018",
+      "name": "はたけカカシ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR忍-19",
+      "number": "prni0019",
+      "name": "砂瀑の我愛羅",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "OP忍-1",
+      "number": "opni0001",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "OP忍-2",
+      "number": "opni0002",
+      "name": "うちはサスケ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "OP忍-3",
+      "number": "opni0003",
+      "name": "春野サクラ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "OP忍-4",
+      "number": "opni0004",
+      "name": "イルカ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "OP忍-5",
+      "number": "opni0005",
+      "name": "はたけカカシ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "忍-1（PS）",
+      "number": "ni0001-ps",
+      "name": "うずまきナルト",
+      "setCode": "promo",
+      "grouping": "ps",
+      "distribution": "ＰＳソフト「NARUTO -ナルト- 忍の里の陣取り合戦」予約特典",
+      "product": "NARUTO -ナルト- 忍の里の陣取り合戦 (PlayStation, Bandai, 2003-06-26)",
+      "artIsOriginal": true,
+      "setName": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）"
+    },
+    {
+      "printed": "忍-2（PS）",
+      "number": "ni0002-ps",
+      "name": "うちはサスケ",
+      "setCode": "promo",
+      "grouping": "ps",
+      "distribution": "ＰＳソフト「NARUTO -ナルト- 忍の里の陣取り合戦」予約特典",
+      "product": "NARUTO -ナルト- 忍の里の陣取り合戦 (PlayStation, Bandai, 2003-06-26)",
+      "artIsOriginal": true,
+      "setName": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）"
+    },
+    {
+      "printed": "忍-3（PS）",
+      "number": "ni0003-ps",
+      "name": "春野サクラ",
+      "setCode": "promo",
+      "grouping": "ps",
+      "distribution": "ＰＳソフト「NARUTO -ナルト- 忍の里の陣取り合戦」予約特典",
+      "product": "NARUTO -ナルト- 忍の里の陣取り合戦 (PlayStation, Bandai, 2003-06-26)",
+      "artIsOriginal": true,
+      "setName": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）"
+    },
+    {
+      "printed": "忍-11（PS）",
+      "number": "ni0011-ps",
+      "name": "はたけカカシ",
+      "setCode": "promo",
+      "grouping": "ps",
+      "distribution": "ＰＳソフト「NARUTO -ナルト- 忍の里の陣取り合戦」予約特典",
+      "product": "NARUTO -ナルト- 忍の里の陣取り合戦 (PlayStation, Bandai, 2003-06-26)",
+      "artIsOriginal": true,
+      "setName": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）"
+    },
+    {
+      "printed": "PR騎-1",
+      "number": "prki0001",
+      "name": "テムジン",
+      "setCode": "promo",
+      "grouping": null,
+      "distribution": "スペシャルファイリングシート — Vジャンプ 2005年9月号, application postale (200 ¥), envoyée à tous les demandeurs",
+      "sheet": ["PR忍-015", "PR騎士-001", "PR作-018", "PR依-001"]
+    },
+    {
+      "printed": "PR術-1",
+      "number": "prte0001",
+      "name": "雷切弐連突",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR術-2",
+      "number": "prte0002",
+      "name": "黒夢",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作戦-1",
+      "number": "prta0001",
+      "name": "火影岩",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作戦-2",
+      "number": "prta0002",
+      "name": "伝説の三忍",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作戦-3",
+      "number": "prta0003",
+      "name": "受け継ぐ者たち",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作戦-4",
+      "number": "prta0004",
+      "name": "戦闘開始！",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作戦-5",
+      "number": "prta0005",
+      "name": "陰謀の発端",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-6",
+      "number": "prta0006",
+      "name": "五人と一匹",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-7",
+      "number": "prta0007",
+      "name": "大蛇丸（あるじ）が為に",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-8",
+      "number": "prta0008",
+      "name": "恐るべき敵",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-9",
+      "number": "prta0009",
+      "name": "強者、集う",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-10",
+      "number": "prta0010",
+      "name": "雪姫忍法帖",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-11",
+      "number": "prta0011",
+      "name": "存在の証明",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-12",
+      "number": "prta0012",
+      "name": "最後の一撃",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-13",
+      "number": "prta0013",
+      "name": "帰郷",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-14",
+      "number": "prta0014",
+      "name": "暁の狙い",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作15",
+      "number": "prta0015",
+      "name": "ナルトvsサスケ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR-作16",
+      "number": "prta0016",
+      "name": "三忍の攻防",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-17",
+      "number": "prta0017",
+      "name": "新たなる敵",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-18",
+      "number": "prta0018",
+      "name": "最強の騎士",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-19",
+      "number": "prta0019",
+      "name": "大激突！幻の地底遺跡だってばよ",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-20",
+      "number": "prta0020",
+      "name": "終わりなき闇",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-21",
+      "number": "prta0021",
+      "name": "それぞれの思惑",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-22",
+      "number": "prta0022",
+      "name": "英雄の名にかけて",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-23",
+      "number": "prta0023",
+      "name": "永久に続く運命",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-24",
+      "number": "prta0024",
+      "name": "精鋭結集",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-25",
+      "number": "prta0025",
+      "name": "烈火の意思",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-26",
+      "number": "prta0026",
+      "name": "深淵の野望",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-27",
+      "number": "prta0027",
+      "name": "伝説への畏怖",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-28",
+      "number": "prta0028",
+      "name": "火影の系譜",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR作-29",
+      "number": "prta0029",
+      "name": "木ノ葉を襲う脅威",
+      "setCode": "promo",
+      "grouping": null
+    },
+    {
+      "printed": "PR依-1",
+      "number": "prcl0001",
+      "name": "ネルグイ",
+      "setCode": "promo",
+      "grouping": null
+    }
+  ]
+}

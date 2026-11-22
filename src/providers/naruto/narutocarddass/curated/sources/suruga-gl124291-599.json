@@ -1,0 +1,146 @@
+{
+  "source": "Suruga-ya.jp product detail GL124291 … GL124599 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "research+staging",
+  "lang": "ja",
+  "range": {
+    "from": "GL124291",
+    "to": "GL124599"
+  },
+  "split": {
+    "carddass": "GL124291–370 (ni/ta/te; scan batch2)",
+    "shippuden": "GL124371–599 (already in suruga-ya-shippuden-listings.tsv + faces)"
+  },
+  "coverage": {
+    "shippudenUniqueCards": 252,
+    "shippudenSurugaFaces": 252,
+    "carddassNarutoListings": 76,
+    "carddassCatalogueSuruga": 73,
+    "carddassBgOrE違いStaged": 8,
+    "nonNarutoOrDead": [
+      "GL124312",
+      "GL124319",
+      "GL124328",
+      "GL124345 detail 404 (CDN=作-267)"
+    ]
+  },
+  "note": "No new catalogue faces required. Staged marketplace variants only — same printed refs, Suruga 絵違い/背景違い/rarity labels, no printed -R.",
+  "not": [
+    "invent-R",
+    "collapse-variants-onto-printKey"
+  ],
+  "variants": [
+    {
+      "productId": "GL124320",
+      "printed": "作-68",
+      "diskId": "ta0068",
+      "surugaTag": "",
+      "role": "stage",
+      "note": "BANDAI 2003 — Team 7 backs / scroll wall. Catalogue face is GL124321 絵違い.",
+      "bandaiYear": 2003
+    },
+    {
+      "productId": "GL124321",
+      "printed": "作-68",
+      "diskId": "ta0068",
+      "surugaTag": "絵違い",
+      "role": "catalogue",
+      "note": "BANDAI 2005 — scrolls in hand. Matches art.suruga.jpg.",
+      "bandaiYear": 2005
+    },
+    {
+      "productId": "GL124342",
+      "printed": "作-245",
+      "diskId": "ta0245",
+      "surugaTag": "",
+      "role": "catalogue",
+      "note": "Matches art.suruga.jpg. Card also has art.tvtokyo-a/b (different pair)."
+    },
+    {
+      "productId": "GL124343",
+      "printed": "作-245",
+      "diskId": "ta0245",
+      "surugaTag": "絵違い",
+      "role": "stage",
+      "note": "Suruga 絵違い — distinct from catalogue and from tvtokyo-a/b. Do not invent -R."
+    },
+    {
+      "productId": "GL124347",
+      "printed": "術-10",
+      "diskId": "te0010",
+      "surugaTag": "ノーマル",
+      "role": "stage",
+      "note": "BANDAI 2004 N — different art from catalogue suruga and from GL124348 R.",
+      "bandaiYear": 2004
+    },
+    {
+      "productId": "GL124348",
+      "printed": "術-10",
+      "diskId": "te0010",
+      "surugaTag": "レア",
+      "role": "stage",
+      "note": "BANDAI 2002 R — same printed 術-10, different art/year/rarity label. No printed -R.",
+      "bandaiYear": 2002
+    },
+    {
+      "productId": "GL124293",
+      "printed": "忍-26",
+      "diskId": "ni0026",
+      "surugaTag": "",
+      "role": "catalogue",
+      "note": "Matches art.suruga.jpg."
+    },
+    {
+      "productId": "GL124294",
+      "printed": "忍-26",
+      "diskId": "ni0026",
+      "surugaTag": "背景違い",
+      "role": "stage",
+      "note": "Suruga 背景違い."
+    },
+    {
+      "productId": "GL124352",
+      "printed": "術-29",
+      "diskId": "te0029",
+      "surugaTag": "",
+      "role": "catalogue",
+      "note": "Matches art.suruga.jpg."
+    },
+    {
+      "productId": "GL124353",
+      "printed": "術-29",
+      "diskId": "te0029",
+      "surugaTag": "背景違い",
+      "role": "stage",
+      "note": "Suruga 背景違い."
+    },
+    {
+      "productId": "GL124360",
+      "printed": "術-72",
+      "diskId": "te0072",
+      "surugaTag": "",
+      "role": "stage",
+      "note": "BANDAI 2004 MADE IN JAPAN — catalogue face is GL124361 (Suruga-labelled 背景違い, 2006 China).",
+      "bandaiYear": 2004
+    },
+    {
+      "productId": "GL124361",
+      "printed": "術-72",
+      "diskId": "te0072",
+      "surugaTag": "背景違い",
+      "role": "catalogue",
+      "note": "BANDAI 2006 MADE IN CHINA — matches art.suruga.jpg despite Suruga 背景違い tag.",
+      "bandaiYear": 2006
+    },
+    {
+      "productId": "GL124345",
+      "printed": "作-267",
+      "diskId": "ta0267",
+      "surugaTag": "MEMORIAL",
+      "role": "stage",
+      "note": "Product detail 404; CDN live. MEMORIAL. Bytes differ from existing art.suruga.jpg (GG936721/GL637193) — staged, not overwritten.",
+      "bandaiYear": 2005
+    }
+  ],
+  "staging": "data/naruto/carddass/staging/suruga/gl124-291-370-variants/"
+}

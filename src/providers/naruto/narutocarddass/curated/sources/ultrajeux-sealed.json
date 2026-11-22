@@ -1,0 +1,35 @@
+{
+  "source": "ultrajeux.com images/produits/maxi (collector paste 2026-10-15)",
+  "observed": "2026-10-15",
+  "note": "Boutique packshots Série 2 starters. Distinct from ultrajeux-s5.json (card-face holes). Tric Trac keeps listing_photo dumps.",
+  "ingestCollection": false,
+  "products": [
+    {
+      "slug": "starter-sceller-le-malefice",
+      "setCode": "s2",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Naruto Série 2 — Sceller le maléfice",
+      "printedRef": "05113",
+      "listing": "https://www.ultrajeux.com/produit-777-naruto-serie-2-sceller-le-malefice.html",
+      "url": "https://www.ultrajeux.com/images/produits/maxi/777.jpg",
+      "staging": "staging/ultrajeux/starter-sceller-le-malefice.jpg",
+      "ingest": true,
+      "pixels": { "width": 336, "height": 421 }
+    },
+    {
+      "slug": "starter-detruire-konoha",
+      "setCode": "s2",
+      "kind": "deck",
+      "lang": "FR",
+      "title": "Naruto Série 2 — Détruire Konoha !",
+      "printedRef": "05113",
+      "ean": "3296580051137",
+      "listing": "https://www.ultrajeux.com/produit-776-naruto-serie-2-detruire-konoha-3296580051137.html",
+      "url": "https://www.ultrajeux.com/images/produits/maxi/776.jpg",
+      "staging": "staging/ultrajeux/starter-detruire-konoha.jpg",
+      "ingest": true,
+      "pixels": { "width": 419, "height": 419 }
+    }
+  ]
+}

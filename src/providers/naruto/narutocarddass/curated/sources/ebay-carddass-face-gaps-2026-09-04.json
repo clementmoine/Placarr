@@ -1,0 +1,789 @@
+{
+  "observed": "2026-09-04",
+  "jaOrphans": 109,
+  "itOrphans": 0,
+  "ja": [
+    {
+      "card": "ni0289",
+      "printed": "NI-289",
+      "name": "うちはサスケ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0289"
+    },
+    {
+      "card": "ni0327",
+      "printed": "NI-327",
+      "name": "春野サクラ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0327"
+    },
+    {
+      "card": "ni0332",
+      "printed": "NI-332",
+      "name": "木ノ葉丸軍団",
+      "set": "ninja",
+      "printKey": "naruto:ni-0332"
+    },
+    {
+      "card": "ni0333",
+      "printed": "NI-333",
+      "name": "はたけカカシ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0333"
+    },
+    {
+      "card": "ni0337",
+      "printed": "NI-337",
+      "name": "風神",
+      "set": "ninja",
+      "printKey": "naruto:ni-0337"
+    },
+    {
+      "card": "ni0338",
+      "printed": "NI-338",
+      "name": "雷神",
+      "set": "ninja",
+      "printKey": "naruto:ni-0338"
+    },
+    {
+      "card": "ni0344",
+      "printed": "NI-344",
+      "name": "うずまきナルト",
+      "set": "ninja",
+      "printKey": "naruto:ni-0344"
+    },
+    {
+      "card": "ni0345",
+      "printed": "NI-345",
+      "name": "春野サクラ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0345"
+    },
+    {
+      "card": "ni0346",
+      "printed": "NI-346",
+      "name": "ロック・リー",
+      "set": "ninja",
+      "printKey": "naruto:ni-0346"
+    },
+    {
+      "card": "ni0349",
+      "printed": "NI-349",
+      "name": "マイト・ガイ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0349"
+    },
+    {
+      "card": "ni0363",
+      "printed": "NI-363",
+      "name": "大蛇丸＆薬師カブト",
+      "set": "ninja",
+      "printKey": "naruto:ni-0363"
+    },
+    {
+      "card": "ni0370",
+      "printed": "NI-370",
+      "name": "三代目火影",
+      "set": "ninja",
+      "printKey": "naruto:ni-0370"
+    },
+    {
+      "card": "ni0373",
+      "printed": "NI-373",
+      "name": "うずまきナルト",
+      "set": "ninja",
+      "printKey": "naruto:ni-0373"
+    },
+    {
+      "card": "ni0376",
+      "printed": "NI-376",
+      "name": "みたらしアンコ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0376"
+    },
+    {
+      "card": "ni0382",
+      "printed": "NI-382",
+      "name": "トキ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0382"
+    },
+    {
+      "card": "ni0383",
+      "printed": "NI-383",
+      "name": "うちはサスケ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0383"
+    },
+    {
+      "card": "ni0397",
+      "printed": "NI-397",
+      "name": "うずまきナルト",
+      "set": "ninja",
+      "printKey": "naruto:ni-0397"
+    },
+    {
+      "card": "ni0398",
+      "printed": "NI-398",
+      "name": "春野サクラ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0398"
+    },
+    {
+      "card": "ni0399",
+      "printed": "NI-399",
+      "name": "ロック・リー",
+      "set": "ninja",
+      "printKey": "naruto:ni-0399"
+    },
+    {
+      "card": "ni0400",
+      "printed": "NI-400",
+      "name": "はたけカカシ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0400"
+    },
+    {
+      "card": "ni0401",
+      "printed": "NI-401",
+      "name": "チャム",
+      "set": "ninja",
+      "printKey": "naruto:ni-0401"
+    },
+    {
+      "card": "ni0402",
+      "printed": "NI-402",
+      "name": "キッキィ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0402"
+    },
+    {
+      "card": "ni0403",
+      "printed": "NI-403",
+      "name": "イシダテ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0403"
+    },
+    {
+      "card": "ni0404",
+      "printed": "NI-404",
+      "name": "コンゴウ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0404"
+    },
+    {
+      "card": "ni0405",
+      "printed": "NI-405",
+      "name": "カレンバナ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0405"
+    },
+    {
+      "card": "ni0406",
+      "printed": "NI-406",
+      "name": "うずまきナルト＆うずまきナルト",
+      "set": "ninja",
+      "printKey": "naruto:ni-0406"
+    },
+    {
+      "card": "ni0407",
+      "printed": "NI-407",
+      "name": "クニヒサ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0407"
+    },
+    {
+      "card": "ni0408",
+      "printed": "NI-408",
+      "name": "海鮮アガリ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0408"
+    },
+    {
+      "card": "ni0412",
+      "printed": "NI-412",
+      "name": "ナツヒ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0412"
+    },
+    {
+      "card": "ni0413",
+      "printed": "NI-413",
+      "name": "アカホシ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0413"
+    },
+    {
+      "card": "ni0414",
+      "printed": "NI-414",
+      "name": "うちはサスケ＆大蛇丸",
+      "set": "ninja",
+      "printKey": "naruto:ni-0414"
+    },
+    {
+      "card": "ni0415",
+      "printed": "NI-415",
+      "name": "うちはサスケ",
+      "set": "ninja",
+      "printKey": "naruto:ni-0415"
+    },
+    {
+      "card": "ni0416",
+      "printed": "NI-416",
+      "name": "薬師カブト",
+      "set": "ninja",
+      "printKey": "naruto:ni-0416"
+    },
+    {
+      "card": "ni0417",
+      "printed": "NI-417",
+      "name": "幻幽丸",
+      "set": "ninja",
+      "printKey": "naruto:ni-0417"
+    },
+    {
+      "card": "te0117",
+      "printed": "TE-117",
+      "name": "水切りの刃",
+      "set": "jutsu",
+      "printKey": "naruto:te-0117"
+    },
+    {
+      "card": "te0239",
+      "printed": "TE-239",
+      "name": "多連拳",
+      "set": "jutsu",
+      "printKey": "naruto:te-0239"
+    },
+    {
+      "card": "te0245",
+      "printed": "TE-245",
+      "name": "柳の舞",
+      "set": "jutsu",
+      "printKey": "naruto:te-0245"
+    },
+    {
+      "card": "te0252",
+      "printed": "TE-252",
+      "name": "鉄線花の舞・蔓",
+      "set": "jutsu",
+      "printKey": "naruto:te-0252"
+    },
+    {
+      "card": "te0253",
+      "printed": "TE-253",
+      "name": "鉄線花の舞・花",
+      "set": "jutsu",
+      "printKey": "naruto:te-0253"
+    },
+    {
+      "card": "te0278",
+      "printed": "TE-278",
+      "name": "封縛法陣",
+      "set": "jutsu",
+      "printKey": "naruto:te-0278"
+    },
+    {
+      "card": "te0281",
+      "printed": "TE-281",
+      "name": "雷切一閃",
+      "set": "jutsu",
+      "printKey": "naruto:te-0281"
+    },
+    {
+      "card": "te0287",
+      "printed": "TE-287",
+      "name": "砂瀑浮遊",
+      "set": "jutsu",
+      "printKey": "naruto:te-0287"
+    },
+    {
+      "card": "te0288",
+      "printed": "TE-288",
+      "name": "砂刃・双撃",
+      "set": "jutsu",
+      "printKey": "naruto:te-0288"
+    },
+    {
+      "card": "te0290",
+      "printed": "TE-290",
+      "name": "百列掌",
+      "set": "jutsu",
+      "printKey": "naruto:te-0290"
+    },
+    {
+      "card": "te0291",
+      "printed": "TE-291",
+      "name": "守護八卦六十四掌",
+      "set": "jutsu",
+      "printKey": "naruto:te-0291"
+    },
+    {
+      "card": "te0295",
+      "printed": "TE-295",
+      "name": "口寄せの術",
+      "set": "jutsu",
+      "printKey": "naruto:te-0295"
+    },
+    {
+      "card": "te0310",
+      "printed": "TE-310",
+      "name": "岩雪崩",
+      "set": "jutsu",
+      "printKey": "naruto:te-0310"
+    },
+    {
+      "card": "te0319",
+      "printed": "TE-319",
+      "name": "鉄鎖",
+      "set": "jutsu",
+      "printKey": "naruto:te-0319"
+    },
+    {
+      "card": "te0320",
+      "printed": "TE-320",
+      "name": "魚雷針",
+      "set": "jutsu",
+      "printKey": "naruto:te-0320"
+    },
+    {
+      "card": "te0325",
+      "printed": "TE-325",
+      "name": "潜影蛇手",
+      "set": "jutsu",
+      "printKey": "naruto:te-0325"
+    },
+    {
+      "card": "te0326",
+      "printed": "TE-326",
+      "name": "解き放たれた力",
+      "set": "jutsu",
+      "printKey": "naruto:te-0326"
+    },
+    {
+      "card": "te0327",
+      "printed": "TE-327",
+      "name": "噛み付き",
+      "set": "jutsu",
+      "printKey": "naruto:te-0327"
+    },
+    {
+      "card": "te0328",
+      "printed": "TE-328",
+      "name": "雷切",
+      "set": "jutsu",
+      "printKey": "naruto:te-0328"
+    },
+    {
+      "card": "te0329",
+      "printed": "TE-329",
+      "name": "火遁・龍火の術",
+      "set": "jutsu",
+      "printKey": "naruto:te-0329"
+    },
+    {
+      "card": "te0333",
+      "printed": "TE-333",
+      "name": "水遁・大砲弾",
+      "set": "jutsu",
+      "printKey": "naruto:te-0333"
+    },
+    {
+      "card": "te0337",
+      "printed": "TE-337",
+      "name": "同化・砂瀑送葬",
+      "set": "jutsu",
+      "printKey": "naruto:te-0337"
+    },
+    {
+      "card": "te0338",
+      "printed": "TE-338",
+      "name": "バックアップ",
+      "set": "jutsu",
+      "printKey": "naruto:te-0338"
+    },
+    {
+      "card": "te0344",
+      "printed": "TE-344",
+      "name": "孔雀妙法・斬",
+      "set": "jutsu",
+      "printKey": "naruto:te-0344"
+    },
+    {
+      "card": "te0345",
+      "printed": "TE-345",
+      "name": "孔雀妙法・獣",
+      "set": "jutsu",
+      "printKey": "naruto:te-0345"
+    },
+    {
+      "card": "te0346",
+      "printed": "TE-346",
+      "name": "月光螺旋丸",
+      "set": "jutsu",
+      "printKey": "naruto:te-0346"
+    },
+    {
+      "card": "te0349",
+      "printed": "TE-349",
+      "name": "金遁・たすけて〜の術",
+      "set": "jutsu",
+      "printKey": "naruto:te-0349"
+    },
+    {
+      "card": "te0350",
+      "printed": "TE-350",
+      "name": "金分身の術",
+      "set": "jutsu",
+      "printKey": "naruto:te-0350"
+    },
+    {
+      "card": "te0355",
+      "printed": "TE-355",
+      "name": "忍法・壁抜けの術",
+      "set": "jutsu",
+      "printKey": "naruto:te-0355"
+    },
+    {
+      "card": "te0356",
+      "printed": "TE-356",
+      "name": "師匠譲りの豪腕",
+      "set": "jutsu",
+      "printKey": "naruto:te-0356"
+    },
+    {
+      "card": "ta0121",
+      "printed": "TA-121",
+      "name": "任務続行",
+      "set": "mission",
+      "printKey": "naruto:ta-0121"
+    },
+    {
+      "card": "ta0271",
+      "printed": "TA-271",
+      "name": "台無し",
+      "set": "mission",
+      "printKey": "naruto:ta-0271"
+    },
+    {
+      "card": "ta0288",
+      "printed": "TA-288",
+      "name": "伝説の発端",
+      "set": "mission",
+      "printKey": "naruto:ta-0288"
+    },
+    {
+      "card": "ta0299",
+      "printed": "TA-299",
+      "name": "懸賞金の手配書",
+      "set": "mission",
+      "printKey": "naruto:ta-0299"
+    },
+    {
+      "card": "ta0310",
+      "printed": "TA-310",
+      "name": "星空の下",
+      "set": "mission",
+      "printKey": "naruto:ta-0310"
+    },
+    {
+      "card": "ta0311",
+      "printed": "TA-311",
+      "name": "神隠しの島",
+      "set": "mission",
+      "printKey": "naruto:ta-0311"
+    },
+    {
+      "card": "ta0312",
+      "printed": "TA-312",
+      "name": "海魔騒動",
+      "set": "mission",
+      "printKey": "naruto:ta-0312"
+    },
+    {
+      "card": "ta0316",
+      "printed": "TA-316",
+      "name": "白き呪い武者",
+      "set": "mission",
+      "printKey": "naruto:ta-0316"
+    },
+    {
+      "card": "ta0320",
+      "printed": "TA-320",
+      "name": "火の伝承者たち",
+      "set": "mission",
+      "printKey": "naruto:ta-0320"
+    },
+    {
+      "card": "ta0325",
+      "printed": "TA-325",
+      "name": "星のかけら",
+      "set": "mission",
+      "printKey": "naruto:ta-0325"
+    },
+    {
+      "card": "ta0326",
+      "printed": "TA-326",
+      "name": "通じあう心",
+      "set": "mission",
+      "printKey": "naruto:ta-0326"
+    },
+    {
+      "card": "ta0327",
+      "printed": "TA-327",
+      "name": "サーカス団の買収",
+      "set": "mission",
+      "printKey": "naruto:ta-0327"
+    },
+    {
+      "card": "ta0331",
+      "printed": "TA-331",
+      "name": "未来を手中に",
+      "set": "mission",
+      "printKey": "naruto:ta-0331"
+    },
+    {
+      "card": "ta0334",
+      "printed": "TA-334",
+      "name": "再出発",
+      "set": "mission",
+      "printKey": "naruto:ta-0334"
+    },
+    {
+      "card": "ta0336",
+      "printed": "TA-336",
+      "name": "軽はずみ",
+      "set": "mission",
+      "printKey": "naruto:ta-0336"
+    },
+    {
+      "card": "ta0337",
+      "printed": "TA-337",
+      "name": "恐るべき手練",
+      "set": "mission",
+      "printKey": "naruto:ta-0337"
+    },
+    {
+      "card": "opni0001",
+      "printed": "OPNI-001",
+      "name": "うずまきナルト",
+      "set": "promo",
+      "printKey": "naruto:opni-0001"
+    },
+    {
+      "card": "prte0001",
+      "printed": "PRTE-001",
+      "name": "雷切弐連突",
+      "set": "promo",
+      "printKey": "naruto:prte-0001"
+    },
+    {
+      "card": "prcl0001",
+      "printed": "PRCL-001",
+      "name": "ネルグイ",
+      "set": "promo",
+      "printKey": "naruto:prcl-0001"
+    },
+    {
+      "card": "prki0001",
+      "printed": "PRKI-001",
+      "name": "テムジン",
+      "set": "promo",
+      "printKey": "naruto:prki-0001"
+    },
+    {
+      "card": "opni0002",
+      "printed": "OPNI-002",
+      "name": "うちはサスケ",
+      "set": "promo",
+      "printKey": "naruto:opni-0002"
+    },
+    {
+      "card": "prte0002",
+      "printed": "PRTE-002",
+      "name": "黒夢",
+      "set": "promo",
+      "printKey": "naruto:prte-0002"
+    },
+    {
+      "card": "prta0002",
+      "printed": "PRTA-002",
+      "name": "伝説の三忍",
+      "set": "promo",
+      "printKey": "naruto:prta-0002"
+    },
+    {
+      "card": "prta0004",
+      "printed": "PRTA-004",
+      "name": "戦闘開始！",
+      "set": "promo",
+      "printKey": "naruto:prta-0004"
+    },
+    {
+      "card": "opni0005",
+      "printed": "OPNI-005",
+      "name": "はたけカカシ",
+      "set": "promo",
+      "printKey": "naruto:opni-0005"
+    },
+    {
+      "card": "prta0005",
+      "printed": "PRTA-005",
+      "name": "陰謀の発端",
+      "set": "promo",
+      "printKey": "naruto:prta-0005"
+    },
+    {
+      "card": "prni0007",
+      "printed": "PRNI-007",
+      "name": "うずまきナルト",
+      "set": "promo",
+      "printKey": "naruto:prni-0007"
+    },
+    {
+      "card": "prta0008",
+      "printed": "PRTA-008",
+      "name": "恐るべき敵",
+      "set": "promo",
+      "printKey": "naruto:prta-0008"
+    },
+    {
+      "card": "prni0009",
+      "printed": "PRNI-009",
+      "name": "うちはサスケ",
+      "set": "promo",
+      "printKey": "naruto:prni-0009"
+    },
+    {
+      "card": "prni0011",
+      "printed": "PRNI-011",
+      "name": "大蛇丸",
+      "set": "promo",
+      "printKey": "naruto:prni-0011"
+    },
+    {
+      "card": "prni0013",
+      "printed": "PRNI-013",
+      "name": "うずまきナルト",
+      "set": "promo",
+      "printKey": "naruto:prni-0013"
+    },
+    {
+      "card": "prta0013",
+      "printed": "PRTA-013",
+      "name": "帰郷",
+      "set": "promo",
+      "printKey": "naruto:prta-0013"
+    },
+    {
+      "card": "prni0014",
+      "printed": "PRNI-014",
+      "name": "君麻呂",
+      "set": "promo",
+      "printKey": "naruto:prni-0014"
+    },
+    {
+      "card": "prni0015",
+      "printed": "PRNI-015",
+      "name": "うずまきナルト",
+      "set": "promo",
+      "printKey": "naruto:prni-0015"
+    },
+    {
+      "card": "prni0018",
+      "printed": "PRNI-018",
+      "name": "はたけカカシ",
+      "set": "promo",
+      "printKey": "naruto:prni-0018"
+    },
+    {
+      "card": "prta0018",
+      "printed": "PRTA-018",
+      "name": "最強の騎士",
+      "set": "promo",
+      "printKey": "naruto:prta-0018"
+    },
+    {
+      "card": "prni0019",
+      "printed": "PRNI-019",
+      "name": "砂瀑の我愛羅",
+      "set": "promo",
+      "printKey": "naruto:prni-0019"
+    },
+    {
+      "card": "prta0019",
+      "printed": "PRTA-019",
+      "name": "大激突！幻の地底遺跡だってばよ",
+      "set": "promo",
+      "printKey": "naruto:prta-0019"
+    },
+    {
+      "card": "prta0022",
+      "printed": "PRTA-022",
+      "name": "英雄の名にかけて",
+      "set": "promo",
+      "printKey": "naruto:prta-0022"
+    },
+    {
+      "card": "prta0023",
+      "printed": "PRTA-023",
+      "name": "永久に続く運命",
+      "set": "promo",
+      "printKey": "naruto:prta-0023"
+    },
+    {
+      "card": "prta0025",
+      "printed": "PRTA-025",
+      "name": "烈火の意思",
+      "set": "promo",
+      "printKey": "naruto:prta-0025"
+    },
+    {
+      "card": "prta0026",
+      "printed": "PRTA-026",
+      "name": "深淵の野望",
+      "set": "promo",
+      "printKey": "naruto:prta-0026"
+    },
+    {
+      "card": "prta0027",
+      "printed": "PRTA-027",
+      "name": "伝説への畏怖",
+      "set": "promo",
+      "printKey": "naruto:prta-0027"
+    },
+    {
+      "card": "prta0028",
+      "printed": "PRTA-028",
+      "name": "火影の系譜",
+      "set": "promo",
+      "printKey": "naruto:prta-0028"
+    },
+    {
+      "card": "prta0029",
+      "printed": "PRTA-029",
+      "name": "木ノ葉を襲う脅威",
+      "set": "promo",
+      "printKey": "naruto:prta-0029"
+    }
+  ],
+  "it": [],
+  "updated": "2026-09-04",
+  "previousTrulyFaceless": {
+    "ja": 180,
+    "it": 7
+  },
+  "missingArtTiles": {
+    "total": 570,
+    "byLang": {
+      "it": 281,
+      "ja": 266,
+      "fr": 23
+    }
+  },
+  "localeGap": 460,
+  "trulyFaceless": 109,
+  "notes": {
+    "chitoroshop20260904": "EN search q=naruto = mostly media; JP singles collection: 1 orphan fill ni0354 (Tsunade Hime UR) via prefix EN name match + art.chitoroshop 1414×2000."
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "source": "atomicempire.com Alliance CDN pastes",
+  "observed": "2026-08-29",
+  "note": "Pasted CDN URLs only — do not crawl. Item 117169 is titled « Booster Pack » but the shop photo is the open display box (box + packs), same angle as Coleka display-s24. Keep as a second EN display dump; Coleka may still win on pixels.",
+  "ingestCollection": false,
+  "products": [
+    {
+      "slug": "display-s24",
+      "setCode": "s24",
+      "kind": "display",
+      "lang": "EN",
+      "title": "Naruto CCG — Sage's Legacy Display (open box)",
+      "listing": "https://www.atomicempire.com/Item/117169",
+      "url": "https://d1rbbjrn2xovty.cloudfront.net/Alliance_Games/BAI/215252396834_big.jpg",
+      "staging": "staging/atomicempire/display-s24.jpg",
+      "ingest": true,
+      "skuShop": "BAI 23632-S",
+      "upc": "045557236328",
+      "pixels": { "width": 450, "height": 434 },
+      "note": "Listing title says booster; photo is display. UPC shared with ToyWiz single-pack page."
+    }
+  ]
+}

@@ -1,0 +1,298 @@
+{
+  "source": "Card Check Box — カードダス NARUTO CARD GAME (checklist JA, marr)",
+  "observed": "2026-08-19",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "carddass-jp",
+  "lang": "ja",
+  "url": "https://cardcheckbox.com/a06a-bandai-3/cdds-naruto-cg.html",
+  "sibling": "Carddass NARUTO 疾風伝 CARD GAME (忍伝/術伝, maku) — separate page on the same site",
+  "note": "First source found that publishes the NEW-number ranges per release for the whole JP tabletop line, 巻ノ一 (2002-12) to 巻ノ十七 (2006-09-08), plus the jumbo sheets, starter boxes and promo sheets that carry their own numbers. No card images at all — this is catalogue structure, not a face source. The union of the ranges below is the numbered JA universe: 忍 1-417, 術 1-361, 作 1-337, 依 1-46, 騎 1-8. Measured against our index on 2026-08-19: 119 numbered cards absent (忍 60, 術 26, 作 21, 依 4, 騎 8) and 349 held without a face. The 騎 family exists nowhere in our disk layout yet — it was minted by 拡張ファイリングシート (騎-1〜6, 2005-08) and 巻ノ十三 (騎-7〜8). Card size given as 86×59 mm. Brand was カードダス EX until mid-2005, then Carddass.",
+  "not": ["faces", "data-carddass", "shippuden-maku"],
+  "quirks": [
+    "忍兵法札絵巻 弐 (2005-02) prints 忍-230〜233 / 術-212〜213 / 作-214〜219, inside ranges 巻ノ十 already announced — reprint numbering, not a second minting.",
+    "巻ノ十三 and 巻ノ十四 first pressings added a DATA CARDDASS 対応カード (4 kinds) — different product, do not mint as tabletop prints.",
+    "Numbering is listed for NEW cards only; reprints in starter boxes carry earlier numbers."
+  ],
+  "universe": {
+    "ni": {
+      "printed": "忍",
+      "max": 417
+    },
+    "te": {
+      "printed": "術",
+      "max": 361
+    },
+    "ta": {
+      "printed": "作",
+      "max": 337
+    },
+    "cl": {
+      "printed": "依",
+      "max": 46
+    },
+    "ki": {
+      "printed": "騎",
+      "max": 8,
+      "disk": "absent from our layout"
+    }
+  },
+  "releases": [
+    {
+      "name": "巻ノ一",
+      "released": "2002-12",
+      "kinds": "70+P",
+      "ni": [1, 24],
+      "te": [1, 24],
+      "ta": [1, 22]
+    },
+    {
+      "name": "巻ノ二 鬼人!再不斬編",
+      "released": "2003",
+      "kinds": "57+P",
+      "ni": [25, 43],
+      "te": [25, 42],
+      "ta": [23, 42]
+    },
+    {
+      "name": "巻ノ三 挑戦者集結!編",
+      "released": "2003",
+      "kinds": "57+P",
+      "ni": [44, 60],
+      "te": [43, 60],
+      "ta": [43, 60],
+      "cl": [1, 4]
+    },
+    {
+      "name": "秘技伝授スターターボックス",
+      "released": "2003-07",
+      "kinds": "18 new",
+      "ni": [61, 66],
+      "te": [61, 66],
+      "ta": [61, 66],
+      "books": ["ナルトの書", "サスケの書"]
+    },
+    {
+      "name": "巻ノ四 死の森の試験!編",
+      "released": "2003-08-08",
+      "kinds": "57+P",
+      "ni": [67, 84],
+      "te": [67, 84],
+      "ta": [67, 84],
+      "cl": [5, 7]
+    },
+    {
+      "name": "巻ノ五 実力伯仲!予選死闘編",
+      "released": "2003-10-24",
+      "kinds": "78 new",
+      "ni": [85, 114],
+      "te": [85, 105],
+      "ta": [85, 107],
+      "cl": [8, 11],
+      "books": ["風雲の書", "雷鳴の書"]
+    },
+    {
+      "name": "拡張シート 極意忍法帖",
+      "released": "2003-12",
+      "kinds": "13 new",
+      "ni": [115, 117],
+      "te": [106, 108],
+      "ta": [108, 114],
+      "format": "jumbo"
+    },
+    {
+      "name": "巻ノ六 それぞれの試練!編",
+      "released": "2004-01",
+      "kinds": "57+P",
+      "ni": [118, 135],
+      "te": [109, 126],
+      "ta": [115, 132],
+      "cl": [12, 14]
+    },
+    {
+      "name": "BEST SELECT BOOSTER 忍兵法札絵巻",
+      "released": "2004-03",
+      "kinds": "72",
+      "kindsSource": "全72種 lu sur l'emballage (2026-08-20) — la fiche notait « unconfirmed »"
+    },
+    {
+      "name": "巻ノ七 激突!中忍最終選抜戦編",
+      "released": "2004-04-16",
+      "kinds": "57+P",
+      "ni": [136, 153],
+      "te": [127, 144],
+      "ta": [133, 150],
+      "cl": [15, 17]
+    },
+    {
+      "name": "巻ノ八 強襲!木ノ葉崩し編",
+      "released": "2004-07-09",
+      "kinds": "71+P",
+      "ni": [154, 180],
+      "te": [145, 168],
+      "ta": [151, 168],
+      "cl": [18, 19],
+      "books": ["守鶴の書", "蝦蟇の書"]
+    },
+    {
+      "name": "劇場版 NARUTO ‐雪姫忍法帖‐",
+      "released": "2004-08",
+      "kinds": "18 new",
+      "ni": [181, 185],
+      "te": [169, 172],
+      "cl": [20, 24],
+      "format": "jumbo"
+    },
+    {
+      "name": "巻ノ九 暁の凶星編",
+      "released": "2004-09",
+      "kinds": "57+P",
+      "ni": [186, 204],
+      "te": [173, 191],
+      "ta": [174, 190],
+      "cl": [25, 26]
+    },
+    {
+      "name": "巻ノ十 受け継ぎ託すもの編",
+      "released": "2004-12-07",
+      "kinds": "80+P",
+      "ni": [205, 239],
+      "te": [192, 211],
+      "ta": [191, 213],
+      "cl": [27, 29],
+      "books": ["迅雷の書", "烈火の書"]
+    },
+    {
+      "name": "忍兵法札絵巻 弐",
+      "released": "2005-02-09",
+      "kinds": "12 new",
+      "ni": [230, 233],
+      "te": [212, 213],
+      "ta": [214, 219],
+      "format": "jumbo + 12-card booster"
+    },
+    {
+      "name": "巻ノ十一 結成!木ノ葉小隊編",
+      "released": "2005-04-13",
+      "kinds": "57+P",
+      "ni": [234, 254],
+      "te": [214, 231],
+      "ta": [220, 235],
+      "cl": [30, 31]
+    },
+    {
+      "name": "ラムネ菓子 カードスタンド 木ノ葉絵巻",
+      "released": "2005-05-17",
+      "kinds": "6",
+      "numbering": "CAN-1〜CAN-6"
+    },
+    {
+      "name": "コイン PLUS",
+      "released": "2005-05-23",
+      "kinds": "8",
+      "numbering": "COIN-1〜COIN-8"
+    },
+    {
+      "name": "巻ノ十二 戦慄の刻印編",
+      "released": "2005-07-15",
+      "kinds": "73+P",
+      "ni": [255, 283],
+      "te": [232, 254],
+      "ta": [236, 254],
+      "cl": [32, 33],
+      "books": ["木ノ葉の書", "呪印の書"]
+    },
+    {
+      "name": "スペシャルファイリングシート (Vジャンプ 2005-09)",
+      "released": "2005-07",
+      "kinds": "4",
+      "numbering": "PR忍-015, PR騎士-001, PR作-018, PR依-001"
+    },
+    {
+      "name": "拡張ファイリングシート",
+      "released": "2005-08-25",
+      "kinds": "10 new",
+      "ni": [284, 287],
+      "ki": [1, 6],
+      "format": "jumbo"
+    },
+    {
+      "name": "巻ノ十三 両雄激突!終末の谷編",
+      "released": "2005-09-06",
+      "kinds": "58+P",
+      "ni": [288, 306],
+      "te": [255, 275],
+      "ta": [255, 267],
+      "cl": [34, 36],
+      "ki": [7, 8]
+    },
+    {
+      "name": "コレクションボックス 忍兵法札大全",
+      "released": "2005-11",
+      "kinds": "18+",
+      "ni": [307, 324],
+      "note": "base card design changed again"
+    },
+    {
+      "name": "巻ノ十四 豪華絢爛!忍大集結 in ナルティメットヒーロー3",
+      "released": "2005-12-16",
+      "kinds": "57+P",
+      "ni": [325, 342],
+      "te": [276, 295],
+      "ta": [268, 285],
+      "cl": [37, 37]
+    },
+    {
+      "name": "拡張ファイリングシート 2 in ナルティメットヒーロー 3",
+      "released": "2006-01",
+      "kinds": "10 new",
+      "ni": [343, 343],
+      "te": [296, 304],
+      "format": "jumbo"
+    },
+    {
+      "name": "巻ノ十五 若き日の伝説編",
+      "released": "2006-03-17",
+      "kinds": "64+P",
+      "ni": [344, 367],
+      "te": [305, 323],
+      "ta": [286, 304],
+      "cl": [38, 39],
+      "books": ["暗躍の書"]
+    },
+    {
+      "name": "コイン PLUS 2 小隊を組むってばよ!編",
+      "released": "2006-05",
+      "kinds": "8",
+      "numbering": "COIN-9〜COIN-16"
+    },
+    {
+      "name": "巻ノ十六 火の継承者編",
+      "released": "2006-06-09",
+      "kinds": "66+P",
+      "ni": [368, 392],
+      "te": [324, 343],
+      "ta": [305, 322],
+      "cl": [40, 42],
+      "books": ["豪雷の書"]
+    },
+    {
+      "name": "スペシャルコンボシート 2",
+      "released": "2006-07",
+      "kinds": "5+",
+      "ni": [393, 396],
+      "cl": [43, 43],
+      "format": "jumbo"
+    },
+    {
+      "name": "巻ノ十七 雄き獣の島編",
+      "released": "2006-09-08",
+      "kinds": "57+P",
+      "ni": [397, 417],
+      "te": [344, 361],
+      "ta": [323, 337],
+      "cl": [44, 46],
+      "last": true
+    }
+  ]
+}

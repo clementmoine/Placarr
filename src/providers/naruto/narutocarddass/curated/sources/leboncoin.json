@@ -1,0 +1,152 @@
+{
+  "source": "img.leboncoin.fr listing photos (collector pastes)",
+  "observed": "2026-09-02",
+  "note": "Pasted CDN URLs only — do not crawl listings or seller stores. Faces use `ad-large` (~602×800). Packshots prefer `classified-1200x800-jpg`. Photos carry a leboncoin watermark. Seller galleries often mix other ads — keep only product frames. Annonces jipiyami promo tournoi (2026-09-02) : preuves texte dans attested-promos.json seulement — pas de face catalogue (photo sleeve < scan carddass retail ; reconstructed promo plus tard).",
+  "ingestCollection": false,
+  "faces": [
+    {
+      "printedRef": "PR-096",
+      "lang": "fr",
+      "setCode": "promo",
+      "title": "4E Hokage",
+      "listing": "https://www.leboncoin.fr/ad/collection/3233037633",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/22/aa/a7/22aaa7568219b8dcf0505417cec451c376711181.jpg?rule=ad-large",
+      "staging": "staging/leboncoin/pr0096-fr.jpg",
+      "ingest": true,
+      "role": "face",
+      "pixels": {
+        "width": 602,
+        "height": 800
+      },
+      "note": "French-text Storm 3 promo in a toploader. Printed: 4e HOKAGE, password 5CBNQ9W86S, [SAUVEUR DE KONOHA], PR-096 PROMO. Verso of that listing is Bandai USA CCG back — do not ingest as a face."
+    }
+  ],
+  "products": [
+    {
+      "slug": "pack-decouverte",
+      "setCode": "s1",
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "art",
+      "title": "Pack Découverte Série 1 — face (annonce LBC)",
+      "printedRef": "06006",
+      "listing": null,
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/3c/6f/82/3c6f8205fb73f3a54dc2ae52e437955d0413bea8.jpg?rule=ad-large",
+      "staging": "staging/leboncoin/pack-decouverte-01.jpg",
+      "ingest": false,
+      "angle": "front",
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
+      "note": "Photo annonce LBC archival. Face catalogue = curated/products/wrappers/pack-decouverte.jpg (packshot clean)."
+    },
+    {
+      "slug": "pack-decouverte",
+      "setCode": "s1",
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "art",
+      "title": "Pack Découverte Série 1 — angle",
+      "printedRef": "06006",
+      "listing": null,
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/c2/d8/97/c2d8972e3f5a81e211705a6c895a49fa30136191.jpg?rule=ad-large",
+      "staging": "staging/leboncoin/pack-decouverte-00.jpg",
+      "ingest": false,
+      "angle": "angle",
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
+      "note": "Angle LBC archival. Face catalogue = wrappers/pack-decouverte.jpg."
+    },
+    {
+      "slug": "pack-decouverte",
+      "setCode": "s1",
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "art",
+      "title": "Pack Découverte Série 1 — angle / contenu imprimé",
+      "printedRef": "06006",
+      "listing": null,
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/8d/11/c3/8d11c32f502fb738e583ecf8bcc8f31805bacce2.jpg?rule=ad-large",
+      "staging": "staging/leboncoin/pack-decouverte-02.jpg",
+      "ingest": false,
+      "angle": "angle",
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
+      "note": "Angle LBC archival. Face catalogue = wrappers/pack-decouverte.jpg."
+    },
+    {
+      "slug": "pack-decouverte",
+      "setCode": "s1",
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "back",
+      "title": "Pack Découverte Série 1 — verso",
+      "printedRef": "06006",
+      "listing": null,
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/0d/c7/17/0dc7179fa58ef17bf5c0772c40d0a1ac3bf07c32.jpg?rule=ad-large",
+      "staging": "staging/leboncoin/pack-decouverte-03.jpg",
+      "ingest": true,
+      "angle": "back",
+      "pixels": {
+        "width": 1062,
+        "height": 800
+      },
+      "note": "Verso LBC (« 2 Starters & 2 Boosters Série 1 »). Face = wrappers/pack-decouverte.jpg."
+    },
+    {
+      "slug": "tin-box",
+      "setCode": null,
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "art",
+      "title": "Coffret Métal — face (sleeve)",
+      "printedRef": "05129",
+      "ean": "3296580051298",
+      "listing": "https://www.leboncoin.fr/ad/jeux_jouets/3258840985",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/2f/78/41/2f7841e2eba18d6314ea18228cb216fb41579d05.jpg?rule=classified-1200x800-jpg",
+      "staging": "staging/leboncoin/tin-box-01.jpg",
+      "ingest": true,
+      "angle": "front",
+      "pixels": {
+        "width": 1067,
+        "height": 800
+      },
+      "note": "COFFRET MÉTAL sleeve + tin edge. carddass.fr Tin-boxN.jpg stays preferred art when both present."
+    },
+    {
+      "slug": "tin-box",
+      "setCode": null,
+      "kind": "coffret",
+      "lang": "FR",
+      "role": "back",
+      "title": "Coffret Métal — verso (contenu imprimé)",
+      "printedRef": "05129",
+      "ean": "3296580051298",
+      "listing": "https://www.leboncoin.fr/ad/jeux_jouets/3258840985",
+      "url": "https://img.leboncoin.fr/api/v1/lbcpb1/images/ea/68/6b/ea686bf31a1352a61e0d4ad34ab07e5d8a49c5d5.jpg?rule=classified-1200x800-jpg",
+      "staging": "staging/leboncoin/tin-box-02.jpg",
+      "ingest": true,
+      "angle": "back",
+      "pixels": {
+        "width": 1067,
+        "height": 800
+      },
+      "note": "Verso: 1 deck [INVOCATION] s4 (40) + booster s1 (8) + booster s2 (8) + 1 promo holo exclusive + tapis + 6 jetons + livret. Réf. 05129 / EAN 3296580051298 / BANDAI 2007 MADE IN BELGIUM."
+    }
+  ],
+  "rejected": [
+    {
+      "listing": "https://www.leboncoin.fr/ad/jeux_jouets/3258840985",
+      "reason": "Seller gallery also shows unrelated ads (sweaters, Top Trumps) — not Tin Box packaging"
+    },
+    {
+      "listing": "jipiyami promo batch (3205143041…3260788087)",
+      "reason": "Photos annonce (sleeve, filigrane LBC) rejetées comme faces promo — préférer scan carddass retail ou reconstructed plus tard. URLs + descriptions restent dans attested-promos.json (mkt-lbc-*)."
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "source": "https://www.suruga-ya.jp/search?category=&search_word=NARUTO%E3%80%80%E7%96%BE%E9%A2%A8%E4%BC%9D%E3%80%80CARDGAME&searchbox=1&rankBy=release_date%28int%29%3Aascending",
+  "observed": "2026-09-13",
+  "countHint": 147,
+  "found": 147,
+  "novel": 0,
+  "novelSample": [],
+  "tsvAfter": 247,
+  "pageStats": [
+    {
+      "page": 1,
+      "parsed": 24,
+      "novel": 0,
+      "total": 24
+    },
+    {
+      "page": 2,
+      "parsed": 24,
+      "novel": 0,
+      "total": 48
+    },
+    {
+      "page": 3,
+      "parsed": 24,
+      "novel": 0,
+      "total": 72
+    },
+    {
+      "page": 4,
+      "parsed": 24,
+      "novel": 0,
+      "total": 96
+    },
+    {
+      "page": 5,
+      "parsed": 24,
+      "novel": 0,
+      "total": 120
+    },
+    {
+      "page": 6,
+      "parsed": 24,
+      "novel": 0,
+      "total": 144
+    },
+    {
+      "page": 7,
+      "parsed": 3,
+      "novel": 0,
+      "total": 147
+    },
+    {
+      "page": 8,
+      "parsed": 0,
+      "novel": 0,
+      "total": 147
+    }
+  ]
+}

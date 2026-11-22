@@ -1,0 +1,36 @@
+{
+  "source": "www.bandaicg.com/naruto/home.php Wayback 2009-02-11",
+  "observed": "2026-08-17",
+  "ingest": "none",
+  "line": "en-ccg",
+  "wayback": {
+    "timestamp": "20090211193529",
+    "url": "https://web.archive.org/web/20090211193529/https://www.bandaicg.com/naruto/home.php",
+    "staging": "staging/bandaicg-en/pages/home.php"
+  },
+  "note": "vBulletin hub, not a cardlist. S13 Fateful Reunion (156 cards) and Guardian of the Village tins (street 2009-02-27, Gaara / Kakashi / Naruto S4 3D) are showthread.php + attachment.php. The EN scraper skips forums on purpose. Cardlists stay in bandaicg-en-cardlist.json. CDX `--locale en --cdx-only` (2026-08-17): site capped at 50k rows, collapse keeps a 2006 home.php — this file is the 2009 bookmark snapshot. Do not `--force` overwrite it. Do not dump the forum.",
+  "announced": [
+    {
+      "kind": "set",
+      "setCode": "s12",
+      "name": "A New Chronicle",
+      "thread": "http://www.bandaicg.com/naruto/showthread.php?t=63364"
+    },
+    {
+      "kind": "set",
+      "setCode": "s13",
+      "name": "Fateful Reunion",
+      "cards": 156,
+      "thread": "http://www.bandaicg.com/naruto/showthread.php?t=63128"
+    },
+    {
+      "kind": "tin",
+      "name": "Guardian of the Village",
+      "streetDate": "2009-02-27",
+      "variants": ["Gaara", "Kakashi", "Naruto"],
+      "thread": "http://www.bandaicg.com/naruto/showthread.php?t=58775",
+      "attachments": [971, 972, 973]
+    }
+  ],
+  "skip": ["showthread.php", "attachment.php", "member.php"]
+}

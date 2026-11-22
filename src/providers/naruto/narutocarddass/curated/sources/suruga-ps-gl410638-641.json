@@ -1,0 +1,82 @@
+{
+  "source": "Suruga-ya.jp product detail GL410638–641 (user paste 2026-09-21)",
+  "observed": "2026-09-21",
+  "ingest": "faces",
+  "lang": "ja",
+  "line": "carddass-jp",
+  "cdn": "https://cdn.suruga-ya.jp/database/pics/game/{id.lower()}.jpg",
+  "set": "「NARUTO -ナルト-」カードゲーム 忍の里の陣取り合戦！編（4枚セット）",
+  "note": "Suruga titles PS cards as 忍-n[プロモ] without （PS） — must NOT land in suruga-ya-carddass-listings.tsv (would fold onto retail 忍-n). GL410641 is retail 忍-11 (BANDAI 2004 劇場版), not 忍-11（PS）. GL734891 is the real 忍-11（PS） product (NOT FOR SALE · 2003).",
+  "not": ["retail-ni", "tsv-fold"],
+  "faces": [
+    {
+      "productId": "GL410638",
+      "printedRef": "忍-1（PS）",
+      "diskId": "ni0001-ps",
+      "title": "うずまきナルト",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL410638",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl410638.jpg",
+      "surugaTitle": "忍-1[プロモ]：うずまきナルト",
+      "note": "NOT FOR SALE · BANDAI 2003. Catalogue face → art.suruga.jpg (was reconstructed/mercari)."
+    },
+    {
+      "productId": "GL410639",
+      "printedRef": "忍-2（PS）",
+      "diskId": "ni0002-ps",
+      "title": "うちはサスケ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL410639",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl410639.jpg",
+      "surugaTitle": "忍-2[プロモ]：うちはサスケ",
+      "note": "NOT FOR SALE · BANDAI 2003."
+    },
+    {
+      "productId": "GL410640",
+      "printedRef": "忍-3（PS）",
+      "diskId": "ni0003-ps",
+      "title": "春野サクラ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL410640",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl410640.jpg",
+      "surugaTitle": "忍-3[プロモ]：春野サクラ",
+      "note": "NOT FOR SALE · BANDAI 2003."
+    },
+    {
+      "productId": "GL734891",
+      "printedRef": "忍-11（PS）",
+      "diskId": "ni0011-ps",
+      "title": "はたけカカシ",
+      "setCode": "promo",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL734891",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl734891.jpg",
+      "surugaTitle": "忍-11[プロモ]：はたけカカシ",
+      "pixels": {
+        "width": 348,
+        "height": 512
+      },
+      "note": "NOT FOR SALE · BANDAI 2003. Same CDN id as kaitori GL734891. Prefer art.suruga over reconstructed (manual face.json)."
+    },
+    {
+      "productId": "GL410641",
+      "printedRef": "忍-11",
+      "diskId": "ni0011",
+      "title": "はたけカカシ",
+      "setCode": "maki?",
+      "ingest": false,
+      "bandaiYear": 2004,
+      "listing": "https://www.suruga-ya.jp/product/detail/GL410641",
+      "url": "https://cdn.suruga-ya.jp/database/pics/game/gl410641.jpg",
+      "staging": "staging/suruga/ps-yoyaku-gl410/gl410641-ni0011-retail-2004-movie.jpg",
+      "reason": "拡張シート雪姫忍法帖 忍-11 — BANDAI 2004 + ©劇場版NARUTO製作委員会. Not NOT FOR SALE. Not 忍-11（PS）. Same art family as GL818534 (see suruga-yukihime-gl818531-534.json). Removed from TSV — must not fold onto 巻ノ壱 ni0011."
+    }
+  ]
+}

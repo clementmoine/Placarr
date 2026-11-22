@@ -90,13 +90,22 @@ export function narutoShippudenCuratedDir(): string {
 const synced = definePackSyncedSources(NARUTO_SHIPPUDEN_PACK_ID);
 /** Synced crawl ledgers — write target under `dataRoot()`. */
 export const narutoShippudenSyncedSourcePath = synced.syncedSourcePath;
-/** Read path — falls back to repo `cwd/data` when `PLACARR_DATA_DIR` is empty. */
-export const narutoShippudenSourcePath = synced.sourcePath;
+/**
+ * Read path — the synced `data/` copy when a Sync has written one, else the
+ * versioned `curated/sources/` copy (ADR-006 : ledgers no Sync rewrites are
+ * versioned, so boot never depends on data/).
+ */
+export function narutoShippudenSourcePath(fileName: string): string {
+  const resolved = synced.sourcePath(fileName);
+  if (existsSync(resolved)) return resolved;
+  const curated = path.join(narutoShippudenCuratedDir(), "sources", fileName);
+  return existsSync(curated) ? curated : resolved;
+}
 
 const syncedJsonCache = new Map<string, unknown>();
 
 /** Cached JSON parse of a synced Shippuden ledger. */
-export function readNarutoShippudenSyncedSource<T = any>(
+export function readNarutoShippudenSyncedSource<T = unknown>(
   fileName: string,
 ): T {
   const hit = syncedJsonCache.get(fileName);

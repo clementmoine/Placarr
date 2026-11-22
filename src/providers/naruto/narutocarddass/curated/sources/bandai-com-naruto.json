@@ -1,0 +1,16 @@
+{
+  "source": "www.bandai.com/naruto/images (official USA CDN, distinct from bandaicg.com)",
+  "observed": "2026-08-16",
+  "note": "Same path tree as bandaicg.com (`cards_s{N}/{n|j|m}###.jpg`, `cards_pr`). No GitHub/Reddit dump of this folder. Wayback has early `cards_s1/j00x.jpg` (~50–75 KB) plus chrome and some `cards_pr`. Storm 3 (`cards_s28`) has 0 CDX rows and live 404 — that is why stop2shop is the EN face source. Probe of `cards_s20` was empty. CDX on later folders / `*back*` hung and was aborted; do not treat that as 'no backs exist', only as 'this CDX pass did not finish'. Useful archive already in-repo: staging/bandaicg-en/ (partial thumbs, no s28).",
+  "pathTree": "/naruto/images/cards_s{N}/{n|j|m|c|pr|ps}###.jpg",
+  "sameTreeAs": "www.bandaicg.com/naruto/images/",
+  "githubDump": false,
+  "wayback": {
+    "earlyS1": true,
+    "s20Probe": "empty",
+    "s28Rows": 0,
+    "backsCdx": "aborted-incomplete"
+  },
+  "stagingAlready": "staging/bandaicg-en/",
+  "ingestS28": "none — use stop2shop"
+}

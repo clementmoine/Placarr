@@ -1,0 +1,17 @@
+{
+  "source": "Noble Knight Games — Naruto CCG sealed (boosters & boxes)",
+  "observed": "2026-08-19",
+  "ingest": "none",
+  "crawlLive": false,
+  "line": "en-ccg",
+  "lang": "en",
+  "url": "https://eu.nobleknight.com/Products/Naruto-CCG---Booster-Boxes-and-Packs",
+  "usUrl": "https://www.nobleknight.com/Products/Naruto-CCG---Booster-Boxes-and-Packs",
+  "note": "Détaillant américain (depuis 1997) qui tient encore un rayon scellé Naruto CCG : la catégorie annonce **53 produits**. Piste packshots pour `products/` côté EN, là où Goat ne couvre que s16 / s19 / s21–23 / s27 et où Coleka a des trous. Non inventorié : la grille produits ne se rend pas hors navigateur complet (aucune tuile dans le DOM après scroll, images = chrome du site). À rouvrir avec un rendu JS pour lister les 53 SKU et leurs visuels avant d'ingérer quoi que ce soit.",
+  "not": ["faces", "carddass", "kayou"],
+  "next": [
+    "Lister les 53 SKU (nom + set + visuel) via un rendu JS.",
+    "Ne retenir que le scellé Bandai 2006–2013 : la boutique vend aussi du moderne.",
+    "Croiser avec products-index.json avant d'ajouter — 56 SKU y sont déjà, surtout FR."
+  ]
+}

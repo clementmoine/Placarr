@@ -1,0 +1,81 @@
+{
+  "source": "goat-locale-promos",
+  "observed": "2026-08-29",
+  "ingest": "titles + pasted Goat locale face CDNs only (no shop crawl). Faces as art.goat.* under the locale lang.",
+  "note": "Goat inventorie des variantes locale séparément. « FOIL EURO Edition » ≠ toujours FR (photo PR-095 EURO = texte EN Unique Training). « French - Foil » sur PR-100 = texte FR [ASPIRATIONS], même art que Drive pr100.png. Ne pas confondre PR-095 Goku (Day One) avec PR-100 cape Hokage. Probe 2026-08-29: seuls PR-100 french/german foil + PR-095 euro_edition en 200 ; pas de french__foil pour 090–096 / 061.",
+  "probe": {
+    "observed": "2026-08-29",
+    "hits200": [
+      "PR-095 foil_euro_edition",
+      "PR-100 french__foil",
+      "PR-100 german__foil"
+    ],
+    "misses404": [
+      "PR-095 french__foil",
+      "PR-095 german__foil",
+      "PR-096 foil_euro_edition",
+      "PR-096 french__foil",
+      "PR-096 german__foil",
+      "PR-100 foil_euro_edition",
+      "PR-090/093/061 french__foil (slug guess)"
+    ],
+    "redditFillsGoatGaps": {
+      "PR-095": "DE + Europe Foil attested on r/Narutoccg (not a Goat SKU slug); FR face via eBay 115771696619",
+      "PR-096": "DE foil attested (ugdgqq) — Goat DE slug 404; FR face via leboncoin"
+    }
+  },
+  "skus": [
+    {
+      "ref": "PR-095",
+      "printKey": "naruto:pr-0095",
+      "goatLabel": "FOIL EURO Edition",
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/naruto_uzumaki__pr095__promo__1st_edition__foil_euro_edition/586269",
+      "goatPhotoLang": "en",
+      "enEffect": "UNIQUE TRAINING",
+      "enName": "Naruto Uzumaki",
+      "art": "Goku outfit crossover",
+      "frMarketplace": "https://www.ebay.fr/itm/115771696619",
+      "frPrintedEffect": "ENTRAÎNEMENT UNIQUE",
+      "note": "EURO SKU photo is EN; FR print attested by eBay listing — face ingested via ebay.json, not Goat."
+    },
+    {
+      "ref": "PR-096",
+      "printKey": "naruto:pr-0096",
+      "goatLabel": "1st Edition (EN listing)",
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/the_4th_hokage__pr096__promo__1st_edition/545455",
+      "frNamePrinted": "4e HOKAGE",
+      "frEffect": "SAUVEUR DE KONOHA",
+      "channel": "duopack-s28 window + Leboncoin",
+      "inCatalogFr": true
+    },
+    {
+      "ref": "PR-100",
+      "printKey": "naruto:pr-0100",
+      "goatLabel": "French - Foil",
+      "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/naruto_uzumaki__pr100__promo__1st_edition__french__foil/564430",
+      "goatPhotoLang": "fr",
+      "frNamePrinted": "Naruto Uzumaki",
+      "frEffect": "ASPIRATIONS",
+      "enEffect": "ASPIRATIONS",
+      "art": "Hokage cloak looking over shoulder — same as Drive pr100.png",
+      "sibling": {
+        "goatLabel": "German - Foil",
+        "url": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/naruto_uzumaki__pr100__promo__1st_edition__german__foil/564431"
+      }
+    }
+  ],
+  "faces": [
+    {
+      "printedRef": "PR-100",
+      "lang": "fr",
+      "setCode": "promo",
+      "title": "Naruto Uzumaki",
+      "listing": "https://goatcardsshop.crystalcommerce.com/catalog/naruto_ccg_singles-promo_cards/naruto_uzumaki__pr100__promo__1st_edition__french__foil/564430",
+      "url": "https://cc-client-assets.nyc3.cdn.digitaloceanspaces.com/photo/goatcardsshop/file/b3a1f08d7b574ea498d4a053663d435b/pr-100%20french.jpg",
+      "staging": "staging/goat-locale-promos/pr0100-fr.jpg",
+      "ingest": true,
+      "note": "Goat shop French Foil CDN (218×300). Bandeau [ASPIRATIONS] + règles FR. Prefer a sharper collector paste later.",
+      "pixels": { "width": 218, "height": 300 }
+    }
+  ]
+}

@@ -1,0 +1,831 @@
+{
+  "source": "Mercari / Rakuma / eBay pasted 忍-3 leads",
+  "observed": "2026-09-14",
+  "crawlLive": false,
+  "ingest": "curated-faces",
+  "lang": "ja",
+  "note": "Pasted listing URLs only — do not crawl Mercari search or seller stores. Ingest rows use live mercdn `url` (install fetches). Optional `curated` is offline fallback only. Titles that say 忍-3 / Sakura No.3 are usually OP忍-3 (2005 opening promo, shy cherry-blossom art). 巻ノ壱 忍-3 is BANDAI 2002, standing hand-on-hip, same pose as FR NI-03. Les quatre 忍-n（PS） viennent du lot m28811788058 : photos individuelles _3/_5/_7/_9.",
+  "not": [
+    "crawl",
+    "opni-as-ni0003",
+    "lot-uncropped",
+    "shops-og-image"
+  ],
+  "shops": {
+    "verified": "2026-08-31, produit 2JShoKKprWw8zNuAiktPqA (呪印術 術-84)",
+    "note": "Pages jp.mercari.com/shops/product/<id> : l'og:image ET l'unique image du HTML initial sont une version MARKETING générée par Mercari Shops — photo vendeur paddée sur fond menthe avec logo トレカ et watermark boutique (la carte n'occupe que ~50 % du cadre). Les photos vendeur brutes (fond blanc, plein cadre) ne sont pas dans le HTML : elles arrivent via la galerie JS. Ne jamais enregistrer l'og:image ; prendre les photos de la galerie (même hôte assets.mercari-shops-static.com/-/large/plain/<id>, autre id)."
+  },
+  "faces": [
+    {
+      "printedRef": "忍-3",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "春野サクラ",
+      "listing": "https://jp.mercari.com/item/m63902869042",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m63902869042_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2002,
+      "note": "Related item next to a pasted OP忍-3 Mercari listing. Printed 忍-3 (no OP/PR prefix), BANDAI 2002 MADE IN JAPAN, standing pose matching FR NI-03."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://www.cafr.ebay.ca/itm/185397519690",
+      "url": "https://i.ebayimg.com/images/g/G0gAAOSw-NhiZBAW/s-l1600.webp",
+      "ingest": false,
+      "reason": "Printed OP忍-3 BANDAI 2005. Already in catalogue as opni0003. Title 'Sakura No.3 Ninja' is not 巻ノ壱 忍-3."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://www.ebay.com/itm/235949420497",
+      "url": "https://i.ebayimg.com/images/g/tR8AAOSwKeFnpzyD/s-l1600.webp",
+      "ingest": false,
+      "reason": "Uncropped 2-up: OP忍-3 + 忍-69. Do not file as ni0003."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://jp.mercari.com/item/m90117035741",
+      "ingest": false,
+      "reason": "Seller title OP忍-3 キラ. Printed OP忍-3 BANDAI 2005. Already opni0003."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://jp.mercari.com/item/m54760516214",
+      "ingest": false,
+      "reason": "Generic '春野サクラ' title. Printed OP-忍-3, cherry-blossom shy art, not 巻ノ壱 standing pose."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://item.fril.jp/fe3228355049173d7f63cc04e45260ed",
+      "url": "https://img.fril.jp/img/844243313/l/2912157458.jpg",
+      "ingest": false,
+      "reason": "Rakuma. BANDAI 2005 + OP shy cherry-blossom art. Not 巻ノ壱 忍-3."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://www.ebay.com/itm/175873810783",
+      "url": "https://i.ebayimg.com/images/g/D54AAOSwokxiMc2j/s-l1600.webp",
+      "ingest": false,
+      "reason": "Printed OP忍-3 BANDAI 2005. Already opni0003."
+    },
+    {
+      "printedRef": "OP忍-3",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://www.ebay.com/itm/196448894281",
+      "url": "https://i.ebayimg.com/images/g/3ywAAOSwhsBmb5QN/s-l1600.webp",
+      "ingest": false,
+      "reason": "Title 2005 BANDAI. Printed OP忍-3. Already opni0003."
+    },
+    {
+      "printedRef": "忍-20",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うちはサスケ",
+      "listing": "https://jp.mercari.com/item/m31428055920",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m31428055920_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2002,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "Version NON holo, prise de face, carte plein cadre, sans pochette ni reflet — l'art est lisible de bout en bout. Le `source.jpg` de ce dossier est déjà pris par le scan Yahoo (holo, carte à ~40 % du cadre) : d'où `source.mercari.jpg`, pas d'écrasement de la provenance Yahoo. Pied : 忍-20 BANDAI 2002 MADE IN JAPAN."
+    },
+    {
+      "printedRef": "忍-20",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うちはサスケ",
+      "listing": "https://jp.mercari.com/item/m60230568071",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m60230568071_1.jpg",
+      "ingest": false,
+      "reason": "Même carte en version holo, mais photo en biais, sous pochette, reflet arc-en-ciel sur l'art. 1080×1080 dont la carte n'occupe qu'une part. Moins bon que m31428055920 et que le Yahoo déjà en place."
+    },
+    {
+      "printedRef": "忍-20",
+      "lang": "ja",
+      "setCode": "maki1",
+      "title": "うちはサスケ",
+      "listing": "https://clubpatio.sedarim.shop/index.php?main_page=product_info&cPath=328&products_id=71983",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m35972327621_1.jpg",
+      "ingest": false,
+      "reason": "clubpatio.sedarim.shop n'est pas une boutique : c'est un miroir Mercari. Sa photo produit EST une URL static.mercdn.net et son SKU [m3597232Mzcs] est un id Mercari maquillé, à 43 333 ¥ pour un 忍-20. Ne pas la traiter comme un hôte. Photo 810×1080 sous pochette, sous le m31428055920 retenu."
+    },
+    {
+      "printedRef": "忍-1（PS）",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "https://jp.mercari.com/item/m28811788058",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_3.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "予約特典 du jeu PS「忍の里の陣取り合戦」. Photo individuelle du lot des 4 (10 photos : 1 = groupe, puis recto/verso par carte). Sous pochette, de face, plein cadre. Lu sur la carte : 3/1 · 1/0 · coût 0 · 忍, pied « 忍-N · NOT FOR SALE · BANDAI 2003 MADE IN JAPAN ». Le numéro est partagé avec la carte de booster mais l'illustration est inédite — （PS） est ce qui les sépare, et `narutoDiskCardId` le rend en `-ps`."
+    },
+    {
+      "printedRef": "忍-2（PS）",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うちはサスケ",
+      "listing": "https://jp.mercari.com/item/m28811788058",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_5.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "予約特典 du jeu PS「忍の里の陣取り合戦」. Photo individuelle du lot des 4 (10 photos : 1 = groupe, puis recto/verso par carte). Sous pochette, de face, plein cadre. Lu sur la carte : 3/1 · 0/0 · coût 0 · 炎, pied « 忍-N · NOT FOR SALE · BANDAI 2003 MADE IN JAPAN ». Le numéro est partagé avec la carte de booster mais l'illustration est inédite — （PS） est ce qui les sépare, et `narutoDiskCardId` le rend en `-ps`."
+    },
+    {
+      "printedRef": "忍-3（PS）",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "春野サクラ",
+      "listing": "https://jp.mercari.com/item/m28811788058",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_7.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "予約特典 du jeu PS「忍の里の陣取り合戦」. Photo individuelle du lot des 4 (10 photos : 1 = groupe, puis recto/verso par carte). Sous pochette, de face, plein cadre. Lu sur la carte : 1/1 · 0/1 · coût 0 · 武, pied « 忍-N · NOT FOR SALE · BANDAI 2003 MADE IN JAPAN ». Le numéro est partagé avec la carte de booster mais l'illustration est inédite — （PS） est ce qui les sépare, et `narutoDiskCardId` le rend en `-ps`."
+    },
+    {
+      "printedRef": "忍-11（PS）",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "はたけカカシ",
+      "listing": "https://jp.mercari.com/item/m28811788058",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m28811788058_9.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "予約特典 du jeu PS「忍の里の陣取り合戦」. Photo individuelle du lot des 4 (10 photos : 1 = groupe, puis recto/verso par carte). Sous pochette, de face, plein cadre. Lu sur la carte : 5/3 · 3/2 · coût 4 · 幻, pied « 忍-N · NOT FOR SALE · BANDAI 2003 MADE IN JAPAN ». Le numéro est partagé avec la carte de booster mais l'illustration est inédite — （PS） est ce qui les sépare, et `narutoDiskCardId` le rend en `-ps`."
+    },
+    {
+      "printedRef": "忍-332",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "木ノ葉丸軍団",
+      "listing": "https://jp.mercari.com/item/m53370794755",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m53370794755_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "note": "Mercdn live fetch. Printed 忍-332 BANDAI 2005 MADE IN JAPAN, 木ノ葉丸軍団 (Konohamaru/Udon/Moegi). JA orphan hole — Suruga CDN missing."
+    },
+    {
+      "printedRef": "忍-309",
+      "lang": "ja",
+      "setCode": "jp-release-23",
+      "title": "山中いの",
+      "listing": "https://jp.mercari.com/item/m62332171948",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m62332171948_6.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "Lot Team 10 (アスマ/シカマル/いの/チョウジ). Photo _6 = recto plein cadre 忍-309. JA orphan — Suruga CDN missing. Reconstruction Gemini à côté (`art.reconstructed.png` + `source.jpg`)."
+    },
+    {
+      "printedRef": "PR作-11",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "存在の証明",
+      "listing": "https://assets.mercari-shops-static.com/-/large/plain/pRJFkFKBLbK7yoUHxG3M2k.jpg@jpg",
+      "url": "https://assets.mercari-shops-static.com/-/large/plain/pRJFkFKBLbK7yoUHxG3M2k.jpg@jpg",
+      "ingest": true,
+      "bandaiYear": 2004,
+      "pixels": {
+        "width": 600,
+        "height": 901
+      },
+      "note": "Mercari Shops gallery large/plain (pas l'og:image menthe). PR作-11 存在の証明 / Gaara, NOT FOR SALE BANDAI 2004. Déjà ebay+yahoo ; dump mercari en fallback (600×901 < ebay 1200×1600)."
+    },
+    {
+      "printedRef": "忍-349",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "マイト・ガイ",
+      "listing": "https://jp.mercari.com/item/m40494603771",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m40494603771_1.jpg?1787878646",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "巻ノ十五 マイト・ガイ. Mercdn _1 plein cadre. JA orphan hole (name only in index)."
+    },
+    {
+      "printedRef": "CAN-2",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト＆犬塚キバ",
+      "listing": "https://jp.mercari.com/item/m21362640492",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m21362640492_1.jpg?1746793032",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 778,
+        "height": 1080
+      },
+      "note": "Porte-cartes 木ノ葉絵巻. Duo 忍-style (Naruto & Kiba). Titre Mercari sans CAN — pied CAN-2."
+    },
+    {
+      "printedRef": "CAN-5",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "師から弟子へ",
+      "listing": "https://jp.mercari.com/item/m25866978777",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m25866978777_1.jpg?1782023076",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "Déjà yahoo 900×1200 ; dump mercari 1080² en fallback (cadrage plus serré / carré)."
+    },
+    {
+      "printedRef": "忍-338",
+      "lang": "ja",
+      "setCode": "maki14",
+      "title": "雷神",
+      "listing": "https://jp.mercari.com/item/m65987751559",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m65987751559_1.jpg?1714727469",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 777,
+        "height": 1080
+      },
+      "note": "巻ノ十四 雷神. Mercdn _1 plein cadre. JA orphan hole (name only in index)."
+    },
+    {
+      "printedRef": "忍-363",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "大蛇丸＆薬師カブト",
+      "listing": "https://jp.mercari.com/shops/product/2JLdoSNwDgLYLynBBbEADd",
+      "url": "https://assets.mercari-shops-static.com/-/large/plain/2JLdoSMxrpf7N7bX6fzNXr.jpg@jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 751,
+        "height": 1024
+      },
+      "note": "Mercari Shops gallery large/plain (pas l'og:image menthe). 巻ノ十五. Aussi m77194133853 mercdn — scan Shops préféré."
+    },
+    {
+      "printedRef": "忍-363",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "大蛇丸＆薬師カブト",
+      "listing": "https://jp.mercari.com/item/m77194133853",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m77194133853_1.jpg?1783075363",
+      "ingest": false,
+      "reason": "Same card as Shops 2JLdoSNwDgLYLynBBbEADd — mercdn dump kept as provenance only; Shops scan ingested."
+    },
+    {
+      "printedRef": "忍-370",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "三代目火影",
+      "listing": "https://jp.mercari.com/shops/product/2JL7BNKJzCrs36deUmgt8c",
+      "url": "https://assets.mercari-shops-static.com/-/large/plain/2JL7BNHNGrY2bFMG9QpvbE.jpg@jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 745,
+        "height": 1024
+      },
+      "note": "Mercari Shops gallery large/plain. 巻ノ十六 三代目火影. JA orphan hole."
+    },
+    {
+      "printedRef": "忍-379",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "ホクシン",
+      "listing": "https://www.ebay.com/itm/395074466931",
+      "url": "https://i.ebayimg.com/images/g/r8AAAOSwPPplgWx4/s-l1600.webp",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 391,
+        "height": 531
+      },
+      "note": "eBay pasted lead (curl 403 HTML; CDN image ok). 巻ノ十六 ホクシン. Photo table — plein cadre carte, pas mint-pad."
+    },
+    {
+      "printedRef": "COIN-11",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "日向ネジ＆テンテン",
+      "listing": "https://jp.mercari.com/item/m15022716387",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m15022716387_2.jpg?1715254104",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 789,
+        "height": 1080
+      },
+      "note": "コイン PLUS 2 gap. Printed COIN-11 confirmed on photo. No Suruga CDN listing found — mercdn _2 is the face."
+    },
+    {
+      "printedRef": "PR忍-19",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "砂瀑の我愛羅",
+      "listing": "https://jp.mercari.com/item/m16457003351",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m16457003351_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "JA orphan hole. Printed PR-忍-19 · NOT FOR SALE · BANDAI 2006. Photo _1 = recto (sleeved, plein cadre); _2 = verso Carddass. Seller title 砂漠の我愛羅 — card prints 砂瀑の我愛羅."
+    },
+    {
+      "printedRef": "CAN-1",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト＆うちはサスケ",
+      "listing": "https://jp.mercari.com/item/m75694779442",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m75694779442_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "Porte-cartes 木ノ葉絵巻. JA orphan hole. Photo _1 = recto plein cadre (fond blanc)."
+    },
+    {
+      "printedRef": "OP忍-5",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "はたけカカシ",
+      "listing": "https://jp.mercari.com/item/m17997959000",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m17997959000_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "ほっかほっか亭 OP promo. JA orphan hole. Photo _1 = recto plein cadre; confirmé pied OP忍-5 · BANDAI 2005."
+    },
+    {
+      "printedRef": "忍-276",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "奈良シカマル",
+      "listing": "https://jp.mercari.com/item/m47501183127",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m47501183127_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "巻ノ十二 / 劇場版. JA orphan hole. Photo _1 = recto plein cadre. Pied 忍-276 · BANDAI 2005 MADE IN CHINA. Name on card 奈良シカマル (noihjp wrongly had 秋道チョウジ)."
+    },
+    {
+      "printedRef": "作-253",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "一人一殺",
+      "listing": "https://jp.mercari.com/item/m78949670834",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m78949670834_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "Seller title wrongly said 術-253; pied prints 作-253. JA orphan hole. Photo _1 = recto plein cadre."
+    },
+    {
+      "printedRef": "PR忍-7",
+      "lang": "ja",
+      "setCode": "promo",
+      "title": "うずまきナルト",
+      "listing": "https://jp.mercari.com/item/m32082390109",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m32082390109_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2003,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "ジャンプフェスタ promo. JA orphan hole. Photo _1 = recto (sleeved, plein cadre). Pied PR忍-7 · NOT FOR SALE · BANDAI 2003."
+    },
+    {
+      "printedRef": "忍-281",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "次郎坊",
+      "listing": "https://jp.mercari.com/item/m17498052302",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m17498052302_2.jpg",
+      "ingest": false,
+      "bandaiYear": 2005,
+      "reason": "Lot crop supersedé — plein cadre m86474122420_1 + reconstruction NI-281J."
+    },
+    {
+      "printedRef": "忍-281",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "次郎坊",
+      "listing": "https://jp.mercari.com/item/m86474122420",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m86474122420_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 782,
+        "height": 980
+      },
+      "note": "Recto plein cadre (状態2). Reconstruction NI-281J. Lot Sound Four m43793500398_15 = même carte."
+    },
+    {
+      "printedRef": "忍-280",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "鬼童丸",
+      "listing": "https://jp.mercari.com/item/m43793500398",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m43793500398_1.jpg",
+      "ingest": false,
+      "bandaiYear": 2005,
+      "reason": "Pas de plein cadre solo — tuile bas-gauche du groupe. Provenance = source.jpg curaté + NI-280J."
+    },
+    {
+      "printedRef": "忍-282",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "左近",
+      "listing": "https://jp.mercari.com/item/m43793500398",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m43793500398_11.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "Lot Sound Four 状態2. Photo _11 = recto 左近. Reconstruction NI-282J."
+    },
+    {
+      "printedRef": "忍-283",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "多由也",
+      "listing": "https://jp.mercari.com/item/m43793500398",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m43793500398_7.jpg",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "Lot Sound Four 状態2. Photo _7 = recto 多由也. Reconstruction NI-283J."
+    },
+    {
+      "printedRef": "忍-371",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "四代目火影",
+      "listing": "https://jp.mercari.com/item/m16046454649",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m16046454649_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "巻ノ十六. Plein cadre 810×1080 — préféré au fril 1080² tissu déjà en disc."
+    },
+    {
+      "printedRef": "忍-415",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "うちはサスケ",
+      "listing": "https://jp.mercari.com/item/m28880810195",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m28880810195_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "JA orphan. Pied 忍-415 BANDAI 2006 — 巻ノ十七. ≪完全なる開眼≫."
+    },
+    {
+      "printedRef": "忍-369",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "二代目火影",
+      "listing": "https://jp.mercari.com/item/m70006976454",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m70006976454_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "巻ノ十六. Plein cadre bois 1080² — préféré au fril 1080² déjà en disc. Reconstruction NI-369J."
+    },
+    {
+      "printedRef": "作-299",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "懸賞金の手配書",
+      "listing": "https://jp.mercari.com/shops/product/2JLH4ibRJ9hTZY6fGqmqn6",
+      "url": "https://assets.mercari-shops-static.com/-/large/plain/2JLH4iadyyyReRRGQV8Dri.jpg@jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 751,
+        "height": 1024
+      },
+      "note": "Mercari Shops gallery large/plain (pas l'og:image menthe). JA orphan. Pied 作-299 BANDAI 2006 — 巻ノ十五. (SR)A 懸賞金の手配書."
+    },
+    {
+      "printedRef": "術-356",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "師匠譲りの豪腕",
+      "listing": "https://jp.mercari.com/item/m60392066704",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m60392066704_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. SR foil 春野サクラ. _2 = dos. JA orphan (no prior disk face)."
+    },
+    {
+      "printedRef": "忍-356",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "蘭丸",
+      "listing": "https://jp.mercari.com/item/m19612470713",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m19612470713_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 769,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. Printed 忍-356 ● (double illust). Suruga gu716126 already on disk as art.suruga; mercari as secondary dump. _2 = dos."
+    },
+    {
+      "printedRef": "術-345",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "孔雀妙法・獣",
+      "listing": "https://jp.mercari.com/item/m80818553035",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m80818553035_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. Titre vendeur «街-345» — pied lu 術-345 BANDAI 2006. JA orphan. _2 = dos."
+    },
+    {
+      "printedRef": "術-329",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "火遁・龍火の術",
+      "listing": "https://jp.mercari.com/item/m23680254354",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m23680254354_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. Pied 術-329 ● BANDAI 2006 — 巻ノ十六. みたらしアンコ. JA orphan. _2 = dos."
+    },
+    {
+      "printedRef": "術-325",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "潜影蛇手",
+      "listing": "https://jp.mercari.com/item/m48001945853",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m48001945853_10.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 810,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. Lot Anko 7枚 — photo _10 solo. Pied 術-325 ● BANDAI 2006 — 巻ノ十六. JA orphan (EN j0325 only)."
+    },
+    {
+      "printedRef": "術-327",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "噛み付き",
+      "listing": "https://jp.mercari.com/item/m40041193289",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m40041193289_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. Pied 術-327 BANDAI 2006 — 巻ノ十六. JA orphan. _2–6 = angles/dos."
+    },
+    {
+      "printedRef": "術-319",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "鉄鎖",
+      "listing": "https://jp.mercari.com/item/m43194718141",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m43194718141_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 785,
+        "height": 1080
+      },
+      "note": "User paste 2026-09-24. Pied 術-319 ● BANDAI 2006 — 巻ノ十五. Upgrade vs art.yahoo.jpg 414×1080 étroit."
+    },
+    {
+      "printedRef": "術-312",
+      "lang": "ja",
+      "title": "いかづちの牙",
+      "listing": "https://jp.mercari.com/item/m14094164096",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m14094164096_1.jpg?1714813625",
+      "ingest": false,
+      "note": "skip: 779x1080; existing art.ebay.webp 1200x1600 better (same 術-312 いかづちの牙)"
+    },
+    {
+      "printedRef": "術-310",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "岩雪崩",
+      "listing": "https://jp.mercari.com/item/m63797095769",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m63797095769_1.jpg?1788656241",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 683,
+        "height": 975
+      },
+      "note": "JA orphan fill. Crop from mercdn 1080sq. Pied 術-310 BANDAI 2006 — 巻ノ十五 岩雪崩."
+    },
+    {
+      "printedRef": "術-252",
+      "lang": "ja",
+      "setCode": "maki12",
+      "title": "鉄線花の舞・蔓",
+      "listing": "https://jp.mercari.com/item/m46866884312",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m46866884312_1.jpg?1790253577",
+      "ingest": true,
+      "bandaiYear": 2005,
+      "pixels": {
+        "width": 703,
+        "height": 983
+      },
+      "note": "JA orphan (maki12-juin). Crop from mercdn 1080sq. Pied 術-252 BANDAI 2005 — 鉄線花の舞・蔓."
+    },
+    {
+      "printedRef": "忍-415",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "うちはサスケ",
+      "listing": "https://jp.mercari.com/item/m49852298794",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m49852298794_1.jpg?1786869760",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 1080,
+        "height": 1080
+      },
+      "note": "Upgrade over prior mercari 1080sq (m28880810195 147KB→271KB). Pied 忍-415 BANDAI 2006 — 巻ノ十七 Ultra Gold ≪完全なる開眼≫."
+    },
+    {
+      "printedRef": "忍-403",
+      "lang": "ja",
+      "setCode": "maki17",
+      "title": "イシダテ",
+      "listing": "https://jp.mercari.com/item/m90799671109",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m90799671109_7.jpg?1787215147",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 696,
+        "height": 976
+      },
+      "note": "JA orphan fill. Pied 忍-403 BANDAI 2006 劇場版 — 巻ノ十七 イシダテ. Crop from 1080sq photo _7 (angled, neighbors cropped out)."
+    },
+    {
+      "printedRef": "忍-371",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "四代目火影",
+      "listing": "https://assets.mercari-shops-static.com/-/large/plain/2JL7AwDZnvc88M8dgjfc2x.jpg@jpg",
+      "url": "https://assets.mercari-shops-static.com/-/large/plain/2JL7AwDZnvc88M8dgjfc2x.jpg@jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 751,
+        "height": 1024
+      },
+      "note": "Upgrade soft art.mercari.jpg. Pied 忍-371 BANDAI 2006 — 四代目火影 ≪電光石火≫. Mercari Shops CDN 751×1024; face.json keeps mercari over fril fabric."
+    },
+    {
+      "printedRef": "作-287",
+      "lang": "ja",
+      "setCode": "maki15",
+      "title": "命のカレー",
+      "listing": "https://jp.mercari.com/item/m45312520435",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m45312520435_1.jpg?1714815022",
+      "ingest": false,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 763,
+        "height": 1080
+      },
+      "note": "skip: mercari 763×1080 softer; existing art.ebay.webp already 1200×1600."
+    },
+    {
+      "printedRef": "作-310",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "星空の下",
+      "listing": "https://jp.mercari.com/item/m31333771728",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m31333771728_1.jpg?1785570505",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 597,
+        "height": 828
+      },
+      "note": "JA orphan fill. Pied 作-310 BANDAI 2006 — 巻ノ十六 星空の下. Crop from 1080² carpet photo."
+    },
+    {
+      "printedRef": "作-310",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "星空の下",
+      "listing": "https://jp.mercari.com/item/m87433227478",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m87433227478_2.jpg?1782452136",
+      "ingest": false,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 523,
+        "height": 765
+      },
+      "note": "skip: dual-copy photo _2 crops to ~523×765; existing art.mercari.jpg already 597×828 from m31333771728."
+    },
+    {
+      "printedRef": "作-316",
+      "lang": "ja",
+      "setCode": "maki16",
+      "title": "白き呪い武者",
+      "listing": "https://jp.mercari.com/item/m87650669099",
+      "url": "https://static.mercdn.net/item/detail/orig/photos/m87650669099_1.jpg",
+      "ingest": true,
+      "bandaiYear": 2006,
+      "pixels": {
+        "width": 481,
+        "height": 702
+      },
+      "note": "JA orphan fill + double illust. Pied 作-316 BANDAI 2006 — 白き呪い武者. VER違い pair: art.mercari=full-body (A), art.ebay=portrait (B). Wired in carddas-jp-double-illustrations.json."
+    }
+  ]
+}

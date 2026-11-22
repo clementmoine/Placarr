@@ -17,9 +17,11 @@ import {
   expandNarutoPrintsToSetScoped,
   isNarutoCatalogueSetCode,
   narutoDiskCardId,
-  type NarutoPrintRow,
 } from "@/providers/naruto/narutocarddass/identity";
-import { narutoPackDbPath } from "@/providers/naruto/narutocarddass/indexStore";
+import {
+  narutoPackDbPath,
+  type NarutoPrintRow,
+} from "@/providers/naruto/narutocarddass/indexStore";
 import { isNarutoS6FrPrintedNumber } from "@/providers/naruto/narutocarddass/sources/titles";
 import { belongsOnNarutoPromoChecklist } from "@/providers/naruto/narutocarddass/sources/promos";
 

@@ -44,7 +44,7 @@ function installCompositionSeeds(): Map<string, boolean> {
       file = load() ?? null;
     } catch (err) {
       console.warn(
-        `  ! ${mod.id}: loadBoosterComposition failed`,
+        `  ! ${mod.info.id}: loadBoosterComposition failed`,
         err instanceof Error ? err.message : err,
       );
       continue;
@@ -62,7 +62,7 @@ function installCompositionSeeds(): Map<string, boolean> {
     mkdirSync(path.dirname(dest), { recursive: true });
     writeFileSync(dest, `${JSON.stringify(file, null, 2)}\n`, "utf8");
     installed.set(packId, true);
-    console.log(`seed file → ${dest} (via ${mod.id})`);
+    console.log(`seed file → ${dest} (via ${mod.info.id})`);
   }
   return installed;
 }

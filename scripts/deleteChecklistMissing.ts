@@ -107,7 +107,9 @@ async function main(): Promise<void> {
     ? readFileSync(pathArg, "utf8")
     : await new Promise<string>((resolve, reject) => {
         const chunks: Buffer[] = [];
-        process.stdin.on("data", (c) => chunks.push(c));
+        process.stdin.on("data", (c: Buffer | string) =>
+          chunks.push(Buffer.from(c)),
+        );
         process.stdin.on("end", () =>
           resolve(Buffer.concat(chunks).toString("utf8")),
         );
@@ -126,7 +128,7 @@ async function main(): Promise<void> {
 
   const toDelete: {
     id: string;
-    printKey: string;
+    printKey: string | null;
     setCode: string | null;
     variant: string | null;
     name: string;

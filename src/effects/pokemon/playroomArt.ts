@@ -22,7 +22,6 @@ import {
 } from "./liveFoilMasks";
 import {
   faceQuarterTurnsForPokemonPrint,
-  ownedBundlesForShader,
 } from "./liveJoin";
 import { POKEMON_MAT_ALIASES } from "./materials";
 import { lookupByBundle } from "./liveCardsLookups";
@@ -92,7 +91,6 @@ const FOIL_SEED_OVERRIDES: Partial<Record<string, Seed>> = {
   },
   SunPillar: {
     // Rampardos ex / Charkos-ex (ME05) — owned CastAndCure SunPillar hero.
-    // Miaouss-ex (me3_fr_062) stays in liveOwned for the multi-face bench.
     // TCGdex set id is `me05` (not Live `me5`); local faces still pending harvest.
     imageBase: "https://assets.tcgdex.net/fr/me/me05/045",
     label: "Charkos-ex",
@@ -272,16 +270,11 @@ export type PlayroomArt = {
   faceQuarterTurns?: 0 | 1 | 2 | 3;
   /** Simey `--card-glow` for Radiant (type colour). */
   cardGlow?: string | null;
-  /**
-   * True when this face is in the Live carddex cache (`liveOwned.json`) —
-   * safe 1:1 MuMu / playroom compare for that effect.
-   */
-  liveOwned?: boolean;
 };
 
 const DUMPED_BUNDLE_LIST_CACHE = new Map<string, BundlePick[]>();
 
-/** Drop dump-face cache after `liveOwned.json` changes (carddex sync / hand edit). */
+/** Vide le cache des faces d'exemple (nouveau dump). */
 export function invalidateDumpedBundleListCache(): void {
   DUMPED_BUNDLE_LIST_CACHE.clear();
 }
@@ -406,13 +399,7 @@ export function listDumpedBundlesForShader(
   if (limit <= 0) return [];
 
   const frag = inventoryFragStem(shader);
-  // Owned list is part of the key — a liveOwned edit must not keep Sovkipou
-  // ahead of Lugulabre until the Next process restarts.
-  const owned = [
-    ...ownedBundlesForShader(shader),
-    ...(frag !== shader ? ownedBundlesForShader(frag) : []),
-  ];
-  const cacheKey = `${shader}::${owned.join(",")}`;
+  const cacheKey = shader;
 
   let full = DUMPED_BUNDLE_LIST_CACHE.get(cacheKey);
   if (!full) {
@@ -430,22 +417,7 @@ export function listDumpedBundlesForShader(
       out.push(pick);
     };
 
-    // Confirmed owned in Live → prefer for 1:1 playroom ↔ MuMu compare.
-    // Order: FOIL_SEED hero (if owned), other Pokémon faces, then energy `ec_*`.
     const preferred = seedFor(shader).bundleId;
-    const ownedRank = (id: string) => {
-      if (preferred && id === preferred) return 0;
-      if (/^ec_/i.test(id)) return 2;
-      return 1;
-    };
-    const ownedOrdered = [...new Set(owned)].sort(
-      (a, b) => ownedRank(a) - ownedRank(b) || a.localeCompare(b),
-    );
-    for (const bundleId of ownedOrdered) {
-      const pick = pickFromLookup(bundleId, shader);
-      if (pick) push(pick);
-    }
-
     if (preferred) {
       const pick = pickFromLookup(preferred, shader);
       if (pick) push(pick);
@@ -532,9 +504,6 @@ function artFromDump(
     seed.faceQuarterTurns ||
     0;
 
-  const liveOwned = Boolean(
-    dumped?.bundleId && ownedBundlesForShader(shader).includes(dumped.bundleId),
-  );
   /*
     Seed TCGdex art only for the seed print itself (or when there is no dump).
     Unharvested stems that are *not* the seed return "" so the stack skips
@@ -571,7 +540,6 @@ function artFromDump(
     bundleId: dumped?.bundleId ?? null,
     variant: dumped?.variant ?? null,
     label,
-    liveOwned,
     ...(faceQuarterTurns ? { faceQuarterTurns } : {}),
     ...(seed.cardGlow ? { cardGlow: seed.cardGlow } : {}),
   };

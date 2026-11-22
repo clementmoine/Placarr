@@ -42,9 +42,9 @@ describe("playroomArtForMaterial", () => {
     const cases = [
       {
         name: "Cosmos",
-        // Owned carddex face (smalt_fr_013) beats unowned FOIL_SEED bwalt_fr_038.
-        bundleId: "smalt_fr_013",
-        label: /smalt_fr_013 · Soleil & Lune \(alt\) n°13/,
+        // FOIL_SEED d'abord (plus de liste « possédées » Live).
+        bundleId: "bwalt_fr_038",
+        label: /Raichu · Noir & Blanc \(alt\) n°38/,
       },
       {
         name: "Galaxy",
@@ -53,9 +53,8 @@ describe("playroomArtForMaterial", () => {
       },
       {
         name: "Rainbow",
-        // Owned carddex face (bw1_fr_095) beats unowned FOIL_SEED bw10_fr_001.
-        bundleId: "bw1_fr_095",
-        label: /bw1_fr_095 · Noir & Blanc n°95/,
+        bundleId: "bw10_fr_001",
+        label: /Arakdo · Noir & Blanc · Glaciation Plasma n°1/,
       },
       {
         name: "RadiantHolo",
@@ -79,15 +78,15 @@ describe("playroomArtForMaterial", () => {
     }
   });
 
-  it("prefers owned Rainbow dump over unowned FOIL_SEED", () => {
+  it("Rainbow → FOIL_SEED Arakdo (bw10_fr_001) en tête, faces locales", () => {
     const dumped = pickDumpedBundleForShader("Rainbow");
-    expect(dumped?.bundleId).toBe("bw1_fr_095");
+    expect(dumped?.bundleId).toBe("bw10_fr_001");
     const art = playroomArtForMaterial("Rainbow");
-    expect(art?.imageUrl).toBe("/assets/pokemon/cards/fr/bw1/095/art.webp");
-    expect(art?.maskUrl).toBe("/assets/pokemon/cards/fr/bw1/095/mask-ph.webp");
+    expect(art?.imageUrl).toBe("/assets/pokemon/cards/fr/bw10/001/art.webp");
+    expect(art?.maskUrl).toBe("/assets/pokemon/cards/fr/bw10/001/mask-ph.webp");
   });
 
-  it("SunPillar → Charkos-ex (me5_fr_045) owned Live face preferred", () => {
+  it("SunPillar → FOIL_SEED Charkos-ex (me5_fr_045)", () => {
     const dumped = pickDumpedBundleForShader("SunPillar");
     expect(dumped?.bundleId).toBe("me5_fr_045");
     const art = playroomArtForMaterial("SunPillar");
@@ -104,32 +103,30 @@ describe("playroomArtForMaterial", () => {
     );
   });
 
-  it("SunBeam → owned Brindibou reverse (sm1_fr_009)", () => {
+  it("SunBeam sans seed → première face du dump, variante reverse (ph)", () => {
     const dumped = pickDumpedBundleForShader("SunBeam");
-    expect(dumped?.bundleId).toBe("sm1_fr_009");
+    expect(dumped?.bundleId).toBe("sm9_fr_014");
     expect(dumped?.variant).toBe("ph");
     const art = playroomArtForMaterial("SunBeam");
-    expect(art?.imageUrl).toBe("/assets/pokemon/cards/fr/sm1/009/art.webp");
-    expect(art?.maskUrl).toBe("/assets/pokemon/cards/fr/sm1/009/mask-ph.webp");
-    expect(art?.label).toMatch(/sm1_fr_009 · Soleil & Lune n°9/);
-    expect(art?.bundleId).toBe("sm1_fr_009");
-    expect(art?.liveOwned).toBe(true);
+    expect(art?.imageUrl).toBe("/assets/pokemon/cards/fr/sm9/014/art.webp");
+    expect(art?.maskUrl).toBe("/assets/pokemon/cards/fr/sm9/014/mask-ph.webp");
+    expect(art?.label).toMatch(/Dracaufeu · Soleil & Lune · Duo de Choc n°14/);
+    expect(art?.bundleId).toBe("sm9_fr_014");
   });
 
-  it("SunLava → owned Lugulabre (sm2) first; dumps ship mask, no etch", () => {
+  it("SunLava → première face lava (std) du dump ; masque, pas d'etch", () => {
     // std = SunLava, ph = SunBeam — pickFromLookup must keep the lava print.
     const dumped = pickDumpedBundleForShader("SunLava");
-    expect(dumped?.bundleId).toBe("sm2_fr_013");
+    expect(dumped?.bundleId).toBe("sm10_fr_001");
     expect(dumped?.variant).toBe("std");
     expect(dumped?.etchTex).toBeFalsy();
     const arts = listPlayroomArtsForMaterial("SunLava", 4);
-    expect(arts[0]?.liveOwned).toBe(true);
-    expect(arts[0]?.bundleId).toBe("sm2_fr_013");
+    expect(arts[0]?.bundleId).toBe("sm10_fr_001");
     expect(arts[0]?.imageUrl).toBe(
-      "/assets/pokemon/cards/fr/sm2/013/art.webp",
+      "/assets/pokemon/cards/fr/sm10/001/art.webp",
     );
     expect(arts[0]?.maskUrl).toBe(
-      "/assets/pokemon/cards/fr/sm2/013/mask.webp",
+      "/assets/pokemon/cards/fr/sm10/001/mask.webp",
     );
     // Empty etch TexEnv → white varnishMask fallback in the renderer.
     expect(arts[0]?.varnishMaskUrl ?? null).toBeNull();
@@ -142,15 +139,6 @@ describe("playroomArtForMaterial", () => {
     const art = playroomArtForMaterial("Squares");
     expect(art?.faceQuarterTurns).toBe(1);
     expect(art?.label).toMatch(/Goupelin TURBO · XY · Rupture TURBO n°14/);
-  });
-
-  it("flags liveOwned on carddex faces; prefers Pokémon over energy", () => {
-    expect(playroomArtForMaterial("Galaxy")?.liveOwned).toBe(true);
-    expect(playroomArtForMaterial("RadiantHolo")?.liveOwned).toBe(false);
-    expect(pickDumpedBundleForShader("AngledPillars")?.bundleId).toBe(
-      "smalt_fr_001",
-    );
-    expect(playroomArtForMaterial("AngledPillars")?.liveOwned).toBe(true);
   });
 
   it("CDN seed paths match TCGdex ids (padded me01 / swsh10.5, ecard1, mep)", () => {

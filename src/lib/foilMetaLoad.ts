@@ -43,7 +43,6 @@ export const FOIL_META_KEYS = {
   lorcanaManifest: "lorcana/foil/manifest.json",
   lorcanaWebRecipes: "lorcana/foil/web/recipes.json",
   liveFoilMasks: "pokemon/liveFoilMasks.json",
-  liveOwned: "pokemon/liveOwned.json",
   reprintMeta: "pokemon/reprintMeta.json",
   lorcanaCardsIndex: "lorcana/cards-index.json",
 } as const;
@@ -179,18 +178,6 @@ export function loadLiveFoilMasks() {
   );
 }
 
-export function loadLiveOwned() {
-  /*
-    Always re-read: carddex sync and hand edits write the JSON on disk outside
-    `writeDataJsonSync`, so a sticky meta cache kept Sovkipou as the SunLava
-    hero after `byEffect` already pointed at Lugulabre.
-  */
-  delete cache()[FOIL_META_KEYS.liveOwned];
-  return readDataJsonSync<unknown>(FOIL_META_KEYS.liveOwned, {
-    bundles: [],
-  });
-}
-
 export function loadReprintMeta() {
   return readDataJsonSync<Record<string, unknown>>(
     FOIL_META_KEYS.reprintMeta,
@@ -220,7 +207,6 @@ const FOIL_META_PACK_HYDRATE: readonly FoilMetaPackHydrate[] = [
     pack: "pokemon",
     apiFields: [
       { field: "liveFoilMasks", key: FOIL_META_KEYS.liveFoilMasks },
-      { field: "liveOwned", key: FOIL_META_KEYS.liveOwned },
       { field: "reprintMeta", key: FOIL_META_KEYS.reprintMeta },
       { field: "materialSheets", key: FOIL_META_KEYS.materialSheets },
       { field: "textureFlags", key: FOIL_META_KEYS.textureFlags },

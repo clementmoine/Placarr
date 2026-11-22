@@ -21,7 +21,6 @@ import { CatalogueBrowser } from "@/components/admin/CatalogueBrowser";
 import { CatalogueSealedBrowser } from "@/components/admin/CatalogueSealedBrowser";
 import { PackDocumentsPanel } from "@/components/admin/PackDocumentsPanel";
 import { PackStorytellingPanel } from "@/components/admin/PackStorytellingPanel";
-import { OpenInLiveButton } from "@/components/admin/OpenInLiveButton";
 import { FoilCardImage } from "@/components/FoilCardImage";
 import type { FoilBackendPreference } from "@/core/render/foil";
 import { clearFoilPool, setFoilPoolMax } from "@/core/render/foil";
@@ -525,7 +524,6 @@ function MaterialTile({
     label?: string | null;
     faceQuarterTurns?: 0 | 1 | 2 | 3;
     cardGlow?: string | null;
-    liveOwned?: boolean;
   } | null;
 }) {
   const fr = locale === "fr";
@@ -552,7 +550,6 @@ function MaterialTile({
     packArtProp !== undefined
       ? packArtProp
       : pack?.playroomArtForMaterial?.(materialName);
-  const liveOwned = Boolean(packArt?.liveOwned);
   const adapted = useAdaptedPrint(candidates, {
     wantedVarnish: varnish,
     requireFoilMask: material ? materialHasRole(material, "foilMask") : true,
@@ -591,16 +588,6 @@ function MaterialTile({
   const subCaptionClass = focus
     ? "text-xs text-muted-foreground"
     : "truncate text-[10px] text-muted-foreground";
-  const liveBundleId = packArt?.bundleId?.trim() || null;
-  const liveOpen =
-    liveOwned && liveBundleId ? (
-      <OpenInLiveButton
-        bundleId={liveBundleId}
-        material={materialName}
-        locale={locale}
-        className={focus ? "items-center" : undefined}
-      />
-    ) : null;
 
   const cardFrame = (children: ReactNode) => (
     <OrientedMediaFrame
@@ -765,11 +752,9 @@ function MaterialTile({
           <p className={captionClass}>{materialName}</p>
           <p className={subCaptionClass}>
             {packArt?.label ?? sample?.name ?? finish ?? "—"}
-            {!liveOwned ? (
-              <span className="ml-1 text-muted-foreground/70">
-                · {fr ? "inspecter" : "inspect"}
-              </span>
-            ) : null}
+            <span className="ml-1 text-muted-foreground/70">
+              · {fr ? "inspecter" : "inspect"}
+            </span>
           </p>
         </button>
       ) : (
@@ -780,7 +765,6 @@ function MaterialTile({
           </p>
         </div>
       )}
-      {liveOpen}
     </div>,
   );
 }
@@ -1007,17 +991,7 @@ export function FoilPlayroom({
     void metaReady;
     return pack?.listMaterials() ?? [];
   }, [pack, metaReady]);
-  /** Owned Live faces first so MuMu-checkable effects are easy to find. */
-  const materialsOrdered = useMemo(() => {
-    if (!pack) return materials;
-    const owned: string[] = [];
-    const rest: string[] = [];
-    for (const name of materials) {
-      if (artsFor(name)[0]?.liveOwned) owned.push(name);
-      else rest.push(name);
-    }
-    return [...owned, ...rest];
-  }, [materials, pack, artsFor]);
+  const materialsOrdered = materials;
   const urlFocusedMaterial = resolvePlayroomMaterial(
     urlPackInSync ? searchParams.get("material") : null,
     materialsOrdered,
@@ -1182,11 +1156,6 @@ export function FoilPlayroom({
   const focusStageRef = useFillViewportBelow<HTMLDivElement>(
     layout !== "grid" && Boolean(focusedMaterial),
   );
-
-  useEffect(() => {
-    // Warm Frida navd in the background so Live opens hit the hot attach.
-    void fetch("/api/admin/live-open").catch(() => {});
-  }, []);
 
   useEffect(() => {
     // Focus mounts a single card — pool of 1 keeps the WebGL context exclusive.

@@ -73,10 +73,8 @@ export {
 } from "./liveFinishVariants";
 export {
   faceQuarterTurnsForPokemonPrint,
-  isOwnedPlayroomBundle,
   joinLiveForPrint,
   listReprintMetaSets,
-  ownedBundlesForShader,
   remapCollectorNumberForLive,
   reprintMetaForTcgdexSet,
   SM115_SHINY_VAULT_LIVE_OFFSET,

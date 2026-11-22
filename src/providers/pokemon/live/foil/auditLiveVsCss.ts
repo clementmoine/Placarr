@@ -30,7 +30,6 @@ import "@/effects/pokemon/cardFoilIndex";
 import { getEffectPack } from "@/core/render/foil";
 import { holoShader } from "@/core/render/holoShaders";
 import { POKEMON_FOIL_NAMES } from "@/effects/pokemon/foilNames";
-import { ownedBundlesForShader } from "@/effects/pokemon/liveJoin";
 
 /** Per-print plates — the card's own art and masks, never shared motifs. */
 const PER_PRINT = /CardColorDiffuse|WhitePlateMask|CardEtch|ColdFoilMask/;
@@ -108,8 +107,7 @@ function main(): void {
     return;
   }
 
-  const findings: { material: string; owned: boolean; missing: string[] }[] =
-    [];
+  const findings: { material: string; missing: string[] }[] = [];
 
   console.log("Live plates vs CSS paint — pokemon\n");
   for (const name of POKEMON_FOIL_NAMES) {
@@ -155,8 +153,6 @@ function main(): void {
       (isData ? data : missing).push(stem);
     }
 
-    const owned = ownedBundlesForShader(name).length > 0;
-    const flag = owned ? "OWNED" : "     ";
     const notes: string[] = [];
     if (data.length) notes.push(`${data.length} carte(s) de données`);
     if (dropped.length)
@@ -167,27 +163,21 @@ function main(): void {
         ? `ok (${notes.join(" ; ")})`
         : "ok";
     console.log(
-      `${flag} ${name.padEnd(20)} live=${String(bound.length).padStart(2)}` +
+      `${name.padEnd(20)} live=${String(bound.length).padStart(2)}` +
         ` peint=${String(painted.size).padStart(2)}` +
         ` découpé=${carved.size}` +
         ` passes=${chain.length}  ${verdict}`,
     );
-    if (missing.length) findings.push({ material: name, owned, missing });
+    if (missing.length) findings.push({ material: name, missing });
   }
 
   if (findings.length === 0) {
     console.log("\nAucune plaque dessinable oubliée.");
     return;
   }
-  const owned = findings.filter((f) => f.owned);
-  console.log(
-    `\n${findings.length} matériau(x) avec une plaque non reprise` +
-      ` — dont ${owned.length} vérifiable(s) à l'œil (owned).`,
-  );
+  console.log(`\n${findings.length} matériau(x) avec une plaque non reprise.`);
   for (const f of findings) {
-    console.log(
-      `  ${f.owned ? "OWNED" : "     "} ${f.material}: ${f.missing.join(" ")}`,
-    );
+    console.log(`  ${f.material}: ${f.missing.join(" ")}`);
   }
 }
 

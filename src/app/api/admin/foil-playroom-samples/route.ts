@@ -79,9 +79,9 @@ export async function GET(req: Request) {
 
     Sent as `packId → material → faces`, which is exactly what the three
     consumers need: the first face for a tile, the whole list for focus and
-    compare, and `liveOwned` for the ordering.
+    compare.
   */
-  // Fresh liveOwned + dump order (owned edits must not stick until restart).
+  // Ordre du dump relu à chaque appel (nouveau dump sans redémarrage).
   invalidateDumpedBundleListCache();
 
   installDbsFwMaskIndex();

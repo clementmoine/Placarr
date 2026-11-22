@@ -55,7 +55,7 @@ describe("hydrateFoilMetaFromAssets", () => {
 
   it("dedupes concurrent browser hydrates onto one pokemon+lorcana pair", async () => {
     vi.stubGlobal("window", {});
-    const fetchImpl = vi.fn(async (url: string) => {
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL) => {
       if (String(url).includes("/api/admin/foil-meta")) {
         return new Response(JSON.stringify({}), { status: 200 });
       }
@@ -80,7 +80,7 @@ describe("hydrateFoilMetaFromAssets", () => {
 
   it("re-fetches after resetFoilMetaCache", async () => {
     vi.stubGlobal("window", {});
-    const fetchImpl = vi.fn(async (url: string) => {
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL) => {
       if (String(url).includes("/api/admin/foil-meta")) {
         return new Response(JSON.stringify({}), { status: 200 });
       }
@@ -100,7 +100,7 @@ describe("hydrateFoilMetaFromAssets", () => {
 
   it("invalidates Lorcana derived meta after each hydrate", async () => {
     vi.stubGlobal("window", {});
-    const fetchImpl = vi.fn(async (url: string) => {
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL) => {
       if (String(url).includes("/api/admin/foil-meta")) {
         return new Response(JSON.stringify({}), { status: 200 });
       }

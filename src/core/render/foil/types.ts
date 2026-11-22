@@ -273,8 +273,6 @@ export type EffectPackModule = {
     /** Quarters of a turn when the seed sits on its side (BREAK → 1). */
     faceQuarterTurns?: 0 | 1 | 2 | 3;
     cardGlow?: string | null;
-    /** Face is in the Live carddex cache — MuMu 1:1 compare is possible. */
-    liveOwned?: boolean;
   } | null;
   /**
    * Several Live faces for one material (seed + other sets). Focus/compare
@@ -293,6 +291,5 @@ export type EffectPackModule = {
     label?: string | null;
     faceQuarterTurns?: 0 | 1 | 2 | 3;
     cardGlow?: string | null;
-    liveOwned?: boolean;
   }>;
 };

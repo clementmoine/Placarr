@@ -432,10 +432,6 @@ export function packLiveFoilMasksPath(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "liveFoilMasks.json");
 }
 
-export function packLiveOwnedPath(pack: string): string {
-  return path.join(dataRoot(), canonicalDataPack(pack), "liveOwned.json");
-}
-
 export function packReprintMetaPath(pack: string): string {
   return path.join(dataRoot(), canonicalDataPack(pack), "reprintMeta.json");
 }

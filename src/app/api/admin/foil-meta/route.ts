@@ -9,7 +9,6 @@ import {
   loadFoilManifest,
   loadFragStems,
   loadLiveFoilMasks,
-  loadLiveOwned,
   loadLorcanaWebRecipes,
   loadMaterialSheets,
   loadReprintMeta,
@@ -41,7 +40,6 @@ export async function GET(req: Request) {
   }
   return NextResponse.json({
     liveFoilMasks: loadLiveFoilMasks(),
-    liveOwned: loadLiveOwned(),
     reprintMeta: loadReprintMeta(),
     materialSheets: loadMaterialSheets(),
     textureFlags: loadTextureFlags(),

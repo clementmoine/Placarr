@@ -7,6 +7,11 @@
  * refresh actually cancels its sockets), and de-duplication of identical
  * in-flight GETs (the same search URL is often requested by several passes at
  * once).
+ *
+ * Résilience par défaut (GET / HEAD, idempotents) : un rejeu sur erreur
+ * transitoire (réseau, délai, 5xx — jamais 4xx ni 429, signal de quota) et un
+ * circuit breaker par host d'API, ouvert après quelques échecs transitoires
+ * consécutifs. Le profil `scrape` garde son propre circuit (`scrapeFetch`).
  */
 import axios, {
   type AxiosError,
@@ -15,6 +20,13 @@ import axios, {
 } from "axios";
 
 import {
+  circuitAllowsRequest,
+  circuitRetryAfterMs,
+  recordCircuitFailure,
+  recordCircuitSuccess,
+} from "@/lib/http/circuitBreaker";
+import {
+  hostKeyOf,
   waitForHostSlot,
   type HostLimiterProfile,
 } from "@/lib/http/hostLimiter";
@@ -62,7 +74,146 @@ export type HttpGetOptions = AxiosRequestConfig & {
   minIntervalMs?: number;
   /** Profil de cadence du limiteur par host (`api` par défaut). */
   hostProfile?: HostLimiterProfile;
+  /**
+   * Nombre total d'essais sur erreur transitoire (réseau, délai, 5xx).
+   * Défaut {@link HTTP_DEFAULT_ATTEMPTS} ; `1` = aucun rejeu (l'appelant gère
+   * déjà le sien, ou chaque seconde compte).
+   */
+  retries?: number;
 };
+
+/** Un rejeu par défaut : assez pour un hoquet réseau, pas de quoi immobiliser un worker. */
+export const HTTP_DEFAULT_ATTEMPTS = 2;
+const RETRY_BASE_DELAY_MS = 250;
+/** Échecs transitoires consécutifs avant d'ouvrir le circuit d'un host d'API. */
+export const API_CIRCUIT_FAILURE_THRESHOLD = 5;
+export const CIRCUIT_OPEN_CODE = "ECIRCUITOPEN";
+
+/**
+ * Erreur réseau / délai / 5xx — rejouable. Lu structurellement (pas via
+ * `axios.isAxiosError`) pour rester compatible avec les tests qui mockent
+ * axios au strict minimum.
+ */
+export function isTransientHttpError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as {
+    isAxiosError?: boolean;
+    code?: string;
+    name?: string;
+    response?: { status?: number };
+  };
+  if (e.name === "AbortError" || e.name === "CanceledError") return false;
+  if (e.code === "ERR_CANCELED" || e.code === CIRCUIT_OPEN_CODE) return false;
+  if (!e.isAxiosError) return false;
+  const status = e.response?.status;
+  if (status == null) return true;
+  return status >= 500 && status < 600;
+}
+
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(abortError(signal.reason));
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(abortError(signal?.reason));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+/**
+ * `PLACARR_HTTP_RESILIENCE=off` : ni rejeu ni circuit d'API. Réservé au rejeu
+ * déterministe des fixtures HTTP (`tests/helpers/httpReplay`), enregistrées
+ * sans ces mécanismes — une requête non couverte y rend un 504 qui, rejoué ou
+ * compté, fausserait le chemin rejoué. Jamais en production.
+ */
+function httpResilienceOff(): boolean {
+  return process.env.PLACARR_HTTP_RESILIENCE?.trim().toLowerCase() === "off";
+}
+
+/** Rejoue `fn` sur erreur transitoire, backoff exponentiel à jitter complet. */
+async function withTransientRetry<T>(
+  attempts: number,
+  signal: AbortSignal | undefined,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const maxAttempts = httpResilienceOff() ? 1 : attempts;
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= maxAttempts || !isTransientHttpError(error)) throw error;
+      const cap = RETRY_BASE_DELAY_MS * 2 ** (attempt - 1);
+      await abortableSleep(Math.random() * cap, signal);
+    }
+  }
+}
+
+/** Échecs transitoires consécutifs par host d'API (mémoire du process). */
+const apiFailures = new Map<string, number>();
+/** Hosts dont ce process a ouvert le circuit — seuls eux consultent le breaker. */
+const apiOpened = new Set<string>();
+
+function circuitOpenError(url: string, key: string): Error {
+  const seconds = Math.ceil(circuitRetryAfterMs(key) / 1000);
+  return Object.assign(
+    new Error(
+      `Circuit ouvert pour ${hostKeyOf(url)} (réessai dans ${seconds}s)`,
+    ),
+    { code: CIRCUIT_OPEN_CODE },
+  );
+}
+
+/**
+ * Circuit breaker des hosts d'API : rien à lire ni écrire tant que le host
+ * répond ; le disque (`circuitBreaker`) n'est touché qu'à l'ouverture et à la
+ * fermeture. Une réponse — même 404 — prouve que le host est vivant.
+ */
+async function withApiCircuit<T>(
+  url: string,
+  profile: HostLimiterProfile,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (profile === "scrape" || httpResilienceOff()) return fn();
+  const key = `api:${hostKeyOf(url)}`;
+  if (apiOpened.has(key) && !circuitAllowsRequest(key)) {
+    throw circuitOpenError(url, key);
+  }
+  try {
+    const result = await fn();
+    noteApiAlive(key);
+    return result;
+  } catch (error) {
+    if (isTransientHttpError(error)) noteApiFailure(key);
+    else if ((error as { response?: unknown })?.response) noteApiAlive(key);
+    throw error;
+  }
+}
+
+function noteApiAlive(key: string): void {
+  apiFailures.delete(key);
+  if (apiOpened.delete(key)) recordCircuitSuccess(key);
+}
+
+function noteApiFailure(key: string): void {
+  // Sonde half-open ratée : le circuit se rouvre au palier suivant.
+  if (apiOpened.has(key)) {
+    recordCircuitFailure(key);
+    return;
+  }
+  const failures = (apiFailures.get(key) ?? 0) + 1;
+  if (failures < API_CIRCUIT_FAILURE_THRESHOLD) {
+    apiFailures.set(key, failures);
+    return;
+  }
+  apiFailures.delete(key);
+  apiOpened.add(key);
+  recordCircuitFailure(key);
+}
 
 type InFlight = {
   promise: Promise<AxiosResponse<unknown>>;
@@ -87,6 +238,8 @@ export function httpClientStats(): Readonly<typeof stats> {
 export function resetHttpClient(): void {
   inFlight.clear();
   responseCache.clear();
+  apiFailures.clear();
+  apiOpened.clear();
   stats.requests = 0;
   stats.dedupHits = 0;
   stats.cacheHits = 0;
@@ -223,11 +376,13 @@ export async function httpGet<T = unknown>(
     noDedup,
     minIntervalMs,
     hostProfile,
+    retries = HTTP_DEFAULT_ATTEMPTS,
     signal: explicitSignal,
     ...rest
   } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
   if (signal?.aborted) throw abortError(signal.reason);
+  const profile = hostProfile ?? "api";
 
   const axiosOptions: AxiosRequestConfig = {
     ...rest,
@@ -239,7 +394,7 @@ export async function httpGet<T = unknown>(
   // host — les hits cache/dedup n'attendent pas, eux.
   const waitSlot = (slotSignal?: AbortSignal) =>
     waitForHostSlot(url, {
-      profile: hostProfile ?? "api",
+      profile,
       minIntervalMs,
       signal: slotSignal,
     });
@@ -247,9 +402,13 @@ export async function httpGet<T = unknown>(
   // Streams have a single consumer — never share or replay them.
   const shareable = !noDedup && axiosOptions.responseType !== "stream";
   if (!shareable) {
-    stats.requests += 1;
-    await waitSlot(signal);
-    return axios.get<T>(url, { ...axiosOptions, signal });
+    return withApiCircuit(url, profile, () =>
+      withTransientRetry(retries, signal, async () => {
+        stats.requests += 1;
+        await waitSlot(signal);
+        return axios.get<T>(url, { ...axiosOptions, signal });
+      }),
+    );
   }
 
   const key = requestKey(url, options);
@@ -274,17 +433,22 @@ export async function httpGet<T = unknown>(
   const entry: InFlight = {
     controller,
     waiters: 0,
-    promise: waitSlot(controller.signal)
-      .then(() => {
-        // Tous les waiters sont partis pendant l'attente du créneau : ne pas
-        // émettre une requête que plus personne n'écoute.
-        if (controller.signal.aborted)
-          throw abortError(controller.signal.reason);
-        return axios.get<T>(url, {
-          ...axiosOptions,
-          signal: controller.signal,
-        });
-      })
+    // Rejeu et circuit dans la promesse partagée : les appelants joints
+    // profitent du même rejeu au lieu d'en relancer chacun un.
+    promise: withApiCircuit(url, profile, () =>
+      withTransientRetry(retries, controller.signal, () =>
+        waitSlot(controller.signal).then(() => {
+          // Tous les waiters sont partis pendant l'attente du créneau : ne pas
+          // émettre une requête que plus personne n'écoute.
+          if (controller.signal.aborted)
+            throw abortError(controller.signal.reason);
+          return axios.get<T>(url, {
+            ...axiosOptions,
+            signal: controller.signal,
+          });
+        }),
+      ),
+    )
       .then((response) => {
         if (cacheTtlMs > 0 && response.status >= 200 && response.status < 300) {
           rememberEntry(responseCache, key, { at: Date.now(), response });
@@ -307,7 +471,7 @@ export async function httpGet<T = unknown>(
 export async function httpPost<T = unknown>(
   url: string,
   body?: unknown,
-  options: Omit<HttpGetOptions, "cacheTtlMs" | "noDedup"> = {},
+  options: Omit<HttpGetOptions, "cacheTtlMs" | "noDedup" | "retries"> = {},
 ): Promise<AxiosResponse<T>> {
   const {
     signal: explicitSignal,
@@ -344,21 +508,23 @@ export async function httpHead(
     signal: explicitSignal,
     minIntervalMs,
     hostProfile,
+    retries = HTTP_DEFAULT_ATTEMPTS,
     ...rest
   } = options;
   const signal = resolveRequestAbortSignal(explicitSignal);
   if (signal?.aborted) throw abortError(signal.reason);
+  const profile = hostProfile ?? "api";
 
-  stats.requests += 1;
-  await waitForHostSlot(url, {
-    profile: hostProfile ?? "api",
-    minIntervalMs,
-    signal,
-  });
-  return axios.head(url, {
-    ...rest,
-    headers: withDefaultUserAgent(rest.headers),
-    timeout: rest.timeout ?? HTTP_DEFAULT_TIMEOUT_MS,
-    signal,
-  });
+  return withApiCircuit(url, profile, () =>
+    withTransientRetry(retries, signal, async () => {
+      stats.requests += 1;
+      await waitForHostSlot(url, { profile, minIntervalMs, signal });
+      return axios.head(url, {
+        ...rest,
+        headers: withDefaultUserAgent(rest.headers),
+        timeout: rest.timeout ?? HTTP_DEFAULT_TIMEOUT_MS,
+        signal,
+      });
+    }),
+  );
 }

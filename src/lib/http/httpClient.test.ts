@@ -14,6 +14,8 @@ import {
   resetHttpClient,
 } from "./httpClient";
 import { resetHostLimiterForTests } from "./hostLimiter";
+import { resetCircuitBreakersForTests } from "./circuitBreaker";
+import { setCircuitPersistenceRoot } from "./circuitPersistence";
 
 const mockedGet = vi.mocked(axios.get);
 
@@ -232,5 +234,140 @@ describe("httpGet", () => {
     await httpGet("https://other.test/a", { noDedup: true });
 
     expect(mockedGet).toHaveBeenCalledTimes(2);
+  });
+});
+
+/** Erreurs axios telles qu'axios les rejette (le mock n'expose pas la classe). */
+function httpError(status: number) {
+  return Object.assign(new Error(`HTTP ${status}`), {
+    isAxiosError: true,
+    response: { status, headers: {}, data: null },
+  });
+}
+function networkError(code = "ECONNRESET") {
+  return Object.assign(new Error(code), { isAxiosError: true, code });
+}
+
+describe("httpGet — résilience par défaut", () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+    resetHttpClient();
+    resetHostLimiterForTests();
+    resetCircuitBreakersForTests();
+    setCircuitPersistenceRoot(null);
+  });
+
+  afterEach(() => {
+    resetHttpClient();
+    resetCircuitBreakersForTests();
+  });
+
+  it("rejoue une fois une erreur transitoire (5xx, réseau) puis rend la réponse", async () => {
+    mockedGet
+      .mockRejectedValueOnce(httpError(503))
+      .mockResolvedValueOnce(response("ok"));
+    await expect(
+      httpGet("https://api.test/a", { minIntervalMs: 0 }),
+    ).resolves.toMatchObject({ data: "ok" });
+
+    mockedGet
+      .mockRejectedValueOnce(networkError())
+      .mockResolvedValueOnce(response("ok2"));
+    await expect(
+      httpGet("https://api.test/b", { minIntervalMs: 0 }),
+    ).resolves.toMatchObject({ data: "ok2" });
+    expect(mockedGet).toHaveBeenCalledTimes(4);
+  });
+
+  it("ne rejoue jamais une erreur définitive ni un quota (404, 429)", async () => {
+    mockedGet.mockRejectedValueOnce(httpError(404));
+    await expect(
+      httpGet("https://api.test/404", { minIntervalMs: 0 }),
+    ).rejects.toThrow("HTTP 404");
+    mockedGet.mockRejectedValueOnce(httpError(429));
+    await expect(
+      httpGet("https://api.test/429", { minIntervalMs: 0 }),
+    ).rejects.toThrow("HTTP 429");
+    expect(mockedGet).toHaveBeenCalledTimes(2);
+  });
+
+  it("`retries: 1` désactive le rejeu", async () => {
+    mockedGet.mockRejectedValueOnce(httpError(502));
+    await expect(
+      httpGet("https://api.test/once", { minIntervalMs: 0, retries: 1 }),
+    ).rejects.toThrow("HTTP 502");
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("ouvre le circuit d'un host après 5 échecs transitoires consécutifs, sans toucher aux autres", async () => {
+    mockedGet.mockRejectedValue(httpError(503));
+    for (let i = 0; i < 5; i += 1) {
+      await expect(
+        httpGet(`https://down.test/${i}`, { minIntervalMs: 0, retries: 1 }),
+      ).rejects.toThrow("HTTP 503");
+    }
+    const callsBefore = mockedGet.mock.calls.length;
+    await expect(
+      httpGet("https://down.test/next", { minIntervalMs: 0 }),
+    ).rejects.toMatchObject({ code: "ECIRCUITOPEN" });
+    expect(mockedGet.mock.calls.length).toBe(callsBefore);
+
+    mockedGet.mockResolvedValueOnce(response("fine"));
+    await expect(
+      httpGet("https://up.test/a", { minIntervalMs: 0 }),
+    ).resolves.toMatchObject({ data: "fine" });
+  });
+
+  it("PLACARR_HTTP_RESILIENCE=off (rejeu déterministe) : ni rejeu ni circuit", async () => {
+    vi.stubEnv("PLACARR_HTTP_RESILIENCE", "off");
+    try {
+      mockedGet.mockRejectedValue(httpError(504));
+      for (let i = 0; i < 7; i += 1) {
+        await expect(
+          httpGet(`https://replay.test/${i}`, { minIntervalMs: 0 }),
+        ).rejects.toThrow("HTTP 504");
+      }
+      // Un appel par requête (pas de rejeu), et jamais de circuit ouvert.
+      expect(mockedGet).toHaveBeenCalledTimes(7);
+      mockedGet.mockResolvedValueOnce(response("couvert"));
+      await expect(
+        httpGet("https://replay.test/ok", { minIntervalMs: 0 }),
+      ).resolves.toMatchObject({ data: "couvert" });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("un succès remet le compteur d'échecs du host à zéro", async () => {
+    for (let round = 0; round < 2; round += 1) {
+      for (let i = 0; i < 4; i += 1) {
+        mockedGet.mockRejectedValueOnce(httpError(500));
+        await expect(
+          httpGet(`https://flaky.test/${round}-${i}`, {
+            minIntervalMs: 0,
+            retries: 1,
+          }),
+        ).rejects.toThrow();
+      }
+      mockedGet.mockResolvedValueOnce(response("ok"));
+      await httpGet(`https://flaky.test/ok-${round}`, { minIntervalMs: 0 });
+    }
+    mockedGet.mockResolvedValueOnce(response("still closed"));
+    await expect(
+      httpGet("https://flaky.test/last", { minIntervalMs: 0 }),
+    ).resolves.toMatchObject({ data: "still closed" });
+  });
+
+  it("laisse le profil `scrape` à son propre circuit (scrapeFetch)", async () => {
+    mockedGet.mockRejectedValue(networkError());
+    for (let i = 0; i < 6; i += 1) {
+      await expect(
+        httpGet(`https://shop.test/${i}`, {
+          minIntervalMs: 0,
+          retries: 1,
+          hostProfile: "scrape",
+        }),
+      ).rejects.toThrow("ECONNRESET");
+    }
   });
 });

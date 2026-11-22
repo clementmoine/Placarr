@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
 
 import { BatchInterceptor } from "@mswjs/interceptors";
@@ -23,7 +24,13 @@ import nodeInterceptors from "@mswjs/interceptors/presets/node";
  */
 
 export type Interaction = {
-  request: { method: string; url: string };
+  /**
+   * `bodyKey` : empreinte du corps des requêtes non-GET. Plusieurs POST vers
+   * la même URL (sidecar Byparr / FlareSolverr, OAuth) ne se distinguent que
+   * par leur corps — sans lui, le rejeu les servait dans l'ordre d'arrivée,
+   * faux dès que les requêtes partent en parallèle.
+   */
+  request: { method: string; url: string; bodyKey?: string };
   response: { status: number; body: string; headers?: Record<string, string> };
 };
 
@@ -49,8 +56,40 @@ export function redact(input: string): string {
   return out;
 }
 
-function keyOf(method: string, url: string): string {
-  return `${method.toUpperCase()} ${redact(normalizeReplayUrl(url))}`;
+function keyOf(method: string, url: string, bodyKey?: string): string {
+  const base = `${method.toUpperCase()} ${redact(normalizeReplayUrl(url))}`;
+  return bodyKey ? `${base} #${bodyKey}` : base;
+}
+
+/** Empreinte stable du corps d'une requête non-GET (secrets expurgés). */
+/** Cible lisible des derniers corps (rapport « requêtes non couvertes »). */
+const bodyLabels = new Map<string, string>();
+
+async function bodyKeyOf(request: Request): Promise<string | undefined> {
+  if (request.method.toUpperCase() === "GET") return undefined;
+  try {
+    const text = await request.clone().text();
+    if (!text) return undefined;
+    // Corps JSON qui nomme une URL cible (Byparr / FlareSolverr `request.get`) :
+    // seuls la commande et la cible comptent — le délai ou la session varient.
+    let material = text;
+    try {
+      const json = JSON.parse(text) as { cmd?: unknown; url?: unknown };
+      if (json && typeof json.url === "string") {
+        material = `${typeof json.cmd === "string" ? json.cmd : ""} ${json.url}`;
+      }
+    } catch {
+      /* corps non JSON : empreinte du texte brut */
+    }
+    const key = createHash("sha1")
+      .update(redact(material))
+      .digest("hex")
+      .slice(0, 16);
+    bodyLabels.set(key, redact(material).slice(0, 160));
+    return key;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Collapse redirect-only query noise so record/replay keys stay aligned. */
@@ -104,6 +143,12 @@ function shouldSkipRecord(url: string): boolean {
 function prepareRecordBody(url: string, body: string): string | null {
   if (shouldSkipRecord(url)) return null;
   if (body.length <= MAX_RECORD_BODY_CHARS) return body;
+  // JSON tronqué = JSON invalide (réponses Byparr / FlareSolverr qui emballent
+  // une page HTML) : le rejeu échouait au parse et partait sur des requêtes
+  // jamais enregistrées. Garder entier ; la taille reste bornée par
+  // tests/fixtureSize.test.ts.
+  const head = body.trimStart()[0];
+  if (head === "{" || head === "[") return body;
   return `${body.slice(0, MAX_RECORD_BODY_CHARS)}\n<!-- truncated ${body.length} chars -->`;
 }
 
@@ -121,7 +166,7 @@ function activateSession(session: HttpReplay) {
   activeSession = session;
   if (sharedInterceptor) return;
   sharedInterceptor = createSharedInterceptor();
-  sharedInterceptor.on("request", ({ request, controller }) => {
+  sharedInterceptor.on("request", async ({ request, controller }) => {
     const current = activeSession;
     if (!current) {
       // Requête hors session (fuite asynchrone d'un cas précédent) : échec
@@ -131,12 +176,24 @@ function activateSession(session: HttpReplay) {
       );
       return;
     }
-    const mocked = current.mockedResponseFor(request.method, request.url);
+    const bodyKey = await bodyKeyOf(request);
+    const mocked = current.mockedResponseFor(
+      request.method,
+      request.url,
+      bodyKey,
+    );
     if (mocked) controller.respondWith(mocked);
     // null = mode record : laisser passer vers le vrai réseau.
   });
   sharedInterceptor.on("response", ({ request, response }) => {
-    activeSession?.captureResponse(request.method, request.url, response);
+    const session = activeSession;
+    if (!session) return;
+    session.captureResponse(
+      request.method,
+      request.url,
+      response,
+      bodyKeyOf(request),
+    );
   });
   sharedInterceptor.apply();
 }
@@ -165,12 +222,15 @@ export class HttpReplay {
     this.mode = "replay";
     this.replayQueue = new Map();
     for (const it of interactions) {
-      const key = keyOf(it.request.method, it.request.url);
+      const key = keyOf(it.request.method, it.request.url, it.request.bodyKey);
       const list = this.replayQueue.get(key) || [];
       list.push(it);
       this.replayQueue.set(key, list);
     }
     this.misses = new Set();
+    // Fixtures enregistrées sans rejeu ni circuit d'API : les couper pour que
+    // le chemin rejoué reste celui enregistré (cf. httpClient).
+    process.env.PLACARR_HTTP_RESILIENCE = "off";
     activateSession(this);
   }
 
@@ -178,13 +238,21 @@ export class HttpReplay {
    * Réponse simulée pour une requête interceptée (délégué par l'intercepteur
    * partagé). `null` en mode record : la requête part sur le vrai réseau.
    */
-  mockedResponseFor(method: string, url: string): Response | null {
+  mockedResponseFor(
+    method: string,
+    url: string,
+    bodyKey?: string,
+  ): Response | null {
     if (this.mode !== "replay") return null;
-    const key = keyOf(method, url);
+    // Clé avec corps d'abord ; repli sur l'ancienne clé (fixtures antérieures).
+    const keyed = bodyKey ? keyOf(method, url, bodyKey) : null;
+    const key =
+      keyed && this.replayQueue.has(keyed) ? keyed : keyOf(method, url);
     const list = this.replayQueue.get(key);
     const it = list && (list.length > 1 ? list.shift() : list[0]);
     if (!it) {
-      this.misses.add(key);
+      const label = bodyKey ? bodyLabels.get(bodyKey) : undefined;
+      this.misses.add(label ? `${key} (${label})` : key);
       // Échec déterministe : le fournisseur est traité comme indisponible.
       return new Response("replay-miss", { status: 504 });
     }
@@ -195,7 +263,12 @@ export class HttpReplay {
   }
 
   /** Capture une réponse réelle (délégué par l'intercepteur partagé). */
-  captureResponse(method: string, url: string, response: Response) {
+  captureResponse(
+    method: string,
+    url: string,
+    response: Response,
+    bodyKeyPromise: Promise<string | undefined> = Promise.resolve(undefined),
+  ) {
     if (this.mode !== "record") return;
     // La lecture du corps est asynchrone : on suit la promesse pour pouvoir
     // l'attendre via flush() avant de lire les interactions.
@@ -207,8 +280,13 @@ export class HttpReplay {
         const headers: Record<string, string> = {};
         const location = response.headers.get("location");
         if (location) headers.location = location;
+        const bodyKey = await bodyKeyPromise;
         this.recorded.push({
-          request: { method, url: redact(url) },
+          request: {
+            method,
+            url: redact(url),
+            ...(bodyKey ? { bodyKey } : {}),
+          },
           response: {
             status: response.status,
             body: redact(body),

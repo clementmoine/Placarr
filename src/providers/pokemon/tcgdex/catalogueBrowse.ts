@@ -278,24 +278,41 @@ export function listPokemonCatalogueBrowsePage(
       on-disk harvests. CDN `image_base_url` alone stays densify debt.
       Post-filter after resolve for an honest total.
     */
+    /*
+      The scan only needs « is there a disk face? » per candidate. Resolving
+      the Live foil too for every one of them (~7k FR rows) made one page
+      take 15–40 s; hydrate the visible window only, like foilOnly.
+    */
     const { foilOnly: _f, identityOnly: _id, ...base } = input;
-    return overscanFilterPage({
+    const overscan = overscanFilterPage({
       offset: input.offset,
       limit: input.limit,
       maxScan: 50_000,
       fetchPage: (offset, limit) =>
-        listPokemonCatalogueBrowsePageSql({
+        listPokemonRawBrowsePage({
           ...base,
           incompleteOnly: input.incompleteOnly,
           missingArtOnly: input.missingArtOnly,
           offset,
           limit,
         }),
-      keep: (row) =>
-        input.incompleteOnly
-          ? Boolean(row.missingArt || !row.name?.trim())
-          : Boolean(row.missingArt),
+      keep: (row) => {
+        const lang = (row.lang ?? "fr").trim().toLowerCase() || "fr";
+        const missingArt = !localPokemonCatalogueArtUrl(
+          row.printKey,
+          lang,
+          undefined,
+          { languages: [lang] },
+        );
+        return input.incompleteOnly
+          ? missingArt || !row.name?.trim()
+          : missingArt;
+      },
     });
+    return {
+      total: overscan.total,
+      rows: overscan.rows.map((row) => rowToCatalogueCard(row)),
+    };
   }
   return listPokemonCatalogueBrowsePageSql(input);
 }

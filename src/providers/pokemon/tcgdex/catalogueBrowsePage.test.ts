@@ -226,7 +226,8 @@ describe.skipIf(!hasDb)("pokemon catalogue SQL browse page", () => {
       limit: 24,
     });
     expect(viaRouter.total).toBe(small.total);
-  });
+    // Three honest totals = three full disk scans of the FR candidates (~7k).
+  }, 60_000);
 
   it("missingArtOnly includes CDN-only densify debt (image_base_url alone ≠ art)", () => {
     const missing = listPokemonCatalogueBrowsePage({

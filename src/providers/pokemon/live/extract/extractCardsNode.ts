@@ -39,6 +39,11 @@ export type ExtractCardsNodeResult = {
   written: number;
   skipped: number;
   errors: number;
+  /**
+   * Bundles left unextracted because `card-uv-rect.json` is unknown: a Live
+   * texture without the Card mesh rect is a square atlas, not card art.
+   */
+  pendingCrop: number;
   rows: MaterialManifestRow[];
 };
 
@@ -48,6 +53,11 @@ export async function extractCardsNode(
   const textureMode = opts.textureMode ?? "cards";
   const cardsRoot = packCardsDir(opts.repo, "pokemon");
   const cropRect = loadUvRectFile(foilPackDir(opts.repo, "pokemon"));
+  if (textureMode === "cards" && !cropRect) {
+    console.warn(
+      "  card-uv-rect.json absent — faces Live non extraites (rectangle du maillage Card : client du jeu requis)",
+    );
+  }
   const ledgerRoot = opts.ledgerRoot ?? path.dirname(opts.bundlesDir);
   const ledger = loadBundleLedger(ledgerRoot);
   let cardFiles = readdirSync(opts.bundlesDir)
@@ -62,6 +72,7 @@ export async function extractCardsNode(
   let written = 0;
   let skipped = 0;
   let errors = 0;
+  let pendingCrop = 0;
   const rows: MaterialManifestRow[] = [];
 
   for (let i = 0; i < cardFiles.length; i++) {
@@ -82,22 +93,27 @@ export async function extractCardsNode(
       textureMode,
       sidecar,
       bundleHash,
+      cropRect,
     });
     if (upToDate) {
       skipped++;
       if (sidecar?.rows?.length) rows.push(...sidecar.rows);
       // Backfill CDN hash on legacy sidecars so a later re-download of the
       // same bytes does not force another Unity decode.
+      // Same for the crop stamp: a fresh legacy face was cut with this rect.
       if (
-        bundleHash &&
         sidecar?.rows?.length &&
-        sidecar.bundleHash !== bundleHash
+        ((bundleHash && sidecar.bundleHash !== bundleHash) ||
+          sidecar.cropRect === undefined)
       ) {
         writeExtractSidecar(faceDir, mtime, textureMode, sidecar.rows, {
-          bundleHash,
+          bundleHash: bundleHash ?? sidecar.bundleHash,
           bundleSize,
+          cropRect,
         });
       }
+    } else if (textureMode === "cards" && !cropRect) {
+      pendingCrop++;
     } else {
       try {
         const result = await extractCardBundleTextures(bundlePath, faceDir, {
@@ -109,6 +125,7 @@ export async function extractCardsNode(
         writeExtractSidecar(faceDir, mtime, textureMode, result.rows, {
           bundleHash,
           bundleSize,
+          cropRect,
         });
       } catch (err) {
         errors++;
@@ -126,7 +143,7 @@ export async function extractCardsNode(
     // minutes of silence while the loop was actually busy stat-ing 30k files.
     if ((i + 1) % 200 === 0 || i + 1 === cardFiles.length) {
       console.log(
-        `  cards ${i + 1}/${cardFiles.length} written=${written} manifests=${rows.length} skipped=${skipped} errors=${errors}`,
+        `  cards ${i + 1}/${cardFiles.length} written=${written} manifests=${rows.length} skipped=${skipped} errors=${errors}${pendingCrop ? ` sans-découpe=${pendingCrop}` : ""}`,
       );
     }
   }
@@ -137,6 +154,7 @@ export async function extractCardsNode(
     written,
     skipped,
     errors,
+    pendingCrop,
     rows,
   };
 }

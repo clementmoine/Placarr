@@ -100,20 +100,47 @@ async function loadCardBackBytesFromApk(apkPath: string): Promise<Buffer | null>
   return null;
 }
 
-async function loadCardBackBytesFromDataDir(dataDir: string): Promise<Buffer | null> {
-  const file = path.join(dataDir, CARD_BACK_ASSET_HASH);
-  if (existsSync(file)) return readFileSync(file);
-
-  console.log(`  card back: hash file missing — scanning ${dataDir}…`);
-  const scanStarted = Date.now();
+/**
+ * Files that may hold the `cardBack` Texture2D: hashed names (Android APK
+ * `assets/bin/Data/`) first, then the desktop player's named serialized files
+ * (`resources.assets`, `sharedassetsN.assets`, `levelN`) — same objects,
+ * different file layout. Streamed `.resS` blobs are not candidates.
+ */
+export function cardBackCandidateFiles(dataDir: string): string[] {
   let entries: string[] = [];
   try {
     entries = readdirSync(dataDir);
   } catch {
-    return null;
+    return [];
   }
-  for (const name of entries) {
-    if (!isUnityAssetHashName(name)) continue;
+  const isFile = (name: string) => {
+    try {
+      return statSync(path.join(dataDir, name)).isFile();
+    } catch {
+      return false;
+    }
+  };
+  const hashed = entries.filter((n) => isUnityAssetHashName(n) && isFile(n));
+  const named = entries.filter(
+    (n) =>
+      /^(resources\.assets|sharedassets\d+\.assets|level\d+|globalgamemanagers(\.assets)?)$/i.test(
+        n,
+      ) && isFile(n),
+  );
+  return [...hashed.sort(), ...named.sort()];
+}
+
+async function loadCardBackBytesFromDataDir(
+  dataDir: string,
+): Promise<{ bytes: Buffer; name: string } | null> {
+  const file = path.join(dataDir, CARD_BACK_ASSET_HASH);
+  if (existsSync(file)) {
+    return { bytes: readFileSync(file), name: CARD_BACK_ASSET_HASH };
+  }
+
+  console.log(`  card back: hash file missing — scanning ${dataDir}…`);
+  const scanStarted = Date.now();
+  for (const name of cardBackCandidateFiles(dataDir)) {
     const full = path.join(dataDir, name);
     try {
       if (!statSync(full).isFile()) continue;
@@ -132,7 +159,7 @@ async function loadCardBackBytesFromDataDir(dataDir: string): Promise<Buffer | n
         console.log(
           `  card back: scan hit ${name} (${bytes.length} B, ${elapsedSec(scanStarted)})`,
         );
-        return bytes;
+        return { bytes, name };
       }
     } catch {
       /* try next */
@@ -142,9 +169,29 @@ async function loadCardBackBytesFromDataDir(dataDir: string): Promise<Buffer | n
   return null;
 }
 
+/**
+ * Sibling `<file>.resS` of a standalone serialized file (desktop player):
+ * the Texture2D `m_StreamData` points there, outside the AssetManager.
+ */
+function siblingStreamBlobs(
+  dataDir: string,
+  name: string,
+): Map<string, Uint8Array> {
+  const blobs = new Map<string, Uint8Array>();
+  const resS = `${name}.resS`;
+  const full = path.join(dataDir, resS);
+  if (existsSync(full)) {
+    const bytes = readFileSync(full);
+    blobs.set(resS, bytes);
+    blobs.set(resS.toLowerCase(), bytes);
+  }
+  return blobs;
+}
+
 async function cardBackRgbaFromBytes(
   bytes: Buffer,
   cropRect: UvRect | null,
+  extraBlobs?: ReadonlyMap<string, Uint8Array>,
 ): Promise<{ rgba: Buffer; width: number; height: number } | null> {
   const parseStarted = Date.now();
   console.log(`  card back: parse Unity (${bytes.length} B)…`);
@@ -162,8 +209,12 @@ async function cardBackRgbaFromBytes(
 
   const decodeStarted = Date.now();
   console.log("  card back: decode Texture2D…");
+  const resourceBlobs = resourceBlobsFromAssetManager(am);
+  for (const [key, blob] of extraBlobs ?? []) {
+    if (!resourceBlobs.has(key)) resourceBlobs.set(key, blob);
+  }
   const decoded = await rgbaFromTexture2DObject(info.object, "cardBack", {
-    resourceBlobs: resourceBlobsFromAssetManager(am),
+    resourceBlobs,
   });
   if (!decoded) {
     console.log(`  card back: decode miss (${elapsedSec(decodeStarted)})`);
@@ -200,13 +251,17 @@ export async function cardBackRgbaFromDataDir(
   dataDir: string,
   cropRect: UvRect | null,
 ): Promise<{ rgba: Buffer; width: number; height: number } | null> {
-  const bytes = await loadCardBackBytesFromDataDir(dataDir);
-  if (!bytes?.length) {
+  const hit = await loadCardBackBytesFromDataDir(dataDir);
+  if (!hit?.bytes.length) {
     console.log("  card back: no cardBack asset found in extracted Data/");
     return null;
   }
-  console.log(`  card back: read extracted ${CARD_BACK_ASSET_HASH} (${bytes.length} B)`);
-  return cardBackRgbaFromBytes(bytes, cropRect);
+  console.log(`  card back: read ${hit.name} (${hit.bytes.length} B)`);
+  return cardBackRgbaFromBytes(
+    hit.bytes,
+    cropRect,
+    siblingStreamBlobs(dataDir, hit.name),
+  );
 }
 
 async function writeCardBackWebp(

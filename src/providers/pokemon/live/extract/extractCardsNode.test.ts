@@ -25,6 +25,99 @@ const SAMPLE_ROW = {
 };
 
 describe("isCardTextureExtractFresh", () => {
+  const RECT = { u0: 0.140625, u1: 0.859375, v0: 0, v1: 1 };
+  const sidecarFor = (extra: Record<string, unknown> = {}) => ({
+    bundleMtime: 1,
+    textureMode: "cards",
+    rows: [SAMPLE_ROW],
+    bundleHash: "abc",
+    bundleSize: 99,
+    ...extra,
+  });
+  /** Minimal lossless WebP header (VP8L) with the given size. */
+  function webpOfSize(file: string, width: number, height: number): void {
+    const bits = (width - 1) | ((height - 1) << 14);
+    const vp8l = Buffer.from([
+      0x2f,
+      bits & 0xff,
+      (bits >> 8) & 0xff,
+      (bits >> 16) & 0xff,
+      (bits >> 24) & 0xff,
+    ]);
+    const chunk = Buffer.concat([
+      Buffer.from("VP8L"),
+      Buffer.from([vp8l.length, 0, 0, 0]),
+      vp8l,
+      Buffer.alloc(1),
+    ]);
+    const riff = Buffer.concat([
+      Buffer.from("RIFF"),
+      Buffer.from([(chunk.length + 4) & 0xff, 0, 0, 0]),
+      Buffer.from("WEBP"),
+      chunk,
+    ]);
+    writeFileSync(file, riff);
+  }
+
+  it("re-extracts when the crop rect differs from the one stamped", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "fresh-crop-"));
+    const art = path.join(dir, "art.webp");
+    webpOfSize(art, 1024, 1024);
+    const base = {
+      artPath: art,
+      bundleMtimeSec: 1,
+      bundleSize: 99,
+      textureMode: "cards" as const,
+      bundleHash: "abc",
+      cropRect: RECT,
+    };
+    // Written while card-uv-rect.json was missing → uncropped atlas.
+    expect(
+      isCardTextureExtractFresh({
+        ...base,
+        sidecar: sidecarFor({ cropRect: null }),
+      }),
+    ).toBe(false);
+    expect(
+      isCardTextureExtractFresh({
+        ...base,
+        sidecar: sidecarFor({ cropRect: RECT }),
+      }),
+    ).toBe(true);
+    // A rect gone missing never re-cuts good faces into atlases.
+    expect(
+      isCardTextureExtractFresh({
+        ...base,
+        cropRect: null,
+        sidecar: sidecarFor({ cropRect: RECT }),
+      }),
+    ).toBe(true);
+  });
+
+  it("re-extracts a legacy square face once a crop rect is known", () => {
+    // Pre-stamp sidecars: a square art.webp means no crop was applied.
+    const dir = mkdtempSync(path.join(tmpdir(), "fresh-legacy-"));
+    const square = path.join(dir, "art.webp");
+    webpOfSize(square, 1024, 1024);
+    const input = {
+      artPath: square,
+      bundleMtimeSec: 1,
+      bundleSize: 99,
+      textureMode: "cards" as const,
+      bundleHash: "abc",
+      cropRect: RECT,
+      sidecar: sidecarFor(),
+    };
+    expect(isCardTextureExtractFresh(input)).toBe(false);
+
+    const portraitDir = mkdtempSync(path.join(tmpdir(), "fresh-legacy-ok-"));
+    const portrait = path.join(portraitDir, "art.webp");
+    webpOfSize(portrait, 732, 1024);
+    expect(
+      isCardTextureExtractFresh({ ...input, artPath: portrait }),
+    ).toBe(true);
+  });
+
   it("trusts CDN hash even when art mtime is older than the bundle", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "fresh-hash-"));
     const art = path.join(dir, "art.webp");
@@ -113,6 +206,27 @@ describe("extractCardsNode skip path", () => {
       expect(result.skipped).toBe(1);
       expect(result.written).toBe(0);
       expect(result.rows).toEqual([SAMPLE_ROW]);
+    } finally {
+      if (prev === undefined) delete process.env.PLACARR_DATA_DIR;
+      else process.env.PLACARR_DATA_DIR = prev;
+    }
+  });
+
+  it("never writes uncropped faces while card-uv-rect.json is unknown", async () => {
+    // Without the Card mesh rect, a Live texture is a square atlas: writing it
+    // as art.webp shipped squeezed cards with visible gutters (bwalt, 2026-11).
+    const repo = mkdtempSync(path.join(tmpdir(), "cards-node-norect-"));
+    const prev = process.env.PLACARR_DATA_DIR;
+    process.env.PLACARR_DATA_DIR = path.join(repo, "data");
+    try {
+      const bundlesDir = path.join(repo, "bundles");
+      mkdirSync(bundlesDir, { recursive: true });
+      writeFileSync(path.join(bundlesDir, "bwalt_fr_038"), "bundle");
+
+      const result = await extractCardsNode({ repo, bundlesDir });
+      expect(result.written).toBe(0);
+      expect(result.errors).toBe(0);
+      expect(result.pendingCrop).toBe(1);
     } finally {
       if (prev === undefined) delete process.env.PLACARR_DATA_DIR;
       else process.env.PLACARR_DATA_DIR = prev;

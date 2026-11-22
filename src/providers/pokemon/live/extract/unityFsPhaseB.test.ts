@@ -1,7 +1,7 @@
 /**
  * UnityFS Texture2D ASTC → WebP (Node, ADR-021 phase B).
  */
-import { existsSync, readFileSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -58,6 +58,31 @@ describe("unity Texture2D (Node)", () => {
     }
     expect(maxd).toBeLessThanOrEqual(1);
     expect(sum / py.length).toBeLessThan(0.5);
+  });
+
+  it("overwrites a stale face instead of keeping it", async () => {
+    // A face judged stale (crop rect back, CDN hash moved) used to be kept
+    // as-is because art.webp already existed — bwalt stayed square atlases.
+    const repo = repoRoot();
+    const card = path.join(repo, "data/pokemon/staging/cdn-bundles/bwalt_fr_038");
+    const uvPath = path.join(repo, "data/pokemon/foil/card-uv-rect.json");
+    if (!existsSync(card) || !existsSync(uvPath)) return;
+
+    const dir = mkdtempSync(path.join(tmpdir(), "placarr-unity-stale-"));
+    try {
+      writeFileSync(path.join(dir, "art.webp"), "stale");
+      const result = await extractCardBundleTextures(card, dir, {
+        textureMode: "cards",
+        cropRect: loadUvRectFile(path.join(repo, "data/pokemon/foil")),
+      });
+      expect(result.written.some((p) => p.endsWith("art.webp"))).toBe(true);
+      const sharp = (await import("sharp")).default;
+      const meta = await sharp(path.join(dir, "art.webp")).metadata();
+      // Cropped Live card: portrait, not the 1024² atlas nor the stale bytes.
+      expect(meta.width).toBeLessThan(meta.height!);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("extracts_art_and_mask_webp_cropped_like_disk", async () => {

@@ -19,6 +19,7 @@ import {
   type UvRect,
 } from "@/core/render/unity/cardCrop";
 import { writeLosslessRgbaWebp } from "@/lib/media/losslessWebp";
+import { probeFaceFileDimensionsSync } from "@/providers/shared/faceFileDimensions";
 import { parseMaterialManifests } from "@/lib/unity/materialManifest";
 import { decodeTexturesFromUnityFs } from "@/lib/unity/texture2d";
 
@@ -97,20 +98,6 @@ function textureKeyCi(
     if (key.toLowerCase() === lower) return key;
   }
   return null;
-}
-
-function migratePngBeside(webpDest: string): boolean {
-  try {
-    if (existsSync(webpDest) && readFileSync(webpDest).byteLength > 0) {
-      return true;
-    }
-  } catch {
-    /* fall through */
-  }
-  const png = webpDest.replace(/\.webp$/i, ".png");
-  if (!existsSync(png)) return false;
-  // Leave PNG migration to a later pass — rare; force re-dump.
-  return false;
 }
 
 export function loadUvRectFile(packFoilDir: string): UvRect | null {
@@ -235,10 +222,8 @@ export async function extractCardBundleTextures(
         asMask: maskTexes.has(name.toLowerCase()),
       }),
     );
-    if (migratePngBeside(dest)) {
-      written.push(dest);
-      continue;
-    }
+    // Called only for stale faces (isCardTextureExtractFresh): always write.
+    // Keeping an existing art.webp here silently defeated every re-extract.
     const cropped = cropCardRgba(tex.rgba, tex.width, tex.height, cropRect);
     await writeLosslessRgbaWebp(cropped.rgba, cropped.width, cropped.height, dest);
     written.push(dest);
@@ -257,6 +242,12 @@ export type ExtractSidecar = {
   bundleHash?: string;
   /** Byte size of the UnityFS bundle at extract time. */
   bundleSize?: number;
+  /**
+   * Card crop applied to the faces (`card-uv-rect.json`), `null` when none
+   * was known — those faces are uncropped atlases and must be redone once
+   * the rect comes back. Absent on legacy sidecars.
+   */
+  cropRect?: UvRect | null;
 };
 
 export function writeExtractSidecar(
@@ -264,7 +255,11 @@ export function writeExtractSidecar(
   bundleMtime: number,
   textureMode: string,
   rows: MaterialManifestRow[],
-  opts?: { bundleHash?: string | null; bundleSize?: number },
+  opts?: {
+    bundleHash?: string | null;
+    bundleSize?: number;
+    cropRect?: UvRect | null;
+  },
 ): void {
   mkdirSync(faceDir, { recursive: true });
   const payload: ExtractSidecar = {
@@ -275,6 +270,7 @@ export function writeExtractSidecar(
     ...(opts?.bundleSize != null && Number.isFinite(opts.bundleSize)
       ? { bundleSize: opts.bundleSize }
       : {}),
+    ...(opts?.cropRect !== undefined ? { cropRect: opts.cropRect } : {}),
   };
   writeFileSync(
     path.join(faceDir, EXTRACT_SIDECAR),
@@ -297,6 +293,9 @@ export function readExtractSidecarMeta(faceDir: string): ExtractSidecar | null {
       ...(parsed.bundleSize != null && Number.isFinite(Number(parsed.bundleSize))
         ? { bundleSize: Number(parsed.bundleSize) }
         : {}),
+      ...(parsed.cropRect !== undefined
+        ? { cropRect: parsed.cropRect ? loadUvRectFromJson(parsed.cropRect) : null }
+        : {}),
     };
   } catch {
     return null;
@@ -316,11 +315,44 @@ export function readExtractSidecar(
  * 1. CDN AssetManifest Hash128 recorded on the sidecar (stable across
  *    re-downloads of the same bytes).
  * 2. Sidecar stamped for this exact bundle mtime — an extract may keep an
- *    existing `art.webp` (`migratePngBeside`) without bumping its mtime, so
+ *    existing `art.webp` without bumping its mtime, so
  *    comparing art→bundle clocks alone falsely re-decodes tens of thousands
  *    of cards on every Sync.
  * 3. Art file newer than the bundle (legacy heuristic).
  */
+function sameUvRect(a: UvRect | null, b: UvRect | null): boolean {
+  if (!a || !b) return a === b;
+  return (
+    Math.abs(a.u0 - b.u0) < 1e-6 &&
+    Math.abs(a.u1 - b.u1) < 1e-6 &&
+    Math.abs(a.v0 - b.v0) < 1e-6 &&
+    Math.abs(a.v1 - b.v1) < 1e-6
+  );
+}
+
+/**
+ * Faces written with a different card crop than the one known now — typically
+ * extracted while `card-uv-rect.json` was missing (square uncropped atlas).
+ * Legacy sidecars carry no stamp: a square face with a known rect was never
+ * cropped (Live card art is portrait once cropped).
+ */
+function cardCropIsStale(input: {
+  artPath: string;
+  textureMode: TextureMode;
+  sidecar: ExtractSidecar | null;
+  cropRect?: UvRect | null;
+}): boolean {
+  if (input.textureMode !== "cards") return false;
+  const want = input.cropRect ?? null;
+  // No rect known now: nothing to re-cut with (never downgrade to uncropped).
+  if (!want) return false;
+  if (input.sidecar && input.sidecar.cropRect !== undefined) {
+    return !sameUvRect(input.sidecar.cropRect, want);
+  }
+  const dims = probeFaceFileDimensionsSync(input.artPath);
+  return Boolean(dims && dims.width === dims.height);
+}
+
 export function isCardTextureExtractFresh(input: {
   artPath: string;
   bundleMtimeSec: number;
@@ -329,9 +361,12 @@ export function isCardTextureExtractFresh(input: {
   sidecar: ExtractSidecar | null;
   /** Current AssetManifest Hash128 for this stem, when known. */
   bundleHash?: string | null;
+  /** Crop the extract would apply now (`card-uv-rect.json`). */
+  cropRect?: UvRect | null;
 }): boolean {
   if (input.textureMode === "none") return false;
   if (!existsSync(input.artPath)) return false;
+  if (cardCropIsStale(input)) return false;
   const hash = input.bundleHash?.trim() || null;
   if (hash && input.sidecar?.bundleHash === hash) return true;
   if (

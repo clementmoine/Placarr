@@ -3,7 +3,9 @@
 # for Booknode CDN (cf_clearance is TLS-bound — Node re-fetch 403s).
 FROM ghcr.io/thephaseless/byparr:latest
 
-COPY models.py endpoints.py content.py /app/src/
+# Explicit mode: a checkout synced through Synology Drive is 0700, and the
+# image runs as uid 1000 — without --chmod the patched modules are unreadable.
+COPY --chmod=644 models.py endpoints.py content.py /app/src/
 
 # Corporate MITM (Zscaler etc.) presents an untrusted issuer to Camoufox inside
 # Docker; host curl trusts the CA via macOS keychain. Ignore HTTPS errors so

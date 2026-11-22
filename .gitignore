@@ -108,8 +108,12 @@ src/providers/pokemontcglive/unity/bin/
 
 # Cursor IDE
 .cursor/
-# Outillage local Claude Code (preview/launch)
-/.claude/
+# Claude Code : skills, réglages partagés et preview versionnés ;
+# réglages perso (settings.local.json) et le reste restent locaux.
+/.claude/*
+!/.claude/skills/
+!/.claude/settings.json
+!/.claude/launch.json
 __pycache__/
 
 # Spool de sniffing / audit Live — contient des tokens OAuth, ne jamais committer
@@ -118,3 +122,6 @@ __pycache__/
 
 # Local dig / crop staging (never commit)
 .tmp-*
+
+# Dumps PostgreSQL — données privées, synchronisées vers le NAS, jamais dans Git
+/backups/

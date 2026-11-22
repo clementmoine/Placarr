@@ -17,20 +17,52 @@ services:
   db:
     image: postgres:16-alpine
     container_name: placarr-db
+    ports:
+      # Loopback only — default password must not be LAN-reachable.
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-placarr}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-placarr}
       POSTGRES_DB: ${POSTGRES_DB:-placarr}
-    ports:
-      # Loopback only — default password must not be LAN-reachable.
-      - "127.0.0.1:5432:5432"
+      # Fresh (empty) volume → restore the newest dump from /backups.
+      RESTORE_ON_INIT: ${RESTORE_ON_INIT:-1}
     volumes:
+      # Live data stays in a Docker volume on purpose: a running cluster must
+      # never sit in a synced folder (Synology Drive/iCloud/Dropbox break
+      # fsync and copy torn files), and the volume is the fast path on macOS.
+      # Durability comes from the dumps below, not from this volume.
       - placarr-db:/var/lib/postgresql/data
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+      - ${PLACARR_BACKUP_DIR:-./backups/postgres}:/backups:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-placarr}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+    logging: *default-logging
+
+  # pg_dump every BACKUP_INTERVAL_SECONDS into ./backups/postgres (synced to
+  # the NAS). `pnpm db:backup` / `pnpm db:restore` — see docs/database.md.
+  db-backup:
+    image: postgres:16-alpine
+    container_name: placarr-db-backup
+    entrypoint: ["/bin/sh", "/scripts/backup.sh", "loop"]
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-placarr}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-placarr}
+      PGDATABASE: ${POSTGRES_DB:-placarr}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-21600}
+      BACKUP_KEEP_ALL_DAYS: ${BACKUP_KEEP_ALL_DAYS:-7}
+      BACKUP_KEEP_DAILY_DAYS: ${BACKUP_KEEP_DAILY_DAYS:-35}
+      BACKUP_KEEP_MONTHLY_DAYS: ${BACKUP_KEEP_MONTHLY_DAYS:-365}
+    volumes:
+      - ./docker/postgres:/scripts:ro
+      - ${PLACARR_BACKUP_DIR:-./backups/postgres}:/backups
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     logging: *default-logging
 
@@ -167,6 +199,8 @@ services:
         condition: service_started
 
 volumes:
+  # Fixed name so a project-directory rename never orphans the database.
   placarr-db:
+    name: placarr-db
   placarr-dev-node-modules:
   placarr-dev-next:

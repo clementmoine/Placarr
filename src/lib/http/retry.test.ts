@@ -27,6 +27,38 @@ describe("isRetryableError", () => {
     ).toBe(true);
   });
 
+  it("retries a 2xx whose body stream was cut mid-transfer", () => {
+    // dbs-cardgame.com FR, 2026-11-22: `stream has been aborted` on a 200
+    // was never retried, and the whole FR cardlist was dropped.
+    const ok = {
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {} as never,
+      data: "",
+    };
+    expect(
+      isRetryableError(
+        new axios.AxiosError(
+          "stream has been aborted",
+          "ERR_BAD_RESPONSE",
+          undefined,
+          undefined,
+          ok,
+        ),
+      ),
+    ).toBe(true);
+    // A 4xx stays definitive even with a body error code.
+    expect(
+      isRetryableError(
+        new axios.AxiosError("gone", "ERR_BAD_RESPONSE", undefined, undefined, {
+          ...ok,
+          status: 404,
+        }),
+      ),
+    ).toBe(false);
+  });
+
   it("does not retry quota responses", () => {
     for (const status of [429, 430]) {
       expect(

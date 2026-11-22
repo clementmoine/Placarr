@@ -37,6 +37,9 @@ export function isRetryableError(err: unknown): boolean {
     // Pas de réponse = problème réseau / timeout → rejouable.
     if (!err.response) return true;
     const status = err.response.status;
+    // En-têtes 2xx reçus puis corps coupé en route (`stream has been aborted`) :
+    // une coupure de transport, aussi transitoire qu'une erreur réseau.
+    if (status >= 200 && status < 300) return true;
     // 429/430 are provider quota signals (ScreenScraper) — retrying hammers the API.
     return status >= 500 && status < 600;
   }

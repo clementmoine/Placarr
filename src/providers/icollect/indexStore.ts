@@ -401,17 +401,20 @@ export function shouldRefreshICollectItemPage(
 
 /**
  * Hot-path gate for barcode lookup (identify / enrich).
- * Sitemap title(+cover) is Tier0 — sufficient without Flare.
- * Background `catalogSync` still uses `shouldRefreshICollectItemPage` to upgrade
- * sitemap → page (platform, publisher, prices).
+ * Sitemap title(+cover) is Tier0 — sufficient without Flare — **when the
+ * platform is known**: a video game without platform is an incomplete
+ * identity (the resolver then misses `platformKey`). Sitemap rows carry no
+ * platform and the background page upgrade is off by default
+ * (`ICOLLECT_PAGE_SCRAPE_BATCH=0`), so such a row reads its page once on
+ * lookup; the page row is cached and stays Tier0 afterwards (2026-11-22).
  */
 export function shouldFetchICollectItemPageOnLookup(
   db: DatabaseSync,
   itemId: string,
-  local: Pick<ICollectMetadata, "title" | "catalogSource"> | null,
+  local: Pick<ICollectMetadata, "title" | "catalogSource" | "platform"> | null,
 ): boolean {
   if (!local?.title?.trim()) return true;
-  if (local.catalogSource === "sitemap") return false;
+  if (local.catalogSource === "sitemap") return !local.platform?.trim();
   if (local.catalogSource === "page") {
     return isICollectItemPageCatalogStale(db, itemId);
   }

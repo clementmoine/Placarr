@@ -20,7 +20,10 @@ import {
   recordLocalArtifactMeta,
   type ArtifactSourceMeta,
 } from "@/providers/shared/remoteArtifactFreshness";
-import { unlinkSqliteSidecars } from "@/providers/shared/sqliteLiveReplace";
+import {
+  replaceSqliteLiveFile,
+  unlinkSqliteSidecars,
+} from "@/providers/shared/sqliteLiveReplace";
 
 import {
   extractLaunchBoxBlock,
@@ -504,18 +507,11 @@ export async function buildLaunchBoxIndex(
   const priorBuild = readBuildMeta();
   const sourceUnchanged = !resolved.changed;
   const xmlUnchanged =
-    Boolean(xmlFp) &&
-    Boolean(priorBuild?.xmlFp) &&
-    priorBuild!.xmlFp === xmlFp;
+    Boolean(xmlFp) && Boolean(priorBuild?.xmlFp) && priorBuild!.xmlFp === xmlFp;
   const schemaMatches =
     priorBuild?.schemaVersion === LAUNCHBOX_INDEX_SCHEMA_VERSION;
 
-  if (
-    !options?.force &&
-    sourceUnchanged &&
-    xmlUnchanged &&
-    schemaMatches
-  ) {
+  if (!options?.force && sourceUnchanged && xmlUnchanged && schemaMatches) {
     const existing = await openExistingLaunchBoxIndex();
     if (existing) {
       console.info(
@@ -529,7 +525,23 @@ export async function buildLaunchBoxIndex(
   const file = indexPath();
   await fs.mkdir(path.dirname(file), { recursive: true });
 
+  /*
+    Construction dans `*.building` puis bascule atomique : un rebuild
+    interrompu (annulation, redémarrage du worker) laisse l'index précédent
+    intact au lieu de ne laisser aucun index.
+  */
+  const building = `${file}.building`;
   try {
+    if (await fileExists(building)) await fs.unlink(building);
+    unlinkSqliteSidecars(building);
+  } catch (err) {
+    console.warn("[LaunchBox] Error clearing stale build file", err);
+  }
+
+  try {
+    const buildDb = new DatabaseSync(building);
+    const stats = await buildSqliteIndex(resolved.xmlPath, buildDb);
+    buildDb.close();
     if (activeDbConnection) {
       try {
         activeDbConnection.close();
@@ -538,18 +550,8 @@ export async function buildLaunchBoxIndex(
       }
       activeDbConnection = null;
     }
-    if (await fileExists(file)) {
-      unlinkSqliteSidecars(file);
-      await fs.unlink(file);
-      unlinkSqliteSidecars(file);
-    }
-  } catch (err) {
-    console.warn("[LaunchBox] Error unlinking old database", err);
-  }
-
-  try {
+    replaceSqliteLiveFile(file, building);
     const db = new DatabaseSync(file);
-    const stats = await buildSqliteIndex(resolved.xmlPath, db);
     console.info(
       `[LaunchBox] SQLite index ready (${stats.games} games, ${stats.alternateNames} alternate names, ${stats.images} images)`,
     );

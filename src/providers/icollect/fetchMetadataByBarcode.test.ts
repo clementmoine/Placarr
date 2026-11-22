@@ -67,7 +67,7 @@ describe("fetchICollectMetadataByBarcode", () => {
     expect(axios.get).not.toHaveBeenCalled();
   });
 
-  it("returns sitemap catalog as Tier0 without hitting the network", async () => {
+  it("returns a sitemap row that carries its platform as Tier0 without hitting the network", async () => {
     const db = await seedBarcodeIndex();
     if (!db) return;
 
@@ -75,6 +75,7 @@ describe("fetchICollectMetadataByBarcode", () => {
       itemId: "892033",
       itemUrl: "https://www.icollecteverything.com/db/item/videogame/892033/",
       title: "Mario Kart Wii",
+      platform: "Nintendo Wii",
       coverUrl:
         "https://www.icollecteverything.com/images/videogame/main/89/892033_1.jpg",
       images: [

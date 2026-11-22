@@ -16,7 +16,19 @@ import {
   shouldFetchICollectItemPageOnLookup,
 } from "./indexStore";
 import type { ICollectMetadata } from "./types";
+
 import { icollectCoverRegionFromAgeRating } from "./imageLabels";
+
+/**
+ * Chemin frais (enregistrement / rejeu des fixtures code-barres) : on ne lit
+ * pas les métadonnées iCollect déjà en base, pour que rejeu et enregistrement
+ * suivent exactement les mêmes requêtes. Jamais actif en production.
+ */
+function icollectFreshPathOnly(): boolean {
+  // Lu directement (comme catalogSync) : importer recordMode créerait un
+  // cycle avec le registre des providers.
+  return Boolean(process.env.RECORD) || process.env.BARCODE_RECORD_SLIM === "1";
+}
 
 const ICE_BASE = "https://www.icollecteverything.com";
 const ICE_SITEMAP_MASTER = `${ICE_BASE}/sitemaps/sitemap-master.xml`;
@@ -672,7 +684,7 @@ export async function fetchICollectVideoGameItem(
   const itemId = itemUrl.match(/\/videogame\/(\d+)\/?$/i)?.[1];
   const db = itemId ? await ensureICollectIndex() : null;
 
-  if (db && itemId && !process.env.RECORD && !options?.bypassCache) {
+  if (db && itemId && !icollectFreshPathOnly() && !options?.bypassCache) {
     const cachedPayload = readCachedICollectMetadata(db, itemId);
     if (cachedPayload) {
       try {
@@ -716,7 +728,7 @@ export async function fetchICollectMetadataByBarcode(
 
   const itemRef = db ? lookupICollectItemRefByBarcodeKey(db, barcodeKey) : null;
   const local =
-    db && !process.env.RECORD
+    db && !icollectFreshPathOnly()
       ? readLocalICollectMetadata(db, barcodeKey)
       : null;
 
@@ -724,7 +736,7 @@ export async function fetchICollectMetadataByBarcode(
   const needsPageRefresh = Boolean(
     db &&
     itemId &&
-    !process.env.RECORD &&
+    !icollectFreshPathOnly() &&
     shouldFetchICollectItemPageOnLookup(db, itemId, local),
   );
 

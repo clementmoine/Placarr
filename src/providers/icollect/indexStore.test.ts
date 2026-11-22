@@ -230,11 +230,20 @@ describe("rememberICollectItemCatalog", () => {
     });
 
     expect(shouldRefreshICollectItemPage(db, "892033")).toBe(true);
+    // Titre sitemap + plateforme connue : suffisant (Tier0).
+    expect(
+      shouldFetchICollectItemPageOnLookup(db, "892033", {
+        title: "Mario Kart Wii",
+        catalogSource: "sitemap",
+        platform: "Nintendo Wii",
+      }),
+    ).toBe(false);
+    // Sans plateforme, l'identité du jeu est incomplète : lire la page une fois.
     expect(
       shouldFetchICollectItemPageOnLookup(db, "892033", {
         title: "Mario Kart Wii",
         catalogSource: "sitemap",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });

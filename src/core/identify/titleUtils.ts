@@ -636,7 +636,9 @@ export function filterPlatformRedundancies(suggestions: string[]): string[] {
 // v45: numéros de parution suffixés à la française (n°100bis/ter/quater) —
 // volumeNumberFromTitle les ignorait, donc l'alignement de numéro traitait
 // n°100bis comme n°100. Bump pour re-résoudre les titres suffixés.
-export const BARCODE_CACHE_VERSION = "canonical-v45";
+// v46: iCollect — une ligne sitemap sans plateforme lit sa page au scan (la
+//      plateforme fait partie de l'identité d'un jeu ; sinon platformKey nul).
+export const BARCODE_CACHE_VERSION = "canonical-v46";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider

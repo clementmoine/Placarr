@@ -56,6 +56,10 @@ describe("isICollectCatalogSyncEnabled", () => {
   });
 
   it("is disabled under vitest and when opted out", () => {
+    // Indépendant du .env local (qui peut couper le crawl).
+    delete process.env.ICOLLECT_CATALOG_SYNC;
+    delete process.env.RECORD;
+    delete process.env.BARCODE_RECORD_SLIM;
     process.env.VITEST = "true";
     expect(isICollectCatalogSyncEnabled()).toBe(false);
     delete process.env.VITEST;
@@ -112,12 +116,10 @@ describe("iCollect sitemap HTTP resilience", () => {
 
   it("retries EPIPE on a single sitemap GET then succeeds", async () => {
     const epipe = new axios.AxiosError("write EPIPE", "EPIPE");
-    h.httpGet
-      .mockRejectedValueOnce(epipe)
-      .mockResolvedValueOnce({
-        status: 200,
-        data: `<?xml version="1.0"?><urlset></urlset>`,
-      });
+    h.httpGet.mockRejectedValueOnce(epipe).mockResolvedValueOnce({
+      status: 200,
+      data: `<?xml version="1.0"?><urlset></urlset>`,
+    });
 
     const stats = await ingestICollectSitemapByUrl(
       {} as never,

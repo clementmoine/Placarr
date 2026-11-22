@@ -15,6 +15,7 @@ import {
 
 import {
   fetchTcgdexCardByPrintKey,
+  resolveTcgdexLanguage,
   printKeyFromTcgdexIds,
 } from "../fetch";
 import { loadPokecardexMcdoLedger } from "./pokecardex/fillMcdo";
@@ -84,7 +85,7 @@ export async function harvestTcgdexMcdoPrices(
     outPath?: string;
   } = {},
 ): Promise<{ ledger: ColekaPriceLedger; outPath: string }> {
-  const language = (opts.language ?? "fr").trim().toLowerCase() || "fr";
+  const language = resolveTcgdexLanguage(opts.language?.trim() || "fr");
   const targets = tcgdexMcdoPriceTargets(opts.ledgerPath);
   const rows: ColekaPriceRow[] = [];
   const rubriques: ColekaPriceLedger["rubriques"] = [];

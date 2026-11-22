@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { digitalOnlySetIds } from "./digitalOnly";
 import {
+  isLegacyTcgdexTrainerGalleryId,
   listTcgdexLocalSets,
   searchTcgdexRows,
   tcgdexBlockAwareSortKeys,
@@ -166,9 +167,16 @@ describe.skipIf(!hasCatalogue)("catalogue Pokémon local", () => {
     expect(byId.get("me05.5c")).toBe(
       "Méga-Évolution — Collection Classique 30ᵉ Anniversaire",
     );
-    // Galerie legacy `swsh9tg` masquée au profit de `swsh9.5tg`.
-    expect(byId.has("swsh9tg")).toBe(false);
-    expect(byId.get("swsh9.5tg")).toBe(
+    /*
+      Galerie des Dresseurs : l'id canon TCGdex est `swsh9tg`. Vérifié le
+      2026-11-22 sur https://api.tcgdex.net/v2/fr/sets (et /v2/en/sets) : les
+      galeries sont `swsh9tg`, `swsh10tg`, `swsh11tg`, `swsh12tg`,
+      `swsh12.5gg` ; `/v2/fr/sets/swsh9tg` → 200 (30 cartes),
+      `/v2/fr/sets/swsh9.5tg` → 404. Le masquage « legacy » ne joue que si
+      les deux ids coexistent (cf. test unitaire ci-dessous) ; ici un seul.
+    */
+    expect(byId.has("swsh9.5tg")).toBe(false);
+    expect(byId.get("swsh9tg")).toBe(
       "Épée et Bouclier — Stars Étincelantes Galerie de Dresseurs",
     );
   });
@@ -354,5 +362,25 @@ describe("tcgdexSetDisplayLabel", () => {
     expect(keys.get("sv01")!).toBeLessThan(keys.get("sv02")!);
     expect(keys.get("sv02")!).toBeLessThan(keys.get("svp")!);
     expect(keys.get("svp")!).toBeLessThan(keys.get("sve")!);
+  });
+});
+
+describe("isLegacyTcgdexTrainerGalleryId", () => {
+  it("masque `swshNtg` seulement quand un `swshN.5tg` coexiste", () => {
+    expect(
+      isLegacyTcgdexTrainerGalleryId("swsh9tg", new Set(["swsh9tg"])),
+    ).toBe(false);
+    expect(
+      isLegacyTcgdexTrainerGalleryId(
+        "swsh9tg",
+        new Set(["swsh9tg", "swsh9.5tg"]),
+      ),
+    ).toBe(true);
+    expect(
+      isLegacyTcgdexTrainerGalleryId(
+        "swsh9.5tg",
+        new Set(["swsh9tg", "swsh9.5tg"]),
+      ),
+    ).toBe(false);
   });
 });

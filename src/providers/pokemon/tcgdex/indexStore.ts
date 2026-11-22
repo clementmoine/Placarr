@@ -14,7 +14,7 @@ import { SET_ENUMERATION_LIMIT } from "@/providers/shared/cardCatalogue/setPrint
  */
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { resolveFaceArtMetaForDig } from "@/core/enrich/media/faceArtMeta";
 import { parsePrintKey } from "@/core/identify/printKey";
@@ -699,6 +699,20 @@ export function ensureTcgdexIndex(): DatabaseSync | null {
   }
   try {
     const db = openTcgdexSqliteRead(dbPath);
+    // Base créée par une étape scellé / documents avant la première moisson :
+    // pas encore de catalogue cartes — même réponse que sans fichier.
+    const hasCardTables =
+      (
+        db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN ('sets', 'prints')",
+          )
+          .get() as { n: number }
+      ).n === 2;
+    if (!hasCardTables) {
+      db.close();
+      return null;
+    }
     ensureSqliteFold(db);
     activeDb = db;
     activePath = dbPath;
@@ -727,7 +741,7 @@ export function listTcgdexPrintsWithImages(): TcgdexPrintRow[] {
           AND TRIM(image_base_url) != ''
         ORDER BY set_id, CAST(local_id AS INTEGER), local_id`,
     )
-    .all() as TcgdexPrintRow[];
+    .all() as Omit<TcgdexPrintRow, "printed">[];
 }
 
 /**
@@ -949,7 +963,7 @@ export function listTcgdexCatalogueBrowsePage(
   if (!langs.length) return { rows: [], total: 0 };
   const offset = Math.max(0, Math.floor(opts.offset));
   const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
-  const params: unknown[] = [];
+  const params: SQLInputValue[] = [];
   const where: string[] = [
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];

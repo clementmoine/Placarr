@@ -17,12 +17,14 @@ import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
 
-import {
-  liveSetCandidatesFromTcgdexSet,
-  liveSetIdFromTcgdexSet,
-  mechanicalReprintFallbackStems,
-} from "@/effects/pokemon/liveSetId";
+import { liveSetCandidatesFromTcgdexSet } from "@/effects/pokemon/liveSetId";
 import { liveCardsIndexAvailable } from "@/effects/pokemon/liveCardsIndex";
+import {
+  fetchTcgdexSetIds,
+  loadLiveSets,
+  reprintMetaPath,
+  writeReprintMetaFile,
+} from "@/providers/pokemon/live/extract/reprintMeta";
 import {
   LIVE_SET_NON_CATALOGUE,
   liveSetToTcgdexSets,
@@ -36,7 +38,6 @@ const REPORT_PATH = path.join(
   "logs",
   "tcgdex-live-set-map.json",
 );
-const REPRINT_META_PATH = path.join(dataRoot(), "pokemon", "reprintMeta.json");
 
 const MALIE_INDEX_URL =
   "https://cdn.malie.io/file/malie-io/tcgl/export/index.json";
@@ -92,16 +93,6 @@ type MalieSetInfo = {
 
 type MalieIndex = Record<string, Record<string, MalieSetInfo>>;
 
-function loadLiveSets(cards: CardsFile): Map<string, number> {
-  const sets = new Map<string, number>();
-  for (const id of Object.keys(cards)) {
-    const set = id.split("_")[0];
-    if (!set) continue;
-    sets.set(set, (sets.get(set) ?? 0) + 1);
-  }
-  return sets;
-}
-
 function parseArgs(argv: string[]) {
   let fetchSets = false;
   let malie = false;
@@ -124,19 +115,6 @@ function parseArgs(argv: string[]) {
 
 function isDigitalOnlySet(setId: string): boolean {
   return /^(a|b)\d+[a-z]?$/i.test(setId);
-}
-
-async function fetchTcgdexSetIds(lang: "fr" | "en"): Promise<string[]> {
-  const url = `https://api.tcgdex.net/v2/${lang}/sets`;
-  const res = await httpGet<Array<{ id?: string }>>(url, {
-    validateStatus: () => true,
-  });
-  if (res.status < 200 || res.status >= 300) {
-    throw new Error(`TCGdex ${lang} sets HTTP ${res.status}`);
-  }
-  return res.data
-    .map((row) => row.id?.trim().toLowerCase())
-    .filter((id): id is string => Boolean(id));
 }
 
 async function fetchMalieIndex(): Promise<MalieIndex> {
@@ -217,78 +195,6 @@ function auditMalie(opts: {
       ]),
     ),
   };
-}
-
-async function fetchTcgdexSetDetail(
-  lang: "fr" | "en",
-  id: string,
-): Promise<{ id: string; cardTotal: number } | null> {
-  const url = `https://api.tcgdex.net/v2/${lang}/sets/${encodeURIComponent(id)}`;
-  const res = await httpGet<{
-    id?: string;
-    cardCount?: { total?: number; official?: number };
-  }>(url, { validateStatus: () => true });
-  if (res.status < 200 || res.status >= 300) return null;
-  const body = res.data;
-  const total = body.cardCount?.total ?? body.cardCount?.official ?? 0;
-  if (!body.id || total <= 0) return null;
-  return { id: body.id, cardTotal: total };
-}
-
-/**
- * Discover TCGdex `*sv` vault splits whose parent Live stem is in the dump but
- * the dedicated vault stem is not — write offsets from parent cardCount.total.
- */
-async function writeReprintMetaFile(opts: {
-  tcgdexIds: string[];
-  liveBundles: Map<string, number>;
-}): Promise<number> {
-  const byTcgdexSet: Record<
-    string,
-    {
-      parentTcgdex: string;
-      parentLive: string;
-      svOffset: number;
-      parentCardTotal: number;
-      vaultCardTotal: number;
-    }
-  > = {};
-
-  for (const tid of opts.tcgdexIds) {
-    const fallbacks = mechanicalReprintFallbackStems(tid);
-    if (fallbacks.length === 0) continue;
-    const parentLive = fallbacks[0]!;
-    if (!opts.liveBundles.has(parentLive)) continue;
-    const primary = liveSetIdFromTcgdexSet(tid);
-    if (primary && opts.liveBundles.has(primary)) continue;
-
-    const parentTcgdex = tid.slice(0, -2);
-    const [parentDetail, vaultDetail] = await Promise.all([
-      fetchTcgdexSetDetail("fr", parentTcgdex),
-      fetchTcgdexSetDetail("fr", tid),
-    ]);
-    if (!parentDetail || !vaultDetail) continue;
-
-    byTcgdexSet[tid] = {
-      parentTcgdex,
-      parentLive,
-      svOffset: parentDetail.cardTotal,
-      parentCardTotal: parentDetail.cardTotal,
-      vaultCardTotal: vaultDetail.cardTotal,
-    };
-  }
-
-  const payload = {
-    generatedAt: new Date().toISOString(),
-    source: "tcgdex-fr+live-dump",
-    byTcgdexSet,
-  };
-  writeFileSync(
-    REPRINT_META_PATH,
-    `${JSON.stringify(payload, null, 2)}\n`,
-    "utf8",
-  );
-  return Object.keys(byTcgdexSet).length;
 }
 
 async function main() {
@@ -483,7 +389,7 @@ async function main() {
 
   if (writeReprintMeta) {
     console.log(
-      `Reprint meta: ${reprintMetaCount} *sv fallback(s) → ${path.relative(process.cwd(), REPRINT_META_PATH)}`,
+      `Reprint meta: ${reprintMetaCount} *sv fallback(s) → ${path.relative(process.cwd(), reprintMetaPath())}`,
     );
   }
 

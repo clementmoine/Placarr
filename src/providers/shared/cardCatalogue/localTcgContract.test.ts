@@ -26,6 +26,7 @@ const FACTORY_LOCAL_TCG_IDS = new Set([
   "leclercmarvel24",
   "leclercsw15",
   "leclercsw16",
+  "leclercsw17",
   "leclercsw18",
   "leclercsw19",
   "mtg",

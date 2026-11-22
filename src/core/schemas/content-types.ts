@@ -7,7 +7,7 @@
  * périmètre ADR-020).
  *
  * @see docs/ADR.md ADR-020
- * @see docs/structure_vs_tako.md §5
+ * @see docs/archive/structure_vs_tako.md §5
  */
 import { z } from "zod";
 

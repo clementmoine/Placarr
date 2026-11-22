@@ -343,7 +343,7 @@ export async function POST(
 
     return NextResponse.json({
       item: refreshed
-        ? presentItemFromStorage(refreshed, uiLocale)
+        ? presentItemFromStorage(refreshed, { uiLocale })
         : { id: item.id },
       ...result,
       childCount: result.childIds.length,

@@ -46,10 +46,15 @@ import type { ProviderInfo } from "@/types/providerRegistry";
 // ---------------------------------------------------------------------------
 
 /**
- * Couche HTTP offerte au provider : timeout, abort du job ambiant, dédup,
- * limiter par host, circuit breaker soft-ban et fallback FlareSolverr sont
- * déjà branchés dedans. Un provider qui l'utilise n'importe rien de
+ * Couche HTTP offerte au provider. Un provider qui l'utilise n'importe rien de
  * `@/lib/http` directement.
+ *
+ * - `get` / `head` : timeout, abort du job ambiant, limiteur par host, dédup
+ *   (`get`), un rejeu sur erreur transitoire (réseau, délai, 5xx ; `retries`)
+ *   et circuit breaker par host d'API (ouvert après des échecs consécutifs).
+ * - `post` : timeout, abort, limiteur — jamais rejoué (non idempotent).
+ * - `scrapeGet` / `scrapeText` : en plus, détection des pages de blocage,
+ *   circuit soft-ban persisté par host et repli Byparr / FlareSolverr.
  */
 export const providerHttp = {
   get: httpGet,

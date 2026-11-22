@@ -1632,6 +1632,8 @@ export function ItemModal({
         galleryProvider: "Perso",
         gallerySourceNames: ["Perso"],
         galleryDetail: null,
+        proofUrl: null,
+        isAppChoice: false,
       });
       return list;
     }
@@ -1678,6 +1680,8 @@ export function ItemModal({
         galleryProvider: gallery?.provider ?? null,
         gallerySourceNames: gallery?.sourceNames ?? [],
         galleryDetail: gallery?.detail ?? null,
+        proofUrl: null,
+        isAppChoice: false,
       });
     }
 

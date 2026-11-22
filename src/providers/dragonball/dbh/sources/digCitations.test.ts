@@ -78,6 +78,7 @@ describe("dbh digCitations", () => {
         rarity: null,
         art: null,
         thumb: null,
+        back: null,
       },
       "dbh",
     );

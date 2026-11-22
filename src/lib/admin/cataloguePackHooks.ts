@@ -8,6 +8,7 @@
 import "server-only";
 
 import type { CardsIndexV1 } from "@/effects/cardsIndex";
+import type { CatalogueCardRow } from "@/lib/admin/catalogueCards";
 import type { CataloguePackId } from "@/lib/admin/cataloguePacks";
 import {
   collapseNarutoCatalogueIdentityRows,
@@ -27,9 +28,9 @@ export type CataloguePackHooks = {
     thumbUrl?: string;
     artFallbackFrom?: string;
   } | null;
-  collapseCatalogueIdentityRows?: <T extends { printKey: string }>(
-    rows: T[],
-  ) => T[];
+  collapseCatalogueIdentityRows?: (
+    rows: CatalogueCardRow[],
+  ) => CatalogueCardRow[];
   matchesPreferredLocaleAxis?: (
     row: {
       kind?: string;

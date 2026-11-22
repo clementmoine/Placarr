@@ -30,6 +30,8 @@ import {
 const mockedGet = vi.mocked(axios.get);
 const mockedPost = vi.mocked(axios.post);
 const ORIGINAL_FLARESOLVERR_URL = process.env.FLARESOLVERR_URL;
+// BYPARR_URL (le .env local) prime sur FLARESOLVERR_URL : à neutraliser aussi.
+const ORIGINAL_BYPARR_URL = process.env.BYPARR_URL;
 
 describe("Booknode provider", () => {
   beforeEach(() => {
@@ -40,9 +42,12 @@ describe("Booknode provider", () => {
     readBooknodeSearchEvidence.mockResolvedValue(null);
     promoteBooknodeSearchEvidence.mockResolvedValue(undefined);
     delete process.env.FLARESOLVERR_URL;
+    delete process.env.BYPARR_URL;
   });
 
   afterEach(() => {
+    if (ORIGINAL_BYPARR_URL) process.env.BYPARR_URL = ORIGINAL_BYPARR_URL;
+    else delete process.env.BYPARR_URL;
     if (ORIGINAL_FLARESOLVERR_URL) {
       process.env.FLARESOLVERR_URL = ORIGINAL_FLARESOLVERR_URL;
     } else {

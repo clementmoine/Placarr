@@ -8,7 +8,7 @@
 
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { parsePrintKey } from "@/core/identify/printKey";
 import { packCardsDir, packCatalogDb } from "@/lib/packPaths";
@@ -264,7 +264,7 @@ function upsertPackArtBasenames(
         const art = row.art.trim();
         if (!printKey || !lang || !art) continue;
         if (!printExists.get(printKey)) continue;
-        const args: unknown[] = [printKey, lang, art];
+        const args: SQLInputValue[] = [printKey, lang, art];
         if (hasSource) args.push(row.sourceUrl);
         upsert.run(...args);
         assets += 1;
@@ -303,6 +303,7 @@ export async function fillCardnexusPackFaces(
     skipped: 0,
     failed: 0,
     unmapped: 0,
+    productUrlsByPrintKey: {},
     assetsUpserted: 0,
   };
   if (!cardnexusApiKey()) return empty;
@@ -428,9 +429,9 @@ export function withCardnexusPackFacesStep<T>(
     onLog?: (line: string) => void;
   },
   runPipeline: (argv: string[]) => Promise<T>,
-): (argv: string[]) => Promise<T> {
+): (argv: readonly string[]) => Promise<T> {
   return async (argv) => {
-    const result = await runPipeline(argv);
+    const result = await runPipeline([...argv]);
     const skipTokens = argv.flatMap((a, i) => {
       if (a !== "--skip") return [];
       return String(argv[i + 1] ?? "")

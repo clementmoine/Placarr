@@ -12,12 +12,12 @@ function basePlan(
     mixed?: Partial<CompletionPlan["mixed"]>;
   },
 ): CompletionPlan {
-  const singles = overrides.singles;
+  const { singles, mixed: mixedOverrides, ...rest } = overrides;
   return {
     mode: "base-set",
     copiesNeeded: singles.pricedCount + singles.unpricedCount,
     holes: singles.pricedCount + singles.unpricedCount,
-    flags: overrides.flags ?? [],
+    flags: rest.flags ?? [],
     singles,
     mixed: {
       items: [],
@@ -29,7 +29,7 @@ function basePlan(
       expectedRemainingCards: singles.lines.length,
       singles: singles.lines,
       stopRule: { minNewCardsPerPack: 0.5 },
-      ...overrides.mixed,
+      ...mixedOverrides,
     },
     sealed: {
       items: [],
@@ -48,7 +48,7 @@ function basePlan(
       savingsCents: 0,
       confidence: "low",
     },
-    ...overrides,
+    ...rest,
   };
 }
 

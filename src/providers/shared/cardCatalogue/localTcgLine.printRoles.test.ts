@@ -30,8 +30,8 @@ describe("localTcgLine print roles ↔ Affiche", () => {
       "art.mcdn.webp",
     );
     const collapsed = collapsePrintRoleTwinWithDiskArt([
-      { type: "cover", url: printUrl, score: 1 },
-      { type: "cover", url: diskUrl, score: 2 },
+      { type: "cover", url: printUrl },
+      { type: "cover", url: diskUrl },
     ]);
     expect(collapsed.map((a) => a.url)).toEqual([diskUrl]);
   });
@@ -44,7 +44,7 @@ describe("localTcgLine print roles ↔ Affiche", () => {
       "face",
     );
     const collapsed = collapsePrintRoleTwinWithDiskArt([
-      { type: "cover", url: printUrl, score: 1 },
+      { type: "cover", url: printUrl },
     ]);
     expect(collapsed.map((a) => a.url)).toEqual([printUrl]);
   });

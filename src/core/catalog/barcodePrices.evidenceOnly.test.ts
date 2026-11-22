@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { AffinityRow } from "@/core/catalog/providerAffinity";
 import type { PriceOfferInput } from "@/core/enrich/evidence";
 import type {
   BarcodePriceRefreshContext,
@@ -39,14 +40,16 @@ vi.mock("@/core/catalog/registry", () => ({
   ] as unknown as ProviderModule[],
 }));
 
-const listAffinities = vi.fn(async () => [] as const);
+const listAffinities = vi.fn(
+  async (_input: unknown): Promise<AffinityRow[]> => [],
+);
 
 vi.mock("@/core/catalog/providerAffinity", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/core/catalog/providerAffinity")>();
   return {
     ...actual,
-    listAffinities: (...args: unknown[]) => listAffinities(...args),
+    listAffinities: (input: unknown) => listAffinities(input),
   };
 });
 

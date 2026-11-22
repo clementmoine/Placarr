@@ -32,16 +32,42 @@ import {
 
 import { DBS_JCC_PACK_ID, dbsJccSourcePath } from "../pack";
 
-type PressLedger = { products: Array<{ ingest?: boolean; host?: string; [key: string]: unknown }> };
+/** One packshot, as written by the press / carddass.fr dig (`data/…/sources/`). */
+export type PressPackshotRow = {
+  slug: string;
+  kind: string;
+  setCode: string;
+  lang: string;
+  title: string;
+  /** Image URL (or its Wayback copy). */
+  url: string;
+  /** Article / listing the image was read from. */
+  referer: string;
+  staging: string;
+  host: string;
+  ingest: boolean;
+  /** Mint the SKU when the products index lacks it. */
+  mint: boolean;
+  /** `false` = complementary dump, not the product face. */
+  face?: boolean;
+  mintSiblingSlug?: string;
+  role?: string;
+  note?: string;
+};
+
+export type PressPackshotLedger = {
+  source: string;
+  observed: string;
+  note?: string;
+  products: PressPackshotRow[];
+};
+
 const pressPackshotsLedgerJson = JSON.parse(
   readFileSync(dbsJccSourcePath("press-packshots.json"), "utf8"),
-) as PressLedger;
+) as PressPackshotLedger;
 const carddassFrPackshotsLedgerJson = JSON.parse(
   readFileSync(dbsJccSourcePath("carddass-fr-packshots.json"), "utf8"),
-) as PressLedger;
-
-export type PressPackshotRow =
-  (typeof pressPackshotsLedgerJson.products)[number];
+) as PressPackshotLedger;
 
 export function pressPackshotLedger() {
   return pressPackshotsLedgerJson;
@@ -53,9 +79,7 @@ export function pressIngestPackshots(): PressPackshotRow[] {
 
 /** Official carddass.fr Wayback sealed art — face:false complementary dumps. */
 export function carddassFrIngestPackshots(): PressPackshotRow[] {
-  return carddassFrPackshotsLedgerJson.products.filter(
-    (row) => row.ingest,
-  ) as PressPackshotRow[];
+  return carddassFrPackshotsLedgerJson.products.filter((row) => row.ingest);
 }
 
 /** Index keys may still be `dbs/jcc::…` after the pack-id rename. */

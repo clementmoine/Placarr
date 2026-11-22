@@ -114,13 +114,11 @@ describe("metadataAliases", () => {
             type: "cover",
             role: "mythos-proof-flyer-fr",
             title: "Annonce promo Mythos (flyer FR)",
-            url: "/assets/naruto/mythos/cards/fr/ks1promo/0133-vv2/proof.french.twitter.webp",
           },
           {
             type: "cover",
             role: "mythos-proof-flyer-en",
             title: "Annonce promo Mythos (flyer EN)",
-            url: "/assets/naruto/mythos/cards/en/ks1promo/0133-vv2/proof.english.twitter.webp",
           },
           {
             type: "cover",

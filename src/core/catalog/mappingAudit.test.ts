@@ -114,6 +114,7 @@ describe("provider mapping probes", () => {
         "leclercmarvel24",
         "leclercsw15",
         "leclercsw16",
+        "leclercsw17",
         "leclercsw18",
         "leclercsw19",
         "ledenicheur",

@@ -460,6 +460,9 @@ type RepairPrisma = {
         language: string | null;
         imageUrl: string | null;
         metadata: { id: string; imageUrl: string | null } | null;
+        /** Selected only by `remapOrphanLetteredItems` (clash lookup). */
+        shelfId?: string;
+        variant?: string | null;
       }>
     >;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

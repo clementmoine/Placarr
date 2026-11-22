@@ -46,7 +46,7 @@ export async function POST(
     const { itemId: rawId } = await context.params;
     const shelfIdParam = req.nextUrl.searchParams.get("shelfId");
     const body = await req.json().catch(() => ({}));
-    const rawPrints = Array.isArray(body?.prints) ? body.prints : [];
+    const rawPrints: unknown[] = Array.isArray(body?.prints) ? body.prints : [];
 
     const resolvedId = await resolveItemId(
       rawId,
@@ -264,7 +264,7 @@ export async function POST(
 
     return NextResponse.json({
       item: refreshed
-        ? presentItemFromStorage(refreshed, uiLocale)
+        ? presentItemFromStorage(refreshed, { uiLocale })
         : { id: item.id },
       ...result,
       childCount: result.childIds.length,

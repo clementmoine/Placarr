@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import type { CardsIndexLangFiles, CardsIndexV1 } from "@/effects/cardsIndex";
 import { packCardDir } from "@/lib/packPaths";
@@ -409,7 +409,7 @@ export function listDbsCgCatalogueBrowsePage(
   const offset = Math.max(0, Math.floor(opts.offset));
   const limit = Math.max(1, Math.min(1000, Math.floor(opts.limit)));
   const artSql = printAssetsArtSql(printAssetsColumnNames(db));
-  const params: unknown[] = [];
+  const params: SQLInputValue[] = [];
   const where: string[] = [
     `t.lang IN (${langs.map(() => "?").join(",")})`,
   ];

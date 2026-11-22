@@ -54,7 +54,7 @@ describe("auditSealedBarcodes", () => {
     };
     const minedByPack: Record<string, Map<string, MinedSlugBarcodes>> = {
       lorcana: new Map(),
-      "naruto/carddass": new Map([
+      "naruto/carddass": new Map<string, MinedSlugBarcodes>([
         [
           "duopack-s24",
           {

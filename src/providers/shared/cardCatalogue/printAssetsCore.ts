@@ -5,7 +5,7 @@
  * plus pack-specific columns). Readers normalize onto this core; pack-only
  * columns (Lorcana varnish, Naruto wayback, Pokémon foil) stay pack-local.
  *
- * @see docs/card_pack_contract.md §2
+ * @see docs/archive/card_pack_contract.md §2
  */
 
 function asText(value: unknown): string | null {

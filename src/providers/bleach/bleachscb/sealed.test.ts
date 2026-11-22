@@ -74,6 +74,6 @@ describe("bleachscb sealed press packshots", () => {
     expect(display?.guaranteedProducts?.[0]?.slug).toBe(
       "booster-s1-shinigami-and-ichigo",
     );
-    expect(contents.byKind.display?.packsContained).toBe(24);
+    expect(contents.byKind?.display?.packsContained).toBe(24);
   });
 });

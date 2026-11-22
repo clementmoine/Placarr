@@ -9,16 +9,25 @@ export {
   installDbsJccPressPackshots as installDbsJccMangaSanctuaryPackshots,
   type InstallPressPackshotsReport as InstallMangaSanctuaryReport,
 } from "./pressPackshots";
+import type { PressPackshotLedger } from "./pressPackshots";
 
-type PressLedger = { products: Array<{ ingest?: boolean; host?: string }> };
+/** Article MS d'origine : page citée + faits relevés (forme libre). */
+type MangaSanctuaryLedger = {
+  source: string;
+  observed: string;
+  page: string;
+  note?: string;
+  facts: Record<string, unknown>;
+  products: unknown[];
+};
 
 const pressPackshotsLedgerJson = JSON.parse(
   readFileSync(dbsJccSourcePath("press-packshots.json"), "utf8"),
-) as PressLedger;
+) as PressPackshotLedger;
 
 const mangaSanctuaryLedgerJson = JSON.parse(
   readFileSync(dbsJccSourcePath("manga-sanctuary-packshots.json"), "utf8"),
-) as PressLedger;
+) as MangaSanctuaryLedger;
 
 export function mangaSanctuaryPackshotLedger() {
   return mangaSanctuaryLedgerJson;

@@ -14,8 +14,8 @@ vi.mock("./fetch", async (importOriginal) => {
       fetchPricesFromPriceChartingGameUrl(...args),
     searchPriceChartingRows: (...args: unknown[]) =>
       searchPriceChartingRows(...args),
-    resolvePriceChartingGamePath: (...args: unknown[]) =>
-      resolvePriceChartingGamePath(...args),
+    resolvePriceChartingGamePath: (gamePath: string) =>
+      resolvePriceChartingGamePath(gamePath),
   };
 });
 

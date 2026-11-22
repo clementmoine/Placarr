@@ -11,9 +11,7 @@ function sumExpected(lines: readonly SinglesLine[]): number {
   );
 }
 
-function stripImputedLines(
-  lines: readonly SinglesLine[],
-): readonly SinglesLine[] {
+function stripImputedLines(lines: readonly SinglesLine[]): SinglesLine[] {
   return lines.filter((line) => !line.priceImputed);
 }
 

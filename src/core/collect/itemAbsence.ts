@@ -173,9 +173,10 @@ export function isItemPast(item: { presence?: string | null }): boolean {
   return coerceItemPresence(item.presence) === "past";
 }
 
+/** Coerced by readers — rows from JSON / the client may carry any string. */
 type LoanCompatFields = {
-  presence?: ItemPresence | null;
-  absenceReason?: AbsenceReason | null;
+  presence?: ItemPresence | string | null;
+  absenceReason?: AbsenceReason | string | null;
   absenceRecipient?: string | null;
   absenceSince?: Date | string | null;
   /** @deprecated migrated column — accepted only while callers catch up */
@@ -238,12 +239,11 @@ type AbsenceBadgeFields = LoanCompatFields &
       ItemAbsenceFields,
       | "absenceSource"
       | "absenceCarrier"
-      | "absenceReason"
-      | "presence"
       | "absencePriceCents"
-      | "absenceExpectedAt"
     >
   > & {
+    /** Date from Prisma, ISO string once serialized for the client. */
+    absenceExpectedAt?: Date | string | null;
     /** Optional trade counterpart title for `exchanged ↔ name`. */
     tradeCounterpartName?: string | null;
   };
@@ -287,13 +287,11 @@ export function resolveAbsenceReminder(
     (typeof item.loanedTo === "string" ? item.loanedTo.trim() : "") ||
     undefined;
 
-  const hasExpectedAt = Boolean(
-    item.absenceExpectedAt != null &&
-      String(item.absenceExpectedAt).trim(),
-  );
-  const daysUntil = hasExpectedAt
-    ? calendarDaysBetween(now, item.absenceExpectedAt)
-    : null;
+  const expectedAt = item.absenceExpectedAt;
+  const daysUntil =
+    expectedAt != null && String(expectedAt).trim()
+      ? calendarDaysBetween(now, expectedAt)
+      : null;
   if (
     daysUntil != null &&
     (reason === "loaned" ||

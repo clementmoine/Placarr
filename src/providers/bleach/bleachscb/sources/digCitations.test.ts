@@ -43,6 +43,7 @@ describe("bleachscb digCitations", () => {
         rarity: null,
         art: null,
         thumb: null,
+        back: null,
       },
       "bleachscb",
     );
@@ -66,6 +67,7 @@ describe("bleachscb digCitations", () => {
           rarity: null,
           art: null,
           thumb: null,
+          back: null,
         },
         "bleachscb",
       ),

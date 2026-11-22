@@ -18,7 +18,7 @@ vi.mock("./client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./client")>();
   return {
     ...actual,
-    cardnexusApiKey: (...args: unknown[]) => cardnexusApiKey(...args),
+    cardnexusApiKey: () => cardnexusApiKey(),
   };
 });
 
@@ -51,7 +51,7 @@ describe("cardnexus createMetadataAdapter", () => {
       externalIds: { cardmarket: [{ id: 99, finish: "NonFoil" }] },
     });
 
-    const adapter = cardnexusModule.createMetadataAdapter!();
+    const adapter = cardnexusModule.createMetadataAdapter!()!;
     const meta = await adapter.resolve({
       name: "Jessie, Lively Cowgirl",
       type: "tcg",
@@ -75,7 +75,7 @@ describe("cardnexus createMetadataAdapter", () => {
 
   it("returns null without an API key", async () => {
     cardnexusApiKey.mockReturnValue("");
-    const adapter = cardnexusModule.createMetadataAdapter!();
+    const adapter = cardnexusModule.createMetadataAdapter!()!;
     const meta = await adapter.resolve({
       name: "Jessie",
       type: "tcg",

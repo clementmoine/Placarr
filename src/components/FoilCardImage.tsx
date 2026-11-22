@@ -265,6 +265,8 @@ function CssFoilFace({
 const NO_FOIL_CAPS: FoilCapabilities = {
   supportsWebgl2: false,
   supportsAstc: false,
+  supportsS3tc: false,
+  supportsS3tcSrgb: false,
 };
 
 function subscribeFoilCaps() {

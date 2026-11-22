@@ -23,11 +23,11 @@ type ProductsContentsFile = {
 
 let digCache: DigFile | null | undefined;
 let sealedFromProducts: Map<string, { label: string; url: string }> | null =
-  undefined;
+  null;
 
 export function resetDbsCgDigCitationCaches(): void {
   digCache = undefined;
-  sealedFromProducts = undefined;
+  sealedFromProducts = null;
 }
 
 function curatedDir(): string {

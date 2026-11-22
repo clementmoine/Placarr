@@ -36,7 +36,8 @@ export type ColekaPriceRow = {
 
 export type ColekaPriceLedger = {
   source: string;
-  sourceId: "coleka-deals";
+  /** `coleka-deals` ici ; un autre récolteur au même format pose le sien. */
+  sourceId: string;
   packId: string;
   fetchedAt: string;
   rubriques: {

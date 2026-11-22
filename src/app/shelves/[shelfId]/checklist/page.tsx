@@ -956,34 +956,19 @@ export default function ChecklistPage() {
               <div className={styles.totals}>
                 <strong>
                   {t("items.checklistOwnedOf", {
-                    owned: checklistDisplayOwned(data.totals, {
-                      showOwned,
-                      showAway,
-                      showPast,
-                      showVirtual,
-                    }),
+                    owned: checklistDisplayOwned(data.totals, { showVirtual }),
                     total: data.totals.total,
                   })}
                 </strong>
                 <CompletionBar
                   value={checklistDisplayCompletion(
-                    checklistDisplayOwned(data.totals, {
-                      showOwned,
-                      showAway,
-                      showPast,
-                      showVirtual,
-                    }),
+                    checklistDisplayOwned(data.totals, { showVirtual }),
                     data.totals.total,
                   )}
                 />
                 <span className={styles.totalsPct}>
                   {checklistDisplayCompletion(
-                    checklistDisplayOwned(data.totals, {
-                      showOwned,
-                      showAway,
-                      showPast,
-                      showVirtual,
-                    }),
+                    checklistDisplayOwned(data.totals, { showVirtual }),
                     data.totals.total,
                   )}
                   %

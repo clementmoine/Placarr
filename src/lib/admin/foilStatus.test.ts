@@ -59,6 +59,7 @@ describe("readFoilPackStatuses", () => {
       "onepiece",
       "leclerc-sw15",
       "leclerc-sw16",
+      "leclerc-sw17",
       "leclerc-sw18",
       "leclerc-sw19",
       "leclerc-marvel20",

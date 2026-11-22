@@ -34,7 +34,7 @@ describe("Kayou lenticular e2e", () => {
   )(
     "$id → multi-panel CSS recipe for FoilCardImage",
     (typed) => {
-      const recipe = narutoKayouEffectPack.resolveCss(typed.finish);
+      const recipe = narutoKayouEffectPack.resolveCss(typed.finish, null);
       expect(recipe.finishShaderId).toBe("kayouLenticular");
       expect(recipe.lenticularGrid).toEqual({
         cols: typed.panelCols,
@@ -50,14 +50,14 @@ describe("Kayou lenticular e2e", () => {
   it.each(
     KAYOU_LENTICULAR_TYPES.filter((t) => t.panelCols * t.panelRows <= 1),
   )("$id → single-panel house flare, no lenticular grid", (typed) => {
-    const recipe = narutoKayouEffectPack.resolveCss(typed.finish);
+    const recipe = narutoKayouEffectPack.resolveCss(typed.finish, null);
     expect(recipe.finishShaderId).toBe(typed.shader);
     expect(recipe.lenticularGrid).toBeNull();
     expect(recipe.lenticularCropProfile).toBeUndefined();
   });
 
   it("accepts × spelling aliases on finish resolve", () => {
-    const recipe = narutoKayouEffectPack.resolveCss("HR-2×2");
+    const recipe = narutoKayouEffectPack.resolveCss("HR-2×2", null);
     expect(recipe.lenticularGrid).toEqual({ cols: 2, rows: 2 });
     expect(recipe.finishShaderId).toBe("kayouLenticular");
   });

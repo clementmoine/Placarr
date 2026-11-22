@@ -334,7 +334,7 @@ export async function POST(
       },
     });
     return NextResponse.json({
-      item: fresh ? presentItemFromStorage(fresh, uiLocale) : null,
+      item: fresh ? presentItemFromStorage(fresh, { uiLocale }) : null,
       parentId: parent.id,
     });
   });
@@ -420,7 +420,7 @@ export async function DELETE(
       },
     });
     return NextResponse.json({
-      item: fresh ? presentItemFromStorage(fresh, uiLocale) : null,
+      item: fresh ? presentItemFromStorage(fresh, { uiLocale }) : null,
       detachedFrom: link.parentId,
     });
   });

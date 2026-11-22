@@ -12,7 +12,7 @@ import {
   unlinkSync,
 } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 import { CATALOGUE_PACKS } from "@/lib/admin/cataloguePacks";
 import { packCatalogDb } from "@/lib/packPaths";
@@ -590,7 +590,7 @@ export function listProductsCataloguePage(
 
     const offset = Math.max(0, Math.floor(opts.offset));
     const limit = Math.max(1, Math.min(200, Math.floor(opts.limit)));
-    const params: unknown[] = [];
+    const params: SQLInputValue[] = [];
     const where: string[] = ["1=1"];
 
     const langs = [

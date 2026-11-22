@@ -9,10 +9,13 @@ import {
   foilScrollModeForInteraction,
 } from "./leanPolicy";
 import { foilMaterialHasTimeSibling } from "./resolveCardMaterial";
+import type { FoilMaterial } from "./types";
 
 describe("scroll mode + fragmentTime", () => {
   it("single-frag Live keeps time clock while pointer-driven", () => {
-    const material = { fragment: "SunPillar.frag" };
+    const material: Pick<FoilMaterial, "fragment" | "fragmentTime"> = {
+      fragment: "SunPillar.frag",
+    };
     const hasTimeSibling = foilMaterialHasTimeSibling(material);
     expect(hasTimeSibling).toBe(false);
     expect(

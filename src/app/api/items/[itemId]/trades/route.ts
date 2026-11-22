@@ -51,7 +51,7 @@ export async function GET(
     auth.user.id,
     auth.user.role,
   );
-  if ("error" in loaded) return loaded.error;
+  if (loaded.error) return loaded.error;
 
   const edges = await prisma.itemTradeLink.findMany({
     where: {
@@ -95,7 +95,7 @@ export async function POST(
     auth.user.id,
     auth.user.role,
   );
-  if ("error" in loaded) return loaded.error;
+  if (loaded.error) return loaded.error;
 
   const body = (await req.json()) as {
     counterpartItemId?: unknown;
@@ -192,7 +192,7 @@ export async function DELETE(
     auth.user.id,
     auth.user.role,
   );
-  if ("error" in loaded) return loaded.error;
+  if (loaded.error) return loaded.error;
 
   const body = (await req.json().catch(() => ({}))) as {
     linkId?: unknown;

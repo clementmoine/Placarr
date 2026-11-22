@@ -27,6 +27,9 @@ function attachment(
     height: null,
     meanLuminance: null,
     darkPixelRatio: null,
+    sourceUrl: null,
+    artKind: null,
+    watermarked: null,
   };
 }
 

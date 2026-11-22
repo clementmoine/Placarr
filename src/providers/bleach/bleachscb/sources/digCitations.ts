@@ -43,11 +43,11 @@ const SEALED_SLUG_LABELS: Record<string, string> = {
 
 let s1CatalogueUrlCache: string | null | undefined;
 let insertByPrintKeyCache: Map<string, { label: string; value: string }> | null =
-  undefined;
+  null;
 
 export function resetBleachScbDigCitationCaches(): void {
   s1CatalogueUrlCache = undefined;
-  insertByPrintKeyCache = undefined;
+  insertByPrintKeyCache = null;
 }
 
 function cdxPath(): string {

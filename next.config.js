@@ -46,8 +46,8 @@ const nextConfig = {
       "onnxruntime-web/webgpu": { browser: ORT_WEB_BUNDLE },
     },
   },
-  // Next 16 writes AGENTS.md / CLAUDE.md on `next dev`. We already have
-  // project rules under `.cursor/`; don't dump extra files into the tree.
+  // Next 16 writes AGENTS.md / CLAUDE.md on `next dev`. Ours are hand-written
+  // (CLAUDE.md + .claude/skills/); don't let Next overwrite or add to them.
   agentRules: false,
   /**
    * Hosts allowed to load dev assets, for testing on a phone over the LAN.

@@ -1,8 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { enrichChecklistWithOfficialFaces, harvestKayouFaces, installKayouFaces, kayouFacesContentHash, uprightKayouHorizontalScan } from "./faces";
+import {
+  enrichChecklistWithOfficialFaces,
+  harvestKayouFaces,
+  installKayouFaces,
+  kayouFacesContentHash,
+  uprightKayouHorizontalScan,
+} from "./faces";
 import { packCardDir } from "@/lib/packPaths";
 import type { KayouChecklist } from "../identity";
 import { listKayouLenticularPlayroomSamples } from "../playroomSamples";
@@ -33,7 +45,8 @@ import { NARUTO_KAYOU_PACK_ID } from "../pack";
                 number: "cc.mr.001s",
                 name: "Naruto Uzumaki",
                 rarity: "CC-MR",
-                faceUrl: "https://capsulecorpgear.com/wp-content/uploads/CC-MR-P001-H-yoccg.jpg",
+                faceUrl:
+                  "https://capsulecorpgear.com/wp-content/uploads/CC-MR-P001-H-yoccg.jpg",
                 faceSource: "capsulecorpgear",
               },
             ],
@@ -62,7 +75,8 @@ import { NARUTO_KAYOU_PACK_ID } from "../pack";
                 idCode: "NRCCNA-◇MR-001",
                 name: "Happy Wedding",
                 rarity: "◇MR",
-                frontImage: "https://static-sg.kayouofficial.com/wedding-001.png",
+                frontImage:
+                  "https://static-sg.kayouofficial.com/wedding-001.png",
                 frontWidth: 1028,
                 frontHeight: 733,
                 backImage: "https://cdn.example/back.png",
@@ -230,7 +244,8 @@ import { NARUTO_KAYOU_PACK_ID } from "../pack";
                   number: "nr.hr.084",
                   name: "Hinata & Naruto",
                   rarity: "HR",
-                  faceUrl: "https://narutopia.fr/wp-content/uploads/2023/08/HR-84.webp",
+                  faceUrl:
+                    "https://narutopia.fr/wp-content/uploads/2023/08/HR-84.webp",
                 },
               ],
             },

@@ -2,11 +2,7 @@
  * Kayou faces — official gallery enrich + narutocards / CCG / alertehit harvest.
  */
 
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { httpGet } from "@/lib/http/httpClient";
@@ -32,7 +28,6 @@ import type { KayouOfficialCatalog } from "./crawl";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
-
 
 // ─── kayouOfficialFaces ───
 
@@ -165,7 +160,10 @@ function refererForUrl(url: string, fallback: string): string {
   }
 }
 
-function artSourceId(card: KayouChecklistCard, chosenUrl: string | null): string {
+function artSourceId(
+  card: KayouChecklistCard,
+  chosenUrl: string | null,
+): string {
   const tagged = card.faceSource?.trim();
   if (tagged) return tagged;
   if (chosenUrl?.includes("kayouofficial.com")) return "kayouofficial";
@@ -177,7 +175,10 @@ function artSourceId(card: KayouChecklistCard, chosenUrl: string | null): string
   return DEFAULT_SOURCE_ID;
 }
 
-async function downloadImage(url: string, referer: string): Promise<Buffer | null> {
+async function downloadImage(
+  url: string,
+  referer: string,
+): Promise<Buffer | null> {
   try {
     const res = await httpGet<ArrayBuffer>(url, {
       headers: { "User-Agent": UA, Referer: referer },
@@ -215,15 +216,13 @@ export type KayouFaceHarvest = {
   skippedFresh?: boolean;
 };
 
-export async function harvestKayouFaces(
-  opts: {
-    checklist: KayouChecklist;
-    force?: boolean;
-    stagingDir?: string;
-    delayMs?: number;
-    onProgress?: (message: string) => void;
-  },
-): Promise<KayouFaceHarvest> {
+export async function harvestKayouFaces(opts: {
+  checklist: KayouChecklist;
+  force?: boolean;
+  stagingDir?: string;
+  delayMs?: number;
+  onProgress?: (message: string) => void;
+}): Promise<KayouFaceHarvest> {
   const ledger = opts.checklist;
   const total = ledger.sets.reduce((n, s) => n + s.cards.length, 0);
   const contentHash = kayouFacesContentHash(ledger);
@@ -297,7 +296,12 @@ export type KayouFaceInstall = { faces: number; missing: string[] };
 
 export function installKayouFaces(
   index: LocalPrintsIndex,
-  opts: { checklist: KayouChecklist; stagingDir?: string; lang?: string; force?: boolean },
+  opts: {
+    checklist: KayouChecklist;
+    stagingDir?: string;
+    lang?: string;
+    force?: boolean;
+  },
 ): KayouFaceInstall {
   const ledger = opts.checklist;
   const staging = opts.stagingDir ?? kayouFacesStagingDir();

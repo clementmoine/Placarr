@@ -59,6 +59,24 @@ Gammes produit FR (starters / boosters 2006–07) aussi listées sur [SciFi-Univ
 
 Coleka liste aussi, **à part**, les séries **EN CCG** (Série 06…28, etc.) sous le fourre-tout « Naruto Cartes à Jouer et à Collectionner ». **Ne pas merger** sans mapping explicite.
 
+#### Lecture des listes Coleka par la Sync (2026-11-23)
+
+- **Gabarit k5** (depuis 2026-11) : 60 tuiles par page, base = 1re page,
+  `?p=1` = 2e. La Sync lit « Page 1 sur N » sur la 1re page et ne demande que
+  ces N pages (`colekaListingPageCount`) ; la référence peut porter l'année
+  (`Ref. NI-01 · 2002`, retirée au parsing).
+- **Mur `/verify`** (Turnstile Coleka) : toute page non mise en cache par le
+  CDN y renvoie — Byparr compris (seule `?p=1` passe souvent). On ne résout
+  pas ce CAPTCHA automatiquement. Une page murée garde sa copie en staging ;
+  des pages de gabarits mélangés (cache CDN périmé) comptent comme une
+  lecture **partielle** : `cards.json` ne rétrécit jamais.
+- **Rafraîchir une liste murée** : ouvrir la rubrique dans un navigateur où
+  la vérification est passée, et enregistrer les pages (tuiles k5) sous
+  `data/naruto/carddass/staging/<coleka-…>/…listing-<i>.html` (i = 0 pour la
+  base). La Sync suivante les relit (cache < 24 h ou mur → copie gardée).
+  Capture du 2026-11-23 : S1–S5 FR, S24 (121 tuiles), S28 (120), Rampage
+  Tornado (33).
+
 ### 1bis. Ce qu’on avait zappé — hors checklist « Série 1–5 booster »
 
 #### Promos FR (tournois Bandai)

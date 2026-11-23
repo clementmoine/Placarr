@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   colekaListingItems,
+  colekaListingPageCount,
+  colekaListingPageUrls,
   colekaListingPagesCoherent,
   colekaListingTemplate,
 } from "./listingItems";
@@ -97,5 +99,31 @@ describe("colekaListingItems — k5 ref with year", () => {
       title: "Naruto Uzumaki",
       ref: "NI-01",
     });
+  });
+});
+
+describe("colekaListingPageCount / colekaListingPageUrls", () => {
+  it("reads the page count Coleka prints above the tiles", () => {
+    expect(
+      colekaListingPageCount(
+        '<p class="pagination">Page 1 sur 3 - classement par défaut</p>',
+      ),
+    ).toBe(3);
+    expect(colekaListingPageCount("<p>Page 2 sur 2</p>")).toBe(2);
+    expect(colekaListingPageCount("<html>verify</html>")).toBeNull();
+  });
+
+  it("builds base + ?p=1… from the count (k5: 60 per page, 0-based p)", () => {
+    // 2026-11-23 : `?p=1` = 2e page (NI-1363…), la base = 1re (JU-895…).
+    // Le calcul fixe à 48/page demandait une page de trop, servie en cache
+    // avec l'ancien gabarit.
+    expect(colekaListingPageUrls("https://x/l_r1", 3)).toEqual([
+      "https://x/l_r1",
+      "https://x/l_r1?p=1",
+      "https://x/l_r1?p=2",
+    ]);
+    expect(colekaListingPageUrls("https://x/l_r1", 1)).toEqual([
+      "https://x/l_r1",
+    ]);
   });
 });

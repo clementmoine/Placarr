@@ -124,3 +124,23 @@ export function colekaListingPagesCoherent(pages: readonly string[]): boolean {
   );
   return templates.size <= 1;
 }
+
+/** « Page 1 sur 3 » au-dessus des tuiles — `null` si la page ne le dit pas. */
+export function colekaListingPageCount(html: string): number | null {
+  const m = /Page\s+\d+\s+sur\s+(\d+)/i.exec(html);
+  const n = m ? Number.parseInt(m[1]!, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * URLs d'une liste paginée d'après le nombre de pages qu'elle annonce :
+ * la base est la 1re page, `?p=1` la 2e (k5, 60 tuiles par page).
+ */
+export function colekaListingPageUrls(
+  baseUrl: string,
+  pages: number,
+): string[] {
+  return Array.from({ length: Math.max(1, pages) }, (_, i) =>
+    i === 0 ? baseUrl : `${baseUrl}?p=${i}`,
+  );
+}

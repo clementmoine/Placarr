@@ -2,12 +2,7 @@
  * Naruto Carddass coleka scrapers.
  */
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { httpGet } from "@/lib/http/httpClient";
 import { dataRoot } from "@/lib/runtimeData";
@@ -15,10 +10,18 @@ import {
   fetchColekaListingHtml,
   keepStagedListingCards,
 } from "@/providers/shared/coleka/listingFetch";
-import { colekaListingPagesCoherent } from "@/providers/shared/coleka/listingItems";
+import {
+  colekaListingPageCount,
+  colekaListingPageUrls,
+  colekaListingPagesCoherent,
+} from "@/providers/shared/coleka/listingItems";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { narutoCardAbsDir } from "../disk";
-import { existingNarutoArtForSource, extFromMagic, saveNarutoFace } from "../disk";
+import {
+  existingNarutoArtForSource,
+  extFromMagic,
+  saveNarutoFace,
+} from "../disk";
 import {
   COLEKA_CARDDASS_FR_LANG,
   COLEKA_CARDDASS_FR_SERIES,
@@ -50,7 +53,11 @@ import {
   STORM3_SET,
   type ColekaStorm3Card,
 } from "../parse/coleka";
-import { mintNarutoPrintKey, narutoDiskCardId, narutoNumbersEqual } from "../identity";
+import {
+  mintNarutoPrintKey,
+  narutoDiskCardId,
+  narutoNumbersEqual,
+} from "../identity";
 import { upsertNarutoAppearances } from "../pipeline";
 import { cardTypeFromCollectorNumber } from "../parse/bandai";
 import { NARUTO_PACK_ID } from "../identity";
@@ -162,6 +169,16 @@ function colekaCarddassFr_mergeByNumber(
   }
 }
 
+/**
+ * La 1re page dit combien il y en a (« Page 1 sur 3 ») : on suit Coleka
+ * plutôt qu'un calcul figé (48 par page avant k5, 60 depuis) qui demandait
+ * des pages au-delà de la fin, servies périmées par le cache.
+ */
+function pagesAnnounced(firstPage: string, fallback: string[]): string[] {
+  const count = colekaListingPageCount(firstPage);
+  return count ? colekaListingPageUrls(fallback[0]!, count) : fallback;
+}
+
 export async function scrapeNarutoColekaCarddassFrCards(
   options: ScrapeColekaCarddassFrOptions = {},
 ): Promise<void> {
@@ -181,10 +198,9 @@ export async function scrapeNarutoColekaCarddassFrCards(
     let pageIdx = 0;
     let seriesCards = 0;
     const seriesPages: string[] = [];
-    for (const url of colekaCarddassFrListingPageUrls(
-      series.path,
-      series.listedCount,
-    )) {
+    let urls = colekaCarddassFrListingPageUrls(series.path, series.listedCount);
+    for (let i = 0; i < urls.length; i += 1) {
+      const url = urls[i]!;
       if (delayMs > 0) {
         if (waited) await sleep(delayMs);
         else waited = true;
@@ -209,6 +225,7 @@ export async function scrapeNarutoColekaCarddassFrCards(
         if (seriesCards === 0) pagesMissing += 1;
         break;
       }
+      if (i === 0) urls = pagesAnnounced(html, urls);
       seriesPages.push(html);
       seriesCards += parsed.length;
       colekaCarddassFr_mergeByNumber(byNumber, parsed);
@@ -685,9 +702,7 @@ export function loadColekaSagesLegacyLedger(
   return readColekaCcgFrLedger(packDir, NARUTO_STAGING_COLEKA_S24);
 }
 
-export function loadColekaStorm3Ledger(
-  packDir?: string,
-): ColekaStorm3Card[] {
+export function loadColekaStorm3Ledger(packDir?: string): ColekaStorm3Card[] {
   return readColekaCcgFrLedger(packDir, NARUTO_STAGING_COLEKA_S28);
 }
 
@@ -787,7 +802,9 @@ async function scrapeColekaCcgFrSet(
   let pagesMissing = 0;
   let waited = false;
   const pages: string[] = [];
-  for (const url of spec.listingPageUrls()) {
+  let urls = spec.listingPageUrls();
+  for (let i = 0; i < urls.length; i += 1) {
+    const url = urls[i]!;
     if (delayMs > 0) {
       if (waited) await sleep(delayMs);
       else waited = true;
@@ -813,6 +830,7 @@ async function scrapeColekaCcgFrSet(
       if (byNumber.size === 0) pagesMissing += 1;
       continue;
     }
+    if (i === 0) urls = pagesAnnounced(html, urls);
     pages.push(html);
     colekaStorm3_mergeByNumber(byNumber, parsed);
   }

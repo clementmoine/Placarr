@@ -46,3 +46,42 @@ describe("card dir layout guard", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+const LANGS = new Set(["en", "fr", "ja", "zh", "ko", "de", "it", "es", "pt"]);
+
+function curatedCardRoots(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const full = path.join(dir, entry.name);
+    if (entry.name === "cards" && path.basename(dir) === "curated") {
+      out.push(full);
+      continue;
+    }
+    if (entry.name === "node_modules" || entry.name === "generated") continue;
+    curatedCardRoots(full, out);
+  }
+  return out;
+}
+
+describe("curated card trees", () => {
+  it("are lang-first too — install copies them as they are", () => {
+    // 2026-11-23 : Ninja Ranks portait `pn/en/…` (dos reconstruits récents)
+    // à côté de `en/pn/…` (anciens) ; la Sync recopiait les deux dans data/.
+    const offenders: string[] = [];
+    for (const root of curatedCardRoots(path.join(SRC, "providers"))) {
+      for (const top of readdirSync(root, { withFileTypes: true })) {
+        if (!top.isDirectory() || LANGS.has(top.name)) continue;
+        for (const sub of readdirSync(path.join(root, top.name), {
+          withFileTypes: true,
+        })) {
+          if (sub.isDirectory() && LANGS.has(sub.name)) {
+            offenders.push(
+              path.relative(SRC, path.join(root, top.name, sub.name)),
+            );
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});

@@ -294,3 +294,61 @@ chaque fiche Coleka), `leclerc-sw17-sealed.json` (coffret, pochette 1,
 peut pas les apparier). Packshots scellés : URLs Coleka citées dans le ledger,
 **pas copiés** en `curated/` (publics). Display : stub, `packsContained` null.
 Pas de dos commun.
+
+## Session 2026-11-23 — ledgers publics produits par la Sync (étape `ledgers`)
+
+Décision du propriétaire : ce qui se relit publiquement ne vit ni en
+`curated/` ni en édition manuelle de `data/` — la Sync le (re)produit, un lien
+profond par fait. Nouvelle étape Sync **`ledgers`** (online, avant `seed`) :
+`ledgerSync.ts`, sources déclarées par op dans `ledgerSources.ts`
+(`LECLERC_LEDGER_SOURCES`, comme `COLLEX_LECLERC_COLLECTIONS`). Copie de
+référence des fichiers faits à la main : `backups/leclerc-sources-2026-11-22/`.
+
+| Fichier | Fait | Source relue | Accès |
+|---------|------|--------------|-------|
+| `leclerc-marvel20/sw19-checklist.json` | noms + lien fiche par carte | listing Coleka : page vivante (gabarit k5, Byparr) + dumps `?nbpp=240` déjà en staging | page 1 vivante ; complet via staging |
+| idem | `rarity` (brillante / pailletee / argentee) + `raritySource` | [Paninimania idm=7013](https://www.paninimania.com/?pag=cid508_alb&idf=15&idm=7013), [idm=6809](https://www.paninimania.com/?pag=cid508_alb&idf=15&idm=6809) — blocs « Images … *code : n, n » | `httpGet` direct (Windows-1252) |
+| idem | `operation` (période, pochette, seuil, prix album) | même fiche Paninimania | idem |
+| `leclerc-sw17-checklist.json` | 25 noms + lien fiche | [listing `_r2836`](https://www.coleka.com/fr/figurines-de-collection/petites-figurines/stikeez-popz/micropopz-star-wars-leclerc_r2836) (28 tuiles, une page) ; repli [Wayback 2025-06-09](https://web.archive.org/web/20250609152258/https://www.coleka.com/fr/figurines-de-collection/petites-figurines/stikeez-popz/micropopz-star-wars-leclerc_r2836) | vivant OK le 2026-11-22 (cache) |
+| idem | n° 001–025 | ordre des fiches Coleka i153671→i153695 (hors 3 SKU scellés déclarés) ; écrit **seulement si 25** | règle déclarée, citée ([article Mintinbox 23/10/2017](https://www.mintinbox.net/2017/10/23/leclerc-star-wars-micropopz-devoilent-officielement/), planche officielle) |
+| idem | `operation` 24/10–09/12/2017, 30 € | [article Mintinbox 16/10/2017](https://www.mintinbox.net/2017/10/16/leclerc-star-wars-micropopz/) (texte) | `httpGet` |
+| `leclerc-sw17-sealed.json` | coffret 1,99 €, lunettes VR 2,99 € (+ date 2017-10-24) | fiches Coleka [`coffret-collector_i153696`](https://web.archive.org/web/20250609152312/https://www.coleka.com/fr/figurines-de-collection/petites-figurines/stikeez-popz/micropopz-star-wars-leclerc/coffret-collector_i153696), [`cardbox-lunettes-vr_i153697`](https://web.archive.org/web/20250609152312/https://www.coleka.com/fr/figurines-de-collection/petites-figurines/stikeez-popz/micropopz-star-wars-leclerc/cardbox-lunettes-vr_i153697) « Prix dans le commerce » | fiche vivante = mur Turnstile → **copie Wayback** (citée par SKU, `citations.priceCents`) |
+| idem | pochette = 1 MicroPopz | visuel modalités officiel (article Mintinbox 23/10/2017) | **déclaré** dans `ledgerSources.ts` (lecture d'image, pas de texte) |
+| `coleka-cdn-faces.json` → `sets.sw17` | 25 URLs `thumbs.coleka.com` | vignettes du listing (`_250x250` retiré) | CDN répond sans contrôle |
+
+Règles de l'étape :
+
+- lecture partielle ≠ effacement : cartes, `aka`, `rarity` déjà attestés
+  restent ; un prix attesté reste si sa fiche ne se relit pas ;
+- finitions relues = vérité (une carte hors liste Paninimania perd son
+  `rarity`) ; Paninimania injoignable → ledger non réécrit ;
+- numérotation par ordre de fiche : rien n'est écrit si le compte attendu
+  (25) n'est pas atteint (sinon les numéros glisseraient) ;
+- la fiche Coleka « Pochette » annonce « 2 € » : **non repris** (la pochette
+  est offerte par tranche de 30 €).
+
+Écart avec la sauvegarde (Sync depuis zéro, 2026-11-22) : cartes, finitions,
+bloc CDN sw17 et valeurs scellées **identiques** ; seules les métadonnées
+diffèrent (libellés `source`, `url` sans `?nbpp=240`, citations ajoutées,
+`operation.sources` par champ, compteurs `coverage` spécifiques
+`memoryCards`/`stickers`/`gameBacks` non recalculés — gardés quand le
+ledger existe).
+
+Reste non automatisable :
+
+- **Listings Coleka complets** marvel20 / sw19 : pages `?p=2…` et
+  `?nbpp=240` derrière Turnstile, aucune copie Wayback du listing ; la Sync
+  relit les dumps navigateur déjà en staging (`listing-nbpp.html`). Sans eux,
+  seule la page 1 vivante (≈ 46–60 tuiles) se relit — les autres cartes du
+  ledger restent (jamais effacées) mais ne sont pas re-vérifiées.
+- **Concordance planche ↔ ordre Coleka** (sw17) : contrôle visuel, pas
+  d'OCR ; la règle est déclarée et citée.
+- **Pochette sw17 = 1 figurine** : lu sur le visuel modalités (image) ;
+  l'article du 16/10 le dit en texte libre (« chaque figurine … dans un
+  sachet opaque ») — valeur déclarée, citée.
+
+Corrigé au passage : `parseColekaLeclercListing` lit aussi le gabarit
+**k5** servi en direct depuis 2026-11 (`Ref. 001 · 2020`) — avant, une page
+vivante rendait 0 carte et seuls les dumps staging alimentaient les faces.
+`waybackCdxQueryUrl` demande `fl=timestamp,original,…` (sans, le CDX met la
+urlkey en tête).

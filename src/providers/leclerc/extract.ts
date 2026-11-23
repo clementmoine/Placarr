@@ -32,22 +32,25 @@ import {
   harvestCollexLeclercFaces,
   installCollexLeclercFaces,
 } from "./collexFaces";
+import { syncLeclercLedgers } from "./ledgerSync";
 import { colekaLeclercListingForSet } from "./parseColekaLeclerc";
 import { leclercSetLabel } from "./printKey";
 import { ingestLeclercSealedProducts } from "./sealed";
 
 /**
- * Ledger seed (offline) + faces Coleka/eBay/ColleX (online) + scellés
- * (offline) + documents de l'opération (online).
+ * Ledgers publics relus (online : checklist / finitions / scellés sous
+ * `data/leclerc/sources/`) + seed depuis les ledgers (offline) + faces
+ * Coleka/eBay/ColleX (online) + scellés (offline) + documents (online).
  */
 export const LECLERC_STEPS = [
+  "ledgers",
   "seed",
   "faces",
   "products",
   "documents",
 ] as const;
 export type LeclercStep = (typeof LECLERC_STEPS)[number];
-const LECLERC_ONLINE = new Set<LeclercStep>(["faces", "documents"]);
+const LECLERC_ONLINE = new Set<LeclercStep>(["ledgers", "faces", "documents"]);
 
 export function selectLeclercSteps(argv: readonly string[]): LeclercStep[] {
   return selectCatalogueSteps(argv, LECLERC_STEPS, { online: LECLERC_ONLINE });
@@ -62,6 +65,15 @@ export async function runLeclercOpPipeline(
   console.log(
     `── ${label} — étapes : ${steps.join(" → ") || "(curated only)"}`,
   );
+  if (steps.includes("ledgers")) {
+    const ledgers = await syncLeclercLedgers(op.setCode);
+    if (ledgers) {
+      console.log(
+        `── ${label} — ledgers : checklist ${ledgers.checklist?.cards ?? "—"} (finitions ${ledgers.checklist?.rarities ?? "—"}), scellés ${ledgers.sealed?.products ?? "—"} (prix ${ledgers.sealed?.prices ?? "—"}), faces CDN ${ledgers.cdnFaces ?? "—"}` +
+          (ledgers.skipped.length ? ` — ${ledgers.skipped.join("; ")}` : ""),
+      );
+    }
+  }
   const result = await runLocalTcgPipeline({
     packId: op.packId,
     curatedDir: leclercCuratedDir(),

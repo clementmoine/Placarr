@@ -4,6 +4,8 @@
  * uncached → Turnstile — ne pas l’utiliser pour le harvest auto.
  * Complément CDN : `data/leclerc/sources/coleka-cdn-faces.json` (index Bing → thumbs.coleka.com).
  */
+import { colekaListingItems } from "@/providers/shared/coleka/listingItems";
+
 export const COLEKA_LECLERC_ORIGIN = "https://www.coleka.com";
 export const COLEKA_LECLERC_LANG = "fr";
 export const COLEKA_LECLERC_SOURCE_ID = "coleka";
@@ -116,10 +118,7 @@ function decodeEntities(raw: string): string {
 
 /** Thumb `_250x250.webp` → full CDN face. */
 export function colekaLeclercFaceUrl(thumbUrl: string): string {
-  return thumbUrl.replace(
-    /_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i,
-    "",
-  );
+  return thumbUrl.replace(/_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i, "");
 }
 
 /** Listing URL for page index (1-based). Page 1 has no `?p=`. */
@@ -245,9 +244,7 @@ export function foldLeclercFixeezKey(raw: string): string {
     .replace(/\p{M}/gu, "")
     .replace(/^fixeez\s*[—\-:]?\s*/i, "")
     .toLowerCase();
-  return stripped
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return stripped.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
 export type LeclercFixeezLookupRow = {
@@ -317,6 +314,55 @@ export type ParseColekaLeclercOptions = {
   fixeezLookup?: ReadonlyMap<string, string>;
 };
 
+type ListingTile = {
+  name: string;
+  thumbUrl: string;
+  href: string;
+  refRaw: string | null;
+};
+
+/** Dumps navigateur / gabarit historique : `<li class="col-md-4">`. */
+function legacyListingTiles(html: string): ListingTile[] {
+  const tiles: ListingTile[] = [];
+  for (const m of html.matchAll(
+    /<li class="[^"]*\bcol-md-4\b[^"]*"[\s\S]*?<\/li>/gi,
+  )) {
+    const block = m[0] ?? "";
+    // Allow browser-injected attrs (`data-cursor-ref`) on title nodes.
+    const titleMatch = block.match(
+      /<h3 class="product-title"[^>]*>([^<]+)<\/h3>/i,
+    );
+    const imgMatch = block.match(
+      /src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
+    );
+    const hrefMatch = block.match(/href="([^"]+_i\d+)"/i);
+    if (!titleMatch || !imgMatch) continue;
+    const refMatch = block.match(/class="ref">\s*Ref\.\s*([^<]+?)\s*</i);
+    tiles.push({
+      name: decodeEntities(titleMatch[1] ?? ""),
+      thumbUrl: imgMatch[1] ?? "",
+      href: hrefMatch?.[1] ?? "",
+      refRaw: refMatch?.[1]?.trim() ?? null,
+    });
+  }
+  return tiles;
+}
+
+/**
+ * Gabarit « k5 » servi en direct depuis 2026-11 (`Ref. 001 · 2020`) — lu par
+ * le parseur de tuiles partagé ; l'année après « · » n'est pas la référence.
+ */
+function k5ListingTiles(html: string): ListingTile[] {
+  return colekaListingItems(html)
+    .filter((item) => item.thumbUrl?.includes("/media/item/"))
+    .map((item) => ({
+      name: item.title,
+      thumbUrl: item.thumbUrl!,
+      href: item.href,
+      refRaw: item.ref?.replace(/\s*·.*$/, "").trim() || null,
+    }));
+}
+
 /**
  * Parse a Coleka rubrique listing HTML for one Leclerc set.
  * Cards: `Ref. NNN` + product title. Fixeez: Fnn in path/title, else checklist name.
@@ -331,23 +377,9 @@ export function parseColekaLeclercListing(
   const seen = new Set<string>();
   const lookup = opts.fixeezLookup;
 
-  for (const m of html.matchAll(
-    /<li class="[^"]*\bcol-md-4\b[^"]*"[\s\S]*?<\/li>/gi,
-  )) {
-    const block = m[0] ?? "";
-    // Allow browser-injected attrs (`data-cursor-ref`) on title nodes.
-    const titleMatch = block.match(
-      /<h3 class="product-title"[^>]*>([^<]+)<\/h3>/i,
-    );
-    const imgMatch = block.match(
-      /src="(https:\/\/thumbs\.coleka\.com\/media\/item\/[^"]+)"/i,
-    );
-    const hrefMatch = block.match(/href="([^"]+_i\d+)"/i);
-    if (!titleMatch || !imgMatch) continue;
-
-    const name = decodeEntities(titleMatch[1] ?? "");
-    const thumbUrl = imgMatch[1] ?? "";
-    const href = hrefMatch?.[1] ?? "";
+  const legacy = legacyListingTiles(html);
+  const tiles = legacy.length ? legacy : k5ListingTiles(html);
+  for (const { name, thumbUrl, href, refRaw } of tiles) {
     if (!name || !thumbUrl) continue;
     if (SKIP_TITLE.test(name)) {
       rejected.push({ name, reason: "non-card" });
@@ -363,8 +395,6 @@ export function parseColekaLeclercListing(
         continue;
       }
     } else {
-      const refMatch = block.match(/class="ref">\s*Ref\.\s*([^<]+?)\s*</i);
-      const refRaw = refMatch?.[1]?.trim() ?? null;
       number = colekaLeclercListingRefToNumber(refRaw, href, name);
       if (!number) {
         rejected.push({ name, reason: refRaw ? "bad-ref" : "no-ref" });

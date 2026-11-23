@@ -12,6 +12,37 @@ import {
 } from "./parseColekaLeclerc";
 
 describe("parseColekaLeclercListing", () => {
+  it("lit aussi le gabarit k5 servi en direct (Ref. « 001 · 2020 »)", () => {
+    const html = `
+      <article class="k5" data-id="800746">
+        <a class="k5-lien" href="/fr/x/album_i800746">
+          <div class="k5-img"><img src="https://thumbs.coleka.com/media/item/202011/06/album_250x250.webp" alt="Album" width="250" height="250"></div>
+          <div class="k5-corps"><h3>Album</h3><p>2020</p></div>
+        </a>
+      </article>
+      <article class="k5" data-id="800747">
+        <a class="k5-lien" href="/fr/x/gamora_i800747">
+          <div class="k5-img"><img src="https://thumbs.coleka.com/media/item/202011/13/sticker-n-1-001_250x250.webp" alt="GAMORA" width="250" height="250"></div>
+          <div class="k5-corps"><h3>GAMORA</h3><p>Ref. 001 · 2020</p></div>
+        </a>
+      </article>`;
+    const parsed = parseColekaLeclercListing(html, "marvel20");
+    expect(parsed.cards).toEqual([
+      {
+        setCode: "marvel20",
+        number: "001",
+        name: "GAMORA",
+        kind: "card",
+        thumbUrl:
+          "https://thumbs.coleka.com/media/item/202011/13/sticker-n-1-001_250x250.webp",
+        faceUrl:
+          "https://thumbs.coleka.com/media/item/202011/13/sticker-n-1-001.webp",
+        pageUrl: "https://www.coleka.com/fr/x/gamora_i800747",
+      },
+    ]);
+    expect(parsed.rejected).toEqual([{ name: "Album", reason: "non-card" }]);
+  });
+
   it("maps listing refs (digits, A–H, C/J prefixes, J slug)", () => {
     expect(colekaLeclercListingRefToNumber("54")).toBe("054");
     expect(colekaLeclercListingRefToNumber("A")).toBe("089");
@@ -170,9 +201,7 @@ describe("parseColekaLeclercListing", () => {
     ]);
     expect(parsed.rejected.some((r) => r.name === "Album")).toBe(true);
     expect(
-      parsed.rejected.some((r) =>
-        r.name.startsWith("Pochette Comic Shell"),
-      ),
+      parsed.rejected.some((r) => r.name.startsWith("Pochette Comic Shell")),
     ).toBe(true);
   });
 
@@ -207,8 +236,8 @@ describe("parseColekaLeclercListing", () => {
       fixeezLookup: lookup,
     });
     expect(parsed.cards.map((c) => c.number)).toEqual(["f02", "f13", "f17"]);
-    expect(parsed.rejected.filter((r) => r.reason === "fixeez-no-number")).toEqual(
-      [],
-    );
+    expect(
+      parsed.rejected.filter((r) => r.reason === "fixeez-no-number"),
+    ).toEqual([]);
   });
 });

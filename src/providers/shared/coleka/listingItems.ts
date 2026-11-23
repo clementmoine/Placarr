@@ -127,7 +127,7 @@ export function colekaListingPagesCoherent(pages: readonly string[]): boolean {
 
 /** « Page 1 sur 3 » au-dessus des tuiles — `null` si la page ne le dit pas. */
 export function colekaListingPageCount(html: string): number | null {
-  const m = /Page\s+\d+\s+sur\s+(\d+)/i.exec(html);
+  const m = /Page\s+\d+\s+(?:sur|of)\s+(\d+)/i.exec(html);
   const n = m ? Number.parseInt(m[1]!, 10) : NaN;
   return Number.isFinite(n) && n > 0 ? n : null;
 }
@@ -143,4 +143,19 @@ export function colekaListingPageUrls(
   return Array.from({ length: Math.max(1, pages) }, (_, i) =>
     i === 0 ? baseUrl : `${baseUrl}?p=${i}`,
   );
+}
+
+/**
+ * Pages à lire d'après la 1re (« Page 1 sur N » / « Page 1 of N ») ; à défaut,
+ * la liste figée du parseur. Un calcul figé (48 par page avant k5, 60 depuis)
+ * demandait des pages au-delà de la fin, servies périmées par le cache CDN.
+ */
+export function colekaListingUrlsFromFirstPage(
+  firstPage: string,
+  fallback: string[],
+): string[] {
+  const count = colekaListingPageCount(firstPage);
+  return count && fallback[0]
+    ? colekaListingPageUrls(fallback[0], count)
+    : fallback;
 }

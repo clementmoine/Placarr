@@ -110,6 +110,8 @@ describe("colekaListingPageCount / colekaListingPageUrls", () => {
       ),
     ).toBe(3);
     expect(colekaListingPageCount("<p>Page 2 sur 2</p>")).toBe(2);
+    // Rubriques anglaises (Ninja Ranks, Ultra Challenge).
+    expect(colekaListingPageCount("<p>Page 1 of 2</p>")).toBe(2);
     expect(colekaListingPageCount("<html>verify</html>")).toBeNull();
   });
 

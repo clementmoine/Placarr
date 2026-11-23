@@ -11,9 +11,8 @@ import {
   keepStagedListingCards,
 } from "@/providers/shared/coleka/listingFetch";
 import {
-  colekaListingPageCount,
-  colekaListingPageUrls,
   colekaListingPagesCoherent,
+  colekaListingUrlsFromFirstPage,
 } from "@/providers/shared/coleka/listingItems";
 import type { NarutoPrintRow, NarutoTitleRow } from "../indexStore";
 import { narutoCardAbsDir } from "../disk";
@@ -169,16 +168,6 @@ function colekaCarddassFr_mergeByNumber(
   }
 }
 
-/**
- * La 1re page dit combien il y en a (« Page 1 sur 3 ») : on suit Coleka
- * plutôt qu'un calcul figé (48 par page avant k5, 60 depuis) qui demandait
- * des pages au-delà de la fin, servies périmées par le cache.
- */
-function pagesAnnounced(firstPage: string, fallback: string[]): string[] {
-  const count = colekaListingPageCount(firstPage);
-  return count ? colekaListingPageUrls(fallback[0]!, count) : fallback;
-}
-
 export async function scrapeNarutoColekaCarddassFrCards(
   options: ScrapeColekaCarddassFrOptions = {},
 ): Promise<void> {
@@ -225,7 +214,7 @@ export async function scrapeNarutoColekaCarddassFrCards(
         if (seriesCards === 0) pagesMissing += 1;
         break;
       }
-      if (i === 0) urls = pagesAnnounced(html, urls);
+      if (i === 0) urls = colekaListingUrlsFromFirstPage(html, urls);
       seriesPages.push(html);
       seriesCards += parsed.length;
       colekaCarddassFr_mergeByNumber(byNumber, parsed);
@@ -830,7 +819,7 @@ async function scrapeColekaCcgFrSet(
       if (byNumber.size === 0) pagesMissing += 1;
       continue;
     }
-    if (i === 0) urls = pagesAnnounced(html, urls);
+    if (i === 0) urls = colekaListingUrlsFromFirstPage(html, urls);
     pages.push(html);
     colekaStorm3_mergeByNumber(byNumber, parsed);
   }

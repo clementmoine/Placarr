@@ -4,6 +4,10 @@
  * Refs `Ref. A 001` / `C 016` / `E 007` / `P 001` / `Z 002` → printKeys FR
  * (`A001`…), jamais JP Ability `A-###`. Hors périmètre : Score Bleach TCG.
  */
+import {
+  colekaListingItems,
+  colekaListingTemplate,
+} from "@/providers/shared/coleka/listingItems";
 import { parseBleachScbPrinted } from "../printKey";
 
 export const COLEKA_BLEACH_ORIGIN = "https://www.coleka.com";
@@ -50,33 +54,27 @@ function decodeEntities(raw: string): string {
 
 /** Thumb `_250x250.webp` → full CDN face. */
 export function colekaBleachFaceUrl(thumbUrl: string): string {
-  return thumbUrl.replace(
-    /_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i,
-    "",
-  );
+  return thumbUrl.replace(/_\d+x\d+(?=\.(?:webp|jpe?g|png|gif)(?:\?|$))/i, "");
 }
 
 /** Page 1 = path ; `?p=1` = page 2 (48/page). */
 export function colekaBleachS1ListingPageUrls(): string[] {
   const base = `${COLEKA_BLEACH_ORIGIN}${COLEKA_BLEACH_S1_LISTING_PATH}`;
-  const pages = Math.max(
-    1,
-    Math.ceil(COLEKA_BLEACH_S1_LISTED_COUNT / 48),
-  );
+  const pages = Math.max(1, Math.ceil(COLEKA_BLEACH_S1_LISTED_COUNT / 48));
   return [
     base,
     ...Array.from({ length: pages - 1 }, (_, i) => `${base}?p=${i + 1}`),
   ];
 }
 
-const SKIP_TITLE =
-  /^(album|pochette|bo[iî]te|display|starter|lot\b)/i;
+const SKIP_TITLE = /^(album|pochette|bo[iî]te|display|starter|lot\b)/i;
 
 /**
  * Parse one Coleka rubrique listing HTML for Bleach S1 FR.
  * Identity = `Ref. [ACEZP] NNN` only — no invented numbers from filenames.
  */
 export function parseColekaBleachListing(html: string): ColekaBleachParse {
+  if (colekaListingTemplate(html) === "k5") return parseK5(html);
   const cards: ColekaBleachCard[] = [];
   const rejected: ColekaBleachParse["rejected"] = [];
   const seen = new Set<string>();
@@ -134,6 +132,50 @@ export function parseColekaBleachListing(html: string): ColekaBleachParse {
     });
   }
 
+  cards.sort((a, b) => a.printed.localeCompare(b.printed));
+  return { cards, rejected };
+}
+
+/** Gabarit k5 (2026-11) : tuiles partagées, même identité `Ref. C 001`. */
+function parseK5(html: string): ColekaBleachParse {
+  const cards: ColekaBleachCard[] = [];
+  const rejected: ColekaBleachParse["rejected"] = [];
+  const seen = new Set<string>();
+  for (const item of colekaListingItems(html)) {
+    const name = decodeEntities(item.title);
+    const thumbUrl = item.thumbUrl ?? "";
+    const refMatch = item.ref?.match(/^([ACEZP])\s*(\d{1,3})$/i);
+    if (!name) continue;
+    if (SKIP_TITLE.test(name)) {
+      rejected.push({ name, reason: "non-card" });
+      continue;
+    }
+    if (!thumbUrl || !refMatch) {
+      rejected.push({ name, reason: "no-ref-or-thumb" });
+      continue;
+    }
+    const parsed = parseBleachScbPrinted(
+      `${refMatch[1]!.toUpperCase()}${refMatch[2]}`,
+    );
+    if (!parsed || !/^[acezp]$/.test(parsed.set)) {
+      rejected.push({ name, reason: "bad-ref" });
+      continue;
+    }
+    if (seen.has(parsed.printed)) continue;
+    seen.add(parsed.printed);
+    cards.push({
+      printed: parsed.printed,
+      set: parsed.set,
+      number: parsed.number,
+      nameFr: name,
+      thumbUrl,
+      faceUrl: colekaBleachFaceUrl(thumbUrl),
+      pageUrl: item.href.startsWith("http")
+        ? item.href
+        : `${COLEKA_BLEACH_ORIGIN}${item.href}`,
+      colekaId: item.id || (item.href.match(/_i(\d+)/)?.[1] ?? ""),
+    });
+  }
   cards.sort((a, b) => a.printed.localeCompare(b.printed));
   return { cards, rejected };
 }

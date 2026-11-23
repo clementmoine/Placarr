@@ -1,26 +1,19 @@
 /**
  * Harvest Coleka Bleach Serie 1 FR (`_r37171`) → curated ledger + face install.
  */
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { packCardDir, packStagingDir } from "@/lib/packPaths";
 import { installCardFace } from "@/providers/shared/cardCatalogue/faceInstall";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
+import { colekaListingUrlsFromFirstPage } from "@/providers/shared/coleka/listingItems";
 import type {
   LocalPrintAssetWrite,
   LocalPrintsIndex,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import {
-  BLEACH_SCB_PACK_ID,
-  bleachScbSyncedSourcePath,
-} from "../pack";
+import { BLEACH_SCB_PACK_ID, bleachScbSyncedSourcePath } from "../pack";
 import {
   COLEKA_BLEACH_ORIGIN,
   COLEKA_BLEACH_S1_LISTING_PATH,
@@ -57,9 +50,7 @@ export function readColekaBleachLedger(): ColekaBleachLedger | null {
   return JSON.parse(readFileSync(p, "utf8")) as ColekaBleachLedger;
 }
 
-function mergeByPrinted(
-  ...lists: ColekaBleachCard[][]
-): ColekaBleachCard[] {
+function mergeByPrinted(...lists: ColekaBleachCard[][]): ColekaBleachCard[] {
   const by = new Map<string, ColekaBleachCard>();
   for (const list of lists) {
     for (const card of list) by.set(card.printed, card);
@@ -73,7 +64,7 @@ export async function harvestColekaBleachS1(
   const staging = colekaBleachStagingDir();
   mkdirSync(staging, { recursive: true });
   const pageCards: ColekaBleachCard[][] = [];
-  const urls = colekaBleachS1ListingPageUrls();
+  let urls = colekaBleachS1ListingPageUrls();
   for (let i = 0; i < urls.length; i += 1) {
     const dest = path.join(staging, `listing-${i}.html`);
     const html = await fetchColekaListingHtml(
@@ -82,6 +73,7 @@ export async function harvestColekaBleachS1(
       opts.force === true,
     );
     if (!html) continue;
+    if (i === 0) urls = colekaListingUrlsFromFirstPage(html, urls);
     pageCards.push(parseColekaBleachListing(html).cards);
   }
 

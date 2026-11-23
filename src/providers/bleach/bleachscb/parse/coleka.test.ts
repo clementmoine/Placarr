@@ -74,3 +74,20 @@ describe("parseColekaBleachListing", () => {
     expect(urls[1]).toMatch(/\?p=1$/);
   });
 });
+
+describe("parseColekaBleachListing — k5 template", () => {
+  it("reads the k5 tiles Coleka serves since 2026-11", () => {
+    const html = `<p class="pagination">Page 1 sur 2</p>
+<article class="k5" data-id="1234567"><a class="k5-lien" href="/fr/cartes-de-collection/cartes-anime-manga/bleach-serie-1/ichigo-kurosaki_i1234567"><div class="k5-img"><img src="https://thumbs.coleka.com/media/item/202101/01/bleach-ichigo_250x250.webp" alt="Ichigo Kurosaki"></div><div class="k5-corps"><h3>Ichigo Kurosaki</h3><p>Ref. C 001 · 2008</p></div></a></article>
+<article class="k5" data-id="1234568"><a class="k5-lien" href="/fr/x/album_i1234568"><div class="k5-img"><img src="https://thumbs.coleka.com/media/item/202101/01/album_250x250.webp" alt="Album"></div><div class="k5-corps"><h3>Album</h3><p>2008</p></div></a></article>`;
+    const parsed = parseColekaBleachListing(html);
+    expect(parsed.cards).toHaveLength(1);
+    expect(parsed.cards[0]).toMatchObject({
+      nameFr: "Ichigo Kurosaki",
+      colekaId: "1234567",
+      faceUrl:
+        "https://thumbs.coleka.com/media/item/202101/01/bleach-ichigo.webp",
+    });
+    expect(parsed.cards[0]!.pageUrl).toContain("_i1234567");
+  });
+});

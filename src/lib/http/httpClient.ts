@@ -194,6 +194,16 @@ async function withApiCircuit<T>(
   }
 }
 
+/**
+ * Le circuit de ce host d'API est-il ouvert ? Pour qu'une boucle de masse
+ * (miroir de faces) s'arrête au lieu d'enchaîner des échecs immédiats.
+ */
+export function apiCircuitOpen(url: string): boolean {
+  if (httpResilienceOff()) return false;
+  const key = `api:${hostKeyOf(url)}`;
+  return apiOpened.has(key) && !circuitAllowsRequest(key);
+}
+
 function noteApiAlive(key: string): void {
   apiFailures.delete(key);
   if (apiOpened.delete(key)) recordCircuitSuccess(key);

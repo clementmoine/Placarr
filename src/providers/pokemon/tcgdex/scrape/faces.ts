@@ -15,7 +15,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { httpGet } from "@/lib/http/httpClient";
+import { apiCircuitOpen, httpGet } from "@/lib/http/httpClient";
 import { softRetryNull } from "@/lib/http/softRetry";
 import { packCardsDir } from "@/lib/packPaths";
 import { pokemonSourcePath } from "@/providers/pokemon/syncedSources";
@@ -32,15 +32,11 @@ import {
   refreshPokemonFaceDecision,
 } from "../disk/faceChoice";
 import { pokemonPaperCardDir } from "../disk/paperCardDisk";
-import {
-  listTcgdexPrintsWithImages,
-  type TcgdexPrintRow,
-} from "../indexStore";
+import { listTcgdexPrintsWithImages, type TcgdexPrintRow } from "../indexStore";
 import { loadTcgdexSetLogoIndex } from "../setLogos";
 
 /** TCGdex REST root (absorbed from former api.ts stub). */
 const API_BASE = "https://api.tcgdex.net/v2";
-
 
 // —— mcdnUrls.ts ——
 
@@ -193,13 +189,9 @@ export function pokemonMcdnGalleryCodes(
  * abbr and collector number. `dbscardsPrintRef` therefore yields null here.
  */
 
-const LOCALE =
-  "fr|en|de|it|es|pt|ja|jp|ptbr|pt-br" as const;
+const LOCALE = "fr|en|de|it|es|pt|ja|jp|ptbr|pt-br" as const;
 
-const SLUG_RE = new RegExp(
-  `^([a-z0-9]+)-(${LOCALE})-(\\d+[a-z]*)-`,
-  "i",
-);
+const SLUG_RE = new RegExp(`^([a-z0-9]+)-(${LOCALE})-(\\d+[a-z]*)-`, "i");
 
 export type PkmcardsPokemonSlug = {
   /** Official abbr as on the CDN (`pbl`, `dri`). */
@@ -216,8 +208,7 @@ export function parsePkmcardsPokemonSlug(
   const match = SLUG_RE.exec(slug.trim());
   if (!match) return null;
   const rawLang = match[2]!.toLowerCase();
-  const lang =
-    rawLang === "jp" ? "ja" : rawLang === "pt-br" ? "ptbr" : rawLang;
+  const lang = rawLang === "jp" ? "ja" : rawLang === "pt-br" ? "ptbr" : rawLang;
   return {
     setAbbr: match[1]!.toLowerCase(),
     lang,
@@ -233,7 +224,6 @@ export function parsePkmcardsPokemonSlug(
  * TCGdex `officialAbbr` + on-disk `data/pokemon/cards/` decide the folder.
  * No inventing stems: unmapped abbr → null (honest skip).
  */
-
 
 export type PkmcardsSetResolve = {
   abbr: string;
@@ -404,10 +394,7 @@ export function pokemontcgIoMcdoImageUrl(
 }
 
 /** Prefer printed token (H1, SWSH251) then digit-stripped fallback. */
-export function pokemontcgIoImageUrls(
-  stem: string,
-  localId: string,
-): string[] {
+export function pokemontcgIoImageUrls(stem: string, localId: string): string[] {
   const raw = localId.trim();
   const urls: string[] = [];
   const push = (token: string) => {
@@ -538,9 +525,6 @@ export async function fillPokemontcgIoFacesForSet(opts: {
  * EN (and other) faces from TCGPlayer CDN using TCGdex thirdParty ids.
  */
 
-
-
-
 export function tcgplayerProductImageUrl(productId: number): string {
   return `https://product-images.tcgplayer.com/fit-in/1000x1000/${productId}.jpg`;
 }
@@ -550,7 +534,10 @@ export function tcgplayerIdFromCardPayload(raw: {
     thirdParty?: { tcgplayer?: number | null };
   }> | null;
   pricing?: {
-    tcgplayer?: Record<string, { productId?: number | null } | string | null> | null;
+    tcgplayer?: Record<
+      string,
+      { productId?: number | null } | string | null
+    > | null;
   } | null;
 }): number | null {
   for (const row of raw.variants_detailed ?? []) {
@@ -569,7 +556,6 @@ export function tcgplayerIdFromCardPayload(raw: {
   }
   return null;
 }
-
 
 export type TcgplayerFillReport = {
   setId: string;
@@ -728,9 +714,6 @@ export async function fillTcgplayerMcdo2023(
  * (news galleries). Not the encyclopédie cms3/cards/full path.
  */
 
-
-
-
 export type PokemonComMcdoCampaign = {
   id: string;
   setId: string;
@@ -777,7 +760,6 @@ export function pokemonComMcdoImageUrl(
   const rel = pathTemplate.replaceAll("{nn}", nn);
   return `${baseUrl.replace(/\/$/, "")}/${rel.replace(/^\//, "")}`;
 }
-
 
 export async function fillPokemonComMcdoCampaign(opts: {
   campaign: PokemonComMcdoCampaign;
@@ -867,14 +849,10 @@ export async function fillPokemonComMcdoFaces(
  * preferred for display via faceChoice — this still stores the pkmcards file.
  */
 
-
-
-
 const sleep = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-
 
 export type FillPkmcardsReport = {
   lang: string;
@@ -898,12 +876,14 @@ function loadIndex(file: string): DbscardsIndexEntry[] {
   }
 }
 
-export async function scrapePkmcardsCardIndex(opts: {
-  lang?: string;
-  maxPages?: number;
-  delayMs?: number;
-  force?: boolean;
-} = {}): Promise<{ file: string; cards: number; pages: number }> {
+export async function scrapePkmcardsCardIndex(
+  opts: {
+    lang?: string;
+    maxPages?: number;
+    delayMs?: number;
+    force?: boolean;
+  } = {},
+): Promise<{ file: string; cards: number; pages: number }> {
   const lang = (opts.lang ?? "fr").toLowerCase();
   const file = pkmcardsIndexPath(lang);
   if (!opts.force && existsSync(file)) {
@@ -923,24 +903,26 @@ export async function scrapePkmcardsCardIndex(opts: {
   return { file: result.file, cards: result.cards, pages: result.pages };
 }
 
-export async function fillPkmcardsFaces(opts: {
-  lang?: string;
-  force?: boolean;
-  /** Re-crawl list even when `pkmcards-<lang>.json` exists. */
-  refreshIndex?: boolean;
-  maxPages?: number;
-  delayMs?: number;
-  downloadDelayMs?: number;
-  limit?: number;
-  cardsRoot?: string;
-  /** Skip network scrape; use this index file (tests). */
-  indexFile?: string;
-  entries?: readonly DbscardsIndexEntry[];
-  /** Heartbeat pendant les ~17k tuiles (défaut console via harvest). */
-  onProgress?: (message: string) => void;
-  /** Log toutes les N tuiles scannées (défaut 500). */
-  progressEvery?: number;
-} = {}): Promise<FillPkmcardsReport> {
+export async function fillPkmcardsFaces(
+  opts: {
+    lang?: string;
+    force?: boolean;
+    /** Re-crawl list even when `pkmcards-<lang>.json` exists. */
+    refreshIndex?: boolean;
+    maxPages?: number;
+    delayMs?: number;
+    downloadDelayMs?: number;
+    limit?: number;
+    cardsRoot?: string;
+    /** Skip network scrape; use this index file (tests). */
+    indexFile?: string;
+    entries?: readonly DbscardsIndexEntry[];
+    /** Heartbeat pendant les ~17k tuiles (défaut console via harvest). */
+    onProgress?: (message: string) => void;
+    /** Log toutes les N tuiles scannées (défaut 500). */
+    progressEvery?: number;
+  } = {},
+): Promise<FillPkmcardsReport> {
   const lang = (opts.lang ?? "fr").toLowerCase();
   const cardsRoot = opts.cardsRoot ?? packCardsDir("pokemon");
   const abbrMap = buildPkmcardsAbbrToLiveStem(cardsRoot);
@@ -1043,11 +1025,7 @@ export async function fillPkmcardsFaces(opts: {
     }
 
     const scanned = i + 1;
-    if (
-      scanned === 1 ||
-      scanned === total ||
-      scanned % progressEvery === 0
-    ) {
+    if (scanned === 1 || scanned === total || scanned % progressEvery === 0) {
       emitProgress(scanned);
     }
   }
@@ -1063,9 +1041,6 @@ export async function fillPkmcardsFaces(opts: {
  * Tries cms3/full then cms2/web for each card. Distinct from McDo marketing
  * tiles (`art.pokemoncom.png`).
  */
-
-
-
 
 export type McdnGalleryCampaign = {
   id: string;
@@ -1105,9 +1080,7 @@ export function loadMcdnGalleryLedger(
 }
 
 /** Parse `1-15` or a JSON array of ids into local id strings. */
-export function parseMcdnLocalIds(
-  spec: string | readonly string[],
-): string[] {
+export function parseMcdnLocalIds(spec: string | readonly string[]): string[] {
   if (Array.isArray(spec)) return spec.map(String);
   const text = String(spec).trim();
   const range = /^(\d+)\s*-\s*(\d+)$/.exec(text);
@@ -1123,7 +1096,6 @@ export function parseMcdnLocalIds(
     .map((s) => s.trim())
     .filter(Boolean);
 }
-
 
 export async function resolveMcdnGalleryCode(opts: {
   setId: string;
@@ -1284,12 +1256,11 @@ export type TcgdexCatalogueFillReport = {
   written: number;
   skipped: number;
   failed: number;
+  /** Miroir arrêté avant la fin : le CDN est coupé (circuit ouvert). */
+  interrupted?: "circuit-open";
 };
 
-function candidateTcgdexFaceUrls(
-  imageBaseUrl: string,
-  lang: string,
-): string[] {
+function candidateTcgdexFaceUrls(imageBaseUrl: string, lang: string): string[] {
   const raw = imageBaseUrl.trim().replace(/\/+$/, "");
   const locale = lang.trim().toLowerCase() || "fr";
   // Probe the requested locale (rewrite en→fr for the HEAD). Never fall back
@@ -1339,6 +1310,8 @@ export async function fillTcgdexCatalogueFaces(
     langs?: readonly string[];
     prints?: readonly TcgdexCatalogueFaceTarget[];
     downloadImage?: (url: string) => Promise<Buffer | null>;
+    /** Host coupé ? (défaut : circuit du client HTTP) — arrête le miroir. */
+    hostCircuitOpen?: (url: string) => boolean;
     /** Parallel downloads (default 6). */
     concurrency?: number;
     onProgress?: (done: number, total: number) => void;
@@ -1416,21 +1389,30 @@ export async function fillTcgdexCatalogueFaces(
     }
 
     const ext = extFromUrl(usedUrl);
-    const dest = path.join(
-      cardDir,
-      pokemonFaceFilename("tcgdex", "art", ext),
-    );
+    const dest = path.join(cardDir, pokemonFaceFilename("tcgdex", "art", ext));
     mkdirSync(cardDir, { recursive: true });
     writeFileSync(dest, buf);
     refreshPokemonFaceDecision(cardDir, job.lang);
     tallies.written += 1;
   }
 
+  const hostCircuitOpen = opts.hostCircuitOpen ?? apiCircuitOpen;
+  let interrupted = false;
+
   async function worker(): Promise<void> {
     while (true) {
+      if (interrupted) return;
       const idx = cursor++;
       if (idx >= jobs.length) return;
-      await runOne(jobs[idx]!);
+      const job = jobs[idx]!;
+      // Hôte coupé (503 en rafale → circuit ouvert pour N minutes) : chaque
+      // job échouerait aussitôt. On s'arrête ; ce qui est déjà sur disque est
+      // sauté à la prochaine Sync, qui reprendra là.
+      if (hostCircuitOpen(job.print.imageBaseUrl)) {
+        interrupted = true;
+        return;
+      }
+      await runOne(job);
       done += 1;
       opts.onProgress?.(done, jobs.length);
     }
@@ -1439,9 +1421,10 @@ export async function fillTcgdexCatalogueFaces(
   await Promise.all(
     Array.from({ length: Math.min(concurrency, jobs.length) }, () => worker()),
   );
-  report.tried = jobs.length;
+  report.tried = done;
   report.written = tallies.written;
   report.skipped = tallies.skipped;
   report.failed = tallies.failed;
+  if (interrupted) report.interrupted = "circuit-open";
   return report;
 }

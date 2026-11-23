@@ -33,6 +33,11 @@ function abortableDelay(delayMs: number, signal?: AbortSignal): Promise<void> {
  * mais jamais sur les 4xx (erreurs définitives : 400/401/403/404…).
  */
 export function isRetryableError(err: unknown): boolean {
+  // Circuit ouvert (l'hôte est coupé pour N minutes) ou job annulé : rejouer
+  // ne change rien et noie les logs.
+  const e = err as { code?: unknown; name?: unknown } | null;
+  if (e?.code === "ECIRCUITOPEN" || e?.code === "ERR_CANCELED") return false;
+  if (e?.name === "AbortError" || e?.name === "CanceledError") return false;
   if (axios.isAxiosError(err)) {
     // Pas de réponse = problème réseau / timeout → rejouable.
     if (!err.response) return true;

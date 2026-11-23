@@ -9,6 +9,22 @@ import {
 } from "./retry";
 
 describe("isRetryableError", () => {
+  it("never retries an open circuit or a cancelled job", () => {
+    // 2026-11-23 : « Retrying... Circuit ouvert pour assets.tcgdex.net
+    // (réessai dans 2855s) » ×50 par lot — rejouer un circuit ouvert ne fait
+    // que noyer les logs.
+    expect(
+      isRetryableError(
+        Object.assign(new Error("Circuit ouvert pour x"), {
+          code: "ECIRCUITOPEN",
+        }),
+      ),
+    ).toBe(false);
+    const aborted = new Error("job cancelled");
+    aborted.name = "AbortError";
+    expect(isRetryableError(aborted)).toBe(false);
+  });
+
   it("retries network failures and 5xx responses", () => {
     expect(isRetryableError(new axios.AxiosError("timeout"))).toBe(true);
     expect(isRetryableError(new axios.AxiosError("write EPIPE", "EPIPE"))).toBe(

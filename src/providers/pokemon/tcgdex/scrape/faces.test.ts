@@ -44,7 +44,6 @@ import {
   tcgplayerProductImageUrl,
 } from "./faces";
 
-
 // —— fillMcdnFaces.test.ts ——
 
 describe("pokemonMcdnGalleryCodes", () => {
@@ -90,7 +89,14 @@ describe("fillMcdnFacesForSet", () => {
   it("writes art.mcdn.png preferring the first successful candidate URL", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "poke-mcdn-"));
     const png = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      0x89,
+      0x50,
+      0x4e,
+      0x47,
+      0x0d,
+      0x0a,
+      0x1a,
+      0x0a,
       ...Array(600).fill(2),
     ]);
     const seen: string[] = [];
@@ -120,9 +126,7 @@ describe("fillMcdnFacesForSet", () => {
 describe("parsePkmcardsPokemonSlug", () => {
   it("lit set-lang-num au milieu du slug (pas le préfixe DBS)", () => {
     expect(
-      parsePkmcardsPokemonSlug(
-        "pbl-fr-001-mega-evolution-nuit-noire-tropius",
-      ),
+      parsePkmcardsPokemonSlug("pbl-fr-001-mega-evolution-nuit-noire-tropius"),
     ).toEqual({ setAbbr: "pbl", lang: "fr", number: "001" });
     expect(
       parsePkmcardsPokemonSlug(
@@ -287,7 +291,17 @@ describe("pokemonComMcdoImageUrl", () => {
 describe("fillPokemonComMcdoCampaign", () => {
   it("writes art.pokemoncom.png and prefers it over tcgplayer", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "poke-pcom-"));
-    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, ...Array(600).fill(1)]);
+    const png = Buffer.from([
+      0x89,
+      0x50,
+      0x4e,
+      0x47,
+      0x0d,
+      0x0a,
+      0x1a,
+      0x0a,
+      ...Array(600).fill(1),
+    ]);
     const report = await fillPokemonComMcdoCampaign({
       baseUrl: "https://mcdn.example/base",
       campaign: {
@@ -467,6 +481,33 @@ describe("pickBestPokemonFace", () => {
 });
 
 describe("fillTcgdexCatalogueFaces", () => {
+  it("stops the bulk mirror once the CDN host circuit is open", async () => {
+    // 89 472 téléchargements tentés contre un hôte coupé pour 48 min.
+    const root = mkdtempSync(path.join(os.tmpdir(), "poke-tcgdex-open-"));
+    let calls = 0;
+    const prints = Array.from({ length: 50 }, (_, i) => ({
+      setId: "base1",
+      localId: String(i + 1),
+      imageBaseUrl: `https://assets.tcgdex.net/en/base/base1/${i + 1}`,
+    }));
+    const report = await fillTcgdexCatalogueFaces({
+      cardsRoot: root,
+      langs: ["fr"],
+      concurrency: 1,
+      prints,
+      downloadImage: async () => {
+        calls += 1;
+        return null;
+      },
+      hostCircuitOpen: () => calls >= 3,
+    });
+    // Le circuit s'ouvre pendant la 1re face (3 URLs candidates) : on
+    // s'arrête avant la 3e, pas après les 50.
+    expect(report.tried).toBeLessThanOrEqual(2);
+    expect(calls).toBeLessThan(10);
+    expect(report.interrupted).toBe("circuit-open");
+  });
+
   it("writes localized art.tcgdex.png and skips on second pass", async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "poke-tcgdex-faces-"));
     const seen: string[] = [];
@@ -491,9 +532,7 @@ describe("fillTcgdexCatalogueFaces", () => {
     });
     expect(report.written).toBe(1);
     expect(report.failed).toBe(0);
-    expect(seen[0]).toBe(
-      "https://assets.tcgdex.net/fr/base/base1/4/high.webp",
-    );
+    expect(seen[0]).toBe("https://assets.tcgdex.net/fr/base/base1/4/high.webp");
     const dest = path.join(root, "fr", "base1", "004", "art.tcgdex.webp");
     expect(existsSync(dest)).toBe(true);
 

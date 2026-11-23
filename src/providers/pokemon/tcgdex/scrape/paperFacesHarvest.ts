@@ -100,6 +100,11 @@ export async function runPokemonPaperFacesHarvest(
     console.log(
       `   tcgdex: ${tcgdex.written} écrites / ${tcgdex.skipped} skip / ${tcgdex.failed} fail (${tcgdex.prints} tirages × ${tcgdex.langs.join("+")})`,
     );
+    if (tcgdex.interrupted === "circuit-open") {
+      console.warn(
+        `   tcgdex: CDN coupé (circuit ouvert) après ${tcgdex.tried} faces — reprise à la prochaine Sync`,
+      );
+    }
   } else {
     console.log(
       "── Pokémon paper faces — TCGdex catalogue skipped (tcgdexCatalogue: false)",
@@ -139,7 +144,9 @@ export async function runPokemonPaperFacesHarvest(
     );
   }
 
-  console.log("── Pokémon paper faces — PokéCardex retail (kits / POP / sans CDN)");
+  console.log(
+    "── Pokémon paper faces — PokéCardex retail (kits / POP / sans CDN)",
+  );
   const pokecardexRetail = await fillPokecardexRetailFaces({
     force: opts.force,
     cardsRoot: opts.cardsRoot,
@@ -243,7 +250,9 @@ export async function runPokemonPaperFacesHarvest(
     `   pkmcards: ${pkmcards.written} écrites / ${pkmcards.skipped} skip / ${pkmcards.unmapped} hors map / ${pkmcards.failed} fail (${pkmcards.indexCards} tuiles)`,
   );
 
-  console.log("── Pokémon paper faces — Trainers Website JA (pokemon-card.com)");
+  console.log(
+    "── Pokémon paper faces — Trainers Website JA (pokemon-card.com)",
+  );
   const trainersJa = await fillTrainersJaFaces({
     force: opts.force,
     cardsRoot: opts.cardsRoot,
@@ -338,9 +347,7 @@ export async function runPokemonPaperFacesHarvest(
 
   // Rebuild only the live data root index (custom cardsRoot = tests).
   const shouldRebuild = opts.rebuildIndex !== false && !opts.cardsRoot;
-  const index = shouldRebuild
-    ? rebuildPokemonCardsIndex()
-    : { cards: 0 };
+  const index = shouldRebuild ? rebuildPokemonCardsIndex() : { cards: 0 };
   if (shouldRebuild) {
     console.log(`── cards-index.json — ${index.cards} bundles`);
   }

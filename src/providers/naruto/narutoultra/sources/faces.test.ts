@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
@@ -35,8 +41,6 @@ import {
   /**
    * AnimeCollection Ultra Challenge faces — parse + install (no live download).
    */
-
-
 
   const roots: string[] = [];
   afterEach(() => {
@@ -110,7 +114,7 @@ import {
   });
 
   describe("installAnimeCollectionFaces", () => {
-    it("pose art.animecollection.jpg sous cards/uc/fr/{number}/", () => {
+    it("pose art.animecollection.jpg sous cards/fr/uc/{number}/", () => {
       tmpDataRoot();
       const staging = mkdtempSync(path.join(os.tmpdir(), "ac-stage-"));
       roots.push(staging);
@@ -135,14 +139,16 @@ import {
         },
       ]);
 
-      const report = installAnimeCollectionFaces(index, { stagingDir: staging });
+      const report = installAnimeCollectionFaces(index, {
+        stagingDir: staging,
+      });
       expect(report.faces).toBe(2);
       expect(report.missing).toHaveLength(98);
 
       const art1 = path.join(
         packCardsDir(NARUTO_ULTRA_PACK_ID),
-        "uc",
         "fr",
+        "uc",
         "0001",
         "art.animecollection.jpg",
       );
@@ -160,8 +166,6 @@ import {
   /**
    * Coleka Ultra Challenge — parse + install (Flare listing mocked via staging).
    */
-
-
 
   const roots: string[] = [];
   afterEach(() => {
@@ -274,7 +278,9 @@ import {
   describe("installColekaUltraFaces", () => {
     it("pose art.coleka.webp et purge le gabarit 100 de l'index", () => {
       tmpDataRoot();
-      const staging = mkdtempSync(path.join(os.tmpdir(), "coleka-ultra-stage-"));
+      const staging = mkdtempSync(
+        path.join(os.tmpdir(), "coleka-ultra-stage-"),
+      );
       roots.push(staging);
       writeFileSync(path.join(staging, "listing-0.html"), FIXTURE);
       writeFileSync(path.join(staging, "0001.webp"), Buffer.from("coleka-1"));
@@ -326,8 +332,8 @@ import {
       expect(report.missing).toEqual([]);
       const art = path.join(
         packCardsDir(NARUTO_ULTRA_PACK_ID),
-        "uc",
         "fr",
+        "uc",
         "0001",
         "art.coleka.webp",
       );
@@ -421,9 +427,9 @@ import {
         contentHash: a,
         promotedAt: "2026-01-01T00:00:00.000Z",
       };
-      expect(
-        catalogArtefactIsFresh(ledger, "faces:coleka-ultra", b),
-      ).toBe(true);
+      expect(catalogArtefactIsFresh(ledger, "faces:coleka-ultra", b)).toBe(
+        true,
+      );
     });
   });
 }

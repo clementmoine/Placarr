@@ -48,9 +48,9 @@ import { relocateKayouAliasFaceDirs } from "./relocateAliases";
       expect(report.migrated).toBe(1);
       expect(report.removed).toBe(1);
       expect(index.lookupRow("kayou:newyeargiftbox-nr.ss.hr.011")).toBeNull();
-      expect(index.lookupRow("kayou:newyeargiftbox-nrss.hr.011")?.fullName).toBe(
-        "Jiraiya",
-      );
+      expect(
+        index.lookupRow("kayou:newyeargiftbox-nrss.hr.011")?.fullName,
+      ).toBe("Jiraiya");
     });
 
     it("renames alias when canonical is missing", () => {
@@ -97,8 +97,11 @@ import { relocateKayouAliasFaceDirs } from "./relocateAliases";
   describe("relocateKayouAliasFaceDirs", () => {
     it("renames alias-only card folders onto canonical ids", () => {
       tmpDataRoot();
-      const cardsRoot = path.join(process.env.PLACARR_DATA_DIR!, "naruto/kayou/cards");
-      const aliasDir = path.join(cardsRoot, "ninjaagebox/en/nr.cc.xr.002l5");
+      const cardsRoot = path.join(
+        process.env.PLACARR_DATA_DIR!,
+        "naruto/kayou/cards",
+      );
+      const aliasDir = path.join(cardsRoot, "en/ninjaagebox/nr.cc.xr.002l5");
       fs.mkdirSync(aliasDir, { recursive: true });
       fs.writeFileSync(path.join(aliasDir, "art.capsulecorpgear.webp"), "webp");
 
@@ -106,7 +109,10 @@ import { relocateKayouAliasFaceDirs } from "./relocateAliases";
       expect(report.renamed).toBe(1);
       expect(
         fs.existsSync(
-          path.join(cardsRoot, "ninjaagebox/en/cc.xr.002l5/art.capsulecorpgear.webp"),
+          path.join(
+            cardsRoot,
+            "en/ninjaagebox/cc.xr.002l5/art.capsulecorpgear.webp",
+          ),
         ),
       ).toBe(true);
       expect(fs.existsSync(aliasDir)).toBe(false);
@@ -114,9 +120,12 @@ import { relocateKayouAliasFaceDirs } from "./relocateAliases";
 
     it("merges alternate art into an existing canonical folder", () => {
       tmpDataRoot();
-      const cardsRoot = path.join(process.env.PLACARR_DATA_DIR!, "naruto/kayou/cards");
-      const canonDir = path.join(cardsRoot, "ninjaagebox/en/cc.mr.001");
-      const aliasDir = path.join(cardsRoot, "ninjaagebox/en/nr.cc.mr.001");
+      const cardsRoot = path.join(
+        process.env.PLACARR_DATA_DIR!,
+        "naruto/kayou/cards",
+      );
+      const canonDir = path.join(cardsRoot, "en/ninjaagebox/cc.mr.001");
+      const aliasDir = path.join(cardsRoot, "en/ninjaagebox/nr.cc.mr.001");
       fs.mkdirSync(canonDir, { recursive: true });
       fs.mkdirSync(aliasDir, { recursive: true });
       fs.writeFileSync(path.join(canonDir, "art.narutocards.webp"), "a");
@@ -124,9 +133,9 @@ import { relocateKayouAliasFaceDirs } from "./relocateAliases";
 
       const report = relocateKayouAliasFaceDirs({ cardsDir: cardsRoot });
       expect(report.merged).toBe(1);
-      expect(fs.existsSync(path.join(canonDir, "art.capsulecorpgear.webp"))).toBe(
-        true,
-      );
+      expect(
+        fs.existsSync(path.join(canonDir, "art.capsulecorpgear.webp")),
+      ).toBe(true);
       expect(fs.existsSync(aliasDir)).toBe(false);
     });
   });

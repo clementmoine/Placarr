@@ -31,8 +31,11 @@ import {
   preferredFaceFile,
   type DbsjccCanonicalPrint,
 } from "../canonicalPrint";
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
-  dbsJccSyncedSourcePath} from "../pack";
+import {
+  DBS_JCC_PACK_ID,
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 
 export type DedupePrintSetsReport = {
   canonical: number;
@@ -63,10 +66,9 @@ export function stripDbsjccArtLetterFromCardFolder(
 export function stripDbsjccArtLetterFromPrintKey(
   printKey: string,
 ): string | null {
-  const m =
-    /^(dbsjcc:[a-z0-9]+-)([a-z]+\d+)([a-z])(-[a-z0-9]+)?$/i.exec(
-      printKey.trim(),
-    );
+  const m = /^(dbsjcc:[a-z0-9]+-)([a-z]+\d+)([a-z])(-[a-z0-9]+)?$/i.exec(
+    printKey.trim(),
+  );
   if (!m) return null;
   return `${m[1]}${m[2]}${m[4] ?? ""}`.toLowerCase();
 }
@@ -87,10 +89,7 @@ function ensureDir(dir: string): void {
   mkdirSync(dir, { recursive: true });
 }
 
-function moveCardTree(
-  print: DbsjccCanonicalPrint,
-  packId: string,
-): void {
+function moveCardTree(print: DbsjccCanonicalPrint, packId: string): void {
   const destCard = cardFolder(print.number, print.grouping);
   for (const lang of ["fr", "ja", "en"]) {
     const destDir = path.join(
@@ -202,7 +201,9 @@ function rewriteSqlite(
     );
 
     const existing = db
-      .prepare(`SELECT print_key AS printKey, set_code AS setCode, number, grouping, card_type AS cardType, source_url AS sourceUrl, category FROM prints`)
+      .prepare(
+        `SELECT print_key AS printKey, set_code AS setCode, number, grouping, card_type AS cardType, source_url AS sourceUrl, category FROM prints`,
+      )
       .all() as Array<{
       printKey: string;
       setCode: string;
@@ -219,8 +220,7 @@ function rewriteSqlite(
       const donors = [print.printKey, ...print.aliasPrintKeys]
         .map((key) => byKey.get(key))
         .filter(Boolean);
-      const sourceUrl =
-        donors.find((d) => d!.sourceUrl)?.sourceUrl ?? null;
+      const sourceUrl = donors.find((d) => d!.sourceUrl)?.sourceUrl ?? null;
       const category = donors.find((d) => d!.category)?.category ?? null;
 
       insertPrint.run(
@@ -275,8 +275,8 @@ function rewriteSqlite(
       const homeFace = preferredFaceFile(
         path.join(
           packCardsDir(packId),
-          print.homeSet,
           "fr",
+          print.homeSet,
           cardFolder(print.number, print.grouping),
         ),
       );
@@ -313,7 +313,9 @@ function rewriteSqlite(
     }
 
     const contentRows = db
-      .prepare(`SELECT id, print_key AS printKey FROM product_contents WHERE print_key IS NOT NULL`)
+      .prepare(
+        `SELECT id, print_key AS printKey FROM product_contents WHERE print_key IS NOT NULL`,
+      )
       .all() as Array<{ id: number; printKey: string }>;
     const updateContent = db.prepare(
       `UPDATE product_contents SET print_key = ? WHERE id = ?`,

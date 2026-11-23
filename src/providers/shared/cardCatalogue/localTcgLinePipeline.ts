@@ -7,6 +7,8 @@
  * carte.
  */
 import { throwIfJobAborted } from "@/lib/http/jobAbort";
+import { packCardsDir } from "@/lib/packPaths";
+import { relocateSetFirstCardDirs } from "./relocateSetFirstCards";
 import { enrichCardsIndexArtDimensions } from "./enrichCardsIndexArtDimensions";
 import {
   createLocalPrintsIndex,
@@ -36,6 +38,13 @@ export async function runLocalTcgPipeline(input: {
     note?: string;
   };
 }): Promise<{ cards: number; products: number }> {
+  // Faces encore rangées set-first par d'anciens writers → ordre du contrat.
+  const relocated = relocateSetFirstCardDirs(packCardsDir(input.packId));
+  if (relocated.moved || relocated.replaced || relocated.keptCanonical) {
+    console.log(
+      `── ${input.label} — faces set-first → lang-first : ${relocated.moved} déplacée(s), ${relocated.replaced} remplacée(s) (plus récentes), ${relocated.keptCanonical} doublon(s) plus ancien(s) écarté(s)`,
+    );
+  }
   const index = createLocalPrintsIndex(input.packId);
   if (input.seed) {
     const seeded = await input.seed(index);

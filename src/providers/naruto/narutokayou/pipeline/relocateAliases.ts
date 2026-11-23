@@ -2,12 +2,7 @@
  * Move on-disk Kayou face folders from ledger alias ids (`nr.cc.*`, `nr.ss.*`)
  * onto canonical paths (`cc.*`, `nrss.*`) after index purge.
  */
-import {
-  existsSync,
-  readdirSync,
-  renameSync,
-  rmSync,
-} from "node:fs";
+import { existsSync, readdirSync, renameSync, rmSync } from "node:fs";
 import path from "node:path";
 
 import { packCardsDir, packStagingDir } from "@/lib/packPaths";
@@ -28,7 +23,10 @@ function isAliasNumber(number: string): boolean {
   return canonicalizeKayouNumber(n) !== n;
 }
 
-function mergeAliasDirIntoCanonical(aliasDir: string, canonDir: string): boolean {
+function mergeAliasDirIntoCanonical(
+  aliasDir: string,
+  canonDir: string,
+): boolean {
   if (!existsSync(aliasDir)) return false;
   let moved = false;
   if (!existsSync(canonDir)) {
@@ -66,8 +64,11 @@ export function relocateKayouAliasFaceDirs(
 
   if (!existsSync(cardsRoot)) return report;
 
-  for (const setCode of readdirSync(cardsRoot)) {
-    const langRoot = path.join(cardsRoot, setCode, "en");
+  // Faces lang-first (`cards/en/<set>/<n°>`, `packCardDir`).
+  const enRoot = path.join(cardsRoot, "en");
+  const setCodes = existsSync(enRoot) ? readdirSync(enRoot) : [];
+  for (const setCode of setCodes) {
+    const langRoot = path.join(enRoot, setCode);
     if (!existsSync(langRoot)) continue;
     for (const number of readdirSync(langRoot)) {
       if (!isAliasNumber(number)) continue;

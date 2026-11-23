@@ -16,6 +16,7 @@ import { httpGet } from "@/lib/http/httpClient";
 import { packCardsDir, packCatalogDb, packStagingDir } from "@/lib/packPaths";
 import type { LocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
+import { colekaListingUrlsFromFirstPage } from "@/providers/shared/coleka/listingItems";
 import { writeLocalSealedProducts } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 import { hashCatalogArtefactBytes } from "@/providers/shared/catalogIngestLedger";
@@ -25,7 +26,11 @@ import {
   promoteAndPurgeNarutoDig,
 } from "@/providers/naruto/shared/promoteNarutoDig";
 
-import { narutoUltraSourcePath, NARUTO_ULTRA_PACK_ID, narutoUltraCuratedDir } from "../pack";
+import {
+  narutoUltraSourcePath,
+  NARUTO_ULTRA_PACK_ID,
+  narutoUltraCuratedDir,
+} from "../pack";
 import {
   COLEKA_ULTRA_LANG,
   COLEKA_ULTRA_LISTING_PATH,
@@ -106,7 +111,9 @@ export function animeCollectionFaceUrl(
   return ledger.faceUrlTemplate.replace("{acId}", acId.trim());
 }
 
-export function animeCollectionStagingFile(row: AnimeCollectionFaceRow): string {
+export function animeCollectionStagingFile(
+  row: AnimeCollectionFaceRow,
+): string {
   return `${row.number}.jpg`;
 }
 
@@ -264,8 +271,8 @@ export function installAnimeCollectionFaces(
     }
     const destDir = path.join(
       packCardsDir(NARUTO_ULTRA_PACK_ID),
-      NARUTO_ULTRA_SET_CODE,
       lang,
+      NARUTO_ULTRA_SET_CODE,
       row.number,
     );
     mkdirSync(destDir, { recursive: true });
@@ -396,11 +403,14 @@ export async function harvestColekaUltraFaces(
   const rejected: ColekaUltraHarvest["rejected"] = [];
   let pages = 0;
 
-  for (const [i, url] of colekaUltraListingPageUrls().entries()) {
+  let pageUrls = colekaUltraListingPageUrls();
+  for (let i = 0; i < pageUrls.length; i += 1) {
+    const url = pageUrls[i]!;
     const dest = path.join(staging, `listing-${i}.html`);
     const html = await fetchColekaListingHtml(url, dest, Boolean(opts.force));
     if (!html) continue;
     pages += 1;
+    if (i === 0) pageUrls = colekaListingUrlsFromFirstPage(html, pageUrls);
     const parsed = parseColekaUltraListing(html);
     for (const card of parsed.cards) {
       if (!seen.has(card.number)) seen.set(card.number, card);
@@ -516,8 +526,8 @@ export function installColekaUltraFaces(
       }
       const destDir = path.join(
         packCardsDir(NARUTO_ULTRA_PACK_ID),
-        NARUTO_ULTRA_SET_CODE,
         lang,
+        NARUTO_ULTRA_SET_CODE,
         card.number,
       );
       mkdirSync(destDir, { recursive: true });
@@ -534,11 +544,9 @@ export function installColekaUltraFaces(
   }
 
   if (assets.length) index.writeAssets(assets);
-  const purgedPlaceholders = purgeColekaUltraPlaceholders(
-    index,
-    lang,
-    [...new Set(placeholderNumbers)],
-  );
+  const purgedPlaceholders = purgeColekaUltraPlaceholders(index, lang, [
+    ...new Set(placeholderNumbers),
+  ]);
   if (missing.length === 0 && assets.length > 0 && !opts.stagingDir) {
     promoteAndPurgeNarutoDig({
       packId: NARUTO_ULTRA_PACK_ID,

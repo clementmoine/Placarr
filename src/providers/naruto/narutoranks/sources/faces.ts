@@ -51,13 +51,18 @@ import {
   fetchEbayBrowseItem,
 } from "@/providers/commerce/ebay/browseItem";
 import { fetchColekaListingHtml } from "@/providers/shared/coleka/listingFetch";
+import { colekaListingUrlsFromFirstPage } from "@/providers/shared/coleka/listingItems";
 import {
   writeLocalSealedProducts,
   type LocalSealedWrite,
 } from "@/providers/shared/sealedProducts/localWrite";
 import type { SealedKind } from "@/providers/shared/sealedProducts/kinds";
 
-import { narutoRanksSourcePath, NARUTO_RANKS_PACK_ID, narutoRanksCuratedDir } from "../pack";
+import {
+  narutoRanksSourcePath,
+  NARUTO_RANKS_PACK_ID,
+  narutoRanksCuratedDir,
+} from "../pack";
 import { ninjaRanksPrintKey } from "../printKey";
 import { readInkworksChecklist } from "../pipeline/ledgers";
 import {
@@ -95,7 +100,8 @@ const UA_CHROME =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
 
 /** eBay Browse API image fetch. */
-const UA_EBAY = "Mozilla/5.0 PlacarrNarutoScrape/1.0 (eBay Browse API image fetch)";
+const UA_EBAY =
+  "Mozilla/5.0 PlacarrNarutoScrape/1.0 (eBay Browse API image fetch)";
 
 /** Inkworks Wayback harvest. */
 const UA_INKWORKS = "PlacarrNarutoScrape/1.0 (local collection)";
@@ -232,7 +238,9 @@ export function parseAnimeCollectionRanksFaces(
 }
 
 /** Parse verso image id from AC card detail AJAX HTML. */
-export function parseAnimeCollectionRanksBackImageId(html: string): string | null {
+export function parseAnimeCollectionRanksBackImageId(
+  html: string,
+): string | null {
   const m =
     /Dos de la carte[\s\S]{0,1200}?afficher_detail_img\('(\d+)'/i.exec(html) ??
     /Dos de la carte[\s\S]{0,1200}?\/(\d+)\/h100_(\d+)_carte_image/i.exec(html);
@@ -443,9 +451,11 @@ export async function harvestAnimeCollectionRanksFaces(
   };
 }
 
-export function installAnimeCollectionRanksFaces(
-  index: LocalPrintsIndex,
-): { faces: number; backs: number; missing: string[] } {
+export function installAnimeCollectionRanksFaces(index: LocalPrintsIndex): {
+  faces: number;
+  backs: number;
+  missing: string[];
+} {
   const ledger = readAnimeCollectionRanksLedger();
   const faces = ledger.faces ?? [];
   const staging = animeCollectionRanksStagingDir();
@@ -479,8 +489,8 @@ export function installAnimeCollectionRanksFaces(
     }
     const cardDir = path.join(
       packCardsDir(NARUTO_RANKS_PACK_ID),
-      row.set,
       lang,
+      row.set,
       row.number,
     );
     mkdirSync(cardDir, { recursive: true });
@@ -513,7 +523,6 @@ export function installAnimeCollectionRanksFaces(
   }
   return { faces: faceCount, backs: backCount, missing };
 }
-
 
 // ─── Coleka Ninja Ranks ──────────────────────────────────────────────────
 
@@ -590,7 +599,10 @@ export function colekaNinjaRanksRejectedFaceKeys(
  * Display candidates above Coleka listing photos — ranked by shared criteria
  * (`artKind` puts reconstructed above dump / AnimeCollection).
  */
-const NINJA_RANKS_DISPLAY_SOURCES = ["reconstructed", "animecollection"] as const;
+const NINJA_RANKS_DISPLAY_SOURCES = [
+  "reconstructed",
+  "animecollection",
+] as const;
 const ninjaRanksDisplayChoice = createCardFaceChoice({
   sources: NINJA_RANKS_DISPLAY_SOURCES,
   coverProvenance: "catalog",
@@ -599,9 +611,7 @@ const ninjaRanksDisplayChoice = createCardFaceChoice({
 /**
  * Face d'affichage préférée sur disque — hors Coleka. `null` = trou honnête.
  */
-export function preferredNinjaRanksDisplayArt(
-  cardDir: string,
-): string | null {
+export function preferredNinjaRanksDisplayArt(cardDir: string): string | null {
   if (!existsSync(cardDir)) return null;
   let files: string[];
   try {
@@ -653,7 +663,7 @@ export function ninjaRanksCardDir(
     card: number,
   });
   if (existsSync(langFirst)) return langFirst;
-  return path.join(packCardsDir(NARUTO_RANKS_PACK_ID), setCode, lang, number);
+  return path.join(packCardsDir(NARUTO_RANKS_PACK_ID), lang, setCode, number);
 }
 
 function purgeColekaRejectedFaces(
@@ -883,13 +893,16 @@ export async function harvestColekaNinjaRanks(
   const rejected: ColekaNinjaRanksHarvest["rejected"] = [];
   let pages = 0;
 
-  for (const [i, url] of colekaNinjaRanksListingPageUrls().entries()) {
+  let pageUrls = colekaNinjaRanksListingPageUrls();
+  for (let i = 0; i < pageUrls.length; i += 1) {
+    const url = pageUrls[i]!;
     const dest = path.join(staging, `listing-${i}.html`);
     const html = await fetchColekaListingHtml(url, dest, Boolean(opts.force));
     // Une page derrière le mur rend `null` : on s'arrête là plutôt que de
     // compter comme vide une page qu'on n'a pas lue.
     if (!html) continue;
     pages += 1;
+    if (i === 0) pageUrls = colekaListingUrlsFromFirstPage(html, pageUrls);
     const parsed = parseColekaNinjaRanksListing(html);
     for (const card of parsed.cards) {
       const key = colekaNinjaRanksCardKey(card);
@@ -1023,20 +1036,16 @@ export function installColekaNinjaRanks(
         continue;
       }
       /*
-        `cards/{set}/{langue}/{numéro}` — dans cet ordre.
-
-        C'est celui qu'`assetsCardUrl` reconstruit pour servir le fichier, et
-        celui que le pack `dbs` respecte (`cards/sd16/fr/03/`). Ce pack-ci
-        écrivait `{set}/{numéro}/{langue}` : les octets étaient bien là, l'URL
-        pointait à côté, et l'admin n'a jamais montré une seule face. Le pack
-        Carddass n'a pas ce problème parce qu'il passe par
-        `narutoCardPathFromCollector`, qui ne sait lire que ses propres
-        identifiants (`ni0001`) et rend `null` sur un numéro nu.
+        `cards/{langue}/{set}/{numéro}` — l'ordre de `packCardDir` et
+        d'`assetsCardUrl` (docs/data-layout.md). L'ordre `{set}/{langue}` ne
+        tenait que par le repli de la route `/assets` : une face récente dans un
+        arbre, une ancienne dans l'autre, et l'app servait la mauvaise (garde
+        `cardDirLayoutGuard`, 2026-11-23).
       */
       const destDir = path.join(
         packCardsDir(NARUTO_RANKS_PACK_ID),
-        card.setCode,
         lang,
+        card.setCode,
         card.number,
       );
       mkdirSync(destDir, { recursive: true });
@@ -1094,8 +1103,8 @@ export function installColekaNinjaRanks(
     }
     const destDir = path.join(
       packCardsDir(NARUTO_RANKS_PACK_ID),
-      setCode,
       lang,
+      setCode,
       row.number,
     );
     mkdirSync(destDir, { recursive: true });
@@ -1130,8 +1139,6 @@ export function installColekaNinjaRanks(
     missing,
   };
 }
-
-
 
 // ─── eBay assets ─────────────────────────────────────────────────────────
 
@@ -1242,7 +1249,6 @@ export async function syncEbayNinjaRanksFromBrowseApi(
   return { fetched, images, skipped, expired };
 }
 
-
 // ─── Inkworks official ───────────────────────────────────────────────────
 
 /**
@@ -1314,7 +1320,10 @@ export function readInkworksProductsLedger(): InkworksProductsLedger {
 }
 
 export function inkworksStagingDir(): string {
-  return path.join(packStagingDir(NARUTO_RANKS_PACK_ID), INKWORKS_STAGING_FOLDER);
+  return path.join(
+    packStagingDir(NARUTO_RANKS_PACK_ID),
+    INKWORKS_STAGING_FOLDER,
+  );
 }
 
 export function inkworksWaybackRawUrl(capture: InkworksCapture): string {
@@ -1530,8 +1539,8 @@ export function installInkworksSampleFaces(
     }
     const destDir = path.join(
       packCardsDir(NARUTO_RANKS_PACK_ID),
-      sample.setCode.trim().toLowerCase(),
       "en",
+      sample.setCode.trim().toLowerCase(),
       sample.number.trim().toLowerCase(),
     );
     mkdirSync(destDir, { recursive: true });
@@ -1548,7 +1557,6 @@ export function installInkworksSampleFaces(
   if (assets.length) index.writeAssets(assets);
   return { installed: assets.length, skipped };
 }
-
 
 // ─── Unofficial visuals (Blogger) ────────────────────────────────────────
 
@@ -1594,7 +1602,10 @@ export function readBloggerPackRipLedger(): BloggerPackRipLedger {
 }
 
 export function bloggerPackRipStagingDir(): string {
-  return path.join(packStagingDir(NARUTO_RANKS_PACK_ID), BLOGGER_STAGING_FOLDER);
+  return path.join(
+    packStagingDir(NARUTO_RANKS_PACK_ID),
+    BLOGGER_STAGING_FOLDER,
+  );
 }
 
 export function bloggerPackRipSkippedReasons(
@@ -1709,8 +1720,8 @@ export function installBloggerPackRip(
     }
     const destDir = path.join(
       packCardsDir(NARUTO_RANKS_PACK_ID),
-      setCode,
       lang,
+      setCode,
       number,
     );
     mkdirSync(destDir, { recursive: true });
@@ -1740,7 +1751,6 @@ export function installBloggerPackRip(
     skipped,
   };
 }
-
 
 // ─── Imadoki sheets ──────────────────────────────────────────────────────
 
@@ -1802,7 +1812,10 @@ const BLANK_RATIO = 0.97;
 const IMADOKI_TRIM_LIGHT_LUMINANCE = 220;
 
 export function imadokiStagingDir(): string {
-  return path.join(packStagingDir(NARUTO_RANKS_PACK_ID), IMADOKI_STAGING_FOLDER);
+  return path.join(
+    packStagingDir(NARUTO_RANKS_PACK_ID),
+    IMADOKI_STAGING_FOLDER,
+  );
 }
 
 export type ImadokiHarvest = { ok: number; skip: number; fail: number };
@@ -1979,8 +1992,8 @@ export async function installImadokiSheets(
       if (!printKey) continue;
       const destDir = path.join(
         packCardsDir(NARUTO_RANKS_PACK_ID),
-        cut.setCode,
         IMADOKI_LANG,
+        cut.setCode,
         cut.number,
       );
       mkdirSync(destDir, { recursive: true });
@@ -1998,7 +2011,6 @@ export async function installImadokiSheets(
   if (assets.length) index.writeAssets(assets);
   return { faces: assets.length, sheets, rejected };
 }
-
 
 // ─── Arcade Game Cards ───────────────────────────────────────────────────
 
@@ -2033,10 +2045,7 @@ export function readArcadeGameCardsLedger(): {
   }[];
 } {
   return JSON.parse(
-    readFileSync(
-      narutoRanksSourcePath(ARCADE_LEDGER_FILE),
-      "utf8",
-    ),
+    readFileSync(narutoRanksSourcePath(ARCADE_LEDGER_FILE), "utf8"),
   );
 }
 
@@ -2166,7 +2175,10 @@ export async function harvestArcadeGameCards(
     } else {
       try {
         const res = await httpGet<ArrayBuffer>(card.imageUrl, {
-          headers: { "User-Agent": UA_CHROME, Referer: arcadeListingUrls()[0]! },
+          headers: {
+            "User-Agent": UA_CHROME,
+            Referer: arcadeListingUrls()[0]!,
+          },
           responseType: "arraybuffer",
           timeout: 40_000,
           validateStatus: (status: number) => status === 200,
@@ -2194,7 +2206,10 @@ export async function harvestArcadeGameCards(
         const res = await httpGet<ArrayBuffer>(
           arcadeBackImageUrl(card.imageUrl),
           {
-            headers: { "User-Agent": UA_CHROME, Referer: arcadeListingUrls()[0]! },
+            headers: {
+              "User-Agent": UA_CHROME,
+              Referer: arcadeListingUrls()[0]!,
+            },
             responseType: "arraybuffer",
             timeout: 40_000,
             validateStatus: (status: number) => status === 200,
@@ -2270,8 +2285,8 @@ export function installArcadeGameCards(
       }
       const destDir = path.join(
         packCardsDir(NARUTO_RANKS_PACK_ID),
-        card.setCode,
         ARCADE_LANG,
+        card.setCode,
         card.number,
       );
       mkdirSync(destDir, { recursive: true });
@@ -2312,4 +2327,3 @@ export function installArcadeGameCards(
     missing,
   };
 }
-

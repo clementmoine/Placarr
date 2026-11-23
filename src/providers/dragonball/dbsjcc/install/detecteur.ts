@@ -4,12 +4,7 @@
  * 月刊少年ジャンプ スペシャルスカウター). Les SKU scellés `*-d-tecteur-*` sont
  * des doublons par série : on les retire.
  */
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { packCardsDir, packSealedProductsDir } from "@/lib/packPaths";
@@ -116,8 +111,8 @@ export async function installDbsjccDetecteur(
   if (frSrc) {
     const destDir = path.join(
       packCardsDir(DBS_JCC_PACK_ID),
-      DBSJCC_DETECTEUR_SET,
       "fr",
+      DBSJCC_DETECTEUR_SET,
       DBSJCC_DETECTEUR_NUMBER,
     );
     mkdirSync(destDir, { recursive: true });
@@ -139,8 +134,8 @@ export async function installDbsjccDetecteur(
   let faceJa = false;
   const jaDir = path.join(
     packCardsDir(DBS_JCC_PACK_ID),
-    DBSJCC_DETECTEUR_SET,
     "ja",
+    DBSJCC_DETECTEUR_SET,
     DBSJCC_DETECTEUR_NUMBER,
   );
   const jaArt = `art.${JA_SOURCE}.jpg`;

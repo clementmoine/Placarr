@@ -1,10 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import fs, { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import fs, {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 import { ebayBrowseItemId } from "@/providers/commerce/ebay/browseItem";
-import { packCardsDir, packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import {
+  packCardsDir,
+  packProductsIndexPath,
+  packSealedProductsDir,
+} from "@/lib/packPaths";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import {
   animeCollectionRanksContentHash,
@@ -177,8 +187,8 @@ const PNG_1X1 = Buffer.from(
         "naruto",
         "ninja-ranks",
         "cards",
-        "nr",
         "fr",
+        "nr",
         "0003",
       );
       expect(fs.existsSync(path.join(cardDir, "back.coleka.webp"))).toBe(true);
@@ -242,8 +252,8 @@ const PNG_1X1 = Buffer.from(
         "naruto",
         "ninja-ranks",
         "cards",
-        "ff",
         "fr",
+        "ff",
         "0002",
       );
       fs.mkdirSync(cardDir, { recursive: true });
@@ -273,9 +283,7 @@ const PNG_1X1 = Buffer.from(
       roots.push(dir);
       fs.writeFileSync(path.join(dir, "art.animecollection.jpg"), PNG_1X1);
       fs.writeFileSync(path.join(dir, "art.reconstructed.png"), PNG_1X1);
-      expect(preferredNinjaRanksDisplayArt(dir)).toBe(
-        "art.reconstructed.png",
-      );
+      expect(preferredNinjaRanksDisplayArt(dir)).toBe("art.reconstructed.png");
     });
 
     it("rejette les photos Coleka reflétées NR-26 / 39 / 44", () => {
@@ -362,14 +370,16 @@ const PNG_1X1 = Buffer.from(
         "naruto",
         "ninja-ranks",
         "cards",
-        "bl",
         "fr",
+        "bl",
         "0003",
       );
       fs.mkdirSync(cardDir, { recursive: true });
       fs.writeFileSync(path.join(cardDir, "art.coleka.webp"), "wrong-base-3");
 
-      installColekaNinjaRanks(index, { stagingDir: path.join(os.tmpdir(), "missing") });
+      installColekaNinjaRanks(index, {
+        stagingDir: path.join(os.tmpdir(), "missing"),
+      });
 
       const exported = index.exportIndex();
       const entry = exported!.index.cards["naruto:bl-0003"]!;
@@ -409,8 +419,8 @@ const PNG_1X1 = Buffer.from(
         "naruto",
         "ninja-ranks",
         "cards",
-        "ff",
         "fr",
+        "ff",
         "0001",
       );
       expect(fs.existsSync(path.join(cardDir, "art.coleka.webp"))).toBe(true);
@@ -433,7 +443,8 @@ const PNG_1X1 = Buffer.from(
       const ledger = readEbayNinjaRanksLedger();
       expect(ledger.marketplaceId).toBe("EBAY_US");
       expect(
-        ledger.listings.find((row) => row.legacyItemId === "293490000296")?.state,
+        ledger.listings.find((row) => row.legacyItemId === "293490000296")
+          ?.state,
       ).toBe("expired");
       expect(
         ledger.listings.find((row) => row.legacyItemId === "403984180609")
@@ -531,9 +542,9 @@ const PNG_1X1 = Buffer.from(
       expect(products.products["naruto/ninja-ranks::booster"]?.image).toBe(
         "/assets/naruto/ninja-ranks/products/booster/en/face",
       );
-      expect(Object.keys(products.products).some((key) => /tin/i.test(key))).toBe(
-        false,
-      );
+      expect(
+        Object.keys(products.products).some((key) => /tin/i.test(key)),
+      ).toBe(false);
     });
 
     it("installs SD-4 as a blogger dump and leaves official samples alone", () => {
@@ -548,8 +559,8 @@ const PNG_1X1 = Buffer.from(
         existsSync(
           path.join(
             packCardsDir(NARUTO_RANKS_PACK_ID),
-            "sd",
             "en",
+            "sd",
             "0004",
             "art.blogger.jpg",
           ),
@@ -559,15 +570,17 @@ const PNG_1X1 = Buffer.from(
         existsSync(
           path.join(
             packCardsDir(NARUTO_RANKS_PACK_ID),
-            "sd",
             "en",
+            "sd",
             "0004",
             "back.blogger.jpg",
           ),
         ),
       ).toBe(true);
       expect(
-        existsSync(path.join(packCardsDir(NARUTO_RANKS_PACK_ID), "back.fr.webp")),
+        existsSync(
+          path.join(packCardsDir(NARUTO_RANKS_PACK_ID), "back.fr.webp"),
+        ),
       ).toBe(false);
     });
   });

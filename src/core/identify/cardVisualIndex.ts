@@ -82,7 +82,7 @@ const FACE_LANGS = new Set([
   "ru",
 ]);
 
-function isFaceLang(name: string): boolean {
+export function isFaceLang(name: string): boolean {
   const code = name.trim().toLowerCase();
   return FACE_LANGS.has(code) && LANG_SEGMENT.test(code);
 }

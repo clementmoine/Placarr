@@ -37,8 +37,11 @@ import {
 } from "@/providers/shared/sealedProducts/localWrite";
 import { sealedSlugHostId } from "@/providers/shared/sealedProducts/rewrite";
 
-import { DBS_JCC_PACK_ID, dbsJccCuratedDir,
-  dbsJccSyncedSourcePath} from "../pack";
+import {
+  DBS_JCC_PACK_ID,
+  dbsJccCuratedDir,
+  dbsJccSyncedSourcePath,
+} from "../pack";
 import {
   DBZC_COLLECTION_IDC,
   dbzcAbsoluteUrl,
@@ -102,7 +105,9 @@ export function dbzcollectionSuperLedgerPath(): string {
 }
 
 export function readDbzcollectionLedger(): DbzcLedger {
-  return JSON.parse(readFileSync(dbzcollectionLedgerPath(), "utf8")) as DbzcLedger;
+  return JSON.parse(
+    readFileSync(dbzcollectionLedgerPath(), "utf8"),
+  ) as DbzcLedger;
 }
 
 export function readDbzcollectionSuperLedger(): DbzcLedger {
@@ -125,7 +130,10 @@ export function jccDbzcollectionSuperContentHash(): string {
 }
 
 function setStagingDir(setCode: string, root?: string): string {
-  return path.join(root ?? dbzcollectionStagingDir(), setCode.trim().toLowerCase());
+  return path.join(
+    root ?? dbzcollectionStagingDir(),
+    setCode.trim().toLowerCase(),
+  );
 }
 
 function sleep(ms: number): Promise<void> {
@@ -156,10 +164,7 @@ export function enabledDbzcSets(
 
 /** Slugifies a power / scouter variant descriptor into a clean grouping segment. */
 export function powerToGroupingSlug(power: string): string {
-  const clean = power
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "");
+  const clean = power.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
   if (clean.includes("kaio")) return "kaio";
   if (clean.includes("enfer")) return "enfer";
   if (clean.includes("main")) return "main";
@@ -249,7 +254,10 @@ export function assignCardGroupings(
   return out;
 }
 
-export function cardFolderName(number: string, grouping: string | null): string {
+export function cardFolderName(
+  number: string,
+  grouping: string | null,
+): string {
   const num = number.trim().toLowerCase();
   return grouping ? `${num}-${grouping}` : num;
 }
@@ -275,8 +283,10 @@ function packKind(label: string): { kind: SealedKind; category: string } {
   if (lower.includes("starter box")) {
     return { kind: "display", category: "starter-box" };
   }
-  if (lower.includes("starter")) return { kind: "deck", category: "starter-deck" };
-  if (lower.includes("box")) return { kind: "collector_box", category: "tin-box" };
+  if (lower.includes("starter"))
+    return { kind: "deck", category: "starter-deck" };
+  if (lower.includes("box"))
+    return { kind: "collector_box", category: "tin-box" };
   if (lower.includes("scouter") || lower.includes("tecteur")) {
     return { kind: "ephemera", category: "scouter" };
   }
@@ -299,7 +309,13 @@ export async function harvestSet(
   set: DbzcSetSpec,
   ledger: DbzcLedger,
   opts: { force?: boolean; stagingRoot?: string },
-): Promise<{ cards: number; packs: number; ok: number; skip: number; fail: number }> {
+): Promise<{
+  cards: number;
+  packs: number;
+  ok: number;
+  skip: number;
+  fail: number;
+}> {
   const staging = setStagingDir(set.setCode, opts.stagingRoot);
   mkdirSync(staging, { recursive: true });
   const idc = ledger.collectionIdc || DBZC_COLLECTION_IDC;
@@ -325,9 +341,7 @@ export async function harvestSet(
     let detail: DbzcCardDetail | null = null;
     if (!opts.force && existsSync(detailDest)) {
       try {
-        detail = JSON.parse(
-          readFileSync(detailDest, "utf8"),
-        ) as DbzcCardDetail;
+        detail = JSON.parse(readFileSync(detailDest, "utf8")) as DbzcCardDetail;
       } catch {
         detail = null;
       }
@@ -809,7 +823,11 @@ export function installDbzcollectionFaces(
         one set and Holo in another — finishes read the title rarity.
       */
       const fr = titles.find((t) => t.lang === "fr");
-      if (fr && !dbsjccFinishWorthy(fr.rarity) && dbsjccFinishWorthy(listing.rarity)) {
+      if (
+        fr &&
+        !dbsjccFinishWorthy(fr.rarity) &&
+        dbsjccFinishWorthy(listing.rarity)
+      ) {
         fr.rarity = listing.rarity;
       }
     }
@@ -836,8 +854,8 @@ export function installDbzcollectionFaces(
       : print.number;
     const homeDir = path.join(
       packCardsDir(DBS_JCC_PACK_ID),
-      print.setCode,
       "fr",
+      print.setCode,
       card,
     );
     mkdirSync(homeDir, { recursive: true });
@@ -846,11 +864,11 @@ export function installDbzcollectionFaces(
     for (const setCode of print.setCodes ?? [print.setCode]) {
       const baseNum = print.number.replace(/[a-z]+$/i, "");
       const candidates = [
-        path.join(packCardsDir(DBS_JCC_PACK_ID), setCode, "fr", card),
+        path.join(packCardsDir(DBS_JCC_PACK_ID), "fr", setCode, card),
         path.join(
           packCardsDir(DBS_JCC_PACK_ID),
-          setCode,
           "fr",
+          setCode,
           print.grouping ? `${baseNum}-${print.grouping}` : baseNum,
         ),
       ];
@@ -1003,7 +1021,10 @@ export function ingestDbzcollectionSealedProducts(
   const products: LocalSealedWrite[] = [];
 
   for (const set of sets) {
-    const packsDir = path.join(setStagingDir(set.setCode, stagingRoot), "packs");
+    const packsDir = path.join(
+      setStagingDir(set.setCode, stagingRoot),
+      "packs",
+    );
     if (!existsSync(packsDir)) continue;
 
     for (const name of readdirSync(packsDir)) {
@@ -1040,7 +1061,8 @@ export function ingestDbzcollectionSealedProducts(
         releaseDate: set.releaseDate ?? null,
         declaredCardCount: null,
         cardsPerPack,
-        path: row.listingUrl || dbzcSetListingUrl(set.ids, ledger.collectionIdc),
+        path:
+          row.listingUrl || dbzcSetListingUrl(set.ids, ledger.collectionIdc),
         artPath,
       });
     }

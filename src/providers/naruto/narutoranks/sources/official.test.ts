@@ -1,10 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DatabaseSync } from "node:sqlite";
-import fs, { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import fs, {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
-import { packCardsDir, packCatalogDb, packProductsIndexPath, packSealedProductsDir } from "@/lib/packPaths";
+import {
+  packCardsDir,
+  packCatalogDb,
+  packProductsIndexPath,
+  packSealedProductsDir,
+} from "@/lib/packPaths";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import sharp from "sharp";
 import { buildFrenchNinjaRanksTitles } from "./titles";
@@ -107,7 +119,9 @@ import type { ImadokiSheet } from "../parse/catalogues";
         name: "Naruto: Ninja Ranks booster pack",
         image: "/assets/naruto/ninja-ranks/products/booster/en/face",
       });
-      expect(index.products["naruto/ninja-ranks::display"].kind).toBe("display");
+      expect(index.products["naruto/ninja-ranks::display"].kind).toBe(
+        "display",
+      );
       expect(index.products["naruto/ninja-ranks::collector-album"].kind).toBe(
         "coffret",
       );
@@ -130,8 +144,8 @@ import type { ImadokiSheet } from "../parse/catalogues";
         existsSync(
           path.join(
             packCardsDir(NARUTO_RANKS_PACK_ID),
-            "sd",
             "en",
+            "sd",
             "0001",
             "art.inkworks.jpg",
           ),
@@ -265,7 +279,9 @@ import type { ImadokiSheet } from "../parse/catalogues";
       // 72 FR checklist + FR hors base (ff-2, sd-5, ns-3) + IT attestés (nr + ff).
       expect(report.ledgerRows).toBe(72);
       expect(report.languageSpecificRows).toBeGreaterThanOrEqual(3);
-      expect(report.titles).toBe(report.ledgerRows + report.languageSpecificRows);
+      expect(report.titles).toBe(
+        report.ledgerRows + report.languageSpecificRows,
+      );
       expect(report.sharedFromEnglish).toBeGreaterThan(0);
       expect(report.skipped).toEqual([]);
       expect(report.missing).toEqual([]);
@@ -275,7 +291,9 @@ import type { ImadokiSheet } from "../parse/catalogues";
       expect(frenchTitle("naruto:ns-0003")).toBe("Gaï");
       expect(frenchTitle("naruto:nr-0058")).toBe("Hokage le 3e");
       expect(frenchTitle("naruto:nr-0066")).toBe("Groupe de Konohamaru");
-      expect(frenchTitle("naruto:nr-0068")).toBe("Second Examen des Survivants");
+      expect(frenchTitle("naruto:nr-0068")).toBe(
+        "Second Examen des Survivants",
+      );
       expect(frenchTitle("naruto:nr-0070")).toBe("Kakashi-Zabuza");
       expect(frenchTitle("naruto:nr-0071")).toBe("Carte");
       expect(frenchTitle("naruto:nr-0057")).toBe("Dosu");

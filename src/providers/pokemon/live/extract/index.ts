@@ -601,11 +601,18 @@ export async function runUpdate(
     } else if (opts.scrapeLimit) {
       cardNames = cardNames.slice(0, opts.scrapeLimit);
     }
-    const names = [...extras, ...cardNames];
-    // Inventaire (Sync par défaut) : pas de bucket par bundle — on sonde le
-    // primaire puis les buckets datés connus (un set récent n'est publié que
-    // dans le sien : me5-5 → 20260915_1700).
+    let names = [...extras, ...cardNames];
+    /*
+      Inventaire (Sync par défaut) : les stems n'ont pas de dossier. On
+      découvre les dossiers de contenu (primaire + buckets datés mémorisés ;
+      la liste exacte est un config-document authentifié, backlog #14), puis
+      leurs AssetManifests publics disent où vit chaque bundle — un set récent
+      n'existe que dans le sien (me5-5 → 20260915_1700). Un bundle qu'aucun
+      manifest ne liste est absent : pas de HEAD dossier par dossier.
+    */
     let contentDirs: string[] | undefined;
+    let bucketIndex: ReturnType<typeof loadCdnCatalogue> | null = null;
+    const absentResults: BundleResult[] = [];
     if (!catalogue) {
       const { resolveLiveContentDirs } =
         await import("@/providers/pokemon/live/cdn/cdnEpochProbe");
@@ -614,32 +621,70 @@ export async function runUpdate(
         cacheRoot: path.dirname(staging),
       });
       console.log(
-        `  buckets datés : ${contentDirs.length - 1} (${contentDirs.slice(1, 6).join(", ")}${contentDirs.length > 6 ? "…" : ""})`,
+        `  dossiers de contenu : ${contentDirs.length} (${contentDirs.slice(0, 5).join(", ")}${contentDirs.length > 5 ? "…" : ""})`,
       );
+      const { dumpCdnManifests } =
+        await import("@/providers/pokemon/live/cdn/dumpCdnManifest");
+      const dumped = await dumpCdnManifests({
+        contentBase: target.content_base,
+        buckets: contentDirs.join(","),
+        locales: opts.langs.join(","),
+        outDir: path.join(staging, "cdn-manifests"),
+      });
+      throwIfAborted();
+      if (dumped.failed.length === 0) {
+        bucketIndex = loadCdnCatalogue(staging, { langs: opts.langs });
+        const { splitByManifestIndex } =
+          await import("@/providers/pokemon/live/cdn/manifestIndex");
+        const split = splitByManifestIndex(cardNames, bucketIndex.bucketOf);
+        names = [...extras, ...split.located];
+        for (const name of split.absent) {
+          absentResults.push({
+            name,
+            ok: false,
+            status: 404,
+            error: "absent-des-manifests",
+          });
+        }
+        console.log(
+          `  manifests : ${split.located.length} bundle(s) localisé(s), ${split.absent.length} absent(s) de tous les dossiers`,
+        );
+      } else {
+        console.warn(
+          `  manifests incomplets (${dumped.failed.length} échec(s)) — sondage dossier par dossier`,
+        );
+      }
     }
     console.log(
       `Scraping ${names.length} (${catalogue ? "catalogue CDN" : "inventory"} ∪ shared)` +
         ` langs=${opts.langs.join(",")}` +
         ` → ${bundles} (CDN; Malie-miss already logged)`,
     );
+    const index = catalogue ?? bucketIndex;
     scrapeReport = (await scrape(names, bundles, {
       version: target.version,
       contentDir: target.content_dir,
       contentBase: target.content_base,
-      // Catalogue carries each bundle's bucket → probing is moot.
+      // Le manifest porte le dossier de chaque bundle → plus de sondage.
       dirProbe:
-        catalogue || contentDirs?.length
+        index || contentDirs?.length
           ? "all"
           : (opts.dirProbe ?? DEFAULT_DIR_PROBE),
       contentDirs,
-      bucketOf: catalogue?.bucketOf ?? null,
-      hashOf: catalogue?.hashOf ?? null,
+      bucketOf: index?.bucketOf ?? null,
+      hashOf: index?.hashOf ?? null,
       configCache: fs.existsSync(configCache) ? configCache : null,
       workers: opts.workers ?? DEFAULT_WORKERS,
       delayS: opts.delayS ?? DEFAULT_DELAY_S,
       dryRun: false,
       signal,
     })) as unknown as Record<string, unknown>;
+    if (absentResults.length) {
+      scrapeReport.results = [
+        ...((scrapeReport.results ?? []) as BundleResult[]),
+        ...absentResults,
+      ];
+    }
     const results = (scrapeReport.results ?? []) as BundleResult[];
     mergeCdnResultsIntoInventory(inventory, results);
     console.log(

@@ -130,6 +130,14 @@ indisponibles. `resolveLiveContentDirs` (`cdn/cdnEpochProbe.ts`) sonde les
 `manifest_en_<bucket>` des 60 derniers jours (un an au premier passage) et
 garde chaque bucket trouvé dans `data/pokemon/logs/cdn-content-dirs.json` —
 une fenêtre glissante ne le perd plus. 19 buckets sur 2025-11 → 2026-11.
+Ensuite la Sync lit les AssetManifests publics de chaque dossier
+(`manifest_{lang}_{bucket}`, ~1 Mo pour `10101_0000`, quelques Ko par bucket
+daté) : chaque bundle part directement vers son dossier, un bundle absent de
+tous les manifests est un miss sans HEAD. Mesure 2026-11-23 : 15 984 stems
+d'inventaire, **15 984 localisés**, 0 absent (les 332 « indisponibles »
+d'avant — me5-5, me6… — étaient tous dans des buckets datés). La liste
+exacte des dossiers reste un config-document authentifié (backlog Foil via
+TCG Live #14).
 
 ---
 

@@ -21,6 +21,7 @@ import {
   POKEMON_PACK_ID,
 } from "@/providers/pokemon/paths";
 
+import { POKEMON_CATALOGUE_LANGUAGES } from "../cdn/languages";
 import { pokemonDesktopClient } from "../cdn/desktopClient";
 import { indexLiveCards } from "./indexCards";
 import { rebuildPokemonCardsIndex } from "./rebuildCardsIndex";
@@ -41,6 +42,8 @@ const hooks = cardCatalogueHooks({
   dbPath: cardsDbPath,
   // Identity corpus is catalog.sqlite; dbPath stays on live.sqlite for empty/stale.
   measureCorpus: () => measureCatalogDbCorpus(pokemonIdentityDbPath()),
+  // Sync = même surface que l'Extract admin : EN (pivot Live) + FR.
+  defaultLangs: POKEMON_CATALOGUE_LANGUAGES,
   runPipeline: async (argv) => {
     const { runPokemonFoilExtract } = await import(
       /* webpackIgnore: true */

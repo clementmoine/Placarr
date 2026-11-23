@@ -58,6 +58,11 @@ export type CardCatalogueHooksInput = {
    * (ex. `--offline` pour ne pas retélécharger les faces Naruto).
    */
   autoExtraArgs?: readonly string[];
+  /**
+   * Langues du catalogue que la Sync moissonne quand le job n'en nomme pas
+   * (`--langs`) — la même surface que l'Extract admin, pas le défaut du CLI.
+   */
+  defaultLangs?: readonly string[];
 };
 
 /**
@@ -91,9 +96,11 @@ function csvTokens(values: readonly string[] | undefined): string | null {
 }
 
 /** Pull optional `{ cards, products, sets }` from a pack pipeline return value. */
-export function catalogGrowthFromPipelineResult(
-  result: unknown,
-): { cards?: number; products?: number; sets?: number } {
+export function catalogGrowthFromPipelineResult(result: unknown): {
+  cards?: number;
+  products?: number;
+  sets?: number;
+} {
   if (!result || typeof result !== "object") return {};
   const row = result as {
     cards?: unknown;
@@ -123,10 +130,7 @@ export function isIdentifyOnlyRefresh(
       .trim()
       .toLowerCase();
     return (
-      t === "identify" ||
-      t === "indexes" ||
-      t === "embed" ||
-      t === "embeddings"
+      t === "identify" || t === "indexes" || t === "embed" || t === "embeddings"
     );
   });
 }
@@ -138,7 +142,10 @@ export function isIdentifyOnlyRefresh(
  */
 export function catalogueRefreshArgv(
   opts: ProviderCatalogRefreshOpts | undefined,
-  input: Pick<CardCatalogueHooksInput, "autoSkip" | "autoExtraArgs">,
+  input: Pick<
+    CardCatalogueHooksInput,
+    "autoSkip" | "autoExtraArgs" | "defaultLangs"
+  >,
 ): string[] {
   const argv: string[] = [];
   if (opts?.auto) {
@@ -157,7 +164,9 @@ export function catalogueRefreshArgv(
   const skip = csvTokens(skipParts);
   if (skip) argv.push("--skip", skip);
 
-  const langs = csvTokens(opts?.langs);
+  const langs = csvTokens(
+    opts?.langs?.length ? opts.langs : input.defaultLangs,
+  );
   if (langs) argv.push("--langs", langs);
 
   if (opts?.limit != null && Number.isFinite(opts.limit) && opts.limit > 0) {
@@ -181,16 +190,14 @@ export function cardCatalogueHooks(
   };
 
   const measure =
-    input.measureCorpus ??
-    (() => measureCatalogDbCorpus(input.dbPath()));
+    input.measureCorpus ?? (() => measureCatalogDbCorpus(input.dbPath()));
 
   const refresh = async (opts?: ProviderCatalogRefreshOpts): Promise<void> => {
     // Targeted `only: identify` — rebuild dHash + CLIP without re-harvesting
     // (API / tests). Product Sync always runs the full path below.
     if (isIdentifyOnlyRefresh(opts?.only)) {
-      const { runDataPackCardIdentifyIndexes } = await import(
-        "@/providers/shared/cardCatalogue/identifyIndexesStep"
-      );
+      const { runDataPackCardIdentifyIndexes } =
+        await import("@/providers/shared/cardCatalogue/identifyIndexesStep");
       // Incremental CLIP by default (reuse unchanged printKey+artRel).
       // Full wipe only when caller passes skip:["identify-cache"] — rare.
       const forceEmbed = (opts?.skip ?? []).some(
@@ -255,18 +262,18 @@ export function cardCatalogueHooks(
     // Skip with skip:["identify"] (or env) so unit tests / dry Sync stay fast.
     const skipIdentify =
       process.env.PLACARR_SKIP_CARD_IDENTIFY_INDEX === "1" ||
-      [...(opts?.skip ?? []), ...(opts?.auto ? input.autoSkip ?? [] : [])].some(
-        (token) => {
-          const t = String(token || "")
-            .trim()
-            .toLowerCase();
-          return t === "identify" || t === "indexes" || t === "embed";
-        },
-      );
+      [
+        ...(opts?.skip ?? []),
+        ...(opts?.auto ? (input.autoSkip ?? []) : []),
+      ].some((token) => {
+        const t = String(token || "")
+          .trim()
+          .toLowerCase();
+        return t === "identify" || t === "indexes" || t === "embed";
+      });
     if (!skipIdentify) {
-      const { runDataPackCardIdentifyIndexes } = await import(
-        "@/providers/shared/cardCatalogue/identifyIndexesStep"
-      );
+      const { runDataPackCardIdentifyIndexes } =
+        await import("@/providers/shared/cardCatalogue/identifyIndexesStep");
       await runDataPackCardIdentifyIndexes(input.packId, {
         langs: opts?.langs,
         onLog: (line) => console.log(line),

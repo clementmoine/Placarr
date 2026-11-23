@@ -568,11 +568,28 @@ export async function installNarutoReconstructed(opts?: {
   }
 
   if (!opts?.dryRun && installs.length) {
+    const merged = mergeProvenanceInstalls(installs);
+    // Fichier curated (versionné) : une Sync qui réinstalle les mêmes faces
+    // ne le réécrit pas pour la seule date — pas de diff git à chaque passage.
+    let previous: { generatedAt?: string; installs?: unknown } | null = null;
+    try {
+      previous = JSON.parse(
+        readFileSync(narutoCuratedReconstructedProvenancePath(), "utf8"),
+      ) as { generatedAt?: string; installs?: unknown };
+    } catch {
+      previous = null;
+    }
+    const unchanged =
+      previous != null &&
+      JSON.stringify(previous.installs) === JSON.stringify(merged);
     writeFileSync(
       narutoCuratedReconstructedProvenancePath(),
       `${JSON.stringify(
         {
-          generatedAt: new Date().toISOString(),
+          generatedAt:
+            unchanged && previous?.generatedAt
+              ? previous.generatedAt
+              : new Date().toISOString(),
           method:
             "AI restoration of an authenticated collector photo, then Figma retouching",
           sourcePhotos:
@@ -582,7 +599,7 @@ export async function installNarutoReconstructed(opts?: {
             "Displayed in place of the official face. The official file is kept on " +
             "disk and remains the authentic source; every field was proofread " +
             "against the collector photo (number, copyright, stats, badge).",
-          installs: mergeProvenanceInstalls(installs),
+          installs: merged,
         },
         null,
         1,

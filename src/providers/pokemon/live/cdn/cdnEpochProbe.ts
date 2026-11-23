@@ -7,6 +7,9 @@
  * nothing even when CDN version discovery is correct.
  */
 
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import { DEFAULT_CONTENT_DIR, DEFAULT_UA } from ".";
 import { normalizeContentBase } from "../gameSettings";
 import { httpGet } from "@/lib/http/httpClient";
@@ -116,4 +119,55 @@ export async function probeLiveContentDirs(
     probedOk,
     probedMiss,
   };
+}
+
+/** Buckets datés déjà vus — survivent à la fenêtre de sonde. */
+export const LIVE_CONTENT_DIRS_FILE = "cdn-content-dirs.json";
+/** Sans mémoire (premier passage, staging perdu) : on remonte un an. */
+export const COLD_START_LOOKBACK_DAYS = 365;
+
+function readKnownDatedDirs(file: string): string[] {
+  try {
+    const raw = JSON.parse(readFileSync(file, "utf8")) as { dirs?: unknown };
+    return Array.isArray(raw.dirs)
+      ? raw.dirs.filter((d): d is string => typeof d === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Dossiers de contenu à sonder pour un bundle : le primaire, les buckets datés
+ * déjà découverts (`logs/cdn-content-dirs.json`) et ceux de la fenêtre
+ * récente. Un nouveau set Live (me5-5 → `20260915_1700`) n'est publié que
+ * dans son bucket daté ; sans cette liste, la Sync ne voyait que
+ * `10101_0000` et comptait ses bundles comme indisponibles.
+ */
+export async function resolveLiveContentDirs(opts: {
+  contentBase: string;
+  cacheRoot: string;
+  knownDirs?: readonly string[];
+  now?: Date;
+  headStatus?: (url: string) => Promise<number>;
+}): Promise<string[]> {
+  const file = path.join(opts.cacheRoot, "logs", LIVE_CONTENT_DIRS_FILE);
+  const remembered = readKnownDatedDirs(file);
+  const probed = await probeLiveContentDirs({
+    contentBase: opts.contentBase,
+    knownDirs: [...(opts.knownDirs ?? []), ...remembered],
+    now: opts.now,
+    headStatus: opts.headStatus,
+    lookbackDays: remembered.length ? 60 : COLD_START_LOOKBACK_DAYS,
+  });
+  const dated = [...new Set([...probed.probedOk, ...remembered])]
+    .filter((d) => d !== DEFAULT_CONTENT_DIR)
+    .sort()
+    .reverse();
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(
+    file,
+    `${JSON.stringify({ updatedAt: (opts.now ?? new Date()).toISOString(), dirs: dated }, null, 2)}\n`,
+  );
+  return mergeContentDirLists(opts.knownDirs ?? [], dated);
 }

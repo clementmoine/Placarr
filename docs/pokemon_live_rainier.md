@@ -122,6 +122,15 @@ thumbnail). Liste des dirs : config-doc `asset-bundle-manifest_0.0` →
 
 Placarr : `gameSettings.ts` / `cdn.ts` / sources report (Catalogue Sync).
 
+**Un set récent n'existe que dans son bucket daté** (2026-11-23) :
+`me5-5_*` → `20260915_1700`, `me6_*` → `20261105_1700`, 403 partout ailleurs
+(y compris `10101_0000`, toutes langues). Sans config-cache APK, la Sync en
+mode inventaire ne sondait que `10101_0000` et comptait ces bundles comme
+indisponibles. `resolveLiveContentDirs` (`cdn/cdnEpochProbe.ts`) sonde les
+`manifest_en_<bucket>` des 60 derniers jours (un an au premier passage) et
+garde chaque bucket trouvé dans `data/pokemon/logs/cdn-content-dirs.json` —
+une fenêtre glissante ne le perd plus. 19 buckets sur 2025-11 → 2026-11.
+
 ---
 
 ## 4. Decode `card-database` (ptcgl.dev `DataTableCodec`)

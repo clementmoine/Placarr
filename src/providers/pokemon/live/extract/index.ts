@@ -602,6 +602,21 @@ export async function runUpdate(
       cardNames = cardNames.slice(0, opts.scrapeLimit);
     }
     const names = [...extras, ...cardNames];
+    // Inventaire (Sync par défaut) : pas de bucket par bundle — on sonde le
+    // primaire puis les buckets datés connus (un set récent n'est publié que
+    // dans le sien : me5-5 → 20260915_1700).
+    let contentDirs: string[] | undefined;
+    if (!catalogue) {
+      const { resolveLiveContentDirs } =
+        await import("@/providers/pokemon/live/cdn/cdnEpochProbe");
+      contentDirs = await resolveLiveContentDirs({
+        contentBase: target.content_base,
+        cacheRoot: path.dirname(staging),
+      });
+      console.log(
+        `  buckets datés : ${contentDirs.length - 1} (${contentDirs.slice(1, 6).join(", ")}${contentDirs.length > 6 ? "…" : ""})`,
+      );
+    }
     console.log(
       `Scraping ${names.length} (${catalogue ? "catalogue CDN" : "inventory"} ∪ shared)` +
         ` langs=${opts.langs.join(",")}` +
@@ -612,7 +627,11 @@ export async function runUpdate(
       contentDir: target.content_dir,
       contentBase: target.content_base,
       // Catalogue carries each bundle's bucket → probing is moot.
-      dirProbe: catalogue ? "all" : (opts.dirProbe ?? DEFAULT_DIR_PROBE),
+      dirProbe:
+        catalogue || contentDirs?.length
+          ? "all"
+          : (opts.dirProbe ?? DEFAULT_DIR_PROBE),
+      contentDirs,
       bucketOf: catalogue?.bucketOf ?? null,
       hashOf: catalogue?.hashOf ?? null,
       configCache: fs.existsSync(configCache) ? configCache : null,

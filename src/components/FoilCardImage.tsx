@@ -119,7 +119,12 @@ type FoilCardImageProps = {
   /** Kayou fixed lenticular crop profile — skips auto pixel detection. */
   lenticularCropProfile?: string | null;
   /** Kayou portrait scan gutter trim — single-face strips. */
-  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
+  scanCrop?: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } | null;
   fit?: "cover" | "contain";
   tuning?: HoloTuning;
   tilt?: boolean;
@@ -220,7 +225,12 @@ function CssFoilFace({
   varnishShaderId: string | null;
   lenticularGrid?: { cols: number; rows: number } | null;
   lenticularCropProfile?: string | null;
-  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
+  scanCrop?: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } | null;
   fit?: "cover" | "contain";
   tuning?: HoloTuning;
   tilt?: boolean;
@@ -422,9 +432,8 @@ export function FoilCardImage({
           finishShaderId: resolvedFinishShaderId,
           varnishShaderId:
             fromPack.varnishShaderId ?? cssVarnishShaderId ?? null,
-          lenticularGrid:
-            lenticularGridProp ?? fromPack.lenticularGrid ?? null,
-          ...(lenticularCropProfileProp ?? fromPack.lenticularCropProfile
+          lenticularGrid: lenticularGridProp ?? fromPack.lenticularGrid ?? null,
+          ...((lenticularCropProfileProp ?? fromPack.lenticularCropProfile)
             ? {
                 lenticularCropProfile:
                   lenticularCropProfileProp ??
@@ -478,10 +487,7 @@ export function FoilCardImage({
   const webglMaterial =
     Boolean(material) &&
     material?.webgl !== false &&
-    !(
-      effectiveMaskUrl &&
-      pack?.isCssOnlyFoilMask?.(effectiveMaskUrl)
-    );
+    !(effectiveMaskUrl && pack?.isCssOnlyFoilMask?.(effectiveMaskUrl));
   const eligible =
     !failed &&
     surfacesReady &&
@@ -594,13 +600,7 @@ export function FoilCardImage({
         }
       }
     },
-    [
-      leanAmplitude,
-      hasTimeSibling,
-      bagged,
-      packagingOnly,
-      faceQuarterTurns,
-    ],
+    [leanAmplitude, hasTimeSibling, bagged, packagingOnly, faceQuarterTurns],
   );
 
   // Physical lean follows the same `cos(t)` Time mode uses for the foil, with
@@ -613,6 +613,7 @@ export function FoilCardImage({
     isDriven || !tilt || !idle || (!useWebgl && !bagged),
     FOIL_MAX_TILT_DEG,
     (lean, glare) => applyLean(lean, { glare }),
+    frameRef,
   );
 
   useEffect(() => {
@@ -825,11 +826,7 @@ export function FoilCardImage({
           "transition-transform duration-200 ease-out",
       )}
     >
-      {bagged ? (
-        <SealedBagOverlay side="front">{face}</SealedBagOverlay>
-      ) : (
-        face
-      )}
+      {bagged ? <SealedBagOverlay side="front">{face}</SealedBagOverlay> : face}
     </div>
   );
 

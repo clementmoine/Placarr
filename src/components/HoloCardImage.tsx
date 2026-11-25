@@ -404,11 +404,7 @@ export function HoloCardImage({
         const norm =
           mode === "idle"
             ? lenticularNormFromIdleLean(lenticularGrid, lean)
-            : lenticularNormFromLean(
-                lenticularGrid,
-                lean.lightX,
-                lean.lightY,
-              );
+            : lenticularNormFromLean(lenticularGrid, lean.lightX, lean.lightY);
         lenticularRef.current?.setTarget(norm.x, norm.y);
       }
     },
@@ -439,6 +435,7 @@ export function HoloCardImage({
     isDriven || !idleEnabled || lightFromParent,
     MAX_TILT,
     placeIdle,
+    frameRef,
   );
 
   const applyPointer = useCallback(
@@ -558,7 +555,10 @@ export function HoloCardImage({
             alt={alt}
             draggable={false}
             onLoad={(event) => noteArtLoaded(event.currentTarget, event)}
-            className={cn("h-full w-full rounded-[inherit]", objectFitClass(fit))}
+            className={cn(
+              "h-full w-full rounded-[inherit]",
+              objectFitClass(fit),
+            )}
           />
         ) : (
           <div className="relative flex h-full w-full items-center justify-center">
@@ -568,7 +568,11 @@ export function HoloCardImage({
                 useLenticularArt
                   ? { width: "100%", height: "100%" }
                   : fit === "contain" && artRatio
-                    ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
+                    ? {
+                        aspectRatio: artRatio,
+                        width: "100%",
+                        maxHeight: "100%",
+                      }
                     : { width: "100%", height: "100%" }
               }
             >
@@ -721,7 +725,11 @@ export function HoloCardImage({
                 useLenticularArt
                   ? { width: "100%", height: "100%" }
                   : fit === "contain" && artRatio
-                    ? { aspectRatio: artRatio, width: "100%", maxHeight: "100%" }
+                    ? {
+                        aspectRatio: artRatio,
+                        width: "100%",
+                        maxHeight: "100%",
+                      }
                     : { width: "100%", height: "100%" }
               }
             >

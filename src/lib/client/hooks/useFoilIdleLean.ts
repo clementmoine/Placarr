@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 
 import { leanFromPointer, type Lean } from "@/core/render/deviceTilt";
 import {
@@ -11,6 +17,68 @@ import {
   idlePointerFromSeconds,
   subscribeFoilFrame,
 } from "@/core/render/foil";
+
+/**
+ * Margin around the viewport inside which a resting card keeps animating —
+ * enough that a card scrolling in is already moving when it appears.
+ */
+const IDLE_VIEWPORT_MARGIN = "200px";
+
+/**
+ * Whether a resting card should draw on the shared clock this frame. Only a
+ * card someone can see: subscribed off screen, the ~120 holos of a large grid
+ * rewrote their CSS properties every frame and the page dropped to 11fps.
+ * The clock is shared, so a card coming back resumes in phase.
+ */
+export function foilIdleShouldTick(input: {
+  driven: boolean;
+  reducedMotion: boolean;
+  nearViewport: boolean;
+}): boolean {
+  return !input.driven && !input.reducedMotion && input.nearViewport;
+}
+
+/**
+ * True while `ref` is within {@link IDLE_VIEWPORT_MARGIN} of the viewport.
+ * Without a ref, the card counts as visible — the historical behaviour.
+ *
+ * The frame often mounts after the first effect (it waits for the mask), so
+ * the element is re-checked after every render and observed once it exists;
+ * until the observer reports, the card counts as off screen.
+ */
+function useNearViewport(ref?: RefObject<Element | null>): boolean {
+  const [near, setNear] = useState(!ref);
+  const observedRef = useRef<Element | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // No deps on purpose: the frame can appear on any render. Cheap — it only
+  // re-observes when the element itself changed; state moves in the observer.
+  useEffect(() => {
+    if (!ref || typeof IntersectionObserver === "undefined") return;
+    const element = ref.current;
+    if (element === observedRef.current) return;
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    observedRef.current = element;
+    if (!element) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setNear(Boolean(entry?.isIntersecting)),
+      { rootMargin: IDLE_VIEWPORT_MARGIN },
+    );
+    observer.observe(element);
+    observerRef.current = observer;
+  });
+
+  useEffect(
+    () => () => {
+      observerRef.current?.disconnect();
+      observerRef.current = null;
+      observedRef.current = null;
+    },
+    [],
+  );
+  return near;
+}
 
 /**
  * Drive a resting card from the shared foil clock, and blend out of a pointer
@@ -28,6 +96,8 @@ export function useFoilIdleLean(
   driven: boolean,
   maxTilt: number,
   onFrame: (lean: Lean, glare: number, combined: number) => void,
+  /** The card's frame: off screen, it stops drawing (see `foilIdleShouldTick`). */
+  targetRef?: RefObject<Element | null>,
 ): {
   noteLean: (lean: Lean, glare?: number) => void;
 } {
@@ -39,6 +109,7 @@ export function useFoilIdleLean(
   const releaseFromCombinedRef = useRef(100);
   const releaseAtRef = useRef<number | null>(null);
   const wasDrivenRef = useRef(driven);
+  const nearViewport = useNearViewport(targetRef);
   const onFrameRef = useRef(onFrame);
   useEffect(() => {
     onFrameRef.current = onFrame;
@@ -65,13 +136,10 @@ export function useFoilIdleLean(
   }, [driven]);
 
   useEffect(() => {
-    if (driven) return;
-    if (
+    const reducedMotion =
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!foilIdleShouldTick({ driven, reducedMotion, nearViewport })) return;
     return subscribeFoilFrame((seconds) => {
       const target = idleLeanFromSeconds(seconds, maxTilt);
       const pointer = idlePointerFromSeconds(seconds);
@@ -102,7 +170,7 @@ export function useFoilIdleLean(
       lastCombinedRef.current = combined;
       onFrameRef.current(lean, glare, combined);
     });
-  }, [driven, maxTilt]);
+  }, [driven, maxTilt, nearViewport]);
 
   return { noteLean };
 }

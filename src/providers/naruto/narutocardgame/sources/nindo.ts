@@ -20,19 +20,20 @@ import type {
   LocalPrintWrite,
 } from "@/providers/shared/cardCatalogue/localPrintsIndex";
 
-import {
-  NARUTO_CARDGAME_MISREAD_KAKASHI_PRINT_KEY,
-} from "../canonicalCollector";
+import { NARUTO_CARDGAME_MISREAD_KAKASHI_PRINT_KEY } from "../canonicalCollector";
+import { narutoCardgameCuratedDir } from "../curatedPaths";
 import { NARUTO_CARDGAME_PACK_ID } from "../pack";
 import { narutoCardgamePrintKey } from "../printKey";
 import {
   absoluteNarutoNindoUrl,
   narutoNindoDetailUrl,
+  narutoNindoFaceUrlFor,
   narutoNindoIdentity,
   narutoNindoListingUrl,
   parseNarutoNindoDetail,
   parseNarutoNindoListingSlugs,
   type NarutoNindoCard,
+  type NarutoNindoFaceOverride,
 } from "../parseNarutoNindo";
 import { narutoCardgameSyncedSourcePath } from "../syncedSources";
 
@@ -68,12 +69,14 @@ async function fetchHtml(url: string): Promise<string | null> {
   }
 }
 
-export async function harvestNarutoNindo(opts: {
-  force?: boolean;
-  offline?: boolean;
-  locales?: readonly string[];
-  limit?: number;
-} = {}): Promise<{
+export async function harvestNarutoNindo(
+  opts: {
+    force?: boolean;
+    offline?: boolean;
+    locales?: readonly string[];
+    limit?: number;
+  } = {},
+): Promise<{
   staging: string;
   locales: Record<string, { listed: number; details: number; fetched: number }>;
 }> {
@@ -183,6 +186,20 @@ export function pruneMisreadKakashiK039(index: LocalPrintsIndex): number {
   return index.prunePrintsExcept(keep).removed;
 }
 
+/** Curated image attributions the source got wrong (see the JSON's notes). */
+function loadNindoFaceOverrides(): Record<string, NarutoNindoFaceOverride> {
+  const file = path.join(
+    narutoCardgameCuratedDir(),
+    "sources",
+    "nindodb-face-overrides.json",
+  );
+  if (!existsSync(file)) return {};
+  const raw = JSON.parse(readFileSync(file, "utf8")) as {
+    faces?: Record<string, NarutoNindoFaceOverride>;
+  };
+  return raw.faces ?? {};
+}
+
 export async function installNarutoNindo(
   index: LocalPrintsIndex,
   opts: { downloadFaces?: boolean } = {},
@@ -211,8 +228,21 @@ export async function installNarutoNindo(
     }
   > = [];
 
-  for (const locale of LOCALES) {
-    for (const card of loadLocaleCards(locale)) {
+  const faceOverrides = loadNindoFaceOverrides();
+  const cardsBySlug = new Map<string, NarutoNindoCard>();
+  const cardsByLocale = LOCALES.map(
+    (locale) => [locale, loadLocaleCards(locale)] as const,
+  );
+  for (const [, cards] of cardsByLocale) {
+    for (const card of cards) {
+      if (card.faceUrl && !cardsBySlug.has(card.slug)) {
+        cardsBySlug.set(card.slug, card);
+      }
+    }
+  }
+
+  for (const [locale, cards] of cardsByLocale) {
+    for (const card of cards) {
       const identity = narutoNindoIdentity(card);
       if (!identity) continue;
       const printKey = narutoCardgamePrintKey(
@@ -235,7 +265,10 @@ export async function installNarutoNindo(
         if (!cur.card.faceUrl && card.faceUrl) cur.card = card;
       }
 
-      if (locale === "en" || !ledgerCards.some((c) => c.printKey === printKey)) {
+      if (
+        locale === "en" ||
+        !ledgerCards.some((c) => c.printKey === printKey)
+      ) {
         ledgerCards.push({
           ...card,
           printKey,
@@ -272,8 +305,11 @@ export async function installNarutoNindo(
       })),
     });
 
-    if (opts.downloadFaces === false || !card.faceUrl) {
-      if (!card.faceUrl) skipped += 1;
+    const faceUrl = narutoNindoFaceUrlFor(card, cardsBySlug, faceOverrides);
+    // A corrected face replaces the wrong file already on disk.
+    const corrected = Boolean(faceOverrides[card.slug]);
+    if (opts.downloadFaces === false || !faceUrl) {
+      if (!faceUrl) skipped += 1;
       continue;
     }
 
@@ -286,9 +322,10 @@ export async function installNarutoNindo(
       const installed = await installCardFace({
         destDir,
         artName: ART_NAME,
-        url: card.faceUrl,
+        url: faceUrl,
         referer: narutoNindoListingUrl(lang),
         minBytes: 4_000,
+        ...(corrected ? { force: true } : {}),
       });
       if (!installed) continue;
       faces += installed.downloaded ? 1 : 0;
@@ -296,7 +333,7 @@ export async function installNarutoNindo(
         printKey,
         lang,
         art: installed.art,
-        sourceUrl: card.faceUrl,
+        sourceUrl: faceUrl,
       });
     }
   }

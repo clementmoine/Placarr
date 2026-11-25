@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  narutoNindoFaceUrlFor,
   narutoNindoDetailUrl,
   narutoNindoIdentity,
   narutoNindoListingUrl,
@@ -91,5 +92,53 @@ describe("narutoNindoIdentity", () => {
     ],
   ] as const)("%j", (card, expected) => {
     expect(narutoNindoIdentity(card)).toEqual(expected);
+  });
+});
+
+/*
+  NindoDB a inversé les images des promos CP-001 : sa page « event promo » porte
+  le macaron Gen Con, sa page « convention promo » n'en a pas. narutomarket et
+  narutotcgcards disent l'inverse et concordent.
+*/
+describe("narutoNindoFaceUrlFor", () => {
+  const event = {
+    slug: "cp-001",
+    faceUrl: "https://nindodb.com/img/cards/CP-001.webp",
+  };
+  const con = {
+    slug: "cp-001-con",
+    faceUrl: "https://nindodb.com/img/cards/CP-001-CON.webp",
+  };
+  const bySlug = new Map([
+    [event.slug, event],
+    [con.slug, con],
+  ]);
+  const overrides = {
+    "cp-001": { faceFromSlug: "cp-001-con", note: "images inversées" },
+    "cp-001-con": { faceFromSlug: "cp-001", note: "images inversées" },
+  };
+
+  it("takes the sister page's image for a swapped pair", () => {
+    expect(narutoNindoFaceUrlFor(event, bySlug, overrides)).toBe(con.faceUrl);
+    expect(narutoNindoFaceUrlFor(con, bySlug, overrides)).toBe(event.faceUrl);
+  });
+
+  it("keeps the page's own image without a correction", () => {
+    const yankees = {
+      slug: "cp-001-yankees",
+      faceUrl: "https://nindodb.com/img/cards/CP-001-YANKEES.webp",
+    };
+    expect(narutoNindoFaceUrlFor(yankees, bySlug, overrides)).toBe(
+      yankees.faceUrl,
+    );
+  });
+
+  it("installs nothing rather than a guess", () => {
+    expect(narutoNindoFaceUrlFor(event, new Map(), overrides)).toBe("");
+    expect(
+      narutoNindoFaceUrlFor(event, bySlug, {
+        "cp-001": { skipFace: true, note: "mock" },
+      }),
+    ).toBe("");
   });
 });

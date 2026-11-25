@@ -1,0 +1,14 @@
+{
+  "sourceId": "nindodb",
+  "note": "Corrections d'attribution d'images NindoDB. Une entrée = une page dont l'og:image appartient à une autre variante. Vérifié le 2026-11-25 contre narutomarket et narutotcgcards, qui concordent entre eux.",
+  "faces": {
+    "cp-001": {
+      "faceFromSlug": "cp-001-con",
+      "note": "La page « Chakra Card (event promo) » (https://nindodb.com/fr/cards/cp-001) affiche CP-001.webp, qui porte le macaron GEN CON en bas à droite. La promo event n'en a pas (narutomarket chakra-card-cp-001-event-promo-2026, narutotcgcards cp-001) : c'est l'image de la page cp-001-con."
+    },
+    "cp-001-con": {
+      "faceFromSlug": "cp-001",
+      "note": "La page « Chakra Card (convention promo) » (https://nindodb.com/fr/cards/cp-001-con) affiche CP-001-CON.webp, sans macaron. La promo Gen Con en porte un (narutomarket chakra-card-cp-001-gen-con-2026, narutotcgcards cp-001-chakra-card-gencon-2026) : c'est l'image de la page cp-001."
+    }
+  }
+}

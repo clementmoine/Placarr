@@ -85,14 +85,7 @@ function parseDtDd(html: string): Record<string, string> {
   return out;
 }
 
-const STAT_KEYS = new Set([
-  "DMG",
-  "POW",
-  "HP",
-  "LIFE",
-  "Chakra",
-  "CHAKRA",
-]);
+const STAT_KEYS = new Set(["DMG", "POW", "HP", "LIFE", "Chakra", "CHAKRA"]);
 
 export function parseNarutoNindoDetail(
   html: string,
@@ -113,11 +106,11 @@ export function parseNarutoNindoDetail(
       .trim() ||
     s;
   const faceUrl =
-    html.match(/property="og:image"\s+content="([^"]+)"/i)?.[1]?.trim() ||
-    "";
+    html.match(/property="og:image"\s+content="([^"]+)"/i)?.[1]?.trim() || "";
   const setSlug =
-    html.match(/href="\/(?:en|fr|it|es)\/sets\/([a-z0-9-]+)"/i)?.[1]?.toLowerCase() ||
-    "";
+    html
+      .match(/href="\/(?:en|fr|it|es)\/sets\/([a-z0-9-]+)"/i)?.[1]
+      ?.toLowerCase() || "";
 
   const stats: Record<string, string> = {};
   for (const [k, v] of Object.entries(fields)) {
@@ -130,8 +123,10 @@ export function parseNarutoNindoDetail(
     code: code || s.toUpperCase(),
     setSlug,
     type: fields.Type || fields.Tipo || "",
-    rarity: fields["Rareté"] || fields.Rarity || fields.Rareza || fields.Rarità || "",
-    color: fields.Couleur || fields.Color || fields.Colore || fields.Colour || "",
+    rarity:
+      fields["Rareté"] || fields.Rarity || fields.Rareza || fields.Rarità || "",
+    color:
+      fields.Couleur || fields.Color || fields.Colore || fields.Colour || "",
     illustrator:
       fields.Illustrateur ||
       fields.Illustrator ||
@@ -151,7 +146,10 @@ export function parseNarutoNindoDetail(
 }
 
 function normalizePrintedRef(raw: string): string | null {
-  const m = raw.trim().toUpperCase().match(/^([A-Z]{1,3})-?(\d{1,4})$/);
+  const m = raw
+    .trim()
+    .toUpperCase()
+    .match(/^([A-Z]{1,3})-?(\d{1,4})$/);
   if (!m) return null;
   return canonicalNarutoCardgameCollector(
     `${m[1]!.toLowerCase()}${m[2]!.padStart(3, "0")}`,
@@ -191,7 +189,9 @@ export function narutoNindoIdentity(
     return { setCode: "promo", number: "cp001", grouping: "event" };
   }
 
-  const number = normalizePrintedRef(code.replace(/-CON$/i, "").replace(/-YANKEES$/i, ""));
+  const number = normalizePrintedRef(
+    code.replace(/-CON$/i, "").replace(/-YANKEES$/i, ""),
+  );
   if (!number) return null;
 
   if (setSlug === "pcc00" || setSlug === "premium00") {
@@ -202,4 +202,35 @@ export function narutoNindoIdentity(
   }
 
   return { setCode: "demo", number };
+}
+
+/**
+ * Correction curée d'une fiche NindoDB (`curated/sources/nindodb-face-overrides.json`).
+ * La source a parfois rangé l'image d'une variante sur la page d'une autre :
+ * on prend alors la face de la page sœur, avec la preuve en note.
+ */
+export type NarutoNindoFaceOverride = {
+  /** Slug de la page NindoDB dont l'image est en réalité celle-ci. */
+  faceFromSlug?: string;
+  /** Ne pas installer la face de cette page (image fausse, pas de sœur). */
+  skipFace?: boolean;
+  /** Pourquoi — et ce qui le montre. */
+  note: string;
+};
+
+/**
+ * URL de face à installer pour une fiche, corrections curées appliquées.
+ * Une correction qui pointe vers une page absente n'invente rien : pas de face.
+ */
+export function narutoNindoFaceUrlFor(
+  card: Pick<NarutoNindoCard, "slug" | "faceUrl">,
+  cardsBySlug: ReadonlyMap<string, Pick<NarutoNindoCard, "faceUrl">>,
+  overrides: Readonly<Record<string, NarutoNindoFaceOverride>>,
+): string {
+  const override = overrides[card.slug.trim().toLowerCase()];
+  if (!override) return card.faceUrl;
+  if (override.skipFace) return "";
+  const from = override.faceFromSlug?.trim().toLowerCase();
+  if (!from) return card.faceUrl;
+  return cardsBySlug.get(from)?.faceUrl ?? "";
 }

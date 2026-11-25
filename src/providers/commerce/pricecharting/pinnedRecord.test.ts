@@ -164,3 +164,124 @@ describe("pricecharting metadata adapter pinned fiche", () => {
     ).toBe(true);
   });
 });
+
+/*
+  Une carte ne se reconnaît pas à son nom : cinq cartes s'appellent « Naruto
+  Uzumaki ». PriceCharting rangeait sous la N-406 « Naruto Uzumaki & Clone »
+  la fiche `naruto-uzumaki-clone-wofwn-1234` (autre série, autre numéro), sous
+  la NI-018 un Zabuza n°40, et sous une carte Disney la jaquette MSX « Hit
+  Bit ». Une fiche de carte doit être sous le chemin du jeu, porter le numéro
+  imprimé du printKey et le nom de la carte.
+*/
+describe("pricecharting metadata adapter on trading cards", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const resolveCard = async (
+    input: { name: string; printKey: string },
+    fiche: { title: string; url: string },
+  ) => {
+    fetchMetadataFromPriceChartingByName.mockResolvedValue({
+      ...fiche,
+      coverUrl:
+        "https://storage.googleapis.com/images.pricecharting.com/x/1600.jpg",
+    });
+    const adapter = pricechartingModule.createMetadataAdapter!()!;
+    return adapter.resolve({ ...input, type: "tcg" });
+  };
+
+  it("never seeks anything for a card line PriceCharting does not carry", async () => {
+    const adapter = pricechartingModule.createMetadataAdapter!()!;
+    const result = await adapter.resolve({
+      name: "Bing Bong",
+      type: "tcg",
+      printKey: "leclerc:disney25-108",
+      providerRecordUrls: {
+        pricecharting: "https://www.pricecharting.com/game/pal-msx/hit-bit",
+      },
+    });
+
+    expect(result).toBeNull();
+    expect(fetchMetadataFromPriceChartingByName).not.toHaveBeenCalled();
+    expect(fetchMetadataFromPriceCharting).not.toHaveBeenCalled();
+    expect(fetchMetadataFromPriceChartingGameUrl).not.toHaveBeenCalled();
+  });
+
+  it("keeps the fiche bearing the card's own number and name", async () => {
+    const result = await resolveCard(
+      { name: "Sakura Haruno", printKey: "naruto:s1-ni0003" },
+      {
+        title: "Sakura Haruno #3",
+        url: "https://www.pricecharting.com/game/naruto-bandai-the-path-to-hokage/sakura-haruno-3",
+      },
+    );
+    expect(result?.title).toBe("Sakura Haruno #3");
+
+    const stitch = await resolveCard(
+      { name: "Stitch - Rock Star", printKey: "lorcana:1-23" },
+      {
+        title: "Stitch - Rock Star #23",
+        url: "https://www.pricecharting.com/game/lorcana-first-chapter/stitch-rock-star-23",
+      },
+    );
+    expect(stitch?.title).toBe("Stitch - Rock Star #23");
+  });
+
+  it("drops a same-game fiche with another number", async () => {
+    expect(
+      await resolveCard(
+        { name: "Naruto Uzumaki & Clone", printKey: "naruto:s11-n0406" },
+        {
+          title: "Naruto Uzumaki (Clone)",
+          url: "https://www.pricecharting.com/game/naruto-bandai-weapons-of-war/naruto-uzumaki-clone-wofwn-1234",
+        },
+      ),
+    ).toBeNull();
+    expect(
+      await resolveCard(
+        { name: "Zabuza Momochi", printKey: "naruto:s1-ni0018" },
+        {
+          title: "Zabuza Momochi #40",
+          url: "https://www.pricecharting.com/game/naruto-bandai-the-path-to-hokage/zabuza-momochi-40",
+        },
+      ),
+    ).toBeNull();
+  });
+
+  it("drops a same-number fiche naming another card", async () => {
+    expect(
+      await resolveCard(
+        { name: "Iruka", printKey: "naruto:nr-0008" },
+        {
+          title: "Kakashi Hatake #8",
+          url: "https://www.pricecharting.com/game/naruto-bandai-the-path-to-hokage/kakashi-hatake-8",
+        },
+      ),
+    ).toBeNull();
+  });
+
+  it("drops figures and video games found under the card's name", async () => {
+    expect(
+      await resolveCard(
+        { name: "Gaara", printKey: "naruto:s3-ni0094" },
+        {
+          title: "Gaara #94",
+          url: "https://www.pricecharting.com/game/funko-pop-animation/gaara-94",
+        },
+      ),
+    ).toBeNull();
+    expect(
+      await resolveCard(
+        {
+          name: "Mickey Mouse - Brave Little Tailor",
+          printKey: "lorcana:1-115",
+        },
+        {
+          title: "Mickey Mousecapade",
+          url: "https://www.pricecharting.com/game/nes/mickey-mousecapade",
+        },
+      ),
+    ).toBeNull();
+  });
+});

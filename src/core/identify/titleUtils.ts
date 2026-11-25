@@ -638,7 +638,10 @@ export function filterPlatformRedundancies(suggestions: string[]): string[] {
 // n°100bis comme n°100. Bump pour re-résoudre les titres suffixés.
 // v46: iCollect — une ligne sitemap sans plateforme lit sa page au scan (la
 //      plateforme fait partie de l'identité d'un jeu ; sinon platformKey nul).
-export const BARCODE_CACHE_VERSION = "canonical-v46";
+// v47: PriceCharting — une carte ne prend une fiche que sur une ligne couverte,
+//      sous le chemin du jeu, au numéro imprimé du printKey et au même nom
+//      (« Bing Bong » devenait « Hit Bit » MSX, la N-406 une carte n°1234).
+export const BARCODE_CACHE_VERSION = "canonical-v47";
 export function versionProvider(provider: string): string {
   return provider.includes(BARCODE_CACHE_VERSION)
     ? provider

@@ -30,7 +30,12 @@ import { providerProductUrlsForKey } from "@/core/commerce/pricing/priceTypes";
 import { pinnedProviderRecordUrl } from "@/providers/shared/pinnedRecord";
 import { buildPriceChartingCatalogLink } from "./catalogLink";
 import { productNameFromPriceChartingGameUrl } from "./fetch";
-import { refreshPriceChartingPokemonOffers } from "./pokemonCardPrice";
+import {
+  priceChartingCardFicheGames,
+  priceChartingCardFicheMatchesPrint,
+  refreshPriceChartingPokemonOffers,
+} from "./pokemonCardPrice";
+import { parsePrintKey } from "@/core/identify/printKey";
 import { cleanCode, detectPlatformKey } from "@/core/identify/query";
 import { barcodeSuggestsPalRegion } from "@/core/identify/normalize";
 import { withMetadataPlatformKeys } from "@/core/enrich/media/platformKeyStamp";
@@ -67,6 +72,16 @@ const BARCODE_TYPES: BarcodeLookupType[] = ["games", "hardware", "generic"];
 const PRICE_SOURCE = "PriceCharting";
 const PRICE_SHELF_TYPES = new Set(["games", "hardware", "tcg"]);
 const SCAN_PRICE_SHELF_TYPES = new Set(["games", "hardware"]);
+/*
+  What PriceCharting's barcode / name seek indexes as a fiche: games and
+  hardware. A card name sent to it comes back as the nearest *product* —
+  « Bing Bong » matched « Hit Bit » on MSX, a Gaara card a Funko Pop — and that
+  box art landed in the card's gallery. Card fiches are kept only on a line
+  PriceCharting carries, and only when they are that print: see
+  `priceChartingCardFicheMatchesPrint` (path, printed number, name).
+  No type (a bare scan) keeps the historical games path.
+*/
+const METADATA_SEEK_TYPES = new Set(["games", "hardware", "generic"]);
 
 /**
  * Hardware catalog titles often already include the device ("Playstation 3
@@ -344,6 +359,20 @@ export const pricechartingModule = defineProvider({
     return {
       id: "pricecharting",
       async resolve(ctx) {
+        const isCard = ctx.type === "tcg";
+        if (ctx.type && !isCard && !METADATA_SEEK_TYPES.has(ctx.type)) {
+          return null;
+        }
+        const printKey = ctx.printKey ?? ctx.match?.printKey ?? null;
+        // A card line PriceCharting does not carry has nothing to find there.
+        if (
+          isCard &&
+          !priceChartingCardFicheGames().includes(
+            (printKey && parsePrintKey(printKey)?.game) || "",
+          )
+        ) {
+          return null;
+        }
         const cleanedBarcode = ctx.barcode ? cleanCode(ctx.barcode) : "";
         const isPal = barcodeSuggestsPalRegion(cleanedBarcode);
         const mediaType = ctx.type === "hardware" ? "hardware" : "games";
@@ -412,6 +441,24 @@ export const pricechartingModule = defineProvider({
           );
         }
         if (!pcMeta) return null;
+        // Only the print itself: never the nearest video game, figure or
+        // same-name card of another number.
+        if (
+          isCard &&
+          !priceChartingCardFicheMatchesPrint({
+            url: pcMeta.url,
+            title: pcMeta.title,
+            printKey,
+            acceptanceTitles: [
+              name,
+              ...(ctx.lookupQueries ?? []),
+              ...(ctx.fallbackNames ?? []),
+              ...(ctx.match?.titles ?? []),
+            ].filter(Boolean),
+          })
+        ) {
+          return null;
+        }
 
         return mapPriceChartingMetadataResult(pcMeta, {
           isPal,

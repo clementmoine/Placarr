@@ -36,6 +36,58 @@ export function supportedPriceChartingTcgPrintGames(): readonly string[] {
   return Object.keys(PC_TCG_PATH_TOKENS);
 }
 
+/*
+  Card lines whose PriceCharting *fiche* (image, link) may describe a print.
+  Wider than the priced lines: Naruto fiches are the English Bandai CCG — the
+  same card and number, but an English edition, so its price is not quoted
+  for a French copy. Path tokens name PriceCharting's own set slugs
+  (`naruto-bandai-the-path-to-hokage`), never its figures (`funko-pop-…`).
+*/
+const PC_CARD_FICHE_PATH_TOKENS: Readonly<Record<string, RegExp>> = {
+  ...PC_TCG_PATH_TOKENS,
+  naruto: /\/game\/(?:pal-)?naruto-bandai-/i,
+};
+
+export function priceChartingCardFicheGames(): readonly string[] {
+  return Object.keys(PC_CARD_FICHE_PATH_TOKENS);
+}
+
+/** Printed number of a print, digits only (`n0406` → `406`, `ni0003` → `3`). */
+export function printedCardNumber(number: string): string {
+  return normalizePokemonCollectorNumber(number.replace(/^[a-z]+/i, ""));
+}
+
+/**
+ * A PriceCharting fiche describes this print only when it sits under the
+ * card line's path, carries the print's own number (slug tail or `#N`), and
+ * names the same card. A name alone matches five « Naruto Uzumaki »; a number
+ * alone matches another line's card #8.
+ */
+export function priceChartingCardFicheMatchesPrint(input: {
+  url: string | null | undefined;
+  title: string | null | undefined;
+  printKey: string | null | undefined;
+  acceptanceTitles: readonly string[];
+}): boolean {
+  const identity = parsePrintKey(input.printKey);
+  const url = input.url?.trim();
+  const title = input.title?.trim();
+  if (!identity || !url || !title) return false;
+  const path = PC_CARD_FICHE_PATH_TOKENS[identity.game];
+  if (!path || !path.test(url)) return false;
+  const number = printedCardNumber(identity.number);
+  if (
+    !number ||
+    !priceChartingRowHasCollectorNumber({ gamePath: url, title }, number)
+  ) {
+    return false;
+  }
+  return priceChartingCatalogAlignsWithTitles(
+    cardNameFromPriceChartingTitle(title),
+    input.acceptanceTitles,
+  );
+}
+
 export function normalizePokemonCollectorNumber(raw: string): string {
   const trimmed = raw.trim().toLowerCase();
   if (!trimmed) return "";
@@ -94,10 +146,7 @@ export function priceChartingRowHasCollectorNumber(
 
   const path = row.gamePath.toLowerCase().split(/[?#]/)[0] ?? "";
   const slugTail = path.match(/\/([^/]+)\/?$/)?.[1] ?? "";
-  return new RegExp(
-    `(?:^|-)0*${escapeRegExp(want)}$`,
-    "i",
-  ).test(slugTail);
+  return new RegExp(`(?:^|-)0*${escapeRegExp(want)}$`, "i").test(slugTail);
 }
 
 function escapeRegExp(value: string): string {
@@ -186,10 +235,7 @@ export function pokemonCardSearchQueries(input: {
   fallbackNames?: readonly string[];
 }): string[] {
   const number = normalizePokemonCollectorNumber(input.collectorNumber);
-  const names = [
-    input.primaryName,
-    ...(input.fallbackNames ?? []),
-  ]
+  const names = [input.primaryName, ...(input.fallbackNames ?? [])]
     .map((name) => name.replace(/\s+/g, " ").trim())
     .filter(Boolean);
   const seen = new Set<string>();
@@ -205,13 +251,11 @@ export function pokemonCardSearchQueries(input: {
   return queries;
 }
 
-function pokemonUngradedOffers(
-  prices: {
-    priceUsed?: number;
-    sourceUrl?: string;
-    productName?: string;
-  },
-): PriceOfferInput[] {
+function pokemonUngradedOffers(prices: {
+  priceUsed?: number;
+  sourceUrl?: string;
+  productName?: string;
+}): PriceOfferInput[] {
   if (prices.priceUsed == null) return [];
   return pricedOffers(PRICE_SOURCE, [
     {
@@ -250,7 +294,10 @@ async function offersFromTcgGameUrl(
   acceptanceTitles: readonly string[],
   options?: { evidenceOnly?: boolean },
 ): Promise<PriceOfferInput[]> {
-  if (!url.includes("/game/") || !priceChartingUrlLooksPrintGame(url, printGame)) {
+  if (
+    !url.includes("/game/") ||
+    !priceChartingUrlLooksPrintGame(url, printGame)
+  ) {
     return [];
   }
   const fromUrl = await fetchPricesFromPriceChartingGameUrl(url, {

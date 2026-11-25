@@ -6,7 +6,9 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  renameSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -26,11 +28,7 @@ import {
   promoteAndPurgeNarutoDig,
 } from "@/providers/naruto/shared/promoteNarutoDig";
 
-import {
-  narutoUltraSourcePath,
-  NARUTO_ULTRA_PACK_ID,
-  narutoUltraCuratedDir,
-} from "../pack";
+import { narutoUltraSourcePath, NARUTO_ULTRA_PACK_ID } from "../pack";
 import {
   COLEKA_ULTRA_LANG,
   COLEKA_ULTRA_LISTING_PATH,
@@ -454,6 +452,29 @@ export type ColekaUltraInstall = {
   purgedPlaceholders: string[];
 };
 
+/**
+ * Sort le gabarit Coleka de l'espace des faces d'une carte : `art.coleka.*`
+ * devient `rejected.coleka.*`. Retirer la ligne de l'index ne suffisait pas —
+ * la vignette `/prints/…/thumb` relit les `art.*` du dossier, et le gabarit
+ * (436×600) y battait le vrai scan AnimeCollection (h400). Les octets restent.
+ */
+export function retireColekaUltraPlaceholderArt(number: string): string[] {
+  const retired: string[] = [];
+  const cardsRoot = packCardsDir(NARUTO_ULTRA_PACK_ID);
+  if (!existsSync(cardsRoot)) return retired;
+  for (const lang of readdirSync(cardsRoot)) {
+    const dir = path.join(cardsRoot, lang, NARUTO_ULTRA_SET_CODE, number);
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
+      if (!/^art\.coleka\./i.test(name)) continue;
+      const dest = path.join(dir, name.replace(/^art\./i, "rejected."));
+      renameSync(path.join(dir, name), dest);
+      retired.push(dest);
+    }
+  }
+  return retired;
+}
+
 /** Retire `art.coleka*` des gabarits — le dump reste à côté, comme Ninja Ranks. */
 function purgeColekaUltraPlaceholders(
   index: LocalPrintsIndex,
@@ -475,6 +496,7 @@ function purgeColekaUltraPlaceholders(
       const printKey = ultraChallengePrintKey(number);
       if (!printKey) continue;
       stmt.run(printKey, lang);
+      retireColekaUltraPlaceholderArt(number);
       purged.push(number);
     }
   } finally {

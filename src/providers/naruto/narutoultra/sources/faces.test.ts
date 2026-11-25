@@ -9,7 +9,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { createLocalPrintsIndex } from "@/providers/shared/cardCatalogue/localPrintsIndex";
-import { packCardsDir, packProductsIndexPath } from "@/lib/packPaths";
+import { packCardsDir } from "@/lib/packPaths";
 import { loadSealedProductsIndex } from "@/providers/shared/sealedProducts/persistProductsIndex";
 import {
   colekaUltraFaceUrl,
@@ -433,3 +433,44 @@ import {
     });
   });
 }
+
+/*
+  Coleka sert, pour une carte pas encore photographiée, la couverture de
+  l'album avec le numéro en surimpression. Refusé au parse, mais des dumps
+  d'avant restaient dans le dossier de la carte : plus grands que le scan
+  AnimeCollection, ils gagnaient la vignette (Zabuza 69 à 72). Le gabarit sort
+  de l'espace des faces ; ses octets restent à côté.
+*/
+describe("retireColekaUltraPlaceholderArt", () => {
+  it("moves the template out of the face candidates, keeping its bytes", async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "uc-placeholder-"));
+    vi.stubEnv("PLACARR_DATA_DIR", root);
+    try {
+      const { retireColekaUltraPlaceholderArt } = await import("./faces");
+      const dir = path.join(
+        packCardsDir("naruto/ultra-challenge"),
+        "fr",
+        "uc",
+        "0069",
+      );
+      const { mkdirSync } = await import("node:fs");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, "art.coleka.webp"), "template");
+      writeFileSync(path.join(dir, "art.animecollection.jpg"), "real");
+
+      expect(retireColekaUltraPlaceholderArt("0069")).toEqual([
+        path.join(dir, "rejected.coleka.webp"),
+      ]);
+      expect(existsSync(path.join(dir, "art.coleka.webp"))).toBe(false);
+      expect(readFileSync(path.join(dir, "rejected.coleka.webp"), "utf8")).toBe(
+        "template",
+      );
+      expect(existsSync(path.join(dir, "art.animecollection.jpg"))).toBe(true);
+      // Idempotent: nothing left to retire.
+      expect(retireColekaUltraPlaceholderArt("0069")).toEqual([]);
+    } finally {
+      vi.unstubAllEnvs();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});

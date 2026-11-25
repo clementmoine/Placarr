@@ -23,7 +23,10 @@ import { applySeriesDisplayNames } from "@/core/enrich/titles/series";
 import { metadataAliases } from "@/core/enrich/aliases";
 import { resolveShelfId } from "@/lib/routing/resolveIds";
 import { reconcileDuplicateItemSlugsOnShelf } from "@/lib/routing/itemSlug";
-import { slugify } from "@/lib/routing/slugs";
+import {
+  allocateUniqueShelfSlug,
+  reconcileDuplicateShelfSlugs,
+} from "@/lib/routing/shelfSlug";
 import { buildItemSearchConditionsFolded } from "@/core/collect/searchFolded";
 import { bestRatingRatioFromFacts } from "@/core/collect/rating";
 import { summarizeShelfItemPrices } from "@/core/commerce/pricing/resolver";
@@ -59,8 +62,7 @@ async function formatShelfWithItemPrices<
       name: item.name,
       metadataTitle: item.metadata?.title ?? null,
       aliases: metadataAliases(item.metadata?.aliases) ?? null,
-      printKey:
-        typeof item.printKey === "string" ? item.printKey : null,
+      printKey: typeof item.printKey === "string" ? item.printKey : null,
     })),
     shelf.name,
   );
@@ -88,8 +90,7 @@ async function formatShelfWithItemPrices<
             id: item.id,
             name: item.name,
             barcode: item.barcode,
-            printKey:
-              typeof item.printKey === "string" ? item.printKey : null,
+            printKey: typeof item.printKey === "string" ? item.printKey : null,
             metadataId: item.metadataId,
             metadataRefreshStartedAt:
               "metadataRefreshStartedAt" in item
@@ -224,6 +225,10 @@ export async function GET(req: NextRequest) {
       const scopeUserId = await collectionUserIdFor(auth.user);
       const collectionOwnerId =
         auth.user.role === "guest" ? scopeUserId : await getCollectionOwnerId();
+
+      // Étagères homonymes créées avant l'allocation unique : chacune doit
+      // retrouver sa propre URL avant qu'on résolve ou liste.
+      await reconcileDuplicateShelfSlugs(scopeUserId);
 
       if (id) {
         const resolvedId = await resolveShelfId(id, scopeUserId);
@@ -410,7 +415,7 @@ export async function POST(req: NextRequest) {
     const shelf = await prisma.shelf.create({
       data: {
         name,
-        slug: slugify(name),
+        slug: await allocateUniqueShelfSlug(auth.user.id, name),
         imageUrl,
         color,
         type: type as Type,
@@ -466,7 +471,6 @@ export async function PATCH(req: NextRequest) {
     } = {};
     if (typeof body.name === "string") {
       data.name = body.name;
-      data.slug = slugify(body.name);
     }
     if (
       "imageUrl" in body &&
@@ -512,6 +516,13 @@ export async function PATCH(req: NextRequest) {
         { error: "You don't have permission to update this shelf" },
         { status: 403 },
       );
+    }
+
+    if (typeof data.name === "string") {
+      // Unique parmi les étagères du propriétaire (pas de l'admin qui renomme).
+      data.slug = await allocateUniqueShelfSlug(shelf.userId, data.name, {
+        excludeShelfId: id,
+      });
     }
 
     const updatedShelf = await prisma.shelf.update({

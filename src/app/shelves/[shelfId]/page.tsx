@@ -58,10 +58,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import { ItemCard } from "@/components/ItemCard";
-import {
-  filterDuplicateGroups,
-  groupCopies,
-} from "@/core/collect/groupCopies";
+import { filterDuplicateGroups, groupCopies } from "@/core/collect/groupCopies";
 import {
   ItemCollectionSortSelect,
   ItemCollectionViewFilter,
@@ -72,8 +69,7 @@ import { ScannerButton } from "@/components/ScannerButton";
 import { ScanFAB } from "@/components/ScanFAB";
 
 const ItemModal = dynamic(
-  () =>
-    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  () => import("@/components/modals/ItemModal").then((m) => m.ItemModal),
   { ssr: false },
 );
 const PrintPickerModal = dynamic(
@@ -91,8 +87,7 @@ const SealedPickerModal = dynamic(
   { ssr: false },
 );
 const BulkAddModal = dynamic(
-  () =>
-    import("@/components/modals/BulkAddModal").then((m) => m.BulkAddModal),
+  () => import("@/components/modals/BulkAddModal").then((m) => m.BulkAddModal),
   { ssr: false },
 );
 const BulkMoveModal = dynamic(
@@ -113,8 +108,7 @@ const BulkEditModal = dynamic(
   { ssr: false },
 );
 const ShelfModal = dynamic(
-  () =>
-    import("@/components/modals/ShelfModal").then((m) => m.ShelfModal),
+  () => import("@/components/modals/ShelfModal").then((m) => m.ShelfModal),
   { ssr: false },
 );
 
@@ -125,7 +119,7 @@ import { getShelf, saveShelf } from "@/lib/api/shelves";
 import { useAccount } from "@/lib/client/hooks/useAccount";
 import { useLocale } from "@/lib/client/providers/LocaleProvider";
 import { getAspectRatio } from "@/lib/text/cardFormat";
-import { itemPath, slugify } from "@/lib/routing/slugs";
+import { findShelfByRouteKey, itemPath, slugify } from "@/lib/routing/slugs";
 import {
   syncItemQueries,
   syncShelfQueries,
@@ -158,7 +152,10 @@ import type { Shelf, Prisma, Item } from "@/generated/prisma/browser";
 import type { ShelfWithItemCount } from "@/types/shelves";
 import { usesPrintSearch } from "@/lib/printSearchTypes";
 import { prefetchPrintCatalogues } from "@/lib/client/printCataloguesCache";
-import { itemsAddLabelKey, itemsCountNounKey } from "@/core/identify/shelfLabels";
+import {
+  itemsAddLabelKey,
+  itemsCountNounKey,
+} from "@/core/identify/shelfLabels";
 import type { ItemWithMetadata } from "@/types/items";
 
 const itemSearchSchema = z.object({
@@ -288,9 +285,6 @@ function ShelfComponent() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const searchParams = useSearchParams();
   const sortParam = searchParams.get("sort");
-  const [sortBy, setSortBy] = useState<ItemCollectionSort>(
-    parseItemCollectionSort(sortParam),
-  );
   const [shelfView, setShelfView] = useState<ItemCollectionShelfView>(
     () => parseItemCollectionFilters(searchParams).shelfView,
   );
@@ -354,14 +348,10 @@ function ShelfComponent() {
     placeholderData: (previousData) => {
       if (previousData) return previousData;
 
-      const shelf = queryClient
-        .getQueryData<ShelfWithItemCount[]>(["shelves"])
-        ?.find(
-          (s) =>
-            s.id === shelfId ||
-            s.slug === shelfId ||
-            slugify(s.name) === shelfId,
-        );
+      const shelf = findShelfByRouteKey(
+        queryClient.getQueryData<ShelfWithItemCount[]>(["shelves"]),
+        shelfId,
+      );
 
       if (!shelf) return undefined;
 
@@ -420,15 +410,24 @@ function ShelfComponent() {
     },
   });
 
-  // L'état local suit le paramètre d'URL (+ type d'étagère pour le défaut TCG) :
-  // ajusté pendant le render (pattern « adjust state when props change »).
+  /*
+    Le tri ne vit que dans l'URL : `?sort=` quand l'utilisateur en a choisi
+    un, sinon le défaut du type d'étagère (extensions en TCG). Un état local
+    initialisé avant que l'étagère soit connue restait figé sur A–Z au retour
+    arrière, quand l'étagère sort déjà du cache et que rien ne le recale.
+  */
+  const sortBy: ItemCollectionSort = parseItemCollectionSort(
+    sortParam,
+    shelf?.type,
+  );
+
+  // Recherche et vue suivent l'URL : ajustées pendant le render
+  // (pattern « adjust state when props change »).
   const paramsKey = searchParams.toString();
-  const sortSourceKey = `${paramsKey}|${shelf?.type ?? ""}`;
-  const [prevSortSourceKey, setPrevSortSourceKey] = useState(sortSourceKey);
-  if (prevSortSourceKey !== sortSourceKey) {
-    setPrevSortSourceKey(sortSourceKey);
+  const [prevParamsKey, setPrevParamsKey] = useState(paramsKey);
+  if (prevParamsKey !== paramsKey) {
+    setPrevParamsKey(paramsKey);
     setSearchQuery(q);
-    setSortBy(parseItemCollectionSort(searchParams.get("sort"), shelf?.type));
     setShelfView(parseItemCollectionFilters(searchParams).shelfView);
   }
 
@@ -554,8 +553,8 @@ function ShelfComponent() {
   /** All print/barcode copies — ordered anti-doublon vs owned twins. */
   const identityPeerItems = useMemo(
     () =>
-      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter(
-        (item) => Boolean(item.printKey || item.barcode),
+      ((shelf?.items ?? []) as unknown as ItemWithMetadata[]).filter((item) =>
+        Boolean(item.printKey || item.barcode),
       ),
     [shelf?.items],
   );
@@ -734,7 +733,13 @@ function ShelfComponent() {
     setMoveModalOpen(false);
     setDeleteModalOpen(false);
     setEditModalOpen(false);
-  }, []);
+  }, [
+    setSelectionMode,
+    setSelectedItemIds,
+    setMoveModalOpen,
+    setDeleteModalOpen,
+    setEditModalOpen,
+  ]);
 
   // Escape mirrors the single "close" affordance in the selection bar.
   useEffect(() => {
@@ -787,12 +792,12 @@ function ShelfComponent() {
         return next;
       });
     },
-    [visibleItemIds],
+    [visibleItemIds, setAddMenuOpen, setSelectionMode, setSelectedItemIds],
   );
 
   const selectAllVisibleItems = useCallback(() => {
     setSelectedItemIds(new Set(visibleItemIds));
-  }, [visibleItemIds]);
+  }, [visibleItemIds, setSelectedItemIds]);
 
   const selectableItemCount = visibleItemIds.length;
   const allVisibleSelected =
@@ -935,9 +940,7 @@ function ShelfComponent() {
             receivableItems={receivableItems}
             identityPeerItems={identityPeerItems}
             entryKind={
-              visibleModal === "itemFree" && !editingItemId
-                ? "free"
-                : undefined
+              visibleModal === "itemFree" && !editingItemId ? "free" : undefined
             }
           />
           {shelf?.type && (
@@ -1214,7 +1217,6 @@ function ShelfComponent() {
                   value={sortBy}
                   shelfType={shelf?.type}
                   onValueChange={(value) => {
-                    setSortBy(value);
                     replaceCollectionParams({ sort: value });
                   }}
                 />
@@ -1257,7 +1259,8 @@ function ShelfComponent() {
                     {formatAbsencePriceEuros(soldStats.cents)}
                   </span>
                   <span className="opacity-70 font-semibold">
-                    ({t("items.cession.salesCount", { count: soldStats.count })})
+                    ({t("items.cession.salesCount", { count: soldStats.count })}
+                    )
                   </span>
                 </div>
               ) : null}

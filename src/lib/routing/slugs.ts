@@ -1,7 +1,4 @@
-import {
-  isStemLeadingGrouping,
-  parsePrintKey,
-} from "@/core/identify/printKey";
+import { isStemLeadingGrouping, parsePrintKey } from "@/core/identify/printKey";
 import {
   normalizeVolumeNumber,
   unpaddedVolumeNumbersInTitle,
@@ -179,9 +176,7 @@ export function printKeyItemSlug(
     !grouping && catalogue && catalogue !== identity.set
       ? `${catalogue}-${reference}`
       : reference;
-  return [head, slugify(language), slugify(variant)]
-    .filter(Boolean)
-    .join("-");
+  return [head, slugify(language), slugify(variant)].filter(Boolean).join("-");
 }
 
 export function itemLookupSlugs(item: {
@@ -242,6 +237,23 @@ export function itemLookupSlugs(item: {
     }
   }
   return [...slugs];
+}
+
+/**
+ * Étagère désignée par un segment d'URL : id exact, puis slug persisté, puis —
+ * seulement en dernier recours — slug calculé depuis le nom (données sans
+ * slug). L'ordre compte : deux étagères homonymes ont `slugify(name)` en
+ * commun, et un seul `find` avec un OU renvoyait parfois la mauvaise.
+ */
+export function findShelfByRouteKey<
+  T extends { id: string; name?: string | null; slug?: string | null },
+>(shelves: readonly T[] | null | undefined, key: string): T | undefined {
+  if (!shelves?.length || !key) return undefined;
+  return (
+    shelves.find((shelf) => shelf.id === key) ??
+    shelves.find((shelf) => shelf.slug === key) ??
+    shelves.find((shelf) => !shelf.slug && slugify(shelf.name) === key)
+  );
 }
 
 export function shelfPath(shelf: {

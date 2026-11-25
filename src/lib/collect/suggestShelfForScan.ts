@@ -50,12 +50,10 @@ function shelfFromPathname(
   if (!match?.[1]) return null;
   const key = decodeURIComponent(match[1]);
   return (
-    shelves.find(
-      (shelf) =>
-        shelf.id === key ||
-        shelf.slug === key ||
-        shelf.name === key,
-    ) ?? null
+    shelves.find((shelf) => shelf.id === key) ??
+    shelves.find((shelf) => shelf.slug === key) ??
+    shelves.find((shelf) => shelf.name === key) ??
+    null
   );
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  itemLookupSlugs,
+  findShelfByRouteKey,
   itemPath,
   itemMatchesVolumeItemSlug,
   itemSlugLookupVariants,
@@ -64,6 +64,26 @@ describe("itemMatchesVolumeItemSlug", () => {
         },
       }),
     ).toBe(true);
+  });
+});
+
+describe("findShelfByRouteKey", () => {
+  // Liste triée par nom : la seconde homonyme peut arriver en premier.
+  const shelves = [
+    { id: "b", name: "Naruto Ninja Ranks", slug: "naruto-ninja-ranks-2" },
+    { id: "a", name: "Naruto Ninja Ranks", slug: "naruto-ninja-ranks" },
+    { id: "c", name: "Mangas", slug: null },
+  ];
+
+  it("ouvre chaque homonyme par son propre slug", () => {
+    expect(findShelfByRouteKey(shelves, "naruto-ninja-ranks")?.id).toBe("a");
+    expect(findShelfByRouteKey(shelves, "naruto-ninja-ranks-2")?.id).toBe("b");
+  });
+
+  it("accepte l'id et le slug calculé d'une étagère sans slug", () => {
+    expect(findShelfByRouteKey(shelves, "b")?.id).toBe("b");
+    expect(findShelfByRouteKey(shelves, "mangas")?.id).toBe("c");
+    expect(findShelfByRouteKey(shelves, "inconnue")).toBeUndefined();
   });
 });
 

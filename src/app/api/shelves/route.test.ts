@@ -56,7 +56,11 @@ vi.mock("@/core/collect/present", () => ({
 vi.mock("@/lib/routing/resolveIds", () => ({
   resolveShelfId: async (id: string) => id,
 }));
-vi.mock("@/lib/routing/slugs", () => ({ slugify: (s: string) => `slug-${s}` }));
+vi.mock("@/lib/routing/shelfSlug", () => ({
+  allocateUniqueShelfSlug: async (userId: string, name: string) =>
+    `slug-${userId}-${name}`,
+  reconcileDuplicateShelfSlugs: async () => 0,
+}));
 vi.mock("@/core/collect/searchFolded", () => ({
   buildItemSearchConditionsFolded: async () => [],
 }));
@@ -269,6 +273,7 @@ describe("POST /api/shelves — autorisation", () => {
     expect(res.status).toBe(200);
     expect(h.shelf.create.mock.calls[0][0].data.userId).toBe("u1");
     expect(h.shelf.create.mock.calls[0][0].data.cardFormat).toBe("portrait");
+    expect(h.shelf.create.mock.calls[0][0].data.slug).toBe("slug-u1-S");
   });
 });
 
@@ -300,6 +305,8 @@ describe("PATCH /api/shelves — autorisation", () => {
     const res = await PATCH(withBody("PATCH", { id: "s1", name: "Y" }));
 
     expect(res.status).toBe(200);
+    // Slug unique parmi les étagères du propriétaire, pas de l'admin.
+    expect(h.shelf.update.mock.calls[0][0].data.slug).toBe("slug-u2-Y");
   });
 });
 

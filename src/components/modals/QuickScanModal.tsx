@@ -45,7 +45,7 @@ import { buildBarcodePlaceholderItemName } from "@/core/collect/placeholderName"
 import { saveItem } from "@/lib/api/items";
 import { syncItemQueries } from "@/core/collect/queryCache";
 import { cn } from "@/lib/shared/utils";
-import { itemPath, slugify } from "@/lib/routing/slugs";
+import { findShelfByRouteKey, itemPath } from "@/lib/routing/slugs";
 import type { MetadataResult } from "@/types/metadataProvider";
 
 function resolveQuickScanCustomTitle(
@@ -212,12 +212,7 @@ export function QuickScanModal({
   }, [existingItems, titleMatchedItems]);
 
   const defaultShelf = defaultShelfId
-    ? shelves?.find(
-        (s) =>
-          s.id === defaultShelfId ||
-          s.slug === defaultShelfId ||
-          slugify(s.name) === defaultShelfId,
-      )
+    ? findShelfByRouteKey(shelves, defaultShelfId)
     : undefined;
 
   // Automatically select the current shelf when the quick scan starts from one

@@ -143,7 +143,9 @@ describe("localTcgLine face URLs", () => {
       syncHint: "test",
       notes: "test",
     });
-    expect(without.lookupPrint("naruto:nr-0002", "fr")?.imageUrl).toBeUndefined();
+    expect(
+      without.lookupPrint("naruto:nr-0002", "fr")?.imageUrl,
+    ).toBeUndefined();
 
     const withBorrow = createLocalTcgLine({
       providerId: "narutoranks",
@@ -234,14 +236,14 @@ describe("localTcgLine metadata adapter", () => {
       syncHint: "test",
       notes: "test",
     });
-    const module = line.attachCatalog({
+    const lineModule = line.attachCatalog({
       dataPack: packId,
       status: async () => ({ empty: false, stale: false, lastSyncAt: null }),
       refresh: async () => {},
     });
 
-    expect(typeof module.createMetadataAdapter).toBe("function");
-    const adapter = module.createMetadataAdapter!();
+    expect(typeof lineModule.createMetadataAdapter).toBe("function");
+    const adapter = lineModule.createMetadataAdapter!();
     expect(adapter).not.toBeNull();
     const hit = await adapter!.resolve({
       name: "ignored",
@@ -407,12 +409,78 @@ describe("localTcgLine listPrintSets remote merge", () => {
         { id: "mh3", label: "Modern Horizons 3" },
       ],
     });
-    const module = line.attachCatalog({
+    const lineModule = line.attachCatalog({
       dataPack: packId,
       status: async () => ({ empty: false, stale: false, lastSyncAt: null }),
       refresh: async () => {},
     });
-    const sets = await module.listPrintSets!("tcg", "en");
+    const sets = await lineModule.listPrintSets!("tcg", "en");
     expect(sets.map((s) => s.id).sort()).toEqual(["mh2", "mh3"]);
+  });
+});
+
+/*
+  Dos rangé au niveau du set (`cards/{set}/back.webp`, ou
+  `cards/{lang}/{set}/back.webp`) : sans dos propre à la carte, le candidat
+  doit le porter. Sinon l'affichage retombait sur le dos par défaut du pack
+  d'effets, qui ne connaît pas l'opération et visait un dossier inexistant.
+*/
+describe("localTcgLine set back", () => {
+  function setBackLine(root: string, backRel: string | null) {
+    const packId = "acme/op1";
+    if (backRel) {
+      const file = path.join(root, packId, "cards", backRel);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, "webp");
+    }
+    const index = createLocalPrintsIndex(packId);
+    index.writePrints([
+      {
+        printKey: "acme:op1-080",
+        setCode: "op1",
+        number: "080",
+        cardType: "op1",
+        titles: [{ lang: "fr", fullName: "Abu" }],
+      },
+    ]);
+    index.writeAssets([
+      { printKey: "acme:op1-080", lang: "fr", art: "art.coleka.webp" },
+    ]);
+    return createLocalTcgLine({
+      providerId: "acmeop1",
+      providerLabel: "test",
+      catalogueLabel: "test",
+      factLabel: "test",
+      packId,
+      effectPackId: "acme",
+      printGame: "acme",
+      defaultLanguage: "fr",
+      syncHint: "test",
+      notes: "test",
+    });
+  }
+
+  it("porte le dos du set quand la carte n'a pas le sien", () => {
+    const root = tmpDataRoot();
+    const line = setBackLine(root, "op1/back.webp");
+    expect(line.lookupPrint!("acme:op1-080", "fr")?.cardBackUrl).toBe(
+      "/assets/acme/op1/backs/fr/sets/op1",
+    );
+  });
+
+  it("lit aussi le dos rangé sous la langue", () => {
+    const root = tmpDataRoot();
+    const line = setBackLine(root, "fr/op1/back.webp");
+    expect(line.lookupPrint!("acme:op1-080", "fr")?.cardBackUrl).toBe(
+      "/assets/acme/op1/backs/fr/sets/op1",
+    );
+  });
+
+  it("ne promet aucun dos absent du disque", () => {
+    const root = tmpDataRoot();
+    const line = setBackLine(root, null);
+    expect(
+      line.lookupPrint!("acme:op1-080", "fr")?.cardBackUrl,
+    ).toBeUndefined();
   });
 });

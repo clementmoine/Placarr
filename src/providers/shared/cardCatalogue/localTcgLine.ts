@@ -23,6 +23,7 @@ import {
   assetsPrintFaceUrl,
   type CardDiskId,
 } from "@/lib/packAssetUrls";
+import { assetsPackBackUrl, assetsSetBackUrl } from "@/lib/packPaths";
 import { enumerateSetPrints } from "@/providers/shared/cardCatalogue/setPrints";
 import { distinctPrintLanguages } from "@/providers/shared/cardCatalogue/languages";
 import {
@@ -142,9 +143,9 @@ export type LocalTcgLineSpec = {
    * Sets announced remotely (API / bulk index) but not yet in the local DB.
    * Merged into `listPrintSets` so a stale harvest cannot hide new extensions.
    */
-  listRemotePrintSets?: (language?: string | null) => Promise<
-    readonly SetOption[]
-  >;
+  listRemotePrintSets?: (
+    language?: string | null,
+  ) => Promise<readonly SetOption[]>;
   /**
    * Post-process a candidate after disk faces are resolved (e.g. OPTCG
    * category sleeve backs). Default: identity.
@@ -161,16 +162,11 @@ export type LocalTcgLineSpec = {
   /**
    * Dig / catalogue facts for a print row (Distribution, Insert… with proof URL).
    */
-  printFacts?: (
-    row: LocalPrintSearchRow,
-    providerId: string,
-  ) => MetadataFact[];
+  printFacts?: (row: LocalPrintSearchRow, providerId: string) => MetadataFact[];
   /**
    * Dig citation for a sealed SKU slug (`packId::slug` via enrich `__skuKey`).
    */
-  sealedCitation?: (
-    slug: string,
-  ) => { label: string; url: string } | null;
+  sealedCitation?: (slug: string) => { label: string; url: string } | null;
 };
 
 export type LocalTcgLine = {
@@ -206,15 +202,11 @@ function defaultReference(
   return group ? `${base}_${group.toUpperCase()}` : base;
 }
 
-function faceUrl(
-  spec: LocalTcgLineSpec,
-  id: CardDiskId,
-  file: string,
-): string {
-  return (spec.cardAssetUrl ?? ((diskId, name) => assetsCardUrl(spec.packId, diskId, name)))(
-    id,
-    file,
-  );
+function faceUrl(spec: LocalTcgLineSpec, id: CardDiskId, file: string): string {
+  return (
+    spec.cardAssetUrl ??
+    ((diskId, name) => assetsCardUrl(spec.packId, diskId, name))
+  )(id, file);
 }
 
 function resolveFaceFiles(
@@ -268,12 +260,7 @@ function toCandidate(
   row: LocalPrintSearchRow,
 ): PrintCandidate {
   const format = spec.formatReference ?? defaultReference;
-  const reference = format(
-    row.cardType,
-    row.number,
-    row.grouping,
-    row.lang,
-  );
+  const reference = format(row.cardType, row.number, row.grouping, row.lang);
   /*
     Le dossier disque suit `set_code` (home set), pas `card_type` (famille
     D/SP…). Confondre les deux cassait DB JCC dès que card_type = `d`.
@@ -297,22 +284,37 @@ function toCandidate(
     le scan vit en EN — le resolver doit alors emprunter, et un 404 laisse
     la check-list sans vignette.
   */
-  const faceLang = (faces.diskLang || row.lang?.trim().toLowerCase() || "").trim();
+  const faceLang = (
+    faces.diskLang ||
+    row.lang?.trim().toLowerCase() ||
+    ""
+  ).trim();
   const art = faces.art
     ? usePrintRoles
       ? assetsPrintFaceUrl(spec.packId, row.printKey, faceLang, "face")
       : faceUrl(spec, diskId, faces.art)
     : null;
-  const thumb = faces.art || faces.thumb
-    ? usePrintRoles
-      ? assetsPrintFaceUrl(spec.packId, row.printKey, faceLang, "thumb")
-      : faces.thumb
-        ? faceUrl(spec, diskId, faces.thumb)
-        : faces.art
-          ? faceUrl(spec, diskId, faces.art)
-          : null
-    : null;
-  const back = faces.back ? faceUrl(spec, diskId, faces.back) : null;
+  const thumb =
+    faces.art || faces.thumb
+      ? usePrintRoles
+        ? assetsPrintFaceUrl(spec.packId, row.printKey, faceLang, "thumb")
+        : faces.thumb
+          ? faceUrl(spec, diskId, faces.thumb)
+          : faces.art
+            ? faceUrl(spec, diskId, faces.art)
+            : null
+      : null;
+  /*
+    Dos propre à la carte d'abord ; sinon le dos du set, puis celui du pack —
+    seulement s'ils existent sur disque. Beaucoup de lignes n'ont qu'un verso
+    par extension (`cards/{set}/back.webp`) : sans ce repli, l'affichage
+    tombait sur le dos par défaut du pack d'effets, qui ignore l'extension.
+  */
+  const backLang = faceLang || undefined;
+  const back = faces.back
+    ? faceUrl(spec, diskId, faces.back)
+    : (assetsSetBackUrl(spec.packId, set, backLang) ??
+      assetsPackBackUrl(spec.packId, backLang));
   const setLabel =
     spec.setLabel ?? ((code: string) => code.trim().toUpperCase());
   const orient = artOrientationForPackPrint(
@@ -543,9 +545,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
     return {
       title,
       ...(imageUrl ? { imageUrl } : {}),
-      ...(disk.attachments.length > 0
-        ? { attachments: disk.attachments }
-        : {}),
+      ...(disk.attachments.length > 0 ? { attachments: disk.attachments } : {}),
       ...(facts?.length ? { facts } : {}),
       externalIds: {
         [spec.providerId]: printKey,
@@ -649,9 +649,7 @@ export function createLocalTcgLine(spec: LocalTcgLineSpec): LocalTcgLine {
       metadataProbe(lookupPrint(spec.probePrintKey ?? "")),
     mappingProbe: {
       sampleInput: spec.probePrintKey ?? spec.packId,
-      context: spec.probePrintKey
-        ? { printKey: spec.probePrintKey }
-        : {},
+      context: spec.probePrintKey ? { printKey: spec.probePrintKey } : {},
     },
     testHandlers: {
       [`${spec.providerId}-search`]: {

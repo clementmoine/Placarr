@@ -487,8 +487,15 @@ export async function executeBackgroundWorkJob(
     const extractTarget = cataloguePackInfo(
       mdl.catalog.dataPack,
     )?.extractTarget;
-    const { appendCatalogueExtractLog, appendCatalogueExtractLogSync } =
-      await import("@/lib/admin/catalogueExtractLog");
+    const {
+      appendCatalogueExtractLog,
+      appendCatalogueExtractLogSync,
+      catalogueLogLineForProvider,
+    } = await import("@/lib/admin/catalogueExtractLog");
+    const { catalogProviderIdsForDataPack } =
+      await import("@/providers/shared/packOwner");
+    const sharedLog =
+      catalogProviderIdsForDataPack(mdl.catalog.dataPack).length > 1;
     const { withConsoleTee } =
       await import("@/lib/admin/catalogueExtractRunner");
 
@@ -532,7 +539,11 @@ export async function executeBackgroundWorkJob(
           await runJobCancellable(job, options, async (signal) => {
             try {
               await withConsoleTee(
-                (line) => appendCatalogueExtractLogSync(extractTarget, line),
+                (line) =>
+                  appendCatalogueExtractLogSync(
+                    extractTarget,
+                    catalogueLogLineForProvider(line, providerId, sharedLog),
+                  ),
                 () => runRefresh(signal),
               );
             } catch (err) {

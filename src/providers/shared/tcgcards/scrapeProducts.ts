@@ -92,6 +92,26 @@ export type ScrapeDbscardsProductsResult = {
   stagingPurged?: boolean;
 };
 
+/** How often the detail loop reports (one line per N fiches, plus the last). */
+export const PRODUCT_DETAIL_PROGRESS_EVERY = 25;
+
+/**
+ * Progress line for the detail fiche loop, or null between reports. The loop
+ * can run hundreds of polite GETs — minutes with nothing in the admin Logs
+ * read as a stuck Sync.
+ */
+export function productDetailProgressLine(
+  done: number,
+  total: number,
+  fetched: number,
+): string | null {
+  if (total <= 0) return null;
+  if (done !== total && done % PRODUCT_DETAIL_PROGRESS_EVERY !== 0) {
+    return null;
+  }
+  return `fiches ${done}/${total} (${fetched} GET)`;
+}
+
 async function readHtml(opts: {
   url: string;
   dest: string;
@@ -320,7 +340,12 @@ export async function scrapeDbscardsProducts(opts: {
   const capped =
     opts.limit != null ? detailRows.slice(0, opts.limit) : detailRows;
 
+  if (capped.length > 0) {
+    opts.onProgress?.(`fiches produit : ${capped.length} à lire`);
+  }
+  let done = 0;
   for (const row of capped) {
+    done += 1;
     const dest = path.join(dir, "pages", row.category, `${row.slug}.html`);
     try {
       const page = await readHtml({
@@ -332,23 +357,29 @@ export async function scrapeDbscardsProducts(opts: {
       });
       if (!page) {
         opts.onProgress?.(`${row.path} : absent (offline)`);
-        continue;
+      } else {
+        if (page.fetched) fetched += 1;
+        const parsed = parseDbscardsProductPage(
+          page.html,
+          row.path,
+          row.category,
+        );
+        if (!parsed.image) parsed.image = row.image;
+        const completed = completeProductContainsPrints(
+          parsed,
+          catalog,
+          lookup,
+        );
+        if (completed.containsPrints.length > parsed.containsPrints.length) {
+          catalogCompleted += 1;
+        }
+        products.push(completed);
       }
-      if (page.fetched) fetched += 1;
-      const parsed = parseDbscardsProductPage(
-        page.html,
-        row.path,
-        row.category,
-      );
-      if (!parsed.image) parsed.image = row.image;
-      const completed = completeProductContainsPrints(parsed, catalog, lookup);
-      if (completed.containsPrints.length > parsed.containsPrints.length) {
-        catalogCompleted += 1;
-      }
-      products.push(completed);
     } catch {
       opts.onProgress?.(`${row.path} : échec, on continue`);
     }
+    const line = productDetailProgressLine(done, capped.length, fetched);
+    if (line) opts.onProgress?.(line);
   }
 
   const printsLinked = products.reduce(
@@ -440,9 +471,8 @@ export async function scrapeTcgCardsProducts(
     );
   }
   if (opts.curatedContentsPath) {
-    const { installProviderProductsContents } = await import(
-      "@/providers/shared/sealedProducts/curatedContents"
-    );
+    const { installProviderProductsContents } =
+      await import("@/providers/shared/sealedProducts/curatedContents");
     installProviderProductsContents(site.packId, opts.curatedContentsPath);
   }
   const catalog =

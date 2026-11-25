@@ -72,6 +72,21 @@ export function appendCatalogueExtractLogSync(
   }
 }
 
+/**
+ * Tags a teed console line with the provider that wrote it when several
+ * providers share one pack log (a paper catalogue and a game-client extract
+ * running side by side). Two « client du jeu » lines with no owner could not
+ * be told apart; a pack with a single provider keeps its lines untouched.
+ */
+export function catalogueLogLineForProvider(
+  line: string,
+  providerId: string,
+  sharedLog: boolean,
+): string {
+  if (!sharedLog || !line.trim()) return line;
+  return `[${providerId}] ${line}`;
+}
+
 export async function appendCatalogueExtractLog(
   pack: CatalogueExtractTarget,
   line: string,

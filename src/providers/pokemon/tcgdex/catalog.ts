@@ -87,36 +87,60 @@ export async function refreshTcgdexCatalog(
     TCGDEX_DETAIL_ENRICH_AUTO_LIMIT,
     TCGDEX_DETAIL_ENRICH_FORCE_LIMIT,
   } = await import("./enrichCardDetails");
+  /*
+    Every line goes to the console, which the job runner tees into the admin
+    Logs. Each step announces itself and relays the progress the harvest
+    already reports: a silent step cannot be told apart from a stuck one.
+  */
+  const log = (line: string) => console.log(line);
+  const progress = (message: string) => log(`   ${message}`);
+  const reason = (error: unknown) =>
+    error instanceof Error ? error.message : String(error);
+  const checkpoint = () => opts?.signal?.throwIfAborted();
+
   // Manual refresh forces a full re-check; auto only fills gaps / new sets.
-  const harvest = await harvestTcgdexCatalogue({ force: !opts?.auto });
+  log(`── tcgdex : sets et tirages (${opts?.auto ? "lacunes" : "complet"})`);
+  const harvest = await harvestTcgdexCatalogue({
+    force: !opts?.auto,
+    onProgress: progress,
+  });
+  checkpoint();
+
+  log("── tcgdex : logos de set");
   try {
     await ensureTcgdexSetLogoIndex({ force: !opts?.auto });
-  } catch {
-    /* logos are nice-to-have for wordmarks; prints matter more */
+  } catch (error) {
+    // Logos are nice-to-have for wordmarks; prints matter more.
+    progress(`logos ignorés : ${reason(error)}`);
   }
+  checkpoint();
+
   // Set briefs omit rarity — budgeted per-card fill (autonomie living).
+  log("── tcgdex : détails (rareté)");
   const details = await enrichTcgdexCardDetails({
     limit: opts?.auto
       ? TCGDEX_DETAIL_ENRICH_AUTO_LIMIT
       : TCGDEX_DETAIL_ENRICH_FORCE_LIMIT,
+    onProgress: progress,
   });
+  checkpoint();
 
   // Fullset.fr FR set titles — HTML index only (`/api` disallowed).
+  log("── tcgdex : titres FR (Fullset)");
   let fullsetTitles: {
     matched: number;
     updated: number;
     unmatched: number;
   } | null = null;
   try {
-    const { harvestFullsetSets } = await import(
-      "@/providers/shared/fullset/harvestSets"
-    );
-    const { applyFullsetPokemonSetTitles } = await import(
-      "./scrape/fullset/applyFullsetSetTitles"
-    );
+    const { harvestFullsetSets } =
+      await import("@/providers/shared/fullset/harvestSets");
+    const { applyFullsetPokemonSetTitles } =
+      await import("./scrape/fullset/applyFullsetSetTitles");
     await harvestFullsetSets({
       packId: POKEMON_PACK_ID,
       game: "pokemon",
+      signal: opts?.signal,
     });
     const applied = applyFullsetPokemonSetTitles();
     fullsetTitles = {
@@ -124,21 +148,30 @@ export async function refreshTcgdexCatalog(
       updated: applied.updated,
       unmatched: applied.unmatched,
     };
-  } catch {
+  } catch (error) {
+    progress(`index Fullset indisponible (${reason(error)}) — titres en cache`);
     try {
-      const { applyFullsetPokemonSetTitles } = await import(
-        "./scrape/fullset/applyFullsetSetTitles"
-      );
+      const { applyFullsetPokemonSetTitles } =
+        await import("./scrape/fullset/applyFullsetSetTitles");
       const applied = applyFullsetPokemonSetTitles();
       fullsetTitles = {
         matched: applied.matched,
         updated: applied.updated,
         unmatched: applied.unmatched,
       };
-    } catch {
+    } catch (fallbackError) {
       /* overlay is optional — TCGdex identity still stands */
+      progress(`titres FR ignorés : ${reason(fallbackError)}`);
     }
   }
+  if (fullsetTitles) {
+    progress(
+      `titres FR : ${fullsetTitles.updated} mis à jour, ${fullsetTitles.matched} reconnus, ${fullsetTitles.unmatched} sans correspondance`,
+    );
+  }
+  log(
+    `── tcgdex : terminé — ${harvest.sets} sets, ${harvest.prints} tirages, ${details.patched} détails`,
+  );
 
   const logs = packLogsDir("pokemon");
   mkdirSync(logs, { recursive: true });

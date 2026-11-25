@@ -52,3 +52,17 @@ describe("foilExtractLog", () => {
     expect(second.nextOffset).toBe(first.nextOffset);
   });
 });
+
+describe("catalogueLogLineForProvider", () => {
+  it("names the provider when several share the pack log", async () => {
+    const { catalogueLogLineForProvider } =
+      await import("./catalogueExtractLog");
+    expect(
+      catalogueLogLineForProvider("── client du jeu pokemon", "tcgdex", true),
+    ).toBe("[tcgdex] ── client du jeu pokemon");
+    expect(
+      catalogueLogLineForProvider("── client du jeu lorcana", "lorcana", false),
+    ).toBe("── client du jeu lorcana");
+    expect(catalogueLogLineForProvider("", "tcgdex", true)).toBe("");
+  });
+});

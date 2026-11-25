@@ -8,7 +8,6 @@ import React, {
   useSyncExternalStore,
   type SyntheticEvent,
 } from "react";
-import dynamic from "next/dynamic";
 import type { Item } from "@/generated/prisma/browser";
 import type { MetadataResult } from "@/types/metadataProvider";
 import { Loader2 } from "lucide-react";
@@ -17,9 +16,7 @@ import {
   DEFAULT_SHELF_TYPE_ICON,
   SHELF_TYPE_ICONS,
 } from "@/components/ShelfTypeIcon";
-import { RemoteImage } from "@/components/RemoteImage";
-import { CardBackSkeleton } from "@/components/CardBackSkeleton";
-import { SealedBagOverlay } from "@/components/SealedBagOverlay";
+import { CardFace } from "@/components/CardFace";
 import {
   usePrintVariant,
   variantRendering,
@@ -30,13 +27,8 @@ import {
   useImageEdgeColors,
 } from "@/lib/client/hooks/useImageEdgeColors";
 
-import {
-  resolveSharedCardBackSkeleton,
-} from "@/core/render/foil";
-import {
-  isSealedFinish,
-  sealedBagOuterAspect,
-} from "@/core/render/sealedBag";
+import { resolveSharedCardBackSkeleton } from "@/core/render/foil";
+import { isSealedFinish, sealedBagOuterAspect } from "@/core/render/sealedBag";
 import {
   effectsRegistered,
   ensureEffects,
@@ -44,13 +36,7 @@ import {
 } from "@/effects/ensureEffects";
 import { useArtFaceOrientation } from "@/lib/client/hooks/useArtFaceOrientation";
 
-const FoilCardImage = dynamic(
-  () =>
-    import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
-  { ssr: false },
-);
 import { getAspectRatio, faceDisplayAspect } from "@/lib/text/cardFormat";
-import { OrientedMediaRotator } from "@/components/OrientedMediaFrame";
 import { localizeFinishLabel } from "@/lib/text/finishLabel";
 import { getItemValueEstimate } from "@/core/collect/value";
 import { isItemMetadataBusy } from "@/core/collect/enrichment";
@@ -203,19 +189,18 @@ function ItemCardInner(props: ItemCardProps) {
       void ensureEffects();
     }
   }, [props.printKey, printVariant?.effectPack, props.variant]);
-  const variantView = useMemo(
-    () =>
-      variantRendering(props.variant, printVariant, imageUrl, {
-        preferThumb: true,
-      }),
-    [props.variant, printVariant, imageUrl, effectsReady],
-  );
+  const variantView = useMemo(() => {
+    // Recomputed once the effect registry lands: pack backs / CSS looks read it.
+    void effectsReady;
+    return variantRendering(props.variant, printVariant, imageUrl, {
+      preferThumb: true,
+    });
+  }, [props.variant, printVariant, imageUrl, effectsReady]);
   const cardBackSkeletonUrl = resolveSharedCardBackSkeleton({
     printCardBackUrl: printVariant?.cardBackUrl,
     printKey: props.printKey,
     setCode: printVariant?.setCode,
-    effectPackId:
-      variantView.effectPackId ?? printVariant?.effectPack ?? null,
+    effectPackId: variantView.effectPackId ?? printVariant?.effectPack ?? null,
   });
 
   const foilMaskUrl = useMirroredCropMask(
@@ -241,7 +226,6 @@ function ItemCardInner(props: ItemCardProps) {
       typeof window !== "undefined" &&
       window.matchMedia?.("(pointer: coarse)").matches === true,
   );
-  const [plainArtReady, setPlainArtReady] = useState(false);
   const artFrameRef = useRef<HTMLDivElement | null>(null);
   const isEnriching = isItemMetadataBusy(props);
   /**
@@ -316,12 +300,10 @@ function ItemCardInner(props: ItemCardProps) {
   if (prevImageUrl !== displayImageUrl) {
     setPrevImageUrl(displayImageUrl);
     setImageFit("contain");
-    setPlainArtReady(false);
     resetEdgeColors();
   }
 
   const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
-    setPlainArtReady(true);
     setImageFit("contain");
     const frame = artFrameRef.current;
     measureEdges(
@@ -388,10 +370,10 @@ function ItemCardInner(props: ItemCardProps) {
           )}
           {props.variant &&
             (variantView.foilMaskUrl || isSealedFinish(props.variant)) && (
-            <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
-              ✦ {localizeFinishLabel(props.variant, t)}
-            </span>
-          )}
+              <span className="text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300/40 bg-zinc-950/90 text-amber-200 shadow-sm">
+                ✦ {localizeFinishLabel(props.variant, t)}
+              </span>
+            )}
           {absenceLabel && absenceBadge ? (
             <span
               className={cn(
@@ -440,100 +422,57 @@ function ItemCardInner(props: ItemCardProps) {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
           </div>
         ) : (
-        <div
-          ref={artFrameRef}
-          className="relative h-full w-full overflow-hidden rounded-[inherit] bg-zinc-200 dark:bg-zinc-950"
-          style={
-            edgeColors && !foilMaskUrl
-              ? { background: edgeGradient(edgeColors) }
-              : undefined
-          }
-        >
-          {/* Bleeding the cover's own edges wins; the back only fills a frame
+          <div
+            ref={artFrameRef}
+            className="relative h-full w-full overflow-hidden rounded-[inherit] bg-zinc-200 dark:bg-zinc-950"
+            style={
+              edgeColors && !foilMaskUrl
+                ? { background: edgeGradient(edgeColors) }
+                : undefined
+            }
+          >
+            {/* Bleeding the cover's own edges wins; the back only fills a frame
               that has nothing else behind it. */}
-          {!(edgeColors && !foilMaskUrl) && (
-            <CardBackSkeleton
-              url={cardBackSkeletonUrl}
+            <CardFace
+              imageUrl={displayImageUrl}
+              alt={name}
+              view={variantView}
+              finish={props.variant}
+              printKey={props.printKey}
+              title={name}
+              sealedBag={printVariant?.sealedBag}
+              cardBackUrl={cardBackSkeletonUrl}
+              showBack={!(edgeColors && !foilMaskUrl)}
+              // Mobile tiles stay on plain art: CSS foil on a long grid is heavy.
+              foilEnabled={!isMobile}
               faceQuarterTurns={displayQuarterTurns}
               orientedAspect={aspectRatio}
-            />
-          )}
-          <OrientedMediaRotator
-            faceQuarterTurns={displayQuarterTurns}
-            orientedAspect={aspectRatio}
-          >
-            {/* Main Cover Image */}
-            {!isMobile && foilMaskUrl ? (
-              <FoilCardImage
-                effectPack={variantView.effectPackId}
-                printKey={props.printKey}
-                title={name}
-                imageUrl={variantView.imageUrl ?? displayImageUrl}
-                alt={name}
-                finish={variantView.finish}
-                sealedBag={printVariant?.sealedBag}
-                materialName={variantView.materialName}
-                varnishType={variantView.varnishType}
-                cssFinishShaderId={variantView.shader?.id ?? null}
-                cssVarnishShaderId={variantView.varnish?.id ?? null}
-                lenticularGrid={variantView.lenticularGrid}
-                lenticularCropProfile={variantView.lenticularCropProfile}
-                scanCrop={variantView.scanCrop}
-                maskUrl={foilMaskUrl}
-                varnishMaskUrl={varnishMaskUrl}
-                varnishColor={variantView.varnishColor}
-                secondVarnishMaskUrl={secondVarnishMaskUrl}
-                secondVarnishColor={variantView.secondVarnishColor}
+              image={{
+                priority,
+                className: cn(
+                  "object-center",
+                  imageFit === "contain" ? "object-contain" : "object-cover",
+                ),
+              }}
+              foil={{
                 // Cover: TCG scans are ~tile ratio, and `contain` leaves a 1px
                 // letterbox whose edge bleed samples the print's white border.
-                fit="cover"
-                // Grids stay on CSS foil: WebGL is for the detail hero / fullscreen
-                // only (one context, readable art).
-                backend="css"
-                faceQuarterTurns={displayQuarterTurns}
-                // A wall of tiles each tipping under the cursor reads as the page
-                // squirming. The light still drifts, which is what marks the copy.
-                tilt={false}
-              />
-            ) : (
-              isSealedFinish(variantView.finish ?? props.variant) ? (
-                <SealedBagOverlay side="front">
-                  <RemoteImage
-                    src={displayImageUrl}
-                    alt={name}
-                    priority={priority}
-                    onLoad={handleImageLoad}
-                    className={[
-                      "w-full h-full select-none transition-opacity duration-150 ease-out object-center",
-                      imageFit === "contain"
-                        ? "object-contain"
-                        : "object-cover",
-                      cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
-                    ].join(" ")}
-                  />
-                </SealedBagOverlay>
-              ) : (
-                <div className="relative h-full w-full">
-                  <RemoteImage
-                    src={displayImageUrl}
-                    alt={name}
-                    priority={priority}
-                    onLoad={handleImageLoad}
-                    className={[
-                      "w-full h-full select-none transition-opacity duration-150 ease-out object-center",
-                      imageFit === "contain"
-                        ? "object-contain"
-                        : "object-cover",
-                      cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
-                    ].join(" ")}
-                  />
-                </div>
-              )
-            )}
-          </OrientedMediaRotator>
-          {/* subtle dark overlay gradient for title legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-        </div>
+                fit: "cover",
+                // Grids stay on CSS foil: WebGL is for the detail hero /
+                // fullscreen only (one context, readable art).
+                backend: "css",
+                // A wall of tiles each tipping under the cursor reads as the
+                // page squirming. The light still drifts, which marks the copy.
+                tilt: false,
+                maskUrl: foilMaskUrl,
+                varnishMaskUrl,
+                secondVarnishMaskUrl,
+              }}
+              onLoad={handleImageLoad}
+            />
+            {/* subtle dark overlay gradient for title legibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+          </div>
         )
       ) : (
         /* Premium looking placeholder fallback */

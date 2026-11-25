@@ -63,13 +63,11 @@ import { ConditionIcon } from "@/components/ConditionIcon";
 import { ItemCard } from "@/components/ItemCard";
 
 const ItemModal = nextDynamic(
-  () =>
-    import("@/components/modals/ItemModal").then((m) => m.ItemModal),
+  () => import("@/components/modals/ItemModal").then((m) => m.ItemModal),
   { ssr: false },
 );
 const FoilCardImage = nextDynamic(
-  () =>
-    import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
+  () => import("@/components/FoilCardImage").then((m) => m.FoilCardImage),
   { ssr: false },
 );
 const SealedDeclareModal = nextDynamic(
@@ -99,7 +97,10 @@ import {
   cancelBackgroundJob,
   upsertBackgroundJobInCache,
 } from "@/lib/api/backgroundJobs";
-import { getHeroImageLight, getGalleryImagesLight } from "@/core/collect/mediaDisplay";
+import {
+  getHeroImageLight,
+  getGalleryImagesLight,
+} from "@/core/collect/mediaDisplay";
 import {
   getAttachmentGalleryLabels,
   type AttachmentDisplayLocale,
@@ -133,12 +134,8 @@ import { itemsBarcodeLabelKey } from "@/core/identify/shelfLabels";
 import { cn } from "@/lib/shared/utils";
 import { RemoteImage } from "@/components/RemoteImage";
 import { FlippableCard } from "@/components/FlippableCard";
-import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import { GameBox3D } from "@/components/GameBox3D";
-import {
-  isSealedFinish,
-  sealedBagOuterAspect,
-} from "@/core/render/sealedBag";
+import { isSealedFinish, sealedBagOuterAspect } from "@/core/render/sealedBag";
 import { Disc3D } from "@/components/Disc3D";
 import {
   resolveBoxFaces,
@@ -146,7 +143,10 @@ import {
   resolveFlatSleeveFlip,
 } from "@/core/enrich/media/resolveBoxFaces";
 import { remoteImageDisplaySrc } from "@/core/enrich/media/remoteImageDisplay";
-import { resolveOpticalDiscKind, isLooseDiscShelfPresentation } from "@/core/enrich/media/opticalDisc";
+import {
+  resolveOpticalDiscKind,
+  isLooseDiscShelfPresentation,
+} from "@/core/enrich/media/opticalDisc";
 import { detectVideoGamePlatformKey } from "@/core/identify/platforms/platformList";
 import { shouldIgnoreItemSiblingNavigation } from "@/lib/client/itemSiblingNavigation";
 import {
@@ -180,6 +180,7 @@ import {
 } from "@/lib/text/cardFormat";
 import { AmbientBackdrop } from "@/components/AmbientBackdrop";
 import { CardBackSkeleton } from "@/components/CardBackSkeleton";
+import { CardFace } from "@/components/CardFace";
 import {
   cardFaceRadius,
   OrientedMediaRotator,
@@ -211,10 +212,7 @@ import {
   marketOfferConditionsForItem,
   shelfShowsItemCondition,
 } from "@/core/collect/condition";
-import {
-  countsAsOwned,
-  formatAbsenceBadge,
-} from "@/core/collect/itemAbsence";
+import { countsAsOwned, formatAbsenceBadge } from "@/core/collect/itemAbsence";
 import { canDeclareSealedPulls } from "@/core/collect/sealedOpen";
 import { formatCatalogEstimateObservationRange } from "@/core/commerce/pricing/catalogEstimateDisplay";
 import { displayAliasesForItem } from "@/core/enrich/aliases";
@@ -707,7 +705,6 @@ function isTagLikeDetailFact(fact: DetailFact) {
     fact.kind,
   );
 }
-
 
 const FACT_DISPLAY_ORDER: Record<string, number> = {
   "estimated-value": 10,
@@ -1277,7 +1274,6 @@ export default function ItemDetailsPage() {
   const [coverImageFit, setCoverImageFit] = useState<"cover" | "contain">(
     "contain",
   );
-  const [coverFaceReady, setCoverFaceReady] = useState(false);
   // Garde « une seule tentative » : jamais rendu → ref, pas un state (évite
   // un setState synchrone dans l'effect de refresh).
   const autoMetadataRefreshAttemptedRef = useRef(false);
@@ -1348,7 +1344,8 @@ export default function ItemDetailsPage() {
     queryKey: ["shelf", shelfId, "items", item?.id, "containment"],
     queryFn: () => getItemContainment(item!.id, { shelfId }),
     enabled: Boolean(
-      item?.id && (item.kind === "sealed" || item.kind === "card" || item.printKey),
+      item?.id &&
+      (item.kind === "sealed" || item.kind === "card" || item.printKey),
     ),
     staleTime: 15_000,
   });
@@ -1948,10 +1945,8 @@ export default function ItemDetailsPage() {
   ]);
 
   const heroImage = useMemo(() => {
-    return (
-      item?.backgroundImageUrl || (item ? getHeroImageLight(item) : null)
-    );
-  }, [item, locale]);
+    return item?.backgroundImageUrl || (item ? getHeroImageLight(item) : null);
+  }, [item]);
 
   const coverImage = item?.imageUrl ?? null;
 
@@ -1975,10 +1970,11 @@ export default function ItemDetailsPage() {
       void ensureEffects();
     }
   }, [item?.printKey, printVariant?.effectPack, item?.variant]);
-  const variantView = useMemo(
-    () => variantRendering(item?.variant, printVariant, coverImage),
-    [item?.variant, printVariant, coverImage, effectsReady],
-  );
+  const variantView = useMemo(() => {
+    // Recomputed once the effect registry lands: pack backs / CSS looks read it.
+    void effectsReady;
+    return variantRendering(item?.variant, printVariant, coverImage);
+  }, [item?.variant, printVariant, coverImage, effectsReady]);
 
   /** Loose disc hero — printed support art + synthetic optical underside. */
   const [disc3dFailed, setDisc3dFailed] = useState(false);
@@ -2131,19 +2127,27 @@ export default function ItemDetailsPage() {
     measure: measureCoverEdges,
     reset: resetCoverEdgeColors,
   } = useImageEdgeColors();
+  /*
+    Le dos de carte n'attend derrière que sur un cadre sans autre fond : la
+    bordure peinte aux couleurs de la cover l'emporte, et boîte / disque /
+    pochette ont leur propre rendu.
+  */
+  const cardBackBehind =
+    !(coverEdgeColors && !variantView.foilMaskUrl) &&
+    !showGameBox &&
+    !showDisc3d &&
+    !showFlatSleeve;
 
   // Réinitialisation quand la cover change — ajustée pendant le render.
   const [prevCoverImage, setPrevCoverImage] = useState(coverImage);
   if (prevCoverImage !== coverImage) {
     setPrevCoverImage(coverImage);
     setCoverImageFit("contain");
-    setCoverFaceReady(false);
     resetCoverEdgeColors();
   }
 
   const handleCoverImageLoad = useCallback(
     (event: SyntheticEvent<HTMLImageElement>) => {
-      setCoverFaceReady(true);
       setCoverImageFit("contain");
       measureCoverEdges(event.currentTarget);
     },
@@ -2818,8 +2822,8 @@ export default function ItemDetailsPage() {
                       // to edge, so a white slab only framed it. Anything else
                       // gets its own edges bled outwards, see `style` below.
                       showGameBox || showDisc3d || showFlatSleeve
-                        ? "cursor-grab"
-                        : "cursor-pointer group/cover"
+                      ? "cursor-grab"
+                      : "cursor-pointer group/cover"
                     : "bg-zinc-950/20",
                   showDisc3d
                     ? "aspect-square w-[240px] md:w-[320px]"
@@ -2846,10 +2850,7 @@ export default function ItemDetailsPage() {
               >
                 {/* Bleeding the cover's own edges wins; the back only fills a
                     frame that has nothing else behind it. */}
-                {!(coverEdgeColors && !variantView.foilMaskUrl) &&
-                  !showGameBox &&
-                  !showDisc3d &&
-                  !showFlatSleeve && (
+                {cardBackBehind && !coverImage && (
                   <CardBackSkeleton
                     url={cardBackSkeletonUrl}
                     faceQuarterTurns={displayQuarterTurns}
@@ -2908,33 +2909,36 @@ export default function ItemDetailsPage() {
                       />
                     </FlippableCard>
                   ) : coverImage ? (
-                  <>
-                    <OrientedMediaRotator
-                      faceQuarterTurns={displayQuarterTurns}
-                      orientedAspect={coverOrientedAspect}
-                    >
-                      {variantView.foilMaskUrl ? (
-                        <FoilCardImage
-                          effectPack={variantView.effectPackId}
-                          printKey={item?.printKey}
-                          title={itemDisplayName}
-                          imageUrl={variantView.imageUrl ?? coverImage}
-                          alt={itemDisplayName ?? ""}
-                          finish={variantView.finish}
-                          sealedBag={printVariant?.sealedBag}
-                          materialName={variantView.materialName}
-                          varnishType={variantView.varnishType}
-                          cssFinishShaderId={variantView.shader?.id ?? null}
-                          cssVarnishShaderId={variantView.varnish?.id ?? null}
-                          lenticularGrid={variantView.lenticularGrid}
-                          lenticularCropProfile={variantView.lenticularCropProfile}
-                          scanCrop={variantView.scanCrop}
-                          maskUrl={foilMaskUrl}
-                          varnishMaskUrl={varnishMaskUrl}
-                          varnishColor={variantView.varnishColor}
-                          secondVarnishMaskUrl={secondVarnishMaskUrl}
-                          secondVarnishColor={variantView.secondVarnishColor}
-                          faceQuarterTurns={displayQuarterTurns}
+                    <>
+                      <CardFace
+                        imageUrl={variantView.imageUrl ?? coverImage}
+                        alt={itemDisplayName ?? ""}
+                        view={variantView}
+                        finish={item?.variant}
+                        printKey={item?.printKey}
+                        title={itemDisplayName}
+                        sealedBag={printVariant?.sealedBag}
+                        cardBackUrl={cardBackSkeletonUrl}
+                        showBack={cardBackBehind}
+                        faceQuarterTurns={displayQuarterTurns}
+                        orientedAspect={coverOrientedAspect}
+                        image={{
+                          width: 768,
+                          height: 1152,
+                          sizes: "(max-width: 768px) 240px, 480px",
+                          loading: "eager",
+                          fetchPriority: "high",
+                          className: cn(
+                            "transition-transform duration-500",
+                            coverImageFit === "contain"
+                              ? "object-contain"
+                              : "object-cover group-hover/cover:scale-105",
+                          ),
+                        }}
+                        foil={{
+                          maskUrl: foilMaskUrl,
+                          varnishMaskUrl,
+                          secondVarnishMaskUrl,
                           /**
                            * Flat here, exactly as in the grid. This cover sits in
                            * a page of text, and a card that tips whenever the
@@ -2944,73 +2948,28 @@ export default function ItemDetailsPage() {
                            * opens the fullscreen card, which is where the
                            * perspective, the lean and the turn belong.
                            */
-                          tilt={false}
-                        />
-                      ) : isSealedFinish(
-                          variantView.finish ?? item?.variant,
-                        ) ? (
-                        <SealedBagOverlay
-                          side="front"
-                        >
-                          <RemoteImage
-                            src={variantView.imageUrl ?? coverImage}
-                            alt={itemDisplayName ?? ""}
-                            width={768}
-                            height={1152}
-                            sizes="(max-width: 768px) 240px, 480px"
-                            loading="eager"
-                            fetchPriority="high"
-                            onLoad={handleCoverImageLoad}
-                            className={cn(
-                              "h-full w-full transition-opacity duration-150 object-cover",
-                              cardBackSkeletonUrl &&
-                                !coverFaceReady &&
-                                "opacity-0",
-                            )}
-                          />
-                        </SealedBagOverlay>
-                      ) : (
-                        <div className="relative h-full w-full">
-                          <RemoteImage
-                            src={variantView.imageUrl ?? coverImage}
-                            alt={itemDisplayName ?? ""}
-                            width={768}
-                            height={1152}
-                            sizes="(max-width: 768px) 240px, 480px"
-                            loading="eager"
-                            fetchPriority="high"
-                            onLoad={handleCoverImageLoad}
-                            className={cn(
-                              "w-full h-full transition-opacity duration-150 transition-transform duration-500",
-                              coverImageFit === "contain"
-                                ? "object-contain"
-                                : "object-cover group-hover/cover:scale-105",
-                              cardBackSkeletonUrl &&
-                                !coverFaceReady &&
-                                "opacity-0",
-                            )}
-                          />
-                        </div>
-                      )}
-                    </OrientedMediaRotator>
-                    {/* Hover Zoom Overlay — decorative, and the click is the
+                          tilt: false,
+                        }}
+                        onLoad={handleCoverImageLoad}
+                      />
+                      {/* Hover Zoom Overlay — decorative, and the click is the
                         container's, so it must not swallow the pointer: the holo
                         layers below track pointer position to place their sheen. */}
-                    <div
-                      className={cn(
-                        "pointer-events-none absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20",
-                        // Darkening fights the shimmer it appears with, so a foil
-                        // copy keeps the affordance and loses the scrim.
-                        variantView.foilMaskUrl
-                          ? "bg-transparent"
-                          : "bg-black/40",
-                      )}
-                    >
-                      <div className="bg-white/20 hover:bg-white/35 text-white backdrop-blur-md p-2.5 rounded-full border border-white/20 shadow-md active:scale-95 transition-all">
-                        <Maximize2 className="size-5" />
+                      <div
+                        className={cn(
+                          "pointer-events-none absolute inset-0 opacity-0 group-hover/cover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20",
+                          // Darkening fights the shimmer it appears with, so a foil
+                          // copy keeps the affordance and loses the scrim.
+                          variantView.foilMaskUrl
+                            ? "bg-transparent"
+                            : "bg-black/40",
+                        )}
+                      >
+                        <div className="bg-white/20 hover:bg-white/35 text-white backdrop-blur-md p-2.5 rounded-full border border-white/20 shadow-md active:scale-95 transition-all">
+                          <Maximize2 className="size-5" />
+                        </div>
                       </div>
-                    </div>
-                  </>
+                    </>
                   ) : null
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-950 text-muted-foreground p-6 gap-3 min-h-[300px]">
@@ -3086,15 +3045,17 @@ export default function ItemDetailsPage() {
                         tradeCounterpartName,
                       });
                       if (!absence) return null;
-                      const label = t(`items.absence.badge.${absence.labelKey}`, {
-                        ...(absence.name ? { name: absence.name } : {}),
-                        ...(absence.detail ? { detail: absence.detail } : {}),
-                        ...(absence.price ? { price: absence.price } : {}),
-                        ...(absence.days ? { days: absence.days } : {}),
-                      });
+                      const label = t(
+                        `items.absence.badge.${absence.labelKey}`,
+                        {
+                          ...(absence.name ? { name: absence.name } : {}),
+                          ...(absence.detail ? { detail: absence.detail } : {}),
+                          ...(absence.price ? { price: absence.price } : {}),
+                          ...(absence.days ? { days: absence.days } : {}),
+                        },
+                      );
                       const dated =
-                        absence.labelKey === "loaned_to" &&
-                        item?.absenceSince
+                        absence.labelKey === "loaned_to" && item?.absenceSince
                           ? t("items.loan.badgeWithDate", {
                               name: absence.name ?? "",
                               date: new Date(
@@ -3174,7 +3135,11 @@ export default function ItemDetailsPage() {
                                 let result: Awaited<
                                   ReturnType<typeof openSealedItem>
                                 > | null = null;
-                                for (let attempt = 0; attempt < 3; attempt += 1) {
+                                for (
+                                  let attempt = 0;
+                                  attempt < 3;
+                                  attempt += 1
+                                ) {
                                   try {
                                     result = await openSealedItem(item.id, {
                                       shelfId,
@@ -3584,33 +3549,34 @@ export default function ItemDetailsPage() {
 
                   {detailTableFacts.map((fact) => {
                     const proofUrl = displayFactCitationUrl(fact.url);
-                    const valueNode = isTagLikeDetailFact(fact) && !proofUrl ? (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {splitTagValues(fact.value).map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : proofUrl ? (
-                      <a
-                        href={proofUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:text-zinc-200 dark:hover:text-zinc-50"
-                      >
-                        <span>{fact.value}</span>
-                        <Link2 className="size-3 shrink-0 text-zinc-400" />
-                      </a>
-                    ) : (
-                      <span className="text-sm font-medium text-foreground dark:text-zinc-200">
-                        {fact.value}
-                      </span>
-                    );
+                    const valueNode =
+                      isTagLikeDetailFact(fact) && !proofUrl ? (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {splitTagValues(fact.value).map((tag) => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="rounded-md border border-border/60 bg-background/70 px-2 py-0.5 text-[11px] font-semibold text-zinc-650 shadow-none dark:border-zinc-800/70 dark:bg-zinc-950/30 dark:text-zinc-300"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : proofUrl ? (
+                        <a
+                          href={proofUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:text-zinc-200 dark:hover:text-zinc-50"
+                        >
+                          <span>{fact.value}</span>
+                          <Link2 className="size-3 shrink-0 text-zinc-400" />
+                        </a>
+                      ) : (
+                        <span className="text-sm font-medium text-foreground dark:text-zinc-200">
+                          {fact.value}
+                        </span>
+                      );
                     return (
                       <div
                         key={`${fact.kind}-${fact.label}-${fact.value}`}

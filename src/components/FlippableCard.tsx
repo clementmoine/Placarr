@@ -223,8 +223,11 @@ export function FlippableCard({
     frame.style.setProperty("--flip-lean-y", style.y);
   }, []);
 
-  const { noteLean } = useFoilIdleLean(isDriven, MAX_TILT, (lean) =>
-    applyLean(lean, "idle"),
+  const { noteLean } = useFoilIdleLean(
+    isDriven,
+    MAX_TILT,
+    (lean) => applyLean(lean, "idle"),
+    frameRef,
   );
 
   const applyPointer = useCallback(
@@ -418,7 +421,11 @@ export function FlippableCard({
                           src={backUrl}
                           alt={backAlt}
                           draggable={false}
-                          className="h-full w-full object-contain"
+                          // Cover, like the face: a scanned back is never
+                          // exactly the frame's ratio, and `contain` left a
+                          // margin the rounded clip missed (one corner
+                          // square, the other round).
+                          className="h-full w-full object-cover"
                         />
                       </SealedBagOverlay>
                     ) : (
@@ -428,7 +435,11 @@ export function FlippableCard({
                           src={backUrl}
                           alt={backAlt}
                           draggable={false}
-                          className="h-full w-full object-contain"
+                          // Cover, like the face: a scanned back is never
+                          // exactly the frame's ratio, and `contain` left a
+                          // margin the rounded clip missed (one corner
+                          // square, the other round).
+                          className="h-full w-full object-cover"
                         />
                       </div>
                     )}
@@ -438,7 +449,6 @@ export function FlippableCard({
             </div>
           </div>
         </div>
-
       </div>
       {/*
         Under the object, not on it. Motion is opt-in: the first tap on iOS is

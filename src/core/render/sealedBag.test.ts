@@ -1,6 +1,8 @@
-import { createElement } from "react";
+import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { CardBackSkeleton } from "@/components/CardBackSkeleton";
+import { FlippableCard } from "@/components/FlippableCard";
 import { SealedBagOverlay } from "@/components/SealedBagOverlay";
 import {
   SEALED_BAG_CHROME_INSET,
@@ -111,5 +113,55 @@ describe("sealedBag", () => {
     expect(html).toContain(SEALED_BAG_SLICES.urls.edgeTop);
     expect(html).toContain(SEALED_CARD_INSET.top);
     expect(html).toContain(SEALED_CARD_INSET.bottom);
+  });
+
+  /*
+    Le dos attend derrière la face pendant qu'elle charge. Sous un sachet, la
+    face est rentrée dans la fenêtre (pli + soudures) : un dos plein cadre
+    dépassait tout autour, comme une carte plus grande que la carte.
+  */
+  it("tucks the waiting card back into the same window as the face", () => {
+    const sealed = renderToStaticMarkup(
+      createElement(CardBackSkeleton, { url: "/back.webp", sealed: true }),
+    );
+    expect(sealed).toContain("/back.webp");
+    expect(sealed).toContain(SEALED_CARD_INSET.top);
+    expect(sealed).toContain(SEALED_CARD_INSET.left);
+    expect(sealed).not.toContain("inset-0");
+
+    const loose = renderToStaticMarkup(
+      createElement(CardBackSkeleton, { url: "/back.webp" }),
+    );
+    expect(loose).toContain("inset-0");
+    expect(loose).not.toContain(SEALED_CARD_INSET.top);
+  });
+
+  /*
+    Un dos scanné n'a jamais tout à fait le ratio du cadre (843×1206 contre
+    5/7). En `contain` il laissait une marge d'un côté : l'arrondi tombait à
+    côté des coins de l'image, un coin carré, l'autre rond. Le dos remplit le
+    cadre comme la face, et le même arrondi les découpe tous les deux.
+  */
+  it("fills the frame with the turned-over back, like the face", () => {
+    for (const sealedBag of [false, true]) {
+      const html = renderToStaticMarkup(
+        createElement(
+          FlippableCard,
+          {
+            backUrl: "/back.webp",
+            backAlt: "dos",
+            flipLabel: "Retourner",
+            tiltPromptLabel: "Incliner",
+            faceTabLabel: "Face",
+            backTabLabel: "Dos",
+            sealedBag,
+          } as ComponentProps<typeof FlippableCard>,
+          createElement("img", { src: "/face.webp", alt: "face" }),
+        ),
+      );
+      const back = /<img[^>]*src="\/back\.webp"[^>]*>/.exec(html)?.[0] ?? "";
+      expect(back).toContain("object-cover");
+      expect(back).not.toContain("object-contain");
+    }
   });
 });

@@ -3,10 +3,10 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { Loader2, Search } from "lucide-react";
 
@@ -21,11 +21,8 @@ import {
   ownedRowKey,
 } from "@/components/modals/printPickerOwned";
 import { CardBackSkeleton } from "@/components/CardBackSkeleton";
-import { FoilCardImage } from "@/components/FoilCardImage";
+import { CardFace } from "@/components/CardFace";
 import { OrientedMediaFrame } from "@/components/OrientedMediaFrame";
-import { RemoteImage } from "@/components/RemoteImage";
-import { SealedBagOverlay } from "@/components/SealedBagOverlay";
-import { Button } from "@/components/ui/button";
 import { expandPrintCandidatesByFinish } from "@/core/enrich/variants";
 import {
   pairReceivableAdds,
@@ -34,10 +31,7 @@ import {
 } from "@/core/collect/receivableMatches";
 import { parsePrintKey } from "@/core/identify/printKey";
 import { resolveSharedCardBackSkeleton } from "@/core/render/foil/cardBacks";
-import {
-  isSealedFinish,
-  sealedBagOuterAspect,
-} from "@/core/render/sealedBag";
+import { sealedBagOuterAspect } from "@/core/render/sealedBag";
 import {
   variantRendering,
   type PrintVariantInfo,
@@ -84,7 +78,12 @@ export type PrintCandidateView = {
   landscapePrint?: boolean;
   lenticularGrid?: { cols: number; rows: number } | null;
   lenticularCropProfile?: string | null;
-  scanCrop?: { left: number; top: number; right: number; bottom: number } | null;
+  scanCrop?: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } | null;
   thumbnailUrl?: string | null;
   imageUrl?: string | null;
   language?: string | null;
@@ -249,72 +248,33 @@ function PrintPickerTileArt({
     setCode: candidate.setCode,
     effectPackId: view.effectPackId ?? candidate.effectPack ?? null,
   });
-  const [plainArtReady, setPlainArtReady] = useState(false);
-  useEffect(() => {
-    setPlainArtReady(false);
-  }, [art]);
-
-  let face: ReactNode = null;
-  if (art && view.foilMaskUrl && (view.shader || view.varnish)) {
-    face = (
-      <FoilCardImage
-        effectPack={view.effectPackId}
-        printKey={candidate.printKey}
-        title={candidate.title}
-        imageUrl={art}
-        alt={candidate.title}
-        finish={view.finish}
-        sealedBag={candidate.sealedBag}
-        materialName={view.materialName}
-        varnishType={view.varnishType}
-        cssFinishShaderId={view.shader?.id ?? null}
-        cssVarnishShaderId={view.varnish?.id ?? null}
-        lenticularGrid={view.lenticularGrid}
-        lenticularCropProfile={view.lenticularCropProfile}
-        scanCrop={view.scanCrop}
-        maskUrl={view.foilMaskUrl}
-        varnishMaskUrl={view.varnishMaskUrl}
-        varnishColor={view.varnishColor}
-        secondVarnishMaskUrl={view.secondVarnishMaskUrl}
-        secondVarnishColor={view.secondVarnishColor}
-        faceQuarterTurns={candidate.faceQuarterTurns}
-        fit="cover"
-        backend="css"
-        tilt={false}
-        className="absolute inset-0 h-full w-full"
-      />
-    );
-  } else if (art) {
-    const image = (
-      <RemoteImage
-        src={art}
-        alt={candidate.title}
-        fill
-        sizes="(max-width: 640px) 45vw, 180px"
-        onLoad={() => setPlainArtReady(true)}
-        className={cn(
-          "object-cover transition-opacity duration-150 ease-out",
-          cardBackSkeletonUrl && !plainArtReady ? "opacity-0" : "",
-        )}
-      />
-    );
-    face = isSealedFinish(view.finish ?? finish) ? (
-      <SealedBagOverlay
-        side="front"
-        className="absolute inset-0 h-full w-full"
-      >
-        {image}
-      </SealedBagOverlay>
-    ) : (
-      <div className="absolute inset-0 h-full w-full">{image}</div>
-    );
+  if (!art) {
+    return <CardBackSkeleton url={cardBackSkeletonUrl} faceQuarterTurns={0} />;
   }
-
+  // Parent {@link OrientedMediaFrame} already orients the tile: the frame
+  // stays at 0 turns, only the foil gets the print's own turns.
   return (
-    <>
-      <CardBackSkeleton url={cardBackSkeletonUrl} faceQuarterTurns={0} />
-      {face}
-    </>
+    <CardFace
+      imageUrl={art}
+      alt={candidate.title}
+      view={view}
+      finish={finish}
+      printKey={candidate.printKey}
+      title={candidate.title}
+      sealedBag={candidate.sealedBag}
+      cardBackUrl={cardBackSkeletonUrl}
+      foilEnabled={Boolean(view.shader || view.varnish)}
+      faceQuarterTurns={0}
+      rotatorClassName="absolute inset-0"
+      image={{ fill: true, sizes: "(max-width: 640px) 45vw, 180px" }}
+      foil={{
+        fit: "cover",
+        backend: "css",
+        tilt: false,
+        className: "absolute inset-0 h-full w-full",
+        faceQuarterTurns: candidate.faceQuarterTurns,
+      }}
+    />
   );
 }
 
@@ -396,7 +356,7 @@ export function PrintPickerModal({
   const [hideOwned, setHideOwned] = useState(true);
 
   /** Une seule application des défauts par ouverture. */
-  const shelfDefaultsApplied = useRef(false);
+  const [shelfDefaultsApplied, setShelfDefaultsApplied] = useState(false);
 
   /*
     Deux niveaux, parce qu'ils ne disent pas la même chose : la finition exacte
@@ -421,9 +381,7 @@ export function PrintPickerModal({
       for (const key of keys) {
         exact.add(ownedRowKey(key, variant, lang, setCode));
         // Finitions : bornées au set quand on le connaît.
-        anyFinish.add(
-          [(setCode ?? "").trim().toLowerCase(), key].join("|"),
-        );
+        anyFinish.add([(setCode ?? "").trim().toLowerCase(), key].join("|"));
         const game = parsePrintKey(key)?.game;
         if (game) games.add(game);
       }
@@ -441,21 +399,26 @@ export function PrintPickerModal({
     };
   }, [ownedPrints]);
 
-  // Dépile la sélection des finitions exactes quand on les masque.
-  useEffect(() => {
-    if (!hideOwned) return;
-    setSelected((current) => {
+  // Dépile la sélection des finitions exactes quand on les masque — ajusté
+  // pendant le render, quand le masque ou ce qu'on possède change.
+  const [prunedFor, setPrunedFor] = useState<{
+    hideOwned: boolean;
+    exact: typeof owned.exact;
+  } | null>(null);
+  if (prunedFor?.hideOwned !== hideOwned || prunedFor?.exact !== owned.exact) {
+    setPrunedFor({ hideOwned, exact: owned.exact });
+    if (hideOwned) {
       let changed = false;
-      const next = new Map(current);
+      const next = new Map(selected);
       for (const [key, row] of next) {
         if (isExactOwnedRow(row, owned.exact)) {
           next.delete(key);
           changed = true;
         }
       }
-      return changed ? next : current;
-    });
-  }, [hideOwned, owned.exact]);
+      if (changed) setSelected(next);
+    }
+  }
 
   /** Aborts the previous first-page search so a slow response cannot overwrite a newer one. */
   const searchAbort = useRef<AbortController | null>(null);
@@ -508,7 +471,7 @@ export function PrintPickerModal({
     setAwaitedPrompt(null);
     setIsReceiving(false);
     setIsCataloguesLoading(false);
-    shelfDefaultsApplied.current = false;
+    setShelfDefaultsApplied(false);
     onClose();
   }, [onClose]);
 
@@ -543,95 +506,70 @@ export function PrintPickerModal({
     Catalogues are prefetched from the shelf page into a shared client cache.
     On open we hydrate from cache (no skeleton) and only fetch when cold or
     when language changes the announced set tree (Naruto JP vs EU).
+
+    The cache is a synchronous Map read, so hydration happens while rendering
+    (when the open / type / language key changes); the effect below only
+    fetches. Shelf defaults land once per opening, on the first rows seen.
   */
-  useEffect(() => {
-    if (!isOpen) {
-      shelfDefaultsApplied.current = false;
-      return;
+  const catalogueLangKey = language === ALL_LANGUAGES ? null : language;
+  const catalogueKey = isOpen ? `${shelfType}|${catalogueLangKey ?? ""}` : null;
+  const [hydratedCatalogueKey, setHydratedCatalogueKey] = useState<
+    string | null
+  >(null);
+  if (hydratedCatalogueKey !== catalogueKey) {
+    setHydratedCatalogueKey(catalogueKey);
+    if (catalogueKey) {
+      const cached =
+        getCachedPrintCatalogues(shelfType, catalogueLangKey) ??
+        getCachedPrintCatalogues(shelfType, null);
+      if (cached?.length) {
+        setCatalogues(cached);
+        setIsCataloguesLoading(false);
+      } else {
+        setIsCataloguesLoading(true);
+      }
+    } else {
+      setShelfDefaultsApplied(false);
     }
+  }
+  if (isOpen && !shelfDefaultsApplied && catalogues.length) {
+    setShelfDefaultsApplied(true);
+    const defaults = inferPrintPickerDefaults(
+      shelfName,
+      catalogues,
+      ownedPrints ?? [],
+    );
+    if (defaults.catalogueId) setCatalogue(defaults.catalogueId);
+    if (defaults.language) setLanguage(defaults.language);
+    if (defaults.setId) setSetId(defaults.setId);
+  }
+
+  useEffect(() => {
+    if (!isOpen) return;
     const langKey = language === ALL_LANGUAGES ? null : language;
-    const cachedExact = getCachedPrintCatalogues(shelfType, langKey);
-    const cachedAny = getCachedPrintCatalogues(shelfType, null);
-
-    const applyDefaultsOnce = (
-      rows: readonly {
-        id: string;
-        label: string;
-        aliases?: { label: string; language?: string }[];
-        defaultLanguage?: string | null;
-        sets?: {
-          id: string;
-          label: string;
-          group?: string;
-          languages?: string[];
-        }[];
-        languages?: string[];
-      }[],
-    ) => {
-      if (shelfDefaultsApplied.current) return;
-      const defaults = inferPrintPickerDefaults(
-        shelfName,
-        rows,
-        ownedPrints ?? [],
-      );
-      shelfDefaultsApplied.current = true;
-      if (defaults.catalogueId) setCatalogue(defaults.catalogueId);
-      if (defaults.language) setLanguage(defaults.language);
-      if (defaults.setId) setSetId(defaults.setId);
-    };
-
-    if (cachedExact?.length) {
-      setCatalogues(cachedExact);
-      setIsCataloguesLoading(false);
-      applyDefaultsOnce(cachedExact);
-      return;
-    }
-
-    // Warm unscoped tree → show it now; refresh language-scoped tree in background.
-    if (cachedAny?.length) {
-      setCatalogues(cachedAny);
-      setIsCataloguesLoading(false);
-      applyDefaultsOnce(cachedAny);
-      if (langKey) {
-        void loadPrintCatalogues(shelfType, langKey)
-          .then((rows) => {
-            if (rows.length) setCatalogues(rows);
-          })
-          .catch(() => {
-            /* keep unscoped tree */
-          });
-      }
-      return;
-    }
-
+    // Exact tree already cached: hydrated above, nothing to fetch.
+    if (getCachedPrintCatalogues(shelfType, langKey)?.length) return;
     const controller = new AbortController();
-    setIsCataloguesLoading(true);
-    void (async () => {
-      try {
-        const rows = await loadPrintCatalogues(
-          shelfType,
-          langKey,
-          controller.signal,
-        );
-        if (!rows.length) return;
-        setCatalogues(rows);
-        applyDefaultsOnce(rows);
-      } catch {
-        // Filters stay minimal; search still works.
-      } finally {
+    void loadPrintCatalogues(shelfType, langKey, controller.signal)
+      .then((rows) => {
+        if (rows.length) setCatalogues(rows);
+      })
+      .catch(() => {
+        // Filters stay minimal (or on the unscoped tree); search still works.
+      })
+      .finally(() => {
         if (!controller.signal.aborted) setIsCataloguesLoading(false);
-      }
-    })();
+      });
     return () => controller.abort();
-  }, [isOpen, shelfType, language, shelfName, ownedPrints]);
+  }, [isOpen, shelfType, language]);
 
-  useEffect(() => {
-    if (!isListMode) {
-      setListIndex(0);
-      return;
-    }
-    setListIndex((i) => Math.min(i, listLines.length - 1));
-  }, [isListMode, listLines.length]);
+  // Leaving list mode restarts the guided step; inside it, `activeListIndex`
+  // already clamps to the lines there are.
+  const [prevListMode, setPrevListMode] = useState(isListMode);
+  if (prevListMode !== isListMode) {
+    setPrevListMode(isListMode);
+    if (!isListMode) setListIndex(0);
+  }
 
   /*
     Les extensions que la langue choisie laisse voir.
@@ -713,8 +651,20 @@ export function PrintPickerModal({
   const activeSetId =
     setId && catalogueSets.some((set) => set.id === setId) ? setId : null;
   /** Jeu choisi, pas d'extension : parcourir tout le catalogue en ordre numérique. */
-  const catalogueBrowse =
-    catalogue !== ALL_CATALOGUES && !activeSetId;
+  const catalogueBrowse = catalogue !== ALL_CATALOGUES && !activeSetId;
+  const searchIdle = !trimmedQuery && !activeSetId && !catalogueBrowse;
+
+  // Nothing to look for: the list empties while rendering; the effect below
+  // only cancels what is in flight.
+  const [prevSearchIdle, setPrevSearchIdle] = useState(searchIdle);
+  if (prevSearchIdle !== searchIdle) {
+    setPrevSearchIdle(searchIdle);
+    if (searchIdle) {
+      setCandidates([]);
+      setHasMore(false);
+      setIsLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     /*
@@ -722,13 +672,10 @@ export function PrintPickerModal({
       complète, même sans mot-clé. On parcourt le set / le catalogue qu'on ne
       sait pas encore nommer.
     */
-    if (!trimmedQuery && !activeSetId && !catalogueBrowse) {
+    if (searchIdle) {
       searchAbort.current?.abort();
       loadMoreAbort.current?.abort();
       candidatesRef.current = [];
-      setCandidates([]);
-      setHasMore(false);
-      setIsLoadingMore(false);
       loadingMoreRef.current = false;
       return;
     }
@@ -804,6 +751,7 @@ export function PrintPickerModal({
     catalogue,
     activeSetId,
     catalogueBrowse,
+    searchIdle,
     language,
     t,
   ]);
@@ -856,9 +804,8 @@ export function PrintPickerModal({
         (BT1-087, BT3-091, …).
       */
       const seen = new Set(
-        candidatesRef.current.map(
-          (row) =>
-            `${row.printKey}|${row.language ?? ""}|${(row.setCode ?? "").trim()}`.toLowerCase(),
+        candidatesRef.current.map((row) =>
+          `${row.printKey}|${row.language ?? ""}|${(row.setCode ?? "").trim()}`.toLowerCase(),
         ),
       );
       const appended = next.filter((row) => {
@@ -888,17 +835,20 @@ export function PrintPickerModal({
     }
   }, [t]);
 
-  scrollQueryRef.current = {
-    hasMore,
-    isSearching,
-    trimmedQuery,
-    activeSetId,
-    catalogueBrowse,
-    candidatesLength: candidatesRef.current.length,
-    shelfType,
-    catalogue,
-    language,
-  };
+  // Latest query for the scroll handler — written after render, never during.
+  useLayoutEffect(() => {
+    scrollQueryRef.current = {
+      hasMore,
+      isSearching,
+      trimmedQuery,
+      activeSetId,
+      catalogueBrowse,
+      candidatesLength: candidatesRef.current.length,
+      shelfType,
+      catalogue,
+      language,
+    };
+  });
 
   /*
     Observer stable : on ne le recrée pas à chaque page. Recréer + abort partagé
@@ -972,13 +922,7 @@ export function PrintPickerModal({
       ...(activeSetId && activeSetLabel ? { setLabel: activeSetLabel } : {}),
     }));
     return expandPrintCandidatesByFinish(stamped);
-  }, [
-    trimmedQuery,
-    activeSetId,
-    catalogueBrowse,
-    candidates,
-    catalogueSets,
-  ]);
+  }, [trimmedQuery, activeSetId, catalogueBrowse, candidates, catalogueSets]);
 
   /*
     Les langues proposées sortent des résultats eux-mêmes. Une liste écrite en
@@ -1238,445 +1182,453 @@ export function PrintPickerModal({
 
   return (
     <>
-    <BaseModal
-      isOpen={isOpen}
-      onClose={performClose}
-      onDismissRequest={requestClose}
-      size="lg"
-      title={t("items.printPicker.title")}
-      description={t("items.printPicker.description")}
-      footer={
-        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <button
-            type="button"
-            onClick={() => {
-              if (requestClose()) performClose();
-            }}
-            disabled={Boolean(progress)}
-            className="w-full sm:w-auto rounded-xl h-10 px-4 text-sm font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-60"
-          >
-            {t("common.cancel")}
-          </button>
-          <button
-            type="button"
-            onClick={() => void addSelected()}
-            disabled={activeSelection.length === 0 || Boolean(progress)}
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
-          >
-            {progress && <Loader2 className="size-4 animate-spin" />}
-            {progress
-              ? t("items.printPicker.addingProgress", {
-                  done: progress.done,
-                  total: progress.total,
-                })
-              : t("items.printPicker.addSelected", {
-                  count: activeSelection.length,
-                })}
-          </button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-4">
-        {/*
+      <BaseModal
+        isOpen={isOpen}
+        onClose={performClose}
+        onDismissRequest={requestClose}
+        size="lg"
+        title={t("items.printPicker.title")}
+        description={t("items.printPicker.description")}
+        footer={
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                if (requestClose()) performClose();
+              }}
+              disabled={Boolean(progress)}
+              className="w-full sm:w-auto rounded-xl h-10 px-4 text-sm font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-60"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={() => void addSelected()}
+              disabled={activeSelection.length === 0 || Boolean(progress)}
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl h-10 px-4 text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
+            >
+              {progress && <Loader2 className="size-4 animate-spin" />}
+              {progress
+                ? t("items.printPicker.addingProgress", {
+                    done: progress.done,
+                    total: progress.total,
+                  })
+                : t("items.printPicker.addSelected", {
+                    count: activeSelection.length,
+                  })}
+            </button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          {/*
           Mobile: stack full-width. sm+: search grows, selects keep fixed
           widths and wrap beside it.
         */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
-          <div className="relative w-full sm:min-w-[12rem] sm:flex-1">
-            <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
-            <textarea
-              autoFocus
-              rows={isListMode ? Math.min(4, listLines.length) : 1}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("items.printPicker.searchPlaceholder")}
-              className={cn(
-                "w-full resize-y rounded-xl border border-border bg-background py-2.5 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary/40",
-                isListMode ? "pr-16 min-h-[2.75rem]" : "pr-9 min-h-[2.75rem]",
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
+            <div className="relative w-full sm:min-w-[12rem] sm:flex-1">
+              <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
+              <textarea
+                autoFocus
+                rows={isListMode ? Math.min(4, listLines.length) : 1}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("items.printPicker.searchPlaceholder")}
+                className={cn(
+                  "w-full resize-y rounded-xl border border-border bg-background py-2.5 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary/40",
+                  isListMode ? "pr-16 min-h-[2.75rem]" : "pr-9 min-h-[2.75rem]",
+                )}
+              />
+              {isListMode && (
+                <span className="pointer-events-none absolute right-3 top-2.5 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-muted-foreground">
+                  {activeListIndex + 1}/{listLines.length}
+                </span>
               )}
-            />
-            {isListMode && (
-              <span className="pointer-events-none absolute right-3 top-2.5 rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-muted-foreground">
-                {activeListIndex + 1}/{listLines.length}
-              </span>
-            )}
-            {isSearching && !isListMode && (
-              <Loader2 className="absolute right-3 top-3 size-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
+              {isSearching && !isListMode && (
+                <Loader2 className="absolute right-3 top-3 size-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
 
-          {/*
+            {/*
             Trois portées, trois contrôles. Affichés dès l'ouverture (skeleton)
             pour ne pas attendre le fetch catalogues avant de voir les filtres.
           */}
-          {isCataloguesLoading ? (
-            <>
-              <Skeleton className="h-11 w-full sm:w-[11rem] rounded-xl" />
-              <Skeleton className="h-11 w-full sm:w-[13rem] rounded-xl" />
-              <Skeleton className="h-11 w-full sm:w-[15rem] rounded-xl" />
-            </>
-          ) : (
-            <>
-          {languages.length > 1 && (
-            <Select
-              value={activeLanguage}
-              onValueChange={(value) => setLanguage(value)}
-            >
-              <SelectTrigger
-                aria-label={t("items.printPicker.languageLabel")}
-                className="h-11 data-[size=default]:h-11 w-full sm:w-[11rem] rounded-xl"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_LANGUAGES}>
-                  {t("items.printPicker.languageAll")}
-                </SelectItem>
-                {languages.map((code) => {
-                  const label = printLanguageLabel(code);
-                  return (
-                    <SelectItem key={code} value={code}>
-                      <span className="flex items-center gap-2">
-                        {label.flag && (
-                          <span aria-hidden className="text-base leading-none">
-                            {label.flag}
-                          </span>
-                        )}
-                        {label.name}
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          )}
+            {isCataloguesLoading ? (
+              <>
+                <Skeleton className="h-11 w-full sm:w-[11rem] rounded-xl" />
+                <Skeleton className="h-11 w-full sm:w-[13rem] rounded-xl" />
+                <Skeleton className="h-11 w-full sm:w-[15rem] rounded-xl" />
+              </>
+            ) : (
+              <>
+                {languages.length > 1 && (
+                  <Select
+                    value={activeLanguage}
+                    onValueChange={(value) => setLanguage(value)}
+                  >
+                    <SelectTrigger
+                      aria-label={t("items.printPicker.languageLabel")}
+                      className="h-11 data-[size=default]:h-11 w-full sm:w-[11rem] rounded-xl"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_LANGUAGES}>
+                        {t("items.printPicker.languageAll")}
+                      </SelectItem>
+                      {languages.map((code) => {
+                        const label = printLanguageLabel(code);
+                        return (
+                          <SelectItem key={code} value={code}>
+                            <span className="flex items-center gap-2">
+                              {label.flag && (
+                                <span
+                                  aria-hidden
+                                  className="text-base leading-none"
+                                >
+                                  {label.flag}
+                                </span>
+                              )}
+                              {label.name}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
 
-          {visibleCatalogues.length > 1 && (
-            <Select
-              value={catalogue}
-              onValueChange={(value) => {
-                setCatalogue(value);
-                /*
+                {visibleCatalogues.length > 1 && (
+                  <Select
+                    value={catalogue}
+                    onValueChange={(value) => {
+                      setCatalogue(value);
+                      /*
                   Changer de jeu relâche l'extension : celle d'avant appartenait
                   à un autre catalogue, et la garder aurait borné la requête sur
                   un identifiant que le nouveau ne connaît pas.
                 */
-                setSetId(null);
-              }}
-            >
-              <SelectTrigger
-                aria-label={t("items.printPicker.catalogueLabel")}
-                className="h-11 data-[size=default]:h-11 w-full sm:w-[13rem] rounded-xl"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_CATALOGUES}>
-                  {t("items.printPicker.catalogueAll")}
-                </SelectItem>
-                {visibleCatalogues.map((row) => (
-                  <SelectItem key={row.id} value={row.id}>
-                    {row.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+                      setSetId(null);
+                    }}
+                  >
+                    <SelectTrigger
+                      aria-label={t("items.printPicker.catalogueLabel")}
+                      className="h-11 data-[size=default]:h-11 w-full sm:w-[13rem] rounded-xl"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_CATALOGUES}>
+                        {t("items.printPicker.catalogueAll")}
+                      </SelectItem>
+                      {visibleCatalogues.map((row) => (
+                        <SelectItem key={row.id} value={row.id}>
+                          {row.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
-          {/*
+                {/*
             L'extension ne s'affiche qu'une fois le jeu choisi : « toutes les
             extensions de tous les jeux » est la liste qu'on vient de casser en
             deux, et la reproposer annulerait le partage.
           */}
-          {catalogueSets.length > 0 && (
-            <Select
-              value={activeSetId ?? ALL_SETS}
-              onValueChange={(value) =>
-                setSetId(value === ALL_SETS ? null : value)
-              }
-            >
-              <SelectTrigger
-                aria-label={t("items.printPicker.setLabel")}
-                className="h-11 data-[size=default]:h-11 w-full sm:w-[15rem] rounded-xl"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_SETS}>
-                  {t("items.printPicker.setAll")}
-                </SelectItem>
-                {[...catalogueCuts].map(([cut, sets]) =>
-                  cut ? (
-                    <SelectGroup key={cut}>
-                      <SelectLabel>{cut}</SelectLabel>
-                      {sets.map((set) => (
-                        <SelectItem key={set.id} value={set.id}>
-                          {set.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ) : (
-                    sets.map((set) => (
-                      <SelectItem key={set.id} value={set.id}>
-                        {set.label}
+                {catalogueSets.length > 0 && (
+                  <Select
+                    value={activeSetId ?? ALL_SETS}
+                    onValueChange={(value) =>
+                      setSetId(value === ALL_SETS ? null : value)
+                    }
+                  >
+                    <SelectTrigger
+                      aria-label={t("items.printPicker.setLabel")}
+                      className="h-11 data-[size=default]:h-11 w-full sm:w-[15rem] rounded-xl"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_SETS}>
+                        {t("items.printPicker.setAll")}
                       </SelectItem>
-                    ))
-                  ),
+                      {[...catalogueCuts].map(([cut, sets]) =>
+                        cut ? (
+                          <SelectGroup key={cut}>
+                            <SelectLabel>{cut}</SelectLabel>
+                            {sets.map((set) => (
+                              <SelectItem key={set.id} value={set.id}>
+                                {set.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ) : (
+                          sets.map((set) => (
+                            <SelectItem key={set.id} value={set.id}>
+                              {set.label}
+                            </SelectItem>
+                          ))
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
                 )}
-              </SelectContent>
-            </Select>
-          )}
-            </>
-          )}
-        </div>
-
-        {isListMode && (
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-              {t("items.printPicker.listStepHint", {
-                line: listLines[activeListIndex] ?? "",
-                index: activeListIndex + 1,
-                total: listLines.length,
-              })}
-            </p>
-            <button
-              type="button"
-              disabled={activeListIndex === 0 || Boolean(progress)}
-              onClick={() => advanceList(-1)}
-              className="rounded-xl h-9 px-3 text-xs font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-50"
-            >
-              {t("items.printPicker.listPrev")}
-            </button>
-            <button
-              type="button"
-              disabled={Boolean(progress)}
-              onClick={() => advanceList(1)}
-              className="rounded-xl h-9 px-3 text-xs font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-50"
-            >
-              {t("items.printPicker.listSkip")}
-            </button>
-            <button
-              type="button"
-              disabled={Boolean(progress)}
-              onClick={goNextListStep}
-              className="rounded-xl h-9 px-3 text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
-            >
-              {activeListIndex + 1 >= listLines.length
-                ? t("items.printPicker.listDone")
-                : t("items.printPicker.listNext")}
-            </button>
+              </>
+            )}
           </div>
-        )}
 
-        {(visibleRows.length > 0 ||
-          (hasSearched && (ownedPrints?.length ?? 0) > 0)) && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {visibleRows.length > 0 && (
+          {isListMode && (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                {t("items.printPicker.listStepHint", {
+                  line: listLines[activeListIndex] ?? "",
+                  index: activeListIndex + 1,
+                  total: listLines.length,
+                })}
+              </p>
               <button
                 type="button"
-                onClick={() =>
-                  setSelected((current) => {
-                    const next = new Map(current);
-                    if (allVisibleSelected) {
-                      for (const row of visibleRows) next.delete(row.rowKey);
-                    } else {
-                      for (const row of visibleRows) next.set(row.rowKey, row);
-                    }
-                    return next;
-                  })
-                }
-                className="text-xs font-bold text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
+                disabled={activeListIndex === 0 || Boolean(progress)}
+                onClick={() => advanceList(-1)}
+                className="rounded-xl h-9 px-3 text-xs font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-50"
               >
-                {allVisibleSelected
-                  ? t("items.printPicker.clearSelection")
-                  : t("items.printPicker.selectAll")}
+                {t("items.printPicker.listPrev")}
               </button>
-            )}
-            {(ownedPrints?.length ?? 0) > 0 && (
-              <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground">
-                <Checkbox
-                  checked={hideOwned}
-                  onCheckedChange={(value) => setHideOwned(value === true)}
-                  aria-label={t("items.printPicker.hideOwned")}
-                />
-                {t("items.printPicker.hideOwned")}
-              </label>
-            )}
-          </div>
-        )}
+              <button
+                type="button"
+                disabled={Boolean(progress)}
+                onClick={() => advanceList(1)}
+                className="rounded-xl h-9 px-3 text-xs font-bold border border-border bg-card hover:bg-accent cursor-pointer disabled:opacity-50"
+              >
+                {t("items.printPicker.listSkip")}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(progress)}
+                onClick={goNextListStep}
+                className="rounded-xl h-9 px-3 text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 cursor-pointer disabled:opacity-50"
+              >
+                {activeListIndex + 1 >= listLines.length
+                  ? t("items.printPicker.listDone")
+                  : t("items.printPicker.listNext")}
+              </button>
+            </div>
+          )}
 
-        {error && (
-          <p className="text-sm font-medium text-destructive">{error}</p>
-        )}
+          {(visibleRows.length > 0 ||
+            (hasSearched && (ownedPrints?.length ?? 0) > 0)) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {visibleRows.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelected((current) => {
+                      const next = new Map(current);
+                      if (allVisibleSelected) {
+                        for (const row of visibleRows) next.delete(row.rowKey);
+                      } else {
+                        for (const row of visibleRows)
+                          next.set(row.rowKey, row);
+                      }
+                      return next;
+                    })
+                  }
+                  className="text-xs font-bold text-muted-foreground underline-offset-2 hover:underline cursor-pointer"
+                >
+                  {allVisibleSelected
+                    ? t("items.printPicker.clearSelection")
+                    : t("items.printPicker.selectAll")}
+                </button>
+              )}
+              {(ownedPrints?.length ?? 0) > 0 && (
+                <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground">
+                  <Checkbox
+                    checked={hideOwned}
+                    onCheckedChange={(value) => setHideOwned(value === true)}
+                    aria-label={t("items.printPicker.hideOwned")}
+                  />
+                  {t("items.printPicker.hideOwned")}
+                </label>
+              )}
+            </div>
+          )}
 
-        {!trimmedQuery && !activeSetId && !catalogueBrowse && (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            {t("items.printPicker.hint")}
-          </p>
-        )}
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
 
-        {/*
+          {!trimmedQuery && !activeSetId && !catalogueBrowse && (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {t("items.printPicker.hint")}
+            </p>
+          )}
+
+          {/*
           « Aucun tirage » et « le filtre de langue ne laisse rien passer » ne
           sont pas la même chose : dans le second cas la recherche a bien
           trouvé, et dire l'inverse enverrait chercher ailleurs pour rien.
         */}
-        {hasSearched && !isSearching && visibleRows.length === 0 && !error && (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            {pickerRows.length > 0
-              ? hideOwned &&
-                pickerRows.some((row) => isExactOwnedRow(row, owned.exact))
-                ? t("items.printPicker.allOwnedHidden")
-                : t("items.printPicker.noResultsForLanguage")
-              : t("items.printPicker.noResults")}
-          </p>
-        )}
+          {hasSearched &&
+            !isSearching &&
+            visibleRows.length === 0 &&
+            !error && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {pickerRows.length > 0
+                  ? hideOwned &&
+                    pickerRows.some((row) => isExactOwnedRow(row, owned.exact))
+                    ? t("items.printPicker.allOwnedHidden")
+                    : t("items.printPicker.noResultsForLanguage")
+                  : t("items.printPicker.noResults")}
+              </p>
+            )}
 
-        {visibleRows.length > 0 && (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {visibleRows.map((row) => {
-              const printKey = row.printKey.trim().toLowerCase();
-              const hasExact = isExactOwnedRow(row, owned.exact);
-              const hasOtherFinish =
-                !hasExact &&
-                (owned.anyFinish.has(
-                  [
-                    (row.setCode ?? "").trim().toLowerCase(),
-                    printKey,
-                  ].join("|"),
-                ) ||
-                  owned.anyFinish.has(["", printKey].join("|")));
-              const isChecked = selected.has(row.rowKey);
-              return (
-                <li key={row.rowKey}>
-                  <button
-                    type="button"
-                    disabled={Boolean(progress)}
-                    aria-pressed={isChecked}
-                    onClick={() => toggleRow(row)}
-                    className={cn(
-                      "group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-2 text-left transition-all",
-                      "hover:border-primary/60 hover:shadow-md disabled:opacity-60",
-                      isChecked && "border-primary ring-2 ring-primary/40",
-                    )}
-                  >
-                    <div className="relative">
-                      <OrientedMediaFrame
-                        aspectRatio={
-                          sealedBagOuterAspect({
-                            finish: row.finish,
-                            sealedBag: row.sealedBag,
-                            faceAspect: "5 / 7",
-                          }) ?? "5 / 7"
-                        }
-                        faceQuarterTurns={row.faceQuarterTurns}
-                        landscapeFace={row.landscapeFace}
-                        className="overflow-hidden rounded-lg bg-zinc-200 dark:bg-zinc-950"
-                      >
-                        <PrintPickerTileArt
-                          candidate={row}
-                          finish={row.finish}
-                        />
-                      </OrientedMediaFrame>
-                      {row.finish && (
-                        <span className="pointer-events-none absolute bottom-1.5 left-1.5 z-10 max-w-[calc(100%-0.75rem)] truncate rounded-md border border-amber-300/40 bg-zinc-950/90 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-200 shadow-sm">
-                          ✦ {localizeFinishLabel(row.finish, t)}
-                        </span>
+          {visibleRows.length > 0 && (
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {visibleRows.map((row) => {
+                const printKey = row.printKey.trim().toLowerCase();
+                const hasExact = isExactOwnedRow(row, owned.exact);
+                const hasOtherFinish =
+                  !hasExact &&
+                  (owned.anyFinish.has(
+                    [(row.setCode ?? "").trim().toLowerCase(), printKey].join(
+                      "|",
+                    ),
+                  ) ||
+                    owned.anyFinish.has(["", printKey].join("|")));
+                const isChecked = selected.has(row.rowKey);
+                return (
+                  <li key={row.rowKey}>
+                    <button
+                      type="button"
+                      disabled={Boolean(progress)}
+                      aria-pressed={isChecked}
+                      onClick={() => toggleRow(row)}
+                      className={cn(
+                        "group flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-2 text-left transition-all",
+                        "hover:border-primary/60 hover:shadow-md disabled:opacity-60",
+                        isChecked && "border-primary ring-2 ring-primary/40",
                       )}
-                      {(hasExact || hasOtherFinish) && (
+                    >
+                      <div className="relative">
+                        <OrientedMediaFrame
+                          aspectRatio={
+                            sealedBagOuterAspect({
+                              finish: row.finish,
+                              sealedBag: row.sealedBag,
+                              faceAspect: "5 / 7",
+                            }) ?? "5 / 7"
+                          }
+                          faceQuarterTurns={row.faceQuarterTurns}
+                          landscapeFace={row.landscapeFace}
+                          className="overflow-hidden rounded-lg bg-zinc-200 dark:bg-zinc-950"
+                        >
+                          <PrintPickerTileArt
+                            candidate={row}
+                            finish={row.finish}
+                          />
+                        </OrientedMediaFrame>
+                        {row.finish && (
+                          <span className="pointer-events-none absolute bottom-1.5 left-1.5 z-10 max-w-[calc(100%-0.75rem)] truncate rounded-md border border-amber-300/40 bg-zinc-950/90 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-200 shadow-sm">
+                            ✦ {localizeFinishLabel(row.finish, t)}
+                          </span>
+                        )}
+                        {(hasExact || hasOtherFinish) && (
+                          <span
+                            className={cn(
+                              "pointer-events-none absolute top-1.5 left-1.5 z-10 max-w-[calc(100%-0.75rem)] truncate rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide shadow-sm",
+                              hasExact
+                                ? "bg-emerald-600/95 text-white"
+                                : "border border-border bg-background/95 text-muted-foreground",
+                            )}
+                          >
+                            {hasExact
+                              ? `✓ ${t("items.printPicker.owned")}`
+                              : t("items.printPicker.ownedOtherFinish")}
+                          </span>
+                        )}
                         <span
+                          aria-hidden
                           className={cn(
-                            "pointer-events-none absolute top-1.5 left-1.5 z-10 max-w-[calc(100%-0.75rem)] truncate rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide shadow-sm",
-                            hasExact
-                              ? "bg-emerald-600/95 text-white"
-                              : "border border-border bg-background/95 text-muted-foreground",
+                            "pointer-events-none absolute top-1.5 right-1.5 z-10 grid size-5 place-items-center rounded-md border text-[11px] font-black",
+                            isChecked
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background/95 text-transparent",
                           )}
                         >
-                          {hasExact
-                            ? `✓ ${t("items.printPicker.owned")}`
-                            : t("items.printPicker.ownedOtherFinish")}
+                          ✓
                         </span>
-                      )}
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "pointer-events-none absolute top-1.5 right-1.5 z-10 grid size-5 place-items-center rounded-md border text-[11px] font-black",
-                          isChecked
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-background/95 text-transparent",
-                        )}
-                      >
-                        ✓
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-bold">{row.title}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">
-                        {row.reference}
-                      </p>
-                      {(row.setLabel || row.setCode) && (
-                        <p
-                          className="truncate text-[11px] font-medium text-foreground/80"
-                          title={row.setLabel ?? row.setCode ?? undefined}
-                        >
-                          {row.setLabel?.trim() || row.setCode}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-bold">
+                          {row.title}
                         </p>
-                      )}
-                      {row.rarity && (
                         <p className="truncate text-[11px] text-muted-foreground">
-                          {row.rarity}
+                          {row.reference}
                         </p>
-                      )}
-                    </div>
-                  </button>
+                        {(row.setLabel || row.setCode) && (
+                          <p
+                            className="truncate text-[11px] font-medium text-foreground/80"
+                            title={row.setLabel ?? row.setCode ?? undefined}
+                          >
+                            {row.setLabel?.trim() || row.setCode}
+                          </p>
+                        )}
+                        {row.rarity && (
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {row.rarity}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+              {hasMore && (
+                <li
+                  ref={loadMoreSentinelRef}
+                  className="col-span-full flex items-center justify-center py-3"
+                  aria-hidden={!isLoadingMore}
+                >
+                  {isLoadingMore ? (
+                    <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      {t("items.printPicker.loadingMore")}
+                    </span>
+                  ) : (
+                    <span className="h-1 w-1" />
+                  )}
                 </li>
-              );
-            })}
-            {hasMore && (
-              <li
-                ref={loadMoreSentinelRef}
-                className="col-span-full flex items-center justify-center py-3"
-                aria-hidden={!isLoadingMore}
-              >
-                {isLoadingMore ? (
-                  <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
-                    {t("items.printPicker.loadingMore")}
-                  </span>
-                ) : (
-                  <span className="h-1 w-1" />
-                )}
-              </li>
-            )}
-          </ul>
-        )}
-      </div>
-    </BaseModal>
+              )}
+            </ul>
+          )}
+        </div>
+      </BaseModal>
 
-    <BaseModal
-      isOpen={confirmCloseOpen}
-      onClose={() => setConfirmCloseOpen(false)}
-      size="sm"
-      title={t("items.printPicker.closeConfirmTitle")}
-      description={t("items.printPicker.closeConfirmDescription")}
-      cancelLabel={t("items.printPicker.closeConfirmStay")}
-      onCancel={() => setConfirmCloseOpen(false)}
-      deleteLabel={t("items.printPicker.closeConfirmLeave")}
-      onDelete={() => {
-        setConfirmCloseOpen(false);
-        performClose();
-      }}
-    >
-      {null}
-    </BaseModal>
+      <BaseModal
+        isOpen={confirmCloseOpen}
+        onClose={() => setConfirmCloseOpen(false)}
+        size="sm"
+        title={t("items.printPicker.closeConfirmTitle")}
+        description={t("items.printPicker.closeConfirmDescription")}
+        cancelLabel={t("items.printPicker.closeConfirmStay")}
+        onCancel={() => setConfirmCloseOpen(false)}
+        deleteLabel={t("items.printPicker.closeConfirmLeave")}
+        onDelete={() => {
+          setConfirmCloseOpen(false);
+          performClose();
+        }}
+      >
+        {null}
+      </BaseModal>
 
-    <AwaitedReceiptDialog
-      isOpen={awaitedPrompt != null}
-      pairs={awaitedPrompt?.pairs ?? []}
-      isReceiving={isReceiving}
-      onClose={() => setAwaitedPrompt(null)}
-      onReceive={confirmReceiveAwaited}
-      onAddAsNew={confirmAddAsNew}
-    />
+      <AwaitedReceiptDialog
+        isOpen={awaitedPrompt != null}
+        pairs={awaitedPrompt?.pairs ?? []}
+        isReceiving={isReceiving}
+        onClose={() => setAwaitedPrompt(null)}
+        onReceive={confirmReceiveAwaited}
+        onAddAsNew={confirmAddAsNew}
+      />
     </>
   );
 }

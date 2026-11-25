@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { CARD_FACE_RADIUS } from "@/components/OrientedMediaFrame";
 import {
   SEALED_BAG_CHROME_INSET,
@@ -23,6 +23,25 @@ export type SealedBagOverlayProps = {
    */
   children?: ReactNode;
 };
+
+/**
+ * La fenêtre du sachet : où la carte se trouve une fois glissée dedans (pli
+ * sur les côtés, soudures en haut et en bas), avec le coin TCG. Tout ce qui
+ * représente la carte — face comme dos en attente — doit s'y tenir.
+ */
+export function sealedBagWindowStyle(): CSSProperties {
+  const pct = sealedCardInsetStyle();
+  return {
+    top: `var(--sealed-bag-seal, ${pct.top})`,
+    right: `var(--sealed-bag-rim, ${pct.right})`,
+    bottom: `var(--sealed-bag-seal, ${pct.bottom})`,
+    left: `var(--sealed-bag-rim, ${pct.left})`,
+    // Same TCG corner as shelf tiles — sharp square edges punched through
+    // the bag and read as a sticker, not a card in plastic.
+    borderRadius: CARD_FACE_RADIUS,
+    clipPath: `inset(0 round ${CARD_FACE_RADIUS})`,
+  };
+}
 
 const BAG_FILTER =
   "brightness(0.96) contrast(1.12) drop-shadow(0 0 0.45px rgba(0,0,0,0.22)) drop-shadow(0 1px 1px rgba(0,0,0,0.1))";
@@ -151,25 +170,11 @@ export function SealedBagOverlay({
 
   if (!children) return bagLayers;
 
-  const pctInset = sealedCardInsetStyle();
-  const inset = {
-    top: `var(--sealed-bag-seal, ${pctInset.top})`,
-    right: `var(--sealed-bag-rim, ${pctInset.right})`,
-    bottom: `var(--sealed-bag-seal, ${pctInset.bottom})`,
-    left: `var(--sealed-bag-rim, ${pctInset.left})`,
-  };
-
   return (
     <div className={cn("relative h-full w-full", className)}>
       <div
         className="absolute z-0 overflow-hidden"
-        style={{
-          ...inset,
-          // Same TCG corner as shelf tiles — sharp square edges punched through
-          // the bag and read as a sticker, not a card in plastic.
-          borderRadius: CARD_FACE_RADIUS,
-          clipPath: `inset(0 round ${CARD_FACE_RADIUS})`,
-        }}
+        style={sealedBagWindowStyle()}
       >
         <div className="relative h-full w-full overflow-hidden rounded-[inherit]">
           {children}

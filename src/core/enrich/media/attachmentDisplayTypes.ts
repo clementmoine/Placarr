@@ -89,6 +89,13 @@ export type AttachmentDisplayScoreOptions = LocalePreferenceOptions & {
    * tall TMDB poster on a square shelf.
    */
   expectedCoverAspectRatio?: number | null;
+  /**
+   * Langue d'impression de l'exemplaire (`Item.language`, `fr`, `en`…). Une
+   * face dans cette langue passe devant toutes les autres ; une face d'une
+   * autre langue connue passe derrière les faces neutres. Sans valeur : aucun
+   * effet (la région / la qualité décident comme avant).
+   */
+  copyLanguage?: string | null;
 };
 
 export interface AttachmentDisplayScoreDetails {

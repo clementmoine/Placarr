@@ -72,10 +72,7 @@ import {
   itemConditionsForShelfType,
   shelfShowsItemCondition,
 } from "@/core/collect/condition";
-import {
-  ITEM_PRESENCES,
-  parsePriceCents,
-} from "@/core/collect/itemAbsence";
+import { ITEM_PRESENCES, parsePriceCents } from "@/core/collect/itemAbsence";
 import { GRADE_STATUSES } from "@/core/collect/itemGrade";
 import {
   ItemModalLifecycleFields,
@@ -468,25 +465,17 @@ export function ItemModal({
   const [tradeRecoverBusy, setTradeRecoverBusy] = useState(false);
 
   const handleRecoverPast = useCallback(() => {
-    if (
-      watchedAbsenceReason === "exchanged" &&
-      item?.id &&
-      !tradeRecoverOpen
-    ) {
+    if (watchedAbsenceReason === "exchanged" && item?.id && !tradeRecoverOpen) {
       setTradeRecoverOpen(true);
       return;
     }
     clearAbsenceToOwned();
-  }, [
-    watchedAbsenceReason,
-    item?.id,
-    tradeRecoverOpen,
-    clearAbsenceToOwned,
-  ]);
+  }, [watchedAbsenceReason, item?.id, tradeRecoverOpen, clearAbsenceToOwned]);
 
   const finishTradeRecover = useCallback(
     async (breakLinks: boolean) => {
-      if (!item?.id) {
+      const tradeItemId = item?.id;
+      if (!tradeItemId) {
         clearAbsenceToOwned();
         setTradeRecoverOpen(false);
         return;
@@ -494,9 +483,9 @@ export function ItemModal({
       setTradeRecoverBusy(true);
       try {
         if (breakLinks) {
-          const { links } = await getItemTrades(item.id, shelfId);
+          const { links } = await getItemTrades(tradeItemId, shelfId);
           for (const link of links) {
-            await unlinkItemTrade(item.id, { linkId: link.id }, shelfId);
+            await unlinkItemTrade(tradeItemId, { linkId: link.id }, shelfId);
           }
         }
         clearAbsenceToOwned();
@@ -641,7 +630,11 @@ export function ItemModal({
     if (!sureId) return;
     const current = form.getValues("shelfId");
     if (current && current === sureId) return;
-    if (current && current !== (prefilledValues?.shelfId || "") && current !== shelfId) {
+    if (
+      current &&
+      current !== (prefilledValues?.shelfId || "") &&
+      current !== shelfId
+    ) {
       return;
     }
     form.setValue("shelfId", sureId, { shouldDirty: false });
@@ -662,8 +655,7 @@ export function ItemModal({
     if (!printKey) return;
     const currentName = (form.getValues("name") || "").trim();
     const looksLikeKey =
-      !currentName ||
-      currentName.toLowerCase() === printKey.toLowerCase();
+      !currentName || currentName.toLowerCase() === printKey.toLowerCase();
     if (!looksLikeKey) return;
     // Hydrate already resolved a human title — keep it.
     if (
@@ -687,16 +679,12 @@ export function ItemModal({
       .then((res) => {
         if (cancelled) return;
         const candidate = res.data?.candidate as
-          | { name?: string; title?: string }
-          | null
-          | undefined;
-        const title =
-          candidate?.name?.trim() || candidate?.title?.trim() || "";
+          { name?: string; title?: string } | null | undefined;
+        const title = candidate?.name?.trim() || candidate?.title?.trim() || "";
         if (!title) return;
         const stillKey =
           (form.getValues("name") || "").trim().toLowerCase() ===
-            printKey.toLowerCase() ||
-          !(form.getValues("name") || "").trim();
+            printKey.toLowerCase() || !(form.getValues("name") || "").trim();
         if (stillKey) {
           form.setValue("name", title, { shouldDirty: false });
         }
@@ -909,6 +897,7 @@ export function ItemModal({
           imageUrl: item?.imageUrl ?? null,
           updatedAt: item?.updatedAt,
           condition: item?.condition ?? null,
+          language: item?.language ?? prefilledValues?.language ?? null,
           metadata: filteredMetadata,
           shelf: activeShelfForMedia,
         },
@@ -957,6 +946,8 @@ export function ItemModal({
       form,
       hasPrefilledScanImage,
       item?.condition,
+      item?.language,
+      prefilledValues?.language,
       item?.imageUrl,
       item?.updatedAt,
       locale,
@@ -1420,6 +1411,7 @@ export function ItemModal({
       imageUrl: item?.imageUrl ?? prefilledValues?.imageUrl ?? null,
       updatedAt: item?.updatedAt,
       condition: watchedCondition ?? item?.condition ?? null,
+      language: item?.language ?? prefilledValues?.language ?? null,
       metadata,
       shelf: activeShelfForMedia,
     };
@@ -1497,6 +1489,7 @@ export function ItemModal({
   }, [
     itemId,
     item,
+    prefilledValues?.language,
     fetchedMetadata,
     prefilledValues?.imageUrl,
     activeShelfForMedia,
@@ -1507,7 +1500,10 @@ export function ItemModal({
   ]);
 
   const currentImageUrl = useWatch({ control: form.control, name: "imageUrl" });
-  const currentCoverMode = useWatch({ control: form.control, name: "coverMode" });
+  const currentCoverMode = useWatch({
+    control: form.control,
+    name: "coverMode",
+  });
   // Checkmark = in-session Affiche pick, else the same cover as the fiche.
   const afficheSelectedCoverUrl = useMemo(() => {
     if (currentImageUrl instanceof File) return null;
@@ -1519,12 +1515,12 @@ export function ItemModal({
           coverMode: currentCoverMode ?? item?.coverMode ?? null,
           updatedAt: item?.updatedAt,
           condition: watchedCondition ?? item?.condition ?? null,
+          language: item?.language ?? prefilledValues?.language ?? null,
           metadata: item?.metadata ?? fetchedMetadata ?? null,
           shelf: activeShelfForMedia,
         },
         locale,
-      ) ||
-      (typeof currentImageUrl === "string" ? currentImageUrl : null)
+      ) || (typeof currentImageUrl === "string" ? currentImageUrl : null)
     );
   }, [
     activeShelfForMedia,
@@ -1532,6 +1528,8 @@ export function ItemModal({
     currentImageUrl,
     fetchedMetadata,
     item?.condition,
+    item?.language,
+    prefilledValues?.language,
     item?.coverMode,
     item?.imageUrl,
     item?.metadata,

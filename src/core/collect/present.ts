@@ -32,6 +32,8 @@ export interface PresentableItemInput {
   barcode?: string | null;
   imageUrl?: string | null;
   condition?: string | null;
+  /** Copy printing language — its faces rank first on the cover. */
+  language?: string | null;
   updatedAt?: Date | string | null;
   metadata?: MetadataResult | null;
   shelf?: {
@@ -276,6 +278,7 @@ function mediaInput(item: PresentableItemInput) {
   return {
     imageUrl: item.imageUrl,
     condition: item.condition,
+    language: item.language,
     updatedAt: "updatedAt" in item ? item.updatedAt : undefined,
     metadata: item.metadata,
     shelf: item.shelf,

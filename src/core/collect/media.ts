@@ -46,10 +46,7 @@ import {
 } from "@/core/enrich/media/coverPlaceholder";
 import { isCoverResolutionAcceptable } from "@/core/enrich/media/coverResolution";
 import { expectedCoverAspectRatioForShelf } from "@/lib/text/cardFormat";
-import {
-  isDiskCardArtUrl,
-  isPrintRoleAssetUrl,
-} from "@/lib/packAssetUrls";
+import { isDiskCardArtUrl, isPrintRoleAssetUrl } from "@/lib/packAssetUrls";
 import {
   findAttachmentForUrl,
   isCoverEligibleAttachmentType,
@@ -117,6 +114,8 @@ export interface MediaInput {
   coverMode?: string | null;
   /** Item grade — loose games prefer disc art as the displayed cover. */
   condition?: string | null;
+  /** Copy printing language (`fr`, `en`…) — its faces rank first. */
+  language?: string | null;
   metadata?: {
     imageUrl?: string | null;
     heroImageUrl?: string | null;
@@ -151,8 +150,7 @@ export function isExplicitUserCoverOverride(item: MediaInput): boolean {
   const lastFetched = item.metadata?.lastFetched;
   const updatedAt = item.updatedAt;
   if (!lastFetched || !updatedAt) return false;
-  const ageMs =
-    new Date(updatedAt).getTime() - new Date(lastFetched).getTime();
+  const ageMs = new Date(updatedAt).getTime() - new Date(lastFetched).getTime();
   if (ageMs <= 0) return false;
   // Enrichment often syncs item.imageUrl to metadata.imageUrl right after
   // writing lastFetched, which bumps updatedAt — that is not a gallery pick.
@@ -219,7 +217,9 @@ export function preferLocalDisplayCoverUrl(
   if (!remoteImageNeedsProxy(pin)) return pin;
 
   const list =
-    pool && pool.length > 0 ? pool : (attachments(item) as ScoredAttachmentInput[]);
+    pool && pool.length > 0
+      ? pool
+      : (attachments(item) as ScoredAttachmentInput[]);
   const pinAttachment = findAttachmentForUrl(list, pin);
   const pinRole = pinAttachment?.role?.trim().toLowerCase() || null;
   // Same-role local only — never steal a marketplace `/uploads` pin as twin of
@@ -295,6 +295,7 @@ function coverDisplayOptions(
       item.shelf?.type,
     ),
     ...(resolvedLocale ? { uiLocale: resolvedLocale } : {}),
+    ...(item.language?.trim() ? { copyLanguage: item.language.trim() } : {}),
     ...(preferDiscCover ? { preferDiscCover: true } : {}),
     ...(preferSystemOnlyCover ? { preferSystemOnlyCover: true } : {}),
   };
@@ -1005,7 +1006,10 @@ export function resolveMetadataCoverUrl(
     if (bestUrl && !urlsReferToSameLocalizedImage(bestUrl, pin)) {
       const bestAttachment = findAttachmentForUrl(coverPool, bestUrl);
       if (bestAttachment) {
-        const bestLocale = coverLocaleRankForAttachment(bestAttachment, options);
+        const bestLocale = coverLocaleRankForAttachment(
+          bestAttachment,
+          options,
+        );
         const pinLocale = coverLocaleRankForAttachment(pinAttachment, options);
         if (bestLocale < pinLocale) return bestUrl;
         if (
@@ -1295,8 +1299,7 @@ export function getGalleryImages(
     const hasDiskArt =
       [...seen].some((url) => isDiskCardArtUrl(url)) ||
       attachments(item).some(
-        (attachment) =>
-          attachment.url && isDiskCardArtUrl(attachment.url),
+        (attachment) => attachment.url && isDiskCardArtUrl(attachment.url),
       );
     const printTwin = hasDiskArt && isPrintRoleAssetUrl(resolvedDefault);
     if ((!alreadyListed || !item.imageUrl) && !printTwin) {
@@ -1339,8 +1342,7 @@ export function getGalleryImages(
     const hasDiskArt =
       [...seen].some((url) => isDiskCardArtUrl(url)) ||
       attachments(item).some(
-        (attachment) =>
-          attachment.url && isDiskCardArtUrl(attachment.url),
+        (attachment) => attachment.url && isDiskCardArtUrl(attachment.url),
       );
     if (!(hasDiskArt && isPrintRoleAssetUrl(item.imageUrl))) {
       add({ url: item.imageUrl, type: "image" });

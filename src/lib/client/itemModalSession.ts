@@ -14,10 +14,7 @@ import {
   priceCentsInputValue,
   type ItemPresence,
 } from "@/core/collect/itemAbsence";
-import {
-  isGradeStatus,
-  type GradeStatus,
-} from "@/core/collect/itemGrade";
+import { isGradeStatus, type GradeStatus } from "@/core/collect/itemGrade";
 import type { ItemWithMetadata } from "@/types/items";
 import type { MetadataResult } from "@/types/metadataProvider";
 import type { Locale } from "@/types/i18n";
@@ -256,6 +253,7 @@ export function buildItemModalSessionInit(input: {
       coverMode: seededCoverMode,
       updatedAt: item.updatedAt,
       condition: item.condition,
+      language: item.language ?? null,
       metadata: item.metadata,
       // Prefer the live shelf frame (cardFormat) over a stale nested item.shelf
       // that may omit it — same options as Affiche gallery ranking.

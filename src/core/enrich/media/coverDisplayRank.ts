@@ -2,6 +2,8 @@ import {
   isCoverCandidateKind,
   isPhysicalNonCoverKind,
   isPromoFlyerKind,
+  parsePrintLanguageCodeFromRole,
+  parsePrintLanguageCodeFromUrl,
   resolveAttachmentDisplayKind,
 } from "@/core/enrich/media/attachmentDisplayLabels";
 import {
@@ -116,7 +118,33 @@ export function isWeakDisplayCoverPin(attachment: {
 }
 
 /**
- * Locale/region tier for cover ranking. Regional tags (fr, eu, …) always beat
+ * Copy-language tier width: larger than any region rank + marketplace penalty,
+ * so the copy's own printing language outranks every region/marketplace signal.
+ */
+const COPY_LANGUAGE_TIER = 1000;
+
+/**
+ * 0 = the attachment is printed in the copy's language, 1 = neutral (no copy
+ * language, or the attachment declares none), 2 = another known language.
+ * Language comes from the attachment's own role / URL (`…-face-fr-…`,
+ * `/cards/fr/…`), never from a source list.
+ */
+export function copyLanguageTier(
+  role?: string | null,
+  url?: string | null,
+  options?: AttachmentDisplayScoreOptions,
+): number {
+  const wanted = options?.copyLanguage?.trim().toLowerCase().split(/[-_]/)[0];
+  if (!wanted) return 1;
+  const printed =
+    parsePrintLanguageCodeFromRole(role) ?? parsePrintLanguageCodeFromUrl(url);
+  if (!printed) return 1;
+  return printed === wanted ? 0 : 2;
+}
+
+/**
+ * Locale/region tier for cover ranking. The copy's printing language comes
+ * first (see {@link copyLanguageTier}); then regional tags (fr, eu, …) beat
  * marketplace roles and unknown regions — quality (score) is compared only
  * within the same locale tier (see `compareCoverDisplayRank`).
  */
@@ -124,12 +152,15 @@ export function coverLocaleRank(
   semantics: ReturnType<typeof attachmentSemantics>,
   role?: string | null,
   options?: AttachmentDisplayScoreOptions,
+  url?: string | null,
 ): number {
+  const languageTier =
+    copyLanguageTier(role, url, options) * COPY_LANGUAGE_TIER;
   const base = regionRank(semantics.region, options);
   if (isMarketplaceCoverRole(role)) {
-    return base + MARKETPLACE_COVER_LOCALE_PENALTY;
+    return languageTier + base + MARKETPLACE_COVER_LOCALE_PENALTY;
   }
-  return base;
+  return languageTier + base;
 }
 
 /** Locale tier for a gallery row — used when deciding whether to keep a metadata pin. */
@@ -141,6 +172,7 @@ export function coverLocaleRankForAttachment(
     attachmentSemantics(attachment),
     attachment.role,
     options,
+    attachment.url,
   );
 }
 
@@ -192,7 +224,12 @@ export function rankCoversForDisplay<T extends ScoredAttachmentInput>(
         attachment,
         options?.requestedPlatformKey,
       ),
-      localeRankValue: coverLocaleRank(semantics, attachment.role, options),
+      localeRankValue: coverLocaleRank(
+        semantics,
+        attachment.role,
+        options,
+        attachment.url,
+      ),
       provenanceRank: coverProvenanceRank(
         resolveCoverProvenance({
           provenance: attachment.coverProvenance,
